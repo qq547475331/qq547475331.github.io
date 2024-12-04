@@ -1,0 +1,476 @@
+<!DOCTYPE html><html lang="en" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>2024-2-26 面试 | Hexo</title><meta name="author" content="John Doe"><meta name="copyright" content="John Doe"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="k8s 有哪些组件？1、etcd保存了集群的状态2、apiserver提供了资源操作的唯一入口，还提供认证，授权，访问控制，api注册和服务发现等3、controller manager负责维护集群的状态，比如自动扩展，滚动更新，故障检测等4、scheduler 负责集群资源的调度，安照预期的调度策略将pod调度到相应的node上5、kubelet负责管理容器的生命周期，还负责共享存储卷和网络的管">
+<meta property="og:type" content="article">
+<meta property="og:title" content="2024-2-26 面试">
+<meta property="og:url" content="http://example.com/2024/12/05/2024-2-26%20%E9%9D%A2%E8%AF%95/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="k8s 有哪些组件？1、etcd保存了集群的状态2、apiserver提供了资源操作的唯一入口，还提供认证，授权，访问控制，api注册和服务发现等3、controller manager负责维护集群的状态，比如自动扩展，滚动更新，故障检测等4、scheduler 负责集群资源的调度，安照预期的调度策略将pod调度到相应的node上5、kubelet负责管理容器的生命周期，还负责共享存储卷和网络的管">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/img/butterfly-icon.png">
+<meta property="article:published_time" content="2024-12-04T16:28:29.733Z">
+<meta property="article:modified_time" content="2024-12-04T16:28:29.733Z">
+<meta property="article:author" content="John Doe">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/img/butterfly-icon.png"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="http://example.com/2024/12/05/2024-2-26%20%E9%9D%A2%E8%AF%95/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: 'Copy Successful',
+    error: 'Copy Failed',
+    noSupport: 'Browser Not Supported'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: 'Just now',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: 'Load More'
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '2024-2-26 面试',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  isShuoshuo: false
+}</script><meta name="generator" content="Hexo 7.3.0"></head><body><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Hexo</span></a><a class="nav-page-title" href="/"><span class="site-name">2024-2-26 面试</span></a></span><div id="menus"></div></nav><div id="post-info"><h1 class="post-title">2024-2-26 面试</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2024-12-04T16:28:29.733Z" title="Created 2024-12-05 00:28:29">2024-12-05</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2024-12-04T16:28:29.733Z" title="Updated 2024-12-05 00:28:29">2024-12-05</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post Views:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h3 id="k8s-有哪些组件？"><a href="#k8s-有哪些组件？" class="headerlink" title="k8s 有哪些组件？"></a>k8s 有哪些组件？</h3><h5 id="1、etcd保存了集群的状态"><a href="#1、etcd保存了集群的状态" class="headerlink" title="1、etcd保存了集群的状态"></a>1、etcd保存了集群的状态</h5><h5 id="2、apiserver提供了资源操作的唯一入口，还提供认证，授权，访问控制，api注册和服务发现等"><a href="#2、apiserver提供了资源操作的唯一入口，还提供认证，授权，访问控制，api注册和服务发现等" class="headerlink" title="2、apiserver提供了资源操作的唯一入口，还提供认证，授权，访问控制，api注册和服务发现等"></a>2、apiserver提供了资源操作的唯一入口，还提供认证，授权，访问控制，api注册和服务发现等</h5><h5 id="3、controller-manager负责维护集群的状态，比如自动扩展，滚动更新，故障检测等"><a href="#3、controller-manager负责维护集群的状态，比如自动扩展，滚动更新，故障检测等" class="headerlink" title="3、controller manager负责维护集群的状态，比如自动扩展，滚动更新，故障检测等"></a>3、controller manager负责维护集群的状态，比如自动扩展，滚动更新，故障检测等</h5><h5 id="4、scheduler-负责集群资源的调度，安照预期的调度策略将pod调度到相应的node上"><a href="#4、scheduler-负责集群资源的调度，安照预期的调度策略将pod调度到相应的node上" class="headerlink" title="4、scheduler 负责集群资源的调度，安照预期的调度策略将pod调度到相应的node上"></a>4、scheduler 负责集群资源的调度，安照预期的调度策略将pod调度到相应的node上</h5><h5 id="5、kubelet负责管理容器的生命周期，还负责共享存储卷和网络的管理"><a href="#5、kubelet负责管理容器的生命周期，还负责共享存储卷和网络的管理" class="headerlink" title="5、kubelet负责管理容器的生命周期，还负责共享存储卷和网络的管理"></a>5、kubelet负责管理容器的生命周期，还负责共享存储卷和网络的管理</h5><h5 id="6、Container-runtime-容器运行时，负责管理镜像的管理，pod和容器的真正运行"><a href="#6、Container-runtime-容器运行时，负责管理镜像的管理，pod和容器的真正运行" class="headerlink" title="6、Container runtime 容器运行时，负责管理镜像的管理，pod和容器的真正运行"></a>6、Container runtime 容器运行时，负责管理镜像的管理，pod和容器的真正运行</h5><h5 id="7、kube-proxy负责管理集群的服务发现和负载均衡"><a href="#7、kube-proxy负责管理集群的服务发现和负载均衡" class="headerlink" title="7、kube-proxy负责管理集群的服务发现和负载均衡"></a>7、kube-proxy负责管理集群的服务发现和负载均衡</h5><p>Kubernetes（K8s）是一个功能强大的容器编排平台，它由多个组件构成，这些组件共同协作来实现集群的管理、调度、监控等功能。下面是 Kubernetes 主要组件的简要介绍：</p>
+<h3 id="1-Kubernetes-核心组件"><a href="#1-Kubernetes-核心组件" class="headerlink" title="1. Kubernetes 核心组件"></a><strong>1. Kubernetes 核心组件</strong></h3><h4 id="1-1-API-Server-kube-apiserver"><a href="#1-1-API-Server-kube-apiserver" class="headerlink" title="1.1 API Server (kube-apiserver)"></a>1.1 <strong>API Server (<code>kube-apiserver</code>)</strong></h4><ul>
+<li><p><strong>职责</strong>：API Server 是 Kubernetes 控制平面的核心组件，它暴露了 Kubernetes 集群的 REST API，所有的命令和操作（如创建、删除、更新 Pod 等）都通过 API Server 来进行。</p>
+</li>
+<li><p>功能</p>
+<p>：</p>
+<ul>
+<li>接收来自用户、控制器、调度器等的请求。</li>
+<li>负责验证和处理请求。</li>
+<li>提供 REST API 接口，供客户端和其他组件使用。</li>
+<li>存储集群状态数据（通过与 etcd 交互）。</li>
+</ul>
+</li>
+</ul>
+<h4 id="1-2-Controller-Manager-kube-controller-manager"><a href="#1-2-Controller-Manager-kube-controller-manager" class="headerlink" title="1.2 Controller Manager (kube-controller-manager)"></a>1.2 <strong>Controller Manager (<code>kube-controller-manager</code>)</strong></h4><ul>
+<li><p><strong>职责</strong>：Controller Manager 负责运行集群的控制循环（controller loops），确保集群的实际状态与期望状态相一致。</p>
+</li>
+<li><p>功能</p>
+<p>：</p>
+<ul>
+<li>启动各种控制器，如 Deployment Controller、ReplicaSet Controller、Node Controller 等。</li>
+<li>处理集群资源的自我修复任务，如创建新的 Pod 来替代已死 Pod，扩缩容等。</li>
+</ul>
+</li>
+</ul>
+<h4 id="1-3-Scheduler-kube-scheduler"><a href="#1-3-Scheduler-kube-scheduler" class="headerlink" title="1.3 Scheduler (kube-scheduler)"></a>1.3 <strong>Scheduler (<code>kube-scheduler</code>)</strong></h4><ul>
+<li><p><strong>职责</strong>：调度器负责将 Pod 分配到集群中的合适节点上。</p>
+</li>
+<li><p>功能</p>
+<p>：</p>
+<ul>
+<li>根据集群资源情况和 Pod 的要求，选择最佳的节点来运行 Pod。</li>
+<li>支持不同的调度策略，如资源请求、节点亲和性（Node Affinity）等。</li>
+</ul>
+</li>
+</ul>
+<h4 id="1-4-etcd"><a href="#1-4-etcd" class="headerlink" title="1.4 etcd"></a>1.4 <strong>etcd</strong></h4><ul>
+<li><p><strong>职责</strong>：etcd 是 Kubernetes 的分布式键值存储系统，用于存储集群的所有状态数据，包括 Pod、节点、Service 等所有资源对象的配置和元数据。</p>
+</li>
+<li><p>功能</p>
+<p>：</p>
+<ul>
+<li>持久化存储集群的所有状态信息。</li>
+<li>提供强一致性保障，确保所有集群组件共享最新的状态数据。</li>
+</ul>
+</li>
+</ul>
+<h4 id="1-5-Cloud-Controller-Manager-kube-cloud-controller-manager"><a href="#1-5-Cloud-Controller-Manager-kube-cloud-controller-manager" class="headerlink" title="1.5 Cloud Controller Manager (kube-cloud-controller-manager)"></a>1.5 <strong>Cloud Controller Manager (<code>kube-cloud-controller-manager</code>)</strong></h4><ul>
+<li><p><strong>职责</strong>：Cloud Controller Manager 是为了支持云环境的 Kubernetes 扩展，它使得 Kubernetes 集群能够与云提供商的 API 集成。</p>
+</li>
+<li><p>功能</p>
+<p>：</p>
+<ul>
+<li>负责与云提供商的控制平面交互，管理负载均衡器、存储卷等云资源。</li>
+<li>让 Kubernetes 集群能够在多云环境中管理资源。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="2-Kubernetes-节点组件"><a href="#2-Kubernetes-节点组件" class="headerlink" title="2. Kubernetes 节点组件"></a><strong>2. Kubernetes 节点组件</strong></h3><h4 id="2-1-Kubelet"><a href="#2-1-Kubelet" class="headerlink" title="2.1 Kubelet"></a>2.1 <strong>Kubelet</strong></h4><ul>
+<li><p><strong>职责</strong>：Kubelet 是集群中每个节点上的代理，负责管理节点上的容器（Pod）。</p>
+</li>
+<li><p>功能</p>
+<p>：</p>
+<ul>
+<li>监控和管理节点上的容器，确保 Pod 中的容器处于正常状态。</li>
+<li>从 API Server 获取 Pod 的规格，并执行容器的启动、停止等操作。</li>
+<li>收集和报告节点的资源使用情况（如 CPU、内存）到 API Server。</li>
+</ul>
+</li>
+</ul>
+<h4 id="2-2-Kube-Proxy"><a href="#2-2-Kube-Proxy" class="headerlink" title="2.2 Kube Proxy"></a>2.2 <strong>Kube Proxy</strong></h4><ul>
+<li><p><strong>职责</strong>：Kube Proxy 是一个网络代理，它负责维护集群中的网络规则，以确保网络流量能够正确地转发到 Pod。</p>
+</li>
+<li><p>功能</p>
+<p>：</p>
+<ul>
+<li>管理每个节点的网络流量，基于 iptables 或 IPVS 实现负载均衡。</li>
+<li>确保 Service 的 DNS 名称能够被解析，并且流量能够正确地路由到后端的 Pod。</li>
+</ul>
+</li>
+</ul>
+<h4 id="2-3-Container-Runtime"><a href="#2-3-Container-Runtime" class="headerlink" title="2.3 Container Runtime"></a>2.3 <strong>Container Runtime</strong></h4><ul>
+<li><p><strong>职责</strong>：容器运行时（如 Docker、containerd）负责运行容器并管理容器生命周期。</p>
+</li>
+<li><p>功能</p>
+<p>：</p>
+<ul>
+<li>启动、停止容器。</li>
+<li>拉取容器镜像并管理容器资源。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="3-高层组件和工具"><a href="#3-高层组件和工具" class="headerlink" title="3. 高层组件和工具"></a><strong>3. 高层组件和工具</strong></h3><h4 id="3-1-Kubernetes-Dashboard"><a href="#3-1-Kubernetes-Dashboard" class="headerlink" title="3.1 Kubernetes Dashboard"></a>3.1 <strong>Kubernetes Dashboard</strong></h4><ul>
+<li><p><strong>职责</strong>：Kubernetes Dashboard 是一个基于 Web 的 UI 工具，用于管理和监控 Kubernetes 集群。</p>
+</li>
+<li><p>功能</p>
+<p>：</p>
+<ul>
+<li>提供图形化的界面，方便用户查看集群状态、Pod、Deployment、Service 等资源。</li>
+<li>支持用户创建、更新、删除集群资源。</li>
+</ul>
+</li>
+</ul>
+<h4 id="3-2-Helm"><a href="#3-2-Helm" class="headerlink" title="3.2 Helm"></a>3.2 <strong>Helm</strong></h4><ul>
+<li><p><strong>职责</strong>：Helm 是 Kubernetes 的包管理工具，类似于 Linux 的 <code>apt</code> 或 <code>yum</code>。</p>
+</li>
+<li><p>功能</p>
+<p>：</p>
+<ul>
+<li>通过 Helm Charts 来管理应用程序的部署。</li>
+<li>Helm Charts 是预配置的 Kubernetes 资源文件集合，允许用户方便地部署和管理应用。</li>
+</ul>
+</li>
+</ul>
+<h4 id="3-3-Ingress-Controller"><a href="#3-3-Ingress-Controller" class="headerlink" title="3.3 Ingress Controller"></a>3.3 <strong>Ingress Controller</strong></h4><ul>
+<li><p><strong>职责</strong>：Ingress Controller 是一种专门处理 HTTP&#x2F;HTTPS 请求的 Kubernetes 组件，它根据 Ingress 资源来路由流量。</p>
+</li>
+<li><p>功能</p>
+<p>：</p>
+<ul>
+<li>控制外部流量进入集群。</li>
+<li>配置负载均衡、SSL&#x2F;TLS 终端和 URL 路由等。</li>
+<li>常见的 Ingress Controller 有 Nginx Ingress Controller、Traefik 等。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="4-Kubernetes-核心资源"><a href="#4-Kubernetes-核心资源" class="headerlink" title="4. Kubernetes 核心资源"></a><strong>4. Kubernetes 核心资源</strong></h3><p>除了上述组件，Kubernetes 还包括一些重要的资源对象，用于管理集群和应用程序：</p>
+<h4 id="4-1-Pod"><a href="#4-1-Pod" class="headerlink" title="4.1 Pod"></a>4.1 <strong>Pod</strong></h4><ul>
+<li><strong>职责</strong>：Pod 是 Kubernetes 中最小的可调度单元，包含一个或多个容器，所有容器共享同一网络和存储。</li>
+</ul>
+<h4 id="4-2-Service"><a href="#4-2-Service" class="headerlink" title="4.2 Service"></a>4.2 <strong>Service</strong></h4><ul>
+<li><strong>职责</strong>：Service 提供了一种稳定的访问方式，用于暴露一组 Pod。它抽象了 Pod 的 IP 地址，并可以提供负载均衡。</li>
+</ul>
+<h4 id="4-3-ReplicaSet"><a href="#4-3-ReplicaSet" class="headerlink" title="4.3 ReplicaSet"></a>4.3 <strong>ReplicaSet</strong></h4><ul>
+<li><strong>职责</strong>：ReplicaSet 用于保证在任何时候都维持指定数量的 Pod 副本。它常常与 Deployment 一起使用。</li>
+</ul>
+<h4 id="4-4-Deployment"><a href="#4-4-Deployment" class="headerlink" title="4.4 Deployment"></a>4.4 <strong>Deployment</strong></h4><ul>
+<li><strong>职责</strong>：Deployment 是一种高级控制器，负责管理 Pod 的副本、更新和滚动更新等操作。</li>
+</ul>
+<h4 id="4-5-StatefulSet"><a href="#4-5-StatefulSet" class="headerlink" title="4.5 StatefulSet"></a>4.5 <strong>StatefulSet</strong></h4><ul>
+<li><strong>职责</strong>：StatefulSet 是 Kubernetes 中用于管理有状态应用的控制器，支持持久化存储和 Pod 的稳定标识符。</li>
+</ul>
+<h4 id="4-6-ConfigMap-和-Secret"><a href="#4-6-ConfigMap-和-Secret" class="headerlink" title="4.6 ConfigMap 和 Secret"></a>4.6 <strong>ConfigMap 和 Secret</strong></h4><ul>
+<li><p>职责</p>
+<p>：</p>
+<ul>
+<li><strong>ConfigMap</strong>：用于存储非敏感的配置数据。</li>
+<li><strong>Secret</strong>：用于存储敏感数据，如密码、OAuth token 等。</li>
+</ul>
+</li>
+</ul>
+<h4 id="4-7-PersistentVolume-PV-和-PersistentVolumeClaim-PVC"><a href="#4-7-PersistentVolume-PV-和-PersistentVolumeClaim-PVC" class="headerlink" title="4.7 PersistentVolume (PV) 和 PersistentVolumeClaim (PVC)"></a>4.7 <strong>PersistentVolume (PV) 和 PersistentVolumeClaim (PVC)</strong></h4><ul>
+<li><strong>职责</strong>：PV 和 PVC 用于管理 Kubernetes 中的持久存储。PV 是集群中的存储资源，PVC 是 Pod 请求存储资源的方式。</li>
+</ul>
+<hr>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a><strong>总结</strong></h3><p>Kubernetes 是由多个组件组成的复杂系统，每个组件都在集群的不同部分起着关键作用。<strong>控制平面</strong> 主要负责管理集群的整体状态，如 API Server、调度器、控制器等；而 <strong>节点组件</strong> 则在每个工作节点上执行容器的管理和调度任务，确保容器能够按照预期正常运行。通过这些组件的协作，Kubernetes 提供了强大的容器管理能力，支持大规模的容器化应用部署和运维。</p>
+<h3 id="创建-Pod的主要流程"><a href="#创建-Pod的主要流程" class="headerlink" title="创建 Pod的主要流程?"></a>创建 Pod的主要流程?</h3><h5 id="1-客户端提交pod的配置信息-可以是yaml-到kube-apiserver"><a href="#1-客户端提交pod的配置信息-可以是yaml-到kube-apiserver" class="headerlink" title="1.客户端提交pod的配置信息(可以是yaml)到kube-apiserver"></a>1.客户端提交pod的配置信息(可以是yaml)到kube-apiserver</h5><h5 id="2-apiserver收到信息后kube-controller-manager创建资源对象"><a href="#2-apiserver收到信息后kube-controller-manager创建资源对象" class="headerlink" title="2.apiserver收到信息后kube-controller-manager创建资源对象"></a>2.apiserver收到信息后kube-controller-manager创建资源对象</h5><h5 id="3-kubecontroller将yaml信息存到etcd"><a href="#3-kubecontroller将yaml信息存到etcd" class="headerlink" title="3.kubecontroller将yaml信息存到etcd"></a>3.kubecontroller将yaml信息存到etcd</h5><h5 id="4-kubescheduler调度pod到某个节点"><a href="#4-kubescheduler调度pod到某个节点" class="headerlink" title="4.kubescheduler调度pod到某个节点"></a>4.kubescheduler调度pod到某个节点</h5><h5 id="5-kubelet根据kube-scheduler发来的配置信息来运行pod，运行成功将pod信息返回给schedule，scheduler将信息返回并存储到到etcd"><a href="#5-kubelet根据kube-scheduler发来的配置信息来运行pod，运行成功将pod信息返回给schedule，scheduler将信息返回并存储到到etcd" class="headerlink" title="5.kubelet根据kube-scheduler发来的配置信息来运行pod，运行成功将pod信息返回给schedule，scheduler将信息返回并存储到到etcd"></a>5.kubelet根据kube-scheduler发来的配置信息来运行pod，运行成功将pod信息返回给schedule，scheduler将信息返回并存储到到etcd</h5><p>在 Kubernetes 中，<strong>Pod</strong> 是最小的部署单元，通常用于部署一个或多个容器。创建 Pod 的主要流程包括从用户发起请求到容器在节点上运行的各个步骤。以下是创建 Pod 的主要流程：</p>
+<hr>
+<h3 id="1-用户请求创建-Pod"><a href="#1-用户请求创建-Pod" class="headerlink" title="1. 用户请求创建 Pod"></a><strong>1. 用户请求创建 Pod</strong></h3><p>创建 Pod 的第一步是用户通过 <code>kubectl</code> 或其他 Kubernetes API 客户端发起创建请求。</p>
+<ul>
+<li><p><strong>通过 kubectl 命令</strong>： 用户可以通过 <code>kubectl run</code> 或 <code>kubectl apply -f pod.yaml</code> 命令创建 Pod。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f pod.yaml</span><br></pre></td></tr></table></figure>
+
+<p>或者通过 <code>kubectl run</code> 创建 Pod（通常用于临时 Pod）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl run mypod --image=nginx</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>通过 Kubernetes API</strong>： 用户也可以通过 Kubernetes API 发起创建请求（通常由控制器自动发起，如 Deployment 或 StatefulSet）。这时，Pod 描述会通过 API 发送到 API Server。</p>
+</li>
+</ul>
+<hr>
+<h3 id="2-API-Server-接收并验证请求"><a href="#2-API-Server-接收并验证请求" class="headerlink" title="2. API Server 接收并验证请求"></a><strong>2. API Server 接收并验证请求</strong></h3><p>Kubernetes 中的所有操作都会通过 <strong>API Server</strong> 来进行。无论是通过 <code>kubectl</code> 还是 API 发起的请求，都会到达 API Server。</p>
+<ul>
+<li><strong>验证请求</strong>：API Server 对 Pod 请求进行验证，确保所请求的 Pod 描述符合 Kubernetes 的规范。例如，确保资源请求正确，标签、容忍等参数合法。</li>
+<li><strong>存储请求</strong>：验证通过后，API Server 会将 Pod 的描述（通常是 YAML 或 JSON 格式）存储到 Kubernetes 的 <strong>etcd</strong> 数据存储中，作为集群的当前状态。</li>
+</ul>
+<hr>
+<h3 id="3-调度器选择节点（调度）"><a href="#3-调度器选择节点（调度）" class="headerlink" title="3. 调度器选择节点（调度）"></a><strong>3. 调度器选择节点（调度）</strong></h3><p>当 API Server 成功接收到 Pod 创建请求并将其存储在 etcd 中后，接下来的任务是将 Pod 调度到一个合适的节点上。这是由 <strong>调度器（kube-scheduler）</strong> 完成的。</p>
+<h4 id="调度过程："><a href="#调度过程：" class="headerlink" title="调度过程："></a><strong>调度过程</strong>：</h4><ol>
+<li><strong>过滤阶段</strong>：<ul>
+<li>调度器会根据 Pod 的要求（如资源请求、亲和性&#x2F;反亲和性等），对所有节点进行过滤，排除不符合条件的节点。</li>
+<li>例如，某些节点的资源可能不足，或者节点与 Pod 的亲和性要求不匹配。</li>
+</ul>
+</li>
+<li><strong>优选阶段</strong>：<ul>
+<li>对剩下的符合条件的节点，调度器会根据节点的负载、拓扑结构等因素打分，选择一个最合适的节点。</li>
+<li>例如，调度器会考虑节点的 CPU 和内存使用情况，选择资源最空闲的节点。</li>
+</ul>
+</li>
+<li><strong>绑定</strong>：<ul>
+<li>一旦选定了节点，调度器会将 Pod 与节点绑定，向 API Server 通知这个 Pod 已经成功调度到指定节点。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h3 id="4-节点上的-Kubelet-处理-Pod"><a href="#4-节点上的-Kubelet-处理-Pod" class="headerlink" title="4. 节点上的 Kubelet 处理 Pod"></a><strong>4. 节点上的 Kubelet 处理 Pod</strong></h3><p>调度器将 Pod 绑定到特定节点后，<strong>Kubelet</strong> 会在该节点上进行具体的操作。</p>
+<ul>
+<li><strong>拉取容器镜像</strong>：Kubelet 会根据 Pod 配置中的容器镜像信息，拉取相应的容器镜像到本地。如果镜像已经存在，则会跳过这一步。</li>
+<li><strong>创建容器</strong>：Kubelet 使用容器运行时（如 Docker、containerd）在节点上启动容器。Pod 可以包含一个或多个容器，Kubelet 会逐个启动它们。</li>
+<li><strong>设置网络和存储</strong>：<ul>
+<li>Kubelet 为 Pod 配置网络，使得容器之间可以相互通信，并且可以访问外部网络。</li>
+<li>如果 Pod 定义了持久存储（如卷），Kubelet 会挂载相关的存储资源。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="5-Pod-运行与健康检查"><a href="#5-Pod-运行与健康检查" class="headerlink" title="5. Pod 运行与健康检查"></a><strong>5. Pod 运行与健康检查</strong></h3><p>当容器启动后，Kubelet 会持续监控 Pod 和容器的状态。Kubelet 会定期执行以下任务：</p>
+<ul>
+<li><strong>健康检查（Liveness &#x2F; Readiness）</strong>：<ul>
+<li><strong>Liveness Probe</strong>：检查容器是否仍然存活。如果 Pod 容器挂掉，Kubelet 会重启容器。</li>
+<li><strong>Readiness Probe</strong>：检查容器是否已准备好接受流量。如果容器不准备好，Kubelet 会将其从服务的负载均衡池中移除，直到它准备好。</li>
+</ul>
+</li>
+<li><strong>资源监控</strong>： Kubelet 会报告节点和容器的资源使用情况（如 CPU、内存等）到 API Server。</li>
+<li><strong>日志与事件</strong>： Kubelet 会将容器的日志和事件收集起来，供用户查看。</li>
+</ul>
+<hr>
+<h3 id="6-控制器的反馈（如-Deployment、StatefulSet）"><a href="#6-控制器的反馈（如-Deployment、StatefulSet）" class="headerlink" title="6. 控制器的反馈（如 Deployment、StatefulSet）"></a><strong>6. 控制器的反馈（如 Deployment、StatefulSet）</strong></h3><p>如果 Pod 是由某个控制器（如 <strong>Deployment</strong>、<strong>StatefulSet</strong>、<strong>DaemonSet</strong>）管理的，那么这些控制器会继续监视 Pod 的状态，确保集群的实际状态符合所期望的状态。如果有 Pod 创建失败，控制器会重新调度 Pod。</p>
+<ul>
+<li>例如，<strong>Deployment</strong> 会确保它管理的 Pod 数量始终保持一致。如果某个 Pod 不健康或不可用，Deployment 会创建一个新的 Pod 来替代它。</li>
+</ul>
+<hr>
+<h3 id="7-更新集群状态"><a href="#7-更新集群状态" class="headerlink" title="7. 更新集群状态"></a><strong>7. 更新集群状态</strong></h3><p>最终，Kubernetes 集群的状态（包括 Pod、节点、容器等信息）会更新到 <strong>etcd</strong> 中，以确保集群的最终状态一致。</p>
+<h3 id="总结：创建-Pod-的主要流程"><a href="#总结：创建-Pod-的主要流程" class="headerlink" title="总结：创建 Pod 的主要流程"></a><strong>总结：创建 Pod 的主要流程</strong></h3><ol>
+<li><strong>用户请求</strong>：用户通过 <code>kubectl</code> 或 API 创建 Pod。</li>
+<li><strong>API Server 验证和存储</strong>：API Server 验证请求并将 Pod 存储到 etcd 中。</li>
+<li><strong>调度器调度</strong>：调度器选择合适的节点，并将 Pod 绑定到该节点。</li>
+<li><strong>Kubelet 启动容器</strong>：Kubelet 在节点上拉取容器镜像并启动容器。</li>
+<li><strong>健康检查与资源监控</strong>：Kubelet 执行容器的健康检查，并持续报告资源使用情况。</li>
+<li><strong>控制器管理</strong>：控制器监控 Pod 的状态，确保集群的期望状态与实际状态一致。</li>
+<li><strong>集群状态更新</strong>：Pod 创建成功后，集群状态存储在 etcd 中。</li>
+</ol>
+<p>通过这些步骤，Kubernetes 确保 Pod 在集群中得到高效、可靠的管理和调度。</p>
+<h3 id="k8s的调度机制"><a href="#k8s的调度机制" class="headerlink" title="k8s的调度机制"></a>k8s的调度机制</h3><h5 id="1-节点预选"><a href="#1-节点预选" class="headerlink" title="1.节点预选"></a>1.节点预选</h5><h5 id="2-节点打分排序"><a href="#2-节点打分排序" class="headerlink" title="2.节点打分排序"></a>2.节点打分排序</h5><h5 id="3-节点选优"><a href="#3-节点选优" class="headerlink" title="3.节点选优"></a>3.节点选优</h5><p><strong>Kubernetes (K8s)</strong> 的调度机制是其核心功能之一，用于决定容器应该在集群中的哪个节点上运行。K8s 调度器（Scheduler）负责根据节点的资源可用性、负载、拓扑、约束条件等因素，智能地将 Pod 分配到集群中的不同节点。调度是一个多阶段的过程，并且涉及到多个重要的调度策略和插件。</p>
+<h3 id="Kubernetes-调度流程概述"><a href="#Kubernetes-调度流程概述" class="headerlink" title="Kubernetes 调度流程概述"></a><strong>Kubernetes 调度流程概述</strong></h3><ol>
+<li><strong>Pod 创建</strong><ul>
+<li>用户通过 <code>kubectl</code> 或其他 API 创建一个 Pod 请求，或者在某个 Deployment、StatefulSet 等控制器中声明了新的 Pod。</li>
+<li>Kubernetes 控制平面通过 API Server 接收这个请求，并将 Pod 交给调度器来决定放置在哪个节点上。</li>
+</ul>
+</li>
+<li><strong>调度器决定节点</strong><ul>
+<li>调度器会检查集群中所有节点的资源使用情况，并根据一系列规则来选择最合适的节点。</li>
+</ul>
+</li>
+<li><strong>Pod 绑定到节点</strong><ul>
+<li>调度器选择合适的节点后，将 Pod 绑定到节点上，并将信息更新到 API Server。然后，节点上的 kubelet 负责拉取容器镜像、启动容器。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h3 id="Kubernetes-调度的关键机制"><a href="#Kubernetes-调度的关键机制" class="headerlink" title="Kubernetes 调度的关键机制"></a><strong>Kubernetes 调度的关键机制</strong></h3><ol>
+<li><strong>调度阶段</strong> Kubernetes 调度器通常按以下顺序工作：<ul>
+<li><strong>过滤阶段 (Filter)</strong><ul>
+<li>调度器通过节点的 <strong>节点选择器</strong>（NodeSelector）、资源限制、硬件&#x2F;网络要求等，过滤出不符合条件的节点。</li>
+<li>过滤阶段的目标是排除掉那些不适合运行该 Pod 的节点，通常根据一些基本的约束条件，如 CPU、内存等资源。</li>
+</ul>
+</li>
+<li><strong>优选阶段 (Score)</strong><ul>
+<li>对于剩下的候选节点，调度器通过 <strong>调度策略</strong> 进行排序（比如节点的负载、拓扑结构等），选择一个最优的节点。</li>
+<li>在优选阶段，调度器会基于 <code>Affinity</code>（亲和性）和 <code>Anti-Affinity</code>（反亲和性）规则、Pod 的资源请求与限制、Pod 的拓扑要求等因素对节点进行评分。</li>
+</ul>
+</li>
+<li><strong>绑定阶段 (Bind)</strong><ul>
+<li>调度器最终选择一个节点并将 Pod 绑定到该节点上。这时，节点上的 <code>kubelet</code> 会负责启动容器。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h3 id="Kubernetes-调度策略"><a href="#Kubernetes-调度策略" class="headerlink" title="Kubernetes 调度策略"></a><strong>Kubernetes 调度策略</strong></h3><ol>
+<li><p><strong>资源请求和限制</strong></p>
+<ul>
+<li>每个 Pod 可以定义 <strong>资源请求</strong>（request）和 <strong>资源限制</strong>（limit）。资源请求是调度器决定在哪里调度 Pod 的基础，而资源限制则是容器运行时能使用的最大资源量。</li>
+<li>调度器会根据节点的可用资源（CPU、内存等）和 Pod 的资源请求来选择节点。</li>
+</ul>
+</li>
+<li><p><strong>Node Affinity（节点亲和性）</strong></p>
+<ul>
+<li>通过 <code>nodeAffinity</code> 规则，可以控制 Pod 只调度到符合特定标签的节点上。</li>
+<li><strong>硬亲和性</strong>（必需条件）和 <strong>软亲和性</strong>（优先条件）都可以通过 <code>affinity</code> 配置来指定。</li>
+</ul>
+<p>示例：让 Pod 只调度到具有特定标签的节点上：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">affinity:</span></span><br><span class="line">  <span class="attr">nodeAffinity:</span></span><br><span class="line">    <span class="attr">requiredDuringSchedulingIgnoredDuringExecution:</span></span><br><span class="line">      <span class="attr">nodeSelectorTerms:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">matchExpressions:</span></span><br><span class="line">          <span class="bullet">-</span> <span class="attr">key:</span> <span class="string">&quot;disktype&quot;</span></span><br><span class="line">            <span class="attr">operator:</span> <span class="string">In</span></span><br><span class="line">            <span class="attr">values:</span></span><br><span class="line">            <span class="bullet">-</span> <span class="string">ssd</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>Pod Affinity 和 Anti-Affinity（Pod亲和性和反亲和性）</strong></p>
+<ul>
+<li><strong>Pod Affinity</strong>：控制 Pod 应该尽可能地调度到与其他 Pod 相同或相邻的节点上。</li>
+<li><strong>Pod Anti-Affinity</strong>：控制 Pod 不应调度到与特定 Pod 相同或相邻的节点上。</li>
+</ul>
+<p>示例：让 Pod 调度到与另一个特定 Pod 在同一个节点上：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">affinity:</span></span><br><span class="line">  <span class="attr">podAffinity:</span></span><br><span class="line">    <span class="attr">requiredDuringSchedulingIgnoredDuringExecution:</span></span><br><span class="line">      <span class="attr">labelSelector:</span></span><br><span class="line">        <span class="attr">matchLabels:</span></span><br><span class="line">          <span class="attr">app:</span> <span class="string">frontend</span></span><br><span class="line">      <span class="attr">topologyKey:</span> <span class="string">&quot;kubernetes.io/hostname&quot;</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>Taints 和 Tolerations（污点和容忍）</strong></p>
+<ul>
+<li><strong>Taints</strong>：允许节点标记为“污点”，即节点会拒绝调度任何没有适当容忍的 Pod。</li>
+<li><strong>Tolerations</strong>：Pod 可以设置容忍，允许其调度到有污点的节点上。</li>
+</ul>
+<p>示例：一个节点加上污点，只有具有特定容忍的 Pod 才能调度到该节点。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">kubectl</span> <span class="string">taint</span> <span class="string">nodes</span> <span class="string">node1</span> <span class="string">key=value:NoSchedule</span></span><br></pre></td></tr></table></figure>
+
+<p>在 Pod 配置中添加容忍：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">tolerations:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">key:</span> <span class="string">&quot;key&quot;</span></span><br><span class="line">  <span class="attr">operator:</span> <span class="string">&quot;Equal&quot;</span></span><br><span class="line">  <span class="attr">value:</span> <span class="string">&quot;value&quot;</span></span><br><span class="line">  <span class="attr">effect:</span> <span class="string">&quot;NoSchedule&quot;</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>资源负载均衡</strong></p>
+<ul>
+<li>在选择节点时，调度器也会考虑节点的负载，确保集群资源的合理利用。调度器会避免某些节点资源过载，而其他节点资源闲置。</li>
+<li>调度器会根据节点的 CPU、内存等资源的剩余情况来选择最合适的节点。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h3 id="Kubernetes-默认调度器和自定义调度器"><a href="#Kubernetes-默认调度器和自定义调度器" class="headerlink" title="Kubernetes 默认调度器和自定义调度器"></a><strong>Kubernetes 默认调度器和自定义调度器</strong></h3><ol>
+<li><strong>默认调度器</strong>：Kubernetes 使用 <code>kube-scheduler</code> 作为默认调度器，处理所有 Pod 的调度请求。</li>
+<li><strong>自定义调度器</strong>：如果有特殊的调度需求，可以使用自定义调度器。可以在集群中运行多个调度器，指定特定的调度策略和工作负载。</li>
+</ol>
+<hr>
+<h3 id="Kubernetes-调度器插件"><a href="#Kubernetes-调度器插件" class="headerlink" title="Kubernetes 调度器插件"></a><strong>Kubernetes 调度器插件</strong></h3><p>Kubernetes 调度器支持插件架构，允许在调度过程中使用不同的策略和插件来定制行为。常见的插件包括：</p>
+<ul>
+<li><strong>预调度插件</strong>（如 <code>NodeAffinity</code>、<code>TaintToleration</code> 等）</li>
+<li><strong>调度策略插件</strong>（如 <code>PodAffinity</code>、<code>ResourceLimits</code> 等）</li>
+<li><strong>后调度插件</strong>（如调度后监听 Pod 状态的变化）</li>
+</ul>
+<p>这些插件使得 Kubernetes 调度器能够灵活地满足各种业务场景的需求。</p>
+<hr>
+<h3 id="总结-1"><a href="#总结-1" class="headerlink" title="总结"></a><strong>总结</strong></h3><p>Kubernetes 调度器负责根据节点的资源、拓扑、亲和性和反亲和性、污点和容忍等规则，智能地将 Pod 分配到最合适的节点上。调度过程包括 <strong>过滤</strong>、<strong>优选</strong> 和 <strong>绑定</strong> 阶段。通过使用 <strong>Node Affinity</strong>、<strong>Pod Affinity</strong>、<strong>Taints 和 Tolerations</strong> 等策略，可以精细控制 Pod 的调度行为，确保集群资源的高效利用和满足业务需求。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>Author: </span><span class="post-copyright-info"><a href="http://example.com">John Doe</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>Link: </span><span class="post-copyright-info"><a href="http://example.com/2024/12/05/2024-2-26%20%E9%9D%A2%E8%AF%95/">http://example.com/2024/12/05/2024-2-26%20%E9%9D%A2%E8%AF%95/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>Copyright Notice: </span><span class="post-copyright-info">All articles on this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless otherwise stated.</span></div></div><div class="tag_share"><div class="post-share"><div class="social-share" data-image="/img/butterfly-icon.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2024/12/05/2024-3-8%20%E9%9D%A2%E8%AF%950308/" title="2024-3-8 面试"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">Previous</div><div class="info-item-2">2024-3-8 面试</div></div><div class="info-2"><div class="info-item-1">根据nginx日志  过滤nginx前十访问量的ip要根据Nginx日志过滤出前十访问量的IP，你可以使用awk、sort和head命令组合来完成这个任务。假设你的Nginx访问日志格式如下（这是Nginx的默认格式）：123bash复制代码127.0.0.1 - - [10/Oct/2023:14:05:01 +0000] &quot;GET / HTTP/1.1&quot; 200 612 &quot;-&quot; &quot;curl/7.68.0&quot;  在这个日志中，第一个字段是客户端的IP地址。你可以使用以下命令来过滤出前十访问量的IP：12345bash复制代码awk &#x27;&#123;print $1&#125;&#x27; access.log | sort | uniq -c | sort -nr | head -n 10cat /var/log/nginx/access.log |awk &#x27;&#123;print $1&#125;&#x27;|sort|uniq -c |sort -nr|head -n...</div></div></div></a><a class="pagination-related" href="/2024/12/05/2024-8-1%20linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98/" title="2024-8-1 linux面试题"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">Next</div><div class="info-item-2">2024-8-1 linux面试题</div></div><div class="info-2"><div class="info-item-1">1、请简述OSI七层网络模型有哪些层及各自的含义?  物理层：底层数据传输，比如网线、网卡标准 数据链路层：定义数据的基本格式，如何传输，如何标识。比如网卡MAC地址 网络层：定义IP编码，定义路由功能，比如不同设备的数据转发 传输层：端到端传输数据的基本功能，比如TCP、UDP 会话层：控制应用程序之间会话能力，比如不同软件数据分发给不停软件 表示层：数据格式标识，基本压缩加密功能。 应用层：各种应用软件，包括 Web 应用。  2、在Linux的LVM分区格式下，请简述给根分区磁盘扩容的步骤?这个分3种 第一种方法: 12growpart /dev/vda 1resize2fs /dev/vda1      第二种方法: 12partpeobe /dev/sdaresize2fs /dev/vda1      第三种方法: 1234fdisk /dev/sdb   # n p 1 1 回车 回车 t 8e wpvcreate /dev/sdb1vgextend datavg /dev/sdb1lvextend -r -L +100%free...</div></div></div></a></nav></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/butterfly-icon.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">John Doe</div><div class="author-info-description"></div><div class="site-data"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">12</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">0</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">0</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>Announcement</span></div><div class="announcement_content">This is my Blog</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Contents</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#k8s-%E6%9C%89%E5%93%AA%E4%BA%9B%E7%BB%84%E4%BB%B6%EF%BC%9F"><span class="toc-number">1.</span> <span class="toc-text">k8s 有哪些组件？</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#1%E3%80%81etcd%E4%BF%9D%E5%AD%98%E4%BA%86%E9%9B%86%E7%BE%A4%E7%9A%84%E7%8A%B6%E6%80%81"><span class="toc-number">1.0.1.</span> <span class="toc-text">1、etcd保存了集群的状态</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#2%E3%80%81apiserver%E6%8F%90%E4%BE%9B%E4%BA%86%E8%B5%84%E6%BA%90%E6%93%8D%E4%BD%9C%E7%9A%84%E5%94%AF%E4%B8%80%E5%85%A5%E5%8F%A3%EF%BC%8C%E8%BF%98%E6%8F%90%E4%BE%9B%E8%AE%A4%E8%AF%81%EF%BC%8C%E6%8E%88%E6%9D%83%EF%BC%8C%E8%AE%BF%E9%97%AE%E6%8E%A7%E5%88%B6%EF%BC%8Capi%E6%B3%A8%E5%86%8C%E5%92%8C%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0%E7%AD%89"><span class="toc-number">1.0.2.</span> <span class="toc-text">2、apiserver提供了资源操作的唯一入口，还提供认证，授权，访问控制，api注册和服务发现等</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#3%E3%80%81controller-manager%E8%B4%9F%E8%B4%A3%E7%BB%B4%E6%8A%A4%E9%9B%86%E7%BE%A4%E7%9A%84%E7%8A%B6%E6%80%81%EF%BC%8C%E6%AF%94%E5%A6%82%E8%87%AA%E5%8A%A8%E6%89%A9%E5%B1%95%EF%BC%8C%E6%BB%9A%E5%8A%A8%E6%9B%B4%E6%96%B0%EF%BC%8C%E6%95%85%E9%9A%9C%E6%A3%80%E6%B5%8B%E7%AD%89"><span class="toc-number">1.0.3.</span> <span class="toc-text">3、controller manager负责维护集群的状态，比如自动扩展，滚动更新，故障检测等</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#4%E3%80%81scheduler-%E8%B4%9F%E8%B4%A3%E9%9B%86%E7%BE%A4%E8%B5%84%E6%BA%90%E7%9A%84%E8%B0%83%E5%BA%A6%EF%BC%8C%E5%AE%89%E7%85%A7%E9%A2%84%E6%9C%9F%E7%9A%84%E8%B0%83%E5%BA%A6%E7%AD%96%E7%95%A5%E5%B0%86pod%E8%B0%83%E5%BA%A6%E5%88%B0%E7%9B%B8%E5%BA%94%E7%9A%84node%E4%B8%8A"><span class="toc-number">1.0.4.</span> <span class="toc-text">4、scheduler 负责集群资源的调度，安照预期的调度策略将pod调度到相应的node上</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#5%E3%80%81kubelet%E8%B4%9F%E8%B4%A3%E7%AE%A1%E7%90%86%E5%AE%B9%E5%99%A8%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%EF%BC%8C%E8%BF%98%E8%B4%9F%E8%B4%A3%E5%85%B1%E4%BA%AB%E5%AD%98%E5%82%A8%E5%8D%B7%E5%92%8C%E7%BD%91%E7%BB%9C%E7%9A%84%E7%AE%A1%E7%90%86"><span class="toc-number">1.0.5.</span> <span class="toc-text">5、kubelet负责管理容器的生命周期，还负责共享存储卷和网络的管理</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#6%E3%80%81Container-runtime-%E5%AE%B9%E5%99%A8%E8%BF%90%E8%A1%8C%E6%97%B6%EF%BC%8C%E8%B4%9F%E8%B4%A3%E7%AE%A1%E7%90%86%E9%95%9C%E5%83%8F%E7%9A%84%E7%AE%A1%E7%90%86%EF%BC%8Cpod%E5%92%8C%E5%AE%B9%E5%99%A8%E7%9A%84%E7%9C%9F%E6%AD%A3%E8%BF%90%E8%A1%8C"><span class="toc-number">1.0.6.</span> <span class="toc-text">6、Container runtime 容器运行时，负责管理镜像的管理，pod和容器的真正运行</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#7%E3%80%81kube-proxy%E8%B4%9F%E8%B4%A3%E7%AE%A1%E7%90%86%E9%9B%86%E7%BE%A4%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0%E5%92%8C%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1"><span class="toc-number">1.0.7.</span> <span class="toc-text">7、kube-proxy负责管理集群的服务发现和负载均衡</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-Kubernetes-%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6"><span class="toc-number">2.</span> <span class="toc-text">1. Kubernetes 核心组件</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-1-API-Server-kube-apiserver"><span class="toc-number">2.1.</span> <span class="toc-text">1.1 API Server (kube-apiserver)</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-2-Controller-Manager-kube-controller-manager"><span class="toc-number">2.2.</span> <span class="toc-text">1.2 Controller Manager (kube-controller-manager)</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-3-Scheduler-kube-scheduler"><span class="toc-number">2.3.</span> <span class="toc-text">1.3 Scheduler (kube-scheduler)</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-4-etcd"><span class="toc-number">2.4.</span> <span class="toc-text">1.4 etcd</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-5-Cloud-Controller-Manager-kube-cloud-controller-manager"><span class="toc-number">2.5.</span> <span class="toc-text">1.5 Cloud Controller Manager (kube-cloud-controller-manager)</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-Kubernetes-%E8%8A%82%E7%82%B9%E7%BB%84%E4%BB%B6"><span class="toc-number">3.</span> <span class="toc-text">2. Kubernetes 节点组件</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#2-1-Kubelet"><span class="toc-number">3.1.</span> <span class="toc-text">2.1 Kubelet</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-2-Kube-Proxy"><span class="toc-number">3.2.</span> <span class="toc-text">2.2 Kube Proxy</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-3-Container-Runtime"><span class="toc-number">3.3.</span> <span class="toc-text">2.3 Container Runtime</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E9%AB%98%E5%B1%82%E7%BB%84%E4%BB%B6%E5%92%8C%E5%B7%A5%E5%85%B7"><span class="toc-number">4.</span> <span class="toc-text">3. 高层组件和工具</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#3-1-Kubernetes-Dashboard"><span class="toc-number">4.1.</span> <span class="toc-text">3.1 Kubernetes Dashboard</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-2-Helm"><span class="toc-number">4.2.</span> <span class="toc-text">3.2 Helm</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-Ingress-Controller"><span class="toc-number">4.3.</span> <span class="toc-text">3.3 Ingress Controller</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-Kubernetes-%E6%A0%B8%E5%BF%83%E8%B5%84%E6%BA%90"><span class="toc-number">5.</span> <span class="toc-text">4. Kubernetes 核心资源</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#4-1-Pod"><span class="toc-number">5.1.</span> <span class="toc-text">4.1 Pod</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-2-Service"><span class="toc-number">5.2.</span> <span class="toc-text">4.2 Service</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-3-ReplicaSet"><span class="toc-number">5.3.</span> <span class="toc-text">4.3 ReplicaSet</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-4-Deployment"><span class="toc-number">5.4.</span> <span class="toc-text">4.4 Deployment</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-5-StatefulSet"><span class="toc-number">5.5.</span> <span class="toc-text">4.5 StatefulSet</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-6-ConfigMap-%E5%92%8C-Secret"><span class="toc-number">5.6.</span> <span class="toc-text">4.6 ConfigMap 和 Secret</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-7-PersistentVolume-PV-%E5%92%8C-PersistentVolumeClaim-PVC"><span class="toc-number">5.7.</span> <span class="toc-text">4.7 PersistentVolume (PV) 和 PersistentVolumeClaim (PVC)</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">6.</span> <span class="toc-text">总结</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA-Pod%E7%9A%84%E4%B8%BB%E8%A6%81%E6%B5%81%E7%A8%8B"><span class="toc-number">7.</span> <span class="toc-text">创建 Pod的主要流程?</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#1-%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%8F%90%E4%BA%A4pod%E7%9A%84%E9%85%8D%E7%BD%AE%E4%BF%A1%E6%81%AF-%E5%8F%AF%E4%BB%A5%E6%98%AFyaml-%E5%88%B0kube-apiserver"><span class="toc-number">7.0.1.</span> <span class="toc-text">1.客户端提交pod的配置信息(可以是yaml)到kube-apiserver</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#2-apiserver%E6%94%B6%E5%88%B0%E4%BF%A1%E6%81%AF%E5%90%8Ekube-controller-manager%E5%88%9B%E5%BB%BA%E8%B5%84%E6%BA%90%E5%AF%B9%E8%B1%A1"><span class="toc-number">7.0.2.</span> <span class="toc-text">2.apiserver收到信息后kube-controller-manager创建资源对象</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#3-kubecontroller%E5%B0%86yaml%E4%BF%A1%E6%81%AF%E5%AD%98%E5%88%B0etcd"><span class="toc-number">7.0.3.</span> <span class="toc-text">3.kubecontroller将yaml信息存到etcd</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#4-kubescheduler%E8%B0%83%E5%BA%A6pod%E5%88%B0%E6%9F%90%E4%B8%AA%E8%8A%82%E7%82%B9"><span class="toc-number">7.0.4.</span> <span class="toc-text">4.kubescheduler调度pod到某个节点</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#5-kubelet%E6%A0%B9%E6%8D%AEkube-scheduler%E5%8F%91%E6%9D%A5%E7%9A%84%E9%85%8D%E7%BD%AE%E4%BF%A1%E6%81%AF%E6%9D%A5%E8%BF%90%E8%A1%8Cpod%EF%BC%8C%E8%BF%90%E8%A1%8C%E6%88%90%E5%8A%9F%E5%B0%86pod%E4%BF%A1%E6%81%AF%E8%BF%94%E5%9B%9E%E7%BB%99schedule%EF%BC%8Cscheduler%E5%B0%86%E4%BF%A1%E6%81%AF%E8%BF%94%E5%9B%9E%E5%B9%B6%E5%AD%98%E5%82%A8%E5%88%B0%E5%88%B0etcd"><span class="toc-number">7.0.5.</span> <span class="toc-text">5.kubelet根据kube-scheduler发来的配置信息来运行pod，运行成功将pod信息返回给schedule，scheduler将信息返回并存储到到etcd</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E7%94%A8%E6%88%B7%E8%AF%B7%E6%B1%82%E5%88%9B%E5%BB%BA-Pod"><span class="toc-number">8.</span> <span class="toc-text">1. 用户请求创建 Pod</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-API-Server-%E6%8E%A5%E6%94%B6%E5%B9%B6%E9%AA%8C%E8%AF%81%E8%AF%B7%E6%B1%82"><span class="toc-number">9.</span> <span class="toc-text">2. API Server 接收并验证请求</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E8%B0%83%E5%BA%A6%E5%99%A8%E9%80%89%E6%8B%A9%E8%8A%82%E7%82%B9%EF%BC%88%E8%B0%83%E5%BA%A6%EF%BC%89"><span class="toc-number">10.</span> <span class="toc-text">3. 调度器选择节点（调度）</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%B0%83%E5%BA%A6%E8%BF%87%E7%A8%8B%EF%BC%9A"><span class="toc-number">10.1.</span> <span class="toc-text">调度过程：</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E8%8A%82%E7%82%B9%E4%B8%8A%E7%9A%84-Kubelet-%E5%A4%84%E7%90%86-Pod"><span class="toc-number">11.</span> <span class="toc-text">4. 节点上的 Kubelet 处理 Pod</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-Pod-%E8%BF%90%E8%A1%8C%E4%B8%8E%E5%81%A5%E5%BA%B7%E6%A3%80%E6%9F%A5"><span class="toc-number">12.</span> <span class="toc-text">5. Pod 运行与健康检查</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-%E6%8E%A7%E5%88%B6%E5%99%A8%E7%9A%84%E5%8F%8D%E9%A6%88%EF%BC%88%E5%A6%82-Deployment%E3%80%81StatefulSet%EF%BC%89"><span class="toc-number">13.</span> <span class="toc-text">6. 控制器的反馈（如 Deployment、StatefulSet）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-%E6%9B%B4%E6%96%B0%E9%9B%86%E7%BE%A4%E7%8A%B6%E6%80%81"><span class="toc-number">14.</span> <span class="toc-text">7. 更新集群状态</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%BB%E7%BB%93%EF%BC%9A%E5%88%9B%E5%BB%BA-Pod-%E7%9A%84%E4%B8%BB%E8%A6%81%E6%B5%81%E7%A8%8B"><span class="toc-number">15.</span> <span class="toc-text">总结：创建 Pod 的主要流程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#k8s%E7%9A%84%E8%B0%83%E5%BA%A6%E6%9C%BA%E5%88%B6"><span class="toc-number">16.</span> <span class="toc-text">k8s的调度机制</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#1-%E8%8A%82%E7%82%B9%E9%A2%84%E9%80%89"><span class="toc-number">16.0.1.</span> <span class="toc-text">1.节点预选</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#2-%E8%8A%82%E7%82%B9%E6%89%93%E5%88%86%E6%8E%92%E5%BA%8F"><span class="toc-number">16.0.2.</span> <span class="toc-text">2.节点打分排序</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#3-%E8%8A%82%E7%82%B9%E9%80%89%E4%BC%98"><span class="toc-number">16.0.3.</span> <span class="toc-text">3.节点选优</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Kubernetes-%E8%B0%83%E5%BA%A6%E6%B5%81%E7%A8%8B%E6%A6%82%E8%BF%B0"><span class="toc-number">17.</span> <span class="toc-text">Kubernetes 调度流程概述</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Kubernetes-%E8%B0%83%E5%BA%A6%E7%9A%84%E5%85%B3%E9%94%AE%E6%9C%BA%E5%88%B6"><span class="toc-number">18.</span> <span class="toc-text">Kubernetes 调度的关键机制</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Kubernetes-%E8%B0%83%E5%BA%A6%E7%AD%96%E7%95%A5"><span class="toc-number">19.</span> <span class="toc-text">Kubernetes 调度策略</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Kubernetes-%E9%BB%98%E8%AE%A4%E8%B0%83%E5%BA%A6%E5%99%A8%E5%92%8C%E8%87%AA%E5%AE%9A%E4%B9%89%E8%B0%83%E5%BA%A6%E5%99%A8"><span class="toc-number">20.</span> <span class="toc-text">Kubernetes 默认调度器和自定义调度器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Kubernetes-%E8%B0%83%E5%BA%A6%E5%99%A8%E6%8F%92%E4%BB%B6"><span class="toc-number">21.</span> <span class="toc-text">Kubernetes 调度器插件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%BB%E7%BB%93-1"><span class="toc-number">22.</span> <span class="toc-text">总结</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>Recent Posts</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/12/05/2024-2-22%20k8s%E6%9E%B6%E6%9E%84%E5%B8%88%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8/" title="2024-2-22 k8s架构师面试大全">2024-2-22 k8s架构师面试大全</a><time datetime="2024-12-04T16:31:06.534Z" title="Created 2024-12-05 00:31:06">2024-12-05</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/12/05/2024-8-1%20%E5%B8%B8%E8%A7%81Linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98%EF%BC%8C%E6%89%BE%E5%B7%A5%E4%BD%9C%E7%9A%84%E5%BF%85%E7%9C%8B%EF%BC%81/" title="2024-8-1 linux运维面试题">2024-8-1 linux运维面试题</a><time datetime="2024-12-04T16:30:42.291Z" title="Created 2024-12-05 00:30:42">2024-12-05</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/12/05/2024-3-8%20%E9%9D%A2%E8%AF%950308/" title="2024-3-8 面试">2024-3-8 面试</a><time datetime="2024-12-04T16:28:51.177Z" title="Created 2024-12-05 00:28:51">2024-12-05</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/12/05/2024-2-26%20%E9%9D%A2%E8%AF%95/" title="2024-2-26 面试">2024-2-26 面试</a><time datetime="2024-12-04T16:28:29.733Z" title="Created 2024-12-05 00:28:29">2024-12-05</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/12/05/2024-8-1%20linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98/" title="2024-8-1 linux面试题">2024-8-1 linux面试题</a><time datetime="2024-12-04T16:28:08.436Z" title="Created 2024-12-05 00:28:08">2024-12-05</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2019 - 2024 By John Doe</div><div class="framework-info"><span>Framework </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>Theme </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Reading Mode"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="Toggle Between Light and Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle Between Single-column and Double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="Settings"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table of Contents"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="Back to Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
