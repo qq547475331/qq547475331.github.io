@@ -21,21 +21,21 @@
   <meta name="author" content="guichen">
   <meta name="keywords" content="">
   
-    <meta name="description" content="nano 是一个在 Unix-like 系统中非常流行的文本编辑器，适合新手和快速编辑配置文件。它是一个基于命令行的编辑器，功能简洁且易于使用。下面是一些基本的 nano 使用方法： 1. 打开文件要编辑一个文件，可以在命令行中输入： 1nano &lt;文件路径&gt;  如果文件不存在，nano 会创建一个新的文件。例如，要编辑 local.conf 文件，可以使用： 1nano local.">
+    <meta name="description" content="使用 OpenStack Ansible 部署 OpenStack 时，通常会按照不同的角色分配到多台虚拟机上，具体的虚拟机数量和分配方式取决于你选择的部署规模和设计架构。对于小规模的测试和实验环境，可以在一台虚拟机上部署所有组件，而对于生产环境，通常会将 OpenStack 的各个组件分布到不同的虚拟机上，以确保更好的性能和高可用性。 以下是部署 OpenStack 时可能需要的虚拟机和每台虚拟">
 <meta property="og:type" content="article">
-<meta property="og:title" content="2024-12-08 nano操作">
-<meta property="og:url" content="http://example.com/2024/12/09/2024-12-08%20nano%E6%93%8D%E4%BD%9C/index.html">
+<meta property="og:title" content="2024-12-08 openstack需要几台虚拟机">
+<meta property="og:url" content="http://example.com/2024/12/09/2024-12-08%20openstack%E9%9C%80%E8%A6%81%E5%87%A0%E5%8F%B0%E8%99%9A%E6%8B%9F%E6%9C%BA/index.html">
 <meta property="og:site_name" content="guichen&#39;s blog">
-<meta property="og:description" content="nano 是一个在 Unix-like 系统中非常流行的文本编辑器，适合新手和快速编辑配置文件。它是一个基于命令行的编辑器，功能简洁且易于使用。下面是一些基本的 nano 使用方法： 1. 打开文件要编辑一个文件，可以在命令行中输入： 1nano &lt;文件路径&gt;  如果文件不存在，nano 会创建一个新的文件。例如，要编辑 local.conf 文件，可以使用： 1nano local.">
+<meta property="og:description" content="使用 OpenStack Ansible 部署 OpenStack 时，通常会按照不同的角色分配到多台虚拟机上，具体的虚拟机数量和分配方式取决于你选择的部署规模和设计架构。对于小规模的测试和实验环境，可以在一台虚拟机上部署所有组件，而对于生产环境，通常会将 OpenStack 的各个组件分布到不同的虚拟机上，以确保更好的性能和高可用性。 以下是部署 OpenStack 时可能需要的虚拟机和每台虚拟">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2024-12-08T23:33:10.414Z">
-<meta property="article:modified_time" content="2024-12-08T23:33:10.414Z">
+<meta property="article:published_time" content="2024-12-08T23:38:39.262Z">
+<meta property="article:modified_time" content="2024-12-08T23:38:39.263Z">
 <meta property="article:author" content="guichen">
 <meta name="twitter:card" content="summary_large_image">
   
   
   
-  <title>2024-12-08 nano操作 - guichen&#39;s blog</title>
+  <title>2024-12-08 openstack需要几台虚拟机 - guichen&#39;s blog</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -201,7 +201,7 @@
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="2024-12-08 nano操作"></span>
+            <span id="subtitle" data-typed-text="2024-12-08 openstack需要几台虚拟机"></span>
           
         </div>
 
@@ -212,7 +212,7 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2024-12-09 07:33" pubdate>
+        <time datetime="2024-12-09 07:38" pubdate>
           2024年12月9日 早上
         </time>
       </span>
@@ -224,7 +224,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          659 字
+          1.6k 字
         
       </span>
     
@@ -235,7 +235,7 @@
         
         
         
-          6 分钟
+          14 分钟
         
       </span>
     
@@ -272,69 +272,130 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">2024-12-08 nano操作</h1>
+            <h1 id="seo-header">2024-12-08 openstack需要几台虚拟机</h1>
             
             
               <div class="markdown-body">
                 
-                <p><code>nano</code> 是一个在 Unix-like 系统中非常流行的文本编辑器，适合新手和快速编辑配置文件。它是一个基于命令行的编辑器，功能简洁且易于使用。下面是一些基本的 <code>nano</code> 使用方法：</p>
-<h3 id="1-打开文件"><a href="#1-打开文件" class="headerlink" title="1. 打开文件"></a>1. <strong>打开文件</strong></h3><p>要编辑一个文件，可以在命令行中输入：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">nano &lt;文件路径&gt;<br></code></pre></td></tr></table></figure>
-
-<p>如果文件不存在，<code>nano</code> 会创建一个新的文件。例如，要编辑 <code>local.conf</code> 文件，可以使用：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">nano local.conf<br></code></pre></td></tr></table></figure>
-
-<h3 id="2-编辑文件"><a href="#2-编辑文件" class="headerlink" title="2. 编辑文件"></a>2. <strong>编辑文件</strong></h3><p>进入 <code>nano</code> 编辑器后，你可以直接开始输入文本。光标可以用方向键移动，编辑内容就像在普通的文本编辑器中一样。</p>
-<h3 id="3-保存文件"><a href="#3-保存文件" class="headerlink" title="3. 保存文件"></a>3. <strong>保存文件</strong></h3><ul>
-<li>按下 **<code>Ctrl + O</code>**（即按住 <code>Ctrl</code> 键，然后按 <code>O</code> 键）保存当前文件。屏幕底部会显示 <code>File Name to Write: &lt;文件路径&gt;</code>，表示文件已准备好保存。</li>
-<li>按 <strong>Enter</strong> 键确认保存文件。</li>
-</ul>
-<h3 id="4-退出-nano"><a href="#4-退出-nano" class="headerlink" title="4. 退出 nano"></a>4. <strong>退出 nano</strong></h3><ul>
-<li><p>按 </p>
-<p><code>Ctrl + X</code></p>
-<p> 退出 </p>
-<figure class="highlight ebnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ebnf"><span class="hljs-attribute">nano</span><br></code></pre></td></tr></table></figure>
-
-<p>。如果你在退出前修改了文件，</p>
-<figure class="highlight ebnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ebnf"><span class="hljs-attribute">nano</span><br></code></pre></td></tr></table></figure>
-
-<p> 会提示你是否保存更改：</p>
+                <p>使用 <strong>OpenStack Ansible</strong> 部署 OpenStack 时，通常会按照不同的角色分配到多台虚拟机上，具体的虚拟机数量和分配方式取决于你选择的部署规模和设计架构。对于小规模的测试和实验环境，可以在一台虚拟机上部署所有组件，而对于生产环境，通常会将 OpenStack 的各个组件分布到不同的虚拟机上，以确保更好的性能和高可用性。</p>
+<p>以下是部署 OpenStack 时可能需要的虚拟机和每台虚拟机的角色说明：</p>
+<h3 id="1-控制节点（Controller-Node）"><a href="#1-控制节点（Controller-Node）" class="headerlink" title="1. 控制节点（Controller Node）"></a>1. <strong>控制节点（Controller Node）</strong></h3><ul>
+<li><p><strong>数量</strong>：1-2 台</p>
+</li>
+<li><p>作用</p>
+<p>：</p>
 <ul>
-<li>如果想保存，按 <strong>Y</strong>（Yes），然后按 <strong>Enter</strong>。</li>
-<li>如果不想保存更改，按 <strong>N</strong>（No）。</li>
+<li>控制节点负责管理 OpenStack 环境的所有核心服务，包括身份认证（Keystone）、图像服务（Glance）、计算服务（Nova）、网络服务（Neutron）、块存储服务（Cinder）、仪表板（Horizon）等。</li>
+<li>控制节点通常部署 OpenStack 的 <strong>管理服务</strong>，这些服务需要处理来自计算节点和存储节点的请求。</li>
+<li>需要更多的 CPU 和内存资源以处理控制和管理任务，尤其是数据库（如 MySQL）、消息队列（如 RabbitMQ）等需要在控制节点上运行。</li>
+<li>对于生产环境，建议部署两个控制节点以提供高可用性，确保如果一个控制节点失败，另一个节点可以接管管理任务。</li>
 </ul>
 </li>
 </ul>
-<h3 id="5-基本命令"><a href="#5-基本命令" class="headerlink" title="5. 基本命令"></a>5. <strong>基本命令</strong></h3><p>在 <code>nano</code> 中，很多操作是通过 <strong>Ctrl + 字母键</strong> 来完成的。下面是一些常见的快捷键：</p>
+<h3 id="2-计算节点（Compute-Node）"><a href="#2-计算节点（Compute-Node）" class="headerlink" title="2. 计算节点（Compute Node）"></a>2. <strong>计算节点（Compute Node）</strong></h3><ul>
+<li><p><strong>数量</strong>：至少 1 台（根据需要扩展）</p>
+</li>
+<li><p>作用</p>
+<p>：</p>
 <ul>
-<li><strong><code>Ctrl + O</code></strong>: 保存文件（Write Out）。</li>
-<li><strong><code>Ctrl + X</code></strong>: 退出编辑器（Exit）。</li>
-<li><strong><code>Ctrl + W</code></strong>: 搜索文本（Where Is）。输入要搜索的内容，按 <strong>Enter</strong> 搜索。</li>
-<li><strong><code>Ctrl + K</code></strong>: 剪切当前行。</li>
-<li><strong><code>Ctrl + U</code></strong>: 粘贴剪切的内容。</li>
-<li><strong><code>Ctrl + J</code></strong>: 格式化文本（自动换行）。</li>
-<li><strong><code>Ctrl + C</code></strong>: 显示光标当前位置（行号和列号）。</li>
-<li><strong><code>Ctrl + T</code></strong>: 调用拼写检查。</li>
+<li>计算节点负责运行虚拟机实例，提供计算资源。计算节点上会运行 Nova 计算服务，它是 OpenStack 中管理虚拟机生命周期的核心组件。</li>
+<li>计算节点需要安装 KVM（或其他虚拟化技术）来运行虚拟机，并且需要充足的 CPU、内存和存储资源。</li>
+<li>对于生产环境，通常会有多个计算节点，以分散虚拟机负载并提高容错能力。</li>
 </ul>
-<h3 id="6-移动光标"><a href="#6-移动光标" class="headerlink" title="6. 移动光标"></a>6. <strong>移动光标</strong></h3><ul>
-<li><strong>箭头键</strong>：上下左右移动光标。</li>
-<li>**<code>Ctrl + A</code>**：移动到行首。</li>
-<li>**<code>Ctrl + E</code>**：移动到行尾。</li>
-<li>**<code>Ctrl + Y</code>**：向上滚动一页。</li>
-<li>**<code>Ctrl + V</code>**：向下滚动一页。</li>
+</li>
 </ul>
-<h3 id="7-删除文本"><a href="#7-删除文本" class="headerlink" title="7. 删除文本"></a>7. <strong>删除文本</strong></h3><ul>
-<li>**<code>Backspace</code>**：删除光标前面的字符。</li>
-<li>**<code>Ctrl + D</code>**：删除光标下的字符。</li>
+<h3 id="3-网络节点（Network-Node）"><a href="#3-网络节点（Network-Node）" class="headerlink" title="3. 网络节点（Network Node）"></a>3. <strong>网络节点（Network Node）</strong></h3><ul>
+<li><p><strong>数量</strong>：1 台（可选，取决于网络需求）</p>
+</li>
+<li><p>作用</p>
+<p>：</p>
+<ul>
+<li>网络节点负责处理 OpenStack 环境中的网络服务，通常会运行 Neutron 网络服务的关键组件（如 L3 路由器、DHCP、VPN 等）。</li>
+<li>如果你需要使用 Neutron 的高级网络功能（如 VLAN、VXLAN、SDN 等），则建议单独设置网络节点。</li>
+<li>在较小的环境中，网络服务通常可以与控制节点合并，但对于大规模部署，最好将网络服务独立出来。</li>
 </ul>
-<h3 id="8-剪切、复制和粘贴"><a href="#8-剪切、复制和粘贴" class="headerlink" title="8. 剪切、复制和粘贴"></a>8. <strong>剪切、复制和粘贴</strong></h3><ul>
-<li>**<code>Ctrl + K</code>**：剪切光标所在行。</li>
-<li>**<code>Ctrl + U</code>**：粘贴剪切的内容。</li>
-<li>**<code>Ctrl + ^</code>**（按住 <code>Ctrl</code> 后按 <code>^</code>）开始选择文本，移动光标选择一块区域，选择完后可以通过 <strong>Ctrl + K</strong> 剪切选中的文本，或通过 <strong>Ctrl + U</strong> 粘贴。</li>
+</li>
 </ul>
-<h3 id="9-帮助信息"><a href="#9-帮助信息" class="headerlink" title="9. 帮助信息"></a>9. <strong>帮助信息</strong></h3><p>如果你需要帮助，按 <strong><code>Ctrl + G</code></strong> 可以查看 <code>nano</code> 的帮助文档，了解所有快捷键和功能。</p>
+<h3 id="4-存储节点（Storage-Node）"><a href="#4-存储节点（Storage-Node）" class="headerlink" title="4. 存储节点（Storage Node）"></a>4. <strong>存储节点（Storage Node）</strong></h3><ul>
+<li><p><strong>数量</strong>：1-2 台（根据存储需求）</p>
+</li>
+<li><p>作用</p>
+<p>：</p>
+<ul>
+<li>存储节点用于提供 OpenStack 的块存储服务，运行 Cinder 服务并提供底层存储。</li>
+<li>存储节点可以提供硬盘存储来支持虚拟机的磁盘挂载，特别是在需要大规模存储的环境中非常重要。</li>
+<li>如果你还计划使用 Ceph 存储或其他分布式存储解决方案，那么存储节点的数量可能会更多，且会配置相应的存储服务。</li>
+</ul>
+</li>
+</ul>
+<h3 id="5-数据库节点（Database-Node）"><a href="#5-数据库节点（Database-Node）" class="headerlink" title="5. 数据库节点（Database Node）"></a>5. <strong>数据库节点（Database Node）</strong></h3><ul>
+<li><p><strong>数量</strong>：1 台（可以与控制节点合并）</p>
+</li>
+<li><p>作用</p>
+<p>：</p>
+<ul>
+<li>数据库节点用于承载 OpenStack 的数据库服务（如 MySQL 或 PostgreSQL）。</li>
+<li>OpenStack 的控制节点通常依赖数据库来存储和管理各种元数据（如虚拟机信息、网络信息、用户权限等）。</li>
+<li>在小规模环境中，数据库可以与控制节点合并，但对于生产环境，通常会将数据库服务分离，以提高性能和可用性。</li>
+</ul>
+</li>
+</ul>
+<h3 id="6-消息队列节点（Message-Queue-Node）"><a href="#6-消息队列节点（Message-Queue-Node）" class="headerlink" title="6. 消息队列节点（Message Queue Node）"></a>6. <strong>消息队列节点（Message Queue Node）</strong></h3><ul>
+<li><p><strong>数量</strong>：1 台（可以与控制节点合并）</p>
+</li>
+<li><p>作用</p>
+<p>：</p>
+<ul>
+<li>OpenStack 使用消息队列（通常是 <strong>RabbitMQ</strong> 或 <strong>Kafka</strong>）来实现各个服务之间的异步通信。消息队列节点负责管理消息传递和队列。</li>
+<li>与数据库节点一样，消息队列服务可以与控制节点合并，但在大规模部署中，通常会将其单独部署以保证高可用性。</li>
+</ul>
+</li>
+</ul>
+<h3 id="7-负载均衡节点（Load-Balancer-Node）"><a href="#7-负载均衡节点（Load-Balancer-Node）" class="headerlink" title="7. 负载均衡节点（Load Balancer Node）"></a>7. <strong>负载均衡节点（Load Balancer Node）</strong></h3><ul>
+<li><p><strong>数量</strong>：可选（通常用于生产环境）</p>
+</li>
+<li><p>作用</p>
+<p>：</p>
+<ul>
+<li>在 OpenStack 中，负载均衡通常用于在多个控制节点之间分配流量，确保高可用性。可以使用 <strong>HAProxy</strong> 或 <strong>Keepalived</strong> 来实现负载均衡。</li>
+<li>负载均衡节点可以与其他服务（如控制节点或网络节点）共享，但通常为了高可用性，建议单独配置。</li>
+</ul>
+</li>
+</ul>
+<h3 id="8-其他（如监控节点）"><a href="#8-其他（如监控节点）" class="headerlink" title="8. 其他（如监控节点）"></a>8. <strong>其他（如监控节点）</strong></h3><ul>
+<li><p><strong>数量</strong>：可选</p>
+</li>
+<li><p>作用</p>
+<p>：</p>
+<ul>
+<li>你可能还需要部署监控节点来监控 OpenStack 环境的健康状况、性能指标等。常用的监控工具包括 <strong>Prometheus</strong>、<strong>Grafana</strong>、<strong>Zabbix</strong> 等。</li>
+<li>如果你使用的是 <strong>Ceph</strong> 存储系统，还需要配置监控和管理 Ceph 集群的节点。</li>
+</ul>
+</li>
+</ul>
 <hr>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p><code>nano</code> 是一个轻量级、易于使用的命令行文本编辑器。它通过简洁的快捷键使得文件编辑更加直观，不需要记住太多复杂的命令，适合用来快速编辑配置文件或进行简单的文本编辑。</p>
+<h3 id="示例架构（小规模部署）："><a href="#示例架构（小规模部署）：" class="headerlink" title="示例架构（小规模部署）："></a>示例架构（小规模部署）：</h3><p>对于小规模的部署，你可以将所有组件部署在 3-4 台虚拟机上：</p>
+<ol>
+<li><strong>虚拟机 1</strong>：控制节点 + 数据库 + 消息队列</li>
+<li><strong>虚拟机 2</strong>：计算节点 + 存储节点</li>
+<li><strong>虚拟机 3</strong>：网络节点（可选，如果需要复杂的网络服务）</li>
+<li><strong>虚拟机 4</strong>：负载均衡节点（可选）</li>
+</ol>
+<h3 id="示例架构（中大型部署）："><a href="#示例架构（中大型部署）：" class="headerlink" title="示例架构（中大型部署）："></a>示例架构（中大型部署）：</h3><p>对于中到大型部署，通常会使用更多的虚拟机来分散负载：</p>
+<ol>
+<li><strong>虚拟机 1-2</strong>：控制节点（两个控制节点以保证高可用性）</li>
+<li><strong>虚拟机 3-6</strong>：计算节点（多台计算节点来支持更多虚拟机）</li>
+<li><strong>虚拟机 7</strong>：网络节点（用于提供高级网络功能，如 VLAN、VXLAN 等）</li>
+<li><strong>虚拟机 8-10</strong>：存储节点（提供 Cinder 存储服务，可能还包括 Ceph 存储）</li>
+<li><strong>虚拟机 11</strong>：负载均衡节点（提供高可用性）</li>
+<li><strong>虚拟机 12</strong>：监控节点（可选，用于集成监控和日志收集服务）</li>
+</ol>
+<hr>
+<h3 id="总结："><a href="#总结：" class="headerlink" title="总结："></a>总结：</h3><ul>
+<li><strong>最小部署</strong>：至少需要 1-2 台虚拟机，控制节点和计算节点可以合并。</li>
+<li><strong>生产环境</strong>：建议分配 3 台以上虚拟机，分别用于控制节点、计算节点和网络节点（如有需要）。存储和数据库等服务可以根据需求进一步拆分到不同节点。</li>
+</ul>
+<p>实际的虚拟机数量和资源需求还要根据你的部署规模、网络设计、存储需求等因素进行调整。你可以根据需要的服务数量来决定每个角色的分配，并逐步扩展节点。</p>
 
                 
               </div>
@@ -352,8 +413,8 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>2024-12-08 nano操作</div>
-      <div>http://example.com/2024/12/09/2024-12-08 nano操作/</div>
+      <div>2024-12-08 openstack需要几台虚拟机</div>
+      <div>http://example.com/2024/12/09/2024-12-08 openstack需要几台虚拟机/</div>
     </div>
     <div class="license-meta">
       
@@ -397,18 +458,12 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2024/12/09/2024-12-08%20openstack%E5%92%8Ckubernetes%E5%8C%BA%E5%88%AB/" title="2024-12-08 openstack和kubernetes区别">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">2024-12-08 openstack和kubernetes区别</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
                   </article>
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2024/12/09/2024-12-08%20mutilpass%E9%83%A8%E7%BD%B2openstack/" title="2024-12-09 mutilpass部署openstack devstack形式">
-                        <span class="hidden-mobile">2024-12-09 mutilpass部署openstack devstack形式</span>
+                      <a href="/2024/12/09/2024-12-08%20%E5%9D%97%E5%AD%98%E5%82%A8%E5%92%8C%E5%AF%B9%E8%B1%A1%E5%82%A8%E5%AD%98%E5%8C%BA%E5%88%AB/" title="2024-12-08 块存储和对象储存区别">
+                        <span class="hidden-mobile">2024-12-08 块存储和对象储存区别</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
