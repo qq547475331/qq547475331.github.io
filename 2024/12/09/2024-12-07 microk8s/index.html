@@ -1,0 +1,896 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="在mutipass中启动ubuntu虚拟机 1multipass shell microk8s-vm    MicroK8s 是一个由 Canonical（Ubuntu 的开发商）维护的轻量级 Kubernetes 发行版。它旨在为开发者、运维人员和边缘计算场景提供一个快速、简便的 Kubernetes 部署方式，适用于本地开发、测试环境、边缘设备以及生产场景。  MicroK8s 的特点 轻量级">
+<meta property="og:type" content="article">
+<meta property="og:title" content="2024-12-07 microk8s">
+<meta property="og:url" content="http://example.com/2024/12/09/2024-12-07%20microk8s/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="在mutipass中启动ubuntu虚拟机 1multipass shell microk8s-vm    MicroK8s 是一个由 Canonical（Ubuntu 的开发商）维护的轻量级 Kubernetes 发行版。它旨在为开发者、运维人员和边缘计算场景提供一个快速、简便的 Kubernetes 部署方式，适用于本地开发、测试环境、边缘设备以及生产场景。  MicroK8s 的特点 轻量级">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2024-12-08T23:25:45.649Z">
+<meta property="article:modified_time" content="2024-12-08T23:25:45.650Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>2024-12-07 microk8s - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="2024-12-07 microk8s"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-12-09 07:25" pubdate>
+          2024年12月9日 早上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.8k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          24 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">2024-12-07 microk8s</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>在mutipass中启动ubuntu虚拟机</p>
+<figure class="highlight mipsasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs mipsasm"><span class="hljs-keyword">multipass </span><span class="hljs-keyword">shell </span>microk8s-vm<br></code></pre></td></tr></table></figure>
+
+
+
+<p><strong>MicroK8s</strong> 是一个由 <strong>Canonical</strong>（Ubuntu 的开发商）维护的轻量级 Kubernetes 发行版。它旨在为开发者、运维人员和边缘计算场景提供一个快速、简便的 Kubernetes 部署方式，适用于本地开发、测试环境、边缘设备以及生产场景。</p>
+<hr>
+<h3 id="MicroK8s-的特点"><a href="#MicroK8s-的特点" class="headerlink" title="MicroK8s 的特点"></a><strong>MicroK8s 的特点</strong></h3><ol>
+<li><strong>轻量级</strong><ul>
+<li>微内核设计，占用资源少，适合运行在笔记本电脑、工作站、树莓派或其他资源受限的设备上。</li>
+<li>默认禁用许多附加组件，只有基本的 Kubernetes 核心功能。</li>
+</ul>
+</li>
+<li><strong>易安装</strong><ul>
+<li>提供单命令安装，尤其在 Ubuntu 系统上，使用 <code>snap</code> 包管理器即可快速安装。</li>
+<li>支持多种操作系统，包括 Linux（Ubuntu、CentOS 等）、Windows 和 macOS（通过虚拟化工具）。</li>
+</ul>
+</li>
+<li><strong>模块化</strong><ul>
+<li>提供了多种可选的附加组件（addons），如 <code>dns</code>、<code>ingress</code>、<code>storage</code>、<code>helm</code> 等，用户可以根据需要启用或禁用这些组件。</li>
+</ul>
+</li>
+<li><strong>开箱即用</strong><ul>
+<li>直接内置了 Kubernetes 集群的核心组件，如 API Server、kubelet 和调度器，用户无需额外配置即可开始使用。</li>
+</ul>
+</li>
+<li><strong>自动升级</strong><ul>
+<li>使用 <code>snap</code> 管理，支持自动更新到最新版本。</li>
+</ul>
+</li>
+<li><strong>跨平台</strong><ul>
+<li>支持多种硬件架构（如 x86、ARM），适合开发、测试和物联网边缘计算场景。</li>
+</ul>
+</li>
+<li><strong>兼容性</strong><ul>
+<li>完全兼容 Kubernetes API，可以运行大多数 Kubernetes 应用程序。</li>
+<li>支持与 kubectl、Helm 等工具集成。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h3 id="MicroK8s-的用途"><a href="#MicroK8s-的用途" class="headerlink" title="MicroK8s 的用途"></a><strong>MicroK8s 的用途</strong></h3><ol>
+<li><strong>本地开发与测试</strong><ul>
+<li>开发人员可以在本地快速启动一个 Kubernetes 集群，用于应用开发、测试和调试。</li>
+</ul>
+</li>
+<li><strong>学习 Kubernetes</strong><ul>
+<li>对于新手来说，MicroK8s 是学习 Kubernetes 的理想工具，因为它简单易用且资源需求低。</li>
+</ul>
+</li>
+<li><strong>边缘计算</strong><ul>
+<li>MicroK8s 轻量级的特性使其适合运行在物联网设备或资源有限的边缘设备上。</li>
+</ul>
+</li>
+<li><strong>CI&#x2F;CD 测试环境</strong><ul>
+<li>用于快速创建临时 Kubernetes 环境以运行持续集成或自动化测试。</li>
+</ul>
+</li>
+<li><strong>单节点或小型生产环境</strong><ul>
+<li>在资源有限的情况下，可以作为单节点 Kubernetes 集群使用。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h3 id="MicroK8s-的安装与使用"><a href="#MicroK8s-的安装与使用" class="headerlink" title="MicroK8s 的安装与使用"></a><strong>MicroK8s 的安装与使用</strong></h3><h4 id="安装-MicroK8s"><a href="#安装-MicroK8s" class="headerlink" title="安装 MicroK8s"></a><strong>安装 MicroK8s</strong></h4><ol>
+<li><p><strong>在 Ubuntu 上安装</strong> 使用 <code>snap</code> 进行安装：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">sudo</span> snap install microk8s --classic<br></code></pre></td></tr></table></figure>
+
+<p>安装完成后，检查版本：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">microk8s version<br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>在其他 Linux 系统上安装</strong> 在支持 <code>snap</code> 的 Linux 系统上，同样可以使用 <code>snap</code> 安装。</p>
+</li>
+<li><p><strong>在 macOS 或 Windows 上安装</strong> 使用 <code>Multipass</code> 或其他虚拟化工具（如 VirtualBox）运行 MicroK8s。</p>
+</li>
+</ol>
+<h4 id="常用命令"><a href="#常用命令" class="headerlink" title="常用命令"></a><strong>常用命令</strong></h4><ol>
+<li><p>启用或禁用附加组件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">microk8s <span class="hljs-built_in">enable</span> dns ingress storage helm3<br>microk8s <span class="hljs-built_in">disable</span> dns<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>查看 Kubernetes 资源： 使用内置的 <code>kubectl</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">microk8s kubectl get nodes<br>microk8s kubectl get pods -A<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>检查 MicroK8s 的状态：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">microk8s status<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>重启或停止服务：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">microk8s stop<br>microk8s start<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>配置用户权限（非 root 用户）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">sudo</span> usermod -a -G microk8s <span class="hljs-variable">$USER</span><br><span class="hljs-built_in">sudo</span> <span class="hljs-built_in">chown</span> -R <span class="hljs-variable">$USER</span> ~/.kube<br>newgrp microk8s<br></code></pre></td></tr></table></figure></li>
+</ol>
+<hr>
+<h3 id="MicroK8s-与其他-Kubernetes-发行版的对比"><a href="#MicroK8s-与其他-Kubernetes-发行版的对比" class="headerlink" title="MicroK8s 与其他 Kubernetes 发行版的对比"></a><strong>MicroK8s 与其他 Kubernetes 发行版的对比</strong></h3><table>
+<thead>
+<tr>
+<th>特性</th>
+<th>MicroK8s</th>
+<th>Minikube</th>
+<th>K3s</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>轻量化</strong></td>
+<td>是</td>
+<td>部分轻量化</td>
+<td>极轻量化</td>
+</tr>
+<tr>
+<td><strong>安装方式</strong></td>
+<td>单命令（snap 包）</td>
+<td>VirtualBox 或其他虚拟化工具</td>
+<td>二进制或安装脚本</td>
+</tr>
+<tr>
+<td><strong>资源需求</strong></td>
+<td>低</td>
+<td>较高</td>
+<td>极低</td>
+</tr>
+<tr>
+<td><strong>生产环境支持</strong></td>
+<td>支持（单节点或小型环境）</td>
+<td>不推荐</td>
+<td>支持</td>
+</tr>
+<tr>
+<td><strong>附加组件管理</strong></td>
+<td>支持，模块化组件</td>
+<td>手动安装</td>
+<td>部分模块化</td>
+</tr>
+<tr>
+<td><strong>云原生兼容性</strong></td>
+<td>完全兼容</td>
+<td>完全兼容</td>
+<td>部分特性简化</td>
+</tr>
+</tbody></table>
+<hr>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a><strong>总结</strong></h3><p>MicroK8s 是一个轻量级且功能强大的 Kubernetes 发行版，专为开发者、测试环境和边缘计算场景设计。它具有易安装、易管理、资源占用低等优点，同时保留了 Kubernetes 的核心功能，非常适合想快速入门 Kubernetes 或在本地进行开发测试的用户。</p>
+<p>如果你需要一个即开即用的 Kubernetes 集群，无论是本地开发还是边缘计算，MicroK8s 都是一个理想的选择。</p>
+<p>在 <strong>macOS</strong> 上安装 <strong>MicroK8s</strong> 相较于 Linux 环境略有不同，因为 macOS 本身不支持直接使用 <code>snap</code> 安装。要在 macOS 上安装 MicroK8s，你需要借助 <strong>Multipass</strong>（一个轻量级虚拟机管理工具）来运行一个虚拟机，从而部署 MicroK8s。</p>
+<p>以下是详细的安装步骤：</p>
+<hr>
+<h3 id="1-安装-Multipass"><a href="#1-安装-Multipass" class="headerlink" title="1. 安装 Multipass"></a><strong>1. 安装 Multipass</strong></h3><p><strong>Multipass</strong> 是一个由 Canonical（Ubuntu 的开发公司）开发的工具，能够轻松管理 Ubuntu 虚拟机。在 macOS 上安装 MicroK8s 的步骤首先是通过 Multipass 启动一个虚拟机。</p>
+<h4 id="（1）安装-Multipass"><a href="#（1）安装-Multipass" class="headerlink" title="（1）安装 Multipass"></a>（1）安装 Multipass</h4><p>你可以通过 Homebrew 安装 Multipass：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">brew install --cask multipass<br></code></pre></td></tr></table></figure>
+
+<h4 id="（2）检查安装是否成功"><a href="#（2）检查安装是否成功" class="headerlink" title="（2）检查安装是否成功"></a>（2）检查安装是否成功</h4><p>安装完成后，可以检查 Multipass 是否安装成功：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">multipass version<br></code></pre></td></tr></table></figure>
+
+<p>如果安装成功，你将看到 Multipass 的版本信息。</p>
+<hr>
+<h3 id="2-使用-Multipass-启动-Ubuntu-虚拟机"><a href="#2-使用-Multipass-启动-Ubuntu-虚拟机" class="headerlink" title="2. 使用 Multipass 启动 Ubuntu 虚拟机"></a><strong>2. 使用 Multipass 启动 Ubuntu 虚拟机</strong></h3><p>MicroK8s 需要 Ubuntu 系统来运行，因此接下来你需要在 macOS 上通过 Multipass 创建一个 Ubuntu 虚拟机。</p>
+<h4 id="（1）启动-Ubuntu-虚拟机"><a href="#（1）启动-Ubuntu-虚拟机" class="headerlink" title="（1）启动 Ubuntu 虚拟机"></a>（1）启动 Ubuntu 虚拟机</h4><p>执行以下命令启动一个 Ubuntu 虚拟机（例如，启动一个 4GB 内存的 Ubuntu 20.04 虚拟机）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">multipass launch --name microk8s-vm --mem 4G --disk 20G 20.04<br></code></pre></td></tr></table></figure>
+
+<p>这将启动一个名为 <code>microk8s-vm</code> 的虚拟机，分配 4GB 内存和 20GB 硬盘。</p>
+<h4 id="（2）进入虚拟机"><a href="#（2）进入虚拟机" class="headerlink" title="（2）进入虚拟机"></a>（2）进入虚拟机</h4><p>进入虚拟机：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">multipass shell microk8s-vm<br></code></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="3-在虚拟机中安装-MicroK8s"><a href="#3-在虚拟机中安装-MicroK8s" class="headerlink" title="3. 在虚拟机中安装 MicroK8s"></a><strong>3. 在虚拟机中安装 MicroK8s</strong></h3><p>进入 Ubuntu 虚拟机后，你可以按照以下步骤安装 MicroK8s。</p>
+<h4 id="（1）安装-MicroK8s"><a href="#（1）安装-MicroK8s" class="headerlink" title="（1）安装 MicroK8s"></a>（1）安装 MicroK8s</h4><p>在虚拟机内，运行以下命令安装 MicroK8s：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">sudo</span> snap install microk8s --classic<br></code></pre></td></tr></table></figure>
+
+<h4 id="（2）验证安装"><a href="#（2）验证安装" class="headerlink" title="（2）验证安装"></a>（2）验证安装</h4><p>安装完成后，检查 MicroK8s 是否正常运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">microk8s status --wait-ready<br></code></pre></td></tr></table></figure>
+
+<p>这条命令会等待直到 MicroK8s 准备好并且可以正常使用。</p>
+<figure class="highlight livecodeserver"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs livecodeserver">ubuntu@microk8s-vm:~$ sudo snap install microk8s <span class="hljs-comment">--classic</span><br>microk8s (<span class="hljs-number">1.31</span>/stable) v1<span class="hljs-number">.31</span><span class="hljs-number">.3</span> <span class="hljs-built_in">from</span> Canonical✓ installed<br>ubuntu@microk8s-vm:~$ microk8s status <span class="hljs-comment">--wait-ready</span><br>Insufficient permissions <span class="hljs-built_in">to</span> access MicroK8s.<br>You can either <span class="hljs-keyword">try</span> again <span class="hljs-keyword">with</span> sudo <span class="hljs-keyword">or</span> <span class="hljs-built_in">add</span> <span class="hljs-keyword">the</span> user ubuntu <span class="hljs-built_in">to</span> <span class="hljs-keyword">the</span> <span class="hljs-string">&#x27;microk8s&#x27;</span> group:<br><br>    sudo usermod -<span class="hljs-keyword">a</span> -G microk8s ubuntu<br>    sudo chown -R ubuntu ~/.kube<br><br>After this, reload <span class="hljs-keyword">the</span> user groups either via <span class="hljs-keyword">a</span> reboot <span class="hljs-keyword">or</span> <span class="hljs-keyword">by</span> running <span class="hljs-string">&#x27;newgrp microk8s&#x27;</span>.<br>ubuntu@microk8s-vm:~$<br></code></pre></td></tr></table></figure>
+
+
+
+<p>这个错误信息表示，当前用户 <code>ubuntu</code> 没有足够的权限来访问 MicroK8s。为了修复这个问题，你需要将 <code>ubuntu</code> 用户添加到 <strong>microk8s</strong> 组，并更改相应的权限。错误信息中已经给出了修复步骤，下面是详细的解释和步骤：</p>
+<h3 id="问题的原因"><a href="#问题的原因" class="headerlink" title="问题的原因"></a><strong>问题的原因</strong></h3><p>MicroK8s 在安装时会创建一个名为 <code>microk8s</code> 的组，只有该组的成员才能访问 MicroK8s 的配置和执行相关命令。默认情况下，普通用户并不在 <code>microk8s</code> 组中，因此无法访问和管理 MicroK8s。</p>
+<h3 id="解决方法"><a href="#解决方法" class="headerlink" title="解决方法"></a><strong>解决方法</strong></h3><ol>
+<li><p><strong>将用户添加到 <code>microk8s</code> 组</strong> 你需要将 <code>ubuntu</code> 用户添加到 <code>microk8s</code> 组中。这可以通过以下命令完成：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">sudo</span> usermod -a -G microk8s ubuntu<br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>修改权限</strong> 接下来，需要修改 Kubernetes 配置文件的权限，使得 <code>ubuntu</code> 用户可以访问它：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">sudo</span> <span class="hljs-built_in">chown</span> -R ubuntu ~/.kube<br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>重新加载用户组</strong> 上述步骤会将用户添加到 <code>microk8s</code> 组，并将 <code>.kube</code> 目录的权限更新。为了让权限生效，重新加载用户组，可以使用以下命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">newgrp microk8s<br></code></pre></td></tr></table></figure>
+
+<p>这会立即使 <code>ubuntu</code> 用户的权限更新，而不需要重启计算机。</p>
+</li>
+</ol>
+<h3 id="4-再次检查-MicroK8s-状态"><a href="#4-再次检查-MicroK8s-状态" class="headerlink" title="4. 再次检查 MicroK8s 状态"></a><strong>4. 再次检查 MicroK8s 状态</strong></h3><p>完成上述步骤后，你应该可以再次运行 <code>microk8s status</code> 命令来查看 MicroK8s 的状态：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">microk8s status --wait-ready<br></code></pre></td></tr></table></figure>
+
+<h3 id="总结-1"><a href="#总结-1" class="headerlink" title="总结"></a><strong>总结</strong></h3><ul>
+<li>你需要将 <code>ubuntu</code> 用户添加到 <code>microk8s</code> 组中，才能让该用户访问 MicroK8s。</li>
+<li>更改 Kubernetes 配置文件的权限，并通过 <code>newgrp</code> 命令重新加载用户组，以确保权限生效。</li>
+</ul>
+<p>执行这些步骤后，问题应该得到解决，你可以正常使用 MicroK8s。</p>
+<p>错误信息 <code>chown: cannot access &#39;/home/ubuntu/.kube&#39;: No such file or directory</code> 表示在 <code>/home/ubuntu/</code> 目录下找不到 <code>.kube</code> 文件夹。原因可能是当前用户还没有在 <code>~/.kube</code> 目录下创建 Kubernetes 配置文件。通常，这是因为还没有执行过 <code>kubectl</code> 命令，或者在配置文件复制步骤中没有正确生成该目录。</p>
+<h3 id="解决方法-1"><a href="#解决方法-1" class="headerlink" title="解决方法"></a><strong>解决方法</strong></h3><h4 id="1-确保-kube-目录存在"><a href="#1-确保-kube-目录存在" class="headerlink" title="1. 确保 .kube 目录存在"></a><strong>1. 确保 <code>.kube</code> 目录存在</strong></h4><p>首先，你需要确保 Kubernetes 配置文件已经生成。执行以下命令生成 Kubernetes 配置文件：</p>
+<ol>
+<li><p><strong>在 MicroK8s 内获取 kubeconfig 文件</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">sudo</span> microk8s kubectl config view --raw &gt; kubeconfig<br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>将 <code>kubeconfig</code> 文件移动到 <code>~/.kube</code> 目录</strong>： 创建 <code>.kube</code> 目录，并将 <code>kubeconfig</code> 文件移动到该目录下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">mkdir</span> -p ~/.kube<br><span class="hljs-built_in">mv</span> kubeconfig ~/.kube/config<br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>更新目录权限</strong>： 现在，你已经成功将 <code>kubeconfig</code> 文件放置在 <code>.kube</code> 目录中，可以重新执行权限修改命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">sudo</span> <span class="hljs-built_in">chown</span> -R ubuntu ~/.kube<br></code></pre></td></tr></table></figure></li>
+</ol>
+<h4 id="2-配置-kubectl-使用-MicroK8s-配置"><a href="#2-配置-kubectl-使用-MicroK8s-配置" class="headerlink" title="2. 配置 kubectl 使用 MicroK8s 配置"></a><strong>2. 配置 <code>kubectl</code> 使用 MicroK8s 配置</strong></h4><p>如果你已经将配置文件正确放入 <code>~/.kube/config</code>，可以尝试使用以下命令来测试是否成功配置了 <code>kubectl</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">kubectl get nodes<br></code></pre></td></tr></table></figure>
+
+<p>如果配置正确，你应该能够看到集群中的节点信息。</p>
+<h4 id="3-重新加载用户组（如果必要）"><a href="#3-重新加载用户组（如果必要）" class="headerlink" title="3. 重新加载用户组（如果必要）"></a><strong>3. 重新加载用户组（如果必要）</strong></h4><p>如果你已经将 <code>ubuntu</code> 用户添加到 <code>microk8s</code> 组，但还没有刷新用户组，可以执行以下命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">newgrp microk8s<br></code></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="总结-2"><a href="#总结-2" class="headerlink" title="总结"></a><strong>总结</strong></h3><ul>
+<li>错误的根本原因是 <code>.kube</code> 目录不存在。你需要确保配置文件 <code>kubeconfig</code> 被正确生成，并放置到 <code>.kube/config</code> 中。</li>
+<li>执行 <code>mkdir -p ~/.kube &amp;&amp; mv kubeconfig ~/.kube/config</code> 可以确保配置文件正确放置。</li>
+<li>修改文件权限时，使用 <code>chown -R ubuntu ~/.kube</code> 来确保当前用户有正确的访问权限。</li>
+</ul>
+<p>完成这些步骤后，你应该能够正常访问 Kubernetes 集群并使用 <code>kubectl</code> 命令了。</p>
+<hr>
+<h3 id="4-配置-kubectl-访问-MicroK8s"><a href="#4-配置-kubectl-访问-MicroK8s" class="headerlink" title="4. 配置 kubectl 访问 MicroK8s"></a><strong>4. 配置 kubectl 访问 MicroK8s</strong></h3><p>为了能够从宿主机（macOS）直接使用 <code>kubectl</code> 来管理 MicroK8s 集群，你需要配置访问权限。</p>
+<h4 id="（1）获取-kubectl-配置文件"><a href="#（1）获取-kubectl-配置文件" class="headerlink" title="（1）获取 kubectl 配置文件"></a>（1）获取 kubectl 配置文件</h4><p>通过 Multipass 虚拟机执行以下命令，获取 Kubernetes 配置文件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">sudo</span> microk8s kubectl config view --raw &gt; kubeconfig<br></code></pre></td></tr></table></figure>
+
+<h4 id="（2）将配置文件复制到宿主机"><a href="#（2）将配置文件复制到宿主机" class="headerlink" title="（2）将配置文件复制到宿主机"></a>（2）将配置文件复制到宿主机</h4><p>将该配置文件复制到宿主机（macOS）上的合适目录，比如 <code>~/.kube/config</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">mkdir</span> -p ~/.kube<br><span class="hljs-built_in">cp</span> kubeconfig ~/.kube/config<br></code></pre></td></tr></table></figure>
+
+<h4 id="（3）验证-kubectl-配置"><a href="#（3）验证-kubectl-配置" class="headerlink" title="（3）验证 kubectl 配置"></a>（3）验证 kubectl 配置</h4><p>验证 <code>kubectl</code> 是否能够连接到 MicroK8s 集群：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">kubectl get nodes<br></code></pre></td></tr></table></figure>
+
+<p>你应该会看到 <code>microk8s-vm</code> 作为节点，表示 <code>kubectl</code> 成功连接到 MicroK8s 集群。</p>
+<hr>
+<h3 id="5-启用必要的-MicroK8s-插件"><a href="#5-启用必要的-MicroK8s-插件" class="headerlink" title="5. 启用必要的 MicroK8s 插件"></a><strong>5. 启用必要的 MicroK8s 插件</strong></h3><p>MicroK8s 提供了多个附加插件，可以根据需要启用它们。</p>
+<p>例如，启用 DNS 和 Ingress：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">microk8s <span class="hljs-built_in">enable</span> dns ingress<br></code></pre></td></tr></table></figure>
+
+<p>你可以根据需求启用其他插件，如存储、Metrics Server 等：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs bash">microk8s <span class="hljs-built_in">enable</span> storage<br>microk8s <span class="hljs-built_in">enable</span> dashboard<br><br><br>microk8s <span class="hljs-built_in">disable</span> ingress<br>microk8s <span class="hljs-built_in">disable</span> storage<br>microk8s <span class="hljs-built_in">disable</span> dashboard<br></code></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="6-访问-Kubernetes-Dashboard（可选）"><a href="#6-访问-Kubernetes-Dashboard（可选）" class="headerlink" title="6. 访问 Kubernetes Dashboard（可选）"></a><strong>6. 访问 Kubernetes Dashboard（可选）</strong></h3><p>如果启用了 Kubernetes Dashboard 插件，可以通过以下命令获取访问 Dashboard 的 token：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">microk8s dashboard-proxy<br></code></pre></td></tr></table></figure>
+
+<p>此命令会显示一个 URL，你可以在浏览器中访问该 URL，以便通过 Web 界面管理集群。</p>
+<hr>
+<h3 id="7-关闭和删除虚拟机"><a href="#7-关闭和删除虚拟机" class="headerlink" title="7. 关闭和删除虚拟机"></a><strong>7. 关闭和删除虚拟机</strong></h3><p>如果不再需要 MicroK8s，可以通过以下命令停止虚拟机：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">multipass stop microk8s-vm<br></code></pre></td></tr></table></figure>
+
+<p>如果希望删除虚拟机及其所有数据，可以运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">multipass delete microk8s-vm<br>multipass purge<br></code></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="总结-3"><a href="#总结-3" class="headerlink" title="总结"></a><strong>总结</strong></h3><p>在 <strong>macOS</strong> 上安装 <strong>MicroK8s</strong> 的关键步骤是使用 <strong>Multipass</strong> 启动一个 Ubuntu 虚拟机，并在虚拟机内安装和配置 MicroK8s。这样，你就可以在本地开发、测试和学习 Kubernetes 集群，或者部署轻量级的应用程序。如果需要更强大的功能，还可以启用多种插件。</p>
+<p>进入虚拟机</p>
+<figure class="highlight mipsasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs mipsasm"><span class="hljs-keyword">multipass </span><span class="hljs-keyword">shell </span>microk8s-v<br></code></pre></td></tr></table></figure>
+
+
+
+
+
+<p>如果你想重新启动已停止的 <code>microk8s-vm</code> 实例，你可以使用以下命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">multipass start microk8s-vm<br></code></pre></td></tr></table></figure>
+
+<p>这将重新启动并使虚拟机恢复运行状态。如果你想查看当前虚拟机的状态，可以使用：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">multipass list<br></code></pre></td></tr></table></figure>
+
+<p>这个命令会列出所有虚拟机及其当前状态（如运行中或已停止）。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs bash">wget https://github.com/derailed/k9s/releases/download/v0.32.7/k9s_linux_amd64.deb &amp;&amp; apt install ./k9s_linux_amd64.deb &amp;&amp; <span class="hljs-built_in">rm</span> k9s_linux_amd64.deb<br><br>wget https://github.com/derailed/k9s/releases/download/v0.32.7/k9s_linux_amd64.deb<br><br>apt install ./k9s_linux_amd64.deb<br><br><span class="hljs-built_in">rm</span> k9s_linux_amd64.deb<br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs pgsql"><span class="hljs-built_in">Warning</span>  FailedCreatePodSandBox  <span class="hljs-number">92</span>s                 kubelet  Failed <span class="hljs-keyword">to</span> <span class="hljs-keyword">create</span> pod sandbox: rpc error: code = DeadlineExceeded <span class="hljs-keyword">desc</span> = failed <span class="hljs-keyword">to</span> g │<br>│ et sandbox image &quot;registry.k8s.io/pause:3.7&quot;: failed <span class="hljs-keyword">to</span> pull image &quot;registry.k8s.io/pause:3.7&quot;: failed <span class="hljs-keyword">to</span> pull <span class="hljs-keyword">and</span> unpack image &quot;registry.k8s.io/pa │<br>│ use:3.7&quot;: failed <span class="hljs-keyword">to</span> resolve reference &quot;registry.k8s.io/pause:3.7&quot;: failed <span class="hljs-keyword">to</span> <span class="hljs-keyword">do</span> request: Head &quot;https://us-west2-docker.pkg.dev/v2/k8s-artifacts-pro │<br>│ d/images/pause/manifests/3.7&quot;: dial tcp <span class="hljs-number">74.125</span><span class="hljs-number">.199</span><span class="hljs-number">.82</span>:<span class="hljs-number">443</span>: i/o timeout                                                                              │<br>│   <span class="hljs-built_in">Warning</span>  FailedCreatePodSandBox  <span class="hljs-number">6</span>s (x7 <span class="hljs-keyword">over</span> <span class="hljs-number">5</span>m15s)  kubelet  Failed <span class="hljs-keyword">to</span> <span class="hljs-keyword">create</span> pod sandbox: rpc error: code = DeadlineExceeded <span class="hljs-keyword">desc</span> = failed <span class="hljs-keyword">to</span> g │<br>│ et sandbox image &quot;registry.k8s.io/pause:3.7&quot;: failed <span class="hljs-keyword">to</span> pull image &quot;registry.k8s.io/pause:3.7&quot;: failed <span class="hljs-keyword">to</span> pull <span class="hljs-keyword">and</span> unpack image &quot;registry.k8s.io/pa │<br>│ use:3.7&quot;: failed <span class="hljs-keyword">to</span> resolve reference &quot;registry.k8s.io/pause:3.7&quot;: failed <span class="hljs-keyword">to</span> <span class="hljs-keyword">do</span> request: Head &quot;https://us-west2-docker.pkg.dev/v2/k8s-artifacts-pro │<br>│ d/images/pause/manifests/3.7&quot;: dial tcp <span class="hljs-number">172.253</span><span class="hljs-number">.117</span><span class="hljs-number">.82</span>:<span class="hljs-number">443</span>: i/o timeout<br></code></pre></td></tr></table></figure>
+
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>2024-12-07 microk8s</div>
+      <div>http://example.com/2024/12/09/2024-12-07 microk8s/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年12月9日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2024/12/09/2024-12-08%20nano%E6%93%8D%E4%BD%9C/" title="">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile"></span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/12/09/2024-12-08%20openstack%E5%92%8Ckubernetes%E5%8C%BA%E5%88%AB/" title="">
+                        <span class="hidden-mobile"></span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

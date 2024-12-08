@@ -1,0 +1,803 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="DevStack 网络DevStack 体验的一个重要部分是默认为创建的来宾提供网络连接。这可能不是您特定测试环境的最佳选择，因此本文档尽力解释发生了什么。 默认值如果您不指定任何配置，您将获得以下内容：  neutron（包括带有 openvswitch 的 l3） 每个 openstack 项目的私有项目网络 浮动 IP 范围为 172.24.4.0&#x2F;24，网关为 172.24.4.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="2024-12-09 openstack ssh连接">
+<meta property="og:url" content="http://example.com/2024/12/09/2024-12-09%20openstack%20ssh%E8%BF%9E%E6%8E%A5/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="DevStack 网络DevStack 体验的一个重要部分是默认为创建的来宾提供网络连接。这可能不是您特定测试环境的最佳选择，因此本文档尽力解释发生了什么。 默认值如果您不指定任何配置，您将获得以下内容：  neutron（包括带有 openvswitch 的 l3） 每个 openstack 项目的私有项目网络 浮动 IP 范围为 172.24.4.0&#x2F;24，网关为 172.24.4.">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2024-12-08T23:27:07.109Z">
+<meta property="article:modified_time" content="2024-12-08T23:27:07.109Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>2024-12-09 openstack ssh连接 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="2024-12-09 openstack ssh连接"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-12-09 07:27" pubdate>
+          2024年12月9日 早上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.8k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          24 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">2024-12-09 openstack ssh连接</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="DevStack-网络"><a href="#DevStack-网络" class="headerlink" title="DevStack 网络"></a>DevStack 网络</h1><p>DevStack 体验的一个重要部分是默认为创建的来宾提供网络连接。这可能不是您特定测试环境的最佳选择，因此本文档尽力解释发生了什么。</p>
+<h2 id="默认值"><a href="#默认值" class="headerlink" title="默认值"></a>默认值</h2><p>如果您不指定任何配置，您将获得以下内容：</p>
+<ul>
+<li>neutron（包括带有 openvswitch 的 l3）</li>
+<li>每个 openstack 项目的私有项目网络</li>
+<li>浮动 IP 范围为 172.24.4.0&#x2F;24，网关为 172.24.4.1</li>
+<li>演示项目在从 10.0.0.0&#x2F;22 范围分配的子网上配置了固定 IP</li>
+<li>由 neutron 控制的所有网络的接口<code>br-ex</code>（不连接到任何物理接口）。</li>
+<li>根据主机的 resolv.conf 为访客提供 DNS 解析</li>
+<li>允许创建的访客路由出去的 IP masq 规则</li>
+</ul>
+<p>这将创建一个与单个主机隔离的环境。访客可以访问外部网络以获取软件包更新。Tempest 测试将在此环境中进行。</p>
+<p>笔记</p>
+<p>默认情况下，所有 OpenStack 环境都有安全组规则，阻止所有发往客户的入站数据包。如果您希望能够 ssh&#x2F;ping 您创建的客户，则应运行以下命令。</p>
+<figure class="highlight gherkin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs gherkin">ubuntu<span class="hljs-meta">@openstack-vm:~$</span> openstack security group list<br><br>+--------------------------------------+---------+------------------------+----------------------------------+------+<br>|<span class="hljs-string"> ID                                   </span>|<span class="hljs-string"> Name    </span>|<span class="hljs-string"> Description            </span>|<span class="hljs-string"> Project                          </span>|<span class="hljs-string"> Tags </span>|<br>+--------------------------------------+---------+------------------------+----------------------------------+------+<br>|<span class="hljs-string"> 109ac0cd-daf6-481c-9594-867dbbdb129b </span>|<span class="hljs-string"> default </span>|<span class="hljs-string"> Default security group </span>|<span class="hljs-string"> 14278ce7bc604abd91e85b82e78ea45e </span>|<span class="hljs-string"> []   </span>|<br>|<span class="hljs-string"> 73b1a108-a0db-49a3-973f-dc91c030d4dd </span>|<span class="hljs-string"> default </span>|<span class="hljs-string"> Default security group </span>|<span class="hljs-string"> 6175cac8870541d1973a0f1010981180 </span>|<span class="hljs-string"> []   </span>|<br>|<span class="hljs-string"> 75e4b266-40bf-4bd8-a7d5-b2f0b0d6e84d </span>|<span class="hljs-string"> default </span>|<span class="hljs-string"> Default security group </span>|<span class="hljs-string"> a942dd11388440a6b8b9922fb405ad55 </span>|<span class="hljs-string"> []   </span>|<br>|<span class="hljs-string"> 9f07480a-fded-4172-852b-c997653324dc </span>|<span class="hljs-string"> t1      </span>|<span class="hljs-string">                        </span>|<span class="hljs-string"> 6175cac8870541d1973a0f1010981180 </span>|<span class="hljs-string"> []   </span>|<br>+--------------------------------------+---------+------------------------+----------------------------------+------+<br>ubuntu<span class="hljs-meta">@openstack-vm:~$</span><br></code></pre></td></tr></table></figure>
+
+<p>你可以使用以下命令删除指定的安全组：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">openstack security group delete 109ac0cd-daf6-481c-9594-867dbbdb129b<br>openstack security group delete 75e4b266-40bf-4bd8-a7d5-b2f0b0d6e84d<br></code></pre></td></tr></table></figure>
+
+<p>确保该安全组没有被任何实例使用，否则删除可能会失败。如果安全组被实例使用，你需要先将其从实例中移除，或者选择一个新的安全组。</p>
+<p>如果你遇到问题，随时告诉我！</p>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">openstack <span class="hljs-keyword">security</span> <span class="hljs-keyword">group</span> <span class="hljs-keyword">rule</span> <span class="hljs-keyword">create</span> <span class="hljs-comment">--proto icmp --dst-port 0 default</span><br>openstack <span class="hljs-keyword">security</span> <span class="hljs-keyword">group</span> <span class="hljs-keyword">rule</span> <span class="hljs-keyword">create</span> <span class="hljs-comment">--proto tcp --dst-port 22 default</span><br><br><br>openstack <span class="hljs-keyword">security</span> <span class="hljs-keyword">group</span> <span class="hljs-keyword">rule</span> <span class="hljs-keyword">create</span> <span class="hljs-comment">--proto icmp --dst-port 0 73b1a108-a0db-49a3-973f-dc91c030d4dd</span><br>openstack <span class="hljs-keyword">security</span> <span class="hljs-keyword">group</span> <span class="hljs-keyword">rule</span> <span class="hljs-keyword">create</span> <span class="hljs-comment">--proto tcp --dst-port 22 73b1a108-a0db-49a3-973f-dc91c030d4dd</span><br><br>openstack <span class="hljs-keyword">security</span> <span class="hljs-keyword">group</span> <span class="hljs-keyword">rule</span> <span class="hljs-keyword">create</span> <span class="hljs-comment">--proto icmp --dst-port 0  9f07480a-fded-4172-852b-c997653324dc</span><br>openstack <span class="hljs-keyword">security</span> <span class="hljs-keyword">group</span> <span class="hljs-keyword">rule</span> <span class="hljs-keyword">create</span> <span class="hljs-comment">--proto icmp --dst-port 22  9f07480a-fded-4172-852b-c997653324dc</span><br></code></pre></td></tr></table></figure>
+
+<h2 id="本地可访问的访客"><a href="#本地可访问的访客" class="headerlink" title="本地可访问的访客"></a>本地可访问的访客</h2><p>如果您想让您的客人可以从网络上的其他机器访问，我们必须连接<code>br-ex</code>到物理接口。</p>
+<h3 id="专用客户机界面"><a href="#专用客户机界面" class="headerlink" title="专用客户机界面"></a>专用客户机界面</h3><p>如果您的 devstack 服务器上有 2 个或更多接口，您可以分配一个接口给 neutron 进行全面管理。这<strong>不应该</strong> 与您用于 ssh 进入 devstack 服务器本身的接口相同。</p>
+<p>这是通过设置<code>PUBLIC_INTERFACE</code>属性来完成的。</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs lua"><span class="hljs-string">[[local|localrc]]</span><br>PUBLIC_INTERFACE=eth1<br></code></pre></td></tr></table></figure>
+
+<p>这会将来自您的客户机的所有第 2 层流量放到主网络上。在此模式下运行时，ip masq 规则不会<strong>添加</strong>到您的 devstack 中，您负责确保本地网络上的路由工作。</p>
+<h3 id="共享客户机接口"><a href="#共享客户机接口" class="headerlink" title="共享客户机接口"></a>共享客户机接口</h3><p>警告</p>
+<p>这不是推荐的配置。由于 OVS 和桥接之间的相互作用，如果您在启用网络的情况下重新启动设备，则可能会丢失系统的网络连接。</p>
+<p>如果您需要访客在网络上可访问，但只有 1 个接口（使用 NUC 之类的设备），您可以共享一个网络。但为了实现这一点，您需要手动设置大量地址，并确保所有地址都完全正确。</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs ini"><span class="hljs-section">[[local|localrc]]</span><br><span class="hljs-attr">PUBLIC_INTERFACE</span>=eth0<br><span class="hljs-attr">HOST_IP</span>=<span class="hljs-number">10.42</span>.<span class="hljs-number">0.52</span><br><span class="hljs-attr">FLOATING_RANGE</span>=<span class="hljs-number">10.42</span>.<span class="hljs-number">0.0</span>/<span class="hljs-number">24</span><br><span class="hljs-attr">PUBLIC_NETWORK_GATEWAY</span>=<span class="hljs-number">10.42</span>.<span class="hljs-number">0.1</span><br><span class="hljs-attr">Q_FLOATING_ALLOCATION_POOL</span>=start=<span class="hljs-number">10.42</span>.<span class="hljs-number">0.250</span>,end=<span class="hljs-number">10.42</span>.<span class="hljs-number">0.254</span><br></code></pre></td></tr></table></figure>
+
+<p>为了使此方案有效，浮动 IP 网络必须与您服务器上的默认网络相匹配。这会破坏 HOST_IP 检测，因为我们默认排除浮动范围，因此您必须手动指定。</p>
+<p>这<code>PUBLIC_NETWORK_GATEWAY</code>是服务器通常用来脱离网络的网关。<code>Q_FLOATING_ALLOCATION_POOL</code>控制将要分配的浮动 IP 范围。由于我们正在共享您现有的网络，因此您需要为其分配本地 dhcp 服务器未分配的片段。否则，您很容易出现 IP 地址冲突，并对您的本地网络造成严重破坏。</p>
+<h2 id="私有网络寻址"><a href="#私有网络寻址" class="headerlink" title="私有网络寻址"></a>私有网络寻址</h2><p><code>IPV4_ADDRS_SAFE_TO_USE</code> 私有网络地址由和变量控制<code>IPV6_ADDRS_SAFE_TO_USE</code>。这允许用户指定一个要使用的安全内部 IP 变量，无论是否使用子网池，都会引用该变量。</p>
+<p>对于IPv4，<code>FIXED_RANGE</code>和<code>SUBNETPOOL_PREFIX_V4</code>将直接默认为的值<code>IPV4_ADDRS_SAFE_TO_USE</code>。</p>
+<p>对于 IPv6，<code>FIXED_RANGE_V6</code>将默认为 的值的前 &#x2F;64 <code>IPV6_ADDRS_SAFE_TO_USE</code>。如果<code>IPV6_ADDRS_SAFE_TO_USE</code>为 &#x2F;64 或更小， <code>FIXED_RANGE_V6</code>将直接使用该值。 <code>SUBNETPOOL_PREFIX_V6</code>将直接默认为 的值 <code>IPV6_ADDRS_SAFE_TO_USE</code>。</p>
+<h2 id="SSH-访问实例"><a href="#SSH-访问实例" class="headerlink" title="SSH 访问实例"></a>SSH 访问实例</h2><p>为了验证连接性，您可以使用网络创建一个实例 <code>$PRIVATE_NETWORK_NAME</code>（默认值：）<code>private</code>，使用<code>$PUBLIC_NETWORK_NAME</code>网络创建一个浮动 IP（默认值：）<code>public</code>，然后将此浮动 IP 附加到该实例：</p>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">openstack keypair <span class="hljs-keyword">create</span> <span class="hljs-comment">--public-key ~/.ssh/id_rsa.pub test-keypair</span><br>openstack <span class="hljs-keyword">server</span> <span class="hljs-keyword">create</span> <span class="hljs-comment">--network private --key-name test-keypair ... test-server</span><br>fip_id=$(openstack floating ip <span class="hljs-keyword">create</span> <span class="hljs-built_in">public</span> -f <span class="hljs-keyword">value</span> -c id)<br>openstack <span class="hljs-keyword">server</span> <span class="hljs-keyword">add</span> floating ip test-<span class="hljs-keyword">server</span> $&#123;fip_id&#125;<br></code></pre></td></tr></table></figure>
+
+<p>完成后，请确保已为用于实例的安全组启用 SSH 和 ICMP（ping）访问。您可以创建自定义安全组并在创建实例时指定它，也可以在创建后添加它，或者您可以修改<code>default</code>每个项目默认创建的安全组。让我们做后者：</p>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">openstack <span class="hljs-keyword">security</span> <span class="hljs-keyword">group</span> <span class="hljs-keyword">rule</span> <span class="hljs-keyword">create</span> <span class="hljs-comment">--proto icmp --dst-port 0 default</span><br>openstack <span class="hljs-keyword">security</span> <span class="hljs-keyword">group</span> <span class="hljs-keyword">rule</span> <span class="hljs-keyword">create</span> <span class="hljs-comment">--proto tcp --dst-port 22 default</span><br></code></pre></td></tr></table></figure>
+
+<p>最后，通过 SSH 进入实例。如果你使用了默认上传的 Cirros 实例，那么你可以运行以下命令：</p>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">openstack <span class="hljs-keyword">server</span> ssh test-<span class="hljs-keyword">server</span> <span class="hljs-comment">-- -l cirros</span><br></code></pre></td></tr></table></figure>
+
+<p>这将使用<code>cirros</code>您在创建实例时配置的用户和密钥对进行连接。</p>
+<h2 id="远程-SSH-访问实例"><a href="#远程-SSH-访问实例" class="headerlink" title="远程 SSH 访问实例"></a>远程 SSH 访问实例</h2><p>您还可以从其他主机通过 SSH 连接到 DevStack 主机上创建的实例。如果您正在现有云上的 VM 中部署 DevStack 并希望在本地计算机上进行开发，这将非常有用。有几种方法可以做到这一点。</p>
+<p>配置实例可供本地访问</p>
+<p>最明显的方法是将客户机配置为本地可访问，如上所述<a target="_blank" rel="noopener" href="https://docs.openstack.org/devstack/latest/LocallyAccessibleGuests">。</a>这样做的好处是不需要在客户端上做进一步的工作。但是，这更复杂，需要云的支持或一些不明智的解决方法。</p>
+<p>使用 DevStack 主机作为跳转主机</p>
+<p>您可以选择使用 DevStack 主机作为跳转主机。要通过这种方式通过 SSH 连接到实例，请将标准<code>-J</code>选项传递给&#x2F; 命令。例如：<code>openstack ssh``ssh</code></p>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">openstack <span class="hljs-keyword">server</span> ssh test-<span class="hljs-keyword">server</span> <span class="hljs-comment">-- -l cirros -J username@devstack-host</span><br></code></pre></td></tr></table></figure>
+
+<p>（其中<code>test-server</code>是现有实例的名称，如前所述 <a target="_blank" rel="noopener" href="https://docs.openstack.org/devstack/latest/networking.html#ssh">，</a>和<code>username</code>是<code>devstack-host</code>您的 DevStack 主机的用户名和主机名）。</p>
+<p>这也可以通过您的文件进行配置<code>~/.ssh/config</code>，因此非常轻松。但是，它仅允许 SSH 访问。如果您想要访问实例上的 Web 应用程序，则需要配置 SSH 隧道并使用选项转发选定端口<code>-L</code>。例如，要转发 HTTP 流量：</p>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">openstack <span class="hljs-keyword">server</span> ssh test-<span class="hljs-keyword">server</span> <span class="hljs-comment">-- -l cirros -L 8080:username@devstack-host:80</span><br></code></pre></td></tr></table></figure>
+
+<p>（其中<code>test-server</code>是现有实例的名称，如前所述 <a target="_blank" rel="noopener" href="https://docs.openstack.org/devstack/latest/networking.html#ssh">，</a>和<code>username</code>是<code>devstack-host</code>您的 DevStack 主机的用户名和主机名）。</p>
+<p>你可以想象，这很快就会失控，特别是对于具有多个端口的更复杂的客户应用程序而言。</p>
+<p>使用代理或 VPN 工具</p>
+<p><code>$PUBLIC_NETWORK_NAME</code>您可以使用代理或 VPN 工具为由 (默认值：<code>public</code>) 定义的网络浮动 IP 地址范围(<code>$FLOATING_RANGE</code>默认值：<code>172.24.4.0/24</code>) 启用隧道。有许多此类工具可用于执行此操作。例如，我们可以使用一个名为<a target="_blank" rel="noopener" href="https://github.com/sshuttle/sshuttle">shuttle</a>的实用实用程序。要使用 启用隧道<code>shuttle</code>，首先确保您已允许 SSH 和 HTTP(S) 流量到您的 DevStack 主机。允许 HTTP(S) 流量是必要的，这样您就可以远程使用 OpenStack API。如何执行此操作取决于您的 DevStack 主机的运行位置。完成后，<code>sshuttle</code>在您的本地主机上安装：</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs cmake">sudo apt-get <span class="hljs-keyword">install</span> sshuttle || yum <span class="hljs-keyword">install</span> sshuttle<br></code></pre></td></tr></table></figure>
+
+<p>最后，<code>sshuttle</code>使用浮动 IP 地址范围在本地主机上启动。例如，假设您使用 的默认值 <code>$FLOATING_RANGE</code>，您可以执行以下操作：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs nginx"><span class="hljs-attribute">sshuttle</span> -r username<span class="hljs-variable">@devstack</span>-host <span class="hljs-number">172.24.4.0</span>/<span class="hljs-number">24</span><br></code></pre></td></tr></table></figure>
+
+<p>（其中<code>username</code>和<code>devstack-host</code>是您的 DevStack 主机的用户名和主机名）。</p>
+<p>您现在应该能够创建一个实例并通过 SSH 进入它：</p>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">openstack <span class="hljs-keyword">server</span> ssh test-<span class="hljs-keyword">server</span> <span class="hljs-comment">-- -l cirros</span><br></code></pre></td></tr></table></figure>
+
+<p>（其中<code>test-server</code>是现有实例的名称， <a target="_blank" rel="noopener" href="https://docs.openstack.org/devstack/latest/networking.html#ssh">如前所述</a>）</p>
+<hr>
+<p>你可以使用 <code>openstack server start</code> 命令来启动一个已经存在的虚拟机实例。</p>
+<p>根据你提供的实例列表，虚拟机名称为 <code>t2</code>，它的状态是 <code>SHUTOFF</code>。你可以通过以下命令来启动它：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">openstack server start t2<br></code></pre></td></tr></table></figure>
+
+<p>如果你想启动多个实例，可以用空格分隔多个实例名称或 ID。例如：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">openstack server start t2 another_instance<br></code></pre></td></tr></table></figure>
+
+<p>另外，如果你想查看实例启动状态，可以使用：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">openstack server show t2<br></code></pre></td></tr></table></figure>
+
+<p>如果有任何问题或需要进一步的帮助，随时告诉我！</p>
+<p>要在外部连接 OpenStack 创建的实例，需要完成几个网络配置步骤：</p>
+<ol>
+<li>确保安全组配置正确：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 创建安全组规则，允许 SSH 访问（如果是 Linux 实例）</span><br>openstack security group rule create --protocol tcp --dst-port 22:22 --remote-ip 0.0.0.0/0 default<br><br><span class="hljs-comment"># 如果是 Windows 实例，需要开放 RDP 端口</span><br>openstack security group rule create --protocol tcp --dst-port 3389:3389 --remote-ip 0.0.0.0/0 default<br></code></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>分配浮动 IP：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 创建浮动 IP</span><br>openstack floating ip create external-network<br><br><span class="hljs-comment"># 将浮动 IP 绑定到实例</span><br>openstack server add floating ip INSTANCE_NAME FLOATING_IP<br></code></pre></td></tr></table></figure>
+
+<ol start="3">
+<li>检查网络配置：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 查看实例的网络详情</span><br>openstack server show INSTANCE_NAME<br><br><span class="hljs-comment"># 查看网络列表</span><br>openstack network list<br><br><span class="hljs-comment"># 查看子网列表</span><br>openstack subnet list<br></code></pre></td></tr></table></figure>
+
+<p>主要配置步骤：</p>
+<ol>
+<li>网络配置：</li>
+</ol>
+<ul>
+<li>确保有外部网络（external network）</li>
+<li>创建路由器连接内部网络和外部网络</li>
+<li>配置正确的 CIDR 和网关</li>
+</ul>
+<ol start="2">
+<li>路由器配置：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 创建路由器</span><br>openstack router create ROUTER_NAME<br><br><span class="hljs-comment"># 设置路由器的外部网关</span><br>openstack router <span class="hljs-built_in">set</span> ROUTER_NAME --external-gateway external-network<br><br><span class="hljs-comment"># 将路由器连接到内部网络</span><br>openstack router add subnet ROUTER_NAME INTERNAL_SUBNET<br></code></pre></td></tr></table></figure>
+
+<ol start="3">
+<li>验证连接：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># Linux 实例</span><br>ssh -i private_key.pem user@FLOATING_IP<br><br><span class="hljs-comment"># Windows 实例</span><br><span class="hljs-comment"># 使用远程桌面连接 FLOATING_IP</span><br></code></pre></td></tr></table></figure>
+
+<p>常见问题检查：</p>
+<ol>
+<li>确保安全组规则正确配置</li>
+<li>验证网络拓扑是否正确</li>
+<li>检查路由器配置</li>
+<li>确认浮动 IP 是否正确绑定</li>
+<li>检查实例的网络接口配置</li>
+</ol>
+<p>如果仍然无法连接：</p>
+<ol>
+<li>检查实例内部的网络配置</li>
+<li>验证防火墙规则</li>
+<li>查看 OpenStack 网络服务日志</li>
+<li>确认 IP 转发是否启用</li>
+<li>检查 DNS 配置</li>
+</ol>
+<p>浮动IP（Floating IP）可以理解为公网IP，它允许OpenStack内部的实例能够被外网访问。让我用一个简单的类比来解释：</p>
+<p>想象一个小区（OpenStack环境）：</p>
+<ul>
+<li>内部网络（Private IP）就像小区内部的房间号，只能在小区内部使用</li>
+<li>浮动IP（Floating IP）就像小区的对外门牌号，外部人员可以通过这个找到你</li>
+</ul>
+<p>具体工作原理：</p>
+<ol>
+<li>默认情况下，OpenStack实例只有内部IP：</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs plaintext">实例A: 192.168.1.10 (内部IP，只能在OpenStack内部访问)<br></code></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>分配浮动IP后：</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs plaintext">实例A: <br>- 内部IP: 192.168.1.10<br>- 浮动IP: 203.0.113.101 (可以从外网访问)<br></code></pre></td></tr></table></figure>
+
+<p>配置步骤：</p>
+<ol>
+<li>创建浮动IP：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 从外部网络池中创建一个浮动IP</span><br>openstack floating ip create external-network<br></code></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>查看可用的浮动IP：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">openstack floating ip list<br></code></pre></td></tr></table></figure>
+
+<ol start="3">
+<li>分配给实例：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 方式1：通过命令行</span><br>openstack server add floating ip 实例名称 浮动IP地址<br><br><span class="hljs-comment"># 方式2：通过Web界面</span><br><span class="hljs-comment"># Instances -&gt; Actions -&gt; Associate Floating IP</span><br></code></pre></td></tr></table></figure>
+
+<p>使用场景：</p>
+<ol>
+<li>需要从外网SSH连接到实例</li>
+<li>实例需要提供对外服务（如网站）</li>
+<li>实例需要访问外网资源</li>
+</ol>
+<p>注意事项：</p>
+<ol>
+<li>浮动IP是有限资源，用完后需要及时释放</li>
+<li>一个实例可以有多个浮动IP</li>
+<li>浮动IP可以在实例之间迁移</li>
+<li>需要配置正确的安全组规则才能访问</li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>2024-12-09 openstack ssh连接</div>
+      <div>http://example.com/2024/12/09/2024-12-09 openstack ssh连接/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年12月9日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2024/12/09/2024-12-08%20mutilpass%E9%83%A8%E7%BD%B2openstack/" title="2024-12-09 mutilpass部署openstack devstack形式">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">2024-12-09 mutilpass部署openstack devstack形式</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/12/09/2024-12-08%20devstack/" title="2024-12-08 devstack">
+                        <span class="hidden-mobile">2024-12-08 devstack</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

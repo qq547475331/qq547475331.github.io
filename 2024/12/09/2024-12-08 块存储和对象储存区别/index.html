@@ -1,0 +1,750 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="块存储和对象存储是两种常见的存储方式，它们在存储模型、使用场景、性能和管理方式等方面存在显著差异。理解这两者的区别，有助于选择适合的存储解决方案来满足特定应用和业务需求。 1. 存储模型的区别 块存储（Block Storage）： 数据存储方式：块存储将数据分割为固定大小的块（通常为 512 字节或 4 KB）。每个块都有一个唯一的地址，计算机可以单独访问这些块。 如何工作：块存储像硬盘一样提供">
+<meta property="og:type" content="article">
+<meta property="og:title" content="guichen&#39;s blog">
+<meta property="og:url" content="http://example.com/2024/12/09/2024-12-08%20%E5%9D%97%E5%AD%98%E5%82%A8%E5%92%8C%E5%AF%B9%E8%B1%A1%E5%82%A8%E5%AD%98%E5%8C%BA%E5%88%AB/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="块存储和对象存储是两种常见的存储方式，它们在存储模型、使用场景、性能和管理方式等方面存在显著差异。理解这两者的区别，有助于选择适合的存储解决方案来满足特定应用和业务需求。 1. 存储模型的区别 块存储（Block Storage）： 数据存储方式：块存储将数据分割为固定大小的块（通常为 512 字节或 4 KB）。每个块都有一个唯一的地址，计算机可以单独访问这些块。 如何工作：块存储像硬盘一样提供">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2024-12-08T23:24:09.178Z">
+<meta property="article:modified_time" content="2024-12-08T23:24:09.179Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text=""></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-12-09 07:24" pubdate>
+          2024年12月9日 早上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.8k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          16 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header"></h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p><strong>块存储</strong>和<strong>对象存储</strong>是两种常见的存储方式，它们在存储模型、使用场景、性能和管理方式等方面存在显著差异。理解这两者的区别，有助于选择适合的存储解决方案来满足特定应用和业务需求。</p>
+<h3 id="1-存储模型的区别"><a href="#1-存储模型的区别" class="headerlink" title="1. 存储模型的区别"></a>1. <strong>存储模型的区别</strong></h3><ul>
+<li><strong>块存储（Block Storage）</strong>：<ul>
+<li><strong>数据存储方式</strong>：块存储将数据分割为固定大小的块（通常为 512 字节或 4 KB）。每个块都有一个唯一的地址，计算机可以单独访问这些块。</li>
+<li><strong>如何工作</strong>：块存储像硬盘一样提供一个裸存储卷，应用程序和操作系统可以直接访问这些块。通常用作操作系统的磁盘、数据库存储等。</li>
+<li><strong>使用方式</strong>：通常用于需要高速访问和低延迟的应用场景，如数据库、高性能应用和虚拟机存储等。</li>
+</ul>
+</li>
+<li><strong>对象存储（Object Storage）</strong>：<ul>
+<li><strong>数据存储方式</strong>：对象存储是将数据以“对象”的形式存储，每个对象由数据、元数据和唯一的标识符（对象ID）组成。对象存储是一个无层次、扁平的存储系统，不像文件系统那样有目录结构。</li>
+<li><strong>如何工作</strong>：对象存储通过 RESTful API（如 Amazon S3 API）来访问数据，数据以对象形式存储并通过唯一的 URL 进行检索。每个对象通常是一个文件（如图片、视频、文档等），可以是任意大小。</li>
+<li><strong>使用方式</strong>：适用于大量的非结构化数据存储，如备份、日志存储、大数据存储、网站文件存储等。</li>
+</ul>
+</li>
+</ul>
+<h3 id="2-性能和可扩展性"><a href="#2-性能和可扩展性" class="headerlink" title="2. 性能和可扩展性"></a>2. <strong>性能和可扩展性</strong></h3><ul>
+<li><p>块存储</p>
+<p>：</p>
+<ul>
+<li><strong>性能</strong>：块存储通常提供较低的延迟和较高的吞吐量，因为它直接与操作系统交互，适合需要频繁、快速读取和写入操作的应用（如数据库、高性能计算、虚拟机等）。</li>
+<li><strong>可扩展性</strong>：扩展块存储通常需要通过增加磁盘或者在存储阵列中增加更多的存储单元来实现。扩展时可能需要手动干预或配置。</li>
+</ul>
+</li>
+<li><p>对象存储</p>
+<p>：</p>
+<ul>
+<li><strong>性能</strong>：对象存储的性能通常不如块存储，因为它是基于 HTTP 协议的 RESTful API 来进行访问，因此延迟会相对较高。不过，适合存储大规模的数据并进行低频访问（如备份、归档等）。</li>
+<li><strong>可扩展性</strong>：对象存储天然具备高可扩展性，能够轻松处理 PB 级别的存储需求。它通过分布式架构和数据冗余技术，自动在多个节点之间扩展存储空间，具有更好的横向扩展性。</li>
+</ul>
+</li>
+</ul>
+<h3 id="3-数据访问方式"><a href="#3-数据访问方式" class="headerlink" title="3. 数据访问方式"></a>3. <strong>数据访问方式</strong></h3><ul>
+<li><strong>块存储</strong>：<ul>
+<li><strong>访问方式</strong>：可以通过操作系统的文件系统直接访问和管理块存储，支持传统的文件系统结构（如 NTFS、EXT4、XFS 等），操作系统对块存储提供低级的读写操作。</li>
+<li><strong>适用场景</strong>：适合对存储进行频繁随机读写的应用，比如数据库、虚拟化环境中的虚拟机磁盘等。</li>
+</ul>
+</li>
+<li><strong>对象存储</strong>：<ul>
+<li><strong>访问方式</strong>：对象存储通过 API（如 RESTful API）进行访问，支持通过 Web 请求获取对象数据。数据不需要通过操作系统文件系统进行访问，而是通过唯一的 URL 地址或对象键来检索。</li>
+<li><strong>适用场景</strong>：适合存储大量非结构化数据，如视频、图片、音频、备份数据、日志文件、静态网页内容等。</li>
+</ul>
+</li>
+</ul>
+<h3 id="4-管理和操作"><a href="#4-管理和操作" class="headerlink" title="4. 管理和操作"></a>4. <strong>管理和操作</strong></h3><ul>
+<li><strong>块存储</strong>：<ul>
+<li><strong>管理方式</strong>：块存储的管理通常更复杂，特别是在大规模部署时。你需要分配、格式化和挂载每个磁盘，进行数据备份、恢复等操作。</li>
+<li><strong>优点</strong>：高性能，支持对文件系统、数据库等的直接管理。</li>
+<li><strong>缺点</strong>：管理开销较大，扩展时可能较为复杂，需要手动干预或配置。</li>
+</ul>
+</li>
+<li><strong>对象存储</strong>：<ul>
+<li><strong>管理方式</strong>：对象存储的管理相对简单，存储的对象通过唯一标识符（如对象ID）进行访问，自动管理冗余和扩展。通过简单的 API 和 Web 控制面板即可完成操作。</li>
+<li><strong>优点</strong>：易于扩展、管理和访问，适合存储大规模、非结构化的数据。</li>
+<li><strong>缺点</strong>：不适合低延迟或高频率随机读写操作，因为访问是基于 HTTP 协议，且没有传统文件系统的目录结构。</li>
+</ul>
+</li>
+</ul>
+<h3 id="5-常见使用场景"><a href="#5-常见使用场景" class="headerlink" title="5. 常见使用场景"></a>5. <strong>常见使用场景</strong></h3><ul>
+<li><strong>块存储</strong>：<ul>
+<li><strong>数据库存储</strong>：块存储适用于需要高 I&#x2F;O 性能的数据库应用，如关系型数据库（MySQL、PostgreSQL）或 NoSQL 数据库（MongoDB、Cassandra）。</li>
+<li><strong>虚拟化</strong>：虚拟机存储虚拟硬盘（如 VMware 或 KVM）使用块存储。</li>
+<li><strong>高性能应用</strong>：需要快速数据访问的高性能计算（HPC）应用、交易系统等。</li>
+</ul>
+</li>
+<li><strong>对象存储</strong>：<ul>
+<li><strong>大数据存储</strong>：存储海量的非结构化数据，如视频、音频、日志文件、图像等。</li>
+<li><strong>备份与归档</strong>：适合大规模备份和长期存储，很多公司将对象存储用于云备份解决方案。</li>
+<li><strong>内容分发网络（CDN）</strong>：将静态网站内容、视频流等分发到全球各地的节点，利用对象存储优化分发速度。</li>
+<li><strong>静态网页存储</strong>：存储 HTML 文件、图片和其他静态资源。</li>
+</ul>
+</li>
+</ul>
+<h3 id="6-冗余与容错机制"><a href="#6-冗余与容错机制" class="headerlink" title="6. 冗余与容错机制"></a>6. <strong>冗余与容错机制</strong></h3><ul>
+<li><strong>块存储</strong>：<ul>
+<li><strong>冗余</strong>：块存储的冗余通常由存储设备（如 SAN、NAS）提供，可以使用 RAID 等技术确保数据的高可用性和冗余。</li>
+<li><strong>容错机制</strong>：块存储支持快速备份和恢复，但如果单台硬盘或存储设备出现故障，可能会影响存储的可用性。</li>
+</ul>
+</li>
+<li><strong>对象存储</strong>：<ul>
+<li><strong>冗余</strong>：对象存储通常内建数据冗余机制，像 AWS S3 等平台自动将数据复制到多个数据中心或节点，以确保数据的持久性和可用性。</li>
+<li><strong>容错机制</strong>：对象存储的高可用性和数据冗余通常通过分布式架构自动处理，具备更强的容错能力。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="7-总结"><a href="#7-总结" class="headerlink" title="7. 总结"></a>7. <strong>总结</strong></h3><table>
+<thead>
+<tr>
+<th>特性</th>
+<th>块存储 (Block Storage)</th>
+<th>对象存储 (Object Storage)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>存储结构</strong></td>
+<td>数据被分割成固定大小的块</td>
+<td>数据以对象（包括数据、元数据和ID）存储</td>
+</tr>
+<tr>
+<td><strong>访问方式</strong></td>
+<td>通过操作系统文件系统直接访问</td>
+<td>通过 API（如 RESTful API）访问</td>
+</tr>
+<tr>
+<td><strong>性能</strong></td>
+<td>适合高性能、低延迟的应用</td>
+<td>适合大规模、非结构化数据的存储和归档</td>
+</tr>
+<tr>
+<td><strong>管理复杂性</strong></td>
+<td>需要手动管理和配置，管理较为复杂</td>
+<td>管理简便，自动化较强</td>
+</tr>
+<tr>
+<td><strong>扩展性</strong></td>
+<td>扩展较为复杂，可能需要人工干预</td>
+<td>极高的扩展性，适合大规模存储</td>
+</tr>
+<tr>
+<td><strong>典型应用场景</strong></td>
+<td>数据库、虚拟机、性能要求高的应用</td>
+<td>大数据存储、备份、归档、静态内容存储</td>
+</tr>
+<tr>
+<td><strong>冗余与容错</strong></td>
+<td>由存储设备（如 RAID）提供冗余</td>
+<td>自动数据冗余和容错机制</td>
+</tr>
+</tbody></table>
+<p>总的来说，<strong>块存储</strong>适用于需要频繁随机读写和高性能的应用，如数据库和虚拟机磁盘；而<strong>对象存储</strong>适用于大规模的非结构化数据存储，如备份、归档、媒体内容分发等。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div></div>
+      <div>http://example.com/2024/12/09/2024-12-08 块存储和对象储存区别/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年12月9日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2024/12/09/2024-12-08%20openstack%E5%92%8Ckubernetes%E5%8C%BA%E5%88%AB/" title="">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile"></span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/12/05/2024-2-22%20k8s%E6%9E%B6%E6%9E%84%E5%B8%88%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8/" title="2024-2-22 k8s架构师面试大全">
+                        <span class="hidden-mobile">2024-2-22 k8s架构师面试大全</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

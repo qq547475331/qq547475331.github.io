@@ -1,0 +1,852 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="在 macOS 上通过 Multipass 部署 OpenStack 测试环境是一个非常方便的方式，尤其是使用 All-in-One 部署方式来简化环境配置。All-in-One 部署将 OpenStack 的所有核心组件（如 Nova、Keystone、Glance、Cinder、Neutron 等）部署在一台虚拟机上，适合用于测试和开发环境。 使用 Multipass 部署 OpenStack">
+<meta property="og:type" content="article">
+<meta property="og:title" content="2024-12-09 mutilpass部署openstack devstack形式">
+<meta property="og:url" content="http://example.com/2024/12/09/2024-12-08%20mutilpass%E9%83%A8%E7%BD%B2openstack/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="在 macOS 上通过 Multipass 部署 OpenStack 测试环境是一个非常方便的方式，尤其是使用 All-in-One 部署方式来简化环境配置。All-in-One 部署将 OpenStack 的所有核心组件（如 Nova、Keystone、Glance、Cinder、Neutron 等）部署在一台虚拟机上，适合用于测试和开发环境。 使用 Multipass 部署 OpenStack">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20241208082002247.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20241208081930313.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20241208082146901.png">
+<meta property="article:published_time" content="2024-12-08T23:27:21.187Z">
+<meta property="article:modified_time" content="2024-12-08T23:27:21.188Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20241208082002247.png">
+  
+  
+  
+  <title>2024-12-09 mutilpass部署openstack devstack形式 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="2024-12-09 mutilpass部署openstack devstack形式"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-12-09 07:27" pubdate>
+          2024年12月9日 早上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.9k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          25 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">2024-12-09 mutilpass部署openstack devstack形式</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>在 macOS 上通过 <strong>Multipass</strong> 部署 OpenStack 测试环境是一个非常方便的方式，尤其是使用 <strong>All-in-One</strong> 部署方式来简化环境配置。All-in-One 部署将 OpenStack 的所有核心组件（如 Nova、Keystone、Glance、Cinder、Neutron 等）部署在一台虚拟机上，适合用于测试和开发环境。</p>
+<h3 id="使用-Multipass-部署-OpenStack"><a href="#使用-Multipass-部署-OpenStack" class="headerlink" title="使用 Multipass 部署 OpenStack"></a>使用 Multipass 部署 OpenStack</h3><h4 id="1-准备工作："><a href="#1-准备工作：" class="headerlink" title="1. 准备工作："></a>1. <strong>准备工作：</strong></h4><ul>
+<li><strong>安装 Multipass</strong>：确保你已经安装了 Multipass。你可以通过官网（<a target="_blank" rel="noopener" href="https://multipass.run/">Multipass 官方网站</a>）下载并安装。</li>
+<li><strong>安装 Ubuntu 虚拟机</strong>：创建一个 Ubuntu 虚拟机来部署 OpenStack。</li>
+</ul>
+<h4 id="2-创建虚拟机："><a href="#2-创建虚拟机：" class="headerlink" title="2. 创建虚拟机："></a>2. <strong>创建虚拟机：</strong></h4><p>使用 Multipass 创建 Ubuntu 虚拟机时，你可以指定虚拟机的资源配置（如 CPU 核数、内存和硬盘空间）。以下是创建虚拟机的命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">multipass launch --name openstack-vm --cpus 4 --mem 8G --disk 40G 22.04<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><code>--name openstack-vm</code>：虚拟机的名称。</li>
+<li><code>--cpus 4</code>：分配 4 个 CPU 核心。</li>
+<li><code>--mem 8G</code>：分配 8GB 内存。</li>
+<li><code>--disk 40G</code>：分配 40GB 硬盘空间。</li>
+<li><code>20.04</code>：指定使用 Ubuntu 20.04 LTS 版本。</li>
+</ul>
+<p>这将创建一台名为 <code>openstack-vm</code> 的虚拟机，具有 4 核 CPU、8GB 内存和 40GB 硬盘空间。</p>
+<h4 id="3-连接到虚拟机："><a href="#3-连接到虚拟机：" class="headerlink" title="3. 连接到虚拟机："></a>3. <strong>连接到虚拟机：</strong></h4><p>创建虚拟机后，你可以通过以下命令连接到虚拟机的终端：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">multipass shell openstack-vm<br></code></pre></td></tr></table></figure>
+
+<p>进入虚拟机后，你可以开始在里面安装 OpenStack。</p>
+<h4 id="4-在虚拟机中部署-OpenStack："><a href="#4-在虚拟机中部署-OpenStack：" class="headerlink" title="4. 在虚拟机中部署 OpenStack："></a>4. <strong>在虚拟机中部署 OpenStack：</strong></h4><p>有几种方式可以在 Ubuntu 虚拟机中安装 OpenStack：</p>
+<ul>
+<li><strong>使用 DevStack</strong>：这是最常见的开发环境部署工具，适合在单一节点（All-in-One）部署 OpenStack。DevStack 会自动配置所有 OpenStack 组件，并且可以通过简单的配置来启动整个环境。</li>
+<li><strong>使用 Packstack</strong>：这是 Red Hat 开发的脚本工具，适用于 OpenStack 的快速部署。</li>
+</ul>
+<p>下面是通过 DevStack 在虚拟机中部署 OpenStack 的简单步骤：</p>
+<h4 id="5-使用-DevStack-安装-OpenStack"><a href="#5-使用-DevStack-安装-OpenStack" class="headerlink" title="5. 使用 DevStack 安装 OpenStack"></a>5. <strong>使用 DevStack 安装 OpenStack</strong></h4><ol>
+<li><p><strong>更新系统</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">sudo</span> apt update<br><span class="hljs-built_in">sudo</span> apt upgrade -y<br><span class="hljs-built_in">sudo</span> apt install git -y<br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>克隆 DevStack 仓库</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs bash"><br><br>git <span class="hljs-built_in">clone</span> https://opendev.org/openstack/devstack<br><span class="hljs-built_in">cd</span> devstack<br><br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>配置 DevStack</strong>： 你可以使用默认的配置文件，也可以创建一个自定义配置文件。在 <code>devstack</code> 目录下创建一个配置文件 <code>local.conf</code>，例如：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">vim local.conf<br></code></pre></td></tr></table></figure>
+
+<p>配置内容如下（修改为你自己的用户名和密码）：</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs ini"><span class="hljs-section">[[local|localrc]]</span><br><span class="hljs-attr">ADMIN_PASSWORD</span>=yourpassword<br><span class="hljs-attr">DATABASE_PASSWORD</span>=<span class="hljs-variable">$ADMIN_PASSWORD</span><br><span class="hljs-attr">RABBIT_PASSWORD</span>=<span class="hljs-variable">$ADMIN_PASSWORD</span><br><span class="hljs-attr">SERVICE_PASSWORD</span>=<span class="hljs-variable">$ADMIN_PASSWORD</span><br><br><span class="hljs-section">[[local|localrc]]</span><br><span class="hljs-attr">ADMIN_PASSWORD</span>=<span class="hljs-number">1234</span><br><span class="hljs-attr">DATABASE_PASSWORD</span>=<span class="hljs-number">1234</span><br><span class="hljs-attr">RABBIT_PASSWORD</span>=<span class="hljs-number">1234</span><br><span class="hljs-attr">SERVICE_PASSWORD</span>=<span class="hljs-number">1234</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>运行 DevStack 安装 OpenStack</strong>： 运行以下命令来安装 OpenStack：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">./stack.sh<br><br>FORCE=<span class="hljs-built_in">yes</span> ./stack.sh<br></code></pre></td></tr></table></figure>
+
+<p>这个过程会下载和安装所有需要的依赖，并配置 OpenStack 所有组件。安装过程可能需要一些时间。</p>
+</li>
+</ol>
+<p>你遇到的错误信息表明 <code>stack.sh</code> 脚本在执行过程中遇到了一些问题。根据报错信息，可能是以下几个原因导致的：</p>
+<ol>
+<li><strong>权限问题或目录不存在</strong>：<ul>
+<li>错误消息显示 <code>functions-common</code> 脚本试图访问 <code>/opt/stack/logs/error.log</code> 文件时找不到该目录。这通常是由于目标目录没有创建或当前用户没有足够权限导致的。</li>
+</ul>
+</li>
+<li><strong>缺少必要的目录</strong>：<ul>
+<li>OpenStack 的安装脚本会创建一些日志和临时目录。如果这些目录没有正确创建，可能会导致后续操作失败。</li>
+</ul>
+</li>
+</ol>
+<h3 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h3><h4 id="1-创建缺少的目录"><a href="#1-创建缺少的目录" class="headerlink" title="1. 创建缺少的目录"></a>1. <strong>创建缺少的目录</strong></h4><p>尝试手动创建日志目录 <code>/opt/stack/logs</code>，并设置正确的权限：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">sudo</span> <span class="hljs-built_in">mkdir</span> -p /opt/stack/logs<br><span class="hljs-built_in">sudo</span> <span class="hljs-built_in">chown</span> -R ubuntu:ubuntu /opt/stack<br></code></pre></td></tr></table></figure>
+
+<p>这里假设你是以 <code>ubuntu</code> 用户身份运行的（根据错误信息中的 <code>ubuntu@openstack-vm</code>）。</p>
+<h4 id="2-确保脚本具有执行权限"><a href="#2-确保脚本具有执行权限" class="headerlink" title="2. 确保脚本具有执行权限"></a>2. <strong>确保脚本具有执行权限</strong></h4><p>如果是权限问题，确保脚本具有正确的执行权限：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">chmod</span> +x stack.sh<br></code></pre></td></tr></table></figure>
+
+<h4 id="3-使用-FORCE-yes-重新运行脚本"><a href="#3-使用-FORCE-yes-重新运行脚本" class="headerlink" title="3. 使用 FORCE=yes 重新运行脚本"></a>3. <strong>使用 <code>FORCE=yes</code> 重新运行脚本</strong></h4><p>如果你想绕过当前的错误并强制运行安装脚本，可以使用 <code>FORCE=yes</code> 环境变量来继续执行脚本：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">FORCE=<span class="hljs-built_in">yes</span> ./stack.sh<br></code></pre></td></tr></table></figure>
+
+<p>这会强制脚本继续执行，但需要注意，这种方式可能会跳过一些错误检查。</p>
+<h4 id="4-查看更详细的日志"><a href="#4-查看更详细的日志" class="headerlink" title="4. 查看更详细的日志"></a>4. <strong>查看更详细的日志</strong></h4><p>如果问题依旧没有解决，查看脚本日志的详细信息可以帮助找出根本原因。你可以查看 <code>stack.sh</code> 脚本所在目录中的其他日志文件，通常这些文件会有更多的错误信息。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">cat</span> /opt/stack/logs/error.log<br></code></pre></td></tr></table></figure>
+
+<h4 id="5-清理之前的安装并重新开始"><a href="#5-清理之前的安装并重新开始" class="headerlink" title="5. 清理之前的安装并重新开始"></a>5. <strong>清理之前的安装并重新开始</strong></h4><p>如果前面的步骤都没有解决问题，可以尝试清理之前的安装并重新运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">./unstack.sh<br>./clean.sh<br></code></pre></td></tr></table></figure>
+
+<p>然后再尝试重新运行 <code>stack.sh</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">./stack.sh<br></code></pre></td></tr></table></figure>
+
+<h4 id="6-检查依赖和配置"><a href="#6-检查依赖和配置" class="headerlink" title="6. 检查依赖和配置"></a>6. <strong>检查依赖和配置</strong></h4><p>确保系统已安装所有必要的依赖项，特别是网络相关的工具（如 <code>git</code>、<code>python</code> 等），并且你的配置文件（如 <code>local.conf</code>）没有遗漏或配置错误。</p>
+<hr>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><ul>
+<li>检查并创建缺少的目录 <code>/opt/stack/logs</code>。</li>
+<li>确保脚本具有正确的执行权限。</li>
+<li>尝试使用 <code>FORCE=yes</code> 重新运行脚本。</li>
+<li>查看错误日志获取更多信息。</li>
+<li>清理并重新开始安装过程。</li>
+</ul>
+<p>这些步骤应该能帮助你解决安装过程中的问题。</p>
+<h4 id="6-完成安装后访问-OpenStack："><a href="#6-完成安装后访问-OpenStack：" class="headerlink" title="6. 完成安装后访问 OpenStack："></a>6. <strong>完成安装后访问 OpenStack</strong>：</h4><p>安装完成后，DevStack 会启动一个默认的 Horizon Web 界面，你可以在浏览器中访问并登录。</p>
+<ol>
+<li><p>获取虚拟机的 IP 地址：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">multipass list<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>在浏览器中访问 Horizon Web 界面： 访问 <code>http://&lt;VM-IP&gt;/dashboard</code>，并使用 DevStack 安装过程中设置的 <code>ADMIN_PASSWORD</code> 登录。</p>
+</li>
+</ol>
+<hr>
+<h3 id="推荐配置"><a href="#推荐配置" class="headerlink" title="推荐配置"></a>推荐配置</h3><ul>
+<li><strong>CPU</strong>：4 核 CPU（可以根据需要调整，2 核也能满足基础体验）</li>
+<li><strong>内存</strong>：8GB 内存（OpenStack 虽然可以在 4GB 内存上运行，但 8GB 会带来更好的体验，尤其是在启动虚拟机和运行服务时）</li>
+<li><strong>硬盘空间</strong>：40GB 硬盘（40GB 适合测试环境，如果需要运行多个虚拟机，可能需要更多存储空间）</li>
+</ul>
+<h3 id="总结-1"><a href="#总结-1" class="headerlink" title="总结"></a>总结</h3><p>通过 Multipass 和 DevStack，你可以轻松在 macOS 上的 Ubuntu 虚拟机中部署一个测试用的 OpenStack 环境。资源配置方面，4 核 CPU、8GB 内存和 40GB 硬盘是一个合适的基础配置，可以支撑 OpenStack 的基础功能和一些虚拟机的运行。如果需要更多的虚拟机或服务，可以根据需求适当调整资源配置。</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs awk"><span class="hljs-regexp">/opt/</span>stack<span class="hljs-regexp">/requirements/u</span>pper-constraints.txt<br><br>zipp<br></code></pre></td></tr></table></figure>
+
+
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20241208082002247.png" srcset="/img/loading.gif" lazyload></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20241208081930313.png" srcset="/img/loading.gif" lazyload alt="image-20241208081930313"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20241208082146901.png" srcset="/img/loading.gif" lazyload alt="image-20241208082146901"></p>
+<p><code>admin-openrc.sh</code> 是一个环境配置文件，它包含了 OpenStack 管理员账户的认证信息，通常在安装和部署 OpenStack 时生成。这个文件用于设置环境变量，使得你可以通过 <code>openstack</code> 命令行工具与 OpenStack 进行交互。</p>
+<h3 id="如何使用-admin-openrc-sh-文件："><a href="#如何使用-admin-openrc-sh-文件：" class="headerlink" title="如何使用 admin-openrc.sh 文件："></a>如何使用 <code>admin-openrc.sh</code> 文件：</h3><ol>
+<li><p><strong>下载 <code>admin-openrc.sh</code> 文件</strong></p>
+<p>如果你从 OpenStack 的 Web 控制面板（Horizon）下载了 <code>admin-openrc.sh</code> 文件，你需要在本地环境中使用它来设置命令行环境。</p>
+<p>通常，你可以在 Horizon 控制面板中找到 <strong>“Download OpenRC file”</strong> 的选项，选择下载 <strong>admin-openrc.sh</strong>，这个文件会包含你 OpenStack 管理员账号的认证信息（如用户名、密码等）。</p>
+</li>
+<li><p><strong>使用 <code>source</code> 命令加载环境变量</strong></p>
+<p>打开终端并定位到 <code>admin-openrc.sh</code> 文件所在的目录，使用 <code>source</code> 命令加载该文件，这样文件中定义的环境变量就会在当前的 shell 会话中生效。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">source</span> admin-openrc.sh<br></code></pre></td></tr></table></figure>
+
+<p>执行后，它会要求你输入 OpenStack 管理员账号的密码。输入密码后，环境变量会设置好，你就可以使用 OpenStack 的命令行工具进行操作了。</p>
+</li>
+<li><p><strong>验证环境变量设置</strong></p>
+<p>加载环境变量后，可以通过 <code>openstack</code> 命令验证是否设置成功。例如，查看当前项目的信息：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">openstack project list<br></code></pre></td></tr></table></figure>
+
+<p>如果环境变量设置正确，你应该能够看到当前 OpenStack 环境中的所有项目。</p>
+</li>
+<li><p><strong>使用 <code>openstack</code> 命令行工具</strong></p>
+<p>加载了环境变量之后，你就可以开始使用 OpenStack 的命令行工具（如 <code>openstack server create</code>，<code>openstack image list</code>，<code>openstack flavor list</code> 等）来管理你的 OpenStack 实例和资源。</p>
+<p>示例：</p>
+<ul>
+<li><p>查看所有镜像：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">openstack image list<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>查看所有实例：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">openstack server list<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>创建一个新的实例：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">openstack server create --image &lt;image_name&gt; --flavor &lt;flavor_name&gt; --network &lt;network_name&gt; --key-name &lt;key_name&gt; &lt;server_name&gt;<br></code></pre></td></tr></table></figure></li>
+</ul>
+</li>
+</ol>
+<h3 id="示例步骤：如何使用-admin-openrc-sh-创建实例"><a href="#示例步骤：如何使用-admin-openrc-sh-创建实例" class="headerlink" title="示例步骤：如何使用 admin-openrc.sh 创建实例"></a>示例步骤：如何使用 <code>admin-openrc.sh</code> 创建实例</h3><ol>
+<li><p><strong>加载 OpenRC 文件</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">source</span> admin-openrc.sh<br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>查看可用的镜像</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">openstack image list<br></code></pre></td></tr></table></figure>
+
+<p>你会看到类似下面的输出：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs bash">+--------------------------------------+------------------+--------+<br>| ID                                   | Name             | Status |<br>+--------------------------------------+------------------+--------+<br>| 1234abcd-5678-efgh-ijkl-mnopqrstuv  | ubuntu-22.04     | active |<br>| abcd1234-5678-efgh-ijkl-mnopqrstuv  | centos-7         | active |<br>+--------------------------------------+------------------+--------+<br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>查看可用的 flavor</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">openstack flavor list<br></code></pre></td></tr></table></figure>
+
+<p>你会看到如下输出：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs bash">+---------+--------+------+------+<br>| ID      | Name   | RAM  | Disk |<br>+---------+--------+------+------+<br>| 1       | m1.small | 2048 | 20   |<br>| 2       | m1.medium | 4096 | 40   |<br>+---------+--------+------+------+<br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>创建实例</strong>：</p>
+<p>假设你想使用 <code>ubuntu-22.04</code> 镜像，<code>m1.small</code> 规格，并连接到名为 <code>private</code> 的网络，命令如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">openstack server create --image ubuntu-22.04 --flavor m1.small --network private --key-name my-key test-instance<br></code></pre></td></tr></table></figure>
+
+<p>这会创建一个名为 <code>test-instance</code> 的实例。</p>
+</li>
+<li><p><strong>查看实例状态</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">openstack server list<br></code></pre></td></tr></table></figure>
+
+<p>你会看到实例的状态变为 <code>ACTIVE</code>，并且可以访问它。</p>
+</li>
+</ol>
+<hr>
+<h3 id="总结-2"><a href="#总结-2" class="headerlink" title="总结"></a>总结</h3><ul>
+<li><code>admin-openrc.sh</code> 是一个包含 OpenStack 管理员认证信息的文件，加载它之后，你可以使用 OpenStack 的命令行工具来管理资源。</li>
+<li>使用 <code>source admin-openrc.sh</code> 加载文件后，你可以创建实例、查看镜像、管理网络等。</li>
+<li>加载后，你就可以使用 <code>openstack</code> 命令行工具执行各种操作，例如创建实例、查看网络、配置安全组等。</li>
+</ul>
+<p>通过这些步骤，你可以成功使用 OpenStack 的 CLI 创建实例并管理资源。</p>
+<figure class="highlight gherkin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs gherkin">openstack compute service list<br><br><br>ubuntu<span class="hljs-meta">@openstack-vm:~$</span> openstack compute service list<br>+--------------------------------------+----------------+--------------+----------+---------+-------+----------------------------+<br>|<span class="hljs-string"> ID                                   </span>|<span class="hljs-string"> Binary         </span>|<span class="hljs-string"> Host         </span>|<span class="hljs-string"> Zone     </span>|<span class="hljs-string"> Status  </span>|<span class="hljs-string"> State </span>|<span class="hljs-string"> Updated At                 </span>|<br>+--------------------------------------+----------------+--------------+----------+---------+-------+----------------------------+<br>|<span class="hljs-string"> 0aab74ff-7591-4f21-9d1e-eafc61e1a76f </span>|<span class="hljs-string"> nova-scheduler </span>|<span class="hljs-string"> openstack-vm </span>|<span class="hljs-string"> internal </span>|<span class="hljs-string"> enabled </span>|<span class="hljs-string"> up    </span>|<span class="hljs-string"> 2024-12-08T22:40:48.000000 </span>|<br>|<span class="hljs-string"> c2a831c6-6a29-4222-aa46-a6241de24d4f </span>|<span class="hljs-string"> nova-conductor </span>|<span class="hljs-string"> openstack-vm </span>|<span class="hljs-string"> internal </span>|<span class="hljs-string"> enabled </span>|<span class="hljs-string"> up    </span>|<span class="hljs-string"> 2024-12-08T22:40:58.000000 </span>|<br>|<span class="hljs-string"> ff2187dc-c994-44a2-92e3-db4be37f1005 </span>|<span class="hljs-string"> nova-conductor </span>|<span class="hljs-string"> openstack-vm </span>|<span class="hljs-string"> internal </span>|<span class="hljs-string"> enabled </span>|<span class="hljs-string"> up    </span>|<span class="hljs-string"> 2024-12-08T22:41:21.000000 </span>|<br>|<span class="hljs-string"> 6d0341c1-bacb-409e-8628-61e870bb83ac </span>|<span class="hljs-string"> nova-compute   </span>|<span class="hljs-string"> openstack-vm </span>|<span class="hljs-string"> nova     </span>|<span class="hljs-string"> enabled </span>|<span class="hljs-string"> up    </span>|<span class="hljs-string"> 2024-12-08T22:41:16.000000 </span>|<br>+--------------------------------------+----------------+--------------+----------+---------+-------+----------------------------+<br>ubuntu<span class="hljs-meta">@openstack-vm:~$</span><br></code></pre></td></tr></table></figure>
+
+<p>在 DevStack 环境中重启 Nova 服务有几种方式：</p>
+<ol>
+<li><p>使用 <code>systemctl</code> 命令（如果是 systemd 管理的服务）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 重启所有 nova 相关服务</span><br><span class="hljs-built_in">sudo</span> systemctl restart devstack@n-*<br><br><span class="hljs-comment"># 重启具体服务</span><br><span class="hljs-built_in">sudo</span> systemctl restart devstack@n-api.service<br><span class="hljs-built_in">sudo</span> systemctl restart devstack@n-cpu.service<br><span class="hljs-built_in">sudo</span> systemctl restart devstack@n-cond.service<br><span class="hljs-built_in">sudo</span> systemctl restart devstack@n-sch.service<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>使用 DevStack 自带的脚本：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 进入 devstack 目录</span><br><span class="hljs-built_in">cd</span> /opt/stack/devstack<br><br><span class="hljs-comment"># 重启所有服务</span><br>./unstack.sh<br>./stack.sh<br><br><span class="hljs-comment"># 或者使用 rejoin-stack.sh</span><br>./rejoin-stack.sh<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>使用 screen 会话方式：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 查看所有 screen 会话</span><br>screen -<span class="hljs-built_in">ls</span><br><br><span class="hljs-comment"># 重新连接到 nova 相关的 screen</span><br>screen -r stack<br><span class="hljs-comment"># 按 Ctrl-A + &quot; 切换到需要的窗口（n-api, n-cpu 等）</span><br><span class="hljs-comment"># 按 Ctrl-C 停止服务</span><br><span class="hljs-comment"># 重新运行服务命令</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p>检查服务状态：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 查看 nova 服务状态</span><br>openstack compute service list<br><br><span class="hljs-comment"># 查看具体服务日志</span><br><span class="hljs-built_in">sudo</span> <span class="hljs-built_in">tail</span> -f /var/log/nova/nova-api.log<br><span class="hljs-built_in">sudo</span> <span class="hljs-built_in">tail</span> -f /var/log/nova/nova-compute.log<br></code></pre></td></tr></table></figure></li>
+</ol>
+<p>如果遇到问题：</p>
+<ol>
+<li><p>检查日志文件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 查看系统日志</span><br><span class="hljs-built_in">sudo</span> journalctl -u devstack@n-*<br><br><span class="hljs-comment"># 查看 nova 日志</span><br><span class="hljs-built_in">cd</span> /var/log/nova/<br><span class="hljs-built_in">tail</span> -f *.<span class="hljs-built_in">log</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p>检查服务配置：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 检查 nova 配置文件</span><br><span class="hljs-built_in">cat</span> /etc/nova/nova.conf<br><br><span class="hljs-comment"># 检查服务状态</span><br>openstack compute service list<br>nova service-list<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>常见问题处理：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 清理数据库（谨慎使用）</span><br>mysql -u root -p<br>&gt; use nova;<br>&gt; show tables;<br>&gt; <span class="hljs-built_in">truncate</span> table instances;<br><br><span class="hljs-comment"># 重置 nova 数据库</span><br><span class="hljs-built_in">cd</span> /opt/stack/devstack<br>./unstack.sh<br>mysql -u root -p -e <span class="hljs-string">&quot;drop database nova;&quot;</span><br>./stack.sh<br></code></pre></td></tr></table></figure></li>
+</ol>
+<p>注意事项：</p>
+<ol>
+<li>重启前最好先检查服务状态</li>
+<li>建议查看日志确认是否有错误</li>
+<li>如果单个服务重启失败，可能需要重启相关依赖服务</li>
+<li>重要数据操作前做好备份</li>
+</ol>
+<p>使用 <code>unstack.sh</code> 关闭后再用 <code>stack.sh</code> 重启，实例是否还在取决于几个因素：</p>
+<ol>
+<li>默认情况下：</li>
+</ol>
+<ul>
+<li>实例的数据会保留在数据库中</li>
+<li>实例的状态可能会变为 <code>SHUTOFF</code> 或 <code>ERROR</code></li>
+<li>重启后需要手动启动实例</li>
+</ul>
+<ol start="2">
+<li><p>检查和恢复实例：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 查看实例状态</span><br>openstack server list --all<br><br><span class="hljs-comment"># 启动处于关闭状态的实例</span><br>openstack server start 实例ID<br><br><span class="hljs-comment"># 如果实例状态异常，可以尝试重置状态</span><br>openstack server reset-state --active 实例ID<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>如果想完全清除环境：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 清理所有数据（包括实例）</span><br><span class="hljs-built_in">cd</span> /opt/stack/devstack<br>./clean.sh<br><br><span class="hljs-comment"># 或者清理数据库</span><br>mysql -u root -p<br>&gt; drop database nova;<br>&gt; drop database neutron;<br></code></pre></td></tr></table></figure></li>
+</ol>
+<p>注意事项：</p>
+<ol>
+<li>建议在关闭前备份重要数据</li>
+<li>如果实例很重要，最好在关闭前做快照</li>
+<li>重启后检查网络和存储是否正常挂载</li>
+<li>可能需要重新配置安全组和浮动IP</li>
+</ol>
+<p>最佳实践：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 关闭前</span><br>openstack server list --all  <span class="hljs-comment"># 记录实例信息</span><br>openstack server stop 实例ID  <span class="hljs-comment"># 优雅关闭实例</span><br><br><span class="hljs-comment"># 关闭 devstack</span><br>./unstack.sh<br><br><span class="hljs-comment"># 重启后</span><br>./stack.sh<br>openstack server start 实例ID  <span class="hljs-comment"># 启动实例</span><br></code></pre></td></tr></table></figure>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>2024-12-09 mutilpass部署openstack devstack形式</div>
+      <div>http://example.com/2024/12/09/2024-12-08 mutilpass部署openstack/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年12月9日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/12/09/2024-12-09%20openstack%20ssh%E8%BF%9E%E6%8E%A5/" title="2024-12-09 openstack ssh连接">
+                        <span class="hidden-mobile">2024-12-09 openstack ssh连接</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
