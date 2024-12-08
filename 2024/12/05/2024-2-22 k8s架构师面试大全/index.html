@@ -1,157 +1,293 @@
-<!DOCTYPE html><html lang="en" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>2024-2-22 k8s架构师面试大全 | Hexo</title><meta name="author" content="John Doe"><meta name="copyright" content="John Doe"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="一、Kubernetes 基础知识面试题10 道面试题 1、什么是 Kubernetes？ Kubernetes 是一个开源容器管理工具，负责容器部署，容器扩缩容以及负载平衡。它提供了出色的社区，并与所有云提供商合作。因此，我们可以说 Kubernetes 不是一个容器化平台，而是一个多容器管理解决方案。2、 Kubernetes 与 docker 什么关系？ Docker 提供容器的生命周期管理">
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="一、Kubernetes 基础知识面试题10 道面试题 1、什么是 Kubernetes？ Kubernetes 是一个开源容器管理工具，负责容器部署，容器扩缩容以及负载平衡。它提供了出色的社区，并与所有云提供商合作。因此，我们可以说 Kubernetes 不是一个容器化平台，而是一个多容器管理解决方案。2、 Kubernetes 与 docker 什么关系？ Docker 提供容器的生命周期管理">
 <meta property="og:type" content="article">
 <meta property="og:title" content="2024-2-22 k8s架构师面试大全">
 <meta property="og:url" content="http://example.com/2024/12/05/2024-2-22%20k8s%E6%9E%B6%E6%9E%84%E5%B8%88%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8/index.html">
-<meta property="og:site_name" content="Hexo">
+<meta property="og:site_name" content="guichen&#39;s blog">
 <meta property="og:description" content="一、Kubernetes 基础知识面试题10 道面试题 1、什么是 Kubernetes？ Kubernetes 是一个开源容器管理工具，负责容器部署，容器扩缩容以及负载平衡。它提供了出色的社区，并与所有云提供商合作。因此，我们可以说 Kubernetes 不是一个容器化平台，而是一个多容器管理解决方案。2、 Kubernetes 与 docker 什么关系？ Docker 提供容器的生命周期管理">
-<meta property="og:locale" content="en_US">
-<meta property="og:image" content="http://example.com/img/butterfly-icon.png">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221059641.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221059626.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221100911.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221100300.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221101104.png">
 <meta property="article:published_time" content="2024-12-04T16:31:06.534Z">
 <meta property="article:modified_time" content="2024-12-04T16:31:06.534Z">
-<meta property="article:author" content="John Doe">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://example.com/img/butterfly-icon.png"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="http://example.com/2024/12/05/2024-2-22%20k8s%E6%9E%B6%E6%9E%84%E5%B8%88%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><script>
-    (() => {
-      
-    const saveToLocal = {
-      set: (key, value, ttl) => {
-        if (!ttl) return
-        const expiry = Date.now() + ttl * 86400000
-        localStorage.setItem(key, JSON.stringify({ value, expiry }))
-      },
-      get: key => {
-        const itemStr = localStorage.getItem(key)
-        if (!itemStr) return undefined
-        const { value, expiry } = JSON.parse(itemStr)
-        if (Date.now() > expiry) {
-          localStorage.removeItem(key)
-          return undefined
-        }
-        return value
-      }
-    }
-
-    window.btf = {
-      saveToLocal,
-      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
-        const script = document.createElement('script')
-        script.src = url
-        script.async = true
-        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
-        script.onload = script.onreadystatechange = () => {
-          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
-        }
-        script.onerror = reject
-        document.head.appendChild(script)
-      }),
-      getCSS: (url, id) => new Promise((resolve, reject) => {
-        const link = document.createElement('link')
-        link.rel = 'stylesheet'
-        link.href = url
-        if (id) link.id = id
-        link.onload = link.onreadystatechange = () => {
-          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
-        }
-        link.onerror = reject
-        document.head.appendChild(link)
-      }),
-      addGlobalFn: (key, fn, name = false, parent = window) => {
-        if (!false && key.startsWith('pjax')) return
-        const globalFn = parent.globalFn || {}
-        globalFn[key] = globalFn[key] || {}
-        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
-        parent.globalFn = globalFn
-      }
-    }
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221059641.png">
   
-      
-      const activateDarkMode = () => {
-        document.documentElement.setAttribute('data-theme', 'dark')
-        if (document.querySelector('meta[name="theme-color"]') !== null) {
-          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
-        }
-      }
-      const activateLightMode = () => {
-        document.documentElement.setAttribute('data-theme', 'light')
-        if (document.querySelector('meta[name="theme-color"]') !== null) {
-          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
-        }
-      }
+  
+  
+  <title>2024-2-22 k8s架构师面试大全 - guichen&#39;s blog</title>
 
-      btf.activateDarkMode = activateDarkMode
-      btf.activateLightMode = activateLightMode
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
-      const theme = saveToLocal.get('theme')
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
     
-          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Fluid</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
         
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="2024-2-22 k8s架构师面试大全"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-12-05 00:31" pubdate>
+          2024年12月5日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          5.3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          45 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
       
-      const asideStatus = saveToLocal.get('aside-status')
-      if (asideStatus !== undefined) {
-        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
-      }
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
     
       
-    const detectApple = () => {
-      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
-        document.documentElement.classList.add('apple')
-      }
-    }
-    detectApple()
-  
-    })()
-  </script><script>const GLOBAL_CONFIG = {
-  root: '/',
-  algolia: undefined,
-  localSearch: undefined,
-  translate: undefined,
-  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
-  copy: {
-    success: 'Copy Successful',
-    error: 'Copy Failed',
-    noSupport: 'Browser Not Supported'
-  },
-  relativeDate: {
-    homepage: false,
-    post: false
-  },
-  runtime: '',
-  dateSuffix: {
-    just: 'Just now',
-    min: 'minutes ago',
-    hour: 'hours ago',
-    day: 'days ago',
-    month: 'months ago'
-  },
-  copyright: undefined,
-  lightbox: 'null',
-  Snackbar: undefined,
-  infinitegrid: {
-    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
-    buttonText: 'Load More'
-  },
-  isPhotoFigcaption: false,
-  islazyload: false,
-  isAnchor: false,
-  percent: {
-    toc: true,
-    rightside: false,
-  },
-  autoDarkmode: false
-}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
-  title: '2024-2-22 k8s架构师面试大全',
-  isPost: true,
-  isHome: false,
-  isHighlightShrink: false,
-  isToc: true,
-  isShuoshuo: false
-}</script><meta name="generator" content="Hexo 7.3.0"></head><body><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Hexo</span></a><a class="nav-page-title" href="/"><span class="site-name">2024-2-22 k8s架构师面试大全</span></a></span><div id="menus"></div></nav><div id="post-info"><h1 class="post-title">2024-2-22 k8s架构师面试大全</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2024-12-04T16:31:06.534Z" title="Created 2024-12-05 00:31:06">2024-12-05</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2024-12-04T16:31:06.534Z" title="Updated 2024-12-05 00:31:06">2024-12-05</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post Views:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p><strong>一、Kubernetes 基础知识面试题10 道面试题</strong></p>
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">2024-2-22 k8s架构师面试大全</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p><strong>一、Kubernetes 基础知识面试题10 道面试题</strong></p>
 <p><strong>1、什么是 Kubernetes？</strong></p>
 <h5 id="Kubernetes-是一个开源容器管理工具，负责容器部署，容器扩缩容以及负载平衡。它提供了出色的社区，并与所有云提供商合作。因此，我们可以说-Kubernetes-不是一个容器化平台，而是一个多容器管理解决方案。"><a href="#Kubernetes-是一个开源容器管理工具，负责容器部署，容器扩缩容以及负载平衡。它提供了出色的社区，并与所有云提供商合作。因此，我们可以说-Kubernetes-不是一个容器化平台，而是一个多容器管理解决方案。" class="headerlink" title="Kubernetes 是一个开源容器管理工具，负责容器部署，容器扩缩容以及负载平衡。它提供了出色的社区，并与所有云提供商合作。因此，我们可以说 Kubernetes 不是一个容器化平台，而是一个多容器管理解决方案。"></a>Kubernetes 是一个开源容器管理工具，负责容器部署，容器扩缩容以及负载平衡。它提供了出色的社区，并与所有云提供商合作。因此，我们可以说 Kubernetes 不是一个容器化平台，而是一个多容器管理解决方案。</h5><p><strong>2、 Kubernetes 与 docker 什么关系？</strong></p>
 <h5 id="Docker-提供容器的生命周期管理，Docker-镜像构建运行时容器。但是，由于这些单独的容器必须通信，因此使用-Kubernetes。因此，我们说-Docker-构建容器，这些容器通过-Kubernetes-相互通信。因此，可以使用-Kubernetes-手动关联和编排在多个主机上运行的容器。"><a href="#Docker-提供容器的生命周期管理，Docker-镜像构建运行时容器。但是，由于这些单独的容器必须通信，因此使用-Kubernetes。因此，我们说-Docker-构建容器，这些容器通过-Kubernetes-相互通信。因此，可以使用-Kubernetes-手动关联和编排在多个主机上运行的容器。" class="headerlink" title="Docker 提供容器的生命周期管理，Docker 镜像构建运行时容器。但是，由于这些单独的容器必须通信，因此使用 Kubernetes。因此，我们说 Docker 构建容器，这些容器通过 Kubernetes 相互通信。因此，可以使用 Kubernetes 手动关联和编排在多个主机上运行的容器。"></a>Docker 提供容器的生命周期管理，Docker 镜像构建运行时容器。但是，由于这些单独的容器必须通信，因此使用 Kubernetes。因此，我们说 Docker 构建容器，这些容器通过 Kubernetes 相互通信。因此，可以使用 Kubernetes 手动关联和编排在多个主机上运行的容器。</h5><p><strong>3、Kubernetes 与 Docker Swarm 的区别？</strong></p>
-<h5 id="Docker-Swarm-和-Kubernetes-都可以用于类似目的。它们都是容器编排工具。"><a href="#Docker-Swarm-和-Kubernetes-都可以用于类似目的。它们都是容器编排工具。" class="headerlink" title="Docker Swarm 和 Kubernetes 都可以用于类似目的。它们都是容器编排工具。"></a>Docker Swarm 和 Kubernetes 都可以用于类似目的。它们都是容器编排工具。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221059641.png" alt="image-20240222105935530"></p>
+<h5 id="Docker-Swarm-和-Kubernetes-都可以用于类似目的。它们都是容器编排工具。"><a href="#Docker-Swarm-和-Kubernetes-都可以用于类似目的。它们都是容器编排工具。" class="headerlink" title="Docker Swarm 和 Kubernetes 都可以用于类似目的。它们都是容器编排工具。"></a>Docker Swarm 和 Kubernetes 都可以用于类似目的。它们都是容器编排工具。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221059641.png" srcset="/img/loading.gif" lazyload alt="image-20240222105935530"></p>
 <p><strong>4、在主机和容器上部署应用程序有什么区别？</strong></p>
-<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221059626.png" alt="image-20240222105949456"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221059626.png" srcset="/img/loading.gif" lazyload alt="image-20240222105949456"></p>
 <h5 id="上图左侧架构表示在主机上部署应用程序。因此，这种架构将具有操作系统，然后操作系统将具有内核，该内核将在应用程序所需的操作系统上安装各种库。因此，在这种框架中，你可以拥有-n-个应用程序，并且所有应用程序将共享该操作系统中存在的库。"><a href="#上图左侧架构表示在主机上部署应用程序。因此，这种架构将具有操作系统，然后操作系统将具有内核，该内核将在应用程序所需的操作系统上安装各种库。因此，在这种框架中，你可以拥有-n-个应用程序，并且所有应用程序将共享该操作系统中存在的库。" class="headerlink" title="上图左侧架构表示在主机上部署应用程序。因此，这种架构将具有操作系统，然后操作系统将具有内核，该内核将在应用程序所需的操作系统上安装各种库。因此，在这种框架中，你可以拥有 n 个应用程序，并且所有应用程序将共享该操作系统中存在的库。"></a><strong>上图左</strong>侧架构表示在主机上部署应用程序。因此，这种架构将具有操作系统，然后操作系统将具有内核，该内核将在应用程序所需的操作系统上安装各种库。因此，在这种框架中，你可以拥有 n 个应用程序，并且所有应用程序将共享该操作系统中存在的库。</h5><h5 id="上图右侧架构是容器中部署应用程序。这种架构将有一个内核，这是唯一一个在所有应用程序之间唯一共同的东西。各个块基本上是容器化的，并且这些块与其他应用程序隔离。因此，应用程序具有与系统其余部分隔离的必要库和二进制文件，并且不能被任何其他应用程序侵占。"><a href="#上图右侧架构是容器中部署应用程序。这种架构将有一个内核，这是唯一一个在所有应用程序之间唯一共同的东西。各个块基本上是容器化的，并且这些块与其他应用程序隔离。因此，应用程序具有与系统其余部分隔离的必要库和二进制文件，并且不能被任何其他应用程序侵占。" class="headerlink" title="上图右侧架构是容器中部署应用程序。这种架构将有一个内核，这是唯一一个在所有应用程序之间唯一共同的东西。各个块基本上是容器化的，并且这些块与其他应用程序隔离。因此，应用程序具有与系统其余部分隔离的必要库和二进制文件，并且不能被任何其他应用程序侵占。"></a><strong>上图右</strong>侧架构是容器中部署应用程序。这种架构将有一个内核，这是唯一一个在所有应用程序之间唯一共同的东西。各个块基本上是容器化的，并且这些块与其他应用程序隔离。因此，应用程序具有与系统其余部分隔离的必要库和二进制文件，并且不能被任何其他应用程序侵占。</h5><p><strong>5、Kubernetes 如何简化容器化部署？</strong></p>
 <h5 id="跨主机的容器都需要相互通信。因此，要做到这一点，你需要一些能够负载平衡，扩展和监控容器的东西。由于-Kubernetes-与云无关并且可以在任何公共-私有提供商上运行，因此可以简化容器化部署程序。"><a href="#跨主机的容器都需要相互通信。因此，要做到这一点，你需要一些能够负载平衡，扩展和监控容器的东西。由于-Kubernetes-与云无关并且可以在任何公共-私有提供商上运行，因此可以简化容器化部署程序。" class="headerlink" title="跨主机的容器都需要相互通信。因此，要做到这一点，你需要一些能够负载平衡，扩展和监控容器的东西。由于 Kubernetes 与云无关并且可以在任何公共&#x2F;私有提供商上运行，因此可以简化容器化部署程序。"></a>跨主机的容器都需要相互通信。因此，要做到这一点，你需要一些能够负载平衡，扩展和监控容器的东西。由于 Kubernetes 与云无关并且可以在任何公共&#x2F;私有提供商上运行，因此可以简化容器化部署程序。</h5><p><strong>6、什么是 kubectl？</strong></p>
 <h5 id="Kubectl-是一个平台，可以使用该平台将命令传递给集群。因此，它基本上为CLI-提供了针对-Kubernetes-集群运行命令的方法，以及创建和管理-Kubernetes组件的各种方法。"><a href="#Kubectl-是一个平台，可以使用该平台将命令传递给集群。因此，它基本上为CLI-提供了针对-Kubernetes-集群运行命令的方法，以及创建和管理-Kubernetes组件的各种方法。" class="headerlink" title="Kubectl 是一个平台，可以使用该平台将命令传递给集群。因此，它基本上为CLI 提供了针对 Kubernetes 集群运行命令的方法，以及创建和管理 Kubernetes组件的各种方法。"></a>Kubectl 是一个平台，可以使用该平台将命令传递给集群。因此，它基本上为CLI 提供了针对 Kubernetes 集群运行命令的方法，以及创建和管理 Kubernetes组件的各种方法。</h5><p><strong>7、什么是 kubelet？</strong></p>
@@ -159,11 +295,11 @@
 <h5 id="1、etcd-保存了整个集群的状态；"><a href="#1、etcd-保存了整个集群的状态；" class="headerlink" title="1、etcd 保存了整个集群的状态；"></a>1、etcd 保存了整个集群的状态；</h5><h5 id="2、apiserver-提供了资源操作的唯一入口，并提供认证、授权、访问控制、API-注册和发现等机制；"><a href="#2、apiserver-提供了资源操作的唯一入口，并提供认证、授权、访问控制、API-注册和发现等机制；" class="headerlink" title="2、apiserver 提供了资源操作的唯一入口，并提供认证、授权、访问控制、API 注册和发现等机制；"></a>2、apiserver 提供了资源操作的唯一入口，并提供认证、授权、访问控制、API 注册和发现等机制；</h5><h5 id="3、controller-manager-负责维护集群的状态，比如故障检测、自动扩展、滚动更新等；"><a href="#3、controller-manager-负责维护集群的状态，比如故障检测、自动扩展、滚动更新等；" class="headerlink" title="3、controller manager 负责维护集群的状态，比如故障检测、自动扩展、滚动更新等；"></a>3、controller manager 负责维护集群的状态，比如故障检测、自动扩展、滚动更新等；</h5><h5 id="4、scheduler-负责资源的调度，按照预定的调度策略将-Pod-调度到相应的机器上；"><a href="#4、scheduler-负责资源的调度，按照预定的调度策略将-Pod-调度到相应的机器上；" class="headerlink" title="4、scheduler 负责资源的调度，按照预定的调度策略将 Pod 调度到相应的机器上；"></a>4、scheduler 负责资源的调度，按照预定的调度策略将 Pod 调度到相应的机器上；</h5><h5 id="5、kubelet-负责维护容器的生命周期，同时也负责-Volume（CVI）和网络（CNI）的管理；"><a href="#5、kubelet-负责维护容器的生命周期，同时也负责-Volume（CVI）和网络（CNI）的管理；" class="headerlink" title="5、kubelet 负责维护容器的生命周期，同时也负责 Volume（CVI）和网络（CNI）的管理；"></a>5、kubelet 负责维护容器的生命周期，同时也负责 Volume（CVI）和网络（CNI）的管理；</h5><h5 id="6、Container-runtime-负责镜像管理以及-Pod-和容器的真正运行（CRI）；"><a href="#6、Container-runtime-负责镜像管理以及-Pod-和容器的真正运行（CRI）；" class="headerlink" title="6、Container runtime 负责镜像管理以及 Pod 和容器的真正运行（CRI）；"></a>6、Container runtime 负责镜像管理以及 Pod 和容器的真正运行（CRI）；</h5><h5 id="7、kube-proxy-负责为-Service-提供-cluster-内部的服务发现和负载均衡。"><a href="#7、kube-proxy-负责为-Service-提供-cluster-内部的服务发现和负载均衡。" class="headerlink" title="7、kube-proxy 负责为 Service 提供 cluster 内部的服务发现和负载均衡。"></a>7、kube-proxy 负责为 Service 提供 cluster 内部的服务发现和负载均衡。</h5><p><strong>9、Pod SVC Node Container 之间如何相互访问</strong>：</p>
 <h5 id="1、同-Pod-内的容器：同一个-Pod-的容器共享同一个网络命名空间可以直接进行通讯"><a href="#1、同-Pod-内的容器：同一个-Pod-的容器共享同一个网络命名空间可以直接进行通讯" class="headerlink" title="1、同 Pod 内的容器：同一个 Pod 的容器共享同一个网络命名空间可以直接进行通讯"></a>1、同 Pod 内的容器：同一个 Pod 的容器共享同一个网络命名空间可以直接进行通讯</h5><h5 id="2、同-Node-内不同-Pod-的容器：多个-Pod-都关联在同一个-Docker0-网桥上，通过-docker0-网桥完成相互通讯。"><a href="#2、同-Node-内不同-Pod-的容器：多个-Pod-都关联在同一个-Docker0-网桥上，通过-docker0-网桥完成相互通讯。" class="headerlink" title="2、同 Node 内不同 Pod 的容器：多个 Pod 都关联在同一个 Docker0 网桥上，通过 docker0 网桥完成相互通讯。"></a>2、同 Node 内不同 Pod 的容器：多个 Pod 都关联在同一个 Docker0 网桥上，通过 docker0 网桥完成相互通讯。</h5><h5 id="3、不同-Node-内-Pod-的容器：不同-Node-上的-docker0-可能会相同，PodIP-和-docker0-是同网段的，所以需要将-PodIP-和-NodeIP-进行关联且保障唯"><a href="#3、不同-Node-内-Pod-的容器：不同-Node-上的-docker0-可能会相同，PodIP-和-docker0-是同网段的，所以需要将-PodIP-和-NodeIP-进行关联且保障唯" class="headerlink" title="3、不同 Node 内 Pod 的容器：不同 Node 上的 docker0 可能会相同，PodIP 和 docker0 是同网段的，所以需要将 PodIP 和 NodeIP 进行关联且保障唯"></a>3、不同 Node 内 Pod 的容器：不同 Node 上的 docker0 可能会相同，PodIP 和 docker0 是同网段的，所以需要将 PodIP 和 NodeIP 进行关联且保障唯</h5><h5 id="4，不同-Pod-之间的数据通过物理机的端口进行转发即可完成通讯。"><a href="#4，不同-Pod-之间的数据通过物理机的端口进行转发即可完成通讯。" class="headerlink" title="4，不同 Pod 之间的数据通过物理机的端口进行转发即可完成通讯。"></a>4，不同 Pod 之间的数据通过物理机的端口进行转发即可完成通讯。</h5><p><strong>二、Kubernetes 架构面试题10 道面试题</strong></p>
 <p><strong>1、kubernetes 控制节点组件有哪些？</strong></p>
-<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221100911.png" alt="image-20240222110025841"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221100911.png" srcset="/img/loading.gif" lazyload alt="image-20240222110025841"></p>
 <h5 id="Kubernetes-控制节点组件：kube-controller-manager，kube-apiserver，kube-scheduler、Kubernetes"><a href="#Kubernetes-控制节点组件：kube-controller-manager，kube-apiserver，kube-scheduler、Kubernetes" class="headerlink" title="Kubernetes 控制节点组件：kube-controller-manager，kube-apiserver，kube-scheduler、Kubernetes"></a><strong>Kubernetes 控制节点组件：</strong>kube-controller-manager，kube-apiserver，kube-scheduler、Kubernetes</h5><h5 id="工作节点组件：kubelet-和-kube-proxy"><a href="#工作节点组件：kubelet-和-kube-proxy" class="headerlink" title="工作节点组件：kubelet 和 kube-proxy"></a><strong>工作节点组件：</strong>kubelet 和 kube-proxy</h5><p><strong>2、谈谈你对 kube-proxy 的理解？</strong></p>
 <h5 id="kube-proxy-是-Kubernetes-的核心组件，部署在每个-Node-节点上，它是实现Kubernetes-Service-的通信与负载均衡机制的重要组件-kube-proxy-负责为-Pod-创建代理服务，从-apiserver-获取所有-server-信息，并根据-server-信息创建代理服务，实现server-到-Pod-的请求路由和转发，从而实现-K8s-层级的虚拟转发网络。"><a href="#kube-proxy-是-Kubernetes-的核心组件，部署在每个-Node-节点上，它是实现Kubernetes-Service-的通信与负载均衡机制的重要组件-kube-proxy-负责为-Pod-创建代理服务，从-apiserver-获取所有-server-信息，并根据-server-信息创建代理服务，实现server-到-Pod-的请求路由和转发，从而实现-K8s-层级的虚拟转发网络。" class="headerlink" title="kube-proxy 是 Kubernetes 的核心组件，部署在每个 Node 节点上，它是实现Kubernetes Service 的通信与负载均衡机制的重要组件; kube-proxy 负责为 Pod 创建代理服务，从 apiserver 获取所有 server 信息，并根据 server 信息创建代理服务，实现server 到 Pod 的请求路由和转发，从而实现 K8s 层级的虚拟转发网络。"></a>kube-proxy 是 Kubernetes 的核心组件，部署在每个 Node 节点上，它是实现Kubernetes Service 的通信与负载均衡机制的重要组件; kube-proxy 负责为 Pod 创建代理服务，从 apiserver 获取所有 server 信息，并根据 server 信息创建代理服务，实现server 到 Pod 的请求路由和转发，从而实现 K8s 层级的虚拟转发网络。</h5><p><strong>3、kube-apiserver 和 kube-scheduler 的作用是什么？</strong></p>
 <h5 id="kube-apiserver-遵循横向扩展架构，是主节点控制平面的前端。将公开Kubernetes-主节点组件的所有-API，并负责在-Kubernetes-节点和-Kubernetes主组件之间建立通信。"><a href="#kube-apiserver-遵循横向扩展架构，是主节点控制平面的前端。将公开Kubernetes-主节点组件的所有-API，并负责在-Kubernetes-节点和-Kubernetes主组件之间建立通信。" class="headerlink" title="kube -apiserver 遵循横向扩展架构，是主节点控制平面的前端。将公开Kubernetes 主节点组件的所有 API，并负责在 Kubernetes 节点和 Kubernetes主组件之间建立通信。"></a><strong>kube -apiserver</strong> 遵循横向扩展架构，是主节点控制平面的前端。将公开Kubernetes 主节点组件的所有 API，并负责在 Kubernetes 节点和 Kubernetes主组件之间建立通信。</h5><h5 id="kube-scheduler-是调度器，负责根据资源需求选择最合适的节点来运行未调度的-pod，并跟踪资源利用率。它确保不在资源已满的节点上调度-pod。"><a href="#kube-scheduler-是调度器，负责根据资源需求选择最合适的节点来运行未调度的-pod，并跟踪资源利用率。它确保不在资源已满的节点上调度-pod。" class="headerlink" title="kube-scheduler 是调度器，负责根据资源需求选择最合适的节点来运行未调度的 pod，并跟踪资源利用率。它确保不在资源已满的节点上调度 pod。"></a><strong>kube-scheduler</strong> 是调度器，负责根据资源需求选择最合适的节点来运行未调度的 pod，并跟踪资源利用率。它确保不在资源已满的节点上调度 pod。</h5><p><strong>4、你能简要介绍一下 Kubernetes 控制管理器吗？</strong></p>
-<h5 id="Controller-Manager-作为集群内部的管理控制中心，负责集群内的-Node、Pod-副本、服务端点（Endpoint）、命名空间（Namespace）、服务账号（ServiceAccount）、资源定额（ResourceQuota）的管理，当某个-Node-意外宕机时，Controller-Manager-会及时发现并执行自动化修复流程，确保集群始终处于预期的工作状态。"><a href="#Controller-Manager-作为集群内部的管理控制中心，负责集群内的-Node、Pod-副本、服务端点（Endpoint）、命名空间（Namespace）、服务账号（ServiceAccount）、资源定额（ResourceQuota）的管理，当某个-Node-意外宕机时，Controller-Manager-会及时发现并执行自动化修复流程，确保集群始终处于预期的工作状态。" class="headerlink" title="Controller Manager 作为集群内部的管理控制中心，负责集群内的 Node、Pod 副本、服务端点（Endpoint）、命名空间（Namespace）、服务账号（ServiceAccount）、资源定额（ResourceQuota）的管理，当某个 Node 意外宕机时，Controller Manager 会及时发现并执行自动化修复流程，确保集群始终处于预期的工作状态。"></a>Controller Manager 作为集群内部的管理控制中心，负责集群内的 Node、Pod 副本、服务端点（Endpoint）、命名空间（Namespace）、服务账号（ServiceAccount）、资源定额（ResourceQuota）的管理，当某个 Node 意外宕机时，Controller Manager 会及时发现并执行自动化修复流程，确保集群始终处于预期的工作状态。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221100300.png" alt="image-20240222110044243"></p>
+<h5 id="Controller-Manager-作为集群内部的管理控制中心，负责集群内的-Node、Pod-副本、服务端点（Endpoint）、命名空间（Namespace）、服务账号（ServiceAccount）、资源定额（ResourceQuota）的管理，当某个-Node-意外宕机时，Controller-Manager-会及时发现并执行自动化修复流程，确保集群始终处于预期的工作状态。"><a href="#Controller-Manager-作为集群内部的管理控制中心，负责集群内的-Node、Pod-副本、服务端点（Endpoint）、命名空间（Namespace）、服务账号（ServiceAccount）、资源定额（ResourceQuota）的管理，当某个-Node-意外宕机时，Controller-Manager-会及时发现并执行自动化修复流程，确保集群始终处于预期的工作状态。" class="headerlink" title="Controller Manager 作为集群内部的管理控制中心，负责集群内的 Node、Pod 副本、服务端点（Endpoint）、命名空间（Namespace）、服务账号（ServiceAccount）、资源定额（ResourceQuota）的管理，当某个 Node 意外宕机时，Controller Manager 会及时发现并执行自动化修复流程，确保集群始终处于预期的工作状态。"></a>Controller Manager 作为集群内部的管理控制中心，负责集群内的 Node、Pod 副本、服务端点（Endpoint）、命名空间（Namespace）、服务账号（ServiceAccount）、资源定额（ResourceQuota）的管理，当某个 Node 意外宕机时，Controller Manager 会及时发现并执行自动化修复流程，确保集群始终处于预期的工作状态。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221100300.png" srcset="/img/loading.gif" lazyload alt="image-20240222110044243"></p>
 <p><strong>5、Kubernetes 如何简化容器化部署？</strong></p>
 <h5 id="跨主机的容器都需要相互通信。因此，要做到这一点，你需要一些能够负载平衡，扩展和监控容器的东西。由于-Kubernetes-与云无关并且可以在任何公共-私有提供商上运行，因此可以简化容器化部署程序。-1"><a href="#跨主机的容器都需要相互通信。因此，要做到这一点，你需要一些能够负载平衡，扩展和监控容器的东西。由于-Kubernetes-与云无关并且可以在任何公共-私有提供商上运行，因此可以简化容器化部署程序。-1" class="headerlink" title="跨主机的容器都需要相互通信。因此，要做到这一点，你需要一些能够负载平衡，扩展和监控容器的东西。由于 Kubernetes 与云无关并且可以在任何公共&#x2F;私有提供商上运行，因此可以简化容器化部署程序。"></a>跨主机的容器都需要相互通信。因此，要做到这一点，你需要一些能够负载平衡，扩展和监控容器的东西。由于 Kubernetes 与云无关并且可以在任何公共&#x2F;私有提供商上运行，因此可以简化容器化部署程序。</h5><p><strong>6、什么是 ETCD?</strong></p>
 <h5 id="Etcd-是用-Go-编程语言编写的，是一个分布式键值存储，用于协调分布式工作。因此，Etcd-存储-Kubernetes-集群的配置数据，表示在任何给定时间点的集群状态。"><a href="#Etcd-是用-Go-编程语言编写的，是一个分布式键值存储，用于协调分布式工作。因此，Etcd-存储-Kubernetes-集群的配置数据，表示在任何给定时间点的集群状态。" class="headerlink" title="Etcd 是用 Go 编程语言编写的，是一个分布式键值存储，用于协调分布式工作。因此，Etcd 存储 Kubernetes 集群的配置数据，表示在任何给定时间点的集群状态。"></a>Etcd 是用 Go 编程语言编写的，是一个分布式键值存储，用于协调分布式工作。因此，Etcd 存储 Kubernetes 集群的配置数据，表示在任何给定时间点的集群状态。</h5><p><strong>7、什么是 Ingress，它是如何工作的？</strong></p>
@@ -204,7 +340,7 @@
 <h5 id="Ceph-是统一存储系统，支持三种接口："><a href="#Ceph-是统一存储系统，支持三种接口：" class="headerlink" title="Ceph 是统一存储系统，支持三种接口："></a>Ceph 是统一存储系统，支持三种接口：</h5><p><strong>1）、Object：有原生的 API，而且也兼容 Swift 和 S3 的 API</strong></p>
 <p><strong>2）、Block：支持精简配置、快照、克隆</strong></p>
 <p><strong>3）、File：Posix 接口，支持快照</strong></p>
-<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221101104.png" alt="image-20240222110125980"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221101104.png" srcset="/img/loading.gif" lazyload alt="image-20240222110125980"></p>
 <p><strong>Ceph 也是分布式存储系统，它的特点是：</strong></p>
 <h5 id="高扩展性：使用普通-x86-服务器，支持-10-1000-台服务器，支持-TB-到-PB-级的扩展。"><a href="#高扩展性：使用普通-x86-服务器，支持-10-1000-台服务器，支持-TB-到-PB-级的扩展。" class="headerlink" title="高扩展性：使用普通 x86 服务器，支持 10~1000 台服务器，支持 TB 到 PB 级的扩展。"></a><strong>高扩展性：</strong>使用普通 x86 服务器，支持 10~1000 台服务器，支持 TB 到 PB 级的扩展。</h5><h5 id="高可靠性：没有单点故障，多数据副本，自动管理，自动修复。"><a href="#高可靠性：没有单点故障，多数据副本，自动管理，自动修复。" class="headerlink" title="高可靠性：没有单点故障，多数据副本，自动管理，自动修复。"></a><strong>高可靠性：</strong>没有单点故障，多数据副本，自动管理，自动修复。</h5><h5 id="高性能：数据分布均衡，并行化度高。对于-objects-storage-和-block-storage-不需要元数据服务器。"><a href="#高性能：数据分布均衡，并行化度高。对于-objects-storage-和-block-storage-不需要元数据服务器。" class="headerlink" title="高性能：数据分布均衡，并行化度高。对于 objects storage 和 block storage,不需要元数据服务器。"></a><strong>高性能：</strong>数据分布均衡，并行化度高。对于 objects storage 和 block storage,不需要元数据服务器。</h5><p><strong>8、k8s 怎么对接 ceph？</strong></p>
 <h5 id="把-ceph-rbd-或者-cephfs-做成-pvStorageclass-可以动态从-ceph-provisioner-找到-ceph，然后生成-pv"><a href="#把-ceph-rbd-或者-cephfs-做成-pvStorageclass-可以动态从-ceph-provisioner-找到-ceph，然后生成-pv" class="headerlink" title="把 ceph rbd 或者 cephfs 做成 pvStorageclass 可以动态从 ceph provisioner 找到 ceph，然后生成 pv"></a>把 ceph rbd 或者 cephfs 做成 pvStorageclass 可以动态从 ceph provisioner 找到 ceph，然后生成 pv</h5><p><strong>9、k8s 挂载 cephfs 和 ceph rbd 适用场景分析</strong></p>
@@ -218,4 +354,338 @@
 <p><strong>1、VxLAN</strong>：</p>
 <h5 id="1-vxlan-叠加网络模式"><a href="#1-vxlan-叠加网络模式" class="headerlink" title="(1) vxlan 叠加网络模式"></a>(1) vxlan 叠加网络模式</h5><h5 id="2-Directrouting"><a href="#2-Directrouting" class="headerlink" title="(2) Directrouting"></a>(2) Directrouting</h5><p><strong>2、host-gw: Host Gateway</strong></p>
 <h5 id="直接路由模式，不推荐，只能在二层网络中，不支持跨网络，如果有成千上万的-Pod，容易产生广播风暴"><a href="#直接路由模式，不推荐，只能在二层网络中，不支持跨网络，如果有成千上万的-Pod，容易产生广播风暴" class="headerlink" title="#直接路由模式，不推荐，只能在二层网络中，不支持跨网络，如果有成千上万的 Pod，容易产生广播风暴"></a>#直接路由模式，不推荐，只能在二层网络中，不支持跨网络，如果有成千上万的 Pod，容易产生广播风暴</h5><p><strong>3、UDP：一般不用这个模式，性能差</strong></p>
-<h5 id="flannel-方案：需要在每个节点上把发向容器的数据包进行封装后，再用隧道将封装后的数据包发送到运行着目标-Pod-的-node-节点上。目标-node-节点再负责去掉封装，将去除封装的数据包发送到目标-Pod-上。数据通信性能则大受影响"><a href="#flannel-方案：需要在每个节点上把发向容器的数据包进行封装后，再用隧道将封装后的数据包发送到运行着目标-Pod-的-node-节点上。目标-node-节点再负责去掉封装，将去除封装的数据包发送到目标-Pod-上。数据通信性能则大受影响" class="headerlink" title="flannel 方案：需要在每个节点上把发向容器的数据包进行封装后，再用隧道将封装后的数据包发送到运行着目标 Pod 的 node 节点上。目标 node 节点再负责去掉封装，将去除封装的数据包发送到目标 Pod 上。数据通信性能则大受影响"></a>flannel 方案：需要在每个节点上把发向容器的数据包进行封装后，再用隧道将封装后的数据包发送到运行着目标 Pod 的 node 节点上。目标 node 节点再负责去掉封装，将去除封装的数据包发送到目标 Pod 上。数据通信性能则大受影响</h5><h5 id="4、calico-方案：在-k8s-多个网路解决方案中选择了延迟表现最好的-calico-方案，可以设置网络策略适用于大型集群。"><a href="#4、calico-方案：在-k8s-多个网路解决方案中选择了延迟表现最好的-calico-方案，可以设置网络策略适用于大型集群。" class="headerlink" title="4、calico 方案：在 k8s 多个网路解决方案中选择了延迟表现最好的-calico 方案，可以设置网络策略适用于大型集群。"></a><strong>4、calico 方案：</strong>在 k8s 多个网路解决方案中选择了延迟表现最好的-calico 方案，可以设置网络策略适用于大型集群。</h5></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>Author: </span><span class="post-copyright-info"><a href="http://example.com">John Doe</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>Link: </span><span class="post-copyright-info"><a href="http://example.com/2024/12/05/2024-2-22%20k8s%E6%9E%B6%E6%9E%84%E5%B8%88%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8/">http://example.com/2024/12/05/2024-2-22%20k8s%E6%9E%B6%E6%9E%84%E5%B8%88%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>Copyright Notice: </span><span class="post-copyright-info">All articles on this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless otherwise stated.</span></div></div><div class="tag_share"><div class="post-share"><div class="social-share" data-image="/img/butterfly-icon.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width" href="/2024/12/05/2024-8-1%20%E5%B8%B8%E8%A7%81Linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98%EF%BC%8C%E6%89%BE%E5%B7%A5%E4%BD%9C%E7%9A%84%E5%BF%85%E7%9C%8B%EF%BC%81/" title="2024-8-1 linux运维面试题"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">Next</div><div class="info-item-2">2024-8-1 linux运维面试题</div></div><div class="info-2"><div class="info-item-1">下面是一名运维人员求职数十家公司总结的 Linux运维面试题，给大家参考下~ 1、现在给你三百台服务器，你怎么对他们进行管理？ 管理3百台服务器的方式：1）设定跳板机，使用统一账号登录，便于安全与登录的考量。2）使用 salt、ansiable、puppet 进行系统的统一调度与配置的统一管理。3）建立简单的服务器的系统、配置、应用的 cmdb 信息管理。便于查阅每台服务器上的各种信息记录。 2、简述 raid0 raid1 raid5 三种工作模式的工作原理及特点 RAID，可以把硬盘整合成一个大磁盘，还可以在大磁盘上再分区，放数据还有一个大功能，多块盘放在一起可以有冗余（备份）RAID整合方式有很多，常用的：0 1 5 10 RAID 0，可以是一块盘和 N 个盘组合  优点读写快，是 RAID 中最好的 缺点：没有冗余，一块坏了数据就全没有了  RAID 1，只能2块盘，盘的大小可以不一样，以小的为准。  10G+10G只有10G，另一个做备份。它有100%的冗余， 缺点：浪费资源，成本高  RAID 5 ，3块盘，容量计算10...</div></div></div></a></nav></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/butterfly-icon.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">John Doe</div><div class="author-info-description"></div><div class="site-data"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">12</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">0</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">0</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>Announcement</span></div><div class="announcement_content">This is my Blog</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Contents</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-5"><a class="toc-link" href="#Kubernetes-%E6%98%AF%E4%B8%80%E4%B8%AA%E5%BC%80%E6%BA%90%E5%AE%B9%E5%99%A8%E7%AE%A1%E7%90%86%E5%B7%A5%E5%85%B7%EF%BC%8C%E8%B4%9F%E8%B4%A3%E5%AE%B9%E5%99%A8%E9%83%A8%E7%BD%B2%EF%BC%8C%E5%AE%B9%E5%99%A8%E6%89%A9%E7%BC%A9%E5%AE%B9%E4%BB%A5%E5%8F%8A%E8%B4%9F%E8%BD%BD%E5%B9%B3%E8%A1%A1%E3%80%82%E5%AE%83%E6%8F%90%E4%BE%9B%E4%BA%86%E5%87%BA%E8%89%B2%E7%9A%84%E7%A4%BE%E5%8C%BA%EF%BC%8C%E5%B9%B6%E4%B8%8E%E6%89%80%E6%9C%89%E4%BA%91%E6%8F%90%E4%BE%9B%E5%95%86%E5%90%88%E4%BD%9C%E3%80%82%E5%9B%A0%E6%AD%A4%EF%BC%8C%E6%88%91%E4%BB%AC%E5%8F%AF%E4%BB%A5%E8%AF%B4-Kubernetes-%E4%B8%8D%E6%98%AF%E4%B8%80%E4%B8%AA%E5%AE%B9%E5%99%A8%E5%8C%96%E5%B9%B3%E5%8F%B0%EF%BC%8C%E8%80%8C%E6%98%AF%E4%B8%80%E4%B8%AA%E5%A4%9A%E5%AE%B9%E5%99%A8%E7%AE%A1%E7%90%86%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88%E3%80%82"><span class="toc-number">1.</span> <span class="toc-text">Kubernetes 是一个开源容器管理工具，负责容器部署，容器扩缩容以及负载平衡。它提供了出色的社区，并与所有云提供商合作。因此，我们可以说 Kubernetes 不是一个容器化平台，而是一个多容器管理解决方案。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#Docker-%E6%8F%90%E4%BE%9B%E5%AE%B9%E5%99%A8%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E7%AE%A1%E7%90%86%EF%BC%8CDocker-%E9%95%9C%E5%83%8F%E6%9E%84%E5%BB%BA%E8%BF%90%E8%A1%8C%E6%97%B6%E5%AE%B9%E5%99%A8%E3%80%82%E4%BD%86%E6%98%AF%EF%BC%8C%E7%94%B1%E4%BA%8E%E8%BF%99%E4%BA%9B%E5%8D%95%E7%8B%AC%E7%9A%84%E5%AE%B9%E5%99%A8%E5%BF%85%E9%A1%BB%E9%80%9A%E4%BF%A1%EF%BC%8C%E5%9B%A0%E6%AD%A4%E4%BD%BF%E7%94%A8-Kubernetes%E3%80%82%E5%9B%A0%E6%AD%A4%EF%BC%8C%E6%88%91%E4%BB%AC%E8%AF%B4-Docker-%E6%9E%84%E5%BB%BA%E5%AE%B9%E5%99%A8%EF%BC%8C%E8%BF%99%E4%BA%9B%E5%AE%B9%E5%99%A8%E9%80%9A%E8%BF%87-Kubernetes-%E7%9B%B8%E4%BA%92%E9%80%9A%E4%BF%A1%E3%80%82%E5%9B%A0%E6%AD%A4%EF%BC%8C%E5%8F%AF%E4%BB%A5%E4%BD%BF%E7%94%A8-Kubernetes-%E6%89%8B%E5%8A%A8%E5%85%B3%E8%81%94%E5%92%8C%E7%BC%96%E6%8E%92%E5%9C%A8%E5%A4%9A%E4%B8%AA%E4%B8%BB%E6%9C%BA%E4%B8%8A%E8%BF%90%E8%A1%8C%E7%9A%84%E5%AE%B9%E5%99%A8%E3%80%82"><span class="toc-number">2.</span> <span class="toc-text">Docker 提供容器的生命周期管理，Docker 镜像构建运行时容器。但是，由于这些单独的容器必须通信，因此使用 Kubernetes。因此，我们说 Docker 构建容器，这些容器通过 Kubernetes 相互通信。因此，可以使用 Kubernetes 手动关联和编排在多个主机上运行的容器。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#Docker-Swarm-%E5%92%8C-Kubernetes-%E9%83%BD%E5%8F%AF%E4%BB%A5%E7%94%A8%E4%BA%8E%E7%B1%BB%E4%BC%BC%E7%9B%AE%E7%9A%84%E3%80%82%E5%AE%83%E4%BB%AC%E9%83%BD%E6%98%AF%E5%AE%B9%E5%99%A8%E7%BC%96%E6%8E%92%E5%B7%A5%E5%85%B7%E3%80%82"><span class="toc-number">3.</span> <span class="toc-text">Docker Swarm 和 Kubernetes 都可以用于类似目的。它们都是容器编排工具。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E4%B8%8A%E5%9B%BE%E5%B7%A6%E4%BE%A7%E6%9E%B6%E6%9E%84%E8%A1%A8%E7%A4%BA%E5%9C%A8%E4%B8%BB%E6%9C%BA%E4%B8%8A%E9%83%A8%E7%BD%B2%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E3%80%82%E5%9B%A0%E6%AD%A4%EF%BC%8C%E8%BF%99%E7%A7%8D%E6%9E%B6%E6%9E%84%E5%B0%86%E5%85%B7%E6%9C%89%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%EF%BC%8C%E7%84%B6%E5%90%8E%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%B0%86%E5%85%B7%E6%9C%89%E5%86%85%E6%A0%B8%EF%BC%8C%E8%AF%A5%E5%86%85%E6%A0%B8%E5%B0%86%E5%9C%A8%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E6%89%80%E9%9C%80%E7%9A%84%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B8%8A%E5%AE%89%E8%A3%85%E5%90%84%E7%A7%8D%E5%BA%93%E3%80%82%E5%9B%A0%E6%AD%A4%EF%BC%8C%E5%9C%A8%E8%BF%99%E7%A7%8D%E6%A1%86%E6%9E%B6%E4%B8%AD%EF%BC%8C%E4%BD%A0%E5%8F%AF%E4%BB%A5%E6%8B%A5%E6%9C%89-n-%E4%B8%AA%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%EF%BC%8C%E5%B9%B6%E4%B8%94%E6%89%80%E6%9C%89%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E5%B0%86%E5%85%B1%E4%BA%AB%E8%AF%A5%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E4%B8%AD%E5%AD%98%E5%9C%A8%E7%9A%84%E5%BA%93%E3%80%82"><span class="toc-number">4.</span> <span class="toc-text">上图左侧架构表示在主机上部署应用程序。因此，这种架构将具有操作系统，然后操作系统将具有内核，该内核将在应用程序所需的操作系统上安装各种库。因此，在这种框架中，你可以拥有 n 个应用程序，并且所有应用程序将共享该操作系统中存在的库。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E4%B8%8A%E5%9B%BE%E5%8F%B3%E4%BE%A7%E6%9E%B6%E6%9E%84%E6%98%AF%E5%AE%B9%E5%99%A8%E4%B8%AD%E9%83%A8%E7%BD%B2%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E3%80%82%E8%BF%99%E7%A7%8D%E6%9E%B6%E6%9E%84%E5%B0%86%E6%9C%89%E4%B8%80%E4%B8%AA%E5%86%85%E6%A0%B8%EF%BC%8C%E8%BF%99%E6%98%AF%E5%94%AF%E4%B8%80%E4%B8%80%E4%B8%AA%E5%9C%A8%E6%89%80%E6%9C%89%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E4%B9%8B%E9%97%B4%E5%94%AF%E4%B8%80%E5%85%B1%E5%90%8C%E7%9A%84%E4%B8%9C%E8%A5%BF%E3%80%82%E5%90%84%E4%B8%AA%E5%9D%97%E5%9F%BA%E6%9C%AC%E4%B8%8A%E6%98%AF%E5%AE%B9%E5%99%A8%E5%8C%96%E7%9A%84%EF%BC%8C%E5%B9%B6%E4%B8%94%E8%BF%99%E4%BA%9B%E5%9D%97%E4%B8%8E%E5%85%B6%E4%BB%96%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E9%9A%94%E7%A6%BB%E3%80%82%E5%9B%A0%E6%AD%A4%EF%BC%8C%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E5%85%B7%E6%9C%89%E4%B8%8E%E7%B3%BB%E7%BB%9F%E5%85%B6%E4%BD%99%E9%83%A8%E5%88%86%E9%9A%94%E7%A6%BB%E7%9A%84%E5%BF%85%E8%A6%81%E5%BA%93%E5%92%8C%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%96%87%E4%BB%B6%EF%BC%8C%E5%B9%B6%E4%B8%94%E4%B8%8D%E8%83%BD%E8%A2%AB%E4%BB%BB%E4%BD%95%E5%85%B6%E4%BB%96%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E4%BE%B5%E5%8D%A0%E3%80%82"><span class="toc-number">5.</span> <span class="toc-text">上图右侧架构是容器中部署应用程序。这种架构将有一个内核，这是唯一一个在所有应用程序之间唯一共同的东西。各个块基本上是容器化的，并且这些块与其他应用程序隔离。因此，应用程序具有与系统其余部分隔离的必要库和二进制文件，并且不能被任何其他应用程序侵占。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E8%B7%A8%E4%B8%BB%E6%9C%BA%E7%9A%84%E5%AE%B9%E5%99%A8%E9%83%BD%E9%9C%80%E8%A6%81%E7%9B%B8%E4%BA%92%E9%80%9A%E4%BF%A1%E3%80%82%E5%9B%A0%E6%AD%A4%EF%BC%8C%E8%A6%81%E5%81%9A%E5%88%B0%E8%BF%99%E4%B8%80%E7%82%B9%EF%BC%8C%E4%BD%A0%E9%9C%80%E8%A6%81%E4%B8%80%E4%BA%9B%E8%83%BD%E5%A4%9F%E8%B4%9F%E8%BD%BD%E5%B9%B3%E8%A1%A1%EF%BC%8C%E6%89%A9%E5%B1%95%E5%92%8C%E7%9B%91%E6%8E%A7%E5%AE%B9%E5%99%A8%E7%9A%84%E4%B8%9C%E8%A5%BF%E3%80%82%E7%94%B1%E4%BA%8E-Kubernetes-%E4%B8%8E%E4%BA%91%E6%97%A0%E5%85%B3%E5%B9%B6%E4%B8%94%E5%8F%AF%E4%BB%A5%E5%9C%A8%E4%BB%BB%E4%BD%95%E5%85%AC%E5%85%B1-%E7%A7%81%E6%9C%89%E6%8F%90%E4%BE%9B%E5%95%86%E4%B8%8A%E8%BF%90%E8%A1%8C%EF%BC%8C%E5%9B%A0%E6%AD%A4%E5%8F%AF%E4%BB%A5%E7%AE%80%E5%8C%96%E5%AE%B9%E5%99%A8%E5%8C%96%E9%83%A8%E7%BD%B2%E7%A8%8B%E5%BA%8F%E3%80%82"><span class="toc-number">6.</span> <span class="toc-text">跨主机的容器都需要相互通信。因此，要做到这一点，你需要一些能够负载平衡，扩展和监控容器的东西。由于 Kubernetes 与云无关并且可以在任何公共&#x2F;私有提供商上运行，因此可以简化容器化部署程序。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#Kubectl-%E6%98%AF%E4%B8%80%E4%B8%AA%E5%B9%B3%E5%8F%B0%EF%BC%8C%E5%8F%AF%E4%BB%A5%E4%BD%BF%E7%94%A8%E8%AF%A5%E5%B9%B3%E5%8F%B0%E5%B0%86%E5%91%BD%E4%BB%A4%E4%BC%A0%E9%80%92%E7%BB%99%E9%9B%86%E7%BE%A4%E3%80%82%E5%9B%A0%E6%AD%A4%EF%BC%8C%E5%AE%83%E5%9F%BA%E6%9C%AC%E4%B8%8A%E4%B8%BACLI-%E6%8F%90%E4%BE%9B%E4%BA%86%E9%92%88%E5%AF%B9-Kubernetes-%E9%9B%86%E7%BE%A4%E8%BF%90%E8%A1%8C%E5%91%BD%E4%BB%A4%E7%9A%84%E6%96%B9%E6%B3%95%EF%BC%8C%E4%BB%A5%E5%8F%8A%E5%88%9B%E5%BB%BA%E5%92%8C%E7%AE%A1%E7%90%86-Kubernetes%E7%BB%84%E4%BB%B6%E7%9A%84%E5%90%84%E7%A7%8D%E6%96%B9%E6%B3%95%E3%80%82"><span class="toc-number">7.</span> <span class="toc-text">Kubectl 是一个平台，可以使用该平台将命令传递给集群。因此，它基本上为CLI 提供了针对 Kubernetes 集群运行命令的方法，以及创建和管理 Kubernetes组件的各种方法。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E8%BF%99%E6%98%AF%E4%B8%80%E4%B8%AA%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1%EF%BC%8C%E5%AE%83%E5%9C%A8%E6%AF%8F%E4%B8%AA%E8%8A%82%E7%82%B9%E4%B8%8A%E8%BF%90%E8%A1%8C%EF%BC%8C%E5%B9%B6%E4%BD%BF%E4%BB%8E%E6%9C%8D%E5%8A%A1%E5%99%A8%E4%B8%8E%E4%B8%BB%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%80%9A%E4%BF%A1%E3%80%82%E5%9B%A0%E6%AD%A4%EF%BC%8CKubelet-%E5%A4%84%E7%90%86-PodSpec-%E4%B8%AD%E6%8F%90%E4%BE%9B%E7%BB%99%E5%AE%83%E7%9A%84%E5%AE%B9%E5%99%A8%E7%9A%84%E6%8F%8F%E8%BF%B0%EF%BC%8C%E5%B9%B6%E7%A1%AE%E4%BF%9D-PodSpec-%E4%B8%AD%E6%8F%8F%E8%BF%B0%E7%9A%84%E5%AE%B9%E5%99%A8%E8%BF%90%E8%A1%8C%E6%AD%A3%E5%B8%B8%E3%80%82%E5%8F%AF%E4%BB%A5%E5%88%9B%E5%BB%BA-pod%E3%80%81%E5%88%A0%E9%99%A4-pod%E3%80%82"><span class="toc-number">8.</span> <span class="toc-text">这是一个代理服务，它在每个节点上运行，并使从服务器与主服务器通信。因此，Kubelet 处理 PodSpec 中提供给它的容器的描述，并确保 PodSpec 中描述的容器运行正常。可以创建 pod、删除 pod。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#1%E3%80%81etcd-%E4%BF%9D%E5%AD%98%E4%BA%86%E6%95%B4%E4%B8%AA%E9%9B%86%E7%BE%A4%E7%9A%84%E7%8A%B6%E6%80%81%EF%BC%9B"><span class="toc-number">9.</span> <span class="toc-text">1、etcd 保存了整个集群的状态；</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#2%E3%80%81apiserver-%E6%8F%90%E4%BE%9B%E4%BA%86%E8%B5%84%E6%BA%90%E6%93%8D%E4%BD%9C%E7%9A%84%E5%94%AF%E4%B8%80%E5%85%A5%E5%8F%A3%EF%BC%8C%E5%B9%B6%E6%8F%90%E4%BE%9B%E8%AE%A4%E8%AF%81%E3%80%81%E6%8E%88%E6%9D%83%E3%80%81%E8%AE%BF%E9%97%AE%E6%8E%A7%E5%88%B6%E3%80%81API-%E6%B3%A8%E5%86%8C%E5%92%8C%E5%8F%91%E7%8E%B0%E7%AD%89%E6%9C%BA%E5%88%B6%EF%BC%9B"><span class="toc-number">10.</span> <span class="toc-text">2、apiserver 提供了资源操作的唯一入口，并提供认证、授权、访问控制、API 注册和发现等机制；</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#3%E3%80%81controller-manager-%E8%B4%9F%E8%B4%A3%E7%BB%B4%E6%8A%A4%E9%9B%86%E7%BE%A4%E7%9A%84%E7%8A%B6%E6%80%81%EF%BC%8C%E6%AF%94%E5%A6%82%E6%95%85%E9%9A%9C%E6%A3%80%E6%B5%8B%E3%80%81%E8%87%AA%E5%8A%A8%E6%89%A9%E5%B1%95%E3%80%81%E6%BB%9A%E5%8A%A8%E6%9B%B4%E6%96%B0%E7%AD%89%EF%BC%9B"><span class="toc-number">11.</span> <span class="toc-text">3、controller manager 负责维护集群的状态，比如故障检测、自动扩展、滚动更新等；</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#4%E3%80%81scheduler-%E8%B4%9F%E8%B4%A3%E8%B5%84%E6%BA%90%E7%9A%84%E8%B0%83%E5%BA%A6%EF%BC%8C%E6%8C%89%E7%85%A7%E9%A2%84%E5%AE%9A%E7%9A%84%E8%B0%83%E5%BA%A6%E7%AD%96%E7%95%A5%E5%B0%86-Pod-%E8%B0%83%E5%BA%A6%E5%88%B0%E7%9B%B8%E5%BA%94%E7%9A%84%E6%9C%BA%E5%99%A8%E4%B8%8A%EF%BC%9B"><span class="toc-number">12.</span> <span class="toc-text">4、scheduler 负责资源的调度，按照预定的调度策略将 Pod 调度到相应的机器上；</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#5%E3%80%81kubelet-%E8%B4%9F%E8%B4%A3%E7%BB%B4%E6%8A%A4%E5%AE%B9%E5%99%A8%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%EF%BC%8C%E5%90%8C%E6%97%B6%E4%B9%9F%E8%B4%9F%E8%B4%A3-Volume%EF%BC%88CVI%EF%BC%89%E5%92%8C%E7%BD%91%E7%BB%9C%EF%BC%88CNI%EF%BC%89%E7%9A%84%E7%AE%A1%E7%90%86%EF%BC%9B"><span class="toc-number">13.</span> <span class="toc-text">5、kubelet 负责维护容器的生命周期，同时也负责 Volume（CVI）和网络（CNI）的管理；</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#6%E3%80%81Container-runtime-%E8%B4%9F%E8%B4%A3%E9%95%9C%E5%83%8F%E7%AE%A1%E7%90%86%E4%BB%A5%E5%8F%8A-Pod-%E5%92%8C%E5%AE%B9%E5%99%A8%E7%9A%84%E7%9C%9F%E6%AD%A3%E8%BF%90%E8%A1%8C%EF%BC%88CRI%EF%BC%89%EF%BC%9B"><span class="toc-number">14.</span> <span class="toc-text">6、Container runtime 负责镜像管理以及 Pod 和容器的真正运行（CRI）；</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#7%E3%80%81kube-proxy-%E8%B4%9F%E8%B4%A3%E4%B8%BA-Service-%E6%8F%90%E4%BE%9B-cluster-%E5%86%85%E9%83%A8%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0%E5%92%8C%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E3%80%82"><span class="toc-number">15.</span> <span class="toc-text">7、kube-proxy 负责为 Service 提供 cluster 内部的服务发现和负载均衡。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#1%E3%80%81%E5%90%8C-Pod-%E5%86%85%E7%9A%84%E5%AE%B9%E5%99%A8%EF%BC%9A%E5%90%8C%E4%B8%80%E4%B8%AA-Pod-%E7%9A%84%E5%AE%B9%E5%99%A8%E5%85%B1%E4%BA%AB%E5%90%8C%E4%B8%80%E4%B8%AA%E7%BD%91%E7%BB%9C%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4%E5%8F%AF%E4%BB%A5%E7%9B%B4%E6%8E%A5%E8%BF%9B%E8%A1%8C%E9%80%9A%E8%AE%AF"><span class="toc-number">16.</span> <span class="toc-text">1、同 Pod 内的容器：同一个 Pod 的容器共享同一个网络命名空间可以直接进行通讯</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#2%E3%80%81%E5%90%8C-Node-%E5%86%85%E4%B8%8D%E5%90%8C-Pod-%E7%9A%84%E5%AE%B9%E5%99%A8%EF%BC%9A%E5%A4%9A%E4%B8%AA-Pod-%E9%83%BD%E5%85%B3%E8%81%94%E5%9C%A8%E5%90%8C%E4%B8%80%E4%B8%AA-Docker0-%E7%BD%91%E6%A1%A5%E4%B8%8A%EF%BC%8C%E9%80%9A%E8%BF%87-docker0-%E7%BD%91%E6%A1%A5%E5%AE%8C%E6%88%90%E7%9B%B8%E4%BA%92%E9%80%9A%E8%AE%AF%E3%80%82"><span class="toc-number">17.</span> <span class="toc-text">2、同 Node 内不同 Pod 的容器：多个 Pod 都关联在同一个 Docker0 网桥上，通过 docker0 网桥完成相互通讯。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#3%E3%80%81%E4%B8%8D%E5%90%8C-Node-%E5%86%85-Pod-%E7%9A%84%E5%AE%B9%E5%99%A8%EF%BC%9A%E4%B8%8D%E5%90%8C-Node-%E4%B8%8A%E7%9A%84-docker0-%E5%8F%AF%E8%83%BD%E4%BC%9A%E7%9B%B8%E5%90%8C%EF%BC%8CPodIP-%E5%92%8C-docker0-%E6%98%AF%E5%90%8C%E7%BD%91%E6%AE%B5%E7%9A%84%EF%BC%8C%E6%89%80%E4%BB%A5%E9%9C%80%E8%A6%81%E5%B0%86-PodIP-%E5%92%8C-NodeIP-%E8%BF%9B%E8%A1%8C%E5%85%B3%E8%81%94%E4%B8%94%E4%BF%9D%E9%9A%9C%E5%94%AF"><span class="toc-number">18.</span> <span class="toc-text">3、不同 Node 内 Pod 的容器：不同 Node 上的 docker0 可能会相同，PodIP 和 docker0 是同网段的，所以需要将 PodIP 和 NodeIP 进行关联且保障唯</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#4%EF%BC%8C%E4%B8%8D%E5%90%8C-Pod-%E4%B9%8B%E9%97%B4%E7%9A%84%E6%95%B0%E6%8D%AE%E9%80%9A%E8%BF%87%E7%89%A9%E7%90%86%E6%9C%BA%E7%9A%84%E7%AB%AF%E5%8F%A3%E8%BF%9B%E8%A1%8C%E8%BD%AC%E5%8F%91%E5%8D%B3%E5%8F%AF%E5%AE%8C%E6%88%90%E9%80%9A%E8%AE%AF%E3%80%82"><span class="toc-number">19.</span> <span class="toc-text">4，不同 Pod 之间的数据通过物理机的端口进行转发即可完成通讯。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#Kubernetes-%E6%8E%A7%E5%88%B6%E8%8A%82%E7%82%B9%E7%BB%84%E4%BB%B6%EF%BC%9Akube-controller-manager%EF%BC%8Ckube-apiserver%EF%BC%8Ckube-scheduler%E3%80%81Kubernetes"><span class="toc-number">20.</span> <span class="toc-text">Kubernetes 控制节点组件：kube-controller-manager，kube-apiserver，kube-scheduler、Kubernetes</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%B7%A5%E4%BD%9C%E8%8A%82%E7%82%B9%E7%BB%84%E4%BB%B6%EF%BC%9Akubelet-%E5%92%8C-kube-proxy"><span class="toc-number">21.</span> <span class="toc-text">工作节点组件：kubelet 和 kube-proxy</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#kube-proxy-%E6%98%AF-Kubernetes-%E7%9A%84%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6%EF%BC%8C%E9%83%A8%E7%BD%B2%E5%9C%A8%E6%AF%8F%E4%B8%AA-Node-%E8%8A%82%E7%82%B9%E4%B8%8A%EF%BC%8C%E5%AE%83%E6%98%AF%E5%AE%9E%E7%8E%B0Kubernetes-Service-%E7%9A%84%E9%80%9A%E4%BF%A1%E4%B8%8E%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E6%9C%BA%E5%88%B6%E7%9A%84%E9%87%8D%E8%A6%81%E7%BB%84%E4%BB%B6-kube-proxy-%E8%B4%9F%E8%B4%A3%E4%B8%BA-Pod-%E5%88%9B%E5%BB%BA%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1%EF%BC%8C%E4%BB%8E-apiserver-%E8%8E%B7%E5%8F%96%E6%89%80%E6%9C%89-server-%E4%BF%A1%E6%81%AF%EF%BC%8C%E5%B9%B6%E6%A0%B9%E6%8D%AE-server-%E4%BF%A1%E6%81%AF%E5%88%9B%E5%BB%BA%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1%EF%BC%8C%E5%AE%9E%E7%8E%B0server-%E5%88%B0-Pod-%E7%9A%84%E8%AF%B7%E6%B1%82%E8%B7%AF%E7%94%B1%E5%92%8C%E8%BD%AC%E5%8F%91%EF%BC%8C%E4%BB%8E%E8%80%8C%E5%AE%9E%E7%8E%B0-K8s-%E5%B1%82%E7%BA%A7%E7%9A%84%E8%99%9A%E6%8B%9F%E8%BD%AC%E5%8F%91%E7%BD%91%E7%BB%9C%E3%80%82"><span class="toc-number">22.</span> <span class="toc-text">kube-proxy 是 Kubernetes 的核心组件，部署在每个 Node 节点上，它是实现Kubernetes Service 的通信与负载均衡机制的重要组件; kube-proxy 负责为 Pod 创建代理服务，从 apiserver 获取所有 server 信息，并根据 server 信息创建代理服务，实现server 到 Pod 的请求路由和转发，从而实现 K8s 层级的虚拟转发网络。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#kube-apiserver-%E9%81%B5%E5%BE%AA%E6%A8%AA%E5%90%91%E6%89%A9%E5%B1%95%E6%9E%B6%E6%9E%84%EF%BC%8C%E6%98%AF%E4%B8%BB%E8%8A%82%E7%82%B9%E6%8E%A7%E5%88%B6%E5%B9%B3%E9%9D%A2%E7%9A%84%E5%89%8D%E7%AB%AF%E3%80%82%E5%B0%86%E5%85%AC%E5%BC%80Kubernetes-%E4%B8%BB%E8%8A%82%E7%82%B9%E7%BB%84%E4%BB%B6%E7%9A%84%E6%89%80%E6%9C%89-API%EF%BC%8C%E5%B9%B6%E8%B4%9F%E8%B4%A3%E5%9C%A8-Kubernetes-%E8%8A%82%E7%82%B9%E5%92%8C-Kubernetes%E4%B8%BB%E7%BB%84%E4%BB%B6%E4%B9%8B%E9%97%B4%E5%BB%BA%E7%AB%8B%E9%80%9A%E4%BF%A1%E3%80%82"><span class="toc-number">23.</span> <span class="toc-text">kube -apiserver 遵循横向扩展架构，是主节点控制平面的前端。将公开Kubernetes 主节点组件的所有 API，并负责在 Kubernetes 节点和 Kubernetes主组件之间建立通信。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#kube-scheduler-%E6%98%AF%E8%B0%83%E5%BA%A6%E5%99%A8%EF%BC%8C%E8%B4%9F%E8%B4%A3%E6%A0%B9%E6%8D%AE%E8%B5%84%E6%BA%90%E9%9C%80%E6%B1%82%E9%80%89%E6%8B%A9%E6%9C%80%E5%90%88%E9%80%82%E7%9A%84%E8%8A%82%E7%82%B9%E6%9D%A5%E8%BF%90%E8%A1%8C%E6%9C%AA%E8%B0%83%E5%BA%A6%E7%9A%84-pod%EF%BC%8C%E5%B9%B6%E8%B7%9F%E8%B8%AA%E8%B5%84%E6%BA%90%E5%88%A9%E7%94%A8%E7%8E%87%E3%80%82%E5%AE%83%E7%A1%AE%E4%BF%9D%E4%B8%8D%E5%9C%A8%E8%B5%84%E6%BA%90%E5%B7%B2%E6%BB%A1%E7%9A%84%E8%8A%82%E7%82%B9%E4%B8%8A%E8%B0%83%E5%BA%A6-pod%E3%80%82"><span class="toc-number">24.</span> <span class="toc-text">kube-scheduler 是调度器，负责根据资源需求选择最合适的节点来运行未调度的 pod，并跟踪资源利用率。它确保不在资源已满的节点上调度 pod。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#Controller-Manager-%E4%BD%9C%E4%B8%BA%E9%9B%86%E7%BE%A4%E5%86%85%E9%83%A8%E7%9A%84%E7%AE%A1%E7%90%86%E6%8E%A7%E5%88%B6%E4%B8%AD%E5%BF%83%EF%BC%8C%E8%B4%9F%E8%B4%A3%E9%9B%86%E7%BE%A4%E5%86%85%E7%9A%84-Node%E3%80%81Pod-%E5%89%AF%E6%9C%AC%E3%80%81%E6%9C%8D%E5%8A%A1%E7%AB%AF%E7%82%B9%EF%BC%88Endpoint%EF%BC%89%E3%80%81%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4%EF%BC%88Namespace%EF%BC%89%E3%80%81%E6%9C%8D%E5%8A%A1%E8%B4%A6%E5%8F%B7%EF%BC%88ServiceAccount%EF%BC%89%E3%80%81%E8%B5%84%E6%BA%90%E5%AE%9A%E9%A2%9D%EF%BC%88ResourceQuota%EF%BC%89%E7%9A%84%E7%AE%A1%E7%90%86%EF%BC%8C%E5%BD%93%E6%9F%90%E4%B8%AA-Node-%E6%84%8F%E5%A4%96%E5%AE%95%E6%9C%BA%E6%97%B6%EF%BC%8CController-Manager-%E4%BC%9A%E5%8F%8A%E6%97%B6%E5%8F%91%E7%8E%B0%E5%B9%B6%E6%89%A7%E8%A1%8C%E8%87%AA%E5%8A%A8%E5%8C%96%E4%BF%AE%E5%A4%8D%E6%B5%81%E7%A8%8B%EF%BC%8C%E7%A1%AE%E4%BF%9D%E9%9B%86%E7%BE%A4%E5%A7%8B%E7%BB%88%E5%A4%84%E4%BA%8E%E9%A2%84%E6%9C%9F%E7%9A%84%E5%B7%A5%E4%BD%9C%E7%8A%B6%E6%80%81%E3%80%82"><span class="toc-number">25.</span> <span class="toc-text">Controller Manager 作为集群内部的管理控制中心，负责集群内的 Node、Pod 副本、服务端点（Endpoint）、命名空间（Namespace）、服务账号（ServiceAccount）、资源定额（ResourceQuota）的管理，当某个 Node 意外宕机时，Controller Manager 会及时发现并执行自动化修复流程，确保集群始终处于预期的工作状态。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E8%B7%A8%E4%B8%BB%E6%9C%BA%E7%9A%84%E5%AE%B9%E5%99%A8%E9%83%BD%E9%9C%80%E8%A6%81%E7%9B%B8%E4%BA%92%E9%80%9A%E4%BF%A1%E3%80%82%E5%9B%A0%E6%AD%A4%EF%BC%8C%E8%A6%81%E5%81%9A%E5%88%B0%E8%BF%99%E4%B8%80%E7%82%B9%EF%BC%8C%E4%BD%A0%E9%9C%80%E8%A6%81%E4%B8%80%E4%BA%9B%E8%83%BD%E5%A4%9F%E8%B4%9F%E8%BD%BD%E5%B9%B3%E8%A1%A1%EF%BC%8C%E6%89%A9%E5%B1%95%E5%92%8C%E7%9B%91%E6%8E%A7%E5%AE%B9%E5%99%A8%E7%9A%84%E4%B8%9C%E8%A5%BF%E3%80%82%E7%94%B1%E4%BA%8E-Kubernetes-%E4%B8%8E%E4%BA%91%E6%97%A0%E5%85%B3%E5%B9%B6%E4%B8%94%E5%8F%AF%E4%BB%A5%E5%9C%A8%E4%BB%BB%E4%BD%95%E5%85%AC%E5%85%B1-%E7%A7%81%E6%9C%89%E6%8F%90%E4%BE%9B%E5%95%86%E4%B8%8A%E8%BF%90%E8%A1%8C%EF%BC%8C%E5%9B%A0%E6%AD%A4%E5%8F%AF%E4%BB%A5%E7%AE%80%E5%8C%96%E5%AE%B9%E5%99%A8%E5%8C%96%E9%83%A8%E7%BD%B2%E7%A8%8B%E5%BA%8F%E3%80%82-1"><span class="toc-number">26.</span> <span class="toc-text">跨主机的容器都需要相互通信。因此，要做到这一点，你需要一些能够负载平衡，扩展和监控容器的东西。由于 Kubernetes 与云无关并且可以在任何公共&#x2F;私有提供商上运行，因此可以简化容器化部署程序。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#Etcd-%E6%98%AF%E7%94%A8-Go-%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80%E7%BC%96%E5%86%99%E7%9A%84%EF%BC%8C%E6%98%AF%E4%B8%80%E4%B8%AA%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%AE%E5%80%BC%E5%AD%98%E5%82%A8%EF%BC%8C%E7%94%A8%E4%BA%8E%E5%8D%8F%E8%B0%83%E5%88%86%E5%B8%83%E5%BC%8F%E5%B7%A5%E4%BD%9C%E3%80%82%E5%9B%A0%E6%AD%A4%EF%BC%8CEtcd-%E5%AD%98%E5%82%A8-Kubernetes-%E9%9B%86%E7%BE%A4%E7%9A%84%E9%85%8D%E7%BD%AE%E6%95%B0%E6%8D%AE%EF%BC%8C%E8%A1%A8%E7%A4%BA%E5%9C%A8%E4%BB%BB%E4%BD%95%E7%BB%99%E5%AE%9A%E6%97%B6%E9%97%B4%E7%82%B9%E7%9A%84%E9%9B%86%E7%BE%A4%E7%8A%B6%E6%80%81%E3%80%82"><span class="toc-number">27.</span> <span class="toc-text">Etcd 是用 Go 编程语言编写的，是一个分布式键值存储，用于协调分布式工作。因此，Etcd 存储 Kubernetes 集群的配置数据，表示在任何给定时间点的集群状态。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#Ingress-%E7%BD%91%E7%BB%9C%E6%98%AF%E4%B8%80%E7%BB%84%E8%A7%84%E5%88%99%EF%BC%8C%E5%85%85%E5%BD%93-Kubernetes-%E9%9B%86%E7%BE%A4%E7%9A%84%E5%85%A5%E5%8F%A3%E7%82%B9%E3%80%82%E8%BF%99%E5%85%81%E8%AE%B8%E5%85%A5%E7%AB%99%E8%BF%9E%E6%8E%A5%EF%BC%8C%E5%8F%AF%E4%BB%A5%E5%B0%86%E5%85%B6%E9%85%8D%E7%BD%AE%E4%B8%BA%E9%80%9A%E8%BF%87%E5%8F%AF%E8%AE%BF%E9%97%AE%E7%9A%84-URL%EF%BC%8C%E8%B4%9F%E8%BD%BD%E5%B9%B3%E8%A1%A1%E6%B5%81%E9%87%8F%E6%88%96%E9%80%9A%E8%BF%87%E6%8F%90%E4%BE%9B%E5%9F%BA%E4%BA%8E%E5%90%8D%E7%A7%B0%E7%9A%84%E8%99%9A%E6%8B%9F%E4%B8%BB%E6%9C%BA%E4%BB%8E%E5%A4%96%E9%83%A8%E6%8F%90%E4%BE%9B%E6%9C%8D%E5%8A%A1%E3%80%82%E5%9B%A0%E6%AD%A4%EF%BC%8CIngress-%E6%98%AF%E4%B8%80%E4%B8%AA-API-%E5%AF%B9%E8%B1%A1%EF%BC%8C%E9%80%9A%E5%B8%B8%E9%80%9A%E8%BF%87-HTTP-%E7%AE%A1%E7%90%86%E9%9B%86%E7%BE%A4%E4%B8%AD%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%A4%96%E9%83%A8%E8%AE%BF%E9%97%AE%EF%BC%8C%E6%98%AF%E6%9A%B4%E9%9C%B2%E6%9C%8D%E5%8A%A1%E7%9A%84%E6%9C%80%E6%9C%89%E6%95%88%E6%96%B9%E5%BC%8F%E3%80%82"><span class="toc-number">28.</span> <span class="toc-text">Ingress 网络是一组规则，充当 Kubernetes 集群的入口点。这允许入站连接，可以将其配置为通过可访问的 URL，负载平衡流量或通过提供基于名称的虚拟主机从外部提供服务。因此，Ingress 是一个 API 对象，通常通过 HTTP 管理集群中服务的外部访问，是暴露服务的最有效方式。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#Headless-Service-%E7%B1%BB%E4%BC%BC%E4%BA%8E%E2%80%9C%E6%99%AE%E9%80%9A%E2%80%9D%E6%9C%8D%E5%8A%A1%EF%BC%8C%E4%BD%86%E6%B2%A1%E6%9C%89%E7%BE%A4%E9%9B%86-IP%E3%80%82%E6%AD%A4%E6%9C%8D%E5%8A%A1%E4%BD%BF%E6%82%A8%E5%8F%AF%E4%BB%A5%E7%9B%B4%E6%8E%A5%E8%AE%BF%E9%97%AEpod%EF%BC%8C%E8%80%8C%E6%97%A0%E9%9C%80%E9%80%9A%E8%BF%87%E4%BB%A3%E7%90%86%E8%AE%BF%E9%97%AE%E5%AE%83%E3%80%82"><span class="toc-number">29.</span> <span class="toc-text">Headless Service 类似于“普通”服务，但没有群集 IP。此服务使您可以直接访问pod，而无需通过代理访问它。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%9C%A8%E8%81%94%E9%82%A6%E9%9B%86%E7%BE%A4%E7%9A%84%E5%B8%AE%E5%8A%A9%E4%B8%8B%EF%BC%8C%E5%8F%AF%E4%BB%A5%E5%B0%86%E5%A4%9A%E4%B8%AA-Kubernetes-%E9%9B%86%E7%BE%A4%E4%BD%9C%E4%B8%BA%E5%8D%95%E4%B8%AA%E9%9B%86%E7%BE%A4%E8%BF%9B%E8%A1%8C%E7%AE%A1%E7%90%86%E3%80%82%E5%9B%A0%E6%AD%A4%EF%BC%8C%E6%82%A8%E5%8F%AF%E4%BB%A5%E5%9C%A8%E6%95%B0%E6%8D%AE%E4%B8%AD%E5%BF%83-%E4%BA%91%E4%B8%AD%E5%88%9B%E5%BB%BA%E5%A4%9A%E4%B8%AA-Kubernetes-%E9%9B%86%E7%BE%A4%EF%BC%8C%E5%B9%B6%E4%BD%BF%E7%94%A8%E8%81%94%E9%82%A6%E6%9D%A5%E5%9C%A8%E4%B8%80%E4%B8%AA%E4%BD%8D%E7%BD%AE%E6%8E%A7%E5%88%B6-%E7%AE%A1%E7%90%86%E5%AE%83%E4%BB%AC%E3%80%82"><span class="toc-number">30.</span> <span class="toc-text">在联邦集群的帮助下，可以将多个 Kubernetes 集群作为单个集群进行管理。因此，您可以在数据中心&#x2F;云中创建多个 Kubernetes 集群，并使用联邦来在一个位置控制&#x2F;管理它们。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#1%E3%80%81%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F%EF%BC%9A%E5%BD%93%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AA-Pod-%E7%9A%84%E6%97%B6%E5%80%99%EF%BC%8Ckubelet-%E4%BC%9A%E5%9C%A8%E8%AF%A5-Pod-%E4%B8%AD%E6%B3%A8%E5%85%A5%E9%9B%86%E7%BE%A4%E5%86%85%E6%89%80%E6%9C%89Service-%E7%9A%84%E7%9B%B8%E5%85%B3%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F%E3%80%82"><span class="toc-number">31.</span> <span class="toc-text">1、环境变量：当创建一个 Pod 的时候，kubelet 会在该 Pod 中注入集群内所有Service 的相关环境变量。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#2%E3%80%81DNS%EF%BC%9A%E5%8F%AF%E4%BB%A5%E9%80%9A%E8%BF%87-cluster-add-on-%E7%9A%84%E6%96%B9%E5%BC%8F%E8%BD%BB%E6%9D%BE%E7%9A%84%E5%88%9B%E5%BB%BA-CoreDNS-%E6%9D%A5%E5%AF%B9%E9%9B%86%E7%BE%A4%E5%86%85%E7%9A%84Service-%E8%BF%9B%E8%A1%8C%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0%E3%80%82"><span class="toc-number">32.</span> <span class="toc-text">2、DNS：可以通过 cluster add-on 的方式轻松的创建 CoreDNS 来对集群内的Service 进行服务发现。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E4%BB%A5%E4%B8%8A%E4%B8%A4%E7%A7%8D%E6%96%B9%E5%BC%8F%EF%BC%8C%E4%B8%80%E4%B8%AA%E6%98%AF%E5%9F%BA%E4%BA%8E-TCP%EF%BC%8CDNS-%E5%9F%BA%E4%BA%8E-UDP%EF%BC%8C%E5%AE%83%E4%BB%AC%E9%83%BD%E6%98%AF%E5%BB%BA%E7%AB%8B%E5%9C%A8%E5%9B%9B%E5%B1%82%E5%8D%8F%E8%AE%AE%E4%B9%8B%E4%B8%8A%E3%80%82"><span class="toc-number">33.</span> <span class="toc-text">以上两种方式，一个是基于 TCP，DNS 基于 UDP，它们都是建立在四层协议之上。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#1%E3%80%81PID-%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4%EF%BC%9APod-%E4%B8%AD%E7%9A%84%E4%B8%8D%E5%90%8C%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E5%8F%AF%E4%BB%A5%E7%9C%8B%E5%88%B0%E5%85%B6%E4%BB%96%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E7%9A%84%E8%BF%9B%E7%A8%8B-ID%E3%80%82"><span class="toc-number">34.</span> <span class="toc-text">1、PID 命名空间：Pod 中的不同应用程序可以看到其他应用程序的进程 ID。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#2%E3%80%81%E7%BD%91%E7%BB%9C%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4%EF%BC%9APod-%E4%B8%AD%E7%9A%84%E5%A4%9A%E4%B8%AA%E5%AE%B9%E5%99%A8%E8%83%BD%E5%A4%9F%E8%AE%BF%E9%97%AE%E5%90%8C%E4%B8%80%E4%B8%AA-IP-%E5%92%8C%E7%AB%AF%E5%8F%A3%E8%8C%83%E5%9B%B4%E3%80%82"><span class="toc-number">35.</span> <span class="toc-text">2、网络命名空间：Pod 中的多个容器能够访问同一个 IP 和端口范围。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#3%E3%80%81IPC-%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4%EF%BC%9APod-%E4%B8%AD%E7%9A%84%E5%A4%9A%E4%B8%AA%E5%AE%B9%E5%99%A8%E8%83%BD%E5%A4%9F%E4%BD%BF%E7%94%A8-SystemV-IPC-%E6%88%96-POSIX-%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E8%BF%9B%E8%A1%8C%E9%80%9A%E4%BF%A1%E3%80%82"><span class="toc-number">36.</span> <span class="toc-text">3、IPC 命名空间：Pod 中的多个容器能够使用 SystemV IPC 或 POSIX 消息队列进行通信。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#4%E3%80%81UTS-%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4%EF%BC%9APod-%E4%B8%AD%E7%9A%84%E5%A4%9A%E4%B8%AA%E5%AE%B9%E5%99%A8%E5%85%B1%E4%BA%AB%E4%B8%80%E4%B8%AA%E4%B8%BB%E6%9C%BA%E5%90%8D%E3%80%82"><span class="toc-number">37.</span> <span class="toc-text">4、UTS 命名空间：Pod 中的多个容器共享一个主机名。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#5%E3%80%81Volumes%EF%BC%88%E5%85%B1%E4%BA%AB%E5%AD%98%E5%82%A8%E5%8D%B7%EF%BC%89%EF%BC%9APod-%E4%B8%AD%E7%9A%84%E5%90%84%E4%B8%AA%E5%AE%B9%E5%99%A8%E5%8F%AF%E4%BB%A5%E8%AE%BF%E9%97%AE%E5%9C%A8-Pod-%E7%BA%A7%E5%88%AB%E5%AE%9A%E4%B9%89%E7%9A%84Volumes%E3%80%82"><span class="toc-number">38.</span> <span class="toc-text">5、Volumes（共享存储卷）：Pod 中的各个容器可以访问在 Pod 级别定义的Volumes。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%81%87%E8%AE%BE%E4%B8%80%E5%AE%B6%E5%9F%BA%E4%BA%8E%E5%8D%95%E4%B8%80%E6%9E%B6%E6%9E%84%E7%9A%84%E5%85%AC%E5%8F%B8%E5%A4%84%E7%90%86%E4%BC%97%E5%A4%9A%E4%BA%A7%E5%93%81%E3%80%82%E7%8E%B0%E5%9C%A8%EF%BC%8C%E9%9A%8F%E7%9D%80%E5%85%AC%E5%8F%B8%E5%9C%A8%E5%BD%93%E4%BB%8A%E7%9A%84%E6%89%A9%E5%B1%95%E8%A1%8C%E4%B8%9A%E7%9A%84%E6%89%A9%E5%B1%95%EF%BC%8C%E4%BB%96%E4%BB%AC%E7%9A%84%E5%8D%95%E4%B8%80%E6%9E%B6%E6%9E%84%E5%BC%80%E5%A7%8B%E5%BC%95%E5%8F%91%E9%97%AE%E9%A2%98%E3%80%82"><span class="toc-number">39.</span> <span class="toc-text">假设一家基于单一架构的公司处理众多产品。现在，随着公司在当今的扩展行业的扩展，他们的单一架构开始引发问题。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%82%A8%E5%A6%82%E4%BD%95%E7%9C%8B%E5%BE%85%E5%85%AC%E5%8F%B8%E4%BB%8E%E5%8D%95%E4%B8%80%E6%9C%8D%E5%8A%A1%E8%BD%AC%E5%90%91%E5%BE%AE%E6%9C%8D%E5%8A%A1%E5%B9%B6%E9%83%A8%E7%BD%B2%E5%85%B6%E6%9C%8D%E5%8A%A1%E5%AE%B9%E5%99%A8%EF%BC%9F"><span class="toc-number">40.</span> <span class="toc-text">您如何看待公司从单一服务转向微服务并部署其服务容器？</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E7%94%B1%E4%BA%8E%E5%85%AC%E5%8F%B8%E7%9A%84%E7%9B%AE%E6%A0%87%E6%98%AF%E4%BB%8E%E5%8D%95%E4%B8%80%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E8%BD%AC%E5%90%91%E5%BE%AE%E6%9C%8D%E5%8A%A1%EF%BC%8C%E5%AE%83%E4%BB%AC%E6%9C%80%E7%BB%88%E5%8F%AF%E4%BB%A5%E9%80%90%E4%B8%AA%E6%9E%84%E5%BB%BA%EF%BC%8C%E5%B9%B6%E8%A1%8C%E6%9E%84%E5%BB%BA%EF%BC%8C%E5%8F%AA%E9%9C%80%E5%9C%A8%E5%90%8E%E5%8F%B0%E5%88%87%E6%8D%A2%E9%85%8D%E7%BD%AE%E3%80%82%E7%84%B6%E5%90%8E%E4%BB%96%E4%BB%AC%E5%8F%AF%E4%BB%A5%E5%B0%86%E8%BF%99%E4%BA%9B%E5%86%85%E7%BD%AE%E5%BE%AE%E6%9C%8D%E5%8A%A1%E6%94%BE%E5%9C%A8-Kubernetes-%E5%B9%B3%E5%8F%B0%E4%B8%8A%E3%80%82%E5%9B%A0%E6%AD%A4%E4%BB%96%E4%BB%AC%E5%8F%AF%E4%BB%A5%E4%BB%8E%E4%B8%80%E6%AC%A1%E6%88%96%E4%B8%A4%E6%AC%A1%E8%BF%81%E7%A7%BB%E6%9C%8D%E5%8A%A1%E5%BC%80%E5%A7%8B%EF%BC%8C%E5%B9%B6%E7%9B%91%E6%8E%A7%E5%AE%83%E4%BB%AC%E4%BB%A5%E7%A1%AE%E4%BF%9D%E4%B8%80%E5%88%87%E8%BF%90%E8%A1%8C%E7%A8%B3%E5%AE%9A%E3%80%82%E4%B8%80%E6%97%A6%E4%BB%96%E4%BB%AC%E8%A7%89%E5%BE%97%E4%B8%80%E5%88%87%E9%A1%BA%E5%88%A9%EF%BC%8C%E4%BB%96%E4%BB%AC%E5%B0%B1%E5%8F%AF%E4%BB%A5%E5%B0%86%E5%85%B6%E4%BD%99%E7%9A%84%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E8%BF%81%E7%A7%BB%E5%88%B0%E4%BB%96%E4%BB%AC%E7%9A%84-Kubernetes-%E9%9B%86%E7%BE%A4%E4%B8%AD%E3%80%82"><span class="toc-number">41.</span> <span class="toc-text">由于公司的目标是从单一应用程序转向微服务，它们最终可以逐个构建，并行构建，只需在后台切换配置。然后他们可以将这些内置微服务放在 Kubernetes 平台上。因此他们可以从一次或两次迁移服务开始，并监控它们以确保一切运行稳定。一旦他们觉得一切顺利，他们就可以将其余的应用程序迁移到他们的 Kubernetes 集群中。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E8%80%83%E8%99%91%E4%B8%80%E5%AE%B6%E6%8B%A5%E6%9C%89%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E7%9A%84%E8%B7%A8%E5%9B%BD%E5%85%AC%E5%8F%B8%EF%BC%8C%E6%8B%A5%E6%9C%89%E5%A4%A7%E9%87%8F%E6%95%B0%E6%8D%AE%E4%B8%AD%E5%BF%83%EF%BC%8C%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%92%8C%E8%AE%B8%E5%A4%9A%E4%BB%8E%E4%BA%8B%E5%90%84%E7%A7%8D%E4%BB%BB%E5%8A%A1%E7%9A%84%E5%91%98%E5%B7%A5%E3%80%82"><span class="toc-number">42.</span> <span class="toc-text">考虑一家拥有分布式系统的跨国公司，拥有大量数据中心，虚拟机和许多从事各种任务的员工。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%82%A8%E8%AE%A4%E4%B8%BA%E8%BF%99%E6%A0%B7-%E7%9A%84%E5%85%AC%E5%8F%B8%E5%A6%82%E4%BD%95%E4%BB%A5%E4%B8%8E-Kubernetes-%E4%B8%80%E8%87%B4%E7%9A%84%E6%96%B9%E5%BC%8F%E7%AE%A1%E7%90%86%E6%89%80%E6%9C%89%E4%BB%BB%E5%8A%A1%EF%BC%9F"><span class="toc-number">43.</span> <span class="toc-text">您认为这样 的公司如何以与 Kubernetes 一致的方式管理所有任务？</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%AD%A3%E5%A6%82%E6%88%91%E4%BB%AC%E6%89%80%E6%9C%89%E4%BA%BA%E9%83%BD%E7%9F%A5%E9%81%93-IT-%E9%83%A8%E9%97%A8%E6%8E%A8%E5%87%BA%E4%BA%86%E6%95%B0%E5%8D%83%E4%B8%AA%E5%AE%B9%E5%99%A8%EF%BC%8C%E5%85%B6%E4%BB%BB%E5%8A%A1%E5%9C%A8%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E4%B8%AD%E9%81%8D%E5%B8%83%E5%85%A8%E7%90%83%E4%BC%97%E5%A4%9A%E8%8A%82%E7%82%B9%E3%80%82%E5%9C%A8%E8%BF%99%E7%A7%8D%E6%83%85%E5%86%B5%E4%B8%8B%EF%BC%8C%E5%85%AC%E5%8F%B8%E5%8F%AF%E4%BB%A5%E4%BD%BF%E7%94%A8%E8%83%BD%E5%A4%9F%E4%B8%BA%E5%9F%BA%E4%BA%8E%E4%BA%91%E7%9A%84%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E6%8F%90%E4%BE%9B%E6%95%8F%E6%8D%B7%E6%80%A7%EF%BC%8C%E6%A8%AA%E5%90%91%E6%89%A9%E5%B1%95%E5%8A%9F%E8%83%BD%E5%92%8CDevOps-%E5%AE%9E%E8%B7%B5%E7%9A%84%E4%B8%9C%E8%A5%BF%E3%80%82%E5%9B%A0%E6%AD%A4%EF%BC%8C%E8%AF%A5%E5%85%AC%E5%8F%B8%E5%8F%AF%E4%BB%A5%E4%BD%BF%E7%94%A8-Kubernetes-%E6%9D%A5%E5%AE%9A%E5%88%B6%E4%BB%96%E4%BB%AC%E7%9A%84%E8%B0%83%E5%BA%A6%E6%9E%B6%E6%9E%84%E5%B9%B6%E6%94%AF%E6%8C%81%E5%A4%9A%E7%A7%8D%E5%AE%B9%E5%99%A8%E6%A0%BC%E5%BC%8F%E3%80%82%E8%BF%99%E4%BD%BF%E5%BE%97%E5%AE%B9%E5%99%A8%E4%BB%BB%E5%8A%A1%E4%B9%8B%E9%97%B4%E7%9A%84%E4%BA%B2%E5%92%8C%E6%80%A7%E6%88%90%E4%B8%BA%E5%8F%AF%E8%83%BD%EF%BC%8C%E4%BB%8E%E8%80%8C%E6%8F%90%E4%BE%9B%E6%9B%B4%E9%AB%98%E7%9A%84%E6%95%88%E7%8E%87%EF%BC%8C%E5%B9%B6%E4%B8%BA%E5%90%84%E7%A7%8D%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88%E5%92%8C%E5%AE%B9%E5%99%A8%E5%AD%98%E5%82%A8%E6%8F%90%E4%BE%9B%E5%B9%BF%E6%B3%9B%E6%94%AF%E6%8C%81%E3%80%82"><span class="toc-number">44.</span> <span class="toc-text">正如我们所有人都知道 IT 部门推出了数千个容器，其任务在分布式系统中遍布全球众多节点。在这种情况下，公司可以使用能够为基于云的应用程序提供敏捷性，横向扩展功能和DevOps 实践的东西。因此，该公司可以使用 Kubernetes 来定制他们的调度架构并支持多种容器格式。这使得容器任务之间的亲和性成为可能，从而提供更高的效率，并为各种容器网络解决方案和容器存储提供广泛支持。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E8%80%83%E8%99%91%E4%B8%80%E7%A7%8D%E6%83%85%E5%86%B5%EF%BC%8C%E5%8D%B3%E5%85%AC%E5%8F%B8%E5%B8%8C%E6%9C%9B%E9%80%9A%E8%BF%87%E7%BB%B4%E6%8C%81%E6%9C%80%E4%BD%8E%E6%88%90%E6%9C%AC%E6%9D%A5%E6%8F%90%E9%AB%98%E5%85%B6%E6%95%88%E7%8E%87%E5%92%8C%E6%8A%80%E6%9C%AF%E8%BF%90%E8%90%A5%E9%80%9F%E5%BA%A6%E3%80%82%E6%82%A8%E8%AE%A4%E4%B8%BA%E5%85%AC%E5%8F%B8%E5%B0%86%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E8%BF%99%E4%B8%80%E7%9B%AE%E6%A0%87%EF%BC%9F"><span class="toc-number">45.</span> <span class="toc-text">考虑一种情况，即公司希望通过维持最低成本来提高其效率和技术运营速度。您认为公司将如何实现这一目标？</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%85%AC%E5%8F%B8%E5%8F%AF%E4%BB%A5%E9%80%9A%E8%BF%87%E6%9E%84%E5%BB%BA-CI-CD-%E7%AE%A1%E9%81%93%E6%9D%A5%E5%AE%9E%E7%8E%B0-DevOps-%E6%96%B9%E6%B3%95%EF%BC%8C%E4%BD%86%E6%98%AF%E8%BF%99%E9%87%8C%E5%8F%AF%E8%83%BD%E5%87%BA%E7%8E%B0%E7%9A%84%E4%B8%80%E4%B8%AA%E9%97%AE%E9%A2%98%E6%98%AF%E9%85%8D%E7%BD%AE%E5%8F%AF%E8%83%BD%E9%9C%80%E8%A6%81%E4%B8%80%E6%AE%B5%E6%97%B6%E9%97%B4%E6%89%8D%E8%83%BD%E5%90%AF%E5%8A%A8%E5%B9%B6%E8%BF%90%E8%A1%8C%E3%80%82%E5%9B%A0%E6%AD%A4%EF%BC%8C%E5%9C%A8%E5%AE%9E%E6%96%BD-CI-CD-%E7%AE%A1%E9%81%93%E4%B9%8B%E5%90%8E%EF%BC%8C%E5%85%AC%E5%8F%B8%E7%9A%84%E4%B8%8B%E4%B8%80%E6%AD%A5%E5%BA%94%E8%AF%A5%E6%98%AF%E5%9C%A8%E4%BA%91%E7%8E%AF%E5%A2%83%E4%B8%AD%E5%B7%A5%E4%BD%9C%E3%80%82%E4%B8%80%E6%97%A6%E4%BB%96%E4%BB%AC%E5%BC%80%E5%A7%8B%E5%A4%84%E7%90%86%E4%BA%91%E7%8E%AF%E5%A2%83%EF%BC%8C%E4%BB%96%E4%BB%AC%E5%B0%B1%E5%8F%AF%E4%BB%A5%E5%9C%A8%E9%9B%86%E7%BE%A4%E4%B8%8A%E5%AE%89%E6%8E%92%E5%AE%B9%E5%99%A8%EF%BC%8C%E5%B9%B6%E5%8F%AF%E4%BB%A5%E5%9C%A8-Kubernetes-%E7%9A%84%E5%B8%AE%E5%8A%A9%E4%B8%8B%E8%BF%9B%E8%A1%8C%E5%8D%8F%E8%B0%83%E3%80%82%E8%BF%99%E7%A7%8D%E6%96%B9%E6%B3%95%E5%B0%86%E6%9C%89%E5%8A%A9%E4%BA%8E%E5%85%AC%E5%8F%B8%E7%BC%A9%E7%9F%AD%E9%83%A8%E7%BD%B2%E6%97%B6%E9%97%B4%EF%BC%8C%E5%B9%B6%E5%9C%A8%E5%90%84%E7%A7%8D%E7%8E%AF%E5%A2%83%E4%B8%AD%E5%8A%A0%E5%BF%AB%E9%80%9F%E5%BA%A6%E3%80%82"><span class="toc-number">46.</span> <span class="toc-text">公司可以通过构建 CI&#x2F;CD 管道来实现 DevOps 方法，但是这里可能出现的一个问题是配置可能需要一段时间才能启动并运行。因此，在实施 CI&#x2F;CD 管道之后，公司的下一步应该是在云环境中工作。一旦他们开始处理云环境，他们就可以在集群上安排容器，并可以在 Kubernetes 的帮助下进行协调。这种方法将有助于公司缩短部署时间，并在各种环境中加快速度。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%81%87%E8%AE%BE%E4%B8%80%E5%AE%B6%E5%85%AC%E5%8F%B8%E6%83%B3%E8%A6%81%E4%BF%AE%E6%94%B9%E5%AE%83%E7%9A%84%E9%83%A8%E7%BD%B2%E6%96%B9%E6%B3%95%EF%BC%8C%E5%B9%B6%E5%B8%8C%E6%9C%9B%E5%BB%BA%E7%AB%8B%E4%B8%80%E4%B8%AA%E6%9B%B4%E5%85%B7%E5%8F%AF%E6%89%A9%E5%B1%95%E6%80%A7%E5%92%8C%E5%93%8D%E5%BA%94%E6%80%A7%E7%9A%84%E5%B9%B3%E5%8F%B0%E3%80%82"><span class="toc-number">47.</span> <span class="toc-text">假设一家公司想要修改它的部署方法，并希望建立一个更具可扩展性和响应性的平台。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%82%A8%E5%A6%82%E4%BD%95%E7%9C%8B%E5%BE%85%E8%BF%99%E5%AE%B6%E5%85%AC%E5%8F%B8%E8%83%BD%E5%A4%9F%E5%AE%9E%E7%8E%B0%E8%BF%99%E4%B8%80%E7%9B%AE%E6%A0%87%E4%BB%A5%E6%BB%A1%E8%B6%B3%E5%AE%A2%E6%88%B7%E9%9C%80%E6%B1%82%EF%BC%9F"><span class="toc-number">48.</span> <span class="toc-text">您如何看待这家公司能够实现这一目标以满足客户需求？</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E4%B8%BA%E4%BA%86%E7%BB%99%E6%95%B0%E7%99%BE%E4%B8%87%E5%AE%A2%E6%88%B7%E6%8F%90%E4%BE%9B%E4%BB%96%E4%BB%AC%E6%9C%9F%E6%9C%9B%E7%9A%84%E6%95%B0%E5%AD%97%E4%BD%93%E9%AA%8C%EF%BC%8C%E5%85%AC%E5%8F%B8%E9%9C%80%E8%A6%81%E4%B8%80%E4%B8%AA%E5%8F%AF%E6%89%A9%E5%B1%95%E4%B8%94%E5%93%8D%E5%BA%94%E8%BF%85%E9%80%9F%E7%9A%84%E5%B9%B3%E5%8F%B0%EF%BC%8C%E4%BB%A5%E4%BE%BF%E4%BB%96%E4%BB%AC%E8%83%BD%E5%A4%9F%E5%BF%AB%E9%80%9F%E5%9C%B0%E5%B0%86%E6%95%B0%E6%8D%AE%E5%8F%91%E9%80%81%E5%88%B0%E5%AE%A2%E6%88%B7%E7%BD%91%E7%AB%99%E3%80%82%E7%8E%B0%E5%9C%A8%EF%BC%8C%E8%A6%81%E5%81%9A%E5%88%B0%E8%BF%99%E4%B8%80%E7%82%B9%EF%BC%8C%E5%85%AC%E5%8F%B8%E5%BA%94%E8%AF%A5%E4%BB%8E%E4%BB%96%E4%BB%AC%E7%9A%84%E7%A7%81%E6%9C%89%E6%95%B0%E6%8D%AE%E4%B8%AD%E5%BF%83%EF%BC%88%E5%A6%82%E6%9E%9C%E4%BB%96%E4%BB%AC%E4%BD%BF%E7%94%A8%E4%BB%BB%E4%BD%95%EF%BC%89%E8%BD%AC%E7%A7%BB%E5%88%B0%E4%BB%BB%E4%BD%95%E4%BA%91%E7%8E%AF%E5%A2%83%EF%BC%8C%E5%A6%82-AWS%E3%80%82%E4%B8%8D%E4%BB%85%E5%A6%82%E6%AD%A4%EF%BC%8C%E4%BB%96%E4%BB%AC%E8%BF%98%E5%BA%94%E8%AF%A5%E5%AE%9E%E7%8E%B0%E5%BE%AE%E6%9C%8D%E5%8A%A1%E6%9E%B6%E6%9E%84%EF%BC%8C%E4%BB%A5%E4%BE%BF%E4%BB%96%E4%BB%AC%E5%8F%AF%E4%BB%A5%E5%BC%80%E5%A7%8B%E4%BD%BF%E7%94%A8-Docker-%E5%AE%B9%E5%99%A8%E3%80%82%E4%B8%80%E6%97%A6%E4%BB%96%E4%BB%AC%E5%87%86%E5%A4%87%E5%A5%BD%E5%9F%BA%E7%A1%80%E6%A1%86%E6%9E%B6%EF%BC%8C%E4%BB%96%E4%BB%AC%E5%B0%B1%E5%8F%AF%E4%BB%A5%E5%BC%80%E5%A7%8B%E4%BD%BF%E7%94%A8%E6%9C%80%E5%A5%BD%E7%9A%84%E7%BC%96%E6%8E%92%E5%B9%B3%E5%8F%B0%EF%BC%8C%E5%8D%B3-Kubernetes%E3%80%82%E8%BF%99%E5%B0%86%E4%BD%BF%E5%9B%A2%E9%98%9F%E8%83%BD%E5%A4%9F%E8%87%AA%E4%B8%BB%E5%9C%B0%E6%9E%84%E5%BB%BA%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E5%B9%B6%E5%BF%AB%E9%80%9F%E4%BA%A4%E4%BB%98%E5%AE%83%E4%BB%AC%E3%80%82"><span class="toc-number">49.</span> <span class="toc-text">为了给数百万客户提供他们期望的数字体验，公司需要一个可扩展且响应迅速的平台，以便他们能够快速地将数据发送到客户网站。现在，要做到这一点，公司应该从他们的私有数据中心（如果他们使用任何）转移到任何云环境，如 AWS。不仅如此，他们还应该实现微服务架构，以便他们可以开始使用 Docker 容器。一旦他们准备好基础框架，他们就可以开始使用最好的编排平台，即 Kubernetes。这将使团队能够自主地构建应用程序并快速交付它们。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E8%80%83%E8%99%91%E4%B8%80%E5%AE%B6%E6%8B%A5%E6%9C%89%E9%9D%9E%E5%B8%B8%E5%88%86%E6%95%A3%E7%9A%84%E7%B3%BB%E7%BB%9F%E7%9A%84%E8%B7%A8%E5%9B%BD%E5%85%AC%E5%8F%B8%EF%BC%8C%E6%9C%9F%E5%BE%85%E8%A7%A3%E5%86%B3%E6%95%B4%E4%BD%93%E4%BB%A3%E7%A0%81%E5%BA%93%E9%97%AE%E9%A2%98%E3%80%82"><span class="toc-number">50.</span> <span class="toc-text">考虑一家拥有非常分散的系统的跨国公司，期待解决整体代码库问题。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%82%A8%E8%AE%A4%E4%B8%BA%E5%85%AC%E5%8F%B8%E5%A6%82%E4%BD%95%E8%A7%A3%E5%86%B3%E4%BB%96%E4%BB%AC%E7%9A%84%E9%97%AE%E9%A2%98%EF%BC%9F"><span class="toc-number">51.</span> <span class="toc-text">您认为公司如何解决他们的问题？</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E9%82%A3%E4%B9%88%EF%BC%8C%E4%B8%BA%E4%BA%86%E8%A7%A3%E5%86%B3%E8%BF%99%E4%B8%AA%E9%97%AE%E9%A2%98%EF%BC%8C%E6%88%91%E4%BB%AC%E5%8F%AF%E4%BB%A5%E5%B0%86%E4%BB%96%E4%BB%AC%E7%9A%84%E5%8D%95%E7%89%87%E4%BB%A3%E7%A0%81%E5%BA%93%E8%BD%AC%E7%A7%BB%E5%88%B0%E5%BE%AE%E6%9C%8D%E5%8A%A1%E8%AE%BE%E8%AE%A1%EF%BC%8C%E7%84%B6%E5%90%8E%E6%AF%8F%E4%B8%AA%E5%BE%AE%E6%9C%8D%E5%8A%A1%E9%83%BD%E5%8F%AF%E4%BB%A5%E8%A2%AB%E8%A7%86%E4%B8%BA%E4%B8%80%E4%B8%AA%E5%AE%B9%E5%99%A8%E3%80%82%E5%9B%A0%E6%AD%A4%EF%BC%8C%E6%89%80%E6%9C%89%E8%BF%99%E4%BA%9B%E5%AE%B9%E5%99%A8%E9%83%BD%E5%8F%AF%E4%BB%A5%E5%9C%A8-Kubernetes-%E7%9A%84%E5%B8%AE%E5%8A%A9%E4%B8%8B%E8%BF%9B%E8%A1%8C%E9%83%A8%E7%BD%B2%E5%92%8C%E5%8D%8F%E8%B0%83%E3%80%82"><span class="toc-number">52.</span> <span class="toc-text">那么，为了解决这个问题，我们可以将他们的单片代码库转移到微服务设计，然后每个微服务都可以被视为一个容器。因此，所有这些容器都可以在 Kubernetes 的帮助下进行部署和协调。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%88%91%E4%BB%AC%E6%89%80%E6%9C%89%E4%BA%BA%E9%83%BD%E7%9F%A5%E9%81%93%EF%BC%8C%E4%BB%8E%E5%8D%95%E7%89%87%E5%88%B0%E5%BE%AE%E6%9C%8D%E5%8A%A1%E7%9A%84%E8%BD%AC%E5%8F%98%E8%A7%A3%E5%86%B3%E4%BA%86%E5%BC%80%E5%8F%91%E6%96%B9%E9%9D%A2%E7%9A%84%E9%97%AE%E9%A2%98%EF%BC%8C%E4%BD%86%E5%8D%B4%E5%A2%9E%E5%8A%A0%E4%BA%86%E9%83%A8%E7%BD%B2%E6%96%B9%E9%9D%A2%E7%9A%84%E9%97%AE%E9%A2%98%E3%80%82"><span class="toc-number">53.</span> <span class="toc-text">我们所有人都知道，从单片到微服务的转变解决了开发方面的问题，但却增加了部署方面的问题。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%85%AC%E5%8F%B8%E5%A6%82%E4%BD%95%E8%A7%A3%E5%86%B3%E9%83%A8%E7%BD%B2%E6%96%B9%E9%9D%A2%E7%9A%84%E9%97%AE%E9%A2%98%EF%BC%9F"><span class="toc-number">54.</span> <span class="toc-text">公司如何解决部署方面的问题？</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%9B%A2%E9%98%9F%E5%8F%AF%E4%BB%A5%E8%AF%95%E9%AA%8C%E5%AE%B9%E5%99%A8%E7%BC%96%E6%8E%92%E5%B9%B3%E5%8F%B0%EF%BC%8C%E4%BE%8B%E5%A6%82-Kubernetes%EF%BC%8C%E5%B9%B6%E5%9C%A8%E6%95%B0%E6%8D%AE%E4%B8%AD%E5%BF%83%E8%BF%90%E8%A1%8C%E3%80%82%E5%9B%A0%E6%AD%A4%EF%BC%8C%E9%80%9A%E8%BF%87%E8%BF%99%E7%A7%8D%E6%96%B9%E5%BC%8F%EF%BC%8C%E5%85%AC%E5%8F%B8%E5%8F%AF%E4%BB%A5%E7%94%9F%E6%88%90%E6%A8%A1%E6%9D%BF%E5%8C%96%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%EF%BC%8C%E5%9C%A8%E4%BA%94%E5%88%86%E9%92%9F%E5%86%85%E9%83%A8%E7%BD%B2%E5%AE%83%EF%BC%8C%E5%B9%B6%E5%9C%A8%E6%AD%A4%E6%97%B6%E5%B0%86%E5%AE%9E%E9%99%85%E5%AE%9E%E4%BE%8B%E9%9B%86%E4%B8%AD%E5%9C%A8%E6%9A%82%E5%AD%98%E7%8E%AF%E5%A2%83%E4%B8%AD%E3%80%82%E8%BF%99%E7%A7%8D-Kubernetes-%E9%A1%B9%E7%9B%AE%E5%B0%86%E6%9C%89%E6%95%B0%E5%8D%81%E4%B8%AA%E5%B9%B6%E8%A1%8C%E8%BF%90%E8%A1%8C%E7%9A%84%E5%BE%AE%E6%9C%8D%E5%8A%A1%EF%BC%8C%E4%BB%A5%E6%8F%90%E9%AB%98%E7%94%9F%E4%BA%A7%E7%8E%87%EF%BC%8C%E5%8D%B3%E4%BD%BF%E8%8A%82%E7%82%B9%E5%87%BA%E7%8E%B0%E6%95%85%E9%9A%9C%EF%BC%8C%E4%B9%9F%E5%8F%AF%E4%BB%A5%E7%AB%8B%E5%8D%B3%E9%87%8D%E6%96%B0%E5%AE%89%E6%8E%92%EF%BC%8C%E8%80%8C%E4%B8%8D%E4%BC%9A%E5%BD%B1%E5%93%8D%E6%80%A7%E8%83%BD%E3%80%82"><span class="toc-number">55.</span> <span class="toc-text">团队可以试验容器编排平台，例如 Kubernetes，并在数据中心运行。因此，通过这种方式，公司可以生成模板化应用程序，在五分钟内部署它，并在此时将实际实例集中在暂存环境中。这种 Kubernetes 项目将有数十个并行运行的微服务，以提高生产率，即使节点出现故障，也可以立即重新安排，而不会影响性能。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%81%87%E8%AE%BE%E4%B8%80%E5%AE%B6%E5%85%AC%E5%8F%B8%E5%B8%8C%E6%9C%9B%E9%80%9A%E8%BF%87%E9%87%87%E7%94%A8%E6%96%B0%E6%8A%80%E6%9C%AF%E6%9D%A5%E4%BC%98%E5%8C%96%E5%85%B6%E5%B7%A5%E4%BD%9C%E8%B4%9F%E8%BD%BD%E7%9A%84%E5%88%86%E9%85%8D%E3%80%82"><span class="toc-number">56.</span> <span class="toc-text">假设一家公司希望通过采用新技术来优化其工作负载的分配。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%85%AC%E5%8F%B8%E5%A6%82%E4%BD%95%E6%9C%89%E6%95%88%E5%9C%B0%E5%AE%9E%E7%8E%B0%E8%BF%99%E7%A7%8D%E8%B5%84%E6%BA%90%E5%88%86%E9%85%8D%EF%BC%9F"><span class="toc-number">57.</span> <span class="toc-text">公司如何有效地实现这种资源分配？</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E8%BF%99%E4%B8%AA%E9%97%AE%E9%A2%98%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88%E5%B0%B1%E6%98%AF-Kubernetes%E3%80%82Kubernetes-%E7%A1%AE%E4%BF%9D%E8%B5%84%E6%BA%90%E5%BE%97%E5%88%B0%E6%9C%89%E6%95%88%E4%BC%98%E5%8C%96%EF%BC%8C%E5%B9%B6%E4%B8%94%E5%8F%AA%E4%BD%BF%E7%94%A8%E7%89%B9%E5%AE%9A%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E6%89%80%E9%9C%80%E7%9A%84%E9%82%A3%E4%BA%9B%E8%B5%84%E6%BA%90%E3%80%82%E5%9B%A0%E6%AD%A4%EF%BC%8C%E9%80%9A%E8%BF%87%E4%BD%BF%E7%94%A8%E6%9C%80%E4%BD%B3%E5%AE%B9%E5%99%A8%E7%BC%96%E6%8E%92%E5%B7%A5%E5%85%B7%EF%BC%8C%E5%85%AC%E5%8F%B8%E5%8F%AF%E4%BB%A5%E6%9C%89%E6%95%88%E5%9C%B0%E5%AE%9E%E7%8E%B0%E8%B5%84%E6%BA%90%E5%88%86%E9%85%8D"><span class="toc-number">58.</span> <span class="toc-text">这个问题的解决方案就是 Kubernetes。Kubernetes 确保资源得到有效优化，并且只使用特定应用程序所需的那些资源。因此，通过使用最佳容器编排工具，公司可以有效地实现资源分配</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E8%80%83%E8%99%91%E4%B8%80%E5%AE%B6%E6%8B%BC%E8%BD%A6%E5%85%AC%E5%8F%B8%E5%B8%8C%E6%9C%9B%E9%80%9A%E8%BF%87%E5%90%8C%E6%97%B6%E6%89%A9%E5%B1%95%E5%85%B6%E5%B9%B3%E5%8F%B0%E6%9D%A5%E5%A2%9E%E5%8A%A0%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%95%B0%E9%87%8F%E3%80%82"><span class="toc-number">59.</span> <span class="toc-text">考虑一家拼车公司希望通过同时扩展其平台来增加服务器数量。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%82%A8%E8%AE%A4%E4%B8%BA%E5%85%AC%E5%8F%B8%E5%A6%82%E4%BD%95%E5%A4%84%E7%90%86%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%8F%8A%E5%85%B6%E5%AE%89%E8%A3%85%EF%BC%9F"><span class="toc-number">60.</span> <span class="toc-text">您认为公司如何处理服务器及其安装？</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%85%AC%E5%8F%B8%E5%8F%AF%E4%BB%A5%E9%87%87%E7%94%A8%E9%9B%86%E8%A3%85%E7%AE%B1%E5%8C%96%E7%9A%84%E6%A6%82%E5%BF%B5%E3%80%82%E4%B8%80%E6%97%A6%E4%BB%96%E4%BB%AC%E5%B0%86%E6%89%80%E6%9C%89%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E9%83%A8%E7%BD%B2%E5%88%B0%E5%AE%B9%E5%99%A8%E4%B8%AD%EF%BC%8C%E4%BB%96%E4%BB%AC%E5%B0%B1%E5%8F%AF%E4%BB%A5%E4%BD%BF%E7%94%A8-Kubernetes-%E8%BF%9B%E8%A1%8C%E7%BC%96%E6%8E%92%EF%BC%8C%E5%B9%B6%E4%BD%BF%E7%94%A8%E5%83%8F-Prometheus-%E8%BF%99%E6%A0%B7%E7%9A%84%E5%AE%B9%E5%99%A8%E7%9B%91%E8%A7%86%E5%B7%A5%E5%85%B7%E6%9D%A5%E7%9B%91%E8%A7%86%E5%AE%B9%E5%99%A8%E4%B8%AD%E7%9A%84%E6%93%8D%E4%BD%9C%E3%80%82%E5%9B%A0%E6%AD%A4%EF%BC%8C%E5%88%A9%E7%94%A8%E5%AE%B9%E5%99%A8%E7%9A%84%E8%BF%99%E7%A7%8D%E4%BD%BF%E7%94%A8%EF%BC%8C%E5%9C%A8%E6%95%B0%E6%8D%AE%E4%B8%AD%E5%BF%83%E4%B8%AD%E4%B8%BA%E5%AE%83%E4%BB%AC%E6%8F%90%E4%BE%9B%E6%9B%B4%E5%A5%BD%E7%9A%84%E5%AE%B9%E9%87%8F%E8%A7%84%E5%88%92%EF%BC%8C%E5%9B%A0%E4%B8%BA%E5%AE%83%E4%BB%AC%E7%8E%B0%E5%9C%A8%E5%B0%86%E5%8F%97%E5%88%B0%E6%9B%B4%E5%B0%91%E7%9A%84%E9%99%90%E5%88%B6%EF%BC%8C%E5%9B%A0%E4%B8%BA%E6%9C%8D%E5%8A%A1%E5%92%8C%E5%AE%83%E4%BB%AC%E8%BF%90%E8%A1%8C%E7%9A%84%E7%A1%AC%E4%BB%B6%E4%B9%8B%E9%97%B4%E5%AD%98%E5%9C%A8%E6%8A%BD%E8%B1%A1%E3%80%82"><span class="toc-number">61.</span> <span class="toc-text">公司可以采用集装箱化的概念。一旦他们将所有应用程序部署到容器中，他们就可以使用 Kubernetes 进行编排，并使用像 Prometheus 这样的容器监视工具来监视容器中的操作。因此，利用容器的这种使用，在数据中心中为它们提供更好的容量规划，因为它们现在将受到更少的限制，因为服务和它们运行的硬件之间存在抽象。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E8%80%83%E8%99%91%E4%B8%80%E7%A7%8D%E6%83%85%E5%86%B5%EF%BC%8C%E5%85%AC%E5%8F%B8%E5%B8%8C%E6%9C%9B%E5%90%91%E5%85%B7%E6%9C%89%E5%90%84%E7%A7%8D%E7%8E%AF%E5%A2%83%E7%9A%84%E5%AE%A2%E6%88%B7%E6%8F%90%E4%BE%9B%E6%89%80%E6%9C%89%E5%BF%85%E9%9C%80%E7%9A%84%E5%88%86%E5%8F%91%E3%80%82%E6%82%A8%E8%AE%A4%E4%B8%BA%E4%BB%96%E4%BB%AC%E5%A6%82%E4%BD%95%E4%BB%A5%E5%8A%A8%E6%80%81%E7%9A%84%E6%96%B9%E5%BC%8F%E5%AE%9E%E7%8E%B0%E8%BF%99%E4%B8%80%E5%85%B3%E9%94%AE%E7%9B%AE%E6%A0%87%EF%BC%9F"><span class="toc-number">62.</span> <span class="toc-text">考虑一种情况，公司希望向具有各种环境的客户提供所有必需的分发。您认为他们如何以动态的方式实现这一关键目标？</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E8%AF%A5%E5%85%AC%E5%8F%B8%E5%8F%AF%E4%BB%A5%E4%BD%BF%E7%94%A8-Docker-%E7%8E%AF%E5%A2%83%EF%BC%8C%E7%BB%84%E5%BB%BA%E4%B8%80%E4%B8%AA%E6%A8%AA%E6%88%AA%E9%9D%A2%E5%9B%A2%E9%98%9F%EF%BC%8C%E4%BD%BF%E7%94%A8-Kubernetes-%E6%9E%84%E5%BB%BA-Web%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E3%80%82%E8%BF%99%E7%A7%8D%E6%A1%86%E6%9E%B6%E5%B0%86%E5%B8%AE%E5%8A%A9%E5%85%AC%E5%8F%B8%E5%AE%9E%E7%8E%B0%E5%9C%A8%E6%9C%80%E7%9F%AD%E7%9A%84%E6%97%B6%E9%97%B4%E5%86%85%E5%B0%86%E6%89%80%E9%9C%80%E4%BA%A7%E5%93%81%E6%8A%95%E5%85%A5%E7%94%9F%E4%BA%A7%E7%9A%84%E7%9B%AE%E6%A0%87%E3%80%82%E5%9B%A0%E6%AD%A4%EF%BC%8C%E5%9C%A8%E8%BF%99%E6%A0%B7%E7%9A%84%E6%9C%BA%E5%99%A8%E8%BF%90%E8%A1%8C%E7%9A%84%E6%83%85%E5%86%B5%E4%B8%8B%EF%BC%8C%E5%85%AC%E5%8F%B8%E5%8F%AF%E4%BB%A5%E5%90%91%E6%89%80%E6%9C%89%E5%85%B7%E6%9C%89%E5%90%84%E7%A7%8D%E7%8E%AF%E5%A2%83%E7%9A%84%E5%AE%A2%E6%88%B7%E5%8F%91%E6%94%BE%E7%94%B5%E5%AD%90%E9%82%AE%E4%BB%B6%E3%80%82"><span class="toc-number">63.</span> <span class="toc-text">该公司可以使用 Docker 环境，组建一个横截面团队，使用 Kubernetes 构建 Web应用程序。这种框架将帮助公司实现在最短的时间内将所需产品投入生产的目标。因此，在这样的机器运行的情况下，公司可以向所有具有各种环境的客户发放电子邮件。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%81%87%E8%AE%BE%E5%85%AC%E5%8F%B8%E5%B8%8C%E6%9C%9B%E5%9C%A8%E4%B8%8D%E5%90%8C%E7%9A%84%E4%BA%91%E5%9F%BA%E7%A1%80%E6%9E%B6%E6%9E%84%E4%B8%8A%E8%BF%90%E8%A1%8C%E5%90%84%E7%A7%8D%E5%B7%A5%E4%BD%9C%E8%B4%9F%E8%BD%BD%EF%BC%8C%E4%BB%8E%E8%A3%B8%E6%9C%BA%E5%88%B0%E5%85%AC%E5%85%B1%E4%BA%91%E3%80%82"><span class="toc-number">64.</span> <span class="toc-text">假设公司希望在不同的云基础架构上运行各种工作负载，从裸机到公共云。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%85%AC%E5%8F%B8%E5%B0%86%E5%A6%82%E4%BD%95%E5%9C%A8%E4%B8%8D%E5%90%8C%E7%95%8C%E9%9D%A2%E7%9A%84%E5%AD%98%E5%9C%A8%E4%B8%8B%E5%AE%9E%E7%8E%B0%E8%BF%99%E4%B8%80%E7%9B%AE%E6%A0%87%EF%BC%9F"><span class="toc-number">65.</span> <span class="toc-text">公司将如何在不同界面的存在下实现这一目标？</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E8%AF%A5%E5%85%AC%E5%8F%B8%E5%8F%AF%E4%BB%A5%E5%B0%86%E5%85%B6%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E5%88%86%E8%A7%A3%E4%B8%BA%E5%BE%AE%E6%9C%8D%E5%8A%A1%EF%BC%8C%E7%84%B6%E5%90%8E%E9%87%87%E7%94%A8-Kubernetes%E3%80%82%E8%BF%99%E5%B0%86%E4%BD%BF%E5%85%AC%E5%8F%B8%E5%9C%A8%E4%B8%8D%E5%90%8C%E7%9A%84%E4%BA%91%E5%9F%BA%E7%A1%80%E6%9E%B6%E6%9E%84%E4%B8%8A%E8%BF%90%E8%A1%8C%E5%90%84%E7%A7%8D%E5%B7%A5%E4%BD%9C%E8%B4%9F%E8%BD%BD%E3%80%82"><span class="toc-number">66.</span> <span class="toc-text">该公司可以将其基础设施分解为微服务，然后采用 Kubernetes。这将使公司在不同的云基础架构上运行各种工作负载。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#1%EF%BC%89%E3%80%81kubectl-%E6%8F%90%E4%BA%A4%E5%88%9B%E5%BB%BA-pod-%E5%91%BD%E4%BB%A4-api-%E5%93%8D%E5%BA%94%E5%91%BD%E4%BB%A4-%E9%80%9A%E8%BF%87%E4%B8%80%E7%B3%BB%E5%88%97%E8%AE%A4%E8%AF%81%E6%8E%88%E6%9D%83-%E6%8A%8A-pod-%E6%95%B0%E6%8D%AE%E5%AD%98%E5%82%A8%E5%88%B0etcd-%E5%88%9B%E5%BB%BA-deployment-%E8%B5%84%E6%BA%90%E5%B9%B6%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-number">67.</span> <span class="toc-text">1）、kubectl 提交创建 pod 命令,api 响应命令,通过一系列认证授权,把 pod 数据存储到etcd,创建 deployment 资源并初始化.</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#2%EF%BC%89%E3%80%81controller-%E9%80%9A%E8%BF%87-list-watch-%E6%9C%BA%E5%88%B6-%E7%9B%91%E6%B5%8B%E5%8F%91%E7%8E%B0%E6%96%B0%E7%9A%84-deployment-%E5%B0%86%E8%AF%A5%E8%B5%84%E6%BA%90%E5%8A%A0%E5%85%A5%E5%88%B0%E5%86%85%E9%83%A8%E5%B7%A5%E4%BD%9C%E9%98%9F%E5%88%97-%E5%8F%91%E7%8E%B0%E8%AF%A5%E8%B5%84%E6%BA%90%E6%B2%A1%E6%9C%89%E5%85%B3%E8%81%94%E7%9A%84-pod-%E5%92%8C-replicaset-%E5%90%AF%E7%94%A8-deployment-controller-%E5%88%9B%E5%BB%BAreplicaset-%E8%B5%84%E6%BA%90-%E5%86%8D%E5%90%AF%E7%94%A8-replicaset-controller-%E5%88%9B%E5%BB%BA-pod"><span class="toc-number">68.</span> <span class="toc-text">2）、controller 通过 list-watch 机制,监测发现新的 deployment,将该资源加入到内部工作队列,发现该资源没有关联的 pod 和 replicaset,启用 deployment controller 创建replicaset 资源,再启用 replicaset controller 创建 pod.</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#3%EF%BC%89%E3%80%81%E6%89%80%E6%9C%89-controller-%E6%AD%A3%E5%B8%B8%E5%90%8E-%E5%B0%86-deployment-replicaset-pod-%E8%B5%84%E6%BA%90%E6%9B%B4%E6%96%B0%E5%AD%98%E5%82%A8%E5%88%B0etcd"><span class="toc-number">69.</span> <span class="toc-text">3）、所有 controller 正常后.将 deployment,replicaset,pod 资源更新存储到etcd.</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#4%EF%BC%89%E3%80%81scheduler-%E9%80%9A%E8%BF%87-list-watch-%E6%9C%BA%E5%88%B6-%E7%9B%91%E6%B5%8B%E5%8F%91%E7%8E%B0%E6%96%B0%E7%9A%84-pod-%E7%BB%8F%E8%BF%87%E4%B8%BB%E6%9C%BA%E8%BF%87%E6%BB%A4%E4%B8%BB%E6%9C%BA%E6%89%93%E5%88%86%E8%A7%84%E5%88%99-%E5%B0%86pod-%E7%BB%91%E5%AE%9A-binding-%E5%88%B0%E5%90%88%E9%80%82%E7%9A%84%E4%B8%BB%E6%9C%BA"><span class="toc-number">70.</span> <span class="toc-text">4）、scheduler 通过 list-watch 机制,监测发现新的 pod,经过主机过滤主机打分规则,将pod 绑定(binding)到合适的主机.</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#5%EF%BC%89%E3%80%81%E5%B0%86%E7%BB%91%E5%AE%9A%E7%BB%93%E6%9E%9C%E5%AD%98%E5%82%A8%E5%88%B0-etcd"><span class="toc-number">71.</span> <span class="toc-text">5）、将绑定结果存储到 etcd</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#6%EF%BC%89%E3%80%81kubelet-%E6%AF%8F%E9%9A%94-20s-%E5%8F%AF%E4%BB%A5%E8%87%AA%E5%AE%9A%E4%B9%89-%E5%90%91-kube-apiserver-%E9%80%9A%E8%BF%87-NodeName-%E8%8E%B7%E5%8F%96%E8%87%AA%E8%BA%ABNode-%E4%B8%8A%E6%89%80%E8%A6%81%E8%BF%90%E8%A1%8C%E7%9A%84-pod-%E6%B8%85%E5%8D%95-%E9%80%9A%E8%BF%87%E4%B8%8E%E8%87%AA%E5%B7%B1%E7%9A%84%E5%86%85%E9%83%A8%E7%BC%93%E5%AD%98%E8%BF%9B%E8%A1%8C%E6%AF%94%E8%BE%83-%E6%96%B0%E5%A2%9E%E5%8A%A0-pod"><span class="toc-number">72.</span> <span class="toc-text">6）、kubelet 每隔 20s(可以自定义)向 kube-apiserver 通过 NodeName 获取自身Node 上所要运行的 pod 清单.通过与自己的内部缓存进行比较,新增加 pod.</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#7%EF%BC%89%E3%80%81%E5%90%AF%E5%8A%A8-pod-%E5%90%AF%E5%8A%A8%E5%AE%B9%E5%99%A8"><span class="toc-number">73.</span> <span class="toc-text">7）、启动 pod 启动容器</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#hpa-%E6%98%AF-k8s-%E7%9A%84%E8%87%AA%E5%8A%A8%E6%89%A9%E7%BC%A9%E5%AE%B9%E7%AD%96%E7%95%A5%E3%80%82v1-%E7%89%88%E5%8F%AF%E6%94%AF%E6%8C%81%E5%9F%BA%E4%BA%8E-cpu-%E7%9A%84%E6%89%A9%E7%BC%A9%E5%AE%B9%EF%BC%8Cv2-%E7%89%88%E5%8F%AF%E6%94%AF%E6%8C%81%E5%9F%BA%E4%BA%8E-cpu%E3%80%81%E5%86%85%E5%AD%98%E3%80%81%E8%87%AA%E5%AE%9A%E4%B9%89%E6%8C%87%E6%A0%87%E7%9A%84%E6%89%A9%E5%AE%B9%E3%80%82%E9%BB%98%E8%AE%A4%E6%83%85%E5%86%B5%E4%B8%8B%EF%BC%8Cpod-%E6%98%AF%E4%B8%80%E5%8F%B0%E5%8F%B0%E6%89%A9%E5%AE%B9%E7%9A%84%EF%BC%8C%E6%89%80%E4%BB%A5%E7%B1%BB%E4%BC%BC%E4%BA%8E-%E5%BE%AE%E5%8D%9A%E7%83%AD%E6%90%9C%E4%B9%8B%E7%B1%BB%E7%9A%84-%E7%AA%81%E7%84%B6%E9%97%B4-%E8%AE%BF%E9%97%AE%E9%87%8F%E5%89%A7%E5%A2%9E%E7%9A%84%E6%83%85%E5%86%B5%E4%B8%8B%E5%B0%B1%E6%98%BE%E6%9C%89%E4%BA%9B%E6%97%A0%E5%8A%9B%E3%80%82%E6%89%80%E4%BB%A5%E9%9C%80%E8%A6%81%E4%BF%AE%E6%94%B9-k8s-%E7%9A%84%E8%B0%83%E5%BA%A6%E8%A7%84%E5%88%99%E3%80%82%E5%A6%82%E6%9E%9C%E6%B3%A2%E5%8A%A8%E9%87%8F%E6%AF%94%E8%BE%83%E5%A4%A7%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%AE%B9%E6%98%93%E9%80%A0%E6%88%90%E4%B8%9A%E5%8A%A1%E6%8A%96%E5%8A%A8%E3%80%82%E4%B8%BB%E8%A6%81%E6%98%AF%E5%BE%88%E8%A2%AB%E5%8A%A8%EF%BC%8C%E6%97%A0%E6%B3%95%E8%BF%9B%E8%A1%8C%E6%8F%90%E5%89%8D%E8%A2%AB%E5%AE%B9%E3%80%82"><span class="toc-number">74.</span> <span class="toc-text">hpa 是 k8s 的自动扩缩容策略。v1 版可支持基于 cpu 的扩缩容，v2 版可支持基于 cpu、内存、自定义指标的扩容。默认情况下，pod 是一台台扩容的，所以类似于 微博热搜之类的 突然间 访问量剧增的情况下就显有些无力。所以需要修改 k8s 的调度规则。如果波动量比较大的服务容易造成业务抖动。主要是很被动，无法进行提前被容。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#HPA-%E5%8F%AF%E9%92%88%E5%AF%B9-cpu-%E5%92%8C%E5%86%85%E5%AD%98%E8%87%AA%E5%AE%9A%E4%B9%89%E5%8F%82%E6%95%B0%E5%BC%B9%E6%80%A7%E6%89%A9%E5%AE%B9%EF%BC%8C%E6%9C%89-5-%E5%88%86%E9%92%9F%E7%9A%84%E5%AE%89%E5%85%A8%E6%97%B6%E9%97%B4%EF%BC%8C%E4%B8%8D%E9%80%82%E5%90%88%E8%AE%BF%E9%97%AE%E9%87%8F%E6%B3%A2%E5%8A%A8%E5%A4%A7%E7%9A%84%E4%B8%9A%E5%8A%A1%E3%80%82"><span class="toc-number">75.</span> <span class="toc-text">HPA 可针对 cpu 和内存自定义参数弹性扩容，有 5 分钟的安全时间，不适合访问量波动大的业务。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E8%93%9D%E7%BB%BF%E5%8F%91%E5%B8%83%E9%80%9A%E8%BF%87-deployment-%E9%83%A8%E7%BD%B2-pod%EF%BC%8C%E6%94%B9%E5%8F%98-service-%E6%88%96%E8%80%85-ingress-%E5%88%87%E6%8D%A2%E6%B5%81%E9%87%8F%E5%8F%AF%E4%BB%A5%E5%AE%9E%E7%8E%B0%E7%81%B0%E5%BA%A6%E5%8F%91%E5%B8%83%E9%80%9A%E8%BF%87-Ingress-Controller-%E6%88%96%E8%80%85-istio-%E5%8F%AF%E4%BB%A5%E5%AE%9E%E7%8E%B0"><span class="toc-number">76.</span> <span class="toc-text">蓝绿发布通过 deployment 部署 pod，改变 service 或者 ingress 切换流量可以实现灰度发布通过 Ingress Controller 或者 istio 可以实现</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#1%EF%BC%89%E9%80%9A%E8%BF%87-describe-%E6%9F%A5%E7%9C%8B-pod-%E8%AF%A6%E7%BB%86%E4%BF%A1%E6%81%AF"><span class="toc-number">77.</span> <span class="toc-text">1）通过 describe 查看 pod 详细信息</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#2%EF%BC%89%E9%80%9A%E8%BF%87-logs-%E6%9F%A5%E7%9C%8B-pod-%E6%97%A5%E5%BF%97"><span class="toc-number">78.</span> <span class="toc-text">2）通过 logs 查看 pod 日志</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E9%80%9A%E8%BF%87%E8%AF%A6%E7%BB%86%E4%BF%A1%E6%81%AF%E5%92%8C%E6%97%A5%E5%BF%97%E5%9F%BA%E6%9C%AC%E5%B0%B1%E5%8F%AF%E4%BB%A5%E6%8A%8A%E9%97%AE%E9%A2%98%E5%AE%9A%E4%BD%8D%E5%87%BA%E6%9D%A5%E4%BA%86"><span class="toc-number">79.</span> <span class="toc-text">通过详细信息和日志基本就可以把问题定位出来了</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#emptyDir%E3%80%81hostPath%E3%80%81pv%E3%80%81storageclass%E3%80%81ceph%E3%80%81nfs%E3%80%81gluster-%E7%AD%89%E9%83%BD%E5%8F%AF%E4%BB%A5%E5%AE%9E%E7%8E%B0-k8s%E6%95%B0%E6%8D%AE%E6%8C%81%E4%B9%85%E5%8C%96%EF%BC%8C%E4%B9%9F%E5%8F%AF%E4%BB%A5%E9%80%9A%E8%BF%87-storageclass-%E5%8A%A8%E6%80%81%E7%9A%84%E4%BB%8E-nfs-provisioner-%E6%88%96%E8%80%85-cephprovisioner-%E7%AD%89%E4%BE%9B%E5%BA%94%E5%95%86%E5%8A%A8%E6%80%81%E7%9A%84%E5%88%92%E5%88%86%E5%AD%98%E5%82%A8%E5%81%9A%E6%88%90-pv"><span class="toc-number">80.</span> <span class="toc-text">emptyDir、hostPath、pv、storageclass、ceph、nfs、gluster 等都可以实现 k8s数据持久化，也可以通过 storageclass 动态的从 nfs provisioner 或者 cephprovisioner 等供应商动态的划分存储做成 pv</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#ClusterIp%EF%BC%9A%E9%9B%86%E7%BE%A4%E5%86%85%E9%83%A8%E7%9B%B8%E5%85%B3%E8%AE%BF%E9%97%AE"><span class="toc-number">81.</span> <span class="toc-text">ClusterIp：集群内部相关访问</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#NodePort%EF%BC%9A%E5%8F%AF%E4%BB%A5%E5%9C%A8%E7%89%A9%E7%90%86%E6%9C%BA%E6%98%A0%E5%B0%84%E7%AB%AF%E5%8F%A3"><span class="toc-number">82.</span> <span class="toc-text">NodePort：可以在物理机映射端口</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#ExternalName%EF%BC%9A%E5%8F%AF%E4%BB%A5%E5%AF%B9-service-%E5%81%9A%E8%BD%AF%E8%BF%9E%E6%8E%A5"><span class="toc-number">83.</span> <span class="toc-text">ExternalName：可以对 service 做软连接</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#LoadBalancer%EF%BC%9A%E4%BD%BF%E7%94%A8%E7%9A%84%E6%98%AF%E4%BA%91%E7%9A%84-slb"><span class="toc-number">84.</span> <span class="toc-text">LoadBalancer：使用的是云的 slb</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#Ceph-%E6%98%AF%E7%BB%9F%E4%B8%80%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F%EF%BC%8C%E6%94%AF%E6%8C%81%E4%B8%89%E7%A7%8D%E6%8E%A5%E5%8F%A3%EF%BC%9A"><span class="toc-number">85.</span> <span class="toc-text">Ceph 是统一存储系统，支持三种接口：</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E9%AB%98%E6%89%A9%E5%B1%95%E6%80%A7%EF%BC%9A%E4%BD%BF%E7%94%A8%E6%99%AE%E9%80%9A-x86-%E6%9C%8D%E5%8A%A1%E5%99%A8%EF%BC%8C%E6%94%AF%E6%8C%81-10-1000-%E5%8F%B0%E6%9C%8D%E5%8A%A1%E5%99%A8%EF%BC%8C%E6%94%AF%E6%8C%81-TB-%E5%88%B0-PB-%E7%BA%A7%E7%9A%84%E6%89%A9%E5%B1%95%E3%80%82"><span class="toc-number">86.</span> <span class="toc-text">高扩展性：使用普通 x86 服务器，支持 10~1000 台服务器，支持 TB 到 PB 级的扩展。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E9%AB%98%E5%8F%AF%E9%9D%A0%E6%80%A7%EF%BC%9A%E6%B2%A1%E6%9C%89%E5%8D%95%E7%82%B9%E6%95%85%E9%9A%9C%EF%BC%8C%E5%A4%9A%E6%95%B0%E6%8D%AE%E5%89%AF%E6%9C%AC%EF%BC%8C%E8%87%AA%E5%8A%A8%E7%AE%A1%E7%90%86%EF%BC%8C%E8%87%AA%E5%8A%A8%E4%BF%AE%E5%A4%8D%E3%80%82"><span class="toc-number">87.</span> <span class="toc-text">高可靠性：没有单点故障，多数据副本，自动管理，自动修复。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E9%AB%98%E6%80%A7%E8%83%BD%EF%BC%9A%E6%95%B0%E6%8D%AE%E5%88%86%E5%B8%83%E5%9D%87%E8%A1%A1%EF%BC%8C%E5%B9%B6%E8%A1%8C%E5%8C%96%E5%BA%A6%E9%AB%98%E3%80%82%E5%AF%B9%E4%BA%8E-objects-storage-%E5%92%8C-block-storage-%E4%B8%8D%E9%9C%80%E8%A6%81%E5%85%83%E6%95%B0%E6%8D%AE%E6%9C%8D%E5%8A%A1%E5%99%A8%E3%80%82"><span class="toc-number">88.</span> <span class="toc-text">高性能：数据分布均衡，并行化度高。对于 objects storage 和 block storage,不需要元数据服务器。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%8A%8A-ceph-rbd-%E6%88%96%E8%80%85-cephfs-%E5%81%9A%E6%88%90-pvStorageclass-%E5%8F%AF%E4%BB%A5%E5%8A%A8%E6%80%81%E4%BB%8E-ceph-provisioner-%E6%89%BE%E5%88%B0-ceph%EF%BC%8C%E7%84%B6%E5%90%8E%E7%94%9F%E6%88%90-pv"><span class="toc-number">89.</span> <span class="toc-text">把 ceph rbd 或者 cephfs 做成 pvStorageclass 可以动态从 ceph provisioner 找到 ceph，然后生成 pv</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#K8s-%E6%8C%82%E8%BD%BD-cephfs-%E5%8F%AF%E4%BB%A5%E6%94%AF%E6%8C%81%E8%B7%A8-node-%E8%8A%82%E7%82%B9-pod-%E6%8C%82%E8%BD%BD"><span class="toc-number">90.</span> <span class="toc-text">K8s 挂载 cephfs 可以支持跨 node 节点 pod 挂载</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#K8s-%E6%8C%82%E8%BD%BD-ceph-rbd-%E4%B8%8D%E6%94%AF%E6%8C%81%E8%B7%A8-node-%E8%8A%82%E7%82%B9-pod-%E6%8C%82%E8%BD%BD"><span class="toc-number">91.</span> <span class="toc-text">K8s 挂载 ceph rbd 不支持跨 node 节点 pod 挂载</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E8%AE%B8%E5%A4%9A%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E7%BB%8F%E8%BF%87%E9%95%BF%E6%97%B6%E9%97%B4%E8%BF%90%E8%A1%8C%EF%BC%8C%E6%9C%80%E7%BB%88%E8%BF%87%E6%B8%A1%E5%88%B0%E6%97%A0%E6%B3%95%E8%BF%90%E8%A1%8C%E7%9A%84%E7%8A%B6%E6%80%81%EF%BC%8C%E9%99%A4%E4%BA%86%E9%87%8D%E5%90%AF%EF%BC%8C%E6%97%A0%E6%B3%95%E6%81%A2%E5%A4%8D%E3%80%82%E9%80%9A%E5%B8%B8%E6%83%85%E5%86%B5%E4%B8%8B%EF%BC%8CK8S-%E4%BC%9A%E5%8F%91%E7%8E%B0%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E5%B7%B2%E7%BB%8F%E7%BB%88%E6%AD%A2%EF%BC%8C%E7%84%B6%E5%90%8E%E9%87%8D%E5%90%AF%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F-pod%E3%80%82%E6%9C%89%E6%97%B6%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E5%8F%AF%E8%83%BD%E5%9B%A0%E4%B8%BA%E6%9F%90%E4%BA%9B%E5%8E%9F%E5%9B%A0%EF%BC%88%E5%90%8E%E7%AB%AF%E6%9C%8D%E5%8A%A1%E6%95%85%E9%9A%9C%E7%AD%89%EF%BC%89%E5%AF%BC%E8%87%B4%E6%9A%82%E6%97%B6%E6%97%A0%E6%B3%95%E5%AF%B9%E5%A4%96%E6%8F%90%E4%BE%9B%E6%9C%8D%E5%8A%A1%EF%BC%8C%E4%BD%86%E5%BA%94%E7%94%A8%E8%BD%AF%E4%BB%B6%E6%B2%A1%E6%9C%89%E7%BB%88%E6%AD%A2%EF%BC%8C%E5%AF%BC%E8%87%B4K8S-%E6%97%A0%E6%B3%95%E9%9A%94%E7%A6%BB%E6%9C%89%E6%95%85%E9%9A%9C%E7%9A%84-pod%EF%BC%8C%E8%B0%83%E7%94%A8%E8%80%85%E5%8F%AF%E8%83%BD%E4%BC%9A%E8%AE%BF%E9%97%AE%E5%88%B0%E6%9C%89%E6%95%85%E9%9A%9C%E7%9A%84-pod%EF%BC%8C%E5%AF%BC%E8%87%B4%E4%B8%9A%E5%8A%A1%E4%B8%8D%E7%A8%B3%E5%AE%9A%E3%80%82K8S%E6%8F%90%E4%BE%9B-livenessProbe-%E6%9D%A5%E6%A3%80%E6%B5%8B%E5%AE%B9%E5%99%A8%E6%98%AF%E5%90%A6%E6%AD%A3%E5%B8%B8%E8%BF%90%E8%A1%8C%EF%BC%8C%E5%B9%B6%E4%B8%94%E5%AF%B9%E7%9B%B8%E5%BA%94%E7%8A%B6%E5%86%B5%E8%BF%9B%E8%A1%8C%E7%9B%B8%E5%BA%94%E7%9A%84%E8%A1%A5%E6%95%91%E6%8E%AA%E6%96%BD%E3%80%82"><span class="toc-number">92.</span> <span class="toc-text">许多应用程序经过长时间运行，最终过渡到无法运行的状态，除了重启，无法恢复。通常情况下，K8S 会发现应用程序已经终止，然后重启应用程序 pod。有时应用程序可能因为某些原因（后端服务故障等）导致暂时无法对外提供服务，但应用软件没有终止，导致K8S 无法隔离有故障的 pod，调用者可能会访问到有故障的 pod，导致业务不稳定。K8S提供 livenessProbe 来检测容器是否正常运行，并且对相应状况进行相应的补救措施。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%9C%A8%E6%B2%A1%E6%9C%89%E9%85%8D%E7%BD%AE-readinessProbe-%E7%9A%84%E8%B5%84%E6%BA%90%E5%AF%B9%E8%B1%A1%E4%B8%AD%EF%BC%8Cpod-%E4%B8%AD%E7%9A%84%E5%AE%B9%E5%99%A8%E5%90%AF%E5%8A%A8%E5%AE%8C%E6%88%90%E5%90%8E%EF%BC%8C%E5%B0%B1%E8%AE%A4%E4%B8%BA-pod-%E4%B8%AD%E7%9A%84%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E5%8F%AF%E4%BB%A5%E5%AF%B9%E5%A4%96%E6%8F%90%E4%BE%9B%E6%9C%8D%E5%8A%A1%EF%BC%8C%E8%AF%A5-pod-%E5%B0%B1%E4%BC%9A%E5%8A%A0%E5%85%A5%E7%9B%B8%E5%AF%B9%E5%BA%94%E7%9A%84-service%EF%BC%8C%E5%AF%B9%E5%A4%96%E6%8F%90%E4%BE%9B%E6%9C%8D%E5%8A%A1%E3%80%82%E4%BD%86%E6%9C%89%E6%97%B6%E4%B8%80%E4%BA%9B%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E5%90%AF%E5%8A%A8%E5%90%8E%EF%BC%8C%E9%9C%80%E8%A6%81%E8%BE%83%E9%95%BF%E6%97%B6%E9%97%B4%E7%9A%84%E5%8A%A0%E8%BD%BD%E6%89%8D%E8%83%BD%E5%AF%B9%E5%A4%96%E6%9C%8D%E5%8A%A1%EF%BC%8C%E5%A6%82%E6%9E%9C%E8%BF%99%E6%97%B6%E5%AF%B9%E5%A4%96%E6%8F%90%E4%BE%9B%E6%9C%8D%E5%8A%A1%EF%BC%8C%E6%89%A7%E8%A1%8C%E7%BB%93%E6%9E%9C%E5%BF%85%E7%84%B6%E6%97%A0%E6%B3%95%E8%BE%BE%E5%88%B0%E9%A2%84%E6%9C%9F%E6%95%88%E6%9E%9C%EF%BC%8C%E5%BD%B1%E5%93%8D%E7%94%A8%E6%88%B7%E4%BD%93%E9%AA%8C%E3%80%82%E6%AF%94%E5%A6%82%E4%BD%BF%E7%94%A8-tomcat-%E7%9A%84%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E6%9D%A5%E8%AF%B4%EF%BC%8C%E5%B9%B6%E4%B8%8D%E6%98%AF%E7%AE%80%E5%8D%95%E5%9C%B0%E8%AF%B4-tomcat-%E5%90%AF%E5%8A%A8%E6%88%90%E5%8A%9F%E5%B0%B1%E5%8F%AF%E4%BB%A5%E5%AF%B9%E5%A4%96%E6%8F%90%E4%BE%9B%E6%9C%8D%E5%8A%A1%E7%9A%84%EF%BC%8C%E8%BF%98%E9%9C%80%E8%A6%81%E7%AD%89%E5%BE%85-spring-%E5%AE%B9%E5%99%A8%E5%88%9D%E5%A7%8B%E5%8C%96%EF%BC%8C%E6%95%B0%E6%8D%AE%E5%BA%93%E8%BF%9E%E6%8E%A5%E4%B8%8A%E7%AD%89%E7%AD%89%E3%80%82"><span class="toc-number">93.</span> <span class="toc-text">在没有配置 readinessProbe 的资源对象中，pod 中的容器启动完成后，就认为 pod 中的应用程序可以对外提供服务，该 pod 就会加入相对应的 service，对外提供服务。但有时一些应用程序启动后，需要较长时间的加载才能对外服务，如果这时对外提供服务，执行结果必然无法达到预期效果，影响用户体验。比如使用 tomcat 的应用程序来说，并不是简单地说 tomcat 启动成功就可以对外提供服务的，还需要等待 spring 容器初始化，数据库连接上等等。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%A6%82%E6%9E%9C%E6%8F%90%E4%BE%9B%E4%BA%86%E5%90%AF%E5%8A%A8%E6%8E%A2%E6%B5%8B-startupprobe-%EF%BC%8C%E5%88%99%E7%A6%81%E7%94%A8%E6%89%80%E6%9C%89%E5%85%B6%E4%BB%96%E6%8E%A2%E6%B5%8B%EF%BC%8C%E7%9B%B4%E5%88%B0%E5%AE%83%E6%88%90%E5%8A%9F%E4%B8%BA%E6%AD%A2%E3%80%82%E5%A6%82%E6%9E%9C%E5%90%AF%E5%8A%A8%E6%8E%A2%E6%B5%8B%E5%A4%B1%E8%B4%A5%EF%BC%8Ckubelet-%E5%B0%86%E6%9D%80%E6%AD%BB%E5%AE%B9%E5%99%A8%EF%BC%8C%E5%AE%B9%E5%99%A8%E6%9C%8D%E4%BB%8E%E5%85%B6%E9%87%8D%E5%90%AF%E7%AD%96%E7%95%A5%E8%BF%9B%E8%A1%8C%E9%87%8D%E5%90%AF%E3%80%82%E5%A6%82%E6%9E%9C%E5%AE%B9%E5%99%A8%E6%B2%A1%E6%9C%89%E6%8F%90%E4%BE%9B%E5%90%AF%E5%8A%A8%E6%8E%A2%E6%B5%8B%EF%BC%8C%E5%88%99%E9%BB%98%E8%AE%A4%E7%8A%B6%E6%80%81%E4%B8%BA%E6%88%90%E5%8A%9FSuccess%E3%80%82"><span class="toc-number">94.</span> <span class="toc-text">如果提供了启动探测(startupprobe)，则禁用所有其他探测，直到它成功为止。如果启动探测失败，kubelet 将杀死容器，容器服从其重启策略进行重启。如果容器没有提供启动探测，则默认状态为成功Success。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#Service-%E6%98%AF%E5%9B%9B%E5%B1%82%E4%BB%A3%E7%90%86%EF%BC%8C%E5%8F%AA%E8%83%BD%E5%9F%BA%E4%BA%8E-ip-%E5%92%8C%E7%AB%AF%E5%8F%A3%E4%BB%A3%E7%90%86%E5%90%8E%E7%AB%AF%E6%9C%8D%E5%8A%A1Ingress-controller-%E6%98%AF%E4%B8%83%E5%B1%82%E4%BB%A3%E7%90%86%EF%BC%8C%E5%8F%AF%E4%BB%A5%E9%80%9A%E8%BF%87-http-%E6%88%96%E8%80%85-https-%E7%9A%84%E5%9F%9F%E5%90%8D%E5%9F%BA%E4%BA%8E-cookie%E3%80%81%E5%9C%B0%E5%9F%9F%E3%80%81%E8%AF%B7%E6%B1%82%E5%A4%B4%E3%80%81%E7%99%BE%E5%88%86%E6%AF%94%E8%BF%9B%E8%A1%8C%E4%BB%A3%E7%90%86%E8%BD%AC%E5%8F%91%E3%80%82Ingress-controller-%E4%BB%A3%E7%90%86%E9%9C%80%E8%A6%81%E6%89%BE%E5%88%B0%E5%AF%B9%E5%BA%94%E7%9A%84-Service%EF%BC%8C%E7%94%B1-Service-%E5%90%91%E5%90%8E%E4%BB%A3%E7%90%86-Pod"><span class="toc-number">95.</span> <span class="toc-text">Service 是四层代理，只能基于 ip 和端口代理后端服务Ingress controller 是七层代理，可以通过 http 或者 https 的域名基于 cookie、地域、请求头、百分比进行代理转发。Ingress controller 代理需要找到对应的 Service，由 Service 向后代理 Pod</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#flannel%EF%BC%9A%E6%94%AF%E6%8C%81%E5%9C%B0%E5%9D%80%E5%88%86%E9%85%8D%EF%BC%8C%E4%B8%8D%E6%94%AF%E6%8C%81%E7%BD%91%E7%BB%9C%E7%AD%96%E7%95%A5-%E3%80%82"><span class="toc-number">96.</span> <span class="toc-text">flannel：支持地址分配，不支持网络策略 。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#calico%EF%BC%9A%E6%94%AF%E6%8C%81%E5%9C%B0%E5%9D%80%E5%88%86%E9%85%8D%EF%BC%8C%E6%94%AF%E6%8C%81%E7%BD%91%E7%BB%9C%E7%AD%96%E7%95%A5%E3%80%82"><span class="toc-number">97.</span> <span class="toc-text">calico：支持地址分配，支持网络策略。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#flannel%EF%BC%9A"><span class="toc-number">98.</span> <span class="toc-text">flannel：</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#vxlan%EF%BC%9A-%E6%89%A9%E5%B1%95%E7%9A%84%E8%99%9A%E6%8B%9F%E5%B1%80%E5%9F%9F%E7%BD%91"><span class="toc-number">99.</span> <span class="toc-text">vxlan：#扩展的虚拟局域网</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#V-%E8%99%9A%E6%8B%9F%E7%9A%84"><span class="toc-number">100.</span> <span class="toc-text">V 虚拟的</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#X-%E6%89%A9%E5%B1%95%E7%9A%84"><span class="toc-number">101.</span> <span class="toc-text">X 扩展的</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#lan-%E5%B1%80%E5%9F%9F%E7%BD%91"><span class="toc-number">102.</span> <span class="toc-text">lan 局域网</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#1-vxlan-%E5%8F%A0%E5%8A%A0%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%BC%8F"><span class="toc-number">103.</span> <span class="toc-text">(1) vxlan 叠加网络模式</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#2-Directrouting"><span class="toc-number">104.</span> <span class="toc-text">(2) Directrouting</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E7%9B%B4%E6%8E%A5%E8%B7%AF%E7%94%B1%E6%A8%A1%E5%BC%8F%EF%BC%8C%E4%B8%8D%E6%8E%A8%E8%8D%90%EF%BC%8C%E5%8F%AA%E8%83%BD%E5%9C%A8%E4%BA%8C%E5%B1%82%E7%BD%91%E7%BB%9C%E4%B8%AD%EF%BC%8C%E4%B8%8D%E6%94%AF%E6%8C%81%E8%B7%A8%E7%BD%91%E7%BB%9C%EF%BC%8C%E5%A6%82%E6%9E%9C%E6%9C%89%E6%88%90%E5%8D%83%E4%B8%8A%E4%B8%87%E7%9A%84-Pod%EF%BC%8C%E5%AE%B9%E6%98%93%E4%BA%A7%E7%94%9F%E5%B9%BF%E6%92%AD%E9%A3%8E%E6%9A%B4"><span class="toc-number">105.</span> <span class="toc-text">#直接路由模式，不推荐，只能在二层网络中，不支持跨网络，如果有成千上万的 Pod，容易产生广播风暴</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#flannel-%E6%96%B9%E6%A1%88%EF%BC%9A%E9%9C%80%E8%A6%81%E5%9C%A8%E6%AF%8F%E4%B8%AA%E8%8A%82%E7%82%B9%E4%B8%8A%E6%8A%8A%E5%8F%91%E5%90%91%E5%AE%B9%E5%99%A8%E7%9A%84%E6%95%B0%E6%8D%AE%E5%8C%85%E8%BF%9B%E8%A1%8C%E5%B0%81%E8%A3%85%E5%90%8E%EF%BC%8C%E5%86%8D%E7%94%A8%E9%9A%A7%E9%81%93%E5%B0%86%E5%B0%81%E8%A3%85%E5%90%8E%E7%9A%84%E6%95%B0%E6%8D%AE%E5%8C%85%E5%8F%91%E9%80%81%E5%88%B0%E8%BF%90%E8%A1%8C%E7%9D%80%E7%9B%AE%E6%A0%87-Pod-%E7%9A%84-node-%E8%8A%82%E7%82%B9%E4%B8%8A%E3%80%82%E7%9B%AE%E6%A0%87-node-%E8%8A%82%E7%82%B9%E5%86%8D%E8%B4%9F%E8%B4%A3%E5%8E%BB%E6%8E%89%E5%B0%81%E8%A3%85%EF%BC%8C%E5%B0%86%E5%8E%BB%E9%99%A4%E5%B0%81%E8%A3%85%E7%9A%84%E6%95%B0%E6%8D%AE%E5%8C%85%E5%8F%91%E9%80%81%E5%88%B0%E7%9B%AE%E6%A0%87-Pod-%E4%B8%8A%E3%80%82%E6%95%B0%E6%8D%AE%E9%80%9A%E4%BF%A1%E6%80%A7%E8%83%BD%E5%88%99%E5%A4%A7%E5%8F%97%E5%BD%B1%E5%93%8D"><span class="toc-number">106.</span> <span class="toc-text">flannel 方案：需要在每个节点上把发向容器的数据包进行封装后，再用隧道将封装后的数据包发送到运行着目标 Pod 的 node 节点上。目标 node 节点再负责去掉封装，将去除封装的数据包发送到目标 Pod 上。数据通信性能则大受影响</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#4%E3%80%81calico-%E6%96%B9%E6%A1%88%EF%BC%9A%E5%9C%A8-k8s-%E5%A4%9A%E4%B8%AA%E7%BD%91%E8%B7%AF%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88%E4%B8%AD%E9%80%89%E6%8B%A9%E4%BA%86%E5%BB%B6%E8%BF%9F%E8%A1%A8%E7%8E%B0%E6%9C%80%E5%A5%BD%E7%9A%84-calico-%E6%96%B9%E6%A1%88%EF%BC%8C%E5%8F%AF%E4%BB%A5%E8%AE%BE%E7%BD%AE%E7%BD%91%E7%BB%9C%E7%AD%96%E7%95%A5%E9%80%82%E7%94%A8%E4%BA%8E%E5%A4%A7%E5%9E%8B%E9%9B%86%E7%BE%A4%E3%80%82"><span class="toc-number">107.</span> <span class="toc-text">4、calico 方案：在 k8s 多个网路解决方案中选择了延迟表现最好的-calico 方案，可以设置网络策略适用于大型集群。</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>Recent Posts</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/12/05/2024-2-22%20k8s%E6%9E%B6%E6%9E%84%E5%B8%88%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8/" title="2024-2-22 k8s架构师面试大全">2024-2-22 k8s架构师面试大全</a><time datetime="2024-12-04T16:31:06.534Z" title="Created 2024-12-05 00:31:06">2024-12-05</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/12/05/2024-8-1%20%E5%B8%B8%E8%A7%81Linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98%EF%BC%8C%E6%89%BE%E5%B7%A5%E4%BD%9C%E7%9A%84%E5%BF%85%E7%9C%8B%EF%BC%81/" title="2024-8-1 linux运维面试题">2024-8-1 linux运维面试题</a><time datetime="2024-12-04T16:30:42.291Z" title="Created 2024-12-05 00:30:42">2024-12-05</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/12/05/2024-3-8%20%E9%9D%A2%E8%AF%950308/" title="2024-3-8 面试">2024-3-8 面试</a><time datetime="2024-12-04T16:28:51.177Z" title="Created 2024-12-05 00:28:51">2024-12-05</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/12/05/2024-2-26%20%E9%9D%A2%E8%AF%95/" title="2024-2-26 面试">2024-2-26 面试</a><time datetime="2024-12-04T16:28:29.733Z" title="Created 2024-12-05 00:28:29">2024-12-05</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/12/05/2024-8-1%20linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98/" title="2024-8-1 linux面试题">2024-8-1 linux面试题</a><time datetime="2024-12-04T16:28:08.436Z" title="Created 2024-12-05 00:28:08">2024-12-05</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2019 - 2024 By John Doe</div><div class="framework-info"><span>Framework </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>Theme </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Reading Mode"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="Toggle Between Light and Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle Between Single-column and Double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="Settings"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table of Contents"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="Back to Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
+<h5 id="flannel-方案：需要在每个节点上把发向容器的数据包进行封装后，再用隧道将封装后的数据包发送到运行着目标-Pod-的-node-节点上。目标-node-节点再负责去掉封装，将去除封装的数据包发送到目标-Pod-上。数据通信性能则大受影响"><a href="#flannel-方案：需要在每个节点上把发向容器的数据包进行封装后，再用隧道将封装后的数据包发送到运行着目标-Pod-的-node-节点上。目标-node-节点再负责去掉封装，将去除封装的数据包发送到目标-Pod-上。数据通信性能则大受影响" class="headerlink" title="flannel 方案：需要在每个节点上把发向容器的数据包进行封装后，再用隧道将封装后的数据包发送到运行着目标 Pod 的 node 节点上。目标 node 节点再负责去掉封装，将去除封装的数据包发送到目标 Pod 上。数据通信性能则大受影响"></a>flannel 方案：需要在每个节点上把发向容器的数据包进行封装后，再用隧道将封装后的数据包发送到运行着目标 Pod 的 node 节点上。目标 node 节点再负责去掉封装，将去除封装的数据包发送到目标 Pod 上。数据通信性能则大受影响</h5><h5 id="4、calico-方案：在-k8s-多个网路解决方案中选择了延迟表现最好的-calico-方案，可以设置网络策略适用于大型集群。"><a href="#4、calico-方案：在-k8s-多个网路解决方案中选择了延迟表现最好的-calico-方案，可以设置网络策略适用于大型集群。" class="headerlink" title="4、calico 方案：在 k8s 多个网路解决方案中选择了延迟表现最好的-calico 方案，可以设置网络策略适用于大型集群。"></a><strong>4、calico 方案：</strong>在 k8s 多个网路解决方案中选择了延迟表现最好的-calico 方案，可以设置网络策略适用于大型集群。</h5>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>2024-2-22 k8s架构师面试大全</div>
+      <div>http://example.com/2024/12/05/2024-2-22 k8s架构师面试大全/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年12月5日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/12/05/2024-8-1%20%E5%B8%B8%E8%A7%81Linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98%EF%BC%8C%E6%89%BE%E5%B7%A5%E4%BD%9C%E7%9A%84%E5%BF%85%E7%9C%8B%EF%BC%81/" title="2024-8-1 linux运维面试题">
+                        <span class="hidden-mobile">2024-8-1 linux运维面试题</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

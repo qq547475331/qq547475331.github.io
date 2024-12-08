@@ -1,151 +1,281 @@
-<!DOCTYPE html><html lang="en" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>2024-3-8 面试 | Hexo</title><meta name="author" content="John Doe"><meta name="copyright" content="John Doe"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="根据nginx日志  过滤nginx前十访问量的ip要根据Nginx日志过滤出前十访问量的IP，你可以使用awk、sort和head命令组合来完成这个任务。假设你的Nginx访问日志格式如下（这是Nginx的默认格式）：123bash复制代码127.0.0.1 - - [10&#x2F;Oct&#x2F;2023:14:05:01 +0000] &quot;GET &#x2F; HTTP&#x2F;1.1&quot; 200 612 &amp;">
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="根据nginx日志  过滤nginx前十访问量的ip要根据Nginx日志过滤出前十访问量的IP，你可以使用awk、sort和head命令组合来完成这个任务。假设你的Nginx访问日志格式如下（这是Nginx的默认格式）：123bash复制代码127.0.0.1 - - [10&#x2F;Oct&#x2F;2023:14:05:01 +0000] &quot;GET &#x2F; HTTP&#x2F;1.1&quot; 200 612 &amp;">
 <meta property="og:type" content="article">
 <meta property="og:title" content="2024-3-8 面试">
 <meta property="og:url" content="http://example.com/2024/12/05/2024-3-8%20%E9%9D%A2%E8%AF%950308/index.html">
-<meta property="og:site_name" content="Hexo">
+<meta property="og:site_name" content="guichen&#39;s blog">
 <meta property="og:description" content="根据nginx日志  过滤nginx前十访问量的ip要根据Nginx日志过滤出前十访问量的IP，你可以使用awk、sort和head命令组合来完成这个任务。假设你的Nginx访问日志格式如下（这是Nginx的默认格式）：123bash复制代码127.0.0.1 - - [10&#x2F;Oct&#x2F;2023:14:05:01 +0000] &quot;GET &#x2F; HTTP&#x2F;1.1&quot; 200 612 &amp;">
-<meta property="og:locale" content="en_US">
-<meta property="og:image" content="http://example.com/img/butterfly-icon.png">
+<meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2024-12-04T16:28:51.177Z">
 <meta property="article:modified_time" content="2024-12-04T16:28:51.177Z">
-<meta property="article:author" content="John Doe">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://example.com/img/butterfly-icon.png"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="http://example.com/2024/12/05/2024-3-8%20%E9%9D%A2%E8%AF%950308/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><script>
-    (() => {
-      
-    const saveToLocal = {
-      set: (key, value, ttl) => {
-        if (!ttl) return
-        const expiry = Date.now() + ttl * 86400000
-        localStorage.setItem(key, JSON.stringify({ value, expiry }))
-      },
-      get: key => {
-        const itemStr = localStorage.getItem(key)
-        if (!itemStr) return undefined
-        const { value, expiry } = JSON.parse(itemStr)
-        if (Date.now() > expiry) {
-          localStorage.removeItem(key)
-          return undefined
-        }
-        return value
-      }
-    }
-
-    window.btf = {
-      saveToLocal,
-      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
-        const script = document.createElement('script')
-        script.src = url
-        script.async = true
-        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
-        script.onload = script.onreadystatechange = () => {
-          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
-        }
-        script.onerror = reject
-        document.head.appendChild(script)
-      }),
-      getCSS: (url, id) => new Promise((resolve, reject) => {
-        const link = document.createElement('link')
-        link.rel = 'stylesheet'
-        link.href = url
-        if (id) link.id = id
-        link.onload = link.onreadystatechange = () => {
-          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
-        }
-        link.onerror = reject
-        document.head.appendChild(link)
-      }),
-      addGlobalFn: (key, fn, name = false, parent = window) => {
-        if (!false && key.startsWith('pjax')) return
-        const globalFn = parent.globalFn || {}
-        globalFn[key] = globalFn[key] || {}
-        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
-        parent.globalFn = globalFn
-      }
-    }
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
   
-      
-      const activateDarkMode = () => {
-        document.documentElement.setAttribute('data-theme', 'dark')
-        if (document.querySelector('meta[name="theme-color"]') !== null) {
-          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
-        }
-      }
-      const activateLightMode = () => {
-        document.documentElement.setAttribute('data-theme', 'light')
-        if (document.querySelector('meta[name="theme-color"]') !== null) {
-          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
-        }
-      }
+  
+  
+  <title>2024-3-8 面试 - guichen&#39;s blog</title>
 
-      btf.activateDarkMode = activateDarkMode
-      btf.activateLightMode = activateLightMode
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
-      const theme = saveToLocal.get('theme')
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
     
-          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Fluid</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
         
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="2024-3-8 面试"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-12-05 00:28" pubdate>
+          2024年12月5日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.9k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          24 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
       
-      const asideStatus = saveToLocal.get('aside-status')
-      if (asideStatus !== undefined) {
-        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
-      }
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
     
       
-    const detectApple = () => {
-      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
-        document.documentElement.classList.add('apple')
-      }
-    }
-    detectApple()
-  
-    })()
-  </script><script>const GLOBAL_CONFIG = {
-  root: '/',
-  algolia: undefined,
-  localSearch: undefined,
-  translate: undefined,
-  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
-  copy: {
-    success: 'Copy Successful',
-    error: 'Copy Failed',
-    noSupport: 'Browser Not Supported'
-  },
-  relativeDate: {
-    homepage: false,
-    post: false
-  },
-  runtime: '',
-  dateSuffix: {
-    just: 'Just now',
-    min: 'minutes ago',
-    hour: 'hours ago',
-    day: 'days ago',
-    month: 'months ago'
-  },
-  copyright: undefined,
-  lightbox: 'null',
-  Snackbar: undefined,
-  infinitegrid: {
-    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
-    buttonText: 'Load More'
-  },
-  isPhotoFigcaption: false,
-  islazyload: false,
-  isAnchor: false,
-  percent: {
-    toc: true,
-    rightside: false,
-  },
-  autoDarkmode: false
-}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
-  title: '2024-3-8 面试',
-  isPost: true,
-  isHome: false,
-  isHighlightShrink: false,
-  isToc: true,
-  isShuoshuo: false
-}</script><meta name="generator" content="Hexo 7.3.0"></head><body><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Hexo</span></a><a class="nav-page-title" href="/"><span class="site-name">2024-3-8 面试</span></a></span><div id="menus"></div></nav><div id="post-info"><h1 class="post-title">2024-3-8 面试</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2024-12-04T16:28:51.177Z" title="Created 2024-12-05 00:28:51">2024-12-05</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2024-12-04T16:28:51.177Z" title="Updated 2024-12-05 00:28:51">2024-12-05</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post Views:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h3 id="根据nginx日志-过滤nginx前十访问量的ip"><a href="#根据nginx日志-过滤nginx前十访问量的ip" class="headerlink" title="根据nginx日志  过滤nginx前十访问量的ip"></a>根据nginx日志  过滤nginx前十访问量的ip</h3><h5 id="要根据Nginx日志过滤出前十访问量的IP，你可以使用awk、sort和head命令组合来完成这个任务。假设你的Nginx访问日志格式如下（这是Nginx的默认格式）："><a href="#要根据Nginx日志过滤出前十访问量的IP，你可以使用awk、sort和head命令组合来完成这个任务。假设你的Nginx访问日志格式如下（这是Nginx的默认格式）：" class="headerlink" title="要根据Nginx日志过滤出前十访问量的IP，你可以使用awk、sort和head命令组合来完成这个任务。假设你的Nginx访问日志格式如下（这是Nginx的默认格式）："></a>要根据Nginx日志过滤出前十访问量的IP，你可以使用<code>awk</code>、<code>sort</code>和<code>head</code>命令组合来完成这个任务。假设你的Nginx访问日志格式如下（这是Nginx的默认格式）：</h5><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">bash复制代码</span><br><span class="line"></span><br><span class="line">127.0.0.1 - - [10/Oct/2023:14:05:01 +0000] <span class="string">&quot;GET / HTTP/1.1&quot;</span> 200 612 <span class="string">&quot;-&quot;</span> <span class="string">&quot;curl/7.68.0&quot;</span></span><br></pre></td></tr></table></figure>
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">2024-3-8 面试</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h3 id="根据nginx日志-过滤nginx前十访问量的ip"><a href="#根据nginx日志-过滤nginx前十访问量的ip" class="headerlink" title="根据nginx日志  过滤nginx前十访问量的ip"></a>根据nginx日志  过滤nginx前十访问量的ip</h3><h5 id="要根据Nginx日志过滤出前十访问量的IP，你可以使用awk、sort和head命令组合来完成这个任务。假设你的Nginx访问日志格式如下（这是Nginx的默认格式）："><a href="#要根据Nginx日志过滤出前十访问量的IP，你可以使用awk、sort和head命令组合来完成这个任务。假设你的Nginx访问日志格式如下（这是Nginx的默认格式）：" class="headerlink" title="要根据Nginx日志过滤出前十访问量的IP，你可以使用awk、sort和head命令组合来完成这个任务。假设你的Nginx访问日志格式如下（这是Nginx的默认格式）："></a>要根据Nginx日志过滤出前十访问量的IP，你可以使用<code>awk</code>、<code>sort</code>和<code>head</code>命令组合来完成这个任务。假设你的Nginx访问日志格式如下（这是Nginx的默认格式）：</h5><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">bash复制代码</span><br><span class="line"></span><br><span class="line">127.0.0.1 - - [10/Oct/2023:14:05:01 +0000] <span class="string">&quot;GET / HTTP/1.1&quot;</span> 200 612 <span class="string">&quot;-&quot;</span> <span class="string">&quot;curl/7.68.0&quot;</span></span><br></pre></td></tr></table></figure>
 
 <h5 id="在这个日志中，第一个字段是客户端的IP地址。"><a href="#在这个日志中，第一个字段是客户端的IP地址。" class="headerlink" title="在这个日志中，第一个字段是客户端的IP地址。"></a>在这个日志中，第一个字段是客户端的IP地址。</h5><h5 id="你可以使用以下命令来过滤出前十访问量的IP："><a href="#你可以使用以下命令来过滤出前十访问量的IP：" class="headerlink" title="你可以使用以下命令来过滤出前十访问量的IP："></a>你可以使用以下命令来过滤出前十访问量的IP：</h5><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">bash复制代码</span><br><span class="line"></span><br><span class="line">awk <span class="string">&#x27;&#123;print $1&#125;&#x27;</span> access.log | <span class="built_in">sort</span> | <span class="built_in">uniq</span> -c | <span class="built_in">sort</span> -nr | <span class="built_in">head</span> -n 10</span><br><span class="line"></span><br><span class="line"><span class="built_in">cat</span> /var/log/nginx/access.log |awk <span class="string">&#x27;&#123;print $1&#125;&#x27;</span>|<span class="built_in">sort</span>|<span class="built_in">uniq</span> -c |<span class="built_in">sort</span> -nr|<span class="built_in">head</span> -n 10</span><br></pre></td></tr></table></figure>
 
@@ -194,4 +324,344 @@
 
 <h3 id="http的504错误"><a href="#http的504错误" class="headerlink" title="http的504错误"></a>http的504错误</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">504错误代表网关超时 （Gateway timeout），是指服务器作为网关或代理，但是没有及时从上游服务器收到请求。这通常意味着上游服务器已关闭（不响应网关 / 代理），而不是上游服务器和网关/代理在交换数据的协议上不一致。</span><br><span class="line"></span><br><span class="line">首先，了解什么是网关。</span><br><span class="line"></span><br><span class="line">网络的基本概念：</span><br><span class="line"></span><br><span class="line">客户端:应用 C/S（客户端/服务器） B/S（浏览器/服务器）</span><br><span class="line"></span><br><span class="line">服务器：为客户端提供服务、数据、资源的机器</span><br><span class="line"></span><br><span class="line">请求：客户端向服务器索取数据</span><br><span class="line"></span><br><span class="line">响应：服务器对客户端请求作出反应，一般是返回给客户端数据</span><br><span class="line"></span><br><span class="line">在这之中，把nginx或Apache作为网关。一般服务的架构是：用PHP则是nginx+php的一系列进程，Apache+tomcat+JVM。</span><br><span class="line"></span><br><span class="line">网关超时就与nginx或Apache配置的超时时间，和与php线程、java线程的响应时间有关。以nginx与PHP为例：它的超时配置fastcgi_connect_timeout、fastcgi_send_timeout、fastcgi_read_timeout。nginx将请求丢给PHP来处理，某个PHP的线程响应时间假如是10s，在10s内没有响应给nginx就报超时。这时可以打开PHP慢日志记录，然后排查之。</span><br><span class="line"></span><br><span class="line">另外，数据库的慢查询也会导致504 。nginx只要进程没有死，一般不是nginx的问题。假如场景是：确定程序执行是正确的，比如向数据库插入大量数据，需要5分钟，nginx设置的超时时间是3分钟。这时候可以将超时时间临时设置为大于5分钟。</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
-</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>Author: </span><span class="post-copyright-info"><a href="http://example.com">John Doe</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>Link: </span><span class="post-copyright-info"><a href="http://example.com/2024/12/05/2024-3-8%20%E9%9D%A2%E8%AF%950308/">http://example.com/2024/12/05/2024-3-8%20%E9%9D%A2%E8%AF%950308/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>Copyright Notice: </span><span class="post-copyright-info">All articles on this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless otherwise stated.</span></div></div><div class="tag_share"><div class="post-share"><div class="social-share" data-image="/img/butterfly-icon.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2024/12/05/2024-8-1%20%E5%B8%B8%E8%A7%81Linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98%EF%BC%8C%E6%89%BE%E5%B7%A5%E4%BD%9C%E7%9A%84%E5%BF%85%E7%9C%8B%EF%BC%81/" title="2024-8-1 linux运维面试题"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">Previous</div><div class="info-item-2">2024-8-1 linux运维面试题</div></div><div class="info-2"><div class="info-item-1">下面是一名运维人员求职数十家公司总结的 Linux运维面试题，给大家参考下~ 1、现在给你三百台服务器，你怎么对他们进行管理？ 管理3百台服务器的方式：1）设定跳板机，使用统一账号登录，便于安全与登录的考量。2）使用 salt、ansiable、puppet 进行系统的统一调度与配置的统一管理。3）建立简单的服务器的系统、配置、应用的 cmdb 信息管理。便于查阅每台服务器上的各种信息记录。 2、简述 raid0 raid1 raid5 三种工作模式的工作原理及特点 RAID，可以把硬盘整合成一个大磁盘，还可以在大磁盘上再分区，放数据还有一个大功能，多块盘放在一起可以有冗余（备份）RAID整合方式有很多，常用的：0 1 5 10 RAID 0，可以是一块盘和 N 个盘组合  优点读写快，是 RAID 中最好的 缺点：没有冗余，一块坏了数据就全没有了  RAID 1，只能2块盘，盘的大小可以不一样，以小的为准。  10G+10G只有10G，另一个做备份。它有100%的冗余， 缺点：浪费资源，成本高  RAID 5 ，3块盘，容量计算10...</div></div></div></a><a class="pagination-related" href="/2024/12/05/2024-2-26%20%E9%9D%A2%E8%AF%95/" title="2024-2-26 面试"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">Next</div><div class="info-item-2">2024-2-26 面试</div></div><div class="info-2"><div class="info-item-1">k8s 有哪些组件？1、etcd保存了集群的状态2、apiserver提供了资源操作的唯一入口，还提供认证，授权，访问控制，api注册和服务发现等3、controller manager负责维护集群的状态，比如自动扩展，滚动更新，故障检测等4、scheduler 负责集群资源的调度，安照预期的调度策略将pod调度到相应的node上5、kubelet负责管理容器的生命周期，还负责共享存储卷和网络的管理6、Container runtime 容器运行时，负责管理镜像的管理，pod和容器的真正运行7、kube-proxy负责管理集群的服务发现和负载均衡Kubernetes（K8s）是一个功能强大的容器编排平台，它由多个组件构成，这些组件共同协作来实现集群的管理、调度、监控等功能。下面是 Kubernetes 主要组件的简要介绍： 1. Kubernetes 核心组件1.1 API Server (kube-apiserver) 职责：API Server 是 Kubernetes 控制平面的核心组件，它暴露了 Kubernetes 集群的 REST...</div></div></div></a></nav></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/butterfly-icon.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">John Doe</div><div class="author-info-description"></div><div class="site-data"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">12</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">0</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">0</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>Announcement</span></div><div class="announcement_content">This is my Blog</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Contents</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%B9%E6%8D%AEnginx%E6%97%A5%E5%BF%97-%E8%BF%87%E6%BB%A4nginx%E5%89%8D%E5%8D%81%E8%AE%BF%E9%97%AE%E9%87%8F%E7%9A%84ip"><span class="toc-number">1.</span> <span class="toc-text">根据nginx日志  过滤nginx前十访问量的ip</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E8%A6%81%E6%A0%B9%E6%8D%AENginx%E6%97%A5%E5%BF%97%E8%BF%87%E6%BB%A4%E5%87%BA%E5%89%8D%E5%8D%81%E8%AE%BF%E9%97%AE%E9%87%8F%E7%9A%84IP%EF%BC%8C%E4%BD%A0%E5%8F%AF%E4%BB%A5%E4%BD%BF%E7%94%A8awk%E3%80%81sort%E5%92%8Chead%E5%91%BD%E4%BB%A4%E7%BB%84%E5%90%88%E6%9D%A5%E5%AE%8C%E6%88%90%E8%BF%99%E4%B8%AA%E4%BB%BB%E5%8A%A1%E3%80%82%E5%81%87%E8%AE%BE%E4%BD%A0%E7%9A%84Nginx%E8%AE%BF%E9%97%AE%E6%97%A5%E5%BF%97%E6%A0%BC%E5%BC%8F%E5%A6%82%E4%B8%8B%EF%BC%88%E8%BF%99%E6%98%AFNginx%E7%9A%84%E9%BB%98%E8%AE%A4%E6%A0%BC%E5%BC%8F%EF%BC%89%EF%BC%9A"><span class="toc-number">1.0.1.</span> <span class="toc-text">要根据Nginx日志过滤出前十访问量的IP，你可以使用awk、sort和head命令组合来完成这个任务。假设你的Nginx访问日志格式如下（这是Nginx的默认格式）：</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%9C%A8%E8%BF%99%E4%B8%AA%E6%97%A5%E5%BF%97%E4%B8%AD%EF%BC%8C%E7%AC%AC%E4%B8%80%E4%B8%AA%E5%AD%97%E6%AE%B5%E6%98%AF%E5%AE%A2%E6%88%B7%E7%AB%AF%E7%9A%84IP%E5%9C%B0%E5%9D%80%E3%80%82"><span class="toc-number">1.0.2.</span> <span class="toc-text">在这个日志中，第一个字段是客户端的IP地址。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E4%BD%A0%E5%8F%AF%E4%BB%A5%E4%BD%BF%E7%94%A8%E4%BB%A5%E4%B8%8B%E5%91%BD%E4%BB%A4%E6%9D%A5%E8%BF%87%E6%BB%A4%E5%87%BA%E5%89%8D%E5%8D%81%E8%AE%BF%E9%97%AE%E9%87%8F%E7%9A%84IP%EF%BC%9A"><span class="toc-number">1.0.3.</span> <span class="toc-text">你可以使用以下命令来过滤出前十访问量的IP：</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E8%BF%99%E4%B8%AA%E5%91%BD%E4%BB%A4%E7%9A%84%E8%A7%A3%E9%87%8A%E5%A6%82%E4%B8%8B%EF%BC%9A"><span class="toc-number">1.0.4.</span> <span class="toc-text">这个命令的解释如下：</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#awk-print-1-access-log%EF%BC%9A%E4%BD%BF%E7%94%A8awk%E5%91%BD%E4%BB%A4%E4%BB%8Eaccess-log%E6%96%87%E4%BB%B6%E4%B8%AD%E6%8F%90%E5%8F%96%E6%AF%8F%E8%A1%8C%E7%9A%84%E7%AC%AC%E4%B8%80%E4%B8%AA%E5%AD%97%E6%AE%B5%EF%BC%88%E5%8D%B3IP%E5%9C%B0%E5%9D%80%EF%BC%89%E3%80%82"><span class="toc-number">1.0.5.</span> <span class="toc-text">awk &#39;{print $1}&#39; access.log：使用awk命令从access.log文件中提取每行的第一个字段（即IP地址）。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#sort%EF%BC%9A%E5%AF%B9%E6%8F%90%E5%8F%96%E5%87%BA%E7%9A%84IP%E5%9C%B0%E5%9D%80%E8%BF%9B%E8%A1%8C%E6%8E%92%E5%BA%8F%E3%80%82"><span class="toc-number">1.0.6.</span> <span class="toc-text">sort：对提取出的IP地址进行排序。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#uniq-c%EF%BC%9A%E7%BB%9F%E8%AE%A1%E6%AF%8F%E4%B8%AA%E5%94%AF%E4%B8%80IP%E5%9C%B0%E5%9D%80%E7%9A%84%E5%87%BA%E7%8E%B0%E6%AC%A1%E6%95%B0%E3%80%82"><span class="toc-number">1.0.7.</span> <span class="toc-text">uniq -c：统计每个唯一IP地址的出现次数。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#sort-nr%EF%BC%9A%E6%8C%89%E6%95%B0%E5%AD%97%E8%BF%9B%E8%A1%8C%E9%80%86%E5%BA%8F%E6%8E%92%E5%BA%8F%EF%BC%8C%E8%BF%99%E6%A0%B7%E8%AE%BF%E9%97%AE%E9%87%8F%E6%9C%80%E5%A4%9A%E7%9A%84IP%E4%BC%9A%E6%8E%92%E5%9C%A8%E6%9C%80%E5%89%8D%E9%9D%A2%E3%80%82"><span class="toc-number">1.0.8.</span> <span class="toc-text">sort -nr：按数字进行逆序排序，这样访问量最多的IP会排在最前面。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#head-n-10%EF%BC%9A%E5%8F%AA%E6%98%BE%E7%A4%BA%E5%89%8D10%E8%A1%8C%EF%BC%8C%E5%8D%B3%E8%AE%BF%E9%97%AE%E9%87%8F%E6%9C%80%E5%A4%9A%E7%9A%84%E5%89%8D10%E4%B8%AAIP%E3%80%82"><span class="toc-number">1.0.9.</span> <span class="toc-text">head -n 10：只显示前10行，即访问量最多的前10个IP。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E8%AF%B7%E6%B3%A8%E6%84%8F%EF%BC%8C%E8%BF%99%E4%B8%AA%E5%91%BD%E4%BB%A4%E5%81%87%E8%AE%BE%E4%BD%A0%E7%9A%84Nginx%E6%97%A5%E5%BF%97%E6%96%87%E4%BB%B6%E5%90%8D%E6%98%AFaccess-log%E3%80%82%E5%A6%82%E6%9E%9C%E4%BD%A0%E7%9A%84%E6%97%A5%E5%BF%97%E6%96%87%E4%BB%B6%E5%90%8D%E4%B8%8D%E5%90%8C%EF%BC%8C%E8%AF%B7%E7%9B%B8%E5%BA%94%E5%9C%B0%E6%9B%BF%E6%8D%A2%E6%96%87%E4%BB%B6%E5%90%8D%E3%80%82%E6%AD%A4%E5%A4%96%EF%BC%8C%E8%BF%99%E4%B8%AA%E5%91%BD%E4%BB%A4%E4%B9%9F%E5%81%87%E8%AE%BE%E4%BD%A0%E7%9A%84%E6%97%A5%E5%BF%97%E6%A0%BC%E5%BC%8F%E4%B8%8E%E4%B8%8A%E9%9D%A2%E6%89%80%E7%A4%BA%E7%9A%84%E9%BB%98%E8%AE%A4%E6%A0%BC%E5%BC%8F%E7%9B%B8%E5%8C%B9%E9%85%8D%E3%80%82%E5%A6%82%E6%9E%9C%E4%BD%A0%E7%9A%84%E6%97%A5%E5%BF%97%E6%A0%BC%E5%BC%8F%E4%B8%8D%E5%90%8C%EF%BC%8C%E4%BD%A0%E5%8F%AF%E8%83%BD%E9%9C%80%E8%A6%81%E8%B0%83%E6%95%B4awk%E5%91%BD%E4%BB%A4%E4%B8%AD%E7%9A%84%E5%AD%97%E6%AE%B5%E9%80%89%E6%8B%A9%E5%99%A8%E3%80%82"><span class="toc-number">1.0.10.</span> <span class="toc-text">请注意，这个命令假设你的Nginx日志文件名是access.log。如果你的日志文件名不同，请相应地替换文件名。此外，这个命令也假设你的日志格式与上面所示的默认格式相匹配。如果你的日志格式不同，你可能需要调整awk命令中的字段选择器。</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#awk%E7%9A%84-nf%E5%95%A5%E6%84%8F%E6%80%9D"><span class="toc-number">2.</span> <span class="toc-text">awk的 $nf啥意思</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%9C%A8awk%E5%91%BD%E4%BB%A4%E4%B8%AD%EF%BC%8C-n%E6%98%AF%E4%B8%80%E4%B8%AA%E5%AD%97%E6%AE%B5%E5%BC%95%E7%94%A8%EF%BC%8C%E5%85%B6%E4%B8%ADn%E6%98%AF%E4%B8%80%E4%B8%AA%E6%95%B0%E5%AD%97%EF%BC%8C%E8%A1%A8%E7%A4%BA%E5%BD%93%E5%89%8D%E8%A1%8C%E7%9A%84%E7%AC%ACn%E4%B8%AA%E5%AD%97%E6%AE%B5%E3%80%82awk%E9%BB%98%E8%AE%A4%E4%BD%BF%E7%94%A8%E7%A9%BA%E7%99%BD%E5%AD%97%E7%AC%A6%EF%BC%88%E9%80%9A%E5%B8%B8%E6%98%AF%E7%A9%BA%E6%A0%BC%E6%88%96%E5%88%B6%E8%A1%A8%E7%AC%A6%EF%BC%89%E4%BD%9C%E4%B8%BA%E5%AD%97%E6%AE%B5%E5%88%86%E9%9A%94%E7%AC%A6%EF%BC%8C%E5%9B%A0%E6%AD%A4-1%E3%80%81-2%E3%80%81-3%E7%AD%89%E5%88%86%E5%88%AB%E4%BB%A3%E8%A1%A8%E6%AF%8F%E8%A1%8C%E7%9A%84%E7%AC%AC%E4%B8%80%E4%B8%AA%E3%80%81%E7%AC%AC%E4%BA%8C%E4%B8%AA%E3%80%81%E7%AC%AC%E4%B8%89%E4%B8%AA%E5%AD%97%E6%AE%B5%EF%BC%8C%E4%BE%9D%E6%AD%A4%E7%B1%BB%E6%8E%A8%E3%80%82"><span class="toc-number">2.0.1.</span> <span class="toc-text">在awk命令中，$n是一个字段引用，其中n是一个数字，表示当前行的第n个字段。awk默认使用空白字符（通常是空格或制表符）作为字段分隔符，因此$1、$2、$3等分别代表每行的第一个、第二个、第三个字段，依此类推。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%9C%A8%E5%A4%84%E7%90%86Nginx%E7%9A%84%E8%AE%BF%E9%97%AE%E6%97%A5%E5%BF%97%E6%97%B6%EF%BC%8C%E9%80%9A%E5%B8%B8%E6%AF%8F%E4%B8%AA%E5%AD%97%E6%AE%B5%E9%83%BD%E6%98%AF%E7%94%B1%E7%89%B9%E5%AE%9A%E7%9A%84%E5%88%86%E9%9A%94%E7%AC%A6%EF%BC%88%E5%A6%82%E7%A9%BA%E6%A0%BC%E6%88%96%E7%89%B9%E6%AE%8A%E5%AD%97%E7%AC%A6%EF%BC%89%E5%88%86%E9%9A%94%E7%9A%84%E3%80%82%E4%BE%8B%E5%A6%82%EF%BC%8C%E5%9C%A8Nginx%E7%9A%84%E9%BB%98%E8%AE%A4%E6%97%A5%E5%BF%97%E6%A0%BC%E5%BC%8F%E4%B8%AD%EF%BC%9A"><span class="toc-number">2.0.2.</span> <span class="toc-text">在处理Nginx的访问日志时，通常每个字段都是由特定的分隔符（如空格或特殊字符）分隔的。例如，在Nginx的默认日志格式中：</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#1-%E9%80%9A%E5%B8%B8%E6%98%AF%E5%AE%A2%E6%88%B7%E7%AB%AF%E7%9A%84IP%E5%9C%B0%E5%9D%80%E3%80%82"><span class="toc-number">2.0.3.</span> <span class="toc-text">$1 通常是客户端的IP地址。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#2-%E9%80%9A%E5%B8%B8%E6%98%AF%E8%BA%AB%E4%BB%BD%E9%AA%8C%E8%AF%81%E7%9A%84%E7%94%A8%E6%88%B7%E5%90%8D%EF%BC%88%E5%9C%A8%E8%BF%99%E4%B8%AA%E4%BE%8B%E5%AD%90%E4%B8%AD%E6%98%AF-%EF%BC%8C%E8%A1%A8%E7%A4%BA%E6%B2%A1%E6%9C%89%E7%94%A8%E6%88%B7%E5%90%8D%EF%BC%89%E3%80%82"><span class="toc-number">2.0.4.</span> <span class="toc-text">$2 通常是身份验证的用户名（在这个例子中是 -，表示没有用户名）。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#3-%E9%80%9A%E5%B8%B8%E6%98%AF%E7%94%A8%E6%88%B7%E7%9A%84%E8%BA%AB%E4%BB%BD%EF%BC%88%E9%80%9A%E5%B8%B8%E4%B9%9F%E6%98%AF-%EF%BC%89%E3%80%82"><span class="toc-number">2.0.5.</span> <span class="toc-text">$3 通常是用户的身份（通常也是 -）。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#4-%E6%98%AF%E8%AF%B7%E6%B1%82%E6%97%B6%E9%97%B4%E3%80%82"><span class="toc-number">2.0.6.</span> <span class="toc-text">$4 是请求时间。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#5-%E6%98%AF%E8%AF%B7%E6%B1%82%E8%A1%8C%EF%BC%88%E4%BE%8B%E5%A6%82-GET-HTTP-1-1-%EF%BC%89%E3%80%82"><span class="toc-number">2.0.7.</span> <span class="toc-text">$5 是请求行（例如 &quot;GET &#x2F; HTTP&#x2F;1.1&quot;）。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#6-%E6%98%AF%E5%93%8D%E5%BA%94%E7%8A%B6%E6%80%81%E7%A0%81%EF%BC%88%E4%BE%8B%E5%A6%82-200%EF%BC%89%E3%80%82"><span class="toc-number">2.0.8.</span> <span class="toc-text">$6 是响应状态码（例如 200）。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#7-%E6%98%AF%E5%93%8D%E5%BA%94%E4%BD%93%E7%9A%84%E5%A4%A7%E5%B0%8F%EF%BC%88%E4%BE%8B%E5%A6%82-612%EF%BC%89%E3%80%82"><span class="toc-number">2.0.9.</span> <span class="toc-text">$7 是响应体的大小（例如 612）。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%90%8E%E7%BB%AD%E7%9A%84%E5%AD%97%E6%AE%B5%E5%8F%AF%E8%83%BD%E5%8C%85%E6%8B%AC%E5%BC%95%E7%94%A8%E9%A1%B5%E3%80%81%E7%94%A8%E6%88%B7%E4%BB%A3%E7%90%86%E7%AD%89%E3%80%82"><span class="toc-number">2.0.10.</span> <span class="toc-text">后续的字段可能包括引用页、用户代理等。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%BD%93%E4%BD%A0%E4%BD%BF%E7%94%A8awk-print-1-access-log%E6%97%B6%EF%BC%8C%E4%BD%A0%E6%AD%A3%E5%9C%A8%E5%91%8A%E8%AF%89awk%E6%89%93%E5%8D%B0%E5%87%BA%E6%AF%8F%E4%B8%80%E8%A1%8C%E7%9A%84%E7%AC%AC%E4%B8%80%E4%B8%AA%E5%AD%97%E6%AE%B5%EF%BC%8C%E5%8D%B3%E5%AE%A2%E6%88%B7%E7%AB%AF%E7%9A%84IP%E5%9C%B0%E5%9D%80%E3%80%82"><span class="toc-number">2.0.11.</span> <span class="toc-text">当你使用awk &#39;{print $1}&#39; access.log时，你正在告诉awk打印出每一行的第一个字段，即客户端的IP地址。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#awk%E4%B9%9F%E5%85%81%E8%AE%B8%E4%BD%A0%E9%80%9A%E8%BF%87-F%E9%80%89%E9%A1%B9%E6%9D%A5%E6%8C%87%E5%AE%9A%E4%B8%80%E4%B8%AA%E4%B8%8D%E5%90%8C%E7%9A%84%E5%AD%97%E6%AE%B5%E5%88%86%E9%9A%94%E7%AC%A6%E3%80%82%E4%BE%8B%E5%A6%82%EF%BC%8C%E5%A6%82%E6%9E%9CNginx%E6%97%A5%E5%BF%97%E4%BD%BF%E7%94%A8%E4%B8%8D%E5%90%8C%E7%9A%84%E5%88%86%E9%9A%94%E7%AC%A6%EF%BC%8C%E4%BD%A0%E5%8F%AF%E4%BB%A5%E8%BF%99%E6%A0%B7%E6%8C%87%E5%AE%9A%EF%BC%9A"><span class="toc-number">2.0.12.</span> <span class="toc-text">awk也允许你通过-F选项来指定一个不同的字段分隔符。例如，如果Nginx日志使用不同的分隔符，你可以这样指定：</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#bash-%E6%AD%A3%E5%B8%B8%E8%BF%94%E5%9B%9E%E5%95%A5"><span class="toc-number">3.</span> <span class="toc-text">bash 正常返回啥</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%9C%A8-Bash-%E8%84%9A%E6%9C%AC%E6%88%96%E5%91%BD%E4%BB%A4%E8%A1%8C%E4%B8%AD%EF%BC%8C%E4%B8%80%E4%B8%AA%E5%91%BD%E4%BB%A4%E2%80%9C%E6%AD%A3%E5%B8%B8%E8%BF%94%E5%9B%9E%E2%80%9D%E9%80%9A%E5%B8%B8%E6%84%8F%E5%91%B3%E7%9D%80%E8%AF%A5%E5%91%BD%E4%BB%A4%E6%89%A7%E8%A1%8C%E6%88%90%E5%8A%9F%E5%B9%B6%E4%B8%94%E6%B2%A1%E6%9C%89%E9%94%99%E8%AF%AF%E3%80%82%E5%BD%93%E5%91%BD%E4%BB%A4%E6%88%90%E5%8A%9F%E6%89%A7%E8%A1%8C%E6%97%B6%EF%BC%8C%E5%AE%83%E4%BC%9A%E8%BF%94%E5%9B%9E%E4%B8%80%E4%B8%AA%E9%80%80%E5%87%BA%E7%8A%B6%E6%80%81%E7%A0%81%EF%BC%88exit-status-code%EF%BC%89%EF%BC%8C%E8%BF%99%E4%B8%AA%E7%8A%B6%E6%80%81%E7%A0%81%E9%80%9A%E5%B8%B8%E6%98%AF%E4%B8%80%E4%B8%AA%E4%BB%8B%E4%BA%8E-0-%E5%88%B0-255-%E4%B9%8B%E9%97%B4%E7%9A%84%E6%95%B4%E6%95%B0%E3%80%82%E5%9C%A8-Unix-%E5%92%8C-Linux-%E7%B3%BB%E7%BB%9F%E4%B8%AD%EF%BC%8C%E7%BA%A6%E5%AE%9A%E4%BF%97%E6%88%90%E7%9A%84%E6%98%AF%EF%BC%9A"><span class="toc-number">3.0.1.</span> <span class="toc-text">在 Bash 脚本或命令行中，一个命令“正常返回”通常意味着该命令执行成功并且没有错误。当命令成功执行时，它会返回一个退出状态码（exit status code），这个状态码通常是一个介于 0 到 255 之间的整数。在 Unix 和 Linux 系统中，约定俗成的是：</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E9%80%80%E5%87%BA%E7%8A%B6%E6%80%81%E7%A0%81-0-%E8%A1%A8%E7%A4%BA%E5%91%BD%E4%BB%A4%E6%89%A7%E8%A1%8C%E6%88%90%E5%8A%9F%E3%80%82"><span class="toc-number">3.0.2.</span> <span class="toc-text">退出状态码 0 表示命令执行成功。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E9%9D%9E%E9%9B%B6%E7%9A%84%E9%80%80%E5%87%BA%E7%8A%B6%E6%80%81%E7%A0%81%E8%A1%A8%E7%A4%BA%E5%91%BD%E4%BB%A4%E6%89%A7%E8%A1%8C%E5%87%BA%E9%94%99%E6%88%96%E9%81%87%E5%88%B0%E4%BA%86%E6%9F%90%E7%A7%8D%E9%97%AE%E9%A2%98%E3%80%82%E4%B8%8D%E5%90%8C%E7%9A%84%E9%9D%9E%E9%9B%B6%E7%8A%B6%E6%80%81%E7%A0%81%E9%80%9A%E5%B8%B8%E7%94%A8%E4%BA%8E%E6%8C%87%E7%A4%BA%E4%B8%8D%E5%90%8C%E7%B1%BB%E5%9E%8B%E7%9A%84%E9%94%99%E8%AF%AF%E3%80%82"><span class="toc-number">3.0.3.</span> <span class="toc-text">非零的退出状态码表示命令执行出错或遇到了某种问题。不同的非零状态码通常用于指示不同类型的错误。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E4%BD%A0%E5%8F%AF%E4%BB%A5%E4%BD%BF%E7%94%A8-%E8%BF%99%E4%B8%AA%E7%89%B9%E6%AE%8A%E5%8F%98%E9%87%8F%E6%9D%A5%E8%8E%B7%E5%8F%96%E4%B8%8A%E4%B8%80%E4%B8%AA%E5%91%BD%E4%BB%A4%E7%9A%84%E9%80%80%E5%87%BA%E7%8A%B6%E6%80%81%E7%A0%81%E3%80%82%E4%BE%8B%E5%A6%82%EF%BC%9A"><span class="toc-number">3.0.4.</span> <span class="toc-text">你可以使用 $? 这个特殊变量来获取上一个命令的退出状态码。例如：</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%9C%A8%E8%BF%99%E4%B8%AA%E8%84%9A%E6%9C%AC%E4%B8%AD%EF%BC%8Cls-nonexistentdirectory-%E5%91%BD%E4%BB%A4%E4%BC%9A%E5%B0%9D%E8%AF%95%E5%88%97%E5%87%BA%E4%B8%80%E4%B8%AA%E4%B8%8D%E5%AD%98%E5%9C%A8%E7%9A%84%E7%9B%AE%E5%BD%95%E7%9A%84%E5%86%85%E5%AE%B9%EF%BC%8C%E8%BF%99%E5%B0%86%E5%AF%BC%E8%87%B4%E4%B8%80%E4%B8%AA%E9%94%99%E8%AF%AF%EF%BC%8C%E5%B9%B6%E8%BF%94%E5%9B%9E%E4%B8%80%E4%B8%AA%E9%9D%9E%E9%9B%B6%E7%9A%84%E9%80%80%E5%87%BA%E7%8A%B6%E6%80%81%E7%A0%81%E3%80%82%E7%84%B6%E5%90%8E%EF%BC%8Cecho-Exit-status-%E4%BC%9A%E6%89%93%E5%8D%B0%E5%87%BA%E8%BF%99%E4%B8%AA%E7%8A%B6%E6%80%81%E7%A0%81%E3%80%82"><span class="toc-number">3.0.5.</span> <span class="toc-text">在这个脚本中，ls &#x2F;nonexistentdirectory 命令会尝试列出一个不存在的目录的内容，这将导致一个错误，并返回一个非零的退出状态码。然后，echo &quot;Exit status: $?&quot; 会打印出这个状态码。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E9%80%9A%E5%B8%B8%EF%BC%8C%E4%BD%A0%E4%B8%8D%E9%9C%80%E8%A6%81%E6%89%8B%E5%8A%A8%E6%A3%80%E6%9F%A5%E6%AF%8F%E4%B8%AA%E5%91%BD%E4%BB%A4%E7%9A%84%E9%80%80%E5%87%BA%E7%8A%B6%E6%80%81%E7%A0%81%EF%BC%8C%E5%9B%A0%E4%B8%BA-Bash-%E8%84%9A%E6%9C%AC%E4%BC%9A%E5%9C%A8%E9%81%87%E5%88%B0%E9%9D%9E%E9%9B%B6%E9%80%80%E5%87%BA%E7%8A%B6%E6%80%81%E7%A0%81%E6%97%B6%E5%81%9C%E6%AD%A2%E6%89%A7%E8%A1%8C%EF%BC%88%E9%99%A4%E9%9D%9E%E4%BD%A0%E5%9C%A8%E8%84%9A%E6%9C%AC%E4%B8%AD%E4%BD%BF%E7%94%A8%E4%BA%86%E9%94%99%E8%AF%AF%E5%A4%84%E7%90%86%E6%9C%BA%E5%88%B6%EF%BC%8C%E5%A6%82-set-e%EF%BC%89%E3%80%82%E4%BD%86%E6%98%AF%EF%BC%8C%E5%9C%A8%E7%BC%96%E5%86%99%E9%9C%80%E8%A6%81%E5%A4%84%E7%90%86%E9%94%99%E8%AF%AF%E6%88%96%E6%A0%B9%E6%8D%AE%E4%B8%8D%E5%90%8C%E9%80%80%E5%87%BA%E7%8A%B6%E6%80%81%E7%A0%81%E9%87%87%E5%8F%96%E4%B8%8D%E5%90%8C%E5%8A%A8%E4%BD%9C%E7%9A%84%E5%A4%8D%E6%9D%82%E8%84%9A%E6%9C%AC%E6%97%B6%EF%BC%8C%E4%BA%86%E8%A7%A3%E5%92%8C%E4%BD%BF%E7%94%A8%E9%80%80%E5%87%BA%E7%8A%B6%E6%80%81%E7%A0%81%E6%98%AF%E9%9D%9E%E5%B8%B8%E9%87%8D%E8%A6%81%E7%9A%84%E3%80%82"><span class="toc-number">3.0.6.</span> <span class="toc-text">通常，你不需要手动检查每个命令的退出状态码，因为 Bash 脚本会在遇到非零退出状态码时停止执行（除非你在脚本中使用了错误处理机制，如 set -e）。但是，在编写需要处理错误或根据不同退出状态码采取不同动作的复杂脚本时，了解和使用退出状态码是非常重要的。</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%AD%A4%E5%A4%96%EF%BC%8C%E6%9C%89%E4%BA%9B%E5%91%BD%E4%BB%A4%E5%8F%AF%E8%83%BD%E4%BC%9A%E8%BF%94%E5%9B%9E%E7%89%B9%E5%AE%9A%E7%9A%84%E9%9D%9E%E9%9B%B6%E7%8A%B6%E6%80%81%E7%A0%81%E6%9D%A5%E8%A1%A8%E7%A4%BA%E4%B8%8D%E5%90%8C%E7%B1%BB%E5%9E%8B%E7%9A%84%E9%94%99%E8%AF%AF%E3%80%82%E4%BE%8B%E5%A6%82%EF%BC%8Cgrep-%E5%91%BD%E4%BB%A4%E5%9C%A8%E6%89%BE%E4%B8%8D%E5%88%B0%E5%8C%B9%E9%85%8D%E9%A1%B9%E6%97%B6%E4%BC%9A%E8%BF%94%E5%9B%9E-1%EF%BC%8C%E8%80%8C%E5%9C%A8%E9%81%87%E5%88%B0%E5%85%B6%E4%BB%96%E9%94%99%E8%AF%AF%E6%97%B6%E4%BC%9A%E8%BF%94%E5%9B%9E%E4%B8%8D%E5%90%8C%E7%9A%84%E5%80%BC%E3%80%82%E5%9B%A0%E6%AD%A4%EF%BC%8C%E7%90%86%E8%A7%A3%E4%BD%A0%E6%AD%A3%E5%9C%A8%E4%BD%BF%E7%94%A8%E7%9A%84%E5%91%BD%E4%BB%A4%E7%9A%84%E6%96%87%E6%A1%A3%EF%BC%8C%E4%BB%A5%E4%BA%86%E8%A7%A3%E5%AE%83%E4%BB%AC%E8%BF%94%E5%9B%9E%E7%9A%84%E4%B8%8D%E5%90%8C%E7%8A%B6%E6%80%81%E7%A0%81%E7%9A%84%E5%90%AB%E4%B9%89%EF%BC%8C%E4%B9%9F%E6%98%AF%E9%9D%9E%E5%B8%B8%E9%87%8D%E8%A6%81%E7%9A%84%E3%80%82"><span class="toc-number">3.0.7.</span> <span class="toc-text">此外，有些命令可能会返回特定的非零状态码来表示不同类型的错误。例如，grep 命令在找不到匹配项时会返回 1，而在遇到其他错误时会返回不同的值。因此，理解你正在使用的命令的文档，以了解它们返回的不同状态码的含义，也是非常重要的。</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#k8s%E5%88%9B%E5%BB%BApod%E7%9A%84%E6%B5%81%E7%A8%8B"><span class="toc-number">4.</span> <span class="toc-text">k8s创建pod的流程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#dockerfile%E7%9A%84copy%E5%92%8Cadd%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-number">5.</span> <span class="toc-text">dockerfile的copy和add的区别</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#helm-chart%E7%9A%84%E5%8C%85%E6%80%8E%E4%B9%88%E6%89%93%EF%BC%9F"><span class="toc-number">5.1.</span> <span class="toc-text">helm chart的包怎么打？</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#http%E7%9A%84504%E9%94%99%E8%AF%AF"><span class="toc-number">6.</span> <span class="toc-text">http的504错误</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>Recent Posts</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/12/05/2024-2-22%20k8s%E6%9E%B6%E6%9E%84%E5%B8%88%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8/" title="2024-2-22 k8s架构师面试大全">2024-2-22 k8s架构师面试大全</a><time datetime="2024-12-04T16:31:06.534Z" title="Created 2024-12-05 00:31:06">2024-12-05</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/12/05/2024-8-1%20%E5%B8%B8%E8%A7%81Linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98%EF%BC%8C%E6%89%BE%E5%B7%A5%E4%BD%9C%E7%9A%84%E5%BF%85%E7%9C%8B%EF%BC%81/" title="2024-8-1 linux运维面试题">2024-8-1 linux运维面试题</a><time datetime="2024-12-04T16:30:42.291Z" title="Created 2024-12-05 00:30:42">2024-12-05</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/12/05/2024-3-8%20%E9%9D%A2%E8%AF%950308/" title="2024-3-8 面试">2024-3-8 面试</a><time datetime="2024-12-04T16:28:51.177Z" title="Created 2024-12-05 00:28:51">2024-12-05</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/12/05/2024-2-26%20%E9%9D%A2%E8%AF%95/" title="2024-2-26 面试">2024-2-26 面试</a><time datetime="2024-12-04T16:28:29.733Z" title="Created 2024-12-05 00:28:29">2024-12-05</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/12/05/2024-8-1%20linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98/" title="2024-8-1 linux面试题">2024-8-1 linux面试题</a><time datetime="2024-12-04T16:28:08.436Z" title="Created 2024-12-05 00:28:08">2024-12-05</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2019 - 2024 By John Doe</div><div class="framework-info"><span>Framework </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>Theme </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Reading Mode"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="Toggle Between Light and Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle Between Single-column and Double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="Settings"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table of Contents"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="Back to Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>2024-3-8 面试</div>
+      <div>http://example.com/2024/12/05/2024-3-8 面试0308/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年12月5日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2024/12/05/2024-8-1%20%E5%B8%B8%E8%A7%81Linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98%EF%BC%8C%E6%89%BE%E5%B7%A5%E4%BD%9C%E7%9A%84%E5%BF%85%E7%9C%8B%EF%BC%81/" title="2024-8-1 linux运维面试题">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">2024-8-1 linux运维面试题</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/12/05/2024-2-26%20%E9%9D%A2%E8%AF%95/" title="2024-2-26 面试">
+                        <span class="hidden-mobile">2024-2-26 面试</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
