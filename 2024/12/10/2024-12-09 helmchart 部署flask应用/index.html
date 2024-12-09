@@ -1,0 +1,780 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="要使用 Helm 部署一个 Flask 应用，你需要进行几个步骤，主要包括：  创建一个 Flask 应用。 编写 Dockerfile 来将 Flask 应用容器化。 推送容器镜像 到容器镜像仓库。 创建 Helm Chart 来描述如何部署应用。  步骤 1: 创建一个简单的 Flask 应用首先，确保你已经创建了一个简单的 Flask 应用。例如： app.py： 12345678910fr">
+<meta property="og:type" content="article">
+<meta property="og:title" content="2024-12-09 helmchart 部署flask应用">
+<meta property="og:url" content="http://example.com/2024/12/10/2024-12-09%20helmchart%20%E9%83%A8%E7%BD%B2flask%E5%BA%94%E7%94%A8/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="要使用 Helm 部署一个 Flask 应用，你需要进行几个步骤，主要包括：  创建一个 Flask 应用。 编写 Dockerfile 来将 Flask 应用容器化。 推送容器镜像 到容器镜像仓库。 创建 Helm Chart 来描述如何部署应用。  步骤 1: 创建一个简单的 Flask 应用首先，确保你已经创建了一个简单的 Flask 应用。例如： app.py： 12345678910fr">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2024-12-09T16:40:30.121Z">
+<meta property="article:modified_time" content="2024-12-09T16:40:30.121Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>2024-12-09 helmchart 部署flask应用 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="2024-12-09 helmchart 部署flask应用"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-12-10 00:40" pubdate>
+          2024年12月10日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          18 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">2024-12-09 helmchart 部署flask应用</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>要使用 Helm 部署一个 Flask 应用，你需要进行几个步骤，主要包括：</p>
+<ol>
+<li><strong>创建一个 Flask 应用</strong>。</li>
+<li><strong>编写 Dockerfile</strong> 来将 Flask 应用容器化。</li>
+<li><strong>推送容器镜像</strong> 到容器镜像仓库。</li>
+<li><strong>创建 Helm Chart</strong> 来描述如何部署应用。</li>
+</ol>
+<h3 id="步骤-1-创建一个简单的-Flask-应用"><a href="#步骤-1-创建一个简单的-Flask-应用" class="headerlink" title="步骤 1: 创建一个简单的 Flask 应用"></a>步骤 1: 创建一个简单的 Flask 应用</h3><p>首先，确保你已经创建了一个简单的 Flask 应用。例如：</p>
+<p><code>app.py</code>：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> flask <span class="hljs-keyword">import</span> Flask<br><br>app = Flask(__name__)<br><br><span class="hljs-meta">@app.route(<span class="hljs-params"><span class="hljs-string">&#x27;/&#x27;</span></span>)</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">hello_world</span>():<br>    <span class="hljs-keyword">return</span> <span class="hljs-string">&quot;Hello, World!&quot;</span><br><br><span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">&#x27;__main__&#x27;</span>:<br>    app.run(host=<span class="hljs-string">&#x27;0.0.0.0&#x27;</span>, port=<span class="hljs-number">5000</span>)<br></code></pre></td></tr></table></figure>
+
+<h3 id="步骤-2-编写-Dockerfile"><a href="#步骤-2-编写-Dockerfile" class="headerlink" title="步骤 2: 编写 Dockerfile"></a>步骤 2: 编写 Dockerfile</h3><p>然后，为你的 Flask 应用创建一个 Dockerfile，将 Flask 应用容器化。假设你将 Flask 应用保存为 <code>app.py</code>。</p>
+<p><code>Dockerfile</code>：</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs Dockerfile"><span class="hljs-comment"># 使用官方 Python 镜像</span><br><span class="hljs-keyword">FROM</span> python:<span class="hljs-number">3.9</span>-slim<br><br><span class="hljs-comment"># 设置工作目录</span><br><span class="hljs-keyword">WORKDIR</span><span class="language-bash"> /app</span><br><br><span class="hljs-comment"># 安装 Flask</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> requirements.txt /app/</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> pip install --no-cache-dir -r requirements.txt</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> pip install flask werkzeug==1.0.1</span><br><br><br><span class="hljs-comment"># 复制 Flask 应用</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> . /app</span><br><br><span class="hljs-comment"># 运行 Flask 应用</span><br><span class="hljs-keyword">CMD</span><span class="language-bash"> [<span class="hljs-string">&quot;python&quot;</span>, <span class="hljs-string">&quot;app.py&quot;</span>]</span><br></code></pre></td></tr></table></figure>
+
+<p>你需要创建 <code>requirements.txt</code> 文件来列出依赖项：</p>
+<p><code>requirements.txt</code>：</p>
+<figure class="highlight abnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs abnf"><span class="hljs-attribute">Flask</span><span class="hljs-operator">=</span><span class="hljs-operator">=</span><span class="hljs-number">2.0</span>.<span class="hljs-number">2</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="步骤-3-构建并推送-Docker-镜像"><a href="#步骤-3-构建并推送-Docker-镜像" class="headerlink" title="步骤 3: 构建并推送 Docker 镜像"></a>步骤 3: 构建并推送 Docker 镜像</h3><p>使用以下命令构建 Docker 镜像：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs bash">docker build -t 547475331/flask-app:latest .<br><br>docker tag <br><br><br>docker push 547475331/flasktest:latest<br></code></pre></td></tr></table></figure>
+
+<p>然后将镜像推送到 Docker 仓库（如 Docker Hub 或其他容器镜像仓库）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">docker push your-dockerhub-username/flask-app:latest<br></code></pre></td></tr></table></figure>
+
+
+
+
+
+<p>在 Ubuntu 上安装 Helm 的步骤如下：</p>
+<h3 id="步骤-1-更新系统的包管理器索引"><a href="#步骤-1-更新系统的包管理器索引" class="headerlink" title="步骤 1: 更新系统的包管理器索引"></a>步骤 1: 更新系统的包管理器索引</h3><p>首先，确保你的包管理器索引是最新的：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">sudo</span> apt-get update<br></code></pre></td></tr></table></figure>
+
+<h3 id="步骤-2-安装-Helm-依赖项"><a href="#步骤-2-安装-Helm-依赖项" class="headerlink" title="步骤 2: 安装 Helm 依赖项"></a>步骤 2: 安装 Helm 依赖项</h3><p>你需要确保系统上安装了 <code>curl</code> 和 <code>apt-transport-https</code>，这些工具用于下载 Helm 安装脚本和管理 APT 仓库。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">sudo</span> apt-get install curl apt-transport-https<br></code></pre></td></tr></table></figure>
+
+<h3 id="步骤-3-添加-Helm-的官方-APT-仓库"><a href="#步骤-3-添加-Helm-的官方-APT-仓库" class="headerlink" title="步骤 3: 添加 Helm 的官方 APT 仓库"></a>步骤 3: 添加 Helm 的官方 APT 仓库</h3><p>添加 Helm 的官方 APT 仓库的 GPG 密钥：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">curl https://baltocdn.com/helm/signing.asc | <span class="hljs-built_in">sudo</span> apt-key add -<br></code></pre></td></tr></table></figure>
+
+<p>然后，将 Helm 仓库添加到系统的 APT 源列表中：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">sudo</span> apt-get install -y software-properties-common<br><span class="hljs-built_in">sudo</span> add-apt-repository <span class="hljs-string">&quot;deb https://baltocdn.com/helm/stable/debian/ all main&quot;</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="步骤-4-安装-Helm"><a href="#步骤-4-安装-Helm" class="headerlink" title="步骤 4: 安装 Helm"></a>步骤 4: 安装 Helm</h3><p>更新包管理器的索引：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">sudo</span> apt-get update<br></code></pre></td></tr></table></figure>
+
+<p>然后，安装 Helm：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">sudo</span> apt-get install helm<br></code></pre></td></tr></table></figure>
+
+<h3 id="步骤-5-验证-Helm-安装"><a href="#步骤-5-验证-Helm-安装" class="headerlink" title="步骤 5: 验证 Helm 安装"></a>步骤 5: 验证 Helm 安装</h3><p>安装完成后，你可以通过以下命令验证 Helm 是否安装成功：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">helm version<br></code></pre></td></tr></table></figure>
+
+<p>如果 Helm 安装成功，你应该看到类似如下的输出：</p>
+<figure class="highlight crmsh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs crmsh"><span class="hljs-keyword">version</span>.Build<span class="hljs-literal">Inf</span>o&#123;<span class="hljs-keyword">Version</span>:<span class="hljs-string">&quot;v3.9.0&quot;</span>, GitCommit:<span class="hljs-string">&quot;abcdef123456&quot;</span>, GitTreeState:<span class="hljs-string">&quot;clean&quot;</span>, GoVersion:<span class="hljs-string">&quot;go1.16.7&quot;</span>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="步骤-6-可选-配置-Helm-仓库"><a href="#步骤-6-可选-配置-Helm-仓库" class="headerlink" title="步骤 6: 可选 - 配置 Helm 仓库"></a>步骤 6: 可选 - 配置 Helm 仓库</h3><p>你可以使用以下命令添加 Helm 仓库：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">helm repo add stable https://charts.helm.sh/stable<br></code></pre></td></tr></table></figure>
+
+<p>然后更新你的 Helm 仓库列表：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">helm repo update<br></code></pre></td></tr></table></figure>
+
+<h3 id="完成"><a href="#完成" class="headerlink" title="完成"></a>完成</h3><p>现在，Helm 应该已成功安装并配置完毕。你可以开始使用 Helm 部署 Kubernetes 应用、管理 Helm Charts 等。如果你有其他问题或遇到困难，欢迎随时提问！</p>
+<h3 id="步骤-4-创建-Helm-Chart"><a href="#步骤-4-创建-Helm-Chart" class="headerlink" title="步骤 4: 创建 Helm Chart"></a>步骤 4: 创建 Helm Chart</h3><p>接下来，使用 Helm 创建一个 Chart 来部署 Flask 应用。假设你已经安装了 Helm。</p>
+<ol>
+<li><strong>创建一个新的 Helm Chart：</strong></li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">helm create flask-app<br></code></pre></td></tr></table></figure>
+
+<p>这将创建一个名为 <code>flask-app</code> 的文件夹，并且包含了一些 Helm 默认的文件和模板。</p>
+<ol>
+<li><strong>编辑 Helm Chart 配置：</strong></li>
+</ol>
+<p>打开 <code>flask-app/values.yaml</code>，并修改以下内容：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-comment"># 修改镜像的名称和标签</span><br><span class="hljs-attr">image:</span><br>  <span class="hljs-attr">repository:</span> <span class="hljs-string">your-dockerhub-username/flask-app</span><br>  <span class="hljs-attr">tag:</span> <span class="hljs-string">latest</span><br>  <span class="hljs-attr">pullPolicy:</span> <span class="hljs-string">IfNotPresent</span><br><br><span class="hljs-comment"># 修改服务端口</span><br><span class="hljs-attr">service:</span><br>  <span class="hljs-attr">port:</span> <span class="hljs-number">80</span><br></code></pre></td></tr></table></figure>
+
+<ol>
+<li><strong>修改 <code>flask-app/templates/deployment.yaml</code>：</strong></li>
+</ol>
+<p>确保 <code>deployment.yaml</code> 中的容器端口与 Flask 应用的端口匹配（Flask 默认是 5000），但因为我们通常希望将它暴露在 80 端口上，记得在服务的配置中进行修改。</p>
+<p>编辑 <code>flask-app/templates/deployment.yaml</code> 中的 <code>containerPort</code>：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">ports:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">containerPort:</span> <span class="hljs-number">5000</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="步骤-5-部署-Flask-应用"><a href="#步骤-5-部署-Flask-应用" class="headerlink" title="步骤 5: 部署 Flask 应用"></a>步骤 5: 部署 Flask 应用</h3><p>使用以下命令安装 Helm Chart：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">helm install flask-app ./flask-app<br></code></pre></td></tr></table></figure>
+
+<p>这将使用你刚刚创建的 Helm Chart 部署 Flask 应用。</p>
+<h3 id="步骤-6-检查部署状态"><a href="#步骤-6-检查部署状态" class="headerlink" title="步骤 6: 检查部署状态"></a>步骤 6: 检查部署状态</h3><p>你可以使用以下命令检查部署的状态：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">kubectl get pods<br></code></pre></td></tr></table></figure>
+
+<p>查看服务的暴露方式，确保你可以通过外部访问到 Flask 应用。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">kubectl get svc<br></code></pre></td></tr></table></figure>
+
+<p>你应该能够看到一个服务正在监听 HTTP 流量，并且你的 Flask 应用已经成功部署在 Kubernetes 集群中。</p>
+<hr>
+<p>这样，你就通过 Helm 部署了一个简单的 Flask 应用。如果你有其他特定的需求或者遇到问题，欢迎继续询问！</p>
+<p>是的，你的 Dockerfile 基本上已经正确地设置了 Python 和 Flask 应用的运行环境，并且通过显式安装指定版本的 <code>werkzeug</code>（1.0.1）来解决兼容性问题。不过，还有一些优化和改进可以让 Dockerfile 更加高效和标准化。</p>
+<p>以下是优化后的 Dockerfile：</p>
+<h3 id="优化后的-Dockerfile"><a href="#优化后的-Dockerfile" class="headerlink" title="优化后的 Dockerfile"></a>优化后的 Dockerfile</h3><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-comment"># 使用官方 Python 3.9-slim 镜像作为基础镜像</span><br><span class="hljs-keyword">FROM</span> python:<span class="hljs-number">3.9</span>-slim<br><br><span class="hljs-comment"># 设置工作目录</span><br><span class="hljs-keyword">WORKDIR</span><span class="language-bash"> /app</span><br><br><span class="hljs-comment"># 复制依赖文件（优先复制 requirements.txt，利用 Docker 缓存机制）</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> requirements.txt /app/</span><br><br><span class="hljs-comment"># 安装依赖（显式安装 werkzeug 的特定版本）</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> pip install --no-cache-dir -r requirements.txt &amp;&amp; \</span><br><span class="language-bash">    pip install werkzeug==1.0.1</span><br>    <br><span class="hljs-keyword">RUN</span><span class="language-bash"> apt-get update &amp;&amp; apt-get install -y curl</span><br><br><span class="hljs-comment"># 复制应用代码到工作目录</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> . /app</span><br><br><span class="hljs-comment"># 暴露应用端口（可选，通常 Flask 默认运行在 5000 端口）</span><br><span class="hljs-keyword">EXPOSE</span> <span class="hljs-number">5000</span><br><br><span class="hljs-comment"># 运行 Flask 应用</span><br><span class="hljs-keyword">CMD</span><span class="language-bash"> [<span class="hljs-string">&quot;python&quot;</span>, <span class="hljs-string">&quot;app.py&quot;</span>]</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="改进点说明"><a href="#改进点说明" class="headerlink" title="改进点说明"></a>改进点说明</h3><ol>
+<li><strong>缓存优化</strong><br> 将 <code>COPY requirements.txt /app/</code> 和 <code>RUN pip install</code> 单独放在一起，这样如果应用代码（比如 <code>.py</code> 文件）变更而依赖未改变时，Docker 构建可以重用缓存，避免重复安装依赖。</li>
+<li><strong>明确暴露端口</strong><br> 使用 <code>EXPOSE 5000</code> 使镜像默认说明 Flask 应用监听的端口。虽然不强制，但有助于文档化容器的用途。</li>
+<li><strong>合并安装命令</strong><br> 在安装 <code>requirements.txt</code> 和单独安装 <code>werkzeug</code> 时，合并为一条命令，减少镜像层数并提高构建效率。</li>
+</ol>
+<h3 id="构建和运行步骤"><a href="#构建和运行步骤" class="headerlink" title="构建和运行步骤"></a>构建和运行步骤</h3><h4 id="1-构建镜像"><a href="#1-构建镜像" class="headerlink" title="1. 构建镜像"></a>1. 构建镜像</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">docker build -t flask-app .<br></code></pre></td></tr></table></figure>
+
+<h4 id="2-运行容器"><a href="#2-运行容器" class="headerlink" title="2. 运行容器"></a>2. 运行容器</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">docker run -d -p 5000:5000 flask-app<br></code></pre></td></tr></table></figure>
+
+<h3 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h3><ol>
+<li><p><strong>检查 <code>requirements.txt</code> 文件</strong><br> 确保 <code>requirements.txt</code> 中没有指定 <code>werkzeug</code> 的其他版本。否则可能会覆盖 <code>werkzeug==1.0.1</code> 的安装。</p>
+<p>示例 <code>requirements.txt</code>：</p>
+<figure class="highlight abnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs abnf"><span class="hljs-attribute">flask</span><span class="hljs-operator">=</span><span class="hljs-operator">=</span><span class="hljs-number">2.0</span>.<span class="hljs-number">3</span><br><span class="hljs-attribute">some-other-library</span><span class="hljs-operator">=</span><span class="hljs-operator">=</span><span class="hljs-number">1.2</span>.<span class="hljs-number">3</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>代码文件结构</strong><br> 确保你的 Flask 应用文件夹结构类似以下内容：</p>
+<figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs stata"><span class="hljs-keyword">app</span>/<br>├── <span class="hljs-keyword">app</span>.py<br>├── requirements.txt<br>└── templates/<br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>运行测试</strong><br> 在容器内验证应用是否正常工作：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">docker <span class="hljs-built_in">exec</span> -it &lt;container-id&gt; bash<br>curl http://localhost:5000<br></code></pre></td></tr></table></figure></li>
+</ol>
+<p>按照优化后的 Dockerfile 和步骤重新构建并运行容器，应该能够顺利启动你的 Flask 应用！如果仍然有问题，可以随时提供更多信息，我会继续协助你排查。</p>
+<p>根据报错信息，<code>werkzeug</code> 的版本可能与 Flask 不兼容。<code>ContextVar</code> 是较新的 <code>werkzeug</code> 中引入的模块，而你的镜像中可能安装了一个旧版本的 <code>werkzeug</code>。</p>
+<h3 id="解决方法："><a href="#解决方法：" class="headerlink" title="解决方法："></a>解决方法：</h3><ol>
+<li><p><strong>检查并更新 <code>werkzeug</code> 版本</strong><br> 确保你的 Flask 应用依赖的 <code>werkzeug</code> 版本是兼容的。</p>
+<p>编辑 <code>requirements.txt</code> 文件，添加或更新如下内容：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs plaintext">flask==2.1.3<br>werkzeug&gt;=2.1.0<br></code></pre></td></tr></table></figure>
+
+<p>根据 Flask 的版本更新 <code>werkzeug</code>，这里假设使用 Flask 2.x 版本。</p>
+</li>
+<li><p><strong>重建 Docker 镜像</strong><br> 在更新 <code>requirements.txt</code> 后，重新构建镜像：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">docker build -t flask-app .<br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>验证更新后的镜像</strong><br> 运行容器：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">docker run -d -p 5000:5000 flask-app<br>docker logs -f &lt;container-id&gt;<br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="其他排查"><a href="#其他排查" class="headerlink" title="其他排查"></a>其他排查</h3><ul>
+<li><p>如果问题依然存在，可以检查 <code>werkzeug</code> 版本：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">docker run -it flask-app python -c <span class="hljs-string">&quot;import werkzeug; print(werkzeug.__version__)&quot;</span><br></code></pre></td></tr></table></figure>
+
+<p>确认是否是预期的版本。</p>
+</li>
+<li><p>如果无法解决，可以直接尝试安装一个具体的兼容版本：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">pip install werkzeug==2.1.2<br></code></pre></td></tr></table></figure></li>
+</ul>
+<p>试试这些步骤，看是否能解决问题！</p>
+<p>你的 Dockerfile 结构是正确的，不过可以稍微优化一些细节：</p>
+<ol>
+<li>你可以将 <code>apt-get</code> 安装命令与 Python 包安装合并为一个层，这样可以减少镜像层数，提高构建效率。</li>
+<li>在安装 <code>curl</code> 之前，如果是基于 <code>python:3.9-slim</code> 镜像，最好先安装 <code>apt-transport-https</code>，确保 <code>apt</code> 能正常使用。</li>
+<li>可以在安装 Python 依赖时，使用 <code>--no-cache-dir</code>，避免缓存安装包，使镜像更小。</li>
+</ol>
+<p>以下是改进后的 Dockerfile：</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-comment"># 使用官方 Python 3.9-slim 镜像作为基础镜像</span><br><span class="hljs-keyword">FROM</span> python:<span class="hljs-number">3.9</span>-slim<br><br><span class="hljs-comment"># 设置工作目录</span><br><span class="hljs-keyword">WORKDIR</span><span class="language-bash"> /app</span><br><br><span class="hljs-comment"># 安装系统依赖，包含 curl 和 apt-transport-https</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> apt-get update &amp;&amp; apt-get install -y \</span><br><span class="language-bash">    apt-transport-https \</span><br><span class="language-bash">    curl</span><br><br><span class="hljs-comment"># 复制依赖文件（优先复制 requirements.txt，利用 Docker 缓存机制）</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> requirements.txt /app/</span><br><br><span class="hljs-comment"># 安装 Python 依赖，并安装特定版本的 werkzeug</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> pip install --no-cache-dir -r requirements.txt &amp;&amp; \</span><br><span class="language-bash">    pip install werkzeug==1.0.1</span><br><br><span class="hljs-comment"># 复制应用代码到工作目录</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> . /app</span><br><br><span class="hljs-comment"># 暴露应用端口（可选，通常 Flask 默认运行在 5000 端口）</span><br><span class="hljs-keyword">EXPOSE</span> <span class="hljs-number">5000</span><br><br><span class="hljs-comment"># 运行 Flask 应用</span><br><span class="hljs-keyword">CMD</span><span class="language-bash"> [<span class="hljs-string">&quot;python&quot;</span>, <span class="hljs-string">&quot;app.py&quot;</span>]</span><br></code></pre></td></tr></table></figure>
+
+<p>这样 Dockerfile 会先更新系统包并安装 <code>curl</code>，然后安装 Python 依赖，最后复制代码并启动应用。</p>
+<p><strong>构建镜像：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">docker build -t flask-app .<br></code></pre></td></tr></table></figure>
+
+<p><strong>运行容器：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">docker run -d -p 5000:5000 flask-app<br></code></pre></td></tr></table></figure>
+
+<p>然后你就可以进入容器并通过 <code>curl</code> 测试应用了。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>2024-12-09 helmchart 部署flask应用</div>
+      <div>http://example.com/2024/12/10/2024-12-09 helmchart 部署flask应用/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年12月10日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2024/12/10/2024-12-09%20docker%20daemon.json/" title="2024-12-09 docker daemon.json">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">2024-12-09 docker daemon.json</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/12/10/2024-12-10%20docker%20registrry/" title="2024-12-10 docker registrry">
+                        <span class="hidden-mobile">2024-12-10 docker registrry</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
