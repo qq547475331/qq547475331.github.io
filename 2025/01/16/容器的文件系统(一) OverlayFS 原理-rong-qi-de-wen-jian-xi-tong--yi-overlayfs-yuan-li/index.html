@@ -1,0 +1,669 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="容器文件系统之前文章 容器原理 说到容器的核心技术是由 Linux Namespace + Cgroups 实现的。其中在说到 Mount Namespace 中说到，使用 docker exec 进入某个容器后。可以看到一个崭新的文件系统，就类似于 ssh 到某个虚拟机或者物理机上，实际上就是利用 Linux Mount Namespace 隔离实现的。当创建一个容器时，Linux 系统上就会创">
+<meta property="og:type" content="article">
+<meta property="og:title" content="容器的文件系统 OverlayFS 原理 2024-04-03 14:45:26.893">
+<meta property="og:url" content="http://example.com/2025/01/16/%E5%AE%B9%E5%99%A8%E7%9A%84%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F(%E4%B8%80)%20OverlayFS%20%E5%8E%9F%E7%90%86-rong-qi-de-wen-jian-xi-tong--yi-overlayfs-yuan-li/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="容器文件系统之前文章 容器原理 说到容器的核心技术是由 Linux Namespace + Cgroups 实现的。其中在说到 Mount Namespace 中说到，使用 docker exec 进入某个容器后。可以看到一个崭新的文件系统，就类似于 ssh 到某个虚拟机或者物理机上，实际上就是利用 Linux Mount Namespace 隔离实现的。当创建一个容器时，Linux 系统上就会创">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191550850.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191550155.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191551124.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191551462.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191551685.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191552802.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.100Z">
+<meta property="article:modified_time" content="2025-01-16T02:57:44.864Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191550850.png">
+  
+  
+  
+  <title>容器的文件系统 OverlayFS 原理 2024-04-03 14:45:26.893 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="容器的文件系统 OverlayFS 原理 2024-04-03 14:45:26.893"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          25 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">容器的文件系统 OverlayFS 原理 2024-04-03 14:45:26.893</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="容器文件系统"><a href="#容器文件系统" class="headerlink" title="容器文件系统"></a>容器文件系统</h2><h5 id="之前文章-容器原理-说到容器的核心技术是由-Linux-Namespace-Cgroups-实现的。其中在说到-Mount-Namespace-中说到，使用-docker-exec-进入某个容器后。可以看到一个崭新的文件系统，就类似于-ssh-到某个虚拟机或者物理机上，实际上就是利用-Linux-Mount-Namespace-隔离实现的。当创建一个容器时，Linux-系统上就会创建一个-对应的-Mount-Namespace，那么这个-Mount-Namespace-就是该容器的文件系统。"><a href="#之前文章-容器原理-说到容器的核心技术是由-Linux-Namespace-Cgroups-实现的。其中在说到-Mount-Namespace-中说到，使用-docker-exec-进入某个容器后。可以看到一个崭新的文件系统，就类似于-ssh-到某个虚拟机或者物理机上，实际上就是利用-Linux-Mount-Namespace-隔离实现的。当创建一个容器时，Linux-系统上就会创建一个-对应的-Mount-Namespace，那么这个-Mount-Namespace-就是该容器的文件系统。" class="headerlink" title="之前文章 容器原理 说到容器的核心技术是由 Linux Namespace + Cgroups 实现的。其中在说到 Mount Namespace 中说到，使用 docker exec 进入某个容器后。可以看到一个崭新的文件系统，就类似于 ssh 到某个虚拟机或者物理机上，实际上就是利用 Linux Mount Namespace 隔离实现的。当创建一个容器时，Linux 系统上就会创建一个 对应的 Mount Namespace，那么这个 Mount Namespace 就是该容器的文件系统。"></a>之前文章 <a target="_blank" rel="noopener" href="http://mp.weixin.qq.com/s?__biz=MzkyNDMyNjAyMg==&mid=2247484030&idx=1&sn=43bd06072aa327ded21d6513b891d84d&chksm=c1d6c397f6a14a81cbef67203522f0a5201492b161d1faf205d7d271b2e6afe64f1a2b710391&scene=21#wechat_redirect">容器原理</a> 说到容器的核心技术是由 Linux <strong>Namespace + Cgroups</strong> 实现的。其中在说到 <strong>Mount Namespace</strong> 中说到，使用 <code>docker exec</code> 进入某个容器后。可以看到一个崭新的文件系统，就类似于 <code>ssh</code> 到某个虚拟机或者物理机上，实际上就是利用 Linux <strong>Mount Namespace</strong> 隔离实现的。当创建一个容器时，Linux 系统上就会创建一个 对应的 <strong>Mount Namespace</strong>，那么这个 <strong>Mount Namespace</strong> 就是该容器的文件系统。</h5><h5 id="容器的文件系统在用户视角和宿主机的文件系统没有什么区别，但是其背后的原理却不同。在容器里运行-df-命令，可以看到在容器中根目录-的文件系统类型是-overlay，它不是我们在普通-Linux-节点上看到的-Ext4-或者-XFS-之类常见的文件系统。"><a href="#容器的文件系统在用户视角和宿主机的文件系统没有什么区别，但是其背后的原理却不同。在容器里运行-df-命令，可以看到在容器中根目录-的文件系统类型是-overlay，它不是我们在普通-Linux-节点上看到的-Ext4-或者-XFS-之类常见的文件系统。" class="headerlink" title="容器的文件系统在用户视角和宿主机的文件系统没有什么区别，但是其背后的原理却不同。在容器里运行 df 命令，可以看到在容器中根目录(/)的文件系统类型是 overlay，它不是我们在普通 Linux 节点上看到的 Ext4 或者 XFS 之类常见的文件系统。"></a>容器的文件系统在用户视角和宿主机的文件系统没有什么区别，但是其背后的原理却不同。在容器里运行 <code>df</code> 命令，可以看到在容器中<code>根目录(/)</code>的文件系统类型是 <strong>overlay</strong>，它不是我们在普通 Linux 节点上看到的 Ext4 或者 XFS 之类常见的文件系统。</h5><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">root</span>@<span class="hljs-number">624</span>d08ddaf99:~# df -h<br><span class="hljs-attribute">Filesystem</span>      Size  Used Avail Use% Mounted <span class="hljs-literal">on</span><br><span class="hljs-attribute">overlay</span>         <span class="hljs-number">558</span>G   <span class="hljs-number">70</span>G  <span class="hljs-number">488</span>G  <span class="hljs-number">13</span>% /<br></code></pre></td></tr></table></figure>
+
+
+
+<hr>
+<h2 id="为什么需要-OverlayFS"><a href="#为什么需要-OverlayFS" class="headerlink" title="为什么需要 OverlayFS"></a>为什么需要 OverlayFS</h2><h5 id="那么这个-OverlayFS-是一个怎样的文件系统，容器为什么使用这种文件系统？"><a href="#那么这个-OverlayFS-是一个怎样的文件系统，容器为什么使用这种文件系统？" class="headerlink" title="那么这个 OverlayFS 是一个怎样的文件系统，容器为什么使用这种文件系统？"></a>那么这个 <strong>OverlayFS</strong> 是一个怎样的文件系统，容器为什么使用这种文件系统？</h5><h5 id="我们知道虚拟机需要-iso-镜像才能启动，那么每个容器也需要一个镜像才能启动。然后这个镜像会包含容器运行的二进制文件、库文件、配置文件，其他的依赖的文件等全部打包成一个-镜像文件。如果使用正常的-EXT4-或者-XFS-文件系统的话，那么每次启动一个容器，就需要把一个镜像文件下载并存储在宿主机上。"><a href="#我们知道虚拟机需要-iso-镜像才能启动，那么每个容器也需要一个镜像才能启动。然后这个镜像会包含容器运行的二进制文件、库文件、配置文件，其他的依赖的文件等全部打包成一个-镜像文件。如果使用正常的-EXT4-或者-XFS-文件系统的话，那么每次启动一个容器，就需要把一个镜像文件下载并存储在宿主机上。" class="headerlink" title="我们知道虚拟机需要 iso 镜像才能启动，那么每个容器也需要一个镜像才能启动。然后这个镜像会包含容器运行的二进制文件、库文件、配置文件，其他的依赖的文件等全部打包成一个 镜像文件。如果使用正常的 EXT4 或者 XFS 文件系统的话，那么每次启动一个容器，就需要把一个镜像文件下载并存储在宿主机上。"></a>我们知道虚拟机需要 iso 镜像才能启动，那么每个容器也需要一个镜像才能启动。然后这个镜像会包含容器运行的二进制文件、库文件、配置文件，其他的依赖的文件等全部打包成一个 镜像文件。如果使用正常的 EXT4 或者 XFS 文件系统的话，那么每次启动一个容器，就需要把一个镜像文件下载并存储在宿主机上。</h5><h5 id="比如：假设一个镜像文件的大小是-500MB，那么-100-个容器的话，就需要下载-500MB-100-50GB-的文件，并且占用-50GB-的磁盘空间。然而在这-50GB-的磁盘空间中，大部分数据都是重复的，因为大部分数据都是镜像的-base-镜像，而且这些-base-镜像基本都是只读的，在容器运行时不会变动。"><a href="#比如：假设一个镜像文件的大小是-500MB，那么-100-个容器的话，就需要下载-500MB-100-50GB-的文件，并且占用-50GB-的磁盘空间。然而在这-50GB-的磁盘空间中，大部分数据都是重复的，因为大部分数据都是镜像的-base-镜像，而且这些-base-镜像基本都是只读的，在容器运行时不会变动。" class="headerlink" title="比如：假设一个镜像文件的大小是 500MB，那么 100 个容器的话，就需要下载 500MB*100= 50GB 的文件，并且占用 50GB 的磁盘空间。然而在这 50GB 的磁盘空间中，大部分数据都是重复的，因为大部分数据都是镜像的 base 镜像，而且这些 base 镜像基本都是只读的，在容器运行时不会变动。"></a>比如：假设一个镜像文件的大小是 500MB，那么 100 个容器的话，就需要下载 <code>500MB*100= 50GB</code> 的文件，并且占用 50GB 的磁盘空间。然而在这 50GB 的磁盘空间中，大部分数据都是重复的，因为大部分数据都是镜像的 base 镜像，而且这些 base 镜像基本都是只读的，在容器运行时不会变动。</h5><h5 id="如说这-100-个容器镜像都是基于-ubuntu-18-04-的，每个容器镜像只是额外复制了-50MB-左右自己的应用程序到-ubuntu-18-04-里，那么就是说在总共-50GB-的数据里，有-90-的数据是冗余的。"><a href="#如说这-100-个容器镜像都是基于-ubuntu-18-04-的，每个容器镜像只是额外复制了-50MB-左右自己的应用程序到-ubuntu-18-04-里，那么就是说在总共-50GB-的数据里，有-90-的数据是冗余的。" class="headerlink" title="如说这 100 个容器镜像都是基于 ubuntu:18.04 的，每个容器镜像只是额外复制了 50MB 左右自己的应用程序到 ubuntu: 18.04 里，那么就是说在总共 50GB 的数据里，有 90% 的数据是冗余的。"></a>如说这 100 个容器镜像都是基于 ubuntu:18.04 的，每个容器镜像只是额外复制了 50MB 左右自己的应用程序到 ubuntu: 18.04 里，那么就是说在总共 50GB 的数据里，有 90% 的数据是冗余的。</h5><h5 id="所以有没有一种文件系统可以达到用户的应用程序可以重复利用-ubuntu-18-04-？也就是能够有效地减少磁盘上冗余的镜像数据，同时减少冗余的镜像数据在网络上的传输。这类的文件系统被称为-UnionFS。下图就是-UnionFS-解决问题的实现。"><a href="#所以有没有一种文件系统可以达到用户的应用程序可以重复利用-ubuntu-18-04-？也就是能够有效地减少磁盘上冗余的镜像数据，同时减少冗余的镜像数据在网络上的传输。这类的文件系统被称为-UnionFS。下图就是-UnionFS-解决问题的实现。" class="headerlink" title="所以有没有一种文件系统可以达到用户的应用程序可以重复利用 ubuntu:18.04 ？也就是能够有效地减少磁盘上冗余的镜像数据，同时减少冗余的镜像数据在网络上的传输。这类的文件系统被称为 UnionFS。下图就是 UnionFS 解决问题的实现。"></a>所以有没有一种文件系统可以达到用户的应用程序可以重复利用 ubuntu:18.04 ？也就是能够有效地减少磁盘上冗余的镜像数据，同时减少冗余的镜像数据在网络上的传输。这类的文件系统被称为 <strong>UnionFS</strong>。下图就是 <strong>UnionFS</strong> 解决问题的实现。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191550850.png" srcset="/img/loading.gif" lazyload alt="image-20240319155030778"></p>
+<h5 id="UnionFS-这类文件系统实现的主要功能是把多个目录（处于不同的分区）一起挂载（mount）在一个目录下。这种多目录挂载的方式，正好可以解决我们刚才说的容器镜像的问题。"><a href="#UnionFS-这类文件系统实现的主要功能是把多个目录（处于不同的分区）一起挂载（mount）在一个目录下。这种多目录挂载的方式，正好可以解决我们刚才说的容器镜像的问题。" class="headerlink" title="UnionFS 这类文件系统实现的主要功能是把多个目录（处于不同的分区）一起挂载（mount）在一个目录下。这种多目录挂载的方式，正好可以解决我们刚才说的容器镜像的问题。"></a><strong>UnionFS</strong> 这类文件系统实现的主要功能是把多个目录（处于不同的分区）一起挂载（<code>mount</code>）在一个目录下。这种多目录挂载的方式，正好可以解决我们刚才说的容器镜像的问题。</h5><h5 id="比如，我们可以把-ubuntu18-04-这个基础镜像的文件放在一个目录-ubuntu18-04-下，容器自己额外的程序文件-app-1-bin-放在-app-1-目录下。"><a href="#比如，我们可以把-ubuntu18-04-这个基础镜像的文件放在一个目录-ubuntu18-04-下，容器自己额外的程序文件-app-1-bin-放在-app-1-目录下。" class="headerlink" title="比如，我们可以把 ubuntu18.04 这个基础镜像的文件放在一个目录 ubuntu18.04&#x2F; 下，容器自己额外的程序文件 app_1_bin 放在 app_1/ 目录下。"></a>比如，我们可以把 ubuntu18.04 这个基础镜像的文件放在一个目录 ubuntu18.04&#x2F; 下，容器自己额外的程序文件 <code>app_1_bin</code> 放在 <code>app_1/</code> 目录下。</h5><h5 id="然后，我们把这两个目录挂载到-container-1-这个目录下，作为容器-1-看到的文件系统；对于容器-2，就可以把-ubuntu18-04-和-app-2-两个目录一起挂载到-container-2-的目录下。这样在节点上我们只要保留一份-ubuntu18-04-的文件就可以了。可参考下图："><a href="#然后，我们把这两个目录挂载到-container-1-这个目录下，作为容器-1-看到的文件系统；对于容器-2，就可以把-ubuntu18-04-和-app-2-两个目录一起挂载到-container-2-的目录下。这样在节点上我们只要保留一份-ubuntu18-04-的文件就可以了。可参考下图：" class="headerlink" title="然后，我们把这两个目录挂载到 container_1/ 这个目录下，作为容器 1 看到的文件系统；对于容器 2，就可以把 ubuntu18.04/ 和 app_2/ 两个目录一起挂载到 container_2 的目录下。这样在节点上我们只要保留一份 ubuntu18.04 的文件就可以了。可参考下图："></a>然后，我们把这两个目录挂载到 <code>container_1/</code> 这个目录下，作为<strong>容器 1</strong> 看到的文件系统；对于<strong>容器 2</strong>，就可以把 <code>ubuntu18.04/</code> 和 <code>app_2/</code> 两个目录一起挂载到 <code>container_2</code> 的目录下。这样在节点上我们只要保留一份 ubuntu18.04 的文件就可以了。可参考下图：</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191550155.png" srcset="/img/loading.gif" lazyload alt="image-20240319155046111"></p>
+<hr>
+<h2 id="OverlayFS"><a href="#OverlayFS" class="headerlink" title="OverlayFS"></a>OverlayFS</h2><h5 id="UnionFS-类似的有很多种实现，Docker-支持-OverlayFS、Fuse-overlayfs、Devicemapper、Btrfs、ZFS、VFS、AUFS-已废弃-。前面我们在运行-df-的时候，看到的文件系统类型-overlay-指的就是-OverlayFS。"><a href="#UnionFS-类似的有很多种实现，Docker-支持-OverlayFS、Fuse-overlayfs、Devicemapper、Btrfs、ZFS、VFS、AUFS-已废弃-。前面我们在运行-df-的时候，看到的文件系统类型-overlay-指的就是-OverlayFS。" class="headerlink" title="UnionFS 类似的有很多种实现，Docker 支持 OverlayFS、Fuse-overlayfs、Devicemapper、Btrfs、ZFS、VFS、AUFS(已废弃) 。前面我们在运行 df 的时候，看到的文件系统类型 overlay 指的就是 OverlayFS。"></a><strong>UnionFS</strong> 类似的有很多种实现，Docker 支持 <strong>OverlayFS、Fuse-overlayfs、Devicemapper、Btrfs、ZFS、VFS、AUFS(已废弃)</strong> 。前面我们在运行 <code>df</code> 的时候，看到的文件系统类型 <strong>overlay</strong> 指的就是 <strong>OverlayFS</strong>。</h5><h5 id="在-Linux-内核-3-18-版本中，OverlayFS-代码正式合入-Linux-内核的主分支。在这之后，OverlayFS-也就逐渐成为各个主流-Linux-发行版本里缺省使用的容器文件系统了。"><a href="#在-Linux-内核-3-18-版本中，OverlayFS-代码正式合入-Linux-内核的主分支。在这之后，OverlayFS-也就逐渐成为各个主流-Linux-发行版本里缺省使用的容器文件系统了。" class="headerlink" title="在 Linux 内核 3.18 版本中，OverlayFS 代码正式合入 Linux 内核的主分支。在这之后，OverlayFS 也就逐渐成为各个主流 Linux 发行版本里缺省使用的容器文件系统了。"></a>在 Linux 内核 3.18 版本中，<strong>OverlayFS</strong> 代码正式合入 Linux 内核的主分支。在这之后，<strong>OverlayFS</strong> 也就逐渐成为各个主流 Linux 发行版本里缺省使用的容器文件系统了。</h5><h5 id="OverlayFS-工作时由四个目录组成："><a href="#OverlayFS-工作时由四个目录组成：" class="headerlink" title="OverlayFS 工作时由四个目录组成："></a><strong>OverlayFS</strong> 工作时由四个目录组成：</h5><ul>
+<li><h5 id="•-lowerdir：只读层，该层无法修改，可以指定多个-lower"><a href="#•-lowerdir：只读层，该层无法修改，可以指定多个-lower" class="headerlink" title="• lowerdir：只读层，该层无法修改，可以指定多个 lower"></a>• <strong>lowerdir</strong>：只读层，该层无法修改，可以指定多个 lower</h5></li>
+<li><h5 id="•-upperdir：读写层，容器数据修改保存的地方"><a href="#•-upperdir：读写层，容器数据修改保存的地方" class="headerlink" title="• upperdir：读写层，容器数据修改保存的地方"></a>• <strong>upperdir</strong>：读写层，容器数据修改保存的地方</h5></li>
+<li><h5 id="•-merged：最终呈现给用户的目录"><a href="#•-merged：最终呈现给用户的目录" class="headerlink" title="• merged：最终呈现给用户的目录"></a>• <strong>merged</strong>：最终呈现给用户的目录</h5></li>
+<li><h5 id="•-workdir：工作目录，指-OverlayFS-工作时临时使用的目录，保证文件操作的原子性，挂载后会被清空"><a href="#•-workdir：工作目录，指-OverlayFS-工作时临时使用的目录，保证文件操作的原子性，挂载后会被清空" class="headerlink" title="• workdir：工作目录，指 OverlayFS 工作时临时使用的目录，保证文件操作的原子性，挂载后会被清空"></a>• <strong>workdir</strong>：工作目录，指 <strong>OverlayFS</strong> 工作时临时使用的目录，保证文件操作的原子性，挂载后会被清空</h5></li>
+</ul>
+<h3 id="如何使用"><a href="#如何使用" class="headerlink" title="如何使用"></a>如何使用</h3><h5 id="OverlayFS-实现的功能就是将-lower-层和-upper-层联合挂载到-merged-层，使得-merged-层拥有-lower-和-upper-层所有文件、目录。"><a href="#OverlayFS-实现的功能就是将-lower-层和-upper-层联合挂载到-merged-层，使得-merged-层拥有-lower-和-upper-层所有文件、目录。" class="headerlink" title="OverlayFS 实现的功能就是将 lower 层和 upper 层联合挂载到 merged 层，使得 merged 层拥有 lower 和 upper 层所有文件、目录。"></a><strong>OverlayFS</strong> 实现的功能就是将 lower 层和 upper 层联合挂载到 merged 层，使得 merged 层拥有 lower 和 upper 层所有文件、目录。</h5><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_">$ </span><span class="language-bash"><span class="hljs-built_in">mkdir</span> upper lower_1 lower_2 merged work</span><br><span class="hljs-meta prompt_">$ </span><span class="language-bash"><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;I&#x27;m from lower_1&quot;</span> &gt; lower_1/in_lower_1.txt</span> <br><span class="hljs-meta prompt_">$ </span><span class="language-bash"><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;I&#x27;m from lower_2&quot;</span> &gt; lower_2/in_lower_2.txt</span> <br><span class="hljs-meta prompt_">$ </span><span class="language-bash"><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;I&#x27;m from upper&quot;</span> &gt; upper/in_upper.txt</span><br><span class="hljs-meta prompt_">$ </span><span class="language-bash"><span class="hljs-comment"># `in_both` is in both directories</span></span><br><span class="hljs-meta prompt_">$ </span><span class="language-bash"><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;I&#x27;m from lower_1&quot;</span> &gt; lower_1/in_both.txt</span> <br><span class="hljs-meta prompt_">$ </span><span class="language-bash"><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;I&#x27;m from lower_2&quot;</span> &gt; lower_2/in_both.txt</span> <br><span class="hljs-meta prompt_">$ </span><span class="language-bash"><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;I&#x27;m from upper&quot;</span> &gt; upper/in_both.txt</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="只需使用-mount-命令即可将-lower、upper-挂载到-merged，用法：mount-t-overlay-overlay-o-lowerdir-upperdir-workdir"><a href="#只需使用-mount-命令即可将-lower、upper-挂载到-merged，用法：mount-t-overlay-overlay-o-lowerdir-upperdir-workdir" class="headerlink" title="只需使用 mount 命令即可将 lower、upper 挂载到 merged，用法：mount -t overlay overlay -o lowerdir=&lt;lowerdir1-dir&gt;:&lt;lowerdir2-dir&gt;:&lt;lowerdir3-dir&gt;,upperdir=&lt;upper-dir&gt;,workdir=&lt;work-dir&gt; &lt;merded-dir&gt;"></a>只需使用 <code>mount</code> 命令即可将 lower、upper 挂载到 merged，用法：<code>mount -t overlay overlay -o lowerdir=&lt;lowerdir1-dir&gt;:&lt;lowerdir2-dir&gt;:&lt;lowerdir3-dir&gt;,upperdir=&lt;upper-dir&gt;,workdir=&lt;work-dir&gt; &lt;merded-dir&gt;</code></h5><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_">$ </span><span class="language-bash">mount -t overlay overlay -o lowerdir=./lower_1:./lower_2,upperdir=./upper,workdir=./work ./merged</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="最终实现的效果就是可以在-merged-目录下看到-in-lower-1-txt、in-lower-2-txt、in-upper-txt、in-both-txt"><a href="#最终实现的效果就是可以在-merged-目录下看到-in-lower-1-txt、in-lower-2-txt、in-upper-txt、in-both-txt" class="headerlink" title="最终实现的效果就是可以在 ./merged 目录下看到 in_lower_1.txt、in_lower_2.txt、in_upper.txt、in_both.txt"></a>最终实现的效果就是可以在 <code>./merged</code> 目录下看到 <code>in_lower_1.txt、in_lower_2.txt、in_upper.txt、in_both.txt</code></h5><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ find lower_1/ lower_2/ upper/ merged/<br>lower_1/<br>lower_1/in_lower_1.txt<br>lower_1/in_both.txt<br>lower_2/<br>lower_2/in_lower_2.txt<br>lower_2/in_both.txt<br>upper/<br>upper/in_upper.txt<br>upper/in_both.txt<br>merged/<br>merged/in_lower_2.txt<br>merged/in_both.txt<br>merged/in_upper.txt<br>merged/in_lower_1.txt<br></code></pre></td></tr></table></figure>
+
+<h5 id="具体挂载实现可参考下图："><a href="#具体挂载实现可参考下图：" class="headerlink" title="具体挂载实现可参考下图："></a>具体挂载实现可参考下图：</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191551124.png" srcset="/img/loading.gif" lazyload alt="image-20240319155113075"></p>
+<h5 id="上面我们在-upper-目录、lower-1-目录、lower-2-目录都创建了-in-both-txt，同时写入不同的内容。"><a href="#上面我们在-upper-目录、lower-1-目录、lower-2-目录都创建了-in-both-txt，同时写入不同的内容。" class="headerlink" title="上面我们在 upper 目录、lower_1 目录、lower_2 目录都创建了 in_both.txt，同时写入不同的内容。"></a>上面我们在 upper 目录、lower_1 目录、lower_2 目录都创建了 in_both.txt，同时写入不同的内容。</h5><h5 id="最终挂载时-upper-层的文件会覆盖-lower-层的文件，所以-merged-in-upper-txt-内容应该是-I-m-from-upper"><a href="#最终挂载时-upper-层的文件会覆盖-lower-层的文件，所以-merged-in-upper-txt-内容应该是-I-m-from-upper" class="headerlink" title="最终挂载时 upper 层的文件会覆盖 lower 层的文件，所以 merged/in_upper.txt 内容应该是 I&#39;m from upper!"></a>最终挂载时 upper 层的文件会覆盖 lower 层的文件，所以 <code>merged/in_upper.txt</code> 内容应该是 <code>I&#39;m from upper!</code></h5><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_">$ </span><span class="language-bash"><span class="hljs-built_in">cat</span> merged/in_both.txt</span> <br>&quot;I&#x27;m from upper<br></code></pre></td></tr></table></figure>
+
+<blockquote>
+<h5 id="当我们挂载完成-OverlayFS-以后，对文件系统的任何操作都只能在-merge-dir-中进行，用户不允许再直接或间接的到底层文件系统的原始-lowerdir-或-upperdir-目录下修改文件或目录，否则可能会出现一些无法预料的后果（kernel-crash除外）。"><a href="#当我们挂载完成-OverlayFS-以后，对文件系统的任何操作都只能在-merge-dir-中进行，用户不允许再直接或间接的到底层文件系统的原始-lowerdir-或-upperdir-目录下修改文件或目录，否则可能会出现一些无法预料的后果（kernel-crash除外）。" class="headerlink" title="当我们挂载完成 OverlayFS 以后，对文件系统的任何操作都只能在 merge dir 中进行，用户不允许再直接或间接的到底层文件系统的原始 lowerdir 或 upperdir 目录下修改文件或目录，否则可能会出现一些无法预料的后果（kernel crash除外）。"></a>当我们挂载完成 <strong>OverlayFS</strong> 以后，对文件系统的任何操作都只能在 merge dir 中进行，用户不允许再直接或间接的到底层文件系统的原始 lowerdir 或 upperdir 目录下修改文件或目录，否则可能会出现一些无法预料的后果（kernel crash除外）。</h5></blockquote>
+<h5 id="上面说到-OverlayFS-文件系统的-upper-层是保存更新的文件，就是说我们在-merged-层创建、修改、删除文件、目录时应该都发生在-upper-层。下面看看在-OverlayFS-删除、新建、更新文件是如何实现的？"><a href="#上面说到-OverlayFS-文件系统的-upper-层是保存更新的文件，就是说我们在-merged-层创建、修改、删除文件、目录时应该都发生在-upper-层。下面看看在-OverlayFS-删除、新建、更新文件是如何实现的？" class="headerlink" title="上面说到 OverlayFS 文件系统的 upper 层是保存更新的文件，就是说我们在 merged 层创建、修改、删除文件、目录时应该都发生在 upper 层。下面看看在 OverlayFS 删除、新建、更新文件是如何实现的？"></a>上面说到 <strong>OverlayFS</strong> 文件系统的 upper 层是保存更新的文件，就是说我们在 merged 层创建、修改、删除文件、目录时应该都发生在 upper 层。下面看看在 OverlayFS 删除、新建、更新文件是如何实现的？</h5><h3 id="删除文件"><a href="#删除文件" class="headerlink" title="删除文件"></a>删除文件</h3><h5 id="在-merged-目录删除文件或者目录时，存在三种情况："><a href="#在-merged-目录删除文件或者目录时，存在三种情况：" class="headerlink" title="在 merged 目录删除文件或者目录时，存在三种情况："></a>在 merged 目录删除文件或者目录时，存在三种情况：</h5><h4 id="删除来源于-upper-层-的文件"><a href="#删除来源于-upper-层-的文件" class="headerlink" title="删除来源于 upper 层 的文件"></a>删除来源于 upper 层 的文件</h4><h5 id="upper-层用于保存文件的更新，那么这个文件在-upper-层消失"><a href="#upper-层用于保存文件的更新，那么这个文件在-upper-层消失" class="headerlink" title="upper 层用于保存文件的更新，那么这个文件在 upper 层消失"></a>upper 层用于保存文件的更新，那么这个文件在 upper 层消失</h5><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_">$ </span><span class="language-bash"><span class="hljs-built_in">cd</span> merged/</span><br><span class="hljs-meta prompt_">$ </span><span class="language-bash"><span class="hljs-built_in">rm</span> -rf in_upper.txt</span> <br><span class="hljs-meta prompt_"># </span><span class="language-bash">in_upper.txt 已经删除</span><br><span class="hljs-meta prompt_">$ </span><span class="language-bash"><span class="hljs-built_in">ls</span></span><br>in_both.txt  in_lower_1.txt  in_lower_2.txt  new_file<br><span class="hljs-meta prompt_"># </span><span class="language-bash">发现 upper 层 in_upper.txt 也消失了</span><br><span class="hljs-meta prompt_">$ </span><span class="language-bash"><span class="hljs-built_in">ls</span> -l ../upper/</span><br>总用量 8<br>-rw-r--r--. 1 root root 15 11月  6 20:16 in_both.txt<br>-rw-r--r--. 1 root root 12 11月  6 20:07 new_file<br></code></pre></td></tr></table></figure>
+
+<h4 id="删除来源于-lower-层的文件"><a href="#删除来源于-lower-层的文件" class="headerlink" title="删除来源于 lower 层的文件"></a>删除来源于 lower 层的文件</h4><h5 id="lower-层是只读层，不允许被修改，所以删除该层文件并不会在-lower-层消失，只不过会在-upper-层创建一个-Whiteout-文件，标识这个文件已经删除，在-merged-层起到删除的效果。"><a href="#lower-层是只读层，不允许被修改，所以删除该层文件并不会在-lower-层消失，只不过会在-upper-层创建一个-Whiteout-文件，标识这个文件已经删除，在-merged-层起到删除的效果。" class="headerlink" title="lower 层是只读层，不允许被修改，所以删除该层文件并不会在 lower 层消失，只不过会在 upper 层创建一个 Whiteout 文件，标识这个文件已经删除，在 merged 层起到删除的效果。"></a>lower 层是只读层，不允许被修改，所以删除该层文件并不会在 lower 层消失，只不过会在 upper 层创建一个 <strong>Whiteout 文件</strong>，标识这个文件已经删除，在 merged 层起到删除的效果。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191551462.png" srcset="/img/loading.gif" lazyload alt="image-20240319155136409"></p>
+<h5 id="Whiteout-文件在用户删除文件时创建，用于屏蔽底层的同名文件，同时该文件在-merge-层是不可见的，所以用户就看不到被删除的文件或目录了。whiteout-文件并非普通文件，而是主次设备号都为-0-的字符设备-可以通过-mknod-c-0-0-命令手动创建-，当用户在-merge-层通过-ls-命令-将通过-readddir-系统调用）检查父目录的目录项时，OverlayFS-会自动过过滤掉和-whiteout-文件自身以及和它同名的-lower-层文件和目录，达到了隐藏文件的目的，让用户以为文件已经被删除了。"><a href="#Whiteout-文件在用户删除文件时创建，用于屏蔽底层的同名文件，同时该文件在-merge-层是不可见的，所以用户就看不到被删除的文件或目录了。whiteout-文件并非普通文件，而是主次设备号都为-0-的字符设备-可以通过-mknod-c-0-0-命令手动创建-，当用户在-merge-层通过-ls-命令-将通过-readddir-系统调用）检查父目录的目录项时，OverlayFS-会自动过过滤掉和-whiteout-文件自身以及和它同名的-lower-层文件和目录，达到了隐藏文件的目的，让用户以为文件已经被删除了。" class="headerlink" title="Whiteout 文件在用户删除文件时创建，用于屏蔽底层的同名文件，同时该文件在 merge 层是不可见的，所以用户就看不到被删除的文件或目录了。whiteout 文件并非普通文件，而是主次设备号都为 0 的字符设备( 可以通过 mknod &lt;name&gt; c 0 0 命令手动创建 )，当用户在 merge 层通过 ls 命令( 将通过 readddir 系统调用）检查父目录的目录项时，OverlayFS 会自动过过滤掉和 whiteout 文件自身以及和它同名的 lower 层文件和目录，达到了隐藏文件的目的，让用户以为文件已经被删除了。"></a><strong>Whiteout 文件</strong>在用户删除文件时创建，用于屏蔽底层的同名文件，同时该文件在 merge 层是不可见的，所以用户就看不到被删除的文件或目录了。<strong>whiteout 文件</strong>并非普通文件，而是主次设备号都为 0 的<strong>字符设备(</strong> 可以通过 <code>mknod &lt;name&gt; c 0 0</code> 命令手动创建 )，当用户在 merge 层通过 <code>ls</code> 命令( 将通过 <code>readddir</code> 系统调用）检查父目录的目录项时，<strong>OverlayFS</strong> 会自动过过滤掉和 <strong>whiteout 文件</strong>自身以及和它同名的 lower 层文件和目录，达到了隐藏文件的目的，让用户以为文件已经被删除了。</h5><h4 id="要删除的文件是-upper-层覆盖-lower层的文件"><a href="#要删除的文件是-upper-层覆盖-lower层的文件" class="headerlink" title="要删除的文件是 upper 层覆盖 lower层的文件"></a>要删除的文件是 upper 层覆盖 lower层的文件</h4><h5 id="这种情况-OverlayFS-即需要删除-upper-层对应文件系统中的文件或目录，也需要在对应位置创建同名-whiteout文件，让upper层的文件被删除后不至于lower层的文件被暴露出来。"><a href="#这种情况-OverlayFS-即需要删除-upper-层对应文件系统中的文件或目录，也需要在对应位置创建同名-whiteout文件，让upper层的文件被删除后不至于lower层的文件被暴露出来。" class="headerlink" title="这种情况 OverlayFS 即需要删除 upper 层对应文件系统中的文件或目录，也需要在对应位置创建同名 whiteout文件，让upper层的文件被删除后不至于lower层的文件被暴露出来。"></a>这种情况 <strong>OverlayFS</strong> 即需要删除 upper 层对应文件系统中的文件或目录，也需要在对应位置创建同名 <strong>whiteout文件</strong>，让upper层的文件被删除后不至于lower层的文件被暴露出来。</h5><h5 id="这里我们删除-in-both-txt，该文件是-upper-层覆盖两个-lower-层的文件，删除之后，发现两个-lower-层依然存在该文件，但是-upper-层的-in-both-txt-已经变成-whiteout-文件了。"><a href="#这里我们删除-in-both-txt，该文件是-upper-层覆盖两个-lower-层的文件，删除之后，发现两个-lower-层依然存在该文件，但是-upper-层的-in-both-txt-已经变成-whiteout-文件了。" class="headerlink" title="这里我们删除 in_both.txt，该文件是 upper 层覆盖两个 lower 层的文件，删除之后，发现两个 lower 层依然存在该文件，但是 upper 层的 in_both.txt 已经变成 whiteout 文件了。"></a>这里我们删除 in_both.txt，该文件是 upper 层覆盖两个 lower 层的文件，删除之后，发现两个 lower 层依然存在该文件，但是 upper 层的 in_both.txt 已经变成 <strong>whiteout 文件</strong>了。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191551685.png" srcset="/img/loading.gif" lazyload alt="image-20240319155153638"></p>
+<h3 id="新建文件"><a href="#新建文件" class="headerlink" title="新建文件"></a>新建文件</h3><h5 id="在-OverlayFS-新建文件同样存在两种情况："><a href="#在-OverlayFS-新建文件同样存在两种情况：" class="headerlink" title="在 OverlayFS 新建文件同样存在两种情况："></a>在 <strong>OverlayFS</strong> 新建文件同样存在两种情况：</h5><h4 id="新建的文件在-lower-层中和-upper-层中都不存在对应的文件或目录"><a href="#新建的文件在-lower-层中和-upper-层中都不存在对应的文件或目录" class="headerlink" title="新建的文件在 lower 层中和 upper 层中都不存在对应的文件或目录"></a>新建的文件在 lower 层中和 upper 层中都不存在对应的文件或目录</h4><h5 id="这种情况会直接在-upper-层中对应的目录下新创建文件或目录"><a href="#这种情况会直接在-upper-层中对应的目录下新创建文件或目录" class="headerlink" title="这种情况会直接在 upper 层中对应的目录下新创建文件或目录"></a>这种情况会直接在 upper 层中对应的目录下新创建文件或目录</h5><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ <span class="hljs-built_in">echo</span> <span class="hljs-string">&#x27;new file&#x27;</span> &gt; merged/new_file<br>$ <span class="hljs-built_in">ls</span> -l */new_file <br>-rw-r--r--. 1 root root 9 11月  6 20:05 merged/new_file<br>-rw-r--r--. 1 root root 9 11月  6 20:05 upper/new_file<br></code></pre></td></tr></table></figure>
+
+<h4 id="创建一个在-lower-层已经存在且在-upper-层有-whiteout-文件的同名文件"><a href="#创建一个在-lower-层已经存在且在-upper-层有-whiteout-文件的同名文件" class="headerlink" title="创建一个在 lower 层已经存在且在 upper 层有 whiteout 文件的同名文件"></a>创建一个在 lower 层已经存在且在 upper 层有 <strong>whiteout 文件</strong>的同名文件</h4><h5 id="显然该文件已经在-merged-层被删除了，所以用户在-merge-层看不到它们，可以新建一个同名的文件。这种场景下，OverlayFS-需要删除-upper-层中的用新建的文件替换原有的-whiteout文件，这样在-merge-层中看到的文件就是来自-upper-层的新文件了。"><a href="#显然该文件已经在-merged-层被删除了，所以用户在-merge-层看不到它们，可以新建一个同名的文件。这种场景下，OverlayFS-需要删除-upper-层中的用新建的文件替换原有的-whiteout文件，这样在-merge-层中看到的文件就是来自-upper-层的新文件了。" class="headerlink" title="显然该文件已经在 merged 层被删除了，所以用户在 merge 层看不到它们，可以新建一个同名的文件。这种场景下，OverlayFS 需要删除 upper 层中的用新建的文件替换原有的 whiteout文件，这样在 merge 层中看到的文件就是来自 upper 层的新文件了。"></a>显然该文件已经在 merged 层被删除了，所以用户在 merge 层看不到它们，可以新建一个同名的文件。这种场景下，<strong>OverlayFS</strong> 需要删除 upper 层中的用新建的文件替换原有的 <strong>whiteout文件</strong>，这样在 merge 层中看到的文件就是来自 upper 层的新文件了。</h5><h5 id="这里创建-in-lower-1-txt-该文件来源于-lower-层且之前已经被删除-，发现可以创建成功，且在-upper-层用新建的文件替换了原有的-whiteout-文件。"><a href="#这里创建-in-lower-1-txt-该文件来源于-lower-层且之前已经被删除-，发现可以创建成功，且在-upper-层用新建的文件替换了原有的-whiteout-文件。" class="headerlink" title="这里创建 in_lower_1.txt(该文件来源于 lower 层且之前已经被删除)，发现可以创建成功，且在 upper 层用新建的文件替换了原有的 whiteout 文件。"></a>这里创建 in_lower_1.txt(该文件来源于 lower 层且之前已经被删除)，发现可以创建成功，且在 upper 层用新建的文件替换了原有的 <strong>whiteout 文件</strong>。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191552802.png" srcset="/img/loading.gif" lazyload alt="image-20240319155209753"></p>
+<h3 id="修改文件"><a href="#修改文件" class="headerlink" title="修改文件"></a>修改文件</h3><h5 id="修改文件同样地会发生在-upper-层，同样存在两情况："><a href="#修改文件同样地会发生在-upper-层，同样存在两情况：" class="headerlink" title="修改文件同样地会发生在 upper 层，同样存在两情况："></a>修改文件同样地会发生在 upper 层，同样存在两情况：</h5><h4 id="修改来源与-upper-层的文件"><a href="#修改来源与-upper-层的文件" class="headerlink" title="修改来源与 upper 层的文件"></a>修改来源与 upper 层的文件</h4><h5 id="这里修改-merged-in-upper-txt-来源于-upper-层-，那么在-upper-层该文件也被修改。"><a href="#这里修改-merged-in-upper-txt-来源于-upper-层-，那么在-upper-层该文件也被修改。" class="headerlink" title="这里修改 merged/in_upper.txt(来源于 upper 层)，那么在 upper 层该文件也被修改。"></a>这里修改 <code>merged/in_upper.txt</code>(来源于 upper 层)，那么在 upper 层该文件也被修改。</h5><figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs stata">$ sed -i &#x27;s/new <span class="hljs-keyword">file</span>/<span class="hljs-keyword">update</span> <span class="hljs-keyword">file</span>/<span class="hljs-keyword">g</span>&#x27; merged/new_file<br>$ grep -R &#x27;<span class="hljs-keyword">update</span> <span class="hljs-keyword">file</span>&#x27; *<br>merged/new_file:<span class="hljs-keyword">update</span> <span class="hljs-keyword">file</span><br>upper/new_file:<span class="hljs-keyword">update</span> <span class="hljs-keyword">file</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="写时复制"><a href="#写时复制" class="headerlink" title="写时复制"></a>写时复制</h3><h5 id="用户在写文件时，如果文件来自-upper-层，那直接写入即可。但是如果文件来自-lower-层，由于-lower-层文件无法修改，因此需要先复制到-upper-层，然后再往其中写入内容，这就是OverlayFS-的写时复制-copy-up-特性。"><a href="#用户在写文件时，如果文件来自-upper-层，那直接写入即可。但是如果文件来自-lower-层，由于-lower-层文件无法修改，因此需要先复制到-upper-层，然后再往其中写入内容，这就是OverlayFS-的写时复制-copy-up-特性。" class="headerlink" title="用户在写文件时，如果文件来自 upper 层，那直接写入即可。但是如果文件来自 lower 层，由于 lower 层文件无法修改，因此需要先复制到 upper 层，然后再往其中写入内容，这就是OverlayFS 的写时复制(copy-up) 特性。"></a>用户在写文件时，如果文件来自 upper 层，那直接写入即可。但是如果文件来自 lower 层，由于 lower 层文件无法修改，因此需要先复制到 upper 层，然后再往其中写入内容，这就是<strong>OverlayFS</strong> 的<strong>写时复制(copy-up)</strong> 特性。</h5><h5 id="修改来源于-lower-层的文件"><a href="#修改来源于-lower-层的文件" class="headerlink" title="修改来源于 lower 层的文件"></a>修改来源于 lower 层的文件</h5><h5 id="修改-merged-in-lower-2-txt-来源于-lower-层-，lower-in-lower-2-txt-不会被修改，同时-upper-层会出现-in-lower-2-txt"><a href="#修改-merged-in-lower-2-txt-来源于-lower-层-，lower-in-lower-2-txt-不会被修改，同时-upper-层会出现-in-lower-2-txt" class="headerlink" title="修改 merged/in_lower_2.txt(来源于 lower 层)，lower/in_lower_2.txt 不会被修改，同时 upper 层会出现 in_lower_2.txt"></a>修改 <code>merged/in_lower_2.txt</code>(来源于 lower 层)，<code>lower/in_lower_2.txt</code> 不会被修改，同时 upper 层会出现 in_lower_2.txt</h5><h5 id="这里就是触发了-OverlayFS-的-写时复制-copy-up-机制。"><a href="#这里就是触发了-OverlayFS-的-写时复制-copy-up-机制。" class="headerlink" title="这里就是触发了 OverlayFS 的**写时复制(copy-up)**机制。"></a>这里就是触发了 <strong>OverlayFS</strong> 的**写时复制(copy-up)**机制。</h5><figure class="highlight tap"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs tap">$ cd merged/<br><span class="hljs-comment"># 更新 in_lower_2.txt</span><br>$ echo &#x27;update lower_2&#x27; &gt;&gt; in_lower_2.txt<br>$ cat in_lower_2.txt <br>I&#x27;m from lower_2<br>update lower_2<br>$ ls -l ../upper/<br>总用量 12<br>-rw-r--r--.<span class="hljs-number"> 1 </span>root root  <span class="hljs-number"> 15 </span>11月 <span class="hljs-number"> 6 </span>20:16 in_both.txt<br>c---------.<span class="hljs-number"> 1 </span>root root 0,<span class="hljs-number"> 0 </span>11月 <span class="hljs-number"> 6 </span>20:21 in_lower_1.txt<br>-rw-r--r--.<span class="hljs-number"> 1 </span>root root  <span class="hljs-number"> 32 </span>11月 <span class="hljs-number"> 6 </span>20:53 in_lower_2.txt<br>-rw-r--r--.<span class="hljs-number"> 1 </span>root root  <span class="hljs-number"> 12 </span>11月 <span class="hljs-number"> 6 </span>20:07 new_file<br></code></pre></td></tr></table></figure>
+
+<h5 id="通过-merged-目录向-in-lower-2-txt-写入新的内容，观察-merged-目录下-in-lower-2-txt-文件的内容，包含原来有的和新写入的，同时观察-upper-目录中，也同样存在一个新的从-lower-目录复制上来的文件-in-lower-2-txt，内容同merge目录中看到的一致。"><a href="#通过-merged-目录向-in-lower-2-txt-写入新的内容，观察-merged-目录下-in-lower-2-txt-文件的内容，包含原来有的和新写入的，同时观察-upper-目录中，也同样存在一个新的从-lower-目录复制上来的文件-in-lower-2-txt，内容同merge目录中看到的一致。" class="headerlink" title="通过 merged 目录向 in_lower_2.txt 写入新的内容，观察 merged 目录下 in_lower_2.txt 文件的内容，包含原来有的和新写入的，同时观察 upper 目录中，也同样存在一个新的从 lower 目录复制上来的文件 in_lower_2.txt，内容同merge目录中看到的一致。"></a>通过 merged 目录向 in_lower_2.txt 写入新的内容，观察 merged 目录下 in_lower_2.txt 文件的内容，包含原来有的和新写入的，同时观察 upper 目录中，也同样存在一个新的从 lower 目录复制上来的文件 in_lower_2.txt，内容同merge目录中看到的一致。</h5><blockquote>
+<h5 id="当然，OverlayFS-的-copy-up-特性并不仅仅在往一个来自-lower-层的文件写入新内容时触发，还有很多的场景会触发，但是基本上都是对-lower-层进行修改会触发，比如："><a href="#当然，OverlayFS-的-copy-up-特性并不仅仅在往一个来自-lower-层的文件写入新内容时触发，还有很多的场景会触发，但是基本上都是对-lower-层进行修改会触发，比如：" class="headerlink" title="当然，OverlayFS 的 copy-up 特性并不仅仅在往一个来自 lower 层的文件写入新内容时触发，还有很多的场景会触发，但是基本上都是对 lower 层进行修改会触发，比如："></a>当然，<strong>OverlayFS</strong> 的 <strong>copy-up</strong> 特性并不仅仅在往一个来自 lower 层的文件写入新内容时触发，还有很多的场景会触发，但是基本上都是对 lower 层进行修改会触发，比如：</h5><h5 id="1）用户以写方式打开来自-lower-层的文件时，对该文件执行-copy-up，即-open-系统调用时带有-O-WRITE-或-O-RDWR-等标识；"><a href="#1）用户以写方式打开来自-lower-层的文件时，对该文件执行-copy-up，即-open-系统调用时带有-O-WRITE-或-O-RDWR-等标识；" class="headerlink" title="1）用户以写方式打开来自 lower 层的文件时，对该文件执行 copy-up，即 open()系统调用时带有 O_WRITE 或 O_RDWR 等标识；"></a>1）用户以写方式打开来自 lower 层的文件时，对该文件执行 <strong>copy-up</strong>，即 <code>open()</code>系统调用时带有 O_WRITE 或 O_RDWR 等标识；</h5><h5 id="2）修改来自-lower-层文件或目录属性或者扩展属性时，对该文件或目录触发-copy-up，例如-chmod、chown-或设置-acl-属性等；"><a href="#2）修改来自-lower-层文件或目录属性或者扩展属性时，对该文件或目录触发-copy-up，例如-chmod、chown-或设置-acl-属性等；" class="headerlink" title="2）修改来自 lower 层文件或目录属性或者扩展属性时，对该文件或目录触发 copy-up，例如 chmod、chown 或设置 acl 属性等；"></a>2）修改来自 lower 层文件或目录属性或者扩展属性时，对该文件或目录触发 <strong>copy-up</strong>，例如 <code>chmod</code>、<code>chown</code> 或设置 acl 属性等；</h5><h5 id="3）rename-来自-lower-层文件时，对该文件执行-copy-up；"><a href="#3）rename-来自-lower-层文件时，对该文件执行-copy-up；" class="headerlink" title="3）rename 来自 lower 层文件时，对该文件执行 copy-up；"></a>3）rename 来自 lower 层文件时，对该文件执行 <strong>copy-up</strong>；</h5><h5 id="4）对来自-lower-层的文件创建硬链接时，对链接原文件执行-copy-up；"><a href="#4）对来自-lower-层的文件创建硬链接时，对链接原文件执行-copy-up；" class="headerlink" title="4）对来自 lower 层的文件创建硬链接时，对链接原文件执行 copy-up；"></a>4）对来自 lower 层的文件创建硬链接时，对链接原文件执行 <strong>copy-up</strong>；</h5><h5 id="5）在来自-lower-层的目录里创建文件、目录、链接等内容时，对其父目录执行-copy-up；"><a href="#5）在来自-lower-层的目录里创建文件、目录、链接等内容时，对其父目录执行-copy-up；" class="headerlink" title="5）在来自 lower 层的目录里创建文件、目录、链接等内容时，对其父目录执行 copy-up；"></a>5）在来自 lower 层的目录里创建文件、目录、链接等内容时，对其父目录执行 <strong>copy-up</strong>；</h5><h5 id="6）对来自-lower-层某个文件或目录进行删除、rename、或其它会触发-copy-up-的动作时，其对应的父目录会至下而上递归执行-copy-up。"><a href="#6）对来自-lower-层某个文件或目录进行删除、rename、或其它会触发-copy-up-的动作时，其对应的父目录会至下而上递归执行-copy-up。" class="headerlink" title="6）对来自 lower 层某个文件或目录进行删除、rename、或其它会触发 copy-up 的动作时，其对应的父目录会至下而上递归执行 copy-up。"></a>6）对来自 lower 层某个文件或目录进行删除、rename、或其它会触发 <strong>copy-up</strong> 的动作时，其对应的父目录会至下而上递归执行 <strong>copy-up</strong>。</h5></blockquote>
+<h5 id="通过这个例子，我们知道了-OverlayFS-是怎么工作了。那么我们可以再想一想，怎么把它运用到容器的镜像文件上？"><a href="#通过这个例子，我们知道了-OverlayFS-是怎么工作了。那么我们可以再想一想，怎么把它运用到容器的镜像文件上？" class="headerlink" title="通过这个例子，我们知道了 OverlayFS 是怎么工作了。那么我们可以再想一想，怎么把它运用到容器的镜像文件上？"></a>通过这个例子，我们知道了 <strong>OverlayFS</strong> 是怎么工作了。那么我们可以再想一想，怎么把它运用到容器的镜像文件上？</h5><h5 id="从系统的-mounts-信息中，我们可以看到-Docker-是怎么用-OverlayFS-来挂载镜像文件的。容器镜像文件可以分成多个层（layer），每层可以对应-OverlayFS-里-lowerdir-的一个目录，lowerdir-支持多个目录，也就可以支持多层的镜像文件。在容器启动后，对镜像文件中修改就会被保存在-upperdir-里了。"><a href="#从系统的-mounts-信息中，我们可以看到-Docker-是怎么用-OverlayFS-来挂载镜像文件的。容器镜像文件可以分成多个层（layer），每层可以对应-OverlayFS-里-lowerdir-的一个目录，lowerdir-支持多个目录，也就可以支持多层的镜像文件。在容器启动后，对镜像文件中修改就会被保存在-upperdir-里了。" class="headerlink" title="从系统的 mounts 信息中，我们可以看到 Docker 是怎么用 OverlayFS 来挂载镜像文件的。容器镜像文件可以分成多个层（layer），每层可以对应 OverlayFS 里 lowerdir 的一个目录，lowerdir 支持多个目录，也就可以支持多层的镜像文件。在容器启动后，对镜像文件中修改就会被保存在 upperdir 里了。"></a>从系统的 mounts 信息中，我们可以看到 Docker 是怎么用 <strong>OverlayFS</strong> 来挂载镜像文件的。容器镜像文件可以分成多个层（layer），每层可以对应 <strong>OverlayFS</strong> 里 lowerdir 的一个目录，lowerdir 支持多个目录，也就可以支持多层的镜像文件。在容器启动后，对镜像文件中修改就会被保存在 upperdir 里了。</h5><figure class="highlight gradle"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs gradle">$ mount | <span class="hljs-keyword">grep</span> overlay<br>overlay on <span class="hljs-regexp">/var/</span>lib<span class="hljs-regexp">/docker/</span>overlay2<span class="hljs-regexp">/ee3585aa8e2cd992af3a66db41f54c4d046b5f3758fb87d7f96c140e90e0dfe6/m</span>erged type overlay <br>(rw,relatime,seclabel,lowerdir=<span class="hljs-regexp">/var/</span>lib<span class="hljs-regexp">/docker/</span>overlay2<span class="hljs-regexp">/l/U</span>RC3EYQVHZ23W6KLE3MASVGHSG:<span class="hljs-regexp">/var/</span>lib<span class="hljs-regexp">/docker/</span>overlay2<span class="hljs-regexp">/l/</span>NFMDRCK2PPWPFDSVGPU2YYLJUF,<br>upperdir=<span class="hljs-regexp">/var/</span>lib<span class="hljs-regexp">/docker/</span>overlay2<span class="hljs-regexp">/ee3585aa8e2cd992af3a66db41f54c4d046b5f3758fb87d7f96c140e90e0dfe6/</span>diff,<br>workdir=<span class="hljs-regexp">/var/</span>lib<span class="hljs-regexp">/docker/</span>overlay2<span class="hljs-regexp">/ee3585aa8e2cd992af3a66db41f54c4d046b5f3758fb87d7f96c140e90e0dfe6/</span>work)<br></code></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文主要解答了容器为什么需要 <strong>OverlayFS</strong> 的问题，同时详细讲解 <strong>OverlayFS</strong> 的使用、原理。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>容器的文件系统 OverlayFS 原理 2024-04-03 14:45:26.893</div>
+      <div>http://example.com/2025/01/16/容器的文件系统(一) OverlayFS 原理-rong-qi-de-wen-jian-xi-tong--yi-overlayfs-yuan-li/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E4%B8%A4%E5%BC%A0%E5%9B%BE%E5%85%A8%E9%9D%A2%E7%90%86%E8%A7%A3K8S%E5%8E%9F%E7%90%86-liang-zhang-tu-quan-mian-li-jie-k8s-yuan-li/" title="两张图全面理解K8S原理 2024-04-03 14:51:27.431">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">两张图全面理解K8S原理 2024-04-03 14:51:27.431</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C%E5%8E%9F%E7%90%86-rong-qi-wang-luo-yuan-li/" title="容器网络原理 2024-04-03 14:51:51.962">
+                        <span class="hidden-mobile">容器网络原理 2024-04-03 14:51:51.962</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

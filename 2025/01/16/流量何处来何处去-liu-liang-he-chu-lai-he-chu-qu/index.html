@@ -1,0 +1,693 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Kubernetes 网络概述在 Kubernetes 集群中，每个容器都在一个 Pod 中运行，并且 Pod 由 Kubernetes 控制平面调度到节点（物理机或虚拟机）上。Kubernetes 网络为 Pod 之间、服务之间以及外部资源之间的通信提供了一种方式。 Kubernetes 使用扁平网络模型，所有 Pod 都可以直接相互通信，无论它们运行在哪个节点上。为了实现这一点，Kuberne">
+<meta property="og:type" content="article">
+<meta property="og:title" content="流量何处来何处去 2024-04-03 14:56:20.089">
+<meta property="og:url" content="http://example.com/2025/01/16/%E6%B5%81%E9%87%8F%E4%BD%95%E5%A4%84%E6%9D%A5%E4%BD%95%E5%A4%84%E5%8E%BB-liu-liang-he-chu-lai-he-chu-qu/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="Kubernetes 网络概述在 Kubernetes 集群中，每个容器都在一个 Pod 中运行，并且 Pod 由 Kubernetes 控制平面调度到节点（物理机或虚拟机）上。Kubernetes 网络为 Pod 之间、服务之间以及外部资源之间的通信提供了一种方式。 Kubernetes 使用扁平网络模型，所有 Pod 都可以直接相互通信，无论它们运行在哪个节点上。为了实现这一点，Kuberne">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191124802.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191124650.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191125007.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191126925.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191126046.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191127692.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191127031.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191128509.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191128538.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191128428.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.101Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:19.334Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191124802.png">
+  
+  
+  
+  <title>流量何处来何处去 2024-04-03 14:56:20.089 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="流量何处来何处去 2024-04-03 14:56:20.089"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          20 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">流量何处来何处去 2024-04-03 14:56:20.089</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="Kubernetes-网络概述"><a href="#Kubernetes-网络概述" class="headerlink" title="Kubernetes 网络概述"></a>Kubernetes 网络概述</h2><p>在 Kubernetes 集群中，每个容器都在一个 Pod 中运行，并且 Pod 由 Kubernetes 控制平面调度到节点（物理机或虚拟机）上。Kubernetes 网络为 Pod 之间、服务之间以及外部资源之间的通信提供了一种方式。</p>
+<p>Kubernetes 使用扁平网络模型，所有 Pod 都可以直接相互通信，无论它们运行在哪个节点上。为了实现这一点，Kubernetes 设置了一个跨越集群中所有节点的虚拟网络，并为每个 Pod 分配了该网络中唯一的 IP 地址。</p>
+<p>你是否想知道 Kubernetes 中的 API 流量去了哪里？</p>
+<p>仔细想想，你在 Kubernetes 集群上执行的任何操作都是 API 调用。无论你是创建新的 Pod 还是列出 Ingress Controller，这都是 API 调用。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191124802.png" srcset="/img/loading.gif" lazyload alt="image-20240319112419761">Kubeshark</p>
+<p>在这篇博文中，你将了解如何利用 Kubeshark（适用于 Kubernetes 的 API 流量查看器）提供对 Kubernetes 内部网络的实时协议级可见性—捕获、剖析和监控所有(跨容器、pod、节点和集群)进出的流量和有效负载。</p>
+<h1 id="什么是-Wireshark？"><a href="#什么是-Wireshark？" class="headerlink" title="什么是 Wireshark？"></a>什么是 Wireshark？</h1><p>在深入了解 Kubeshark 之前，有必要简单介绍一下 Wireshark。为什么？因为当你看到谈论 Kubeshark 时，你会看到它与 Wireshark 的比较。</p>
+<h5 id="Wireshark是一款免费的开源数据包分析器。它用于网络故障排除、分析。Wireshark是跨平台的，并使用Qt工具来实现其用户界面，使用pcap来捕获数据包；它可以在-Linux、macOS、BSD、Solaris、其他一些类-Unix-操作系统和-Microsoft-Windows-上运行。还有一个基于终端（非-GUI）的版本，称为-TShark。Wireshark-与-tcpdump-非常相似，但具有图形化以及集成的排序和过滤选项。"><a href="#Wireshark是一款免费的开源数据包分析器。它用于网络故障排除、分析。Wireshark是跨平台的，并使用Qt工具来实现其用户界面，使用pcap来捕获数据包；它可以在-Linux、macOS、BSD、Solaris、其他一些类-Unix-操作系统和-Microsoft-Windows-上运行。还有一个基于终端（非-GUI）的版本，称为-TShark。Wireshark-与-tcpdump-非常相似，但具有图形化以及集成的排序和过滤选项。" class="headerlink" title="Wireshark是一款免费的开源数据包分析器。它用于网络故障排除、分析。Wireshark是跨平台的，并使用Qt工具来实现其用户界面，使用pcap来捕获数据包；它可以在 Linux、macOS、BSD、Solaris、其他一些类 Unix 操作系统和 Microsoft Windows 上运行。还有一个基于终端（非 GUI）的版本，称为 TShark。Wireshark 与 tcpdump 非常相似，但具有图形化以及集成的排序和过滤选项。"></a><strong>Wireshark</strong>是一款免费的开源数据包分析器。它用于网络故障排除、分析。Wireshark是跨平台的，并使用Qt工具来实现其用户界面，使用pcap来捕获数据包；它可以在 Linux、macOS、BSD、Solaris、其他一些类 Unix 操作系统和 Microsoft Windows 上运行。还有一个基于终端（非 GUI）的版本，称为 TShark。Wireshark 与 tcpdump 非常相似，但具有图形化以及集成的排序和过滤选项。</h5><h5 id="TCPDump-Wireshark-使我们能够在微观层面上可视化和理解网络中发生的情况。想象一下，如果这样的事情在-Kubernetes-中是可能的，你就可以看到工作负载、Pod或服务帐户间相互交互时到底会发生什么。"><a href="#TCPDump-Wireshark-使我们能够在微观层面上可视化和理解网络中发生的情况。想象一下，如果这样的事情在-Kubernetes-中是可能的，你就可以看到工作负载、Pod或服务帐户间相互交互时到底会发生什么。" class="headerlink" title="TCPDump&#x2F;Wireshark 使我们能够在微观层面上可视化和理解网络中发生的情况。想象一下，如果这样的事情在 Kubernetes 中是可能的，你就可以看到工作负载、Pod或服务帐户间相互交互时到底会发生什么。"></a>TCPDump&#x2F;Wireshark 使我们能够在微观层面上可视化和理解网络中发生的情况。想象一下，如果这样的事情在 Kubernetes 中是可能的，你就可以看到工作负载、Pod或服务帐户间相互交互时到底会发生什么。</h5><h5 id="Kubeshark-与-Wireshark-非常相似，会展示每次调用时发生的情况。不同之处在于-Wireshark-查看数据包。Kubeshark-查看-API-调用。"><a href="#Kubeshark-与-Wireshark-非常相似，会展示每次调用时发生的情况。不同之处在于-Wireshark-查看数据包。Kubeshark-查看-API-调用。" class="headerlink" title="Kubeshark 与 Wireshark 非常相似，会展示每次调用时发生的情况。不同之处在于 Wireshark 查看数据包。Kubeshark 查看 API 调用。"></a>Kubeshark 与 Wireshark 非常相似，会展示每次调用时发生的情况。不同之处在于 Wireshark 查看数据包。Kubeshark 查看 API 调用。</h5><h1 id="API-调用？"><a href="#API-调用？" class="headerlink" title="API 调用？"></a>API 调用？</h1><h5 id="在-Kubernetes-中，你可能看起来没有进行-API-调用。你运行一些看起来像的命令kubectl-get-pods，并认为它只是一个命令，但该命令实际上是在进行-API-调用。当你运行时kubectl-get-pods，你实际上正在做的是对-Kubernetes-API-服务器执行GET请求。"><a href="#在-Kubernetes-中，你可能看起来没有进行-API-调用。你运行一些看起来像的命令kubectl-get-pods，并认为它只是一个命令，但该命令实际上是在进行-API-调用。当你运行时kubectl-get-pods，你实际上正在做的是对-Kubernetes-API-服务器执行GET请求。" class="headerlink" title="在 Kubernetes 中，你可能看起来没有进行 API 调用。你运行一些看起来像的命令kubectl get pods，并认为它只是一个命令，但该命令实际上是在进行 API 调用。当你运行时kubectl get pods，你实际上正在做的是对 Kubernetes API 服务器执行GET请求。"></a>在 Kubernetes 中，你可能看起来没有进行 API 调用。你运行一些看起来像的命令<code>kubectl get pods</code>，并认为它只是一个命令，但该命令实际上是在进行 API 调用。当你运行时<code>kubectl get pods</code>，你实际上正在做的是对 Kubernetes API 服务器执行<code>GET</code>请求。</h5><h5 id="无论你是在创建新的-Kubernetes-资源（例如部署或服务），还是在检索有关-Kubernetes-资源的信息，你都在进行-API-调用。每当你与-Kubernetes-交互时，你都在进行-API-调用。"><a href="#无论你是在创建新的-Kubernetes-资源（例如部署或服务），还是在检索有关-Kubernetes-资源的信息，你都在进行-API-调用。每当你与-Kubernetes-交互时，你都在进行-API-调用。" class="headerlink" title="无论你是在创建新的 Kubernetes 资源（例如部署或服务），还是在检索有关 Kubernetes 资源的信息，你都在进行 API 调用。每当你与 Kubernetes 交互时，你都在进行 API 调用。"></a>无论你是在创建新的 Kubernetes 资源（例如部署或服务），还是在检索有关 Kubernetes 资源的信息，你都在进行 API 调用。每当你与 Kubernetes 交互时，你都在进行 API 调用。</h5><h5 id="正如你可以想象的那样，有大量流量流向-API-服务器。假如，我们能够监控流量是多么有意义，并且对于故障排除特别有帮助。"><a href="#正如你可以想象的那样，有大量流量流向-API-服务器。假如，我们能够监控流量是多么有意义，并且对于故障排除特别有帮助。" class="headerlink" title="正如你可以想象的那样，有大量流量流向 API 服务器。假如，我们能够监控流量是多么有意义，并且对于故障排除特别有帮助。"></a>正如你可以想象的那样，有大量流量流向 API 服务器。假如，我们能够监控流量是多么有意义，并且对于故障排除特别有帮助。</h5><h1 id="为什么选择-Kubeshark？"><a href="#为什么选择-Kubeshark？" class="headerlink" title="为什么选择 Kubeshark？"></a>为什么选择 Kubeshark？</h1><h5 id="Kubeshark-填补了-Kubernetes-长期以来的空白——以可视化方式查看-API-调用。"><a href="#Kubeshark-填补了-Kubernetes-长期以来的空白——以可视化方式查看-API-调用。" class="headerlink" title="Kubeshark 填补了 Kubernetes 长期以来的空白——以可视化方式查看 API 调用。"></a>Kubeshark 填补了 Kubernetes 长期以来的空白——以可视化方式查看 API 调用。</h5><h5 id="你能看到在没有-Kubeshark-的情况下完成的-API-调用吗？绝对地。"><a href="#你能看到在没有-Kubeshark-的情况下完成的-API-调用吗？绝对地。" class="headerlink" title="你能看到在没有 Kubeshark 的情况下完成的 API 调用吗？绝对地。"></a>你能看到在没有 Kubeshark 的情况下完成的 API 调用吗？绝对地。</h5><h5 id="下面的命令将向你展示用于检索-Pod-信息的-API-调用。"><a href="#下面的命令将向你展示用于检索-Pod-信息的-API-调用。" class="headerlink" title="下面的命令将向你展示用于检索 Pod 信息的 API 调用。"></a>下面的命令将向你展示用于检索 Pod 信息的 API 调用。</h5><figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs routeros">kubectl <span class="hljs-built_in">get</span> pods <span class="hljs-attribute">-v</span>=8<br></code></pre></td></tr></table></figure>
+
+<p>你会看到类似于下面显示 API 调用的输出。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191124650.png" srcset="/img/loading.gif" lazyload alt="image-20240319112459591"></p>
+<p>问题是它不是很直观，而且有很多信息，看起来有点混乱。这就是 Kubeshark 的可视化发挥作用的地方，它满足了以更清晰的方式查看 API 调用的需求。</p>
+<h1 id="Kubeshark-架构分析"><a href="#Kubeshark-架构分析" class="headerlink" title="Kubeshark 架构分析"></a>Kubeshark 架构分析</h1><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191125007.png" srcset="/img/loading.gif" lazyload alt="image-20240319112515943">Kubeshark 架构分析</p>
+<p>Kubeshark 由四个协同工作的组件组成：</p>
+<h2 id="CLI"><a href="#CLI" class="headerlink" title="CLI"></a>CLI</h2><h5 id="Kubeshark-客户端的二进制发行版，由-Go-语言编写。"><a href="#Kubeshark-客户端的二进制发行版，由-Go-语言编写。" class="headerlink" title="Kubeshark 客户端的二进制发行版，由 Go 语言编写。"></a>Kubeshark 客户端的二进制发行版，由 Go 语言编写。</h5><h5 id="它通过-K8s-API-与你的集群通信，以部署-Hub-和-Worker-Pod。"><a href="#它通过-K8s-API-与你的集群通信，以部署-Hub-和-Worker-Pod。" class="headerlink" title="它通过 K8s API 与你的集群通信，以部署 Hub 和 Worker Pod。"></a>它通过 K8s API 与你的集群通信，以部署 Hub 和 Worker Pod。</h5><h2 id="Hub"><a href="#Hub" class="headerlink" title="Hub"></a>Hub</h2><h5 id="Hub-是一个-pod，充当-Workers-的网关。它托管一个-HTTP-服务器并用于以下目的："><a href="#Hub-是一个-pod，充当-Workers-的网关。它托管一个-HTTP-服务器并用于以下目的：" class="headerlink" title="Hub 是一个 pod，充当 Workers 的网关。它托管一个 HTTP 服务器并用于以下目的："></a>Hub 是一个 pod，充当 Workers 的网关。它托管一个 HTTP 服务器并用于以下目的：</h5><ul>
+<li><h5 id="•-接受-WebSocket-连接和随附的过滤器。"><a href="#•-接受-WebSocket-连接和随附的过滤器。" class="headerlink" title="• 接受 WebSocket 连接和随附的过滤器。"></a>• 接受 WebSocket 连接和随附的过滤器。</h5></li>
+<li><h5 id="•-与Worker建立新的-WebSocket-连接。"><a href="#•-与Worker建立新的-WebSocket-连接。" class="headerlink" title="• 与Worker建立新的 WebSocket 连接。"></a>• 与Worker建立新的 WebSocket 连接。</h5></li>
+<li><h5 id="•-接收来自Worker的流量。"><a href="#•-接收来自Worker的流量。" class="headerlink" title="• 接收来自Worker的流量。"></a>• 接收来自Worker的流量。</h5></li>
+<li><h5 id="•-将结果流式传输回请求者。"><a href="#•-将结果流式传输回请求者。" class="headerlink" title="• 将结果流式传输回请求者。"></a>• 将结果流式传输回请求者。</h5></li>
+<li><h5 id="•-通过-HTTP-调用配置工作线程状态。"><a href="#•-通过-HTTP-调用配置工作线程状态。" class="headerlink" title="• 通过 HTTP 调用配置工作线程状态。"></a>• 通过 HTTP 调用配置工作线程状态。</h5></li>
+</ul>
+<h2 id="Worker"><a href="#Worker" class="headerlink" title="Worker"></a>Worker</h2><h5 id="它作为DaemonSet部署到你的集群中，以确保集群中的每个节点都被-Kubeshark-覆盖。"><a href="#它作为DaemonSet部署到你的集群中，以确保集群中的每个节点都被-Kubeshark-覆盖。" class="headerlink" title="它作为DaemonSet部署到你的集群中，以确保集群中的每个节点都被 Kubeshark 覆盖。"></a>它作为DaemonSet部署到你的集群中，以确保集群中的每个节点都被 Kubeshark 覆盖。</h5><h5 id="Worker-包含网络嗅探器和内核跟踪器的实现。它从所有网络接口捕获数据包，重新组装-TCP-流，如果它们是可解析的，则将它们存储为PCAP文件。Worker-通过-WebSocket-连接将收集到的流量传输到-Hub。"><a href="#Worker-包含网络嗅探器和内核跟踪器的实现。它从所有网络接口捕获数据包，重新组装-TCP-流，如果它们是可解析的，则将它们存储为PCAP文件。Worker-通过-WebSocket-连接将收集到的流量传输到-Hub。" class="headerlink" title="Worker 包含网络嗅探器和内核跟踪器的实现。它从所有网络接口捕获数据包，重新组装 TCP 流，如果它们是可解析的，则将它们存储为PCAP文件。Worker 通过 WebSocket 连接将收集到的流量传输到 Hub。"></a>Worker 包含网络嗅探器和内核跟踪器的实现。它从所有网络接口捕获数据包，重新组装 TCP 流，如果它们是可解析的，则将它们存储为PCAP文件。Worker 通过 WebSocket 连接将收集到的流量传输到 Hub。</h5><h5 id="Kubeshark-存储原始数据包并根据查询按需解析它们。"><a href="#Kubeshark-存储原始数据包并根据查询按需解析它们。" class="headerlink" title="Kubeshark 存储原始数据包并根据查询按需解析它们。"></a>Kubeshark 存储原始数据包并根据查询按需解析它们。</h5><h5 id="Worker-本身可以用作计算机上的网络嗅探器，而无需-Kubernetes-集群。"><a href="#Worker-本身可以用作计算机上的网络嗅探器，而无需-Kubernetes-集群。" class="headerlink" title="Worker 本身可以用作计算机上的网络嗅探器，而无需 Kubernetes 集群。"></a>Worker 本身可以用作计算机上的网络嗅探器，而无需 Kubernetes 集群。</h5><h2 id="分布式协议解析器"><a href="#分布式协议解析器" class="headerlink" title="分布式协议解析器"></a>分布式协议解析器</h2><h5 id="应用层协议的解析器分布在整个集群中-DaemonSet配置-。"><a href="#应用层协议的解析器分布在整个集群中-DaemonSet配置-。" class="headerlink" title="应用层协议的解析器分布在整个集群中(DaemonSet配置)。"></a>应用层协议的解析器分布在整个集群中(DaemonSet配置)。</h5><h2 id="基于PCAP的分布式存储"><a href="#基于PCAP的分布式存储" class="headerlink" title="基于PCAP的分布式存储"></a>基于PCAP的分布式存储</h2><h5 id="Kubeshark-使用基于-PCAP-的分布式存储，其中每个工作线程将捕获的-TCP-流，并存储在节点的根文件系统中。"><a href="#Kubeshark-使用基于-PCAP-的分布式存储，其中每个工作线程将捕获的-TCP-流，并存储在节点的根文件系统中。" class="headerlink" title="Kubeshark 使用基于 PCAP 的分布式存储，其中每个工作线程将捕获的 TCP 流，并存储在节点的根文件系统中。"></a>Kubeshark 使用基于 PCAP 的分布式存储，其中每个工作线程将捕获的 TCP 流，并存储在节点的根文件系统中。</h5><h5 id="Kubeshark-默认设置为-200MB-的存储限制。该限制可以通过-CLI-选项进行更改。"><a href="#Kubeshark-默认设置为-200MB-的存储限制。该限制可以通过-CLI-选项进行更改。" class="headerlink" title="Kubeshark 默认设置为 200MB 的存储限制。该限制可以通过 CLI 选项进行更改。"></a>Kubeshark 默认设置为 200MB 的存储限制。该限制可以通过 CLI 选项进行更改。</h5><h2 id="网络开销低"><a href="#网络开销低" class="headerlink" title="网络开销低"></a>网络开销低</h2><h5 id="为了减少潜在的网络开销，仅根据请求通过网络发送一小部分流量。"><a href="#为了减少潜在的网络开销，仅根据请求通过网络发送一小部分流量。" class="headerlink" title="为了减少潜在的网络开销，仅根据请求通过网络发送一小部分流量。"></a>为了减少潜在的网络开销，仅根据请求通过网络发送一小部分流量。</h5><h2 id="Web-UI"><a href="#Web-UI" class="headerlink" title="Web UI"></a>Web UI</h2><p>前端是一个 React 应用程序，它通过 WebSocket 与 Hub 通信，显示捕获的流量。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191126925.png" srcset="/img/loading.gif" lazyload alt="image-20240319112602874"></p>
+<p>Web UI</p>
+<h1 id="Kubeshark-安装"><a href="#Kubeshark-安装" class="headerlink" title="Kubeshark 安装"></a>Kubeshark 安装</h1><p>行万里路，此处相逢，共话云原生之道。 偶逗趣事，明月清风，与君同坐。</p>
+<p>55篇原创内容</p>
+<p>公众号</p>
+<p>Kubeshark 入门很简单。你只需下载 CLI 并运行它。</p>
+<p>你可以使用 shell 脚本下载适合你的操作系统和 CPU 架构的二进制文件：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs awk">sh &lt;(curl -Ls https:<span class="hljs-regexp">//</span>kubeshark.co/install)<br><br><span class="hljs-comment"># 或者使用以下命令指定版本</span><br>curl -Lo kubeshark https:<span class="hljs-regexp">//gi</span>thub.com<span class="hljs-regexp">/kubeshark/</span>kubeshark<span class="hljs-regexp">/releases/</span>download<span class="hljs-regexp">/41.6/</span>kubeshark_linux_amd64 &amp;&amp; chmod <span class="hljs-number">755</span> kubeshark<br></code></pre></td></tr></table></figure>
+
+<p>其他方法可以在<a target="_blank" rel="noopener" href="https://docs.kubeshark.co/en/install%E6%89%BE%E5%88%B0">https://docs.kubeshark.co/en/install找到</a></p>
+<h1 id="Kubeshark-示例"><a href="#Kubeshark-示例" class="headerlink" title="Kubeshark 示例"></a>Kubeshark 示例</h1><p>以下是如何使用 Kubeshark CLI 开始捕获 Kubernetes 集群中的流量的一些示例：</p>
+<figure class="highlight excel"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs excel">kubeshark tap<br>kubeshark tap -A<br>kubeshark tap -<span class="hljs-built_in">n</span> sock-shop <span class="hljs-string">&quot;(catalo*|front-end*)&quot;</span><br></code></pre></td></tr></table></figure>
+
+<p>运行 CLI 后，默认情况下，浏览器窗口将在 localhost:8899 打开。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191126046.png" srcset="/img/loading.gif" lazyload alt="image-20240319112654994"></p>
+<p>为了演示 kubeshark 的使用，让我们将示例应用程序部署到 kuberenetes 集群中。我们正在部署 kuberentes 官方文档中留言板应用程序。</p>
+<blockquote>
+<p>使用 Redis 部署 PHP 留言板应用程序:</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs awk">https:<span class="hljs-regexp">//</span>kubernetes.io<span class="hljs-regexp">/docs/</span>tutorials<span class="hljs-regexp">/stateless-application/gu</span>estbook/<br></code></pre></td></tr></table></figure>
+
+
+</blockquote>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs awk"><span class="hljs-comment"># 1. 启动 Redis 数据库--留言板应用程序使用 Redis 存储数据</span><br><span class="hljs-comment"># 创建 Redis 领导者</span><br>kubectl apply -f https:<span class="hljs-regexp">//</span>k8s.io<span class="hljs-regexp">/examples/</span>application<span class="hljs-regexp">/guestbook/</span>redis-leader-deployment.yaml<br>kubectl apply -f https:<span class="hljs-regexp">//</span>k8s.io<span class="hljs-regexp">/examples/</span>application<span class="hljs-regexp">/guestbook/</span>redis-leader-service.yaml<br><span class="hljs-comment"># 设置 Redis 跟随者</span><br>kubectl apply -f https:<span class="hljs-regexp">//</span>k8s.io<span class="hljs-regexp">/examples/</span>application<span class="hljs-regexp">/guestbook/</span>redis-follower-deployment.yaml<br>kubectl apply -f https:<span class="hljs-regexp">//</span>k8s.io<span class="hljs-regexp">/examples/</span>application<span class="hljs-regexp">/guestbook/</span>redis-follower-service.yaml<br><br><span class="hljs-comment"># 2. 留言板的 Web 服务器</span><br><span class="hljs-comment"># 留言板 应用使用 PHP 前端。该前端被配置成与后端的 Redis 跟随者或者 领导者服务通信，具体选择哪个服务取决于请求是读操作还是写操作。 前端对外暴露一个 JSON 接口，并提供基于 jQuery-Ajax 的用户体验。</span><br>kubectl apply -f https:<span class="hljs-regexp">//</span>k8s.io<span class="hljs-regexp">/examples/</span>application<span class="hljs-regexp">/guestbook/</span>frontend-deployment.yaml<br>kubectl apply -f https:<span class="hljs-regexp">//</span>k8s.io<span class="hljs-regexp">/examples/</span>application<span class="hljs-regexp">/guestbook/</span>frontend-service.yaml<br><span class="hljs-comment"># 通过 kubectl port-forward 查看前端服务</span><br>kubectl port-forward svc/frontend <span class="hljs-number">8080</span>:<span class="hljs-number">80</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="在浏览器中加载-http-localhost-8080-页面以查看-留言板应用程序"><a href="#在浏览器中加载-http-localhost-8080-页面以查看-留言板应用程序" class="headerlink" title="在浏览器中加载 http://localhost:8080 页面以查看 留言板应用程序"></a>在浏览器中加载 <a target="_blank" rel="noopener" href="http://localhost:8080/">http://localhost:8080</a> 页面以查看 留言板应用程序</h5><h5 id="验证已安装的应用程序正在运行。"><a href="#验证已安装的应用程序正在运行。" class="headerlink" title="验证已安装的应用程序正在运行。"></a>验证已安装的应用程序正在运行。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191127692.png" srcset="/img/loading.gif" lazyload alt="image-20240319112737654"></p>
+<h5 id="让我们为应用程序的命名空间运行-kubeshark。命令如下："><a href="#让我们为应用程序的命名空间运行-kubeshark。命令如下：" class="headerlink" title="让我们为应用程序的命名空间运行 kubeshark。命令如下："></a>让我们为应用程序的命名空间运行 kubeshark。命令如下：</h5><figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">kubeshark tap -n &lt;<span class="hljs-keyword">namespace</span> <span class="hljs-symbol">name</span>&gt;<br></code></pre></td></tr></table></figure>
+
+<p>运行 CLI 后，默认情况下，浏览器窗口将在 localhost:8899 打开。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191127031.png" srcset="/img/loading.gif" lazyload alt="image-20240319112755989"></p>
+<p>让我们产生一些流量。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191128509.png" srcset="/img/loading.gif" lazyload alt="image-20240319112810464"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191128538.png" srcset="/img/loading.gif" lazyload alt="image-20240319112824483"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191128428.png" srcset="/img/loading.gif" lazyload alt="image-20240319112838381"></p>
+<p>在本博客中，我们了解了如何使用<strong>Kubeshark分析 Kubernetes 集群中的网络流量，它为 Kubernetes 管理员和开发人员提供了几个优势：</strong></p>
+<ol>
+<li><h5 id="1-增强的可见性：Kubeshark-提供-Kubernetes-集群中-Pod-和服务之间网络流量的实时可见性。这可以帮助你排除和诊断与网络相关的问题，例如响应时间慢或延迟高。"><a href="#1-增强的可见性：Kubeshark-提供-Kubernetes-集群中-Pod-和服务之间网络流量的实时可见性。这可以帮助你排除和诊断与网络相关的问题，例如响应时间慢或延迟高。" class="headerlink" title="\1. 增强的可见性：Kubeshark 提供 Kubernetes 集群中 Pod 和服务之间网络流量的实时可见性。这可以帮助你排除和诊断与网络相关的问题，例如响应时间慢或延迟高。"></a>\1. <strong>增强的可见性</strong>：Kubeshark 提供 Kubernetes 集群中 Pod 和服务之间网络流量的实时可见性。这可以帮助你排除和诊断与网络相关的问题，例如响应时间慢或延迟高。</h5></li>
+<li><h5 id="2-易于使用：Kubeshark-是一个-kubectl-插件，这意味着它可以在-Kubernetes-命令行界面中轻松安装和使用。你无需学习新工具或界面即可使用-Kubeshark。"><a href="#2-易于使用：Kubeshark-是一个-kubectl-插件，这意味着它可以在-Kubernetes-命令行界面中轻松安装和使用。你无需学习新工具或界面即可使用-Kubeshark。" class="headerlink" title="\2. 易于使用：Kubeshark 是一个 kubectl 插件，这意味着它可以在 Kubernetes 命令行界面中轻松安装和使用。你无需学习新工具或界面即可使用 Kubeshark。"></a>\2. <strong>易于使用</strong>：Kubeshark 是一个 kubectl 插件，这意味着它可以在 Kubernetes 命令行界面中轻松安装和使用。你无需学习新工具或界面即可使用 Kubeshark。</h5></li>
+<li><h5 id="3-粒度过滤：Kubeshark-允许你根据各种标准过滤网络流量，例如协议、源-IP-地址、目标-IP-地址和端口号。这可以帮助你关注特定的流量模式并识别潜在的安全威胁。"><a href="#3-粒度过滤：Kubeshark-允许你根据各种标准过滤网络流量，例如协议、源-IP-地址、目标-IP-地址和端口号。这可以帮助你关注特定的流量模式并识别潜在的安全威胁。" class="headerlink" title="\3. 粒度过滤：Kubeshark 允许你根据各种标准过滤网络流量，例如协议、源 IP 地址、目标 IP 地址和端口号。这可以帮助你关注特定的流量模式并识别潜在的安全威胁。"></a>\3. <strong>粒度过滤</strong>：Kubeshark 允许你根据各种标准过滤网络流量，例如协议、源 IP 地址、目标 IP 地址和端口号。这可以帮助你关注特定的流量模式并识别潜在的安全威胁。</h5></li>
+<li><h5 id="4-与-Wireshark-集成：Kubeshark-使用-Wireshark-作为其底层网络协议分析器，这是网络分析社区中广泛使用且成熟的工具。这使你可以利用-Wireshark-的高级功能，例如协议解码和数据包分析。"><a href="#4-与-Wireshark-集成：Kubeshark-使用-Wireshark-作为其底层网络协议分析器，这是网络分析社区中广泛使用且成熟的工具。这使你可以利用-Wireshark-的高级功能，例如协议解码和数据包分析。" class="headerlink" title="\4. 与 Wireshark 集成：Kubeshark 使用 Wireshark 作为其底层网络协议分析器，这是网络分析社区中广泛使用且成熟的工具。这使你可以利用 Wireshark 的高级功能，例如协议解码和数据包分析。"></a>\4. <strong>与 Wireshark 集成</strong>：Kubeshark 使用 Wireshark 作为其底层网络协议分析器，这是网络分析社区中广泛使用且成熟的工具。这使你可以利用 Wireshark 的高级功能，例如协议解码和数据包分析。</h5></li>
+</ol>
+<h1 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h1><h5 id="Kubeshark-是一款功能强大的工具，早期称为-Mizu，由-UP9-开发的-API-流量查看器，后来开源，现在更名为-Kubeshark，标志着-Wireshark-为-K8s-重生。"><a href="#Kubeshark-是一款功能强大的工具，早期称为-Mizu，由-UP9-开发的-API-流量查看器，后来开源，现在更名为-Kubeshark，标志着-Wireshark-为-K8s-重生。" class="headerlink" title="Kubeshark 是一款功能强大的工具，早期称为 Mizu，由 UP9 开发的 API 流量查看器，后来开源，现在更名为 Kubeshark，标志着 Wireshark 为 K8s 重生。"></a>Kubeshark 是一款功能强大的工具，早期称为 Mizu，由 UP9 开发的 API 流量查看器，后来开源，现在更名为 Kubeshark，标志着 Wireshark 为 K8s 重生。</h5><h5 id="虽然有一些复杂的-K8s-运行时安全工具，例如-Sysdig-Falco、Cilium-Tetragon-都是利用-eBPF-功能构建的，但文档中提到-Kubeshark-也使用-eBPF，但更专注于提供微观层面的可视化层，以更好帮助我们了解网络通信。Kubeshark-提供的数据肯定可以用于运行时检测的几个方面。"><a href="#虽然有一些复杂的-K8s-运行时安全工具，例如-Sysdig-Falco、Cilium-Tetragon-都是利用-eBPF-功能构建的，但文档中提到-Kubeshark-也使用-eBPF，但更专注于提供微观层面的可视化层，以更好帮助我们了解网络通信。Kubeshark-提供的数据肯定可以用于运行时检测的几个方面。" class="headerlink" title="虽然有一些复杂的 K8s 运行时安全工具，例如 Sysdig Falco、Cilium Tetragon 都是利用 eBPF 功能构建的，但文档中提到 Kubeshark 也使用 eBPF，但更专注于提供微观层面的可视化层，以更好帮助我们了解网络通信。Kubeshark 提供的数据肯定可以用于运行时检测的几个方面。"></a>虽然有一些复杂的 K8s 运行时安全工具，例如 Sysdig Falco、Cilium Tetragon 都是利用 eBPF 功能构建的，但文档中提到 Kubeshark 也使用 eBPF，但更专注于提供微观层面的可视化层，以更好帮助我们了解网络通信。Kubeshark 提供的数据肯定可以用于运行时检测的几个方面。</h5><h5 id="总体而言，Kubeshark-为-Kubernetes-集群中的网络分析提供了强大且灵活的工具，其与-Wireshark-的集成以及易用性使其成为-Kubernetes-管理员和开发人员的选择。"><a href="#总体而言，Kubeshark-为-Kubernetes-集群中的网络分析提供了强大且灵活的工具，其与-Wireshark-的集成以及易用性使其成为-Kubernetes-管理员和开发人员的选择。" class="headerlink" title="总体而言，Kubeshark 为 Kubernetes 集群中的网络分析提供了强大且灵活的工具，其与 Wireshark 的集成以及易用性使其成为 Kubernetes 管理员和开发人员的选择。"></a>总体而言，Kubeshark 为 Kubernetes 集群中的网络分析提供了强大且灵活的工具，其与 Wireshark 的集成以及易用性使其成为 Kubernetes 管理员和开发人员的选择。</h5>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>流量何处来何处去 2024-04-03 14:56:20.089</div>
+      <div>http://example.com/2025/01/16/流量何处来何处去-liu-liang-he-chu-lai-he-chu-qu/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E6%9E%84%E5%BB%BA%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E5%88%A9%E5%99%A8buildkit-gou-jian-rong-qi-jing-xiang-li-qi-buildkit/" title="构建容器镜像利器buildkit 2024-08-02 17:49:14.916">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">构建容器镜像利器buildkit 2024-08-02 17:49:14.916</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E4%B8%A4%E5%BC%A0%E5%9B%BE%E5%85%A8%E9%9D%A2%E7%90%86%E8%A7%A3K8S%E5%8E%9F%E7%90%86-liang-zhang-tu-quan-mian-li-jie-k8s-yuan-li/" title="两张图全面理解K8S原理 2024-04-03 14:51:27.431">
+                        <span class="hidden-mobile">两张图全面理解K8S原理 2024-04-03 14:51:27.431</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

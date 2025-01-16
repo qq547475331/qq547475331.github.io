@@ -1,0 +1,733 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="由于组织内部的人事调整，我接手了一套 CICD 平台。为了帮助团队成员尽快熟悉这套系统，今天我将详细讲解 CI 和 CD 的概念，并介绍这套系统底层关键组件 Tekon 的基本知识。最后，我将通过一个 Golang 项目作为示例，向大家演示如何使用 Tekton 从零开始快速构建自己的 CICD 平台，实现自动化的流程。 CICDCI 和 CD 是软件开发中常接触到的两个术语，分别代表持续集成（C">
+<meta property="og:type" content="article">
+<meta property="og:title" content="如何使用tekton快速搭建CI&#x2F;CD平台 2024-04-03">
+<meta property="og:url" content="http://example.com/2025/01/16/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8tekton%E5%BF%AB%E9%80%9F%E6%90%AD%E5%BB%BACICD%E5%B9%B3%E5%8F%B0-ru-he-shi-yong-tekton-kuai-su-da-jian-cicd-ping-tai/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="由于组织内部的人事调整，我接手了一套 CICD 平台。为了帮助团队成员尽快熟悉这套系统，今天我将详细讲解 CI 和 CD 的概念，并介绍这套系统底层关键组件 Tekon 的基本知识。最后，我将通过一个 Golang 项目作为示例，向大家演示如何使用 Tekton 从零开始快速构建自己的 CICD 平台，实现自动化的流程。 CICDCI 和 CD 是软件开发中常接触到的两个术语，分别代表持续集成（C">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221146639.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221147813.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221147297.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402281805669.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221147199.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221148335.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221148468.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221148719.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.094Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:19.217Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221146639.png">
+  
+  
+  
+  <title>如何使用tekton快速搭建CI/CD平台 2024-04-03 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="如何使用tekton快速搭建CI/CD平台 2024-04-03"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.8k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          32 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">如何使用tekton快速搭建CI/CD平台 2024-04-03</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>由于组织内部的人事调整，我接手了一套 CICD 平台。为了帮助团队成员尽快熟悉这套系统，今天我将详细讲解 CI 和 CD 的概念，并介绍这套系统底层关键组件 Tekon 的基本知识。最后，我将通过一个 Golang 项目作为示例，向大家演示如何使用 Tekton 从零开始快速构建自己的 CICD 平台，实现自动化的流程。</p>
+<h2 id="CICD"><a href="#CICD" class="headerlink" title="CICD"></a><strong>CICD</strong></h2><h5 id="CI-和-CD-是软件开发中常接触到的两个术语，分别代表持续集成（Continuous-Integration）和持续交付（Continuous-Delivery）或持续部署（Continuous-Deployment）。"><a href="#CI-和-CD-是软件开发中常接触到的两个术语，分别代表持续集成（Continuous-Integration）和持续交付（Continuous-Delivery）或持续部署（Continuous-Deployment）。" class="headerlink" title="CI 和 CD 是软件开发中常接触到的两个术语，分别代表持续集成（Continuous Integration）和持续交付（Continuous Delivery）或持续部署（Continuous Deployment）。"></a>CI 和 CD 是软件开发中常接触到的两个术语，分别代表持续集成（Continuous Integration）和持续交付（Continuous Delivery）或持续部署（Continuous Deployment）。</h5><h5 id="CICD-在敏捷开发和-DevOps-扮演着重要的角色，通过自动化的脚本-CICD-可以减少从代码开发到部署期间人工操作次数，从而加快软件交付速度、提高软件质量、促进团队协作。因此，CICD-是实现软件持续高质量交付的关键流程。"><a href="#CICD-在敏捷开发和-DevOps-扮演着重要的角色，通过自动化的脚本-CICD-可以减少从代码开发到部署期间人工操作次数，从而加快软件交付速度、提高软件质量、促进团队协作。因此，CICD-是实现软件持续高质量交付的关键流程。" class="headerlink" title="CICD 在敏捷开发和 DevOps 扮演着重要的角色，通过自动化的脚本 CICD 可以减少从代码开发到部署期间人工操作次数，从而加快软件交付速度、提高软件质量、促进团队协作。因此，CICD 是实现软件持续高质量交付的关键流程。"></a>CICD 在敏捷开发和 DevOps 扮演着重要的角色，通过自动化的脚本 CICD 可以减少从代码开发到部署期间人工操作次数，从而加快软件交付速度、提高软件质量、促进团队协作。因此，CICD 是实现软件持续高质量交付的关键流程。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221146639.png" srcset="/img/loading.gif" lazyload alt="image-20240222114650519"></p>
+<p><strong>持续集成</strong></p>
+<p>持续集成的概念早在上个世纪 90 年代就开始出现，经过多年的完善和推广，现在已经被广泛认可和使用。其基本概念是：持续集成是一种软件开发实践，团队成员频繁将他们的工作成果集成在一起；每次提交后，自动触发运行一次包含自动化验证集的构建任务，以便能尽早发现集成问题。</p>
+<p>持续集成的核心原则包括频繁提交代码、自动化构建和测试、快速反馈、团队合作等。</p>
+<p>通过频繁将代码集成到主干分支中，减少代码集成造成的延期和风险，通过自动化构建和测试进行功能测试、单元测试、集成测试等操作快速发现问题，并及时向开发人员反馈测试结果和推进问题修复。在这个过程中，各团队成员之间需要加强沟通和合作，协同开发和解决问题。</p>
+<p>在持续集成中，为了确保功能分支的代码可以顺利集成到主干，团队成员可以采用六步提交法：</p>
+<ol>
+<li>检出代码前先更新代码库，确保代码库中的最新代码与本地代码相同步；</li>
+<li>在个人工作区对代码进行修改；</li>
+<li>在本地进行构建和测试，确保代码符合修改的要求；</li>
+<li>将主干分支合并到个人工作区后，再次进行构建和测试，防止开发期间代码与他人冲突；</li>
+<li>将修改后的代码推送到主干分支；</li>
+<li>在主干分支进行构建和测试，确保主干分支的代码质量和准确性；</li>
+</ol>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221147813.png" srcset="/img/loading.gif" lazyload alt="image-20240222114702744"></p>
+<h3 id="持续交付-持续部署"><a href="#持续交付-持续部署" class="headerlink" title="持续交付&amp;&amp;持续部署"></a><strong>持续交付&amp;&amp;持续部署</strong></h3><p>持续交付和持续部署是在持续集成的基础上更进一步的自动化。</p>
+<p>持续交付是指在开发流程中，将代码持续地构建、测试和打包，并尽可能快地交付到生产环境前的预生产环境中。</p>
+<p>持续部署是指在持续交付的基础上，将代码在通过预生产环境的测试后，自动部署到生产环境中，与持续交付相比，持续部署不需要人工干预。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221147297.png" srcset="/img/loading.gif" lazyload alt="image-20240222114717137"></p>
+<p>那么，如何在企业内快速搭建自己的 CICD 平台呢？Tekton 给我们提供了一种解决方案。</p>
+<h2 id="Tekton"><a href="#Tekton" class="headerlink" title="Tekton"></a><strong>Tekton</strong></h2><p>Tekton 是一款基于 Kubernetes 实现的 CICD 开源框架，它提供了丰富的组件来满足各种构建、测试和部署的场景。我们可以直接使用 Tekton 来构建自己的 CICD 流程，也可以基于它进行二次开发搭建满足企业内部定制化需求的 CICD 平台。</p>
+<h3 id="为什么是-Tekton"><a href="#为什么是-Tekton" class="headerlink" title="为什么是 Tekton"></a><strong>为什么是 Tekton</strong></h3><p>在社区中有很多 CICD 工具，比如 Gitlab CI、Jenkins、Travis CI、Circle CI 等，那为什么要选择 Tekton 呢？</p>
+<p>原因有三个：</p>
+<ol>
+<li><h5 id="Tekton-是一款轻量级的-CICD-框架，对于熟悉-Kebernetes-的同学来说，它的上手门槛非常低；"><a href="#Tekton-是一款轻量级的-CICD-框架，对于熟悉-Kebernetes-的同学来说，它的上手门槛非常低；" class="headerlink" title="Tekton 是一款轻量级的 CICD 框架，对于熟悉 Kebernetes 的同学来说，它的上手门槛非常低；"></a>Tekton 是一款轻量级的 CICD 框架，对于熟悉 Kebernetes 的同学来说，它的上手门槛非常低；</h5></li>
+<li><h5 id="Tekton-具有很强的扩展性，通过自定义-Pipeline-和-Task-可以快速定制和扩展-CICD-流程，可以满足不同的业务场景；"><a href="#Tekton-具有很强的扩展性，通过自定义-Pipeline-和-Task-可以快速定制和扩展-CICD-流程，可以满足不同的业务场景；" class="headerlink" title="Tekton 具有很强的扩展性，通过自定义 Pipeline 和 Task 可以快速定制和扩展 CICD 流程，可以满足不同的业务场景；"></a>Tekton 具有很强的扩展性，通过自定义 Pipeline 和 Task 可以快速定制和扩展 CICD 流程，可以满足不同的业务场景；</h5></li>
+<li><h5 id="Tekton-是一款基于-Kubernetes-实现的-CICD-框架，Tekton-可以充分利用-Kubernetes-的生态，从而大大降低部署和管理的难度；"><a href="#Tekton-是一款基于-Kubernetes-实现的-CICD-框架，Tekton-可以充分利用-Kubernetes-的生态，从而大大降低部署和管理的难度；" class="headerlink" title="Tekton 是一款基于 Kubernetes 实现的 CICD 框架，Tekton 可以充分利用 Kubernetes 的生态，从而大大降低部署和管理的难度；"></a>Tekton 是一款基于 Kubernetes 实现的 CICD 框架，Tekton 可以充分利用 Kubernetes 的生态，从而大大降低部署和管理的难度；</h5></li>
+</ol>
+<h5 id="作为云原生领域事实上的标准，Kubernetes-提供了强大的能力，包括自动化编排、部署、恢复和自愈等功能。"><a href="#作为云原生领域事实上的标准，Kubernetes-提供了强大的能力，包括自动化编排、部署、恢复和自愈等功能。" class="headerlink" title="作为云原生领域事实上的标准，Kubernetes 提供了强大的能力，包括自动化编排、部署、恢复和自愈等功能。"></a>作为云原生领域事实上的标准，Kubernetes 提供了强大的能力，包括自动化编排、部署、恢复和自愈等功能。</h5><h5 id="以横向扩容为例，Tekon-可以基于-Kubernetes-提供的节点管理能力快速地完成扩容，从而提高系统的吞吐量和并发处理能力。"><a href="#以横向扩容为例，Tekon-可以基于-Kubernetes-提供的节点管理能力快速地完成扩容，从而提高系统的吞吐量和并发处理能力。" class="headerlink" title="以横向扩容为例，Tekon 可以基于 Kubernetes 提供的节点管理能力快速地完成扩容，从而提高系统的吞吐量和并发处理能力。"></a>以横向扩容为例，Tekon 可以基于 Kubernetes 提供的节点管理能力快速地完成扩容，从而提高系统的吞吐量和并发处理能力。</h5><h6 id="此外，Tekton-可以很好地融合进-Kubernetes-的生态，与其他-Kubernetes-工具和服务实现整合，包括监控、告警、日志服务等。这样可以形成基于-Kubernetes-的完整-DevOps-技术栈，为实现-CICD-流程的全生命周期管理提供更好的保障和支持。"><a href="#此外，Tekton-可以很好地融合进-Kubernetes-的生态，与其他-Kubernetes-工具和服务实现整合，包括监控、告警、日志服务等。这样可以形成基于-Kubernetes-的完整-DevOps-技术栈，为实现-CICD-流程的全生命周期管理提供更好的保障和支持。" class="headerlink" title="此外，Tekton 可以很好地融合进 Kubernetes 的生态，与其他 Kubernetes 工具和服务实现整合，包括监控、告警、日志服务等。这样可以形成基于 Kubernetes 的完整 DevOps 技术栈，为实现 CICD 流程的全生命周期管理提供更好的保障和支持。"></a>此外，Tekton 可以很好地融合进 Kubernetes 的生态，与其他 Kubernetes 工具和服务实现整合，包括监控、告警、日志服务等。这样可以形成基于 Kubernetes 的完整 DevOps 技术栈，为实现 CICD 流程的全生命周期管理提供更好的保障和支持。</h6><h5 id="因此，基于-Kubernetes-的实现，是我们选择-Tekton-的主要原因。"><a href="#因此，基于-Kubernetes-的实现，是我们选择-Tekton-的主要原因。" class="headerlink" title="因此，基于 Kubernetes 的实现，是我们选择 Tekton 的主要原因。"></a>因此，基于 Kubernetes 的实现，是我们选择 Tekton 的主要原因。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402281805669.png" srcset="/img/loading.gif" lazyload alt="image-20240228180505542"></p>
+<h3 id="安装-Tekton"><a href="#安装-Tekton" class="headerlink" title="安装 Tekton"></a><strong>安装 Tekton</strong></h3><h5 id="推荐使用-Operator-的方式安装-Tekton："><a href="#推荐使用-Operator-的方式安装-Tekton：" class="headerlink" title="推荐使用 Operator 的方式安装 Tekton："></a>推荐使用 Operator 的方式安装 Tekton：</h5><figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs awk">kubectl apply -f https:<span class="hljs-regexp">//</span>storage.googleapis.com<span class="hljs-regexp">/tekton-releases/</span>operator<span class="hljs-regexp">/latest/</span>release.yaml<br></code></pre></td></tr></table></figure>
+
+<h5 id="安装-Tekton-时可以选择lite、basic、all-等选项，每个选项中含有不同的组件："><a href="#安装-Tekton-时可以选择lite、basic、all-等选项，每个选项中含有不同的组件：" class="headerlink" title="安装 Tekton 时可以选择lite、basic、all 等选项，每个选项中含有不同的组件："></a>安装 Tekton 时可以选择<code>lite</code>、<code>basic</code>、<code>all</code> 等选项，每个选项中含有不同的组件：</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221147199.png" srcset="/img/loading.gif" lazyload alt="image-20240222114748122"></p>
+<h5 id="使用-Operator-安装Tekton-时，默认会选择选择all选项安装所有组件，如果不需要这么多组件，可以使用其他选项（例如lite）来进行组件安装："><a href="#使用-Operator-安装Tekton-时，默认会选择选择all选项安装所有组件，如果不需要这么多组件，可以使用其他选项（例如lite）来进行组件安装：" class="headerlink" title="使用 Operator 安装Tekton 时，默认会选择选择all选项安装所有组件，如果不需要这么多组件，可以使用其他选项（例如lite）来进行组件安装："></a>使用 Operator 安装Tekton 时，默认会选择选择<code>all</code>选项安装所有组件，如果不需要这么多组件，可以使用其他选项（例如<code>lite</code>）来进行组件安装：</h5><figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs awk">kubectl apply -f https:<span class="hljs-regexp">//</span>raw.githubusercontent.com<span class="hljs-regexp">/tektoncd/</span>operator<span class="hljs-regexp">/main/</span>config<span class="hljs-regexp">/crs/</span>kubernetes<span class="hljs-regexp">/config/</span>lite/operator_v1alpha1_config_cr.yaml<br></code></pre></td></tr></table></figure>
+
+<h3 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a><strong>基本概念</strong></h3><h5 id="在开始使用-Tekton-之前，我们先来了解-Tekton-的两个核心对象："><a href="#在开始使用-Tekton-之前，我们先来了解-Tekton-的两个核心对象：" class="headerlink" title="在开始使用 Tekton 之前，我们先来了解 Tekton 的两个核心对象："></a>在开始使用 Tekton 之前，我们先来了解 Tekton 的两个核心对象：</h5><ul>
+<li><h5 id="Task：任务，Tekton-中的最小执行单位，由一个按顺序执行的步骤（Step）列表组成；"><a href="#Task：任务，Tekton-中的最小执行单位，由一个按顺序执行的步骤（Step）列表组成；" class="headerlink" title="Task：任务，Tekton 中的最小执行单位，由一个按顺序执行的步骤（Step）列表组成；"></a>Task：任务，Tekton 中的最小执行单位，由一个按顺序执行的步骤（Step）列表组成；</h5></li>
+<li><h5 id="Pipeline：流水线，由一个或多个-Task-组成，流水线中定义了每个-Task-的执行顺序以及它们的依赖关系；"><a href="#Pipeline：流水线，由一个或多个-Task-组成，流水线中定义了每个-Task-的执行顺序以及它们的依赖关系；" class="headerlink" title="Pipeline：流水线，由一个或多个 Task 组成，流水线中定义了每个 Task 的执行顺序以及它们的依赖关系；"></a>Pipeline：流水线，由一个或多个 Task 组成，流水线中定义了每个 Task 的执行顺序以及它们的依赖关系；</h5></li>
+</ul>
+<h5 id="Task-代表一个明确的任务，可以是构建、测试或者部署等操作，每个-Task-对应的是一个-Kubernetes-的-Pod，任务-Task-里面的步骤-Step-则对应-Pod-中的容器，流水线-Pipeline-则是对任务-Task-的编排。"><a href="#Task-代表一个明确的任务，可以是构建、测试或者部署等操作，每个-Task-对应的是一个-Kubernetes-的-Pod，任务-Task-里面的步骤-Step-则对应-Pod-中的容器，流水线-Pipeline-则是对任务-Task-的编排。" class="headerlink" title="Task 代表一个明确的任务，可以是构建、测试或者部署等操作，每个 Task 对应的是一个 Kubernetes 的 Pod，任务 Task 里面的步骤 Step 则对应 Pod 中的容器，流水线 Pipeline 则是对任务 Task 的编排。"></a>Task 代表一个明确的任务，可以是构建、测试或者部署等操作，每个 Task 对应的是一个 Kubernetes 的 Pod，任务 Task 里面的步骤 Step 则对应 Pod 中的容器，流水线 Pipeline 则是对任务 Task 的编排。</h5><h5 id="任务-Task-是步骤-Step-的集合，流水线-Pipeline-在任务-Task-的集合。Task-和-Pipeline-都是定义，他们在实例化后分别称为-TaskRun-和-PipelineRun，-会明确声明具体的输入、输出等内容。"><a href="#任务-Task-是步骤-Step-的集合，流水线-Pipeline-在任务-Task-的集合。Task-和-Pipeline-都是定义，他们在实例化后分别称为-TaskRun-和-PipelineRun，-会明确声明具体的输入、输出等内容。" class="headerlink" title="任务 Task 是步骤 Step 的集合，流水线 Pipeline 在任务 Task 的集合。Task 和 Pipeline 都是定义，他们在实例化后分别称为 TaskRun 和 PipelineRun， 会明确声明具体的输入、输出等内容。"></a>任务 Task 是步骤 Step 的集合，流水线 Pipeline 在任务 Task 的集合。Task 和 Pipeline 都是定义，他们在实例化后分别称为 TaskRun 和 PipelineRun， 会明确声明具体的输入、输出等内容。</h5><h5 id="它们的关系示意图如下："><a href="#它们的关系示意图如下：" class="headerlink" title="它们的关系示意图如下："></a>它们的关系示意图如下：</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221148335.png" srcset="/img/loading.gif" lazyload alt="image-20240222114801253"></p>
+<h5 id="接下来，我将以-Golang-项目为例，演示如何使用-Tekton-搭建-CICD-平台。"><a href="#接下来，我将以-Golang-项目为例，演示如何使用-Tekton-搭建-CICD-平台。" class="headerlink" title="接下来，我将以 Golang 项目为例，演示如何使用 Tekton 搭建 CICD 平台。"></a>接下来，我将以 Golang 项目为例，演示如何使用 Tekton 搭建 CICD 平台。</h5><h3 id="搭建-CICD-平台"><a href="#搭建-CICD-平台" class="headerlink" title="搭建 CICD 平台"></a><strong>搭建 CICD 平台</strong></h3><h5 id="本次实践使用的-Kubernetes-集群版本是-v1-26-0，Tekton-Pipeline-版本是-v0-56-0。另外，需要准备好代码仓库、镜像仓库、nfs-存储等基础设施。"><a href="#本次实践使用的-Kubernetes-集群版本是-v1-26-0，Tekton-Pipeline-版本是-v0-56-0。另外，需要准备好代码仓库、镜像仓库、nfs-存储等基础设施。" class="headerlink" title="本次实践使用的 Kubernetes 集群版本是 v1.26.0，Tekton Pipeline 版本是 v0.56.0。另外，需要准备好代码仓库、镜像仓库、nfs 存储等基础设施。"></a>本次实践使用的 Kubernetes 集群版本是 v1.26.0，Tekton Pipeline 版本是 v0.56.0。另外，需要准备好代码仓库、镜像仓库、nfs 存储等基础设施。</h5><h5 id="Golang-项目的目录结构如下："><a href="#Golang-项目的目录结构如下：" class="headerlink" title="Golang 项目的目录结构如下："></a>Golang 项目的目录结构如下：</h5><figure class="highlight maxima"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs maxima">.<br>├── Dockerfile<br>├── <span class="hljs-built_in">go</span>.<span class="hljs-built_in">mod</span><br>├── main.<span class="hljs-built_in">go</span><br>└── README.md<br></code></pre></td></tr></table></figure>
+
+<h5 id="其中-Dockerfile-的内容如下："><a href="#其中-Dockerfile-的内容如下：" class="headerlink" title="其中 Dockerfile 的内容如下："></a>其中 Dockerfile 的内容如下：</h5><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-keyword">FROM</span> golang:latest<br><span class="hljs-keyword">WORKDIR</span><span class="language-bash"> /app</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> . /app</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> go build -o main .</span><br><span class="hljs-keyword">EXPOSE</span> <span class="hljs-number">8080</span><br><span class="hljs-keyword">CMD</span><span class="language-bash"> [<span class="hljs-string">&quot;./main&quot;</span>]</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="整个过程将会使用-Tekton-Pipeline-把代码从-Git-仓库克隆到本地，在构建完成后将镜像推送至镜像仓库，最后自动部署到-Kubernetes-集群中。"><a href="#整个过程将会使用-Tekton-Pipeline-把代码从-Git-仓库克隆到本地，在构建完成后将镜像推送至镜像仓库，最后自动部署到-Kubernetes-集群中。" class="headerlink" title="整个过程将会使用 Tekton Pipeline 把代码从 Git 仓库克隆到本地，在构建完成后将镜像推送至镜像仓库，最后自动部署到 Kubernetes 集群中。"></a>整个过程将会使用 Tekton Pipeline 把代码从 Git 仓库克隆到本地，在构建完成后将镜像推送至镜像仓库，最后自动部署到 Kubernetes 集群中。</h5><h4 id="编写-Task"><a href="#编写-Task" class="headerlink" title="编写 Task"></a><strong>编写 Task</strong></h4><h5 id="Task-的定义支持以下字段："><a href="#Task-的定义支持以下字段：" class="headerlink" title="Task 的定义支持以下字段："></a>Task 的定义支持以下字段：</h5><ul>
+<li><h5 id="apiVersion：API-版本"><a href="#apiVersion：API-版本" class="headerlink" title="apiVersion：API 版本"></a>apiVersion：API 版本</h5></li>
+<li><h5 id="kind：类型"><a href="#kind：类型" class="headerlink" title="kind：类型"></a>kind：类型</h5></li>
+<li><h5 id="metadata：元数据"><a href="#metadata：元数据" class="headerlink" title="metadata：元数据"></a>metadata：元数据</h5></li>
+<li><h5 id="spec：配置"><a href="#spec：配置" class="headerlink" title="spec：配置"></a>spec：配置</h5></li>
+<li><ul>
+<li><h5 id="description：任务的描述"><a href="#description：任务的描述" class="headerlink" title="description：任务的描述"></a>description：任务的描述</h5></li>
+<li><h5 id="steps：任务的步骤"><a href="#steps：任务的步骤" class="headerlink" title="steps：任务的步骤"></a>steps：任务的步骤</h5></li>
+<li><h5 id="params：任务的执行参数"><a href="#params：任务的执行参数" class="headerlink" title="params：任务的执行参数"></a>params：任务的执行参数</h5></li>
+<li><h5 id="workspaces：任务所需的卷的路径"><a href="#workspaces：任务所需的卷的路径" class="headerlink" title="workspaces：任务所需的卷的路径"></a>workspaces：任务所需的卷的路径</h5></li>
+<li><h5 id="results：任务将执行结果抛给下游时使用的名称"><a href="#results：任务将执行结果抛给下游时使用的名称" class="headerlink" title="results：任务将执行结果抛给下游时使用的名称"></a>results：任务将执行结果抛给下游时使用的名称</h5></li>
+<li><h5 id="volumes：任务中的步骤中可使用的存储卷"><a href="#volumes：任务中的步骤中可使用的存储卷" class="headerlink" title="volumes：任务中的步骤中可使用的存储卷"></a>volumes：任务中的步骤中可使用的存储卷</h5></li>
+<li><h5 id="stepTemplate：步骤的共享模板"><a href="#stepTemplate：步骤的共享模板" class="headerlink" title="stepTemplate：步骤的共享模板"></a>stepTemplate：步骤的共享模板</h5></li>
+<li><h5 id="sidecars：步骤中的-Sidecar-容器"><a href="#sidecars：步骤中的-Sidecar-容器" class="headerlink" title="sidecars：步骤中的 Sidecar 容器"></a>sidecars：步骤中的 Sidecar 容器</h5></li>
+</ul>
+</li>
+</ul>
+<h5 id="在-Tekton-的插件库中有很多现成的-Task-可以使用，为了方便大家更好地了解-Tekton-Task-的开发流程，我将以克隆-Git-仓库代码为例，详细介绍一下里面的细节。"><a href="#在-Tekton-的插件库中有很多现成的-Task-可以使用，为了方便大家更好地了解-Tekton-Task-的开发流程，我将以克隆-Git-仓库代码为例，详细介绍一下里面的细节。" class="headerlink" title="在 Tekton 的插件库中有很多现成的 Task 可以使用，为了方便大家更好地了解 Tekton Task 的开发流程，我将以克隆 Git 仓库代码为例，详细介绍一下里面的细节。"></a>在 Tekton 的插件库中有很多现成的 Task 可以使用，为了方便大家更好地了解 Tekton Task 的开发流程，我将以克隆 Git 仓库代码为例，详细介绍一下里面的细节。</h5><h5 id="示例如下："><a href="#示例如下：" class="headerlink" title="示例如下："></a>示例如下：</h5><figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-comment"># git-clone.yaml</span><br><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">tekton.dev/v1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Task</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">git-clone</span><br><span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">description</span><span class="hljs-punctuation">:</span> <span class="hljs-string">git clone</span><br>  <span class="hljs-attribute">workspaces</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: git-directory</span><br>    <span class="hljs-attribute">description</span><span class="hljs-punctuation">:</span> <span class="hljs-string">克隆代码在本地存储的路径</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: ssh-directory</span><br>    <span class="hljs-attribute">description</span><span class="hljs-punctuation">:</span> <span class="hljs-string">使用 ssh 克隆代码时所需的相关凭证</span><br>  <span class="hljs-attribute">params</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: url</span><br>    <span class="hljs-attribute">description</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Git仓库地址</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: revision</span><br>    <span class="hljs-attribute">description</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Git分支/标签</span><br>  <span class="hljs-attribute">results</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: gitCommitHash</span><br>    <span class="hljs-attribute">description</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Git提交哈希</span><br>  <span class="hljs-attribute">steps</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: git-clone</span><br>    <span class="hljs-attribute">image</span><span class="hljs-punctuation">:</span> <span class="hljs-string">bitnami/git:latest</span><br>    <span class="hljs-attribute">workingDir</span><span class="hljs-punctuation">:</span> <span class="hljs-string">$(workspaces.git-directory.path)</span><br>    <span class="hljs-attribute">env</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">name: PARAM_URL</span><br>      <span class="hljs-attribute">value</span><span class="hljs-punctuation">:</span> <span class="hljs-string">$(params.url)</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">name: PARAM_REVISION</span><br>      <span class="hljs-attribute">value</span><span class="hljs-punctuation">:</span> <span class="hljs-string">$(params.revision)</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">name: WORKSPACE_GIT_DIRECTORY_PATH</span><br>      <span class="hljs-attribute">value</span><span class="hljs-punctuation">:</span> <span class="hljs-string">$(workspaces.git-directory.path)</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">name: WORKSPACE_SSH_DIRECTORY_BOUND</span><br>      <span class="hljs-attribute">value</span><span class="hljs-punctuation">:</span> <span class="hljs-string">$(workspaces.ssh-directory.bound)</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">name: WORKSPACE_SSH_DIRECTORY_PATH</span><br>      <span class="hljs-attribute">value</span><span class="hljs-punctuation">:</span> <span class="hljs-string">$(workspaces.ssh-directory.path)</span><br>    <span class="hljs-attribute">script</span><span class="hljs-punctuation">:</span> <span class="hljs-string">|</span><br>      <span class="hljs-comment">#!/bin/bash</span><br>      <span class="hljs-comment"># -x 表示输出每条命令及其结果，-e 表示脚本执行失败时立即退出，-u 表示使用了未定义的变量时立即退出脚本</span><br>      set -xeu<br>      <span class="hljs-comment"># 设置凭证，使用ssh认证的方式与git进行身份验证</span><br>      if [ &quot;$&#123;WORKSPACE_SSH_DIRECTORY_BOUND&#125;&quot; == &quot;true&quot; ]; then<br>        <span class="hljs-comment"># 将配置中的ssh文件拷贝到~/.ssh目录中，-R 表示递归复制，即复制目录及其子目录和文件，-L 表示解析符号链接，复制符号链接所指向的实际文件，避免复制时拿到的是软连接</span><br>        cp -RL &quot;$&#123;WORKSPACE_SSH_DIRECTORY_PATH&#125;&quot; ~/.ssh<br>        chmod 700 ~/.ssh<br>        chmod -R 400 ~/.ssh/*<br>      fi<br><br>      cd $&#123;WORKSPACE_GIT_DIRECTORY_PATH&#125;<br>      mkdir -p git_repo<br>      <span class="hljs-comment"># 将git_repo添加到Git的安全目录列表</span><br>      git config --global --add safe.directory $&#123;WORKSPACE_GIT_DIRECTORY_PATH&#125;/git_repo<br><br>      <span class="hljs-comment"># 克隆代码</span><br>      git clone $&#123;PARAM_URL&#125; git_repo<br>      cd git_repo<br>      git checkout $&#123;PARAM_REVISION&#125;<br><br>      <span class="hljs-comment"># 将结果输出到results字段中</span><br>      GIT_COMMIT_HASH=&quot;$(git log --pretty=format:&quot;%h&quot; -n 1)&quot;<br>      echo -n $&#123;GIT_COMMIT_HASH&#125; | tee $(results.gitCommitHash.path)<br></code></pre></td></tr></table></figure>
+
+<h5 id="在克隆-Git-仓库代码时，需要通过volumes字段来提供-Git-凭证，并使用params字段明确指定要克隆的代码仓库、分支等内容。代码克隆到本地后，还需要将它存储到workspaces中以便后续任务进行测试和构建等工作。同时，为了保留-Git-相关的记录，需要通过results将它们传递给后续的任务使用。"><a href="#在克隆-Git-仓库代码时，需要通过volumes字段来提供-Git-凭证，并使用params字段明确指定要克隆的代码仓库、分支等内容。代码克隆到本地后，还需要将它存储到workspaces中以便后续任务进行测试和构建等工作。同时，为了保留-Git-相关的记录，需要通过results将它们传递给后续的任务使用。" class="headerlink" title="在克隆 Git 仓库代码时，需要通过volumes字段来提供 Git 凭证，并使用params字段明确指定要克隆的代码仓库、分支等内容。代码克隆到本地后，还需要将它存储到workspaces中以便后续任务进行测试和构建等工作。同时，为了保留 Git 相关的记录，需要通过results将它们传递给后续的任务使用。"></a>在克隆 Git 仓库代码时，需要通过<code>volumes</code>字段来提供 Git 凭证，并使用<code>params</code>字段明确指定要克隆的代码仓库、分支等内容。代码克隆到本地后，还需要将它存储到<code>workspaces</code>中以便后续任务进行测试和构建等工作。同时，为了保留 Git 相关的记录，需要通过<code>results</code>将它们传递给后续的任务使用。</h5><h5 id="Task-的开发过程并不复杂，主要是在步骤-Step-的script字段里通过-shell-脚本来实现，通过类似的方式，我们可以快速实现测试、构建、部署等场景的-Task。"><a href="#Task-的开发过程并不复杂，主要是在步骤-Step-的script字段里通过-shell-脚本来实现，通过类似的方式，我们可以快速实现测试、构建、部署等场景的-Task。" class="headerlink" title="Task 的开发过程并不复杂，主要是在步骤 Step 的script字段里通过 shell 脚本来实现，通过类似的方式，我们可以快速实现测试、构建、部署等场景的 Task。"></a>Task 的开发过程并不复杂，主要是在步骤 Step 的<code>script</code>字段里通过 shell 脚本来实现，通过类似的方式，我们可以快速实现测试、构建、部署等场景的 Task。</h5><h5 id="接下来我们再开发一个用于构建镜像的任务-Task-："><a href="#接下来我们再开发一个用于构建镜像的任务-Task-：" class="headerlink" title="接下来我们再开发一个用于构建镜像的任务 Task ："></a>接下来我们再开发一个用于构建镜像的任务 Task ：</h5><figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-comment"># build-push.yaml</span><br><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">tekton.dev/v1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Task</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">build-push</span><br><span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">description</span><span class="hljs-punctuation">:</span> <span class="hljs-string">使用 docker 构建镜像</span><br>  <span class="hljs-attribute">params</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: image</span><br>    <span class="hljs-attribute">description</span><span class="hljs-punctuation">:</span> <span class="hljs-string">镜像地址</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: dockerfilePath</span><br>    <span class="hljs-attribute">description</span><span class="hljs-punctuation">:</span> <span class="hljs-string">dockerfile路径</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: gitCommitHash</span><br>    <span class="hljs-attribute">description</span><span class="hljs-punctuation">:</span> <span class="hljs-string">git提交哈希</span><br>  <span class="hljs-attribute">workspaces</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: git-directory</span><br>    <span class="hljs-attribute">description</span><span class="hljs-punctuation">:</span> <span class="hljs-string">克隆代码在本地存储的路径</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: dockerconfig</span><br>    <span class="hljs-attribute">description</span><span class="hljs-punctuation">:</span> <span class="hljs-string">docker配置文件</span><br>  <span class="hljs-attribute">volumes</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: docker-socket</span><br>    <span class="hljs-attribute">hostPath</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-attribute">path</span><span class="hljs-punctuation">:</span> <span class="hljs-string">/var/run/docker.sock</span><br>      <span class="hljs-attribute">type</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Socket</span><br>  <span class="hljs-attribute">steps</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: build</span><br>    <span class="hljs-attribute">image</span><span class="hljs-punctuation">:</span> <span class="hljs-string">docker:git</span><br>    <span class="hljs-attribute">workingDir</span><span class="hljs-punctuation">:</span> <span class="hljs-string">$(workspaces.git-directory.path)</span><br>    <span class="hljs-attribute">volumeMounts</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">name: docker-socket</span><br>      <span class="hljs-attribute">mountPath</span><span class="hljs-punctuation">:</span> <span class="hljs-string">/var/run/docker.sock</span><br>    <span class="hljs-attribute">env</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">name: WORKSPACE_DOCKERCONFIG_BOUND</span><br>      <span class="hljs-attribute">value</span><span class="hljs-punctuation">:</span> <span class="hljs-string">$(workspaces.dockerconfig.bound)</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">name: WORKSPACE_DOCKERCONFIG_PATH</span><br>      <span class="hljs-attribute">value</span><span class="hljs-punctuation">:</span> <span class="hljs-string">$(workspaces.dockerconfig.path)</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">name: WORKSPACE_GIT_DIRECTORY_PATH</span><br>      <span class="hljs-attribute">value</span><span class="hljs-punctuation">:</span> <span class="hljs-string">$(workspaces.git-directory.path)</span><br>    <span class="hljs-attribute">script</span><span class="hljs-punctuation">:</span> <span class="hljs-string">|</span><br>      <span class="hljs-comment">#!/bin/sh</span><br>      set -xeu<br>      if [ &quot;$&#123;WORKSPACE_DOCKERCONFIG_BOUND&#125;&quot; == &quot;true&quot; ]; then<br>        cp -RL &quot;$&#123;WORKSPACE_DOCKERCONFIG_PATH&#125;&quot; ~/.docker<br>        chmod 700 ~/.docker<br>      fi<br>      <span class="hljs-comment"># 将git_repo添加到Git的安全目录列表</span><br>      git config --global --add safe.directory $&#123;WORKSPACE_GIT_DIRECTORY_PATH&#125;/git_repo<br>      cd git_repo<br>      IMAGE=&quot;$(params.image)-$(params.gitCommitHash)&quot;<br>      docker build -t $&#123;IMAGE&#125; -f $(params.dockerfilePath) .<br>      docker push $&#123;IMAGE&#125;<br></code></pre></td></tr></table></figure>
+
+<h5 id="在构建的过程中，我使用的是-Docker-In-Docker-的方式，将-Docker-socket-挂载给容器，以便容器中的进程可以通过-Docker-API-与宿主机上的-Docker-引擎进行交互。这种方式可以用于开发环境的调试使用，但不推荐在生产环境中使用。"><a href="#在构建的过程中，我使用的是-Docker-In-Docker-的方式，将-Docker-socket-挂载给容器，以便容器中的进程可以通过-Docker-API-与宿主机上的-Docker-引擎进行交互。这种方式可以用于开发环境的调试使用，但不推荐在生产环境中使用。" class="headerlink" title="在构建的过程中，我使用的是 Docker In Docker 的方式，将 Docker socket 挂载给容器，以便容器中的进程可以通过 Docker API 与宿主机上的 Docker 引擎进行交互。这种方式可以用于开发环境的调试使用，但不推荐在生产环境中使用。"></a>在构建的过程中，我使用的是 Docker In Docker 的方式，将 Docker socket 挂载给容器，以便容器中的进程可以通过 Docker API 与宿主机上的 Docker 引擎进行交互。这种方式可以用于开发环境的调试使用，但不推荐在生产环境中使用。</h5><h5 id="到这里，相信大家应该都明白了任务-Task-的开发流程，后续部署应用的任务我就简单地一笔带过，示例如下："><a href="#到这里，相信大家应该都明白了任务-Task-的开发流程，后续部署应用的任务我就简单地一笔带过，示例如下：" class="headerlink" title="到这里，相信大家应该都明白了任务 Task 的开发流程，后续部署应用的任务我就简单地一笔带过，示例如下："></a>到这里，相信大家应该都明白了任务 Task 的开发流程，后续部署应用的任务我就简单地一笔带过，示例如下：</h5><figure class="highlight dts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs dts"><span class="hljs-meta"># deploy-app.yaml</span><br><span class="hljs-symbol">apiVersion:</span> tekton.dev/v1<br><span class="hljs-symbol">kind:</span> Task<br><span class="hljs-symbol">metadata:</span><br><span class="hljs-symbol">  name:</span> deploy-app<br><span class="hljs-symbol">spec:</span><br><span class="hljs-symbol">  description:</span> 部署应用<br><span class="hljs-symbol">  steps:</span><br>  - name: deploy-app<br><span class="hljs-symbol">    image:</span> ubuntu:latest<br><span class="hljs-symbol">    script:</span> |<br>      <span class="hljs-meta">#!/bin/sh</span><br>      echo <span class="hljs-string">&quot;部署应用到 Kubernetes 集群&quot;</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="在完成任务-Task-的编写后，接下来我们需要使用流水线-Pipeline-将它们串起来，实现克隆、构建、推送镜像、部署应用的自动化流程。"><a href="#在完成任务-Task-的编写后，接下来我们需要使用流水线-Pipeline-将它们串起来，实现克隆、构建、推送镜像、部署应用的自动化流程。" class="headerlink" title="在完成任务 Task 的编写后，接下来我们需要使用流水线 Pipeline 将它们串起来，实现克隆、构建、推送镜像、部署应用的自动化流程。"></a>在完成任务 Task 的编写后，接下来我们需要使用流水线 Pipeline 将它们串起来，实现克隆、构建、推送镜像、部署应用的自动化流程。</h5><h4 id="编排-Pipeline"><a href="#编排-Pipeline" class="headerlink" title="编排 Pipeline"></a><strong>编排 Pipeline</strong></h4><h5 id="通过前面的操作后，我们得到了三个任务-Task："><a href="#通过前面的操作后，我们得到了三个任务-Task：" class="headerlink" title="通过前面的操作后，我们得到了三个任务 Task："></a>通过前面的操作后，我们得到了三个任务 Task：</h5><ul>
+<li><h5 id="git-clone：将代码克隆到本地；"><a href="#git-clone：将代码克隆到本地；" class="headerlink" title="git-clone：将代码克隆到本地；"></a>git-clone：将代码克隆到本地；</h5></li>
+<li><h5 id="build-push：构建代码并推送镜像；"><a href="#build-push：构建代码并推送镜像；" class="headerlink" title="build-push：构建代码并推送镜像；"></a>build-push：构建代码并推送镜像；</h5></li>
+<li><h5 id="deploy-app：部署服务到集群应用；"><a href="#deploy-app：部署服务到集群应用；" class="headerlink" title="deploy-app：部署服务到集群应用；"></a>deploy-app：部署服务到集群应用；</h5></li>
+</ul>
+<h5 id="我们来看一下流水线-Pipeline-的编排方式，示例如下："><a href="#我们来看一下流水线-Pipeline-的编排方式，示例如下：" class="headerlink" title="我们来看一下流水线 Pipeline 的编排方式，示例如下："></a>我们来看一下流水线 Pipeline 的编排方式，示例如下：</h5><figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-comment"># pipeline.yaml</span><br><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">tekton.dev/v1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Pipeline</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">cicd</span><br><span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">description</span><span class="hljs-punctuation">:</span> <span class="hljs-string">使用git和docker等工具将项目从远程代码仓库拉到容器中构建，将产物推送到镜像仓库，并部署到集群中</span><br>  <span class="hljs-attribute">params</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: url</span><br>    <span class="hljs-attribute">description</span><span class="hljs-punctuation">:</span> <span class="hljs-string">git仓库地址</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: revision</span><br>    <span class="hljs-attribute">description</span><span class="hljs-punctuation">:</span> <span class="hljs-string">git分支/标签</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: image</span><br>    <span class="hljs-attribute">description</span><span class="hljs-punctuation">:</span> <span class="hljs-string">镜像地址</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: dockerfilePath</span><br>    <span class="hljs-attribute">description</span><span class="hljs-punctuation">:</span> <span class="hljs-string">dockerfile路径</span><br>  <span class="hljs-attribute">workspaces</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: git-directory</span><br>    <span class="hljs-attribute">description</span><span class="hljs-punctuation">:</span> <span class="hljs-string">克隆代码在本地存储的路径</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: ssh-directory</span><br>    <span class="hljs-attribute">description</span><span class="hljs-punctuation">:</span> <span class="hljs-string">克隆代码时所需的相关凭证</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: dockerconfig</span><br>    <span class="hljs-attribute">description</span><span class="hljs-punctuation">:</span> <span class="hljs-string">docker配置文件</span><br>  <span class="hljs-attribute">tasks</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: git-clone</span><br>    <span class="hljs-attribute">taskRef</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">git-clone</span><br>    <span class="hljs-attribute">params</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">name: url</span><br>      <span class="hljs-attribute">value</span><span class="hljs-punctuation">:</span> <span class="hljs-string">$(params.url)</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">name: revision</span><br>      <span class="hljs-attribute">value</span><span class="hljs-punctuation">:</span> <span class="hljs-string">$(params.revision)</span><br>    <span class="hljs-attribute">workspaces</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">name: git-directory</span><br>      <span class="hljs-attribute">workspace</span><span class="hljs-punctuation">:</span> <span class="hljs-string">git-directory</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">name: ssh-directory</span><br>      <span class="hljs-attribute">workspace</span><span class="hljs-punctuation">:</span> <span class="hljs-string">ssh-directory</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: build-push</span><br>    <span class="hljs-attribute">runAfter</span><span class="hljs-punctuation">:</span> <span class="hljs-string">[&quot;git-clone&quot;]</span><br>    <span class="hljs-attribute">taskRef</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">build-push</span><br>    <span class="hljs-attribute">params</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">name: image</span><br>      <span class="hljs-attribute">value</span><span class="hljs-punctuation">:</span> <span class="hljs-string">$(params.image)</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">name: dockerfilePath</span><br>      <span class="hljs-attribute">value</span><span class="hljs-punctuation">:</span> <span class="hljs-string">$(params.dockerfilePath)</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">name: gitCommitHash</span><br>      <span class="hljs-attribute">value</span><span class="hljs-punctuation">:</span> <span class="hljs-string">$(tasks.git-clone.results.gitCommitHash)</span><br>    <span class="hljs-attribute">workspaces</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">name: git-directory</span><br>      <span class="hljs-attribute">workspace</span><span class="hljs-punctuation">:</span> <span class="hljs-string">git-directory</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">name: dockerconfig</span><br>      <span class="hljs-attribute">workspace</span><span class="hljs-punctuation">:</span> <span class="hljs-string">dockerconfig</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: deploy-app</span><br>    <span class="hljs-attribute">runAfter</span><span class="hljs-punctuation">:</span> <span class="hljs-string">[&quot;build-push&quot;]</span><br>    <span class="hljs-attribute">taskRef</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">deploy-app</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="在编排流水线时，需要处理好任务之间的顺序。这里我们通过runAfter字段来表明任务build-push在git-clone之后运行，任务deploy-app又在build-push之后运行，同时还需要关注任务所需的参数和依赖关系。"><a href="#在编排流水线时，需要处理好任务之间的顺序。这里我们通过runAfter字段来表明任务build-push在git-clone之后运行，任务deploy-app又在build-push之后运行，同时还需要关注任务所需的参数和依赖关系。" class="headerlink" title="在编排流水线时，需要处理好任务之间的顺序。这里我们通过runAfter字段来表明任务build-push在git-clone之后运行，任务deploy-app又在build-push之后运行，同时还需要关注任务所需的参数和依赖关系。"></a>在编排流水线时，需要处理好任务之间的顺序。这里我们通过<code>runAfter</code>字段来表明任务<code>build-push</code>在<code>git-clone</code>之后运行，任务<code>deploy-app</code>又在<code>build-push</code>之后运行，同时还需要关注任务所需的参数和依赖关系。</h5><h5 id="接下来，我们将使用-PipelineRun-运行流水线。"><a href="#接下来，我们将使用-PipelineRun-运行流水线。" class="headerlink" title="接下来，我们将使用 PipelineRun 运行流水线。"></a>接下来，我们将使用 PipelineRun 运行流水线。</h5><h4 id="运行流水线"><a href="#运行流水线" class="headerlink" title="运行流水线"></a><strong>运行流水线</strong></h4><h5 id="Tekton-的-PipelineRun-对象负责实例化流水线-Pipeline，明确声明各种参数和依赖，并自动为流水线中的任务-Task-创建相应的-TaskRun。"><a href="#Tekton-的-PipelineRun-对象负责实例化流水线-Pipeline，明确声明各种参数和依赖，并自动为流水线中的任务-Task-创建相应的-TaskRun。" class="headerlink" title="Tekton 的 PipelineRun 对象负责实例化流水线 Pipeline，明确声明各种参数和依赖，并自动为流水线中的任务 Task 创建相应的 TaskRun。"></a>Tekton 的 PipelineRun 对象负责实例化流水线 Pipeline，明确声明各种参数和依赖，并自动为流水线中的任务 Task 创建相应的 TaskRun。</h5><h5 id="完整的-PipelineRun-对象配置如下："><a href="#完整的-PipelineRun-对象配置如下：" class="headerlink" title="完整的 PipelineRun 对象配置如下："></a>完整的 PipelineRun 对象配置如下：</h5><figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-comment"># pipelinerun.yaml</span><br><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">tekton.dev/v1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">PipelineRun</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">generateName</span><span class="hljs-punctuation">:</span> <span class="hljs-string">cicd-</span><br><span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">pipelineRef</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">cicd</span><br>  <span class="hljs-attribute">params</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: url</span><br>    <span class="hljs-attribute">value</span><span class="hljs-punctuation">:</span> <span class="hljs-string">git@zlw.com:golang/demo.git</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: revision</span><br>    <span class="hljs-attribute">value</span><span class="hljs-punctuation">:</span> <span class="hljs-string">master</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: image</span><br>    <span class="hljs-attribute">value</span><span class="hljs-punctuation">:</span> <span class="hljs-string">hub-zlw.com/golang/demo:0.0.1</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: dockerfilePath</span><br>    <span class="hljs-attribute">value</span><span class="hljs-punctuation">:</span> <span class="hljs-string">./Dockerfile</span><br>  <span class="hljs-attribute">workspaces</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: ssh-directory</span><br>    <span class="hljs-attribute">secret</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-attribute">secretName</span><span class="hljs-punctuation">:</span> <span class="hljs-string">ssh-directory</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: dockerconfig</span><br>    <span class="hljs-attribute">secret</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-attribute">secretName</span><span class="hljs-punctuation">:</span> <span class="hljs-string">dockerconfig</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: git-directory</span><br>    <span class="hljs-attribute">volumeClaimTemplate</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>        <span class="hljs-attribute">accessModes</span><span class="hljs-punctuation">:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-string">ReadWriteOnce</span><br>        <span class="hljs-attribute">resources</span><span class="hljs-punctuation">:</span><br>          <span class="hljs-attribute">requests</span><span class="hljs-punctuation">:</span><br>            <span class="hljs-attribute">storage</span><span class="hljs-punctuation">:</span> <span class="hljs-string">1Gi</span><br>  <span class="hljs-attribute">taskRunTemplate</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">podTemplate</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-attribute">securityContext</span><span class="hljs-punctuation">:</span><br>        <span class="hljs-attribute">fsGroup</span><span class="hljs-punctuation">:</span> <span class="hljs-string">65532</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="在运行流水线的时，我们提供了以下参数和依赖："><a href="#在运行流水线的时，我们提供了以下参数和依赖：" class="headerlink" title="在运行流水线的时，我们提供了以下参数和依赖："></a>在运行流水线的时，我们提供了以下参数和依赖：</h5><ul>
+<li><h5 id="参数："><a href="#参数：" class="headerlink" title="参数："></a>参数：</h5></li>
+<li><ul>
+<li><h5 id="url：镜像仓库地址"><a href="#url：镜像仓库地址" class="headerlink" title="url：镜像仓库地址"></a>url：镜像仓库地址</h5></li>
+<li><h5 id="revision：代码分支或版本"><a href="#revision：代码分支或版本" class="headerlink" title="revision：代码分支或版本"></a>revision：代码分支或版本</h5></li>
+<li><h5 id="Image：构建完成的镜像名称"><a href="#Image：构建完成的镜像名称" class="headerlink" title="Image：构建完成的镜像名称"></a>Image：构建完成的镜像名称</h5></li>
+<li><h5 id="dockerfilePath：dockerfile文件的路径"><a href="#dockerfilePath：dockerfile文件的路径" class="headerlink" title="dockerfilePath：dockerfile文件的路径"></a>dockerfilePath：dockerfile文件的路径</h5></li>
+</ul>
+</li>
+<li><h5 id="依赖："><a href="#依赖：" class="headerlink" title="依赖："></a>依赖：</h5></li>
+<li><ul>
+<li><h5 id="密钥："><a href="#密钥：" class="headerlink" title="密钥："></a>密钥：</h5></li>
+<li><ul>
+<li><h5 id="ssh凭证：用于拉取代码"><a href="#ssh凭证：用于拉取代码" class="headerlink" title="ssh凭证：用于拉取代码"></a>ssh凭证：用于拉取代码</h5></li>
+<li><h5 id="docker凭证：用于推送镜像"><a href="#docker凭证：用于推送镜像" class="headerlink" title="docker凭证：用于推送镜像"></a>docker凭证：用于推送镜像</h5></li>
+</ul>
+</li>
+<li><h5 id="存储：用于存放代码"><a href="#存储：用于存放代码" class="headerlink" title="存储：用于存放代码"></a>存储：用于存放代码</h5></li>
+</ul>
+</li>
+</ul>
+<h5 id="依赖中的密钥和存储，我们需要提前准备，示例如下："><a href="#依赖中的密钥和存储，我们需要提前准备，示例如下：" class="headerlink" title="依赖中的密钥和存储，我们需要提前准备，示例如下："></a>依赖中的密钥和存储，我们需要提前准备，示例如下：</h5><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-comment"># git凭证</span><br><span class="hljs-comment"># -w0表示一行来显示</span><br><span class="hljs-string">$</span> <span class="hljs-string">cat</span> <span class="hljs-string">~/.ssh/id_rsa</span> <span class="hljs-string">|</span> <span class="hljs-string">base64</span> <span class="hljs-string">-w0</span><br><span class="hljs-string">LS0tLS1CRU==</span><br><span class="hljs-string">$</span> <span class="hljs-string">cat</span> <span class="hljs-string">~/.ssh/known_hosts</span> <span class="hljs-string">|</span> <span class="hljs-string">base64</span> <span class="hljs-string">-w0</span><br><span class="hljs-string">d3BzZ2l0Lmtpbm==</span><br><br><span class="hljs-comment"># 将base64后的凭证放在Secret中，包括id_rsa和known_hosts等文件</span><br><span class="hljs-string">$</span> <span class="hljs-string">kubectl</span> <span class="hljs-string">apply</span> <span class="hljs-string">-f</span> <span class="hljs-bullet">-</span> <span class="hljs-string">&lt;&lt;EOF</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Secret</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">ssh-directory</span><br>  <span class="hljs-attr">namespace:</span> <span class="hljs-string">default</span><br><span class="hljs-attr">type:</span> <span class="hljs-string">Opaque</span><br><span class="hljs-attr">data:</span><br>  <span class="hljs-attr">id_rsa:</span> <span class="hljs-string">LS0tLS1CRU==</span><br>  <span class="hljs-attr">known_hosts:</span> <span class="hljs-string">d3BzZ2l0Lmtpbm==</span><br><span class="hljs-string">EOF</span><br><br><span class="hljs-comment"># docker 凭证</span><br><span class="hljs-string">$</span> <span class="hljs-string">kubectl</span> <span class="hljs-string">apply</span> <span class="hljs-string">-f</span> <span class="hljs-bullet">-</span> <span class="hljs-string">&lt;&lt;EOF</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Secret</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">dockerconfig</span><br><span class="hljs-attr">type:</span> <span class="hljs-string">kubernetes.io/dockerconfigjson</span><br><span class="hljs-attr">data:</span><br>  <span class="hljs-attr">config.json:</span> <span class="hljs-string">eyJhdXRocyI6eyJod==</span><br><span class="hljs-string">EOF</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="存储方面，我使用的是-nfs-作为-Tekton-的存储，由于-nfs-的安装过程稍微比较复杂，后续有需要可以单独细说，这里大家自行准备。"><a href="#存储方面，我使用的是-nfs-作为-Tekton-的存储，由于-nfs-的安装过程稍微比较复杂，后续有需要可以单独细说，这里大家自行准备。" class="headerlink" title="存储方面，我使用的是 nfs 作为 Tekton 的存储，由于 nfs 的安装过程稍微比较复杂，后续有需要可以单独细说，这里大家自行准备。"></a>存储方面，我使用的是 nfs 作为 Tekton 的存储，由于 nfs 的安装过程稍微比较复杂，后续有需要可以单独细说，这里大家自行准备。</h5><h5 id="最后，我们通过命令行运行流水线和查看流水结果："><a href="#最后，我们通过命令行运行流水线和查看流水结果：" class="headerlink" title="最后，我们通过命令行运行流水线和查看流水结果："></a>最后，我们通过命令行运行流水线和查看流水结果：</h5><figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs powershell"><span class="hljs-comment"># 运行流水线</span><br><span class="hljs-variable">$</span> kubectl create <span class="hljs-operator">-f</span> pipelinerun.yaml<br><br><span class="hljs-variable">$</span> 查看运行结果<br><span class="hljs-variable">$</span> kubectl get pipelinerun<br>NAME         SUCCEEDED   REASON      STARTTIME   COMPLETIONTIME<br>cicd<span class="hljs-literal">-24c5j</span>   True        Succeeded   <span class="hljs-number">19</span><span class="hljs-built_in">h</span>         <span class="hljs-number">19</span><span class="hljs-built_in">h</span><br>cicd<span class="hljs-literal">-cs9gq</span>   True        Succeeded   <span class="hljs-number">20</span><span class="hljs-built_in">h</span>         <span class="hljs-number">20</span><span class="hljs-built_in">h</span><br></code></pre></td></tr></table></figure>
+
+<p>当然，我们也可以通过 Tekton 提供的 Dashboard 查看流水线：</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221148468.png" srcset="/img/loading.gif" lazyload alt="image-20240222114838375"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221148719.png" srcset="/img/loading.gif" lazyload alt="image-20240222114852618"></p>
+<h5 id="到这里，我们已经使用-Tekton-完成了最小闭环的-CICD-流程。借助-Tekton-的生态和能力，我们可以快速构建自己的-CICD-平台，或者在-Tekton-上做二次开发，以满足自身偏好或公司业务需求，打造更加完善的内部生态。"><a href="#到这里，我们已经使用-Tekton-完成了最小闭环的-CICD-流程。借助-Tekton-的生态和能力，我们可以快速构建自己的-CICD-平台，或者在-Tekton-上做二次开发，以满足自身偏好或公司业务需求，打造更加完善的内部生态。" class="headerlink" title="到这里，我们已经使用 Tekton 完成了最小闭环的 CICD 流程。借助 Tekton 的生态和能力，我们可以快速构建自己的 CICD 平台，或者在 Tekton 上做二次开发，以满足自身偏好或公司业务需求，打造更加完善的内部生态。"></a>到这里，我们已经使用 Tekton 完成了最小闭环的 CICD 流程。借助 Tekton 的生态和能力，我们可以快速构建自己的 CICD 平台，或者在 Tekton 上做二次开发，以满足自身偏好或公司业务需求，打造更加完善的内部生态。</h5><h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a><strong>总结</strong></h2><h5 id="基于-Tekton-实现的-CICD-平台具有巨大的创新潜力，不仅能为各类型的应用提供-CICD-流程支持，还能用于支持各种云原生服务，例如通过-istio-进行流量控制、实现混沌工程等。此外，Tekton-还可作为通用的工作流引擎使用，以实现基于事件的自动化流程等。"><a href="#基于-Tekton-实现的-CICD-平台具有巨大的创新潜力，不仅能为各类型的应用提供-CICD-流程支持，还能用于支持各种云原生服务，例如通过-istio-进行流量控制、实现混沌工程等。此外，Tekton-还可作为通用的工作流引擎使用，以实现基于事件的自动化流程等。" class="headerlink" title="基于 Tekton 实现的 CICD 平台具有巨大的创新潜力，不仅能为各类型的应用提供 CICD 流程支持，还能用于支持各种云原生服务，例如通过 istio 进行流量控制、实现混沌工程等。此外，Tekton 还可作为通用的工作流引擎使用，以实现基于事件的自动化流程等。"></a>基于 Tekton 实现的 CICD 平台具有巨大的创新潜力，不仅能为各类型的应用提供 CICD 流程支持，还能用于支持各种云原生服务，例如通过 istio 进行流量控制、实现混沌工程等。此外，Tekton 还可作为通用的工作流引擎使用，以实现基于事件的自动化流程等。</h5><h5 id="在本期内容中，我向大家介绍了-CICD-的基本定义以及如何使用-Tekton-从零开始快速构建-CICD-平台，包括-Tekton-的基本概念、如何开发任务-Task、如何编排流水线-Pipeline-以及如何运行流水线等。在后续的内容中，我将更加深入介绍-Tekton-的更多高级功能，例如与其他工具的集成、Tekton-的调度优化以及性能优化等。我们下期再见"><a href="#在本期内容中，我向大家介绍了-CICD-的基本定义以及如何使用-Tekton-从零开始快速构建-CICD-平台，包括-Tekton-的基本概念、如何开发任务-Task、如何编排流水线-Pipeline-以及如何运行流水线等。在后续的内容中，我将更加深入介绍-Tekton-的更多高级功能，例如与其他工具的集成、Tekton-的调度优化以及性能优化等。我们下期再见" class="headerlink" title="在本期内容中，我向大家介绍了 CICD 的基本定义以及如何使用 Tekton 从零开始快速构建 CICD 平台，包括 Tekton 的基本概念、如何开发任务 Task、如何编排流水线 Pipeline 以及如何运行流水线等。在后续的内容中，我将更加深入介绍 Tekton 的更多高级功能，例如与其他工具的集成、Tekton 的调度优化以及性能优化等。我们下期再见~"></a>在本期内容中，我向大家介绍了 CICD 的基本定义以及如何使用 Tekton 从零开始快速构建 CICD 平台，包括 Tekton 的基本概念、如何开发任务 Task、如何编排流水线 Pipeline 以及如何运行流水线等。在后续的内容中，我将更加深入介绍 Tekton 的更多高级功能，例如与其他工具的集成、Tekton 的调度优化以及性能优化等。我们下期再见~</h5>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>如何使用tekton快速搭建CI/CD平台 2024-04-03</div>
+      <div>http://example.com/2025/01/16/如何使用tekton快速搭建CICD平台-ru-he-shi-yong-tekton-kuai-su-da-jian-cicd-ping-tai/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E5%A4%9A%E6%9E%B6%E6%9E%84%E6%94%AF%E6%8C%81-duo-jia-gou-zhi-chi/" title="多架构支持 2023-09-28 15:29:54.111">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">多架构支持 2023-09-28 15:29:54.111</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E5%A4%A7%E5%8E%82%E6%80%BB%E7%BB%93nginx%E9%AB%98%E5%B9%B6%E5%8F%91%E4%BC%98%E5%8C%96%E7%AC%94%E8%AE%B0-da-chang-zong-jie-nginx-gao-bing-fa-you-hua-bi-ji/" title="大厂总结nginx高并发优化笔记 2024-08-02 17:46:19.098">
+                        <span class="hidden-mobile">大厂总结nginx高并发优化笔记 2024-08-02 17:46:19.098</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

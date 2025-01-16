@@ -1,0 +1,698 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="从源码解析Kruise原地升级原理本文从源码的角度分析 Kruise 原地升级相关功能的实现。 本篇Kruise版本为v1.5.2。 Kruise项目地址: https:&#x2F;&#x2F;github.com&#x2F;openkruise&#x2F;kruise 更多云原生、K8S相关文章请点击【专栏】查看！ 原地升级的概念当我们使用deployment等Workload， 我们更改镜像版本时，k8s会删除原有pod进行重建，重">
+<meta property="og:type" content="article">
+<meta property="og:title" content="kruise原地升级解析 2024-08-02 17:59:31.689">
+<meta property="og:url" content="http://example.com/2025/01/16/kruise%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7%E8%A7%A3%E6%9E%90-kruise-yuan-de-sheng-ji-jie-xi/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="从源码解析Kruise原地升级原理本文从源码的角度分析 Kruise 原地升级相关功能的实现。 本篇Kruise版本为v1.5.2。 Kruise项目地址: https:&#x2F;&#x2F;github.com&#x2F;openkruise&#x2F;kruise 更多云原生、K8S相关文章请点击【专栏】查看！ 原地升级的概念当我们使用deployment等Workload， 我们更改镜像版本时，k8s会删除原有pod进行重建，重">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407191535344.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407191536626.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.074Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:18.965Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407191535344.png">
+  
+  
+  
+  <title>kruise原地升级解析 2024-08-02 17:59:31.689 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="kruise原地升级解析 2024-08-02 17:59:31.689"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.9k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          25 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">kruise原地升级解析 2024-08-02 17:59:31.689</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p><strong>从源码解析Kruise原地升级原理</strong><br><strong>本文从源码的角度分析 Kruise 原地升级相关功能的实现。</strong></p>
+<p><strong>本篇Kruise版本为v1.5.2。</strong></p>
+<p><strong>Kruise项目地址: <a target="_blank" rel="noopener" href="https://github.com/openkruise/kruise">https://github.com/openkruise/kruise</a></strong></p>
+<p><strong>更多云原生、K8S相关文章请点击【专栏】查看！</strong></p>
+<p><strong>原地升级的概念</strong><br><strong>当我们使用deployment等Workload， 我们更改镜像版本时，k8s会删除原有pod进行重建，重建后pod的相关属性都有可能会变化， 比如uid、node、ipd等。</strong></p>
+<p><strong>原地升级的目的就是保持pod的相关属性不变，只更改镜像版本。</strong></p>
+<p><strong>下面的测试可以帮助理解kubelet的原地升级功能。</strong></p>
+<p><strong>测试一： 修改deployment镜像版本</strong><br><strong>比如当前deployment使用nginx作为镜像, 且有一个pod实例：</strong></p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs routeros">~|⇒ kubectl <span class="hljs-built_in">get</span> deployment test -o <span class="hljs-attribute">jsonpath</span>=<span class="hljs-string">&quot;&#123;.spec.template.spec.containers[0]&#125;&quot;</span><br>&#123;<span class="hljs-string">&quot;image&quot;</span>:<span class="hljs-string">&quot;nginx&quot;</span>,<span class="hljs-string">&quot;imagePullPolicy&quot;</span>:<span class="hljs-string">&quot;Always&quot;</span>,<span class="hljs-string">&quot;name&quot;</span>:<span class="hljs-string">&quot;nginx&quot;</span>,<span class="hljs-string">&quot;resources&quot;</span>:&#123;&#125;,<span class="hljs-string">&quot;terminationMessagePath&quot;</span>:<span class="hljs-string">&quot;/dev/termination-log&quot;</span>,<span class="hljs-string">&quot;terminationMessagePolicy&quot;</span>:<span class="hljs-string">&quot;File&quot;</span>&#125;<br>~|⇒ kubectl <span class="hljs-built_in">get</span> pod<br>NAME                    READY   STATUS    RESTARTS      AGE<br>test-5746d4c59f-nwc6q   1/1     Running   0             10m<br>web-0                   1/1     Running   1 (71m ago)   18d<br><br></code></pre></td></tr></table></figure>
+
+<p><strong>修改镜像版本后， pod会被重建：</strong></p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs routeros">~|⇒ kubectl <span class="hljs-built_in">edit</span> deployment test<br>deployment.apps/test edited<br>~|⇒ kubectl <span class="hljs-built_in">get</span> pod<br>NAME                    READY   STATUS              RESTARTS      AGE<br>test-5746d4c59f-nwc6q   1/1     Running             0             11m<br>test-674d57777c-8qc7c   0/1     ContainerCreating   0             2s<br>web-0                   1/1     Running             1 (72m ago)   18d<br>~|⇒ kubectl <span class="hljs-built_in">get</span> pod<br>NAME                    READY   STATUS    RESTARTS      AGE<br>test-674d57777c-8qc7c   1/1     Running   0             42s<br><br></code></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>可以看到，pod被重建后，pod的名称（以及其他属性）发生了变化。</strong></p>
+</blockquote>
+<h4 id="测试二：-修改pod的镜像版本"><a href="#测试二：-修改pod的镜像版本" class="headerlink" title="测试二： 修改pod的镜像版本"></a><strong>测试二： 修改pod的镜像版本</strong></h4><p><strong>比如当前deployment使用nginx:1.25作为镜像, 且有一个pod实例：</strong></p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs routeros">~|⇒ kubectl <span class="hljs-built_in">get</span> deployment test -o <span class="hljs-attribute">jsonpath</span>=<span class="hljs-string">&quot;&#123;.spec.template.spec.containers[0]&#125;&quot;</span><br>&#123;<span class="hljs-string">&quot;image&quot;</span>:<span class="hljs-string">&quot;nginx:1.25&quot;</span>,<span class="hljs-string">&quot;imagePullPolicy&quot;</span>:<span class="hljs-string">&quot;Always&quot;</span>,<span class="hljs-string">&quot;name&quot;</span>:<span class="hljs-string">&quot;nginx&quot;</span>,<span class="hljs-string">&quot;resources&quot;</span>:&#123;&#125;,<span class="hljs-string">&quot;terminationMessagePath&quot;</span>:<span class="hljs-string">&quot;/dev/termination-log&quot;</span>,<span class="hljs-string">&quot;terminationMessagePolicy&quot;</span>:<span class="hljs-string">&quot;File&quot;</span>&#125;%<br>~|⇒ kubectl <span class="hljs-built_in">get</span> pod<br>NAME                    READY   STATUS    RESTARTS      AGE<br>test-76f8989b6c-8s9s2   1/1     Running   0             3m17s<br><br></code></pre></td></tr></table></figure>
+
+<p><strong>直接修改pod的镜像版本后， pod不会被重建(但是会增加一次restart)：</strong></p>
+<figure class="highlight subunit"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs subunit">~|⇒ kubectl edit pod test<span class="hljs-string">-76</span>f8989b6c<span class="hljs-string">-8</span>s9s2<br>pod/test<span class="hljs-string">-76</span>f8989b6c<span class="hljs-string">-8</span>s9s2 edited<br>~|⇒ kubectl get pod<br>NAME                    READY   STATUS    RESTARTS      AGE<br>test<span class="hljs-string">-76</span>f8989b6c<span class="hljs-string">-8</span>s9s2   1/1     Running   1 (4s ago)    5m38s<br></code></pre></td></tr></table></figure>
+
+<p><strong>pod的镜像版本变动后，并不会逆向同步到deployment。</strong></p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs routeros">~|⇒ kubectl <span class="hljs-built_in">get</span> deployment test -o <span class="hljs-attribute">jsonpath</span>=<span class="hljs-string">&quot;&#123;.spec.template.spec.containers[0]&#125;&quot;</span><br>&#123;<span class="hljs-string">&quot;image&quot;</span>:<span class="hljs-string">&quot;nginx:1.25&quot;</span>,<span class="hljs-string">&quot;imagePullPolicy&quot;</span>:<span class="hljs-string">&quot;Always&quot;</span>,<span class="hljs-string">&quot;name&quot;</span>:<span class="hljs-string">&quot;nginx&quot;</span>,<span class="hljs-string">&quot;resources&quot;</span>:&#123;&#125;,<span class="hljs-string">&quot;terminationMessagePath&quot;</span>:<span class="hljs-string">&quot;/dev/termination-log&quot;</span>,<span class="hljs-string">&quot;terminationMessagePolicy&quot;</span>:<span class="hljs-string">&quot;File&quot;</span>&#125;%<br><br></code></pre></td></tr></table></figure>
+
+<p><strong>但是pod的镜像版本变化了， uid、名称的属性都没有变化。</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-string">--</span> <span class="hljs-string">old</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Pod</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">creationTimestamp:</span> <span class="hljs-string">&quot;2024-02-20T03:53:34Z&quot;</span><br>  <span class="hljs-attr">generateName:</span> <span class="hljs-string">test-76f8989b6c-</span><br>  <span class="hljs-attr">labels:</span><br>    <span class="hljs-attr">app:</span> <span class="hljs-string">test</span><br>    <span class="hljs-attr">pod-template-hash:</span> <span class="hljs-string">76f8989b6c</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">test-76f8989b6c-8s9s2</span><br>  <span class="hljs-attr">namespace:</span> <span class="hljs-string">default</span><br>  <span class="hljs-attr">ownerReferences:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span><br>    <span class="hljs-attr">blockOwnerDeletion:</span> <span class="hljs-literal">true</span><br>    <span class="hljs-attr">controller:</span> <span class="hljs-literal">true</span><br>    <span class="hljs-attr">kind:</span> <span class="hljs-string">ReplicaSet</span><br>    <span class="hljs-attr">name:</span> <span class="hljs-string">test-76f8989b6c</span><br>    <span class="hljs-attr">uid:</span> <span class="hljs-number">68434490</span><span class="hljs-number">-0948</span><span class="hljs-string">-4c88-bf59-e1f63887e02f</span><br>  <span class="hljs-attr">resourceVersion:</span> <span class="hljs-string">&quot;2160531&quot;</span><br>  <span class="hljs-attr">uid:</span> <span class="hljs-string">9f5fb37b-01ae-45a6-b50f-fc2385b6e317</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">containers:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">image:</span> <span class="hljs-string">nginx:1.25</span><br>    <span class="hljs-attr">imagePullPolicy:</span> <span class="hljs-string">Always</span><br>    <span class="hljs-attr">name:</span> <span class="hljs-string">nginx</span><br><span class="hljs-string">---</span> <span class="hljs-string">new</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Pod</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">creationTimestamp:</span> <span class="hljs-string">&quot;2024-02-20T03:53:34Z&quot;</span><br>  <span class="hljs-attr">generateName:</span> <span class="hljs-string">test-76f8989b6c-</span><br>  <span class="hljs-attr">labels:</span><br>    <span class="hljs-attr">app:</span> <span class="hljs-string">test</span><br>    <span class="hljs-attr">pod-template-hash:</span> <span class="hljs-string">76f8989b6c</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">test-76f8989b6c-8s9s2</span><br>  <span class="hljs-attr">namespace:</span> <span class="hljs-string">default</span><br>  <span class="hljs-attr">ownerReferences:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span><br>    <span class="hljs-attr">blockOwnerDeletion:</span> <span class="hljs-literal">true</span><br>    <span class="hljs-attr">controller:</span> <span class="hljs-literal">true</span><br>    <span class="hljs-attr">kind:</span> <span class="hljs-string">ReplicaSet</span><br>    <span class="hljs-attr">name:</span> <span class="hljs-string">test-76f8989b6c</span><br>    <span class="hljs-attr">uid:</span> <span class="hljs-number">68434490</span><span class="hljs-number">-0948</span><span class="hljs-string">-4c88-bf59-e1f63887e02f</span><br>  <span class="hljs-attr">resourceVersion:</span> <span class="hljs-string">&quot;2161008&quot;</span><br>  <span class="hljs-attr">uid:</span> <span class="hljs-string">9f5fb37b-01ae-45a6-b50f-fc2385b6e317</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">containers:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">image:</span> <span class="hljs-string">nginx:1.25.4</span><br>    <span class="hljs-attr">imagePullPolicy:</span> <span class="hljs-string">Always</span><br>    <span class="hljs-attr">name:</span> <span class="hljs-string">nginx</span><br><br></code></pre></td></tr></table></figure>
+
+<h4 id="测试三：-停止pod内容器"><a href="#测试三：-停止pod内容器" class="headerlink" title="测试三： 停止pod内容器"></a><strong>测试三： 停止pod内容器</strong></h4><p><strong>依旧是“测试二”中的pod：</strong></p>
+<figure class="highlight fortran"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs fortran">~|⇒ kubectl get pod<br><span class="hljs-keyword">NAME</span>                    READY   <span class="hljs-keyword">STATUS</span>    RESTARTS        AGE<br>test-<span class="hljs-number">76</span>f8989b6c-<span class="hljs-number">8</span>s9s2   <span class="hljs-number">1</span>/<span class="hljs-number">1</span>     Running   <span class="hljs-number">1</span> (<span class="hljs-number">112</span>m ago)    <span class="hljs-number">118</span>m<br><br></code></pre></td></tr></table></figure>
+
+<p><strong>找到其对应的容器， 对其进行停止操作：</strong></p>
+<figure class="highlight subunit"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs subunit"># 正在运行无法直接删除， 可以强制删除或者先停止<br>$ docker rm 518f1b0accada9c9587cd5d7655cbda0bc7a33bebaf11f0ec99877b6a9c92222<br><span class="hljs-keyword">Error </span>response from daemon: You cannot remove a running container 518f1b0accada9c9587cd5d7655cbda0bc7a33bebaf11f0ec99877b6a9c92222. Stop the container before attempting removal or force remove<br>$ docker stop 518f1b0accada9c9587cd5d7655cbda0bc7a33bebaf11f0ec99877b6a9c92222<br>518f1b0accada9c9587cd5d7655cbda0bc7a33bebaf11f0ec99877b6a9c92222<br># 已经停止<br>$ docker ps | grep 518f1b0accada9c9587cd5d7655cbda0bc7a33bebaf11f0ec99877b6a9c92222<br># 拉起了新的容器<br>$ docker ps | grep nginx<br>ebb42aafa572   nginx                             &quot;/docker-entrypoint.…&quot;   3 minutes ago   Up 3 minutes             k8s_nginx_test<span class="hljs-string">-76</span>f8989b6c<span class="hljs-string">-8</span>s9s2_default_9f5fb37b<span class="hljs-string">-01</span>ae<span class="hljs-string">-45</span>a6-b50f-fc2385b6e317_2<br><br></code></pre></td></tr></table></figure>
+
+<p><strong>容器停止后， 会被kubelet中的Runonce方法拉起， pod的属性不会变化, 状态中的containerID会更新。</strong></p>
+<p><strong>结论</strong><br><strong>pod本身其实具备原地升级的能力，所以简单来说(一个pod多个容器仅其中一个升级的状况会更复杂)， 对deployment实现原地升级只需要几步就可以做到：</strong></p>
+<p><strong>修改workload镜像版本，但是需要拦截pod重建动作</strong><br><strong>提前拉取新版镜像， 加快过程</strong><br><strong>更新pod镜像版本，重新启动容器</strong><br><strong>kruise原地升级原理</strong><br><strong>Container Restart</strong></p>
+<p><strong><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407191535344.png" srcset="/img/loading.gif" lazyload alt="image-20240719153501213"></strong></p>
+<p><strong>ContainerRecreateRequest是一个CRD,可以帮助用户重启&#x2F;重建存量 Pod 中一个或多个容器。下文称之为CRR</strong></p>
+<p><strong>和 Kruise 提供的原地升级类似，当一个容器重建的时候，Pod 中的其他容器还保持正常运行。重建完成后，Pod 中除了该容器的 restartCount 增加以外不会有什么其他变化。 注意，之前临时写到旧容器 rootfs 中的文件会丢失，但是 volume mount 挂载卷中的数据都还存在。</strong></p>
+<p><strong><code>CRR</code>的具体管理者是<code>kruise-daemon</code>进程。</strong></p>
+<p><strong><code>kruise-daemon</code> 除此之外还会管理<code>NnodeImage</code>CRD</strong></p>
+<figure class="highlight autohotkey"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs autohotkey">CRR`资源管理的实现在`pkg/daemon/containerrecreate<br></code></pre></td></tr></table></figure>
+
+<p><strong>资源的处理最终会由<code>Controller.sync</code>方法执行</strong></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(c *Controller)</span></span> sync(key <span class="hljs-type">string</span>) (retErr <span class="hljs-type">error</span>) &#123;<br>	namespace, podName, err := cache.SplitMetaNamespaceKey(key)<br>	objectList, err := c.crrInformer.GetIndexer().ByIndex(CRRPodNameIndex, podName)<br>	crrList := <span class="hljs-built_in">make</span>([]*appsv1alpha1.ContainerRecreateRequest, <span class="hljs-number">0</span>, <span class="hljs-built_in">len</span>(objectList))<br>	<span class="hljs-comment">// 弹出一个CRR进行处理</span><br>	crr, err := c.pickRecreateRequest(crrList)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> || crr == <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br>    <span class="hljs-comment">// ...</span><br>    <span class="hljs-comment">// 省略一些状态判断</span><br><br>	<span class="hljs-keyword">return</span> c.manage(crr)<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(c *Controller)</span></span> manage(crr *appsv1alpha1.ContainerRecreateRequest) <span class="hljs-type">error</span> &#123;<br>	runtimeManager, err := c.newRuntimeManager(c.runtimeFactory, crr)<br>	pod := convertCRRToPod(crr)<br>	podStatus, err := runtimeManager.GetPodStatus(pod.UID, pod.Name, pod.Namespace)<br>	newCRRContainerRecreateStates := getCurrentCRRContainersRecreateStates(crr, podStatus)<br>	<span class="hljs-keyword">if</span> !reflect.DeepEqual(crr.Status.ContainerRecreateStates, newCRRContainerRecreateStates) &#123;<br>		<span class="hljs-keyword">return</span> c.patchCRRContainerRecreateStates(crr, newCRRContainerRecreateStates)<br>	&#125;<br><br>	<span class="hljs-keyword">var</span> completedCount <span class="hljs-type">int</span><br>	<span class="hljs-keyword">for</span> i := <span class="hljs-keyword">range</span> newCRRContainerRecreateStates &#123;<br>		state := &amp;newCRRContainerRecreateStates[i]<br>		<span class="hljs-comment">// ...</span><br>        <span class="hljs-comment">// 省略一些状态判断</span><br><br>        <span class="hljs-comment">// 从pod状态中获取容器id，调用cri停止对应容器</span><br>		err := runtimeManager.KillContainer(pod, kubeContainerStatus.ID, state.Name, msg, <span class="hljs-literal">nil</span>)<br>		<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">if</span> crr.Spec.Strategy.FailurePolicy == appsv1alpha1.ContainerRecreateRequestFailurePolicyIgnore &#123;<br>				<span class="hljs-keyword">continue</span><br>			&#125;<br>			<span class="hljs-keyword">return</span> c.patchCRRContainerRecreateStates(crr, newCRRContainerRecreateStates)<br>		&#125;<br>		state.IsKilled = <span class="hljs-literal">true</span><br>		state.Phase = appsv1alpha1.ContainerRecreateRequestRecreating<br>		<span class="hljs-keyword">break</span><br>	&#125;<br>    <span class="hljs-comment">// 更新CCR状态</span><br>	<span class="hljs-keyword">if</span> !reflect.DeepEqual(crr.Status.ContainerRecreateStates, newCRRContainerRecreateStates) &#123;<br>		<span class="hljs-keyword">return</span> c.patchCRRContainerRecreateStates(crr, newCRRContainerRecreateStates)<br>	&#125;<br>	<span class="hljs-keyword">if</span> completedCount == <span class="hljs-built_in">len</span>(newCRRContainerRecreateStates) &#123;<br>		<span class="hljs-keyword">return</span> c.completeCRRStatus(crr, <span class="hljs-string">&quot;&quot;</span>)<br>	&#125;<br>	<span class="hljs-keyword">if</span> crr.Spec.Strategy != <span class="hljs-literal">nil</span> &amp;&amp; crr.Spec.Strategy.MinStartedSeconds &gt; <span class="hljs-number">0</span> &#123;<br>		c.queue.AddAfter(objectKey(crr), time.Duration(crr.Spec.Strategy.MinStartedSeconds)*time.Second)<br>	&#125;<br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<p><strong>可以看到整体逻辑比较简单， 主要是越过上层workload资源，直接停止对应的容器，利用k8s kubelet本身的container状态监控机制再次拉起， 完成原地重启。</strong></p>
+<p><strong>总的来说所，他与我们手动去删除容器的操作大体相同， 不过帮我们省略其中查找容器、登陆node的重复操作， 并提供了一些状态控制机制。</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps.kruise.io/v1alpha1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">ContainerRecreateRequest</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">namespace:</span> <span class="hljs-string">pod-namespace</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">xxx</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">podName:</span> <span class="hljs-string">pod-name</span><br>  <span class="hljs-attr">containers:</span>       <span class="hljs-comment"># 要重建的容器名字列表，至少要有 1 个</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">app</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">sidecar</span><br>  <span class="hljs-attr">strategy:</span><br>    <span class="hljs-attr">failurePolicy:</span> <span class="hljs-string">Fail</span>                 <span class="hljs-comment"># &#x27;Fail&#x27; 或 &#x27;Ignore&#x27;，表示一旦有某个容器停止或重建失败， CRR 立即结束</span><br>    <span class="hljs-attr">orderedRecreate:</span> <span class="hljs-literal">false</span>              <span class="hljs-comment"># &#x27;true&#x27; 表示要等前一个容器重建完成了，再开始重建下一个</span><br>    <span class="hljs-attr">terminationGracePeriodSeconds:</span> <span class="hljs-number">30</span>   <span class="hljs-comment"># 等待容器优雅退出的时间，不填默认用 Pod 中定义的</span><br>    <span class="hljs-attr">unreadyGracePeriodSeconds:</span> <span class="hljs-number">3</span>        <span class="hljs-comment"># 在重建之前先把 Pod 设为 not ready，并等待这段时间后再开始执行重建</span><br>    <span class="hljs-attr">minStartedSeconds:</span> <span class="hljs-number">10</span>               <span class="hljs-comment"># 重建后新容器至少保持运行这段时间，才认为该容器重建成功</span><br>  <span class="hljs-attr">activeDeadlineSeconds:</span> <span class="hljs-number">300</span>        <span class="hljs-comment"># 如果 CRR 执行超过这个时间，则直接标记为结束（未结束的容器标记为失败）</span><br>  <span class="hljs-attr">ttlSecondsAfterFinished:</span> <span class="hljs-number">1800</span>     <span class="hljs-comment"># CRR 结束后，过了这段时间自动被删除掉</span><br><br></code></pre></td></tr></table></figure>
+
+<h4 id="cloneSet原地升级"><a href="#cloneSet原地升级" class="headerlink" title="cloneSet原地升级"></a><strong>cloneSet原地升级</strong></h4><p><strong><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407191536626.png" srcset="/img/loading.gif" lazyload alt="image-20240719153657538"></strong></p>
+<p><strong>原地升级与上面的<code>CRR</code>的原理基本相同， 不过多了一步修改信息的操作（如image、annotation）.</strong></p>
+<p><strong>kruise中支持原地升级的<code>workload</code>类型， 基本上用的是同一套代码逻辑， 我们以<code>cloneSet</code>为例进行分析。</strong></p>
+<p><strong>代码路径: pkg&#x2F;controller&#x2F;cloneset</strong></p>
+<p><strong>本文中不会对代码实现全部展开分析， 会更加偏向于整体流程的理解。</strong></p>
+<h5 id="controller"><a href="#controller" class="headerlink" title="controller"></a><strong>controller</strong></h5><p><strong>kruise controller中通过<code>Reconciler</code>来实现<code>workload</code>状态同步，interface定义如下：</strong></p>
+<figure class="highlight elm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs elm"><span class="hljs-keyword">type</span> <span class="hljs-type">Reconciler</span> interface &#123;<br>	<span class="hljs-type">Reconcile</span>(context.<span class="hljs-type">Context</span>, <span class="hljs-type">Request</span>) (<span class="hljs-type">Result</span>, error)<br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<p><strong><code>workload</code>会实现这个interface，并在其中实现状态同步的逻辑。这里面就包含原地升级。</strong></p>
+<p><strong>我们忽略<code>cloneSet</code>控制器中其他的逻辑， 只关注原地升级， 最终定位到<code>sync/cloneset_update.go/realControl.updatePod</code>这个方法。</strong></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(c *realControl)</span></span> updatePod(cs *appsv1alpha1.CloneSet, coreControl clonesetcore.Control,<br>	updateRevision *apps.ControllerRevision, revisions []*apps.ControllerRevision,<br>	pod *v1.Pod, pvcs []*v1.PersistentVolumeClaim,<br>) (time.Duration, <span class="hljs-type">error</span>) &#123;<br><br>	<span class="hljs-keyword">if</span> cs.Spec.UpdateStrategy.Type == appsv1alpha1.InPlaceIfPossibleCloneSetUpdateStrategyType ||<br>		<span class="hljs-comment">// ...</span><br>        <span class="hljs-comment">// 省略一些状态判断</span><br>        <span class="hljs-comment">// 判断是否可以原地升级</span><br>		<span class="hljs-keyword">if</span> c.inplaceControl.CanUpdateInPlace(oldRevision, updateRevision, coreControl.GetUpdateOptions()) &#123;<br>			<span class="hljs-comment">// ...</span><br>            <span class="hljs-comment">// 省略一些状态判断</span><br>            <span class="hljs-comment">// 原地升级</span><br>			opts := coreControl.GetUpdateOptions()<br>			opts.AdditionalFuncs = <span class="hljs-built_in">append</span>(opts.AdditionalFuncs, lifecycle.SetPodLifecycle(appspub.LifecycleStateUpdating))<br>            <span class="hljs-comment">// 执行升级动作</span><br>			res := c.inplaceControl.Update(pod, oldRevision, updateRevision, opts)<br>			<span class="hljs-keyword">if</span> res.InPlaceUpdate &#123;<br>				<span class="hljs-keyword">if</span> res.UpdateErr == <span class="hljs-literal">nil</span> &#123;<br>					clonesetutils.ResourceVersionExpectations.Expect(&amp;metav1.ObjectMeta&#123;UID: pod.UID, ResourceVersion: res.NewResourceVersion&#125;)<br>					<span class="hljs-keyword">return</span> res.DelayDuration, <span class="hljs-literal">nil</span><br>				&#125;<br>				<span class="hljs-keyword">return</span> res.DelayDuration, res.UpdateErr<br>			&#125;<br>		&#125;<br><br>		<span class="hljs-keyword">if</span> cs.Spec.UpdateStrategy.Type == appsv1alpha1.InPlaceOnlyCloneSetUpdateStrategyType &#123;<br>			<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>, fmt.Errorf(<span class="hljs-string">&quot;find Pod %s update strategy is InPlaceOnly but can not update in-place&quot;</span>, pod.Name)<br>		&#125;<br>	&#125;<br>    <span class="hljs-comment">// 省略状态更新</span><br>    <span class="hljs-comment">// ...</span><br>	<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>, <span class="hljs-literal">nil</span><br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<p><strong>可以看到， 关键的处理逻辑在<code>c.inplaceControl</code>这个对象中。这个对象是<code>inplaceupdate.Interface</code>类型。</strong></p>
+<h5 id="inplaceupdate"><a href="#inplaceupdate" class="headerlink" title="inplaceupdate"></a><strong>inplaceupdate</strong></h5><p><strong>查看文件<code>pkg/util/inplaceupdate/inplace_update.go</code></strong></p>
+<figure class="highlight elm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs elm"><span class="hljs-keyword">type</span> <span class="hljs-type">Interface</span> interface &#123;<br>    // 判断是否可以原地升级<br>	<span class="hljs-type">CanUpdateInPlace</span>(oldRevision, newRevision *apps.<span class="hljs-type">ControllerRevision</span>, opts *<span class="hljs-type">UpdateOptions</span>) bool<br>    // 执行原地升级<br>	<span class="hljs-type">Update</span>(pod *v1.<span class="hljs-type">Pod</span>, oldRevision, newRevision *apps.<span class="hljs-type">ControllerRevision</span>, opts *<span class="hljs-type">UpdateOptions</span>) <span class="hljs-type">UpdateResult</span><br>    // 刷新一些状态信息<br>	<span class="hljs-type">Refresh</span>(pod *v1.<span class="hljs-type">Pod</span>, opts *<span class="hljs-type">UpdateOptions</span>) <span class="hljs-type">RefreshResult</span><br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<p><strong><code>UpdateOptions</code>包含了一些重要的函数， 比如需要计算更新的字段、更新字段等。</strong></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> UpdateOptions <span class="hljs-keyword">struct</span> &#123;<br>	GracePeriodSeconds <span class="hljs-type">int32</span><br>	AdditionalFuncs    []<span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(*v1.Pod)</span></span><br><br>    <span class="hljs-comment">// 计算更新的字段, 也用于判断是否可以原地升级</span><br>	CalculateSpec                  <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(oldRevision, newRevision *apps.ControllerRevision, opts *UpdateOptions)</span></span> *UpdateSpec<br>    <span class="hljs-comment">// 更新字段</span><br>	PatchSpecToPod                 <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(pod *v1.Pod, spec *UpdateSpec, state *appspub.InPlaceUpdateState)</span></span> (*v1.Pod, <span class="hljs-type">error</span>)<br>    <span class="hljs-comment">// 检查更新状态</span><br>	CheckPodUpdateCompleted        <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(pod *v1.Pod)</span></span> <span class="hljs-type">error</span><br>    <span class="hljs-comment">// 检查容器更新状态</span><br>	CheckContainersUpdateCompleted <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(pod *v1.Pod, state *appspub.InPlaceUpdateState)</span></span> <span class="hljs-type">error</span><br>	GetRevision                    <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(rev *apps.ControllerRevision)</span></span> <span class="hljs-type">string</span><br>&#125;<br><span class="hljs-comment">// 默认CalculateSpec函数, 这里体现出只支持label、annotation、镜像的更新的原地升级</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">defaultCalculateInPlaceUpdateSpec</span><span class="hljs-params">(oldRevision, newRevision *apps.ControllerRevision, opts *UpdateOptions)</span></span> *UpdateSpec &#123;<br>	<span class="hljs-comment">// ...</span><br>	<span class="hljs-keyword">for</span> _, op := <span class="hljs-keyword">range</span> patches &#123;<br>        <span class="hljs-comment">// 计算更新镜像</span><br>		op.Path = strings.Replace(op.Path, <span class="hljs-string">&quot;/spec/template&quot;</span>, <span class="hljs-string">&quot;&quot;</span>, <span class="hljs-number">1</span>)<br><br>		<span class="hljs-keyword">if</span> !strings.HasPrefix(op.Path, <span class="hljs-string">&quot;/spec/&quot;</span>) &#123;<br>			<span class="hljs-keyword">if</span> strings.HasPrefix(op.Path, <span class="hljs-string">&quot;/metadata/&quot;</span>) &#123;<br>				metadataPatches = <span class="hljs-built_in">append</span>(metadataPatches, op)<br>				<span class="hljs-keyword">continue</span><br>			&#125;<br>			<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>		&#125;<br>		<span class="hljs-keyword">if</span> op.Operation != <span class="hljs-string">&quot;replace&quot;</span> || !containerImagePatchRexp.MatchString(op.Path) &#123;<br>			<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>		&#125;<br>		<span class="hljs-comment">// for example: /spec/containers/0/image</span><br>		words := strings.Split(op.Path, <span class="hljs-string">&quot;/&quot;</span>)<br>		idx, _ := strconv.Atoi(words[<span class="hljs-number">3</span>])<br>		<span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(oldTemp.Spec.Containers) &lt;= idx &#123;<br>			<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>		&#125;<br>		updateSpec.ContainerImages[oldTemp.Spec.Containers[idx].Name] = op.Value.(<span class="hljs-type">string</span>)<br>	&#125;<br>	<span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(metadataPatches) &gt; <span class="hljs-number">0</span> &#123;<br>        <span class="hljs-comment">// 计算lbels、annotations的更新</span><br>		<span class="hljs-keyword">if</span> utilfeature.DefaultFeatureGate.Enabled(features.InPlaceUpdateEnvFromMetadata) &#123;<br>			<span class="hljs-keyword">for</span> _, op := <span class="hljs-keyword">range</span> metadataPatches &#123;<br>				<span class="hljs-comment">//...</span><br>				<span class="hljs-keyword">for</span> i := <span class="hljs-keyword">range</span> newTemp.Spec.Containers &#123;<br>					c := &amp;newTemp.Spec.Containers[i]<br>					objMeta := updateSpec.ContainerRefMetadata[c.Name]<br>					<span class="hljs-keyword">switch</span> words[<span class="hljs-number">2</span>] &#123;<br>					<span class="hljs-keyword">case</span> <span class="hljs-string">&quot;labels&quot;</span>:<br>						<span class="hljs-comment">// ...</span><br><br>					<span class="hljs-keyword">case</span> <span class="hljs-string">&quot;annotations&quot;</span>:<br>						<span class="hljs-comment">// ...</span><br>					&#125;<br><br>					updateSpec.ContainerRefMetadata[c.Name] = objMeta<br>					updateSpec.UpdateEnvFromMetadata = <span class="hljs-literal">true</span><br>				&#125;<br>			&#125;<br>		&#125;<br>		<span class="hljs-comment">// ...</span><br>		updateSpec.MetaDataPatch = patchBytes<br>	&#125;<br>	<span class="hljs-keyword">return</span> updateSpec<br>&#125;<br><span class="hljs-comment">// 默认CheckContainersUpdateCompleted函数， 实际CheckPodUpdateCompleted也是调用的这个</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">defaultCheckContainersInPlaceUpdateCompleted</span><span class="hljs-params">(pod *v1.Pod, inPlaceUpdateState *appspub.InPlaceUpdateState)</span></span> <span class="hljs-type">error</span> &#123;<br>    <span class="hljs-comment">// ...</span><br>	containerImages := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]<span class="hljs-type">string</span>, <span class="hljs-built_in">len</span>(pod.Spec.Containers))<br>	<span class="hljs-keyword">for</span> i := <span class="hljs-keyword">range</span> pod.Spec.Containers &#123;<br>		c := &amp;pod.Spec.Containers[i]<br>		containerImages[c.Name] = c.Image<br>		<span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(strings.Split(c.Image, <span class="hljs-string">&quot;:&quot;</span>)) &lt;= <span class="hljs-number">1</span> &#123;<br>			containerImages[c.Name] = fmt.Sprintf(<span class="hljs-string">&quot;%s:latest&quot;</span>, c.Image)<br>		&#125;<br>	&#125;<br><br>	<span class="hljs-keyword">for</span> _, cs := <span class="hljs-keyword">range</span> pod.Status.ContainerStatuses &#123;<br>		<span class="hljs-keyword">if</span> oldStatus, ok := inPlaceUpdateState.LastContainerStatuses[cs.Name]; ok &#123;<br>			<span class="hljs-comment">// 通过判断镜像id是否变化来判断是否更新</span><br>			<span class="hljs-keyword">if</span> oldStatus.ImageID == cs.ImageID &#123;<br>				<span class="hljs-keyword">if</span> containerImages[cs.Name] != cs.Image &#123;<br>					<span class="hljs-keyword">return</span> fmt.Errorf(<span class="hljs-string">&quot;container %s imageID not changed&quot;</span>, cs.Name)<br>				&#125;<br>			&#125;<br>			<span class="hljs-built_in">delete</span>(inPlaceUpdateState.LastContainerStatuses, cs.Name)<br>		&#125;<br>	&#125;<br>    <span class="hljs-comment">// ...</span><br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<p><strong><code>realControl</code>实现了<code>inplaceupdate.Interface</code>。</strong></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(c *realControl)</span></span> CanUpdateInPlace(oldRevision, newRevision *apps.ControllerRevision, opts *UpdateOptions) <span class="hljs-type">bool</span> &#123;<br>	opts = SetOptionsDefaults(opts)<br>    <span class="hljs-comment">// 判断是否可以原地升级, 通过计算更新的字段来判断</span><br>	<span class="hljs-keyword">return</span> opts.CalculateSpec(oldRevision, newRevision, opts) != <span class="hljs-literal">nil</span><br>&#125;<br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(c *realControl)</span></span> Update(pod *v1.Pod, oldRevision, newRevision *apps.ControllerRevision, opts *UpdateOptions) UpdateResult &#123;<br>	opts = SetOptionsDefaults(opts)<br><br>	<span class="hljs-comment">// 1. 计算更新字段</span><br>	spec := opts.CalculateSpec(oldRevision, newRevision, opts)<br>	<span class="hljs-comment">// 2. 更新状态</span><br>	<span class="hljs-keyword">if</span> containsReadinessGate(pod) &#123;<br>		newCondition := v1.PodCondition&#123;<br>			Type:               appspub.InPlaceUpdateReady,<br>			LastTransitionTime: metav1.NewTime(Clock.Now()),<br>			Status:             v1.ConditionFalse,<br>			Reason:             <span class="hljs-string">&quot;StartInPlaceUpdate&quot;</span>,<br>		&#125;<br>		<span class="hljs-keyword">if</span> err := c.updateCondition(pod, newCondition); err != <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">return</span> UpdateResult&#123;InPlaceUpdate: <span class="hljs-literal">true</span>, UpdateErr: err&#125;<br>		&#125;<br>	&#125;<br>	<span class="hljs-comment">// 3.更新镜像信息</span><br>	newResourceVersion, err := c.updatePodInPlace(pod, spec, opts)<br>	<span class="hljs-comment">// ...</span><br>	<span class="hljs-keyword">return</span> UpdateResult&#123;InPlaceUpdate: <span class="hljs-literal">true</span>, DelayDuration: delayDuration, NewResourceVersion: newResourceVersion&#125;<br>&#125;<br><span class="hljs-comment">// 3.更新镜像信息</span><br><span class="hljs-comment">// newResourceVersion, err := c.updatePodInPlace(pod, spec, opts)</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(c *realControl)</span></span> updatePodInPlace(pod *v1.Pod, spec *UpdateSpec, opts *UpdateOptions) (<span class="hljs-type">string</span>, <span class="hljs-type">error</span>) &#123;<br>	<span class="hljs-keyword">var</span> newResourceVersion <span class="hljs-type">string</span><br>	retryErr := retry.RetryOnConflict(retry.DefaultBackoff, <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> <span class="hljs-type">error</span> &#123;<br>        <span class="hljs-comment">// 1. 准备：获取pod</span><br>		clone, err := c.podAdapter.GetPod(pod.Namespace, pod.Name)<br>		<span class="hljs-comment">// 2. 准备：设置Annotations， 记录相关信息</span><br>		inPlaceUpdateState := appspub.InPlaceUpdateState&#123;<br>			Revision:              spec.Revision,<br>			UpdateTimestamp:       metav1.NewTime(Clock.Now()),<br>			UpdateEnvFromMetadata: spec.UpdateEnvFromMetadata,<br>		&#125;<br>		inPlaceUpdateStateJSON, _ := json.Marshal(inPlaceUpdateState)<br>		clone.Annotations[appspub.InPlaceUpdateStateKey] = <span class="hljs-type">string</span>(inPlaceUpdateStateJSON)<br>		<span class="hljs-built_in">delete</span>(clone.Annotations, appspub.InPlaceUpdateStateKeyOld)<br>        <span class="hljs-comment">// 3. 更新pod</span><br>        <span class="hljs-keyword">if</span> spec.GraceSeconds &lt;= <span class="hljs-number">0</span> &#123;<br>            <span class="hljs-comment">// GraceSeconds &lt;= 0时会立即更新pod状态为notready</span><br>			<span class="hljs-keyword">if</span> clone, err = opts.PatchSpecToPod(clone, spec, &amp;inPlaceUpdateState); err != <span class="hljs-literal">nil</span> &#123;<br>				<span class="hljs-keyword">return</span> err<br>			&#125;<br>			appspub.RemoveInPlaceUpdateGrace(clone)<br>		&#125; <span class="hljs-keyword">else</span> &#123;<br>			inPlaceUpdateSpecJSON, _ := json.Marshal(spec)<br>			clone.Annotations[appspub.InPlaceUpdateGraceKey] = <span class="hljs-type">string</span>(inPlaceUpdateSpecJSON)<br>		&#125;<br>        <span class="hljs-comment">// 执行更新，这时会调用k8s API将数据更新到server， 后续的容器重建工作由kubelet完成</span><br>		newPod, updateErr := c.podAdapter.UpdatePod(clone)<br>		<span class="hljs-keyword">if</span> updateErr == <span class="hljs-literal">nil</span> &#123;<br>			newResourceVersion = newPod.ResourceVersion<br>		&#125;<br>		<span class="hljs-keyword">return</span> updateErr<br>	&#125;)<br>	<span class="hljs-keyword">return</span> newResourceVersion, retryErr<br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<p><strong>总结</strong><br><strong>原地升级的原理比较简单， 主要还是利用了pod自身的特性和kubelet的拉起功能。</strong></p>
+<p><strong>kruise中仅对自己的CRD Workload支持原地升级， 其实也可以扩展到对原生资源的支持（如一开始的测试），但会存在一些问题和限制（如测试二中deployment的镜像版本不会发生改变）。</strong></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>kruise原地升级解析 2024-08-02 17:59:31.689</div>
+      <div>http://example.com/2025/01/16/kruise原地升级解析-kruise-yuan-de-sheng-ji-jie-xi/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/k8s%E8%BF%90%E7%BB%B4%E4%B9%8B%E6%B8%85%E7%90%86%E7%A3%81%E7%9B%98-k8s-yun-wei-zhi-qing-li-ci-pan/" title="k8s运维之清理磁盘 2024-04-03 15:13:57.279">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">k8s运维之清理磁盘 2024-04-03 15:13:57.279</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/k8s%E5%BA%94%E7%94%A8%E7%9A%84%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5-k8s-ying-yong-de-zui-jia-shi-jian/" title="k8s应用的最佳实践 2024-04-03 14:43:16.936">
+                        <span class="hidden-mobile">k8s应用的最佳实践 2024-04-03 14:43:16.936</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

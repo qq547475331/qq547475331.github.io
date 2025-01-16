@@ -1,0 +1,675 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="简介上一篇 Kubernetes 证书详解(认证) 系统分析了 Kubernetes 集群中每个证书的作用和证书认证的原理。对于 Kube-apiserver，Kubelet 来说，它们都能提供 HTTPS 服务，Kube-apiserver、Kubelet 对于一个请求，既要认证也要鉴权。在 Kube-apiserver 中，鉴权也有多种方式： • Node • ABAC • RBAC • We">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kubernetes 证书详解(鉴权) 2024-04-03 14:49:04.385">
+<meta property="og:url" content="http://example.com/2025/01/16/Kubernetes%20%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3(%E9%89%B4%E6%9D%83)-kubernetes-zheng-shu-xiang-jie--jian-quan-/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="简介上一篇 Kubernetes 证书详解(认证) 系统分析了 Kubernetes 集群中每个证书的作用和证书认证的原理。对于 Kube-apiserver，Kubelet 来说，它们都能提供 HTTPS 服务，Kube-apiserver、Kubelet 对于一个请求，既要认证也要鉴权。在 Kube-apiserver 中，鉴权也有多种方式： • Node • ABAC • RBAC • We">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191510936.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191510839.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191510300.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.063Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:18.819Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191510936.png">
+  
+  
+  
+  <title>Kubernetes 证书详解(鉴权) 2024-04-03 14:49:04.385 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Kubernetes 证书详解(鉴权) 2024-04-03 14:49:04.385"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          18 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Kubernetes 证书详解(鉴权) 2024-04-03 14:49:04.385</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><h5 id="上一篇-Kubernetes-证书详解-认证-系统分析了-Kubernetes-集群中每个证书的作用和证书认证的原理。对于-Kube-apiserver，Kubelet-来说，它们都能提供-HTTPS-服务，Kube-apiserver、Kubelet-对于一个请求，既要认证也要鉴权。在-Kube-apiserver-中，鉴权也有多种方式："><a href="#上一篇-Kubernetes-证书详解-认证-系统分析了-Kubernetes-集群中每个证书的作用和证书认证的原理。对于-Kube-apiserver，Kubelet-来说，它们都能提供-HTTPS-服务，Kube-apiserver、Kubelet-对于一个请求，既要认证也要鉴权。在-Kube-apiserver-中，鉴权也有多种方式：" class="headerlink" title="上一篇 Kubernetes 证书详解(认证) 系统分析了 Kubernetes 集群中每个证书的作用和证书认证的原理。对于 Kube-apiserver，Kubelet 来说，它们都能提供 HTTPS 服务，Kube-apiserver、Kubelet 对于一个请求，既要认证也要鉴权。在 Kube-apiserver 中，鉴权也有多种方式："></a>上一篇 <a target="_blank" rel="noopener" href="http://mp.weixin.qq.com/s?__biz=MzkyNDMyNjAyMg==&mid=2247484214&idx=1&sn=313df9f95fa77ac60abb777d3a72e5c2&chksm=c1d6c2dff6a14bc993cf3ca8990af9f1f403172038d91dc831e49377c10429a9dc3a51f9047a&scene=21#wechat_redirect">Kubernetes 证书详解(认证)</a> 系统分析了 Kubernetes 集群中每个证书的作用和证书认证的原理。对于 Kube-apiserver，Kubelet 来说，它们都能提供 HTTPS 服务，Kube-apiserver、Kubelet 对于一个请求，既要认证也要鉴权。在 Kube-apiserver 中，鉴权也有多种方式：</h5><ul>
+<li><h5 id="•-Node"><a href="#•-Node" class="headerlink" title="• Node"></a>• Node</h5></li>
+<li><h5 id="•-ABAC"><a href="#•-ABAC" class="headerlink" title="• ABAC"></a>• ABAC</h5></li>
+<li><h5 id="•-RBAC"><a href="#•-RBAC" class="headerlink" title="• RBAC"></a>• RBAC</h5></li>
+<li><h5 id="•-Webhook"><a href="#•-Webhook" class="headerlink" title="• Webhook"></a>• Webhook</h5></li>
+</ul>
+<h5 id="在-TLS-RBAC-模式下，访问-Kube-apiserver-有三种方式："><a href="#在-TLS-RBAC-模式下，访问-Kube-apiserver-有三种方式：" class="headerlink" title="在 TLS + RBAC 模式下，访问 Kube-apiserver 有三种方式："></a>在 TLS + RBAC 模式下，访问 Kube-apiserver 有三种方式：</h5><ul>
+<li><h5 id="•-证书-RBAC-就是上一篇说到的那些证书"><a href="#•-证书-RBAC-就是上一篇说到的那些证书" class="headerlink" title="• 证书 + RBAC(就是上一篇说到的那些证书)"></a>• 证书 + RBAC(就是上一篇说到的那些证书)</h5></li>
+<li><h5 id="•-Node-RBAC-Kubelet-访问-Kube-apiserver-时"><a href="#•-Node-RBAC-Kubelet-访问-Kube-apiserver-时" class="headerlink" title="• Node + RBAC( Kubelet 访问 Kube-apiserver 时)"></a>• Node + RBAC( Kubelet 访问 Kube-apiserver 时)</h5></li>
+<li><h5 id="•-ServiceAccount-RBAC-Kubernetes-集群内-Pod-访问-Kube-apiserver-）"><a href="#•-ServiceAccount-RBAC-Kubernetes-集群内-Pod-访问-Kube-apiserver-）" class="headerlink" title="• ServiceAccount + RBAC( Kubernetes 集群内 Pod 访问 Kube-apiserver ）"></a>• ServiceAccount + RBAC( Kubernetes 集群内 Pod 访问 Kube-apiserver ）</h5></li>
+</ul>
+<h5 id="关于-RBAC-的内容不熟悉的可以参考官网-1"><a href="#关于-RBAC-的内容不熟悉的可以参考官网-1" class="headerlink" title="关于 RBAC 的内容不熟悉的可以参考官网[1]"></a>关于 RBAC 的内容不熟悉的可以参考官网[1]</h5><h2 id="K8S-证书的-CN、O"><a href="#K8S-证书的-CN、O" class="headerlink" title="K8S 证书的 CN、O"></a>K8S 证书的 CN、O</h2><h5 id="RBAC-鉴权需要对-User-或者-Group-来绑定相应权限达到效果。Kubernetes-证书中的-CN-表示-User，O-表示-Group，看一个例子："><a href="#RBAC-鉴权需要对-User-或者-Group-来绑定相应权限达到效果。Kubernetes-证书中的-CN-表示-User，O-表示-Group，看一个例子：" class="headerlink" title="RBAC 鉴权需要对 User 或者 Group 来绑定相应权限达到效果。Kubernetes 证书中的 CN 表示 User，O 表示 Group，看一个例子："></a>RBAC 鉴权需要对 User 或者 Group 来绑定相应权限达到效果。Kubernetes 证书中的 <em><code>CN</code></em> 表示 User，<code>O</code> 表示 Group，看一个例子：</h5><h5 id="用-openssl-命令解析-kubelet-的客户端证书，kubelet-访问-Kube-apiserver-的时候就会用这个证书来认证，鉴权。"><a href="#用-openssl-命令解析-kubelet-的客户端证书，kubelet-访问-Kube-apiserver-的时候就会用这个证书来认证，鉴权。" class="headerlink" title="用 openssl 命令解析 kubelet 的客户端证书，kubelet 访问 Kube-apiserver 的时候就会用这个证书来认证，鉴权。"></a>用 <em><code>openssl</code></em> 命令解析 kubelet 的客户端证书，kubelet 访问 Kube-apiserver 的时候就会用这个证书来认证，鉴权。</h5><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-string">$</span> <span class="hljs-string">openssl</span> <span class="hljs-string">x509</span> <span class="hljs-string">-noout</span> <span class="hljs-string">-text</span> <span class="hljs-string">-in</span> <span class="hljs-string">kubelet-client-current.pem</span> <br><span class="hljs-attr">Certificate:</span><br>    <span class="hljs-attr">Data:</span><br>        <span class="hljs-attr">Version:</span> <span class="hljs-number">3</span> <span class="hljs-string">(0x2)</span><br>        <span class="hljs-attr">Serial Number:</span> <span class="hljs-number">271895513527774644</span> <span class="hljs-string">(0x3c5f7876bd86db4)</span><br>    <span class="hljs-attr">Signature Algorithm:</span> <span class="hljs-string">sha256WithRSAEncryption</span><br>        <span class="hljs-attr">Issuer:</span> <span class="hljs-string">CN=kubernetes</span><br>        <span class="hljs-string">Validity</span><br>            <span class="hljs-attr">Not Before:</span> <span class="hljs-string">May</span> <span class="hljs-number">10</span> <span class="hljs-number">06</span><span class="hljs-string">:48:30</span> <span class="hljs-number">2023 </span><span class="hljs-string">GMT</span><br>            <span class="hljs-attr">Not After :</span> <span class="hljs-string">Apr</span> <span class="hljs-number">16</span> <span class="hljs-number">06</span><span class="hljs-string">:48:37</span> <span class="hljs-number">2123 </span><span class="hljs-string">GMT</span><br>                <span class="hljs-comment"># 看这里</span><br>        <span class="hljs-attr">Subject:</span> <span class="hljs-string">O=system:nodes,</span> <span class="hljs-string">CN=system:node:master-172-31-97-104</span><br>        <span class="hljs-attr">Subject Public Key Info:</span><br>        <span class="hljs-string">.......</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="可以发现-Kubelet-的客户端证书的-O-是-system-nodes，CN-是-system-node-master-172-31-97-104-，所以在-Kubernetes-中，每个结点的-Kubelet-都被赋予-system-node-结点名称“-的-User，且附属于-system-nodes-的-Group。"><a href="#可以发现-Kubelet-的客户端证书的-O-是-system-nodes，CN-是-system-node-master-172-31-97-104-，所以在-Kubernetes-中，每个结点的-Kubelet-都被赋予-system-node-结点名称“-的-User，且附属于-system-nodes-的-Group。" class="headerlink" title="可以发现 Kubelet 的客户端证书的 O 是 system.nodes，CN 是 system:node:master-172-31-97-104 ，所以在 Kubernetes 中，每个结点的 Kubelet 都被赋予 system:node:&quot;结点名称“ 的 User，且附属于 system.nodes 的 Group。"></a>可以发现 Kubelet 的客户端证书的 <em><code>O</code></em> 是 <em><code>system.nodes</code>，<code>CN</code></em> 是 <em><code>system:node:master-172-31-97-104</code></em> ，所以在 Kubernetes 中，每个结点的 Kubelet 都被赋予 <em><code>system:node:&quot;结点名称“</code></em> 的 User，且附属于 <em><code>system.nodes</code></em> 的 Group。</h5><h5 id="Kubernetes-RBAC-鉴权机制就是利用将权限绑定到-User-或者-Group，使得-User、Group-拥有对应权限，下面就看看-Kubernetes-如何-根据证书、ServiceAccount-鉴权的。"><a href="#Kubernetes-RBAC-鉴权机制就是利用将权限绑定到-User-或者-Group，使得-User、Group-拥有对应权限，下面就看看-Kubernetes-如何-根据证书、ServiceAccount-鉴权的。" class="headerlink" title="Kubernetes RBAC 鉴权机制就是利用将权限绑定到 User 或者 Group，使得 User、Group 拥有对应权限，下面就看看 Kubernetes 如何 根据证书、ServiceAccount 鉴权的。"></a>Kubernetes RBAC 鉴权机制就是利用将权限绑定到 User 或者 Group，使得 User、Group 拥有对应权限，下面就看看 Kubernetes 如何 根据证书、ServiceAccount 鉴权的。</h5><hr>
+<h2 id="Kubectl"><a href="#Kubectl" class="headerlink" title="Kubectl"></a>Kubectl</h2><h5 id="Kubectl-使用-KubeConfig-与-Kube-apiserver-进行认证、鉴权。认证上一篇说过了，就是通过-TLS-认证。这里说鉴权，先看看-KubeConfig-的客户端证书-O、CN"><a href="#Kubectl-使用-KubeConfig-与-Kube-apiserver-进行认证、鉴权。认证上一篇说过了，就是通过-TLS-认证。这里说鉴权，先看看-KubeConfig-的客户端证书-O、CN" class="headerlink" title="Kubectl 使用 KubeConfig 与 Kube-apiserver 进行认证、鉴权。认证上一篇说过了，就是通过 TLS 认证。这里说鉴权，先看看 KubeConfig 的客户端证书 O、CN"></a>Kubectl 使用 KubeConfig 与 Kube-apiserver 进行认证、鉴权。认证上一篇说过了，就是通过 TLS 认证。这里说鉴权，先看看 KubeConfig 的客户端证书 <em><code>O</code>、<code>CN</code></em></h5><h5 id="使用-openssl-命令解析-KubeConfig-中-client-certificate-data-字段，查看-KubeConfig-客户端证书的-O、CN"><a href="#使用-openssl-命令解析-KubeConfig-中-client-certificate-data-字段，查看-KubeConfig-客户端证书的-O、CN" class="headerlink" title="使用 openssl 命令解析 KubeConfig 中 client-certificate-data 字段，查看 KubeConfig 客户端证书的 O、CN"></a>使用 <em><code>openssl</code></em> 命令解析 KubeConfig 中 <em><code>client-certificate-data</code></em> 字段，查看 KubeConfig 客户端证书的 <em><code>O</code>、<code>CN</code></em></h5><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_">$ </span><span class="language-bash"><span class="hljs-built_in">cat</span> /root/.kube/config | grep client-certificate-data: | sed <span class="hljs-string">&#x27;s/    client-certificate-data: //g&#x27;</span> | <span class="hljs-built_in">base64</span> -d | openssl x509 -noout  -subject</span><br><span class="hljs-meta prompt_"># </span><span class="language-bash">结果</span><br>subject= /O=system:masters/CN=kubernetes-admin<br></code></pre></td></tr></table></figure>
+
+<h5 id="可以发现-KubeConfig-客户端证书为-kubernetes-admin-User-且属于-system-masters-Group。"><a href="#可以发现-KubeConfig-客户端证书为-kubernetes-admin-User-且属于-system-masters-Group。" class="headerlink" title="可以发现 KubeConfig 客户端证书为 kubernetes-admin User 且属于 system:masters Group。"></a>可以发现 KubeConfig 客户端证书为 <em><code>kubernetes-admin</code></em> User 且属于 <em><code>system:masters</code></em> Group。</h5><h5 id="system-masters-是-Kubernetes-内置的用户组，且-Kubernetes-集群中也包含许多默认-ClusterRole、ClusterRolebinding，其中-cluster-admin-的-ClusterRolebinding-就将-cluster-admin-的-ClusterRole-绑定到-system-masters-Group，这样-KubeConfig-就拥有权限来操作-Kube-apiserver-了。"><a href="#system-masters-是-Kubernetes-内置的用户组，且-Kubernetes-集群中也包含许多默认-ClusterRole、ClusterRolebinding，其中-cluster-admin-的-ClusterRolebinding-就将-cluster-admin-的-ClusterRole-绑定到-system-masters-Group，这样-KubeConfig-就拥有权限来操作-Kube-apiserver-了。" class="headerlink" title="system:masters 是 Kubernetes 内置的用户组，且 Kubernetes 集群中也包含许多默认 ClusterRole、ClusterRolebinding，其中 cluster-admin 的 ClusterRolebinding 就将 cluster-admin 的 ClusterRole 绑定到 system:masters Group，这样 KubeConfig 就拥有权限来操作 Kube-apiserver 了。"></a><em><code>system:masters</code></em> 是 Kubernetes 内置的用户组，且 Kubernetes 集群中也包含许多<strong>默认</strong> ClusterRole、ClusterRolebinding，其中 <em><code>cluster-admin</code></em> 的 ClusterRolebinding 就将 <em><code>cluster-admin</code></em> 的 ClusterRole 绑定到 <em><code>system:masters</code></em> Group，这样 KubeConfig 就拥有权限来操作 Kube-apiserver 了。</h5><figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-comment"># cluster-admin ClusterRole 拥有所有资源的所有权限</span><br><span class="hljs-attribute">$ kubectl get clusterrole cluster-admin -o yaml</span><br><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">rbac.authorization.k8s.io/v1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">ClusterRole</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">annotations</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">rbac.authorization.kubernetes.io/autoupdate</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;true&quot;</span><br>  <span class="hljs-attribute">creationTimestamp</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;2023-05-10T06:49:27Z&quot;</span><br>  <span class="hljs-attribute">labels</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">kubernetes.io/bootstrapping</span><span class="hljs-punctuation">:</span> <span class="hljs-string">rbac-defaults</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">cluster-admin</span><br>  <span class="hljs-attribute">resourceVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;85&quot;</span><br>  <span class="hljs-attribute">uid</span><span class="hljs-punctuation">:</span> <span class="hljs-string">006af228-e6ef-43fa-a73f-ca0c109b13f0</span><br><span class="hljs-attribute">rules</span><span class="hljs-punctuation">:</span><br><span class="hljs-bullet">-</span> <span class="hljs-string">apiGroups:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">&#x27;*&#x27;</span><br>  <span class="hljs-attribute">resources</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">&#x27;*&#x27;</span><br>  <span class="hljs-attribute">verbs</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">&#x27;*&#x27;</span><br><span class="hljs-bullet">-</span> <span class="hljs-string">nonResourceURLs:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">&#x27;*&#x27;</span><br>  <span class="hljs-attribute">verbs</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">&#x27;*&#x27;</span><br>-------------------------------------------------------------------<br><br><span class="hljs-comment"># cluster-admin ClusterRoleBinding 将 cluster-admin ClusterRole 绑定到 system:masters Group</span><br><span class="hljs-attribute">$ kubectl get clusterrolebinding cluster-admin -o yaml</span><br><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">rbac.authorization.k8s.io/v1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">ClusterRoleBinding</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">annotations</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">rbac.authorization.kubernetes.io/autoupdate</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;true&quot;</span><br>  <span class="hljs-attribute">creationTimestamp</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;2023-05-10T06:49:27Z&quot;</span><br>  <span class="hljs-attribute">labels</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">kubernetes.io/bootstrapping</span><span class="hljs-punctuation">:</span> <span class="hljs-string">rbac-defaults</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">cluster-admin</span><br>  <span class="hljs-attribute">resourceVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;147&quot;</span><br>  <span class="hljs-attribute">uid</span><span class="hljs-punctuation">:</span> <span class="hljs-string">980fbdff-6750-4957-b5fa-954a5013b192</span><br><span class="hljs-attribute">roleRef</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">apiGroup</span><span class="hljs-punctuation">:</span> <span class="hljs-string">rbac.authorization.k8s.io</span><br>  <span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">ClusterRole</span><br>    <span class="hljs-comment"># clusterRole name</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">cluster-admin</span><br><span class="hljs-attribute">subjects</span><span class="hljs-punctuation">:</span><br><span class="hljs-bullet">-</span> <span class="hljs-string">apiGroup: rbac.authorization.k8s.io</span><br>  <span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Group</span><br>    <span class="hljs-comment"># Group name</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">system:masters</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="经过上面的操作，Kubectl-就可以使用-KubeConfig-来操作-Kube-apiserver-了。"><a href="#经过上面的操作，Kubectl-就可以使用-KubeConfig-来操作-Kube-apiserver-了。" class="headerlink" title="经过上面的操作，Kubectl 就可以使用 KubeConfig 来操作 Kube-apiserver 了。"></a>经过上面的操作，Kubectl 就可以使用 KubeConfig 来操作 Kube-apiserver 了。</h5><hr>
+<h2 id="Kube-scheduler、Kube-controller-manager"><a href="#Kube-scheduler、Kube-controller-manager" class="headerlink" title="Kube-scheduler、Kube-controller-manager"></a>Kube-scheduler、Kube-controller-manager</h2><h5 id="同样-Kube-scheduler、Kube-controller-manager-也是使用各自的-KubeConfig-来认证、鉴权。但是他们和-Kubectl-的-KubeConfig-不属于同一个用户、组。"><a href="#同样-Kube-scheduler、Kube-controller-manager-也是使用各自的-KubeConfig-来认证、鉴权。但是他们和-Kubectl-的-KubeConfig-不属于同一个用户、组。" class="headerlink" title="同样 Kube-scheduler、Kube-controller-manager 也是使用各自的 KubeConfig 来认证、鉴权。但是他们和 Kubectl 的 KubeConfig 不属于同一个用户、组。"></a>同样 Kube-scheduler、Kube-controller-manager 也是使用各自的 KubeConfig 来认证、鉴权。但是他们和 Kubectl 的 KubeConfig 不属于同一个用户、组。</h5><h5 id="使用-openssl-命令解析-Kube-scheduler-的-KubeConfig-中-client-certificate-data-字段，查看-KubeConfig-客户端证书的-O、CN"><a href="#使用-openssl-命令解析-Kube-scheduler-的-KubeConfig-中-client-certificate-data-字段，查看-KubeConfig-客户端证书的-O、CN" class="headerlink" title="使用 openssl 命令解析 Kube-scheduler 的 KubeConfig 中 client-certificate-data 字段，查看 KubeConfig 客户端证书的 O、CN"></a>使用 <em><code>openssl</code></em> 命令解析 Kube-scheduler 的 KubeConfig 中 <em><code>client-certificate-data</code></em> 字段，查看 KubeConfig 客户端证书的 <em><code>O</code>、<code>CN</code></em></h5><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_">$ </span><span class="language-bash"><span class="hljs-built_in">cat</span> /etc/kubernetes/scheduler.conf | grep client-certificate-data: | sed <span class="hljs-string">&#x27;s/    client-certificate-data: //g&#x27;</span> | <span class="hljs-built_in">base64</span> -d | openssl x509 -noout  -subject</span><br><span class="hljs-meta prompt_"># </span><span class="language-bash">结果</span><br>subject= /CN=system:kube-scheduler<br></code></pre></td></tr></table></figure>
+
+<h5 id="可以发现-KubeConfig-客户端证书为-kubernetes-admin-User-但是不属于某个-Group。"><a href="#可以发现-KubeConfig-客户端证书为-kubernetes-admin-User-但是不属于某个-Group。" class="headerlink" title="可以发现 KubeConfig 客户端证书为 kubernetes-admin User 但是不属于某个 Group。"></a>可以发现 KubeConfig 客户端证书为 <em><code>kubernetes-admin</code></em> User 但是不属于某个 Group。</h5><h5 id="system-kube-scheduler-也是-Kubernetes-集群内部的设置的用户，Kubernetes-集群中也存在对应默认的-ClusterRole-system-kube-scheduler-和-ClusterRoleBinding-system-kube-scheduler-。"><a href="#system-kube-scheduler-也是-Kubernetes-集群内部的设置的用户，Kubernetes-集群中也存在对应默认的-ClusterRole-system-kube-scheduler-和-ClusterRoleBinding-system-kube-scheduler-。" class="headerlink" title="system:kube-scheduler 也是 Kubernetes 集群内部的设置的用户，Kubernetes 集群中也存在对应默认的 ClusterRole system:kube-scheduler 和 ClusterRoleBinding system:kube-scheduler 。"></a><em><code>system:kube-scheduler</code></em> 也是 Kubernetes 集群内部的设置的用户，Kubernetes 集群中也存在对应默认的 ClusterRole <em><code>system:kube-scheduler</code></em> 和 ClusterRoleBinding <em><code>system:kube-scheduler</code></em> 。</h5><figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-comment"># system:kube-scheduler ClusterRole 拥有细分的权限</span><br>$ kubectl get clusterrole system:kube-scheduler -o yaml<br><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">rbac.authorization.k8s.io/v1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">ClusterRole</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">annotations</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">rbac.authorization.kubernetes.io/autoupdate</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;true&quot;</span><br>  <span class="hljs-attribute">creationTimestamp</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;2023-05-10T06:49:27Z&quot;</span><br>  <span class="hljs-attribute">labels</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">kubernetes.io/bootstrapping</span><span class="hljs-punctuation">:</span> <span class="hljs-string">rbac-defaults</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">system:kube-scheduler</span><br>  <span class="hljs-attribute">resourceVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;115&quot;</span><br>  <span class="hljs-attribute">uid</span><span class="hljs-punctuation">:</span> <span class="hljs-string">b1ddf98c-bdb9-4d4d-9af3-9db1c97b038a</span><br><span class="hljs-attribute">rules</span><span class="hljs-punctuation">:</span><br><span class="hljs-bullet">-</span> <span class="hljs-string">apiGroups:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">&quot;&quot;</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">events.k8s.io</span><br>  <span class="hljs-attribute">resources</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">events</span><br>  <span class="hljs-attribute">verbs</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">create</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">patch</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">update</span><br><span class="hljs-bullet">-</span> <span class="hljs-string">apiGroups:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">coordination.k8s.io</span><br>  <span class="hljs-attribute">resources</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">leases</span><br>  <span class="hljs-attribute">verbs</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">create</span><br><span class="hljs-bullet">-</span> <span class="hljs-string">apiGroups:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">coordination.k8s.io</span><br>  <span class="hljs-attribute">resourceNames</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">kube-scheduler</span><br>  <span class="hljs-attribute">resources</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">leases</span><br>  <span class="hljs-attribute">verbs</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">get</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">update</span><br><span class="hljs-bullet">-</span> <span class="hljs-string">apiGroups:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">&quot;&quot;</span><br>  <span class="hljs-attribute">resources</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">endpoints</span><br>  <span class="hljs-attribute">verbs</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">create</span><br> .......<br> <span class="hljs-comment"># 一些更细致的权限</span><br>--------------------------------------------------------------------------<br><br><span class="hljs-comment"># system:kube-scheduler ClusterRoleBinding 将 system:kube-scheduler ClusterRole 绑定到 system:kube-scheduler User</span><br>$ kubectl get clusterrolebinding system:kube-scheduler -o yaml<br><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">rbac.authorization.k8s.io/v1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">ClusterRoleBinding</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">annotations</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">rbac.authorization.kubernetes.io/autoupdate</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;true&quot;</span><br>  <span class="hljs-attribute">creationTimestamp</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;2023-05-10T06:49:27Z&quot;</span><br>  <span class="hljs-attribute">labels</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">kubernetes.io/bootstrapping</span><span class="hljs-punctuation">:</span> <span class="hljs-string">rbac-defaults</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">system:kube-scheduler</span><br>  <span class="hljs-attribute">resourceVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;155&quot;</span><br>  <span class="hljs-attribute">uid</span><span class="hljs-punctuation">:</span> <span class="hljs-string">a9b8a85e-bb5c-483c-a08e-51822ce84d7f</span><br><span class="hljs-attribute">roleRef</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">apiGroup</span><span class="hljs-punctuation">:</span> <span class="hljs-string">rbac.authorization.k8s.io</span><br>  <span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">ClusterRole</span><br>    <span class="hljs-comment"># ClusterRole name</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">system:kube-scheduler</span><br><span class="hljs-attribute">subjects</span><span class="hljs-punctuation">:</span><br><span class="hljs-bullet">-</span> <span class="hljs-string">apiGroup: rbac.authorization.k8s.io</span><br>  <span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">User</span><br>    <span class="hljs-comment"># User name</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">system:kube-scheduler</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="可以发现-Kube-scheduler-权限并不是向-Kubectl-那样拥有所有资源的所有操作权限，即使是内部组件，基于最小权限原则，Kubernetes-依然会为这两个用户只绑定必要的权限。"><a href="#可以发现-Kube-scheduler-权限并不是向-Kubectl-那样拥有所有资源的所有操作权限，即使是内部组件，基于最小权限原则，Kubernetes-依然会为这两个用户只绑定必要的权限。" class="headerlink" title="可以发现 Kube-scheduler 权限并不是向 Kubectl 那样拥有所有资源的所有操作权限，即使是内部组件，基于最小权限原则，Kubernetes 依然会为这两个用户只绑定必要的权限。"></a>可以发现 Kube-scheduler 权限并不是向 Kubectl 那样拥有所有资源的所有操作权限，即使是内部组件，基于最小权限原则，Kubernetes 依然会为这两个用户只绑定必要的权限。</h5><h5 id="Kube-controller-manager-和-Kube-scheduler-一样，只不过-Kube-controller-manager-的-User-是-system-kube-controller-manager-，其默认的-ClusterRole、ClusterRoleBinding-名称不同而已，可以根据-Kube-scheduler-自行验证"><a href="#Kube-controller-manager-和-Kube-scheduler-一样，只不过-Kube-controller-manager-的-User-是-system-kube-controller-manager-，其默认的-ClusterRole、ClusterRoleBinding-名称不同而已，可以根据-Kube-scheduler-自行验证" class="headerlink" title="Kube-controller-manager 和 Kube-scheduler 一样，只不过 Kube-controller-manager 的 User 是 system:kube-controller-manager ，其默认的 ClusterRole、ClusterRoleBinding 名称不同而已，可以根据 Kube-scheduler 自行验证~"></a>Kube-controller-manager 和 Kube-scheduler 一样，只不过 Kube-controller-manager 的 User 是 <em><code>system:kube-controller-manager</code></em> ，其默认的 ClusterRole、ClusterRoleBinding 名称不同而已，可以根据 Kube-scheduler 自行验证~</h5><blockquote>
+<p><code>system:</code> 前缀是 Kubernetes 保留的关键字，用于描述内置的系统用户和系统用户组，在 Kube-apiserver 启动时，会默认为这些用户绑定好对应的权限，具体参考官网[2]</p>
+</blockquote>
+<hr>
+<h2 id="Kubelet"><a href="#Kubelet" class="headerlink" title="Kubelet"></a>Kubelet</h2><h5 id="Kubelet-同样也会访问-Kube-apiserver，Kubelet-使用其客户端证书与-Kube-apiserver-认证、鉴权。"><a href="#Kubelet-同样也会访问-Kube-apiserver，Kubelet-使用其客户端证书与-Kube-apiserver-认证、鉴权。" class="headerlink" title="Kubelet 同样也会访问 Kube-apiserver，Kubelet 使用其客户端证书与 Kube-apiserver 认证、鉴权。"></a>Kubelet 同样也会访问 Kube-apiserver，Kubelet 使用其客户端证书与 Kube-apiserver 认证、鉴权。</h5><h5 id="使用-openssl-命令解析-Kubelet-客户端证书，查看证书的-O、CN"><a href="#使用-openssl-命令解析-Kubelet-客户端证书，查看证书的-O、CN" class="headerlink" title="使用 openssl 命令解析 Kubelet 客户端证书，查看证书的 O、CN"></a>使用 <em><code>openssl</code></em> 命令解析 Kubelet 客户端证书，查看证书的 <em><code>O</code>、<code>CN</code></em></h5><figure class="highlight nsis"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs nsis">$ openssl x509 -noout  -subject -in /<span class="hljs-keyword">var</span>/lib/kubelet/pki/kubelet-client-<span class="hljs-literal">current</span>.pem <br><span class="hljs-comment"># 结果</span><br>subject= /O=<span class="hljs-params">system</span>:nodes/CN=<span class="hljs-params">system</span>:node:master-<span class="hljs-number">172</span>-<span class="hljs-number">31</span>-<span class="hljs-number">97</span>-<span class="hljs-number">104</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="可以发现-Kubelet-客户端证书为-system-node-master-172-31-97-104-User-且属于-system-nodes-Group。"><a href="#可以发现-Kubelet-客户端证书为-system-node-master-172-31-97-104-User-且属于-system-nodes-Group。" class="headerlink" title="可以发现 Kubelet 客户端证书为 system:node:master-172-31-97-104 User 且属于 system:nodes Group。"></a>可以发现 Kubelet 客户端证书为 <em><code>system:node:master-172-31-97-104</code></em> User 且属于 <em><code>system:nodes</code></em> Group。</h5><h5 id="还是和上面一样-system-nodes-也是-Kubernetes-内置用户组，通过查看其默认的-ClusterRole、ClusterRoleBinding"><a href="#还是和上面一样-system-nodes-也是-Kubernetes-内置用户组，通过查看其默认的-ClusterRole、ClusterRoleBinding" class="headerlink" title="还是和上面一样, system:nodes 也是 Kubernetes 内置用户组，通过查看其默认的 ClusterRole、ClusterRoleBinding"></a>还是和上面一样, <em><code>system:nodes</code></em> 也是 Kubernetes 内置用户组，通过查看其默认的 ClusterRole、ClusterRoleBinding</h5><figure class="highlight dts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs dts">$ kubectl get clusterrolebinding system:node -o yaml<br><span class="hljs-symbol">apiVersion:</span> rbac.authorization.k8s.io/v1<br><span class="hljs-symbol">kind:</span> ClusterRoleBinding<br><span class="hljs-symbol">metadata:</span><br><span class="hljs-symbol">  annotations:</span><br>    rbac.authorization.kubernetes.io/autoupdate: <span class="hljs-string">&quot;true&quot;</span><br><span class="hljs-symbol">  creationTimestamp:</span> <span class="hljs-string">&quot;2023-05-10T06:49:27Z&quot;</span><br><span class="hljs-symbol">  labels:</span><br>    kubernetes.io/bootstrapping: rbac-defaults<br><span class="hljs-symbol">  name:</span> system:node<br><span class="hljs-symbol">  resourceVersion:</span> <span class="hljs-string">&quot;157&quot;</span><br><span class="hljs-symbol">  uid:</span> <span class="hljs-number">8</span>ba46211-bdae<span class="hljs-number">-493</span>f<span class="hljs-number">-8</span>f5f<span class="hljs-number">-3386</span>fe63ba29<br><span class="hljs-symbol">roleRef:</span><br><span class="hljs-symbol">  apiGroup:</span> rbac.authorization.k8s.io<br><span class="hljs-symbol">  kind:</span> ClusterRole<br><span class="hljs-symbol">  name:</span> system:node<br></code></pre></td></tr></table></figure>
+
+<h5 id="发现-system-node-ClusterRoleBinding-并没有绑定-system-node-master-172-31-97-104-User-或者-system-nodes-Group。官方文档也有介绍：https-kubernetes-io-zh-cn-docs-reference-access-authn-authz-rbac-core-component-roles"><a href="#发现-system-node-ClusterRoleBinding-并没有绑定-system-node-master-172-31-97-104-User-或者-system-nodes-Group。官方文档也有介绍：https-kubernetes-io-zh-cn-docs-reference-access-authn-authz-rbac-core-component-roles" class="headerlink" title="发现 system:node ClusterRoleBinding 并没有绑定 system:node:master-172-31-97-104 User 或者 system:nodes Group。官方文档也有介绍：https://kubernetes.io/zh-cn/docs/reference/access-authn-authz/rbac/#core-component-roles"></a>发现 <em><code>system:node</code></em> ClusterRoleBinding 并没有绑定 <em><code>system:node:master-172-31-97-104</code></em> User 或者 <em><code>system:nodes</code></em> Group。官方文档也有介绍：<a target="_blank" rel="noopener" href="https://kubernetes.io/zh-cn/docs/reference/access-authn-authz/rbac/#core-component-roles">https://kubernetes.io/zh-cn/docs/reference/access-authn-authz/rbac/#core-component-roles</a></h5><h5 id="实际上-Kubernetes-现在基于-Node-Authorizer-来限制kubelet只能读取和修改本节点上的资源，并不是使用-RBAC-来鉴权。为了获得节点鉴权器的授权，Kubelet-必须使用一个凭证以表示它在-system-nodes-组中，用户名为-system-node-。这个凭证就是从-Kubelet-客户端证书获取，也就是上面的-O、CN"><a href="#实际上-Kubernetes-现在基于-Node-Authorizer-来限制kubelet只能读取和修改本节点上的资源，并不是使用-RBAC-来鉴权。为了获得节点鉴权器的授权，Kubelet-必须使用一个凭证以表示它在-system-nodes-组中，用户名为-system-node-。这个凭证就是从-Kubelet-客户端证书获取，也就是上面的-O、CN" class="headerlink" title="实际上 Kubernetes 现在基于 Node Authorizer 来限制kubelet只能读取和修改本节点上的资源，并不是使用 RBAC 来鉴权。为了获得节点鉴权器的授权，Kubelet 必须使用一个凭证以表示它在 system:nodes 组中，用户名为 system:node:&lt;nodeName&gt;。这个凭证就是从 Kubelet 客户端证书获取，也就是上面的 O、CN"></a>实际上 Kubernetes 现在基于 Node Authorizer 来限制<code>kubelet</code>只能读取和修改本节点上的资源，并不是使用 RBAC 来鉴权。为了获得节点鉴权器的授权，Kubelet 必须使用一个凭证以表示它在 <code>system:nodes</code> 组中，用户名为 <code>system:node:&lt;nodeName&gt;</code>。这个凭证就是从 Kubelet 客户端证书获取，也就是上面的 <em><code>O</code>、<code>CN</code></em></h5><blockquote>
+<p>Node Authorizer 参考：<a target="_blank" rel="noopener" href="https://kubernetes.io/zh-cn/docs/reference/access-authn-authz/node/">https://kubernetes.io/zh-cn/docs/reference/access-authn-authz/node/</a></p>
+</blockquote>
+<hr>
+<h2 id="Kube-apiserver"><a href="#Kube-apiserver" class="headerlink" title="Kube-apiserver"></a>Kube-apiserver</h2><h5 id="前面都是在说其他组件访问-Kube-apiserver，然后-Kube-apiserver-对访问者进行授权，然而-Kube-apiserver-也会作为客户端去访问-Kubelet，例如：kubectl-logs-exec，Kube-apiserver-都会去访问-Kubelet。Kubelet-作为服务端内部也是通过-TLS-RBAC-这种模式去认证、鉴权。"><a href="#前面都是在说其他组件访问-Kube-apiserver，然后-Kube-apiserver-对访问者进行授权，然而-Kube-apiserver-也会作为客户端去访问-Kubelet，例如：kubectl-logs-exec，Kube-apiserver-都会去访问-Kubelet。Kubelet-作为服务端内部也是通过-TLS-RBAC-这种模式去认证、鉴权。" class="headerlink" title="前面都是在说其他组件访问 Kube-apiserver，然后 Kube-apiserver 对访问者进行授权，然而 Kube-apiserver 也会作为客户端去访问 Kubelet，例如：kubectl logs&#x2F;exec，Kube-apiserver 都会去访问 Kubelet。Kubelet 作为服务端内部也是通过 TLS + RBAC 这种模式去认证、鉴权。"></a>前面都是在说其他组件访问 Kube-apiserver，然后 Kube-apiserver 对访问者进行授权，然而 Kube-apiserver 也会作为客户端去访问 Kubelet，例如：kubectl logs&#x2F;exec，Kube-apiserver 都会去访问 Kubelet。Kubelet 作为服务端内部也是通过 TLS + RBAC 这种模式去认证、鉴权。</h5><h5 id="使用-openssl-命令解析-Kube-apiserver-客户端证书，查看证书的-O、CN"><a href="#使用-openssl-命令解析-Kube-apiserver-客户端证书，查看证书的-O、CN" class="headerlink" title="使用 openssl 命令解析 Kube-apiserver 客户端证书，查看证书的 O、CN"></a>使用 <em><code>openssl</code></em> 命令解析 Kube-apiserver 客户端证书，查看证书的 <em><code>O</code>、<code>CN</code></em></h5><figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs awk">$ openssl x509 -noout  -subject -<span class="hljs-keyword">in</span> <span class="hljs-regexp">/etc/</span>kubernetes<span class="hljs-regexp">/pki/</span>apiserver-kubelet-client.crt <br><span class="hljs-comment"># 结果</span><br>subject= <span class="hljs-regexp">/O=system:masters/</span>CN=kube-apiserver-kubelet-client<br></code></pre></td></tr></table></figure>
+
+<h5 id="可以发现-Kube-apiserver-访问-Kubelet-客户端证书为-kube-apiserver-kubelet-client-User-且属于-system-masters-Group。"><a href="#可以发现-Kube-apiserver-访问-Kubelet-客户端证书为-kube-apiserver-kubelet-client-User-且属于-system-masters-Group。" class="headerlink" title="可以发现 Kube-apiserver 访问 Kubelet 客户端证书为 kube-apiserver-kubelet-client User 且属于 system:masters Group。"></a>可以发现 Kube-apiserver 访问 Kubelet 客户端证书为 <em><code>kube-apiserver-kubelet-client</code></em> User 且属于 <em><code>system:masters</code></em> Group。</h5><h5 id="在-Kubectl-章节介绍了-system-masters-属于内置用户组，且默认拥有超级权限，所以-Kube-apiserver-可以去访问-Kubelet-操作资源。"><a href="#在-Kubectl-章节介绍了-system-masters-属于内置用户组，且默认拥有超级权限，所以-Kube-apiserver-可以去访问-Kubelet-操作资源。" class="headerlink" title="在 Kubectl 章节介绍了 system:masters 属于内置用户组，且默认拥有超级权限，所以 Kube-apiserver 可以去访问 Kubelet 操作资源。"></a>在 Kubectl 章节介绍了 <em><code>system:masters</code></em> 属于内置用户组，且默认拥有超级权限，所以 Kube-apiserver 可以去访问 Kubelet 操作资源。</h5><hr>
+<h2 id="ServiceAccount"><a href="#ServiceAccount" class="headerlink" title="ServiceAccount"></a>ServiceAccount</h2><h5 id="上面说的几种情况，都是根据-User-或者-Group-鉴别其是否拥有权限，ServiceAccount-和-User、Group-属于同一性质。"><a href="#上面说的几种情况，都是根据-User-或者-Group-鉴别其是否拥有权限，ServiceAccount-和-User、Group-属于同一性质。" class="headerlink" title="上面说的几种情况，都是根据 User 或者 Group 鉴别其是否拥有权限，ServiceAccount 和 User、Group 属于同一性质。"></a>上面说的几种情况，都是根据 User 或者 Group 鉴别其是否拥有权限，ServiceAccount 和 User、Group 属于同一性质。</h5><h5 id="在-Kubernetes-集群内部，比如-Pod-需要访问-Kube-apiserver，就会使用其配置的-Service-Account（没有配置，则使用默认-与-Kube-apiserver-认证、鉴权。"><a href="#在-Kubernetes-集群内部，比如-Pod-需要访问-Kube-apiserver，就会使用其配置的-Service-Account（没有配置，则使用默认-与-Kube-apiserver-认证、鉴权。" class="headerlink" title="在 Kubernetes 集群内部，比如 Pod 需要访问 Kube-apiserver，就会使用其配置的 Service Account（没有配置，则使用默认) 与 Kube-apiserver 认证、鉴权。"></a>在 Kubernetes 集群内部，比如 Pod 需要访问 Kube-apiserver，就会使用其配置的 Service Account（没有配置，则使用默认) 与 Kube-apiserver 认证、鉴权。</h5><h5 id="通过一个例子来说明："><a href="#通过一个例子来说明：" class="headerlink" title="通过一个例子来说明："></a>通过一个例子来说明：</h5><h5 id="mysql-这个-Pod-配置-mysql-sa-这个-ServiceAccount"><a href="#mysql-这个-Pod-配置-mysql-sa-这个-ServiceAccount" class="headerlink" title="mysql 这个 Pod 配置 mysql-sa 这个 ServiceAccount"></a><em><code>mysql</code></em> 这个 Pod 配置 <em><code>mysql-sa</code></em> 这个 ServiceAccount</h5><figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-comment"># pod 部分 yaml</span><br><br><span class="hljs-attribute">nodeName</span><span class="hljs-punctuation">:</span> <span class="hljs-string">master-172-31-97-104</span><br>  <span class="hljs-attribute">preemptionPolicy</span><span class="hljs-punctuation">:</span> <span class="hljs-string">PreemptLowerPriority</span><br>  <span class="hljs-attribute">priority</span><span class="hljs-punctuation">:</span> <span class="hljs-string">0</span><br>  <span class="hljs-attribute">restartPolicy</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Always</span><br>  <span class="hljs-attribute">schedulerName</span><span class="hljs-punctuation">:</span> <span class="hljs-string">default-scheduler</span><br>  <span class="hljs-attribute">securityContext</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&#123;&#125;</span><br>    <span class="hljs-comment"># serviceAccount 配置</span><br>  <span class="hljs-attribute">serviceAccount</span><span class="hljs-punctuation">:</span> <span class="hljs-string">mysql-sa</span><br>  <span class="hljs-attribute">serviceAccountName</span><span class="hljs-punctuation">:</span> <span class="hljs-string">mysql-sa</span><br>  <span class="hljs-attribute">terminationGracePeriodSeconds</span><span class="hljs-punctuation">:</span> <span class="hljs-string">10</span><br>  <span class="hljs-attribute">tolerations</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">effect: NoSchedule</span><br>    <span class="hljs-attribute">key</span><span class="hljs-punctuation">:</span> <span class="hljs-string">node-role.kubernetes.io/master</span><br>    <span class="hljs-attribute">operator</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Exists</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">effect: NoExecute</span><br>    <span class="hljs-attribute">key</span><span class="hljs-punctuation">:</span> <span class="hljs-string">node.kubernetes.io/not-ready</span><br>    <span class="hljs-attribute">operator</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Exists</span><br>    <span class="hljs-attribute">tolerationSeconds</span><span class="hljs-punctuation">:</span> <span class="hljs-string">300</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">effect: NoExecute</span><br>    <span class="hljs-attribute">key</span><span class="hljs-punctuation">:</span> <span class="hljs-string">node.kubernetes.io/unreachable</span><br>    <span class="hljs-attribute">operator</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Exists</span><br>    <span class="hljs-attribute">tolerationSeconds</span><span class="hljs-punctuation">:</span> <span class="hljs-string">300</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="然后查看对应-Role，查看拥有的权限"><a href="#然后查看对应-Role，查看拥有的权限" class="headerlink" title="然后查看对应 Role，查看拥有的权限"></a>然后查看对应 Role，查看拥有的权限</h5><figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-attribute">$ kubectl get role mysql-role -n test -o yaml</span><br><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">rbac.authorization.k8s.io/v1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Role</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">mysql-role</span><br>  <span class="hljs-attribute">namespace</span><span class="hljs-punctuation">:</span> <span class="hljs-string">test</span><br><span class="hljs-attribute">rules</span><span class="hljs-punctuation">:</span><br><span class="hljs-bullet">-</span> <span class="hljs-string">apiGroups:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">&quot;&quot;</span><br>  <span class="hljs-attribute">resources</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">configmaps</span><br>  <span class="hljs-attribute">verbs</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">get</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">list</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">watch</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">create</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">update</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">patch</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">delete</span><br><span class="hljs-bullet">-</span> <span class="hljs-string">apiGroups:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">&quot;&quot;</span><br>  <span class="hljs-attribute">resources</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">events</span><br>  <span class="hljs-attribute">verbs</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">create</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">patch</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="查看-RoleBinding，然后会发现将上面的-Role-与-Pod-的-ServiceAccount-绑定。"><a href="#查看-RoleBinding，然后会发现将上面的-Role-与-Pod-的-ServiceAccount-绑定。" class="headerlink" title="查看 RoleBinding，然后会发现将上面的 Role 与 Pod 的 ServiceAccount 绑定。"></a>查看 RoleBinding，然后会发现将上面的 Role 与 Pod 的 ServiceAccount 绑定。</h5><figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-attribute">$ kubectl get rolebinding mysql-role -n test -o yaml</span><br><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">rbac.authorization.k8s.io/v1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">RoleBinding</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">mysql-rolebinding</span><br>  <span class="hljs-attribute">namespace</span><span class="hljs-punctuation">:</span> <span class="hljs-string">test</span><br><span class="hljs-attribute">roleRef</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">apiGroup</span><span class="hljs-punctuation">:</span> <span class="hljs-string">rbac.authorization.k8s.io</span><br>  <span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Role</span><br>    <span class="hljs-comment"># role name</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">mysql-role</span><br><span class="hljs-attribute">subjects</span><span class="hljs-punctuation">:</span><br><span class="hljs-bullet">-</span> <span class="hljs-string">kind: ServiceAccount</span><br>    <span class="hljs-comment"># serviceAccount name</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">mysql-sa</span><br>  <span class="hljs-attribute">namespace</span><span class="hljs-punctuation">:</span> <span class="hljs-string">test</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="这样-mysql-sa-ServiceAccount-就拥有了-Configmmap，Event-这两个资源的所有权限。"><a href="#这样-mysql-sa-ServiceAccount-就拥有了-Configmmap，Event-这两个资源的所有权限。" class="headerlink" title="这样 mysql-sa ServiceAccount 就拥有了 Configmmap，Event 这两个资源的所有权限。"></a>这样 <em><code>mysql-sa</code></em> ServiceAccount 就拥有了 Configmmap，Event 这两个资源的所有权限。</h5><h5 id="所以当-Pod-内部去访问-Kube-apiserver，实际上-Kube-apiserver-是根据其-ServiceAccount-来鉴定其拥有的权限，而不是-User-或者-Group。"><a href="#所以当-Pod-内部去访问-Kube-apiserver，实际上-Kube-apiserver-是根据其-ServiceAccount-来鉴定其拥有的权限，而不是-User-或者-Group。" class="headerlink" title="所以当 Pod 内部去访问 Kube-apiserver，实际上 Kube-apiserver 是根据其 ServiceAccount 来鉴定其拥有的权限，而不是 User 或者 Group。"></a>所以当 Pod 内部去访问 Kube-apiserver，实际上 Kube-apiserver 是根据其 ServiceAccount 来鉴定其拥有的权限，而不是 User 或者 Group。</h5><hr>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><h5 id="上面的鉴权原理，可以下面这张图做个总结"><a href="#上面的鉴权原理，可以下面这张图做个总结" class="headerlink" title="上面的鉴权原理，可以下面这张图做个总结"></a>上面的鉴权原理，可以下面这张图做个总结</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191510936.png" srcset="/img/loading.gif" lazyload alt="image-20240319151023876"></p>
+<p>​                 k8s-crt-auth.png</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191510839.png" srcset="/img/loading.gif" lazyload alt="image-20240319151037791"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191510300.png" srcset="/img/loading.gif" lazyload alt="image-20240319151052251"></p>
+<h5 id="每个组件都代表着不同的-K8S-角色与-Kube-apiserver-鉴权。"><a href="#每个组件都代表着不同的-K8S-角色与-Kube-apiserver-鉴权。" class="headerlink" title="每个组件都代表着不同的 K8S 角色与 Kube-apiserver 鉴权。"></a>每个组件都代表着不同的 K8S 角色与 Kube-apiserver 鉴权。</h5><h5 id="到这里整个-Kubernetes-证书都讲解完了，包括认证、鉴权。掌握了-Kubernetes-组件之间的调用关系，以及双向-TLS-认证-就可以理清证书的作用和关系，同时还需掌握证书内容的-O、CN、SANS-等字段作用，才能明白-Kubernetes-是如何根据证书-RBAC-进行访问授权的。"><a href="#到这里整个-Kubernetes-证书都讲解完了，包括认证、鉴权。掌握了-Kubernetes-组件之间的调用关系，以及双向-TLS-认证-就可以理清证书的作用和关系，同时还需掌握证书内容的-O、CN、SANS-等字段作用，才能明白-Kubernetes-是如何根据证书-RBAC-进行访问授权的。" class="headerlink" title="到这里整个 Kubernetes 证书都讲解完了，包括认证、鉴权。掌握了 Kubernetes 组件之间的调用关系，以及双向 TLS 认证 就可以理清证书的作用和关系，同时还需掌握证书内容的 O、CN、SANS 等字段作用，才能明白 Kubernetes 是如何根据证书 + RBAC 进行访问授权的。"></a>到这里整个 Kubernetes 证书都讲解完了，包括认证、鉴权。掌握了 Kubernetes 组件之间的调用关系，以及双向 TLS 认证 就可以理清证书的作用和关系，同时还需掌握证书内容的 <em><code>O</code>、<code>CN</code>、<code>SANS</code></em> 等字段作用，才能明白 Kubernetes 是如何根据证书 + RBAC 进行访问授权的。</h5><h5 id="最后有兴趣可以使用二进制部署一个-Kubernetes-集群，通过手动签发证书，来加深理解"><a href="#最后有兴趣可以使用二进制部署一个-Kubernetes-集群，通过手动签发证书，来加深理解" class="headerlink" title="最后有兴趣可以使用二进制部署一个 Kubernetes 集群，通过手动签发证书，来加深理解~"></a>最后有兴趣可以使用二进制部署一个 Kubernetes 集群，通过手动签发证书，来加深理解~</h5><h4 id="引用链接"><a href="#引用链接" class="headerlink" title="引用链接"></a>引用链接</h4><p><code>[1]</code> 官网: <em><a target="_blank" rel="noopener" href="https://kubernetes.io/zh-cn/docs/reference/access-authn-authz/rbac/">https://kubernetes.io/zh-cn/docs/reference/access-authn-authz/rbac/</a></em><br><code>[2]</code> 官网: <em><a target="_blank" rel="noopener" href="https://kubernetes.io/zh-cn/docs/reference/access-authn-authz/rbac/#core-component-roles">https://kubernetes.io/zh-cn/docs/reference/access-authn-authz/rbac/#core-component-roles</a></em><br><code>[3]</code> Kubernetes 官方文档 Node Authorizer: <em><a target="_blank" rel="noopener" href="https://kubernetes.io/zh-cn/docs/reference/access-authn-authz/node/">https://kubernetes.io/zh-cn/docs/reference/access-authn-authz/node/</a></em><br><code>[4]</code> Kubernetes 官方文档 RBAC: <em><a target="_blank" rel="noopener" href="https://kubernetes.io/zh-cn/docs/reference/access-authn-authz/rbac/">https://kubernetes.io/zh-cn/docs/reference/access-authn-authz/rbac/</a></em></p>
+<hr>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Kubernetes 证书详解(鉴权) 2024-04-03 14:49:04.385</div>
+      <div>http://example.com/2025/01/16/Kubernetes 证书详解(鉴权)-kubernetes-zheng-shu-xiang-jie--jian-quan-/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/Linux%20%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%A4%A7%E5%85%A8-linux-xing-neng-you-hua-da-quan/" title="Linux 性能优化大全 2024-04-03 15:09:06.854">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Linux 性能优化大全 2024-04-03 15:09:06.854</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/Kubernetes%20%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3(%E8%AE%A4%E8%AF%81)-kubernetes-zheng-shu-xiang-jie--ren-zheng-/" title="Kubernetes 证书详解(认证) 2024-04-03 14:52:56.54">
+                        <span class="hidden-mobile">Kubernetes 证书详解(认证) 2024-04-03 14:52:56.54</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

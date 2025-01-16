@@ -1,0 +1,667 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="calico 配置 BGP Route ReflectorsCalico作为k8s的一个流行网络插件，它依赖BGP路由协议实现集群节点上的POD路由互通；而路由互通的前提是节点间建立 BGP Peer 连接。BGP 路由反射器（Route Reflectors，简称 RR）可以简化集群BGP Peer的连接方式，它是解决BGP扩展性问题的有效方式；具体来说： 没有 RR 时，所有节点之间需要两两建">
+<meta property="og:type" content="article">
+<meta property="og:title" content="calico 配置 BGP Route Reflectors 2023-09-28 15:34:01.007">
+<meta property="og:url" content="http://example.com/2025/01/16/calico%20%E9%85%8D%E7%BD%AE%20BGP%20Route%20Reflectors-calico-pei-zhi-bgproutereflectors/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="calico 配置 BGP Route ReflectorsCalico作为k8s的一个流行网络插件，它依赖BGP路由协议实现集群节点上的POD路由互通；而路由互通的前提是节点间建立 BGP Peer 连接。BGP 路由反射器（Route Reflectors，简称 RR）可以简化集群BGP Peer的连接方式，它是解决BGP扩展性问题的有效方式；具体来说： 没有 RR 时，所有节点之间需要两两建">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-01-16T02:08:28.067Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:18.883Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>calico 配置 BGP Route Reflectors 2023-09-28 15:34:01.007 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="calico 配置 BGP Route Reflectors 2023-09-28 15:34:01.007"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          10 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">calico 配置 BGP Route Reflectors 2023-09-28 15:34:01.007</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="calico-配置-BGP-Route-Reflectors"><a href="#calico-配置-BGP-Route-Reflectors" class="headerlink" title="calico 配置 BGP Route Reflectors"></a>calico 配置 BGP Route Reflectors</h1><h5 id="Calico作为k8s的一个流行网络插件，它依赖BGP路由协议实现集群节点上的POD路由互通；而路由互通的前提是节点间建立-BGP-Peer-连接。BGP-路由反射器（Route-Reflectors，简称-RR）可以简化集群BGP-Peer的连接方式，它是解决BGP扩展性问题的有效方式；具体来说："><a href="#Calico作为k8s的一个流行网络插件，它依赖BGP路由协议实现集群节点上的POD路由互通；而路由互通的前提是节点间建立-BGP-Peer-连接。BGP-路由反射器（Route-Reflectors，简称-RR）可以简化集群BGP-Peer的连接方式，它是解决BGP扩展性问题的有效方式；具体来说：" class="headerlink" title="Calico作为k8s的一个流行网络插件，它依赖BGP路由协议实现集群节点上的POD路由互通；而路由互通的前提是节点间建立 BGP Peer 连接。BGP 路由反射器（Route Reflectors，简称 RR）可以简化集群BGP Peer的连接方式，它是解决BGP扩展性问题的有效方式；具体来说："></a><code>Calico</code>作为<code>k8s</code>的一个流行网络插件，它依赖<code>BGP</code>路由协议实现集群节点上的<code>POD</code>路由互通；而路由互通的前提是节点间建立 BGP Peer 连接。BGP 路由反射器（Route Reflectors，简称 RR）可以简化集群BGP Peer的连接方式，它是解决BGP扩展性问题的有效方式；具体来说：</h5><ul>
+<li><h5 id="没有-RR-时，所有节点之间需要两两建立连接（IBGP全互联），节点数量增加将导致连接数剧增、资源占用剧增"><a href="#没有-RR-时，所有节点之间需要两两建立连接（IBGP全互联），节点数量增加将导致连接数剧增、资源占用剧增" class="headerlink" title="没有 RR 时，所有节点之间需要两两建立连接（IBGP全互联），节点数量增加将导致连接数剧增、资源占用剧增"></a>没有 RR 时，所有节点之间需要两两建立连接（IBGP全互联），节点数量增加将导致连接数剧增、资源占用剧增</h5></li>
+<li><h5 id="引入-RR-后，其他-BGP-路由器只需要与它建立连接并交换路由信息，节点数量增加连接数只是线性增加，节省系统资源"><a href="#引入-RR-后，其他-BGP-路由器只需要与它建立连接并交换路由信息，节点数量增加连接数只是线性增加，节省系统资源" class="headerlink" title="引入 RR 后，其他 BGP 路由器只需要与它建立连接并交换路由信息，节点数量增加连接数只是线性增加，节省系统资源"></a>引入 RR 后，其他 BGP 路由器只需要与它建立连接并交换路由信息，节点数量增加连接数只是线性增加，节省系统资源</h5></li>
+</ul>
+<h5 id="calico-node-版本-v3-3-开始支持内建路由反射器，非常方便，因此使用-calico-作为网络插件可以支持大规模节点数的K8S集群。"><a href="#calico-node-版本-v3-3-开始支持内建路由反射器，非常方便，因此使用-calico-作为网络插件可以支持大规模节点数的K8S集群。" class="headerlink" title="calico-node 版本 v3.3 开始支持内建路由反射器，非常方便，因此使用 calico 作为网络插件可以支持大规模节点数的K8S集群。"></a>calico-node 版本 v3.3 开始支持内建路由反射器，非常方便，因此使用 calico 作为网络插件可以支持大规模节点数的<code>K8S</code>集群。</h5><ul>
+<li><h5 id="建议集群节点数大于50时，应用BGP-Route-Reflectors-特性"><a href="#建议集群节点数大于50时，应用BGP-Route-Reflectors-特性" class="headerlink" title="建议集群节点数大于50时，应用BGP Route Reflectors 特性"></a>建议集群节点数大于50时，应用BGP Route Reflectors 特性</h5></li>
+</ul>
+<h5 id="前提条件"><a href="#前提条件" class="headerlink" title="前提条件"></a>前提条件</h5><h5 id="k8s-集群使用calico网络插件部署成功。本实验环境为按照kubeasz安装的2主2从集群，calico-版本-v3-19-4。"><a href="#k8s-集群使用calico网络插件部署成功。本实验环境为按照kubeasz安装的2主2从集群，calico-版本-v3-19-4。" class="headerlink" title="k8s 集群使用calico网络插件部署成功。本实验环境为按照kubeasz安装的2主2从集群，calico 版本 v3.19.4。"></a>k8s 集群使用calico网络插件部署成功。本实验环境为按照kubeasz安装的2主2从集群，calico 版本 v3.19.4。</h5><figure class="highlight crmsh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs crmsh">$ kubectl get <span class="hljs-keyword">node</span><br><span class="hljs-title">NAME</span>           STATUS                     ROLES    AGE    <span class="hljs-keyword">VERSION</span><br><span class="hljs-number">192.168</span>.<span class="hljs-number">1.1</span>   Ready,SchedulingDisabled   <span class="hljs-keyword">master</span>   <span class="hljs-title">178m</span>   v1.<span class="hljs-number">13.1</span><br><span class="hljs-number">192.168</span>.<span class="hljs-number">1.2</span>   Ready,SchedulingDisabled   <span class="hljs-keyword">master</span>   <span class="hljs-title">178m</span>   v1.<span class="hljs-number">13.1</span><br><span class="hljs-number">192.168</span>.<span class="hljs-number">1.3</span>   Ready                      <span class="hljs-keyword">node</span>     <span class="hljs-title">178m</span>   v1.<span class="hljs-number">13.1</span><br><span class="hljs-number">192.168</span>.<span class="hljs-number">1.4</span>   Ready                      <span class="hljs-keyword">node</span>     <span class="hljs-title">178m</span>   v1.<span class="hljs-number">13.1</span><br>$ kubectl get pod -n kube-system -o wide | grep calico<br>calico-kube-controllers-<span class="hljs-number">77487546</span>bd-jqrlc   <span class="hljs-number">1</span>/<span class="hljs-number">1</span>     Running   <span class="hljs-number">0</span>          <span class="hljs-number">179m</span>   <span class="hljs-number">192.168</span>.<span class="hljs-number">1.3</span>   <span class="hljs-number">192.168</span>.<span class="hljs-number">1.3</span>   <span class="hljs-tag">&lt;none&gt;</span>           <span class="hljs-tag">&lt;none&gt;</span><br>calico-<span class="hljs-keyword">node</span><span class="hljs-title">-67t5m</span>                          <span class="hljs-number">2</span>/<span class="hljs-number">2</span>     Running   <span class="hljs-number">0</span>          <span class="hljs-number">179m</span>   <span class="hljs-number">192.168</span>.<span class="hljs-number">1.1</span>   <span class="hljs-number">192.168</span>.<span class="hljs-number">1.1</span>   <span class="hljs-tag">&lt;none&gt;</span>           <span class="hljs-tag">&lt;none&gt;</span><br>calico-<span class="hljs-keyword">node</span><span class="hljs-title">-drmhq</span>                          <span class="hljs-number">2</span>/<span class="hljs-number">2</span>     Running   <span class="hljs-number">0</span>          <span class="hljs-number">179m</span>   <span class="hljs-number">192.168</span>.<span class="hljs-number">1.2</span>   <span class="hljs-number">192.168</span>.<span class="hljs-number">1.2</span>   <span class="hljs-tag">&lt;none&gt;</span>           <span class="hljs-tag">&lt;none&gt;</span><br>calico-<span class="hljs-keyword">node</span><span class="hljs-title">-rjtkv</span>                          <span class="hljs-number">2</span>/<span class="hljs-number">2</span>     Running   <span class="hljs-number">0</span>          <span class="hljs-number">179m</span>   <span class="hljs-number">192.168</span>.<span class="hljs-number">1.4</span>   <span class="hljs-number">192.168</span>.<span class="hljs-number">1.4</span>   <span class="hljs-tag">&lt;none&gt;</span>           <span class="hljs-tag">&lt;none&gt;</span><br>calico-<span class="hljs-keyword">node</span><span class="hljs-title">-xtspl</span>                          <span class="hljs-number">2</span>/<span class="hljs-number">2</span>     Running   <span class="hljs-number">0</span>          <span class="hljs-number">179m</span>   <span class="hljs-number">192.168</span>.<span class="hljs-number">1.3</span>   <span class="hljs-number">192.168</span>.<span class="hljs-number">1.3</span>   <span class="hljs-tag">&lt;none&gt;</span>           <span class="hljs-tag">&lt;none&gt;</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="查看当前集群中BGP连接情况：可以看到集群中4个节点两两建立了-BGP-连接"><a href="#查看当前集群中BGP连接情况：可以看到集群中4个节点两两建立了-BGP-连接" class="headerlink" title="查看当前集群中BGP连接情况：可以看到集群中4个节点两两建立了 BGP 连接"></a>查看当前集群中BGP连接情况：可以看到集群中4个节点两两建立了 BGP 连接</h5><figure class="highlight asciidoc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><code class="hljs asciidoc">$ dk ansible -i /etc/kubeasz/clusters/xxx/hosts all -m shell -a <span class="hljs-emphasis">&#x27;/opt/kube/bin/calicoctl node status&#x27;</span><br>192.168.1.3 | SUCCESS | rc=0 &gt;&gt;<br>Calico process is running.<br><br><span class="hljs-section">IPv4 BGP status</span><br><span class="hljs-section">+--------------+-------------------+-------+----------+-------------+</span><br><span class="hljs-section">| PEER ADDRESS |     PEER TYPE     | STATE |  SINCE   |    INFO     |</span><br><span class="hljs-section">+--------------+-------------------+-------+----------+-------------+</span><br>| 192.168.1.1 | node-to-node mesh | up    | 03:08:20 | Established |<br>| 192.168.1.2 | node-to-node mesh | up    | 03:08:18 | Established |<br><span class="hljs-section">| 192.168.1.4 | node-to-node mesh | up    | 03:08:19 | Established |</span><br><span class="hljs-section">+--------------+-------------------+-------+----------+-------------+</span><br><br>IPv6 BGP status<br>No IPv6 peers found.<br><br>192.168.1.2 | SUCCESS | rc=0 &gt;&gt;<br>Calico process is running.<br><br><span class="hljs-section">IPv4 BGP status</span><br><span class="hljs-section">+--------------+-------------------+-------+----------+-------------+</span><br><span class="hljs-section">| PEER ADDRESS |     PEER TYPE     | STATE |  SINCE   |    INFO     |</span><br><span class="hljs-section">+--------------+-------------------+-------+----------+-------------+</span><br>| 192.168.1.4 | node-to-node mesh | up    | 03:08:17 | Established |<br>| 192.168.1.3 | node-to-node mesh | up    | 03:08:18 | Established |<br><span class="hljs-section">| 192.168.1.1 | node-to-node mesh | up    | 03:08:20 | Established |</span><br><span class="hljs-section">+--------------+-------------------+-------+----------+-------------+</span><br><br>IPv6 BGP status<br>No IPv6 peers found.<br><br>192.168.1.1 | SUCCESS | rc=0 &gt;&gt;<br>Calico process is running.<br><br><span class="hljs-section">IPv4 BGP status</span><br><span class="hljs-section">+--------------+-------------------+-------+----------+-------------+</span><br><span class="hljs-section">| PEER ADDRESS |     PEER TYPE     | STATE |  SINCE   |    INFO     |</span><br><span class="hljs-section">+--------------+-------------------+-------+----------+-------------+</span><br>| 192.168.1.2 | node-to-node mesh | up    | 03:08:21 | Established |<br>| 192.168.1.3 | node-to-node mesh | up    | 03:08:21 | Established |<br><span class="hljs-section">| 192.168.1.4 | node-to-node mesh | up    | 03:08:21 | Established |</span><br><span class="hljs-section">+--------------+-------------------+-------+----------+-------------+</span><br><br>IPv6 BGP status<br>No IPv6 peers found.<br><br>192.168.1.4 | SUCCESS | rc=0 &gt;&gt;<br>Calico process is running.<br><br><span class="hljs-section">IPv4 BGP status</span><br><span class="hljs-section">+--------------+-------------------+-------+----------+-------------+</span><br><span class="hljs-section">| PEER ADDRESS |     PEER TYPE     | STATE |  SINCE   |    INFO     |</span><br><span class="hljs-section">+--------------+-------------------+-------+----------+-------------+</span><br>| 192.168.1.2 | node-to-node mesh | up    | 03:08:17 | Established |<br>| 192.168.1.3 | node-to-node mesh | up    | 03:08:19 | Established |<br><span class="hljs-section">| 192.168.1.1 | node-to-node mesh | up    | 03:08:20 | Established |</span><br><span class="hljs-section">+--------------+-------------------+-------+----------+-------------+</span><br><br>IPv6 BGP status<br>No IPv6 peers found.<br></code></pre></td></tr></table></figure>
+
+<h2 id="kubeasz-自动安装启用-route-reflector"><a href="#kubeasz-自动安装启用-route-reflector" class="headerlink" title="kubeasz 自动安装启用 route reflector"></a>kubeasz 自动安装启用 route reflector</h2><ul>
+<li><h5 id="修改-etc-kubeasz-clusters-xxx-config-yml文件，设置配置项CALICO-RR-ENABLED-true"><a href="#修改-etc-kubeasz-clusters-xxx-config-yml文件，设置配置项CALICO-RR-ENABLED-true" class="headerlink" title="修改/etc/kubeasz/clusters/xxx/config.yml文件，设置配置项CALICO_RR_ENABLED: true"></a>修改<code>/etc/kubeasz/clusters/xxx/config.yml</code>文件，设置配置项<code>CALICO_RR_ENABLED: true</code></h5></li>
+<li><h5 id="重新执行网络安装-dk-ezctl-setup-xxx-07"><a href="#重新执行网络安装-dk-ezctl-setup-xxx-07" class="headerlink" title="重新执行网络安装 dk ezctl setup xxx 07"></a>重新执行网络安装 <code>dk ezctl setup xxx 07</code></h5></li>
+</ul>
+<h5 id="执行完成，检查bgp连接验证即可。"><a href="#执行完成，检查bgp连接验证即可。" class="headerlink" title="执行完成，检查bgp连接验证即可。"></a>执行完成，检查bgp连接验证即可。</h5><h3 id="附：手动安装route-reflector-过程讲解"><a href="#附：手动安装route-reflector-过程讲解" class="headerlink" title="附：手动安装route reflector 过程讲解"></a>附：手动安装route reflector 过程讲解</h3><ul>
+<li>选择并配置 Route Reflector 节点</li>
+</ul>
+<p>首先查看当前集群中的节点：</p>
+<figure class="highlight erlang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs erlang"><span class="hljs-string">$ </span>calicoctl get node -o wide<br>NAME     ASN       IPV4              IPV6<br><span class="hljs-function"><span class="hljs-title">k8s401</span>   <span class="hljs-params">(<span class="hljs-number">64512</span>)</span>   192.168.1.1/24</span><br><span class="hljs-function"><span class="hljs-title">k8s402</span>   <span class="hljs-params">(<span class="hljs-number">64512</span>)</span>   192.168.1.2/24</span><br><span class="hljs-function"><span class="hljs-title">k8s403</span>   <span class="hljs-params">(<span class="hljs-number">64512</span>)</span>   192.168.1.3/24</span><br><span class="hljs-function"><span class="hljs-title">k8s404</span>   <span class="hljs-params">(<span class="hljs-number">64512</span>)</span>   192.168.1.4/24</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="可以在集群中选择1个或多个节点作为-rr-节点，这里先选择节点：k8s401"><a href="#可以在集群中选择1个或多个节点作为-rr-节点，这里先选择节点：k8s401" class="headerlink" title="可以在集群中选择1个或多个节点作为 rr 节点，这里先选择节点：k8s401"></a>可以在集群中选择1个或多个节点作为 rr 节点，这里先选择节点：k8s401</h5><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment">#配置routeReflectorClusterID</span><br>calicoctl patch node k8s401 -p <span class="hljs-string">&#x27;&#123;&quot;spec&quot;: &#123;&quot;bgp&quot;: &#123;&quot;routeReflectorClusterID&quot;: &quot;244.0.0.1&quot;&#125;&#125;&#125;&#x27;</span><br><br><span class="hljs-comment">#配置node label</span><br>calicoctl patch node k8s401 -p <span class="hljs-string">&#x27;&#123;&quot;metadata&quot;: &#123;&quot;labels&quot;: &#123;&quot;route-reflector&quot;: &quot;true&quot;&#125;&#125;&#125;&#x27;</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><h5 id="配置-BGP-node-与-Route-Reflector-的连接建立规则"><a href="#配置-BGP-node-与-Route-Reflector-的连接建立规则" class="headerlink" title="配置 BGP node 与 Route Reflector 的连接建立规则"></a>配置 BGP node 与 Route Reflector 的连接建立规则</h5></li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ <span class="hljs-built_in">cat</span> &lt;&lt; <span class="hljs-string">EOF | calicoctl create -f -</span><br><span class="hljs-string">kind: BGPPeer</span><br><span class="hljs-string">apiVersion: projectcalico.org/v3</span><br><span class="hljs-string">metadata:</span><br><span class="hljs-string">  name: peer-with-route-reflectors</span><br><span class="hljs-string">spec:</span><br><span class="hljs-string">  nodeSelector: all()</span><br><span class="hljs-string">  peerSelector: route-reflector == &#x27;true&#x27;</span><br><span class="hljs-string">EOF</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><h5 id="配置全局禁用全连接（BGP-full-mesh）"><a href="#配置全局禁用全连接（BGP-full-mesh）" class="headerlink" title="配置全局禁用全连接（BGP full mesh）"></a>配置全局禁用全连接（BGP full mesh）</h5></li>
+</ul>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-string">$</span> <span class="hljs-string">cat</span> <span class="hljs-string">&lt;&lt;</span> <span class="hljs-string">EOF</span> <span class="hljs-string">|</span> <span class="hljs-string">calicoctl</span> <span class="hljs-string">create</span> <span class="hljs-string">-f</span> <span class="hljs-bullet">-</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">projectcalico.org/v3</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">BGPConfiguration</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">default</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">logSeverityScreen:</span> <span class="hljs-string">Info</span><br>  <span class="hljs-attr">nodeToNodeMeshEnabled:</span> <span class="hljs-literal">false</span><br>  <span class="hljs-attr">asNumber:</span> <span class="hljs-number">64512</span><br><span class="hljs-string">EOF</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><h5 id="验证增加-rr-之后的bgp-连接情况"><a href="#验证增加-rr-之后的bgp-连接情况" class="headerlink" title="验证增加 rr 之后的bgp 连接情况"></a>验证增加 rr 之后的bgp 连接情况</h5></li>
+</ul>
+<figure class="highlight asciidoc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><code class="hljs asciidoc">$ dk ansible -i /etc/kubeasz/clusters/xxx/hosts all -m shell -a <span class="hljs-emphasis">&#x27;/opt/kube/bin/calicoctl node status&#x27;</span><br>192.168.1.4 | SUCCESS | rc=0 &gt;&gt;<br>Calico process is running.<br><br><span class="hljs-section">IPv4 BGP status</span><br><span class="hljs-section">+--------------+-----------+-------+----------+-------------+</span><br><span class="hljs-section">| PEER ADDRESS |   PEER TYPE   | STATE |  SINCE   |    INFO     |</span><br><span class="hljs-section">+--------------+-----------+-------+----------+-------------+</span><br><span class="hljs-section">| 192.168.1.1 | node specific | up    | 11:02:55 | Established |</span><br><span class="hljs-section">+--------------+-----------+-------+----------+-------------+</span><br><br>IPv6 BGP status<br>No IPv6 peers found.<br><br>192.168.1.3 | SUCCESS | rc=0 &gt;&gt;<br>Calico process is running.<br><br><span class="hljs-section">IPv4 BGP status</span><br><span class="hljs-section">+--------------+-----------+-------+----------+-------------+</span><br><span class="hljs-section">| PEER ADDRESS | PEER TYPE | STATE |  SINCE   |    INFO     |</span><br><span class="hljs-section">+--------------+-----------+-------+----------+-------------+</span><br><span class="hljs-section">| 192.168.1.1 | node specific | up    | 11:02:55 | Established |</span><br><span class="hljs-section">+--------------+-----------+-------+----------+-------------+</span><br><br>IPv6 BGP status<br>No IPv6 peers found.<br><br>192.168.1.1 | SUCCESS | rc=0 &gt;&gt;<br>Calico process is running.<br><br><span class="hljs-section">IPv4 BGP status</span><br><span class="hljs-section">+--------------+---------------+-------+----------+-------------+</span><br><span class="hljs-section">| PEER ADDRESS |   PEER TYPE   | STATE |  SINCE   |    INFO     |</span><br><span class="hljs-section">+--------------+---------------+-------+----------+-------------+</span><br>| 192.168.1.2 | node specific | up    | 11:02:55 | Established |<br>| 192.168.1.3 | node specific | up    | 11:02:55 | Established |<br><span class="hljs-section">| 192.168.1.4 | node specific | up    | 11:02:55 | Established |</span><br><span class="hljs-section">+--------------+---------------+-------+----------+-------------+</span><br><br>IPv6 BGP status<br>No IPv6 peers found.<br><br>192.168.1.2 | SUCCESS | rc=0 &gt;&gt;<br>Calico process is running.<br><br><span class="hljs-section">IPv4 BGP status</span><br><span class="hljs-section">+--------------+-----------+-------+----------+-------------+</span><br><span class="hljs-section">| PEER ADDRESS | PEER TYPE | STATE |  SINCE   |    INFO     |</span><br><span class="hljs-section">+--------------+-----------+-------+----------+-------------+</span><br><span class="hljs-section">| 192.168.1.1 | node specific | up    | 11:02:55 | Established |</span><br><span class="hljs-section">+--------------+-----------+-------+----------+-------------+</span><br><br>IPv6 BGP status<br>No IPv6 peers found.<br></code></pre></td></tr></table></figure>
+
+<p>可以看到所有其他节点都与所选rr节点建立bgp连接。</p>
+<ul>
+<li>再增加一个 rr 节点(略)</li>
+</ul>
+<p>步骤同上，添加成功后可以看到所有其他节点都与两个rr节点建立bgp连接，两个rr节点之间也建立bgp连接。对于节点数较多的<code>K8S</code>集群建议配置2-3个 RR 节点。</p>
+<h2 id="参考文档"><a href="#参考文档" class="headerlink" title="参考文档"></a>参考文档</h2><ul>
+<li>1.<a target="_blank" rel="noopener" href="https://projectcalico.docs.tigera.io/reference/resources/bgpconfig">Calico bgp 配置指南</a></li>
+<li>2.<a target="_blank" rel="noopener" href="https://www.sohu.com/a/140033025_761420">BGP路由反射器基础</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>calico 配置 BGP Route Reflectors 2023-09-28 15:34:01.007</div>
+      <div>http://example.com/2025/01/16/calico 配置 BGP Route Reflectors-calico-pei-zhi-bgproutereflectors/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/acme%E8%87%AA%E5%8A%A8%E6%9B%B4%E6%96%B0%E8%AF%81%E4%B9%A6-acme-zi-dong-geng-xin-zheng-shu/" title="acme自动更新证书 2024-04-03 14:41:44.289">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">acme自动更新证书 2024-04-03 14:41:44.289</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/TEG%E4%B8%8Eistio%E9%9B%86%E6%88%90-teg-yu-istio-ji-cheng/" title="TEG与istio集成 2024-08-02 17:51:20.389">
+                        <span class="hidden-mobile">TEG与istio集成 2024-08-02 17:51:20.389</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

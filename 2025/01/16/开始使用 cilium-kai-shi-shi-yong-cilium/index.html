@@ -1,0 +1,669 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="开始使用 cilium以下为简要翻译 cilium doc上的一个应用示例原文，部署在单节点k8s 环境的实践。 部署示例应用官方文档用几个pod&#x2F;svc 抽象一个有趣的应用场景（星战迷）：星战中帝国方建造了被称为“终极武器”的“死星”，它是一个卫星大小的战斗空间站，它的核心是使用凯伯晶体（Kyber Crystal）的超级激光炮，剧中它的首秀就以完全火力摧毁了“杰达圣城”（Jedha）。下面将用">
+<meta property="og:type" content="article">
+<meta property="og:title" content="开始使用 cilium 2023-09-28 15:34:49.205">
+<meta property="og:url" content="http://example.com/2025/01/16/%E5%BC%80%E5%A7%8B%E4%BD%BF%E7%94%A8%20cilium-kai-shi-shi-yong-cilium/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="开始使用 cilium以下为简要翻译 cilium doc上的一个应用示例原文，部署在单节点k8s 环境的实践。 部署示例应用官方文档用几个pod&#x2F;svc 抽象一个有趣的应用场景（星战迷）：星战中帝国方建造了被称为“终极武器”的“死星”，它是一个卫星大小的战斗空间站，它的核心是使用凯伯晶体（Kyber Crystal）的超级激光炮，剧中它的首秀就以完全火力摧毁了“杰达圣城”（Jedha）。下面将用">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://docs.cilium.io/en/stable/_images/cilium_http_gsg.png">
+<meta property="og:image" content="https://docs.cilium.io/en/stable/_images/cilium_http_l3_l4_gsg.png">
+<meta property="og:image" content="https://docs.cilium.io/en/stable/_images/cilium_http_l3_l4_l7_gsg.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.089Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:19.154Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://docs.cilium.io/en/stable/_images/cilium_http_gsg.png">
+  
+  
+  
+  <title>开始使用 cilium 2023-09-28 15:34:49.205 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="开始使用 cilium 2023-09-28 15:34:49.205"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          12 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">开始使用 cilium 2023-09-28 15:34:49.205</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="开始使用-cilium"><a href="#开始使用-cilium" class="headerlink" title="开始使用 cilium"></a>开始使用 cilium</h2><p>以下为简要翻译 <code>cilium doc</code>上的一个应用示例<a target="_blank" rel="noopener" href="https://docs.cilium.io/en/stable/gettingstarted/http/">原文</a>，部署在单节点k8s 环境的实践。</p>
+<h3 id="部署示例应用"><a href="#部署示例应用" class="headerlink" title="部署示例应用"></a>部署示例应用</h3><p>官方文档用几个<code>pod/svc</code> 抽象一个有趣的应用场景（星战迷）：星战中帝国方建造了被称为“终极武器”的“死星”，它是一个卫星大小的战斗空间站，它的核心是使用凯伯晶体（Kyber Crystal）的超级激光炮，剧中它的首秀就以完全火力摧毁了“杰达圣城”（Jedha）。下面将用运行于 k8s上的 pod&#x2F;svc&#x2F;cilium 等模拟“死星“的一个“飞船登陆”系统安全策略设计。</p>
+<ul>
+<li>deploy&#x2F;deathstar：作为控制整个“死星”的飞船登陆管理系统，它暴露一个SVC，提供HTTP REST 接口给飞船请求登陆使用；</li>
+<li>pod&#x2F;tiefighter：作为“帝国”方的常规战斗飞船，它会调用上述 HTTP 接口，请求登陆“死星”；</li>
+<li>pod&#x2F;xwing：作为“盟军”方的飞行舰，它也尝试调用 HTTP 接口，请求登陆“死星”；</li>
+</ul>
+<img alt="cilium_http_gsg" width="400" height="300" src="https://docs.cilium.io/en/stable/_images/cilium_http_gsg.png" srcset="/img/loading.gif" lazyload>
+
+<p>根据文件<a href="../../../roles/cilium/files/star_war_example/http-sw-app.yaml">http-sw-app.yaml</a> 创建 <code>$ kubectl create -f http-sw-app.yaml</code> 后，验证如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ kubectl get pods,svc<br>NAME                             READY     STATUS    RESTARTS   AGE<br>pod/deathstar-5fc7c7795d-djf2q   1/1       Running   0          4h<br>pod/deathstar-5fc7c7795d-hrgst   1/1       Running   0          4h<br>pod/tiefighter                   1/1       Running   0          4h<br>pod/xwing                        1/1       Running   0          4h<br><br>NAME                 TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE<br>service/deathstar    ClusterIP   10.68.242.130   &lt;none&gt;        80/TCP    4h<br>service/kubernetes   ClusterIP   10.68.0.1       &lt;none&gt;        443/TCP   5h<br></code></pre></td></tr></table></figure>
+
+<p>每个 POD 在 <code>cilium</code> 中都表示为 <code>Endpoint</code>，初始每个 <code>Endpoint</code> 的”进出安全策略“状态均为 <code>Disabled</code>，如下：(已省略部分无关 POD 信息)</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ kubectl <span class="hljs-built_in">exec</span> -n kube-system cilium-6t5vx -- cilium endpoint list<br>ENDPOINT   POLICY (ingress)   POLICY (egress)   IDENTITY   LABELS (<span class="hljs-built_in">source</span>:key[=value])                                    IPv6                  IPv4           STATUS   <br>           ENFORCEMENT        ENFORCEMENT                                                                                                                      <br>643        Disabled           Disabled          31371      k8s:class=deathstar                                            f00d::ac14:0:0:283    172.20.0.246   ready   <br>                                                           k8s:io.cilium.k8s.policy.serviceaccount=default                                                             <br>                                                           k8s:io.kubernetes.pod.namespace=default                                                                     <br>                                                           k8s:org=empire                                                                                              <br>1011       Disabled           Disabled          31371      k8s:class=deathstar                                            f00d::ac14:0:0:3f3    172.20.0.63    ready   <br>                                                           k8s:io.cilium.k8s.policy.serviceaccount=default                                                             <br>                                                           k8s:io.kubernetes.pod.namespace=default                                                                     <br>                                                           k8s:org=empire                                                                                              <br>32030      Disabled           Disabled          5350       k8s:class=tiefighter                                           f00d::ac14:0:0:7d1e   172.20.0.201   ready   <br>                                                           k8s:io.cilium.k8s.policy.serviceaccount=default                                                             <br>                                                           k8s:io.kubernetes.pod.namespace=default                                                                     <br>                                                           k8s:org=empire                                                                                              <br>45943      Disabled           Disabled          14309      k8s:class=xwing                                                f00d::ac14:0:0:b377   172.20.0.189   ready   <br>                                                           k8s:io.cilium.k8s.policy.serviceaccount=default                                                             <br>                                                           k8s:io.kubernetes.pod.namespace=default                                                                     <br>                                                           k8s:org=alliance                                                                                            <br>52035      Disabled           Disabled          4          reserved:health                                                f00d::ac14:0:0:cb43   172.20.0.92    ready   <br></code></pre></td></tr></table></figure>
+
+<h3 id="检查初始状态"><a href="#检查初始状态" class="headerlink" title="检查初始状态"></a>检查初始状态</h3><p>当然“死星”应该只允许“帝国”的飞船着陆，因为没有应用任何策略，所以初始状态下“帝国”和“联盟”的飞船都可以登陆，如下测试：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ kubectl <span class="hljs-built_in">exec</span> xwing -- curl -s -XPOST deathstar.default.svc.cluster.local/v1/request-landing<br>Ship landed <span class="hljs-comment"># 成功着陆</span><br>$ kubectl <span class="hljs-built_in">exec</span> tiefighter -- curl -s -XPOST deathstar.default.svc.cluster.local/v1/request-landing<br>Ship landed <span class="hljs-comment"># 成功着陆</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="应用-L3-L4-策略"><a href="#应用-L3-L4-策略" class="headerlink" title="应用 L3&#x2F;L4 策略"></a>应用 L3&#x2F;L4 策略</h3><p>现在我们应用策略，仅让带有标签 <code>org=empire</code>的飞船登陆“死星”；那么带有标签 <code>org=alliance</code>的“联盟”飞船将禁止登陆；这个就是我们熟悉的传统L3&#x2F;L4 防火墙策略，并跟踪连接（会话）状态；</p>
+<img alt="cilium_http_l3_l4_gsg" width="400" height="300" src="https://docs.cilium.io/en/stable/_images/cilium_http_l3_l4_gsg.png" srcset="/img/loading.gif" lazyload>
+
+<p>根据文件<a href="../../../roles/cilium/files/star_war_example/sw_l3_l4_policy.yaml">sw_l3_l4_policy.yaml</a> 创建 <code>$ kubectl apply -f sw_l3_l4_policy.yaml</code> 后，验证如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ kubectl <span class="hljs-built_in">exec</span> tiefighter -- curl -s -XPOST deathstar.default.svc.cluster.local/v1/request-landing<br>Ship landed <span class="hljs-comment"># 成功着陆</span><br><br>$ kubectl <span class="hljs-built_in">exec</span> xwing -- curl -s -XPOST deathstar.default.svc.cluster.local/v1/request-landing<br><span class="hljs-comment"># 失败超时</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="查看安全策略"><a href="#查看安全策略" class="headerlink" title="查看安全策略"></a>查看安全策略</h3><p>再次执行 <code>cilium endpoint list</code>，可以看到标签带<code>deathstar</code>的 POD 已经应用了 <code>Ingress</code>方向的策略：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># kubectl exec -n kube-system cilium-6t5vx -- cilium endpoint list</span><br>ENDPOINT   POLICY (ingress)   POLICY (egress)   IDENTITY   LABELS (<span class="hljs-built_in">source</span>:key[=value])                                    IPv6                  IPv4           STATUS   <br>           ENFORCEMENT        ENFORCEMENT                                                                                                                      <br>643        Enabled            Disabled          31371      k8s:class=deathstar                                            f00d::ac14:0:0:283    172.20.0.246   ready   <br>                                                           k8s:io.cilium.k8s.policy.serviceaccount=default                                                             <br>                                                           k8s:io.kubernetes.pod.namespace=default                                                                     <br>                                                           k8s:org=empire                                                                                              <br>1011       Enabled            Disabled          31371      k8s:class=deathstar                                            f00d::ac14:0:0:3f3    172.20.0.63    ready   <br>                                                           k8s:io.cilium.k8s.policy.serviceaccount=default                                                             <br>                                                           k8s:io.kubernetes.pod.namespace=default                                                                     <br>                                                           k8s:org=empire                                                                                              <br>32030      Disabled           Disabled          5350       k8s:class=tiefighter                                           f00d::ac14:0:0:7d1e   172.20.0.201   ready   <br>                                                           k8s:io.cilium.k8s.policy.serviceaccount=default                                                             <br>                                                           k8s:io.kubernetes.pod.namespace=default                                                                     <br>                                                           k8s:org=empire                                                                                              <br>45943      Disabled           Disabled          14309      k8s:class=xwing                                                f00d::ac14:0:0:b377   172.20.0.189   ready   <br>                                                           k8s:io.cilium.k8s.policy.serviceaccount=default                                                             <br>                                                           k8s:io.kubernetes.pod.namespace=default                                                                     <br>                                                           k8s:org=alliance                                                                                            <br>52035      Disabled           Disabled          4          reserved:health                                                f00d::ac14:0:0:cb43   172.20.0.92    ready   <br></code></pre></td></tr></table></figure>
+
+<p>查看具体策略内容 <code>kubectl describe cnp rule1</code></p>
+<h3 id="L7-安全策略"><a href="#L7-安全策略" class="headerlink" title="L7 安全策略"></a>L7 安全策略</h3><p>上述的策略可以进行简单的安全防护了，但是“死星”的这个系统还有很多复杂的功能；比如它还提供了一个内部维护接口，如果被不合理调用将带来严重灾难性后果，也许“联盟”勇士劫持了一架“帝国”飞船正在进行这个任务（虽然我们内心希望他能够成功摧毁“死星”）。不幸的是“死星”系统设计者考虑到这个风险，它有办法严格限制每架飞船能够请求的权限。</p>
+<p>没有限制飞船请求权限时，如下运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ kubectl <span class="hljs-built_in">exec</span> tiefighter -- curl -s -XPUT deathstar.default.svc.cluster.local/v1/exhaust-port<br>Panic: deathstar exploded<br><br>goroutine 1 [running]:<br>main.HandleGarbage(0x2080c3f50, 0x2, 0x4, 0x425c0, 0x5, 0xa)<br>        /code/src/github.com/empire/deathstar/<br>        temp/main.go:9 +0x64<br>main.main()<br>        /code/src/github.com/empire/deathstar/<br>        temp/main.go:5 +0x85<br></code></pre></td></tr></table></figure>
+
+<img alt="cilium_http_l3_l4_l7_gsg" width="400" height="300" src="https://docs.cilium.io/en/stable/_images/cilium_http_l3_l4_l7_gsg.png" srcset="/img/loading.gif" lazyload>
+
+<p>限制L7 的安全策略，根据文件<a href="../../../roles/cilium/files/star_war_example/sw_l3_l4_l7_policy.yaml">sw_l3_l4_l7_policy.yaml</a> 创建 <code>$ kubectl apply -f sw_l3_l4_l7_policy.yaml</code> 后，验证如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ kubectl <span class="hljs-built_in">exec</span> tiefighter -- curl -s -XPOST deathstar.default.svc.cluster.local/v1/request-landing<br>Ship landed<br>$ kubectl <span class="hljs-built_in">exec</span> tiefighter -- curl -s -XPUT deathstar.default.svc.cluster.local/v1/exhaust-port<br>Access denied<br></code></pre></td></tr></table></figure>
+
+<p>我们同样可以使用 <code>kubectl desribe cnp</code>检查更新的策略，或者使用 <code>cilium</code> 命令行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ kubectl <span class="hljs-built_in">exec</span> -n kube-system cilium-6t5vx -- cilium policy get<br>[<br>  &#123;<br>    <span class="hljs-string">&quot;endpointSelector&quot;</span>: &#123;<br>      <span class="hljs-string">&quot;matchLabels&quot;</span>: &#123;<br>        <span class="hljs-string">&quot;any:class&quot;</span>: <span class="hljs-string">&quot;deathstar&quot;</span>,<br>        <span class="hljs-string">&quot;any:org&quot;</span>: <span class="hljs-string">&quot;empire&quot;</span>,<br>        <span class="hljs-string">&quot;k8s:io.kubernetes.pod.namespace&quot;</span>: <span class="hljs-string">&quot;default&quot;</span><br>      &#125;<br>    &#125;,<br>    <span class="hljs-string">&quot;ingress&quot;</span>: [<br>      &#123;<br>        <span class="hljs-string">&quot;fromEndpoints&quot;</span>: [<br>          &#123;<br>            <span class="hljs-string">&quot;matchLabels&quot;</span>: &#123;<br>              <span class="hljs-string">&quot;any:org&quot;</span>: <span class="hljs-string">&quot;empire&quot;</span>,<br>              <span class="hljs-string">&quot;k8s:io.kubernetes.pod.namespace&quot;</span>: <span class="hljs-string">&quot;default&quot;</span><br>            &#125;<br>          &#125;<br>        ],<br>        <span class="hljs-string">&quot;toPorts&quot;</span>: [<br>          &#123;<br>            <span class="hljs-string">&quot;ports&quot;</span>: [<br>              &#123;<br>                <span class="hljs-string">&quot;port&quot;</span>: <span class="hljs-string">&quot;80&quot;</span>,<br>                <span class="hljs-string">&quot;protocol&quot;</span>: <span class="hljs-string">&quot;TCP&quot;</span><br>              &#125;<br>            ],<br>            <span class="hljs-string">&quot;rules&quot;</span>: &#123;<br>              <span class="hljs-string">&quot;http&quot;</span>: [<br>                &#123;<br>                  <span class="hljs-string">&quot;path&quot;</span>: <span class="hljs-string">&quot;/v1/request-landing&quot;</span>,<br>                  <span class="hljs-string">&quot;method&quot;</span>: <span class="hljs-string">&quot;POST&quot;</span><br>                &#125;<br>              ]<br>            &#125;<br>          &#125;<br>        ]<br>      &#125;<br>    ],<br>    <span class="hljs-string">&quot;labels&quot;</span>: [<br>      &#123;<br>        <span class="hljs-string">&quot;key&quot;</span>: <span class="hljs-string">&quot;io.cilium.k8s.policy.name&quot;</span>,<br>        <span class="hljs-string">&quot;value&quot;</span>: <span class="hljs-string">&quot;rule1&quot;</span>,<br>        <span class="hljs-string">&quot;source&quot;</span>: <span class="hljs-string">&quot;k8s&quot;</span><br>      &#125;,<br>      &#123;<br>        <span class="hljs-string">&quot;key&quot;</span>: <span class="hljs-string">&quot;io.cilium.k8s.policy.namespace&quot;</span>,<br>        <span class="hljs-string">&quot;value&quot;</span>: <span class="hljs-string">&quot;default&quot;</span>,<br>        <span class="hljs-string">&quot;source&quot;</span>: <span class="hljs-string">&quot;k8s&quot;</span><br>      &#125;<br>    ]<br>  &#125;<br>]<br>Revision: 267<br></code></pre></td></tr></table></figure>
+
+<p>我们看到 <code>cilium</code> 可以实现 <code>7层 HTTP </code>协议的请求方法（GET&#x2F;PUT&#x2F;POST等）、路径（&#x2F;v1&#x2F;request-landing）等等安全策略；另外，它还可以防护其他应用（如：Kafka, gRPC, Elasticsearch），可以去官网文档示例学习！</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/cilium/cilium">cilium github</a></li>
+<li><a target="_blank" rel="noopener" href="http://docs.cilium.io/">cilium doc</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>开始使用 cilium 2023-09-28 15:34:49.205</div>
+      <div>http://example.com/2025/01/16/开始使用 cilium-kai-shi-shi-yong-cilium/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E5%AE%B9%E5%99%A8%E5%86%85%E7%9A%84%201%20%E5%8F%B7%E8%BF%9B%E7%A8%8B-rong-qi-nei-de-1-hao-jin-cheng/" title="容器内的 1 号进程 2024-04-03 14:46:29.998">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">容器内的 1 号进程 2024-04-03 14:46:29.998</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E5%A6%82%E4%BD%95%E4%B8%BAK8S%E4%BF%9D%E9%A9%BE%E6%8A%A4%E8%88%AA-ru-he-wei-k8s-bao-jia-hu-hang/" title="如何为K8S保驾护航 2024-04-16 17:09:21.962">
+                        <span class="hidden-mobile">如何为K8S保驾护航 2024-04-16 17:09:21.962</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

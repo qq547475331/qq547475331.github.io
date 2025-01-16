@@ -1,0 +1,723 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="简介在 Linux 系统中，系统启动的时候先是执行内核态的代码，然后在内核中调用 1 号进程的代码，从内核态切换到用户态。内核执行的第一个用户态程序就是 1 号进程。目前主流的 Linux 发行版，无论是 RedHat 系的还是 Debian 系的，都会把 &#x2F;sbin&#x2F;init 作为符号链接指向 Systemd。Systemd 是目前最流行的 Linux init 进程，在它之">
+<meta property="og:type" content="article">
+<meta property="og:title" content="容器内的 1 号进程 2024-04-03 14:46:29.998">
+<meta property="og:url" content="http://example.com/2025/01/16/%E5%AE%B9%E5%99%A8%E5%86%85%E7%9A%84%201%20%E5%8F%B7%E8%BF%9B%E7%A8%8B-rong-qi-nei-de-1-hao-jin-cheng/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="简介在 Linux 系统中，系统启动的时候先是执行内核态的代码，然后在内核中调用 1 号进程的代码，从内核态切换到用户态。内核执行的第一个用户态程序就是 1 号进程。目前主流的 Linux 发行版，无论是 RedHat 系的还是 Debian 系的，都会把 &#x2F;sbin&#x2F;init 作为符号链接指向 Systemd。Systemd 是目前最流行的 Linux init 进程，在它之">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191525373.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.089Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:19.151Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191525373.png">
+  
+  
+  
+  <title>容器内的 1 号进程 2024-04-03 14:46:29.998 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="容器内的 1 号进程 2024-04-03 14:46:29.998"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.8k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          32 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">容器内的 1 号进程 2024-04-03 14:46:29.998</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><h5 id="在-Linux-系统中，系统启动的时候先是执行内核态的代码，然后在内核中调用-1-号进程的代码，从内核态切换到用户态。内核执行的第一个用户态程序就是-1-号进程。"><a href="#在-Linux-系统中，系统启动的时候先是执行内核态的代码，然后在内核中调用-1-号进程的代码，从内核态切换到用户态。内核执行的第一个用户态程序就是-1-号进程。" class="headerlink" title="在 Linux 系统中，系统启动的时候先是执行内核态的代码，然后在内核中调用 1 号进程的代码，从内核态切换到用户态。内核执行的第一个用户态程序就是 1 号进程。"></a>在 Linux 系统中，系统启动的时候先是执行内核态的代码，然后在内核中调用 <strong>1 号进程</strong>的代码，从内核态切换到用户态。内核执行的第一个用户态程序就是 <strong>1 号进程。</strong></h5><h5 id="目前主流的-Linux-发行版，无论是-RedHat-系的还是-Debian-系的，都会把-sbin-init-作为符号链接指向-Systemd。Systemd-是目前最流行的-Linux-init-进程，在它之前还有-SysVinit、UpStart-等-Linux-init-进程。"><a href="#目前主流的-Linux-发行版，无论是-RedHat-系的还是-Debian-系的，都会把-sbin-init-作为符号链接指向-Systemd。Systemd-是目前最流行的-Linux-init-进程，在它之前还有-SysVinit、UpStart-等-Linux-init-进程。" class="headerlink" title="目前主流的 Linux 发行版，无论是 RedHat 系的还是 Debian 系的，都会把 &#x2F;sbin&#x2F;init 作为符号链接指向 Systemd。Systemd 是目前最流行的 Linux init 进程，在它之前还有 SysVinit、UpStart 等 Linux init 进程。"></a>目前主流的 Linux 发行版，无论是 RedHat 系的还是 Debian 系的，都会把 &#x2F;sbin&#x2F;init 作为符号链接指向 Systemd。Systemd 是目前最流行的 Linux init 进程，在它之前还有 SysVinit、UpStart 等 Linux init 进程。</h5><h5 id="同样在容器中也有-1-号进程的概念，一旦容器建立了自己的-Pid-Namespace（进程命名空间-，这个-Namespace-里的进程号也是从-1-开始标记的。"><a href="#同样在容器中也有-1-号进程的概念，一旦容器建立了自己的-Pid-Namespace（进程命名空间-，这个-Namespace-里的进程号也是从-1-开始标记的。" class="headerlink" title="同样在容器中也有 1 号进程的概念，一旦容器建立了自己的 Pid Namespace（进程命名空间)，这个 Namespace 里的进程号也是从 1 开始标记的。"></a>同样在<strong>容器中</strong>也有 1 号进程的概念，一旦容器建立了自己的 <strong>Pid Namespace（进程命名空间)，</strong>这个 Namespace 里的进程号也是从 1 开始标记的。</h5><h5 id="1-号进程是第一个用户态的进程，由它直接或者间接创建了容器中的其他进程。"><a href="#1-号进程是第一个用户态的进程，由它直接或者间接创建了容器中的其他进程。" class="headerlink" title="1 号进程是第一个用户态的进程，由它直接或者间接创建了容器中的其他进程。"></a>1 号进程是第一个用户态的进程，由它直接或者间接创建了容器中的其他进程。</h5><h2 id="为什么杀不掉容器中-1号进程"><a href="#为什么杀不掉容器中-1号进程" class="headerlink" title="为什么杀不掉容器中 1号进程"></a>为什么杀不掉容器中 1号进程</h2><h5 id="通过几个实际的示例来说明"><a href="#通过几个实际的示例来说明" class="headerlink" title="通过几个实际的示例来说明"></a>通过几个实际的示例来说明</h5><h5 id="下面示例统一用如下-Dockerfile，启动一个休闲-600s-的容器。"><a href="#下面示例统一用如下-Dockerfile，启动一个休闲-600s-的容器。" class="headerlink" title="下面示例统一用如下 Dockerfile，启动一个休闲 600s 的容器。"></a>下面示例统一用如下 Dockerfile，启动一个休闲 <code>600s</code> 的容器。</h5><figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs css"><span class="hljs-selector-tag">FROM</span> ubuntu<br>ENTRYPOINT <span class="hljs-selector-attr">[<span class="hljs-string">&quot;sleep&quot;</span>, <span class="hljs-string">&quot;600&quot;</span>]</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="现象"><a href="#现象" class="headerlink" title="现象"></a>现象</h3><p><strong>示例一</strong></p>
+<h5 id="在容器中使用-kill-9，kill-15-杀死-1-号进程"><a href="#在容器中使用-kill-9，kill-15-杀死-1-号进程" class="headerlink" title="在容器中使用 kill -9，kill -15 杀死 1 号进程"></a>在容器中使用 <code>kill -9，kill -15</code> 杀死 1 号进程</h5><figure class="highlight tap"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs tap">$ docker run --name test -d test-init:v1<br>$ docker exec -it test bash<br>[root@4db3c6f1766b /]<span class="hljs-comment"># ps -ef</span><br>UID         PID   PPID  C STIME TTY          TIME CMD<br>root         <span class="hljs-number"> 1 </span>    <span class="hljs-number"> 0 </span><span class="hljs-number"> 0 </span>01:38 ?        00:00:00 sleep 600<br>root         <span class="hljs-number"> 6 </span>    <span class="hljs-number"> 0 </span><span class="hljs-number"> 2 </span>01:39 pts/0    00:00:00 bash<br>root        <span class="hljs-number"> 13 </span>    <span class="hljs-number"> 6 </span><span class="hljs-number"> 0 </span>01:39 pts/0    00:00:00 ps -ef<br><br>[root@5cc69036b7b2 /]<span class="hljs-comment"># kill 1</span><br>[root@5cc69036b7b2 /]<span class="hljs-comment"># kill -9 1</span><br>[root@5cc69036b7b2 /]<span class="hljs-comment"># ps -ef</span><br>UID         PID   PPID  C STIME TTY          TIME CMD<br>root         <span class="hljs-number"> 1 </span>    <span class="hljs-number"> 0 </span><span class="hljs-number"> 0 </span>01:38 ?        00:00:00 sleep 600<br>root         <span class="hljs-number"> 6 </span>    <span class="hljs-number"> 0 </span><span class="hljs-number"> 2 </span>01:39 pts/0    00:00:00 bash<br>root        <span class="hljs-number"> 13 </span>    <span class="hljs-number"> 6 </span><span class="hljs-number"> 0 </span>01:39 pts/0    00:00:00 ps -ef<br></code></pre></td></tr></table></figure>
+
+<h5 id="当我们完成前面的操作，就会发现无论运行-kill-1-对应-Linux-中的-SIGTERM-信号-还是-kill-9-1-对应-Linux-中的-SIGKILL-信号-，都无法让进程终止。那么问题来了，这两个常常用来终止进程的信号，都对容器中的-1号进程不起作用。"><a href="#当我们完成前面的操作，就会发现无论运行-kill-1-对应-Linux-中的-SIGTERM-信号-还是-kill-9-1-对应-Linux-中的-SIGKILL-信号-，都无法让进程终止。那么问题来了，这两个常常用来终止进程的信号，都对容器中的-1号进程不起作用。" class="headerlink" title="当我们完成前面的操作，就会发现无论运行 kill 1 (对应 Linux 中的 SIGTERM 信号) 还是 kill -9 1(对应 Linux 中的 SIGKILL 信号)，都无法让进程终止。那么问题来了，这两个常常用来终止进程的信号，都对容器中的 1号进程不起作用。"></a>当我们完成前面的操作，就会发现无论运行 <code>kill 1</code> (对应 Linux 中的 <code>SIGTERM</code> 信号) 还是 <code>kill -9 1</code>(对应 Linux 中的 <code>SIGKILL</code> 信号)，都无法让进程终止。那么问题来了，这两个常常用来终止进程的信号，都对容器中的 1号进程不起作用。</h5><p><strong>示例二</strong></p>
+<h5 id="在宿主机上使用-kill-9-kill-15-杀死容器-1-号进程对应在宿主机上的进程"><a href="#在宿主机上使用-kill-9-kill-15-杀死容器-1-号进程对应在宿主机上的进程" class="headerlink" title="在宿主机上使用 kill -9, kill -15 杀死容器 1 号进程对应在宿主机上的进程"></a>在宿主机上使用 <code>kill -9, kill -15</code> 杀死容器 1 号进程对应在<strong>宿主机上的进程</strong></h5><figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs powershell"><span class="hljs-comment"># 获取宿主机上对应容器的进程</span><br><span class="hljs-variable">$</span> docker inspect test | grep Pid<br><span class="hljs-variable">$</span> <span class="hljs-built_in">kill</span> <span class="hljs-literal">-15</span> <span class="hljs-number">24446</span><br><span class="hljs-variable">$</span> <span class="hljs-built_in">ps</span> <span class="hljs-literal">-ef</span> | grep <span class="hljs-number">24446</span><br>root      <span class="hljs-number">24446</span>  <span class="hljs-number">24404</span>  <span class="hljs-number">0</span> <span class="hljs-number">09</span>:<span class="hljs-number">38</span> ?        <span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span> <span class="hljs-built_in">sleep</span> <span class="hljs-number">600</span><br>root      <span class="hljs-number">54735</span>  <span class="hljs-number">44623</span>  <span class="hljs-number">0</span> <span class="hljs-number">09</span>:<span class="hljs-number">48</span> pts/<span class="hljs-number">0</span>    <span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span> grep <span class="hljs-literal">--color</span>=auto <span class="hljs-number">24446</span><br><span class="hljs-variable">$</span> <span class="hljs-built_in">kill</span> <span class="hljs-literal">-9</span> <span class="hljs-number">24446</span><br><span class="hljs-variable">$</span> <span class="hljs-built_in">ps</span> <span class="hljs-literal">-ef</span> | grep <span class="hljs-number">24446</span><br>root      <span class="hljs-number">55167</span>  <span class="hljs-number">44623</span>  <span class="hljs-number">0</span> <span class="hljs-number">09</span>:<span class="hljs-number">48</span> pts/<span class="hljs-number">0</span>    <span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span> grep <span class="hljs-literal">--color</span>=auto <span class="hljs-number">24446</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="发现-kill-15-无法杀死容器进程，而-kill-9-却可以。"><a href="#发现-kill-15-无法杀死容器进程，而-kill-9-却可以。" class="headerlink" title="发现 kill -15 无法杀死容器进程，而 kill -9 却可以。"></a>发现 <code>kill -15</code> 无法杀死容器进程，而 <code>kill -9</code> 却可以。</h5><p><strong>示例三</strong></p>
+<h5 id="在宿主机上使用-docker-stop-杀死容器"><a href="#在宿主机上使用-docker-stop-杀死容器" class="headerlink" title="在宿主机上使用 docker stop &lt;container-id&gt; 杀死容器"></a>在宿主机上使用 <code>docker stop &lt;container-id&gt;</code> 杀死容器</h5><figure class="highlight crmsh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs crmsh">$ /usr/bin/time docker <span class="hljs-literal">stop</span> e58851b5452f<br>e58851b5452f<br><br>real <span class="hljs-number">0m</span> <span class="hljs-number">10.19s</span><br><span class="hljs-keyword">user</span> <span class="hljs-title">0m</span> <span class="hljs-number">0.04s</span><br>sys <span class="hljs-number">0m</span> <span class="hljs-number">0.03s</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="发现经过了-10s-左右容器进程才杀死。"><a href="#发现经过了-10s-左右容器进程才杀死。" class="headerlink" title="发现经过了 10s 左右容器进程才杀死。"></a>发现经过了 <code>10s</code> 左右容器进程才杀死。</h5><p><strong>示例四</strong></p>
+<h5 id="把容器中的-sleep-换成-Golang-程序，使用-kill-9，kill-15-杀死进程"><a href="#把容器中的-sleep-换成-Golang-程序，使用-kill-9，kill-15-杀死进程" class="headerlink" title="把容器中的 sleep 换成 Golang 程序，使用 kill -9，kill -15 杀死进程"></a>把容器中的 sleep 换成 Golang 程序，使用 <code>kill -9，kill -15</code> 杀死进程</h5><h5 id="Golang-代码如下："><a href="#Golang-代码如下：" class="headerlink" title="Golang 代码如下："></a>Golang 代码如下：</h5><figure class="highlight arcade"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs arcade">package main<br><br><span class="hljs-keyword">import</span> (<br>       <span class="hljs-string">&quot;fmt&quot;</span><br>       <span class="hljs-string">&quot;time&quot;</span><br>)<br><br>func main() &#123;<br>       fmt.Println(<span class="hljs-string">&quot;Start app\n&quot;</span>)<br>       <span class="hljs-built_in">time</span>.Sleep(<span class="hljs-built_in">time</span>.Duration(<span class="hljs-number">100000</span>) * <span class="hljs-built_in">time</span>.<span class="hljs-built_in">Millisecond</span>)<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h5 id="Dockerfile-如下："><a href="#Dockerfile-如下：" class="headerlink" title="Dockerfile 如下："></a>Dockerfile 如下：</h5><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-keyword">FROM</span> ubuntu<br><span class="hljs-comment"># go-demo 就是上面代码编译出的二进制程序</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> go-demo .</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> <span class="hljs-built_in">chmod</span> +x go-demo</span><br><span class="hljs-keyword">ENTRYPOINT</span><span class="language-bash"> [<span class="hljs-string">&quot;./go-demo&quot;</span>]</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="进入容器操作"><a href="#进入容器操作" class="headerlink" title="进入容器操作"></a>进入容器操作</h5><figure class="highlight tap"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs tap">$docker exec -it 7a62c48d0d1f bash<br>[root@7a62c48d0d1f /]<span class="hljs-comment"># ps -ef</span><br>UID         PID   PPID  C STIME TTY          TIME CMD<br>root         <span class="hljs-number"> 1 </span>    <span class="hljs-number"> 0 </span><span class="hljs-number"> 0 </span>02:04 ?        00:00:00 ./go-demo<br>root        <span class="hljs-number"> 10 </span>    <span class="hljs-number"> 0 </span><span class="hljs-number"> 1 </span>02:04 pts/0    00:00:00 bash<br>root        <span class="hljs-number"> 23 </span>   <span class="hljs-number"> 10 </span><span class="hljs-number"> 0 </span>02:04 pts/0    00:00:00 ps -ef<br>[root@7a62c48d0d1f /]<span class="hljs-comment"># kill -9 1</span><br>[root@7a62c48d0d1f /]<span class="hljs-comment"># ps -ef</span><br>UID         PID   PPID  C STIME TTY          TIME CMD<br>root         <span class="hljs-number"> 1 </span>    <span class="hljs-number"> 0 </span><span class="hljs-number"> 0 </span>02:04 ?        00:00:00 ./go-demo<br>root        <span class="hljs-number"> 10 </span>    <span class="hljs-number"> 0 </span><span class="hljs-number"> 0 </span>02:04 pts/0    00:00:00 bash<br>root        <span class="hljs-number"> 24 </span>   <span class="hljs-number"> 10 </span><span class="hljs-number"> 0 </span>02:04 pts/0    00:00:00 ps -ef<br>[root@7a62c48d0d1f /]<span class="hljs-comment"># kill 1</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="发现-kill-9-无法杀死进程，kill-15-可以。"><a href="#发现-kill-9-无法杀死进程，kill-15-可以。" class="headerlink" title="发现 kill -9 无法杀死进程，kill -15 可以。"></a>发现 <code>kill -9</code> 无法杀死进程，<code>kill -15</code> 可以。</h5><h5 id="要解释以上现象，需要先了解-Linux-中信号机制。"><a href="#要解释以上现象，需要先了解-Linux-中信号机制。" class="headerlink" title="要解释以上现象，需要先了解 Linux 中信号机制。"></a>要解释以上现象，需要先了解 Linux 中信号机制。</h5><h3 id="Linux-信号"><a href="#Linux-信号" class="headerlink" title="Linux 信号"></a>Linux 信号</h3><h5 id="我们运行-kill-命令，其实在-Linux-里就是发送一个信号。信号一般会从-1-开始编号，通常来说，信号编号是-1-到-64。在-Linux-上我们可以用-kill-l-来看这些信号的编号和名字"><a href="#我们运行-kill-命令，其实在-Linux-里就是发送一个信号。信号一般会从-1-开始编号，通常来说，信号编号是-1-到-64。在-Linux-上我们可以用-kill-l-来看这些信号的编号和名字" class="headerlink" title="我们运行 kill 命令，其实在 Linux 里就是发送一个信号。信号一般会从 1 开始编号，通常来说，信号编号是 1 到 64。在 Linux 上我们可以用 kill -l 来看这些信号的编号和名字"></a>我们运行 kill 命令，其实在 Linux 里就是发送一个信号。信号一般会从 1 开始编号，通常来说，信号编号是 1 到 64。在 Linux 上我们可以用 <code>kill -l</code> 来看这些信号的编号和名字</h5><figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs powershell"><span class="hljs-variable">$</span> <span class="hljs-built_in">kill</span> <span class="hljs-literal">-l</span><br> <span class="hljs-number">1</span>) SIGHUP      <span class="hljs-number">2</span>) SIGINT    <span class="hljs-number">3</span>) SIGQUIT    <span class="hljs-number">4</span>) SIGILL    <span class="hljs-number">5</span>) SIGTRAP<br> <span class="hljs-number">6</span>) SIGABRT     <span class="hljs-number">7</span>) SIGBUS    <span class="hljs-number">8</span>) SIGFPE     <span class="hljs-number">9</span>) SIGKILL  <span class="hljs-number">10</span>) SIGUSR1<br><span class="hljs-number">11</span>) SIGSEGV    <span class="hljs-number">12</span>) SIGUSR2  <span class="hljs-number">13</span>) SIGPIPE   <span class="hljs-number">14</span>) SIGALRM  <span class="hljs-number">15</span>) SIGTERM<br><span class="hljs-number">16</span>) SIGSTKFLT  <span class="hljs-number">17</span>) SIGCHLD  <span class="hljs-number">18</span>) SIGCONT   <span class="hljs-number">19</span>) SIGSTOP  <span class="hljs-number">20</span>) SIGTSTP<br><span class="hljs-number">21</span>) SIGTTIN    <span class="hljs-number">22</span>) SIGTTOU  <span class="hljs-number">23</span>) SIGURG    <span class="hljs-number">24</span>) SIGXCPU  <span class="hljs-number">25</span>) SIGXFSZ<br><span class="hljs-number">26</span>) SIGVTALRM  <span class="hljs-number">27</span>) SIGPROF  <span class="hljs-number">28</span>) SIGWINCH  <span class="hljs-number">29</span>) SIGIO    <span class="hljs-number">30</span>) SIGPWR<br><span class="hljs-number">31</span>) SIGSYS<br></code></pre></td></tr></table></figure>
+
+<h5 id="典型的使用信号机制的场景："><a href="#典型的使用信号机制的场景：" class="headerlink" title="典型的使用信号机制的场景："></a>典型的使用信号机制的场景：</h5><ul>
+<li><h5 id="•-如果我们按下键盘-Ctrl-C，当前运行的进程就会收到一个信号-SIGINT-而退出；"><a href="#•-如果我们按下键盘-Ctrl-C，当前运行的进程就会收到一个信号-SIGINT-而退出；" class="headerlink" title="• 如果我们按下键盘 Ctrl+C，当前运行的进程就会收到一个信号 SIGINT 而退出；"></a>• 如果我们按下键盘 <code>Ctrl+C</code>，当前运行的进程就会收到一个信号 <code>SIGINT</code> 而退出；</h5></li>
+<li><h5 id="•-如果应用程序内存访问出错了，当前的进程就会收到另一个信号-SIGSEGV；"><a href="#•-如果应用程序内存访问出错了，当前的进程就会收到另一个信号-SIGSEGV；" class="headerlink" title="• 如果应用程序内存访问出错了，当前的进程就会收到另一个信号 SIGSEGV；"></a>• 如果应用程序内存访问出错了，当前的进程就会收到另一个信号 <code>SIGSEGV</code>；</h5></li>
+<li><h5 id="•-我们也可以通过命令-kill-，直接向一个进程发送一个信号，缺省情况下不指定信号的类型，那么这个信号就是-SIGTERM。也可以指定信号类型，比如命令-kill-9，这里的-9，就是编号为-9-的信号，SIGKILL-信号。"><a href="#•-我们也可以通过命令-kill-，直接向一个进程发送一个信号，缺省情况下不指定信号的类型，那么这个信号就是-SIGTERM。也可以指定信号类型，比如命令-kill-9，这里的-9，就是编号为-9-的信号，SIGKILL-信号。" class="headerlink" title="• 我们也可以通过命令 kill ，直接向一个进程发送一个信号，缺省情况下不指定信号的类型，那么这个信号就是 SIGTERM。也可以指定信号类型，比如命令 kill -9，这里的 9，就是编号为 9 的信号，SIGKILL 信号。"></a>• 我们也可以通过命令 <code>kill</code> ，直接向一个进程发送一个信号，缺省情况下不指定信号的类型，那么这个信号就是 <code>SIGTERM</code>。也可以指定信号类型，比如命令 <code>kill -9</code>，这里的 9，就是编号为 9 的信号，<code>SIGKILL</code> 信号。</h5></li>
+</ul>
+<h5 id="在操作系统常见手动杀死进程的信号就是-SIGTERM-和-SIGKILL-，进程在收到信号后，就会去做相应的处理。对于每一个信号，进程对它的处理都有下面三个选择。"><a href="#在操作系统常见手动杀死进程的信号就是-SIGTERM-和-SIGKILL-，进程在收到信号后，就会去做相应的处理。对于每一个信号，进程对它的处理都有下面三个选择。" class="headerlink" title="在操作系统常见手动杀死进程的信号就是 SIGTERM 和 SIGKILL ，进程在收到信号后，就会去做相应的处理。对于每一个信号，进程对它的处理都有下面三个选择。"></a>在操作系统常见手动杀死进程的信号就是 <code>SIGTERM</code> 和 <code>SIGKILL</code> ，进程在收到信号后，就会去做相应的处理。对于每一个信号，进程对它的处理都有下面三个选择。</h5><p><strong>忽略</strong></p>
+<h5 id="忽略-Ignore-就是对这个信号不做任何处理，但是有两个信号例外，对于-SIGKILL-和-SIGSTOP-这个两个信号，进程是不能忽略的。这是因为它们的主要作用是为-Linux-kernel-和超级用户提供删除任意进程的特权。"><a href="#忽略-Ignore-就是对这个信号不做任何处理，但是有两个信号例外，对于-SIGKILL-和-SIGSTOP-这个两个信号，进程是不能忽略的。这是因为它们的主要作用是为-Linux-kernel-和超级用户提供删除任意进程的特权。" class="headerlink" title="忽略( Ignore ) 就是对这个信号不做任何处理，但是有两个信号例外，对于 SIGKILL 和 SIGSTOP 这个两个信号，进程是不能忽略的。这是因为它们的主要作用是为 Linux kernel 和超级用户提供删除任意进程的特权。"></a>忽略( Ignore ) 就是对这个信号不做任何处理，但是有两个信号例外，对于 <code>SIGKILL</code> 和 <code>SIGSTOP</code> 这个两个信号，进程是不能忽略的。这是因为它们的主要作用是为 Linux kernel 和超级用户提供删除任意进程的特权。</h5><p><strong>捕获</strong></p>
+<h5 id="捕获-Catch-，这个是指让用户进程可以注册自己针对这个信号的-handler。对于捕获，SIGKILL-和-SIGSTOP-这两个信号也同样例外，这两个信号不能由用户自己的处理代码，只能执行系统的缺省行为。"><a href="#捕获-Catch-，这个是指让用户进程可以注册自己针对这个信号的-handler。对于捕获，SIGKILL-和-SIGSTOP-这两个信号也同样例外，这两个信号不能由用户自己的处理代码，只能执行系统的缺省行为。" class="headerlink" title="捕获( Catch )，这个是指让用户进程可以注册自己针对这个信号的 handler。对于捕获，SIGKILL 和 SIGSTOP 这两个信号也同样例外，这两个信号不能由用户自己的处理代码，只能执行系统的缺省行为。"></a>捕获( Catch )，这个是指让用户进程可以注册自己针对这个信号的 handler。对于捕获，<code>SIGKILL</code> 和 <code>SIGSTOP</code> 这两个信号也同样例外，这两个信号不能由用户自己的处理代码，只能执行系统的<strong>缺省行为</strong>。</h5><p><strong>缺省行为</strong></p>
+<h5 id="缺省行为-Default-，Linux-为每个信号都定义了一个缺省的行为，你可以在-Linux-系统中运行-man-7-signal-来查看每个信号的缺省行为。对于大部分的信号而言，应用程序不需要注册自己的-handler，使用系统缺省定义行为就可以了。"><a href="#缺省行为-Default-，Linux-为每个信号都定义了一个缺省的行为，你可以在-Linux-系统中运行-man-7-signal-来查看每个信号的缺省行为。对于大部分的信号而言，应用程序不需要注册自己的-handler，使用系统缺省定义行为就可以了。" class="headerlink" title="缺省行为( Default )，Linux 为每个信号都定义了一个缺省的行为，你可以在 Linux 系统中运行 man 7 signal 来查看每个信号的缺省行为。对于大部分的信号而言，应用程序不需要注册自己的 handler，使用系统缺省定义行为就可以了。"></a>缺省行为( Default )，Linux 为每个信号都定义了一个缺省的行为，你可以在 Linux 系统中运行 <code>man 7 signal</code> 来查看每个信号的缺省行为。对于大部分的信号而言，应用程序不需要注册自己的 handler，使用系统缺省定义行为就可以了。</h5><h5 id="常见的-SIGTERM-和-SIGKILL-信号默认行为都是终止进程。针对上面说的三个实例，详细看看这两个信号。"><a href="#常见的-SIGTERM-和-SIGKILL-信号默认行为都是终止进程。针对上面说的三个实例，详细看看这两个信号。" class="headerlink" title="常见的 SIGTERM 和 SIGKILL 信号默认行为都是终止进程。针对上面说的三个实例，详细看看这两个信号。"></a>常见的 <code>SIGTERM</code> 和 <code>SIGKILL</code> 信号默认行为都是<strong>终止进程。</strong>针对上面说的三个实例，详细看看这两个信号。</h5><p><strong>SIGTERM</strong></p>
+<h5 id="这个信号是-Linux-命令-kill-缺省发出的。前面例子里的命令-kill-1-，就是通过-kill-向-1-号进程发送一个信号，等价于-kill-15，在没有别的参数时，这个信号类型就默认为-SIGTERM。"><a href="#这个信号是-Linux-命令-kill-缺省发出的。前面例子里的命令-kill-1-，就是通过-kill-向-1-号进程发送一个信号，等价于-kill-15，在没有别的参数时，这个信号类型就默认为-SIGTERM。" class="headerlink" title="这个信号是 Linux 命令 kill 缺省发出的。前面例子里的命令 kill 1 ，就是通过 kill 向 1 号进程发送一个信号，等价于 kill -15，在没有别的参数时，这个信号类型就默认为 SIGTERM。"></a>这个信号是 Linux 命令 <code>kill</code> 缺省发出的。前面例子里的命令 <code>kill 1</code> ，就是通过 <code>kill</code> 向 1 号进程发送一个信号，等价于 <code>kill -15</code>，在没有别的参数时，这个信号类型就默认为 <code>SIGTERM</code>。</h5><h5 id="SIGTERM-这个信号是可以被捕获的，这里的捕获指的就是用户进程可以为这个信号注册自己的-handler，而-SIGTERM-信号一般是用于进程优雅退出。"><a href="#SIGTERM-这个信号是可以被捕获的，这里的捕获指的就是用户进程可以为这个信号注册自己的-handler，而-SIGTERM-信号一般是用于进程优雅退出。" class="headerlink" title="SIGTERM 这个信号是可以被捕获的，这里的捕获指的就是用户进程可以为这个信号注册自己的 handler，而 SIGTERM 信号一般是用于进程优雅退出。"></a><code>SIGTERM</code> 这个信号是可以被捕获的，这里的<strong>捕获</strong>指的就是用户进程可以为这个信号注册自己的 handler，而 <code>SIGTERM</code> 信号一般是用于进程优雅退出。</h5><p><strong>SIGKILL</strong></p>
+<h5 id="SIGKILL-9-，这个信号是-Linux-里两个特权信号之一。特权信号就是-Linux-为-kernel-和超级用户去删除任意进程所保留的，不能被忽略也不能被捕获。那么进程一旦收到-SIGKILL，就要退出。"><a href="#SIGKILL-9-，这个信号是-Linux-里两个特权信号之一。特权信号就是-Linux-为-kernel-和超级用户去删除任意进程所保留的，不能被忽略也不能被捕获。那么进程一旦收到-SIGKILL，就要退出。" class="headerlink" title="SIGKILL (9)，这个信号是 Linux 里两个特权信号之一。特权信号就是 Linux 为 kernel 和超级用户去删除任意进程所保留的，不能被忽略也不能被捕获。那么进程一旦收到 SIGKILL，就要退出。"></a><code>SIGKILL (9)</code>，这个信号是 Linux 里两个特权信号之一。特权信号就是 Linux 为 kernel 和超级用户去删除任意进程所保留的，不能被忽略也不能被捕获。那么进程一旦收到 <code>SIGKILL</code>，就要退出。</h5><h5 id="在前面的例子里，我们运行的命令-kill-9-1-里的参数-9-，其实就是指发送编号为-9-的这个-SIGKILL-信号给-1-号进程。"><a href="#在前面的例子里，我们运行的命令-kill-9-1-里的参数-9-，其实就是指发送编号为-9-的这个-SIGKILL-信号给-1-号进程。" class="headerlink" title="在前面的例子里，我们运行的命令 kill -9 1 里的参数 -9 ，其实就是指发送编号为 9 的这个 SIGKILL 信号给 1 号进程。"></a>在前面的例子里，我们运行的命令 <code>kill -9 1</code> 里的参数 <code>-9</code> ，其实就是指发送编号为 9 的这个 <code>SIGKILL</code> 信号给 <strong>1 号进程</strong>。</h5><h3 id="Linux-信号处理原理"><a href="#Linux-信号处理原理" class="headerlink" title="Linux 信号处理原理"></a>Linux 信号处理原理</h3><h5 id="在了解了-Linux-信号机制的概念后，再解释上述现象就会较容易理解。"><a href="#在了解了-Linux-信号机制的概念后，再解释上述现象就会较容易理解。" class="headerlink" title="在了解了 Linux 信号机制的概念后，再解释上述现象就会较容易理解。"></a>在了解了 Linux 信号机制的概念后，再解释上述现象就会较容易理解。</h5><h5 id="在-Linux-中，使用-kill-命令向-1号进程发起信号时，Linux-内核会根据如下代码逻辑判断是否忽略该信号。当下面代码-if-条件为-true-的话则忽略信号，否则执行信号默认行为。"><a href="#在-Linux-中，使用-kill-命令向-1号进程发起信号时，Linux-内核会根据如下代码逻辑判断是否忽略该信号。当下面代码-if-条件为-true-的话则忽略信号，否则执行信号默认行为。" class="headerlink" title="在 Linux 中，使用 kill 命令向 1号进程发起信号时，Linux 内核会根据如下代码逻辑判断是否忽略该信号。当下面代码 if 条件为 true 的话则忽略信号，否则执行信号默认行为。"></a>在 Linux 中，使用 <code>kill</code> 命令向 1号进程发起信号时，Linux 内核会根据如下代码逻辑判断是否忽略该信号。当下面代码 if 条件为 true 的话则忽略信号，否则执行信号默认行为。</h5><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs aspectj">kernel/signal.c<br><span class="hljs-keyword">static</span> <span class="hljs-function">bool <span class="hljs-title">sig_task_ignored</span><span class="hljs-params">(struct task_struct *t, <span class="hljs-keyword">int</span> sig, bool force)</span></span><br><span class="hljs-function"></span>&#123;<br>        <span class="hljs-keyword">void</span> __user *<span class="hljs-keyword">handler</span>;<br>        <span class="hljs-keyword">handler</span> = sig_handler(t, sig);<br><br>        <span class="hljs-comment">/* unlikely(t-&gt;signal-&gt;flags &amp; SIGNAL_UNKILLABLE) 表示是否为 1 号进程  */</span><br>        <span class="hljs-comment">/* handler == SIG_DFL 表示进程是否使用默认信号行为 */</span><br>        <span class="hljs-comment">/* force 表示发出信号和接受信号是否在同一个 Namespace 下, 在即为 0, 不在为 1 */</span><br>        <span class="hljs-keyword">if</span> (unlikely(t-&gt;signal-&gt;flags &amp; SIGNAL_UNKILLABLE) &amp;&amp;<br>            <span class="hljs-keyword">handler</span> == SIG_DFL &amp;&amp; !(force &amp;&amp; sig_kernel_only(sig)))<br>                <span class="hljs-keyword">return</span> <span class="hljs-keyword">true</span>;<br><br>        <span class="hljs-function"><span class="hljs-keyword">return</span> <span class="hljs-title">sig_handler_ignored</span><span class="hljs-params">(<span class="hljs-keyword">handler</span>, sig)</span></span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h5 id="分别对上述-if-中的三个条件进行分析。"><a href="#分别对上述-if-中的三个条件进行分析。" class="headerlink" title="分别对上述 if 中的三个条件进行分析。"></a>分别对上述 if 中的三个条件进行分析。</h5><p><strong>1、unlikely(t-&gt;signal-&gt;flags &amp; SIGNAL_UNKILLABLE)</strong></p>
+<h5 id="t-signal-flags-SIGNAL-UNKILLABLE-表示进程必须是-SIGNAL-UNKILLABLE-的。在每个-Namespace-的-init-进程建立的时候，就会打上-SIGNAL-UNKILLABLE-这个标签，也就是说只要是-1-号进程，就会有这个-flag，这个条件也是满足的。"><a href="#t-signal-flags-SIGNAL-UNKILLABLE-表示进程必须是-SIGNAL-UNKILLABLE-的。在每个-Namespace-的-init-进程建立的时候，就会打上-SIGNAL-UNKILLABLE-这个标签，也就是说只要是-1-号进程，就会有这个-flag，这个条件也是满足的。" class="headerlink" title="t-&gt;signal-&gt;flags &amp; SIGNAL_UNKILLABLE 表示进程必须是 SIGNAL_UNKILLABLE 的。在每个 Namespace 的 init 进程建立的时候，就会打上 SIGNAL_UNKILLABLE 这个标签，也就是说只要是 1 号进程，就会有这个 flag，这个条件也是满足的。"></a><code>t-&gt;signal-&gt;flags &amp; SIGNAL_UNKILLABLE</code> 表示进程必须是 <code>SIGNAL_UNKILLABLE</code> 的。在每个 Namespace 的 init 进程建立的时候，就会打上 <code>SIGNAL_UNKILLABLE</code> 这个标签，也就是说只要是 1 号进程，就会有这个 flag，这个条件也是满足的。</h5><p><strong>2、handler &#x3D;&#x3D; SIG_DFL</strong></p>
+<h5 id="判断信号的-handler-是否是-SIG-DFL。对于每个信号，用户进程如果不注册一个自己的-handler，就会有一个系统缺省的-handler，这个缺省的-handler-就叫作-SIG-DFL。"><a href="#判断信号的-handler-是否是-SIG-DFL。对于每个信号，用户进程如果不注册一个自己的-handler，就会有一个系统缺省的-handler，这个缺省的-handler-就叫作-SIG-DFL。" class="headerlink" title="判断信号的 handler 是否是 SIG_DFL。对于每个信号，用户进程如果不注册一个自己的 handler，就会有一个系统缺省的 handler，这个缺省的 handler 就叫作 SIG_DFL。"></a>判断信号的 handler 是否是 <code>SIG_DFL</code>。对于每个信号，用户进程如果不注册一个自己的 handler，就会有一个系统缺省的 handler，这个缺省的 handler 就叫作 <code>SIG_DFL</code>。</h5><h5 id="对于-SIGKILL，它是特权信号，是不允许被捕获的，所以它的-handler-就一直是-SIG-DFL。对-SIGKILL来说该条件总是满足的。"><a href="#对于-SIGKILL，它是特权信号，是不允许被捕获的，所以它的-handler-就一直是-SIG-DFL。对-SIGKILL来说该条件总是满足的。" class="headerlink" title="对于 SIGKILL，它是特权信号，是不允许被捕获的，所以它的 handler 就一直是 SIG_DFL。对 SIGKILL来说该条件总是满足的。"></a>对于 <code>SIGKILL</code>，它是特权信号，是不允许被捕获的，所以它的 handler 就一直是 <code>SIG_DFL</code>。对 <code>SIGKILL</code>来说该条件总是满足的。</h5><h5 id="对于-SIGTERM，它是可以被捕获的。也就是说如果用户不注册-handler，那么这个条件对-SIGTERM-也是满足的。"><a href="#对于-SIGTERM，它是可以被捕获的。也就是说如果用户不注册-handler，那么这个条件对-SIGTERM-也是满足的。" class="headerlink" title="对于 SIGTERM，它是可以被捕获的。也就是说如果用户不注册 handler，那么这个条件对 SIGTERM 也是满足的。"></a>对于 <code>SIGTERM</code>，它是可以被捕获的。也就是说如果用户不注册 handler，那么这个条件对 <code>SIGTERM</code> 也是满足的。</h5><p><strong>3、!(force &amp;&amp; sig_kernel_only(sig))</strong></p>
+<h5 id="force-表示如果发出信号的进程与接受信号的进程在同一个-Namespace-中值为-false，否则为-true-。"><a href="#force-表示如果发出信号的进程与接受信号的进程在同一个-Namespace-中值为-false，否则为-true-。" class="headerlink" title="force 表示如果发出信号的进程与接受信号的进程在同一个 Namespace 中值为 false，否则为 true 。"></a><code>force</code> 表示如果发出信号的进程与接受信号的进程在同一个 Namespace 中值为 <code>false</code>，否则为 <code>true</code> 。</h5><h5 id="sig-kernel-only-sig-表示信号是否为特权信号，SIGKILL-为特权信号，SIGTERM-不是。"><a href="#sig-kernel-only-sig-表示信号是否为特权信号，SIGKILL-为特权信号，SIGTERM-不是。" class="headerlink" title="sig_kernel_only(sig) ****表示信号是否为特权信号，SIGKILL 为特权信号，SIGTERM 不是。"></a><code>sig_kernel_only(sig)</code> ****表示信号是否为特权信号，<code>SIGKILL</code> 为特权信号，<code>SIGTERM</code> 不是。</h5><p>所以 <code>!(force &amp;&amp; sig_kernel_only(si5g))</code> 这个条件对于 <code>SIGKILL</code> 来说是 true，对于 <code>SIGTERM</code> 来说是 false。</p>
+<blockquote>
+<p>Namespace 概念不了解的话，可参考前期文章 <a target="_blank" rel="noopener" href="http://mp.weixin.qq.com/s?__biz=MzkyNDMyNjAyMg==&mid=2247484030&idx=1&sn=43bd06072aa327ded21d6513b891d84d&chksm=c1d6c397f6a14a81cbef67203522f0a5201492b161d1faf205d7d271b2e6afe64f1a2b710391&scene=21#wechat_redirect">容器原理</a></p>
+</blockquote>
+<p>上述逻辑可参考下图：</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191525373.png" srcset="/img/loading.gif" lazyload alt="image-20240319152513316"></p>
+<p><strong>示例一解释</strong></p>
+<h5 id="现在再来看第一个示例，示例中容器的-1-号进程是-sleep，同时发信号和接受信号都在容器内部，属于同一个-Namespace，同时由于-sleep-命令自身没有注册-handler，满足上述三个条件。导致-kill-9，kill-15-被-Linux-内核忽略。"><a href="#现在再来看第一个示例，示例中容器的-1-号进程是-sleep，同时发信号和接受信号都在容器内部，属于同一个-Namespace，同时由于-sleep-命令自身没有注册-handler，满足上述三个条件。导致-kill-9，kill-15-被-Linux-内核忽略。" class="headerlink" title="现在再来看第一个示例，示例中容器的 1 号进程是 sleep，同时发信号和接受信号都在容器内部，属于同一个 Namespace，同时由于 sleep 命令自身没有注册 handler，满足上述三个条件。导致 kill -9，kill -15 被 Linux 内核忽略。"></a>现在再来看第一个示例，示例中容器的 1 号进程是 <code>sleep</code>，同时发信号和接受信号都在容器内部，属于同一个 Namespace，同时由于 <code>sleep</code> 命令自身没有注册 handler，满足上述三个条件。导致 <code>kill -9，kill -15</code> 被 Linux 内核忽略。</h5><p><strong>示例二解释</strong></p>
+<h5 id="对于示例二，由于在宿主机操作容器内的进程，这样就是发出信号的进程和接受信号的进程不属于同一个-Namespace，force-true-，对于-SIGTERM-信号，它不是特权信号，所以-sig-kernel-only-sig-false-—-force-sig-kernel-only-sig-true-—-kill-15-忽略。"><a href="#对于示例二，由于在宿主机操作容器内的进程，这样就是发出信号的进程和接受信号的进程不属于同一个-Namespace，force-true-，对于-SIGTERM-信号，它不是特权信号，所以-sig-kernel-only-sig-false-—-force-sig-kernel-only-sig-true-—-kill-15-忽略。" class="headerlink" title="对于示例二，由于在宿主机操作容器内的进程，这样就是发出信号的进程和接受信号的进程不属于同一个 Namespace，force = true ，对于 SIGTERM 信号，它不是特权信号，所以 sig_kernel_only(sig)=false —&gt; !(force &amp;&amp; sig_kernel_only(sig)) = true —&gt; kill -15 忽略。"></a>对于示例二，由于在宿主机操作容器内的进程，这样就是发出信号的进程和接受信号的进程不属于同一个 Namespace，<code>force = true</code> ，对于 <code>SIGTERM</code> 信号，它不是特权信号，所以 <code>sig_kernel_only(sig)=false</code> —&gt; <code>!(force &amp;&amp; sig_kernel_only(sig)) = true</code> —&gt; <code>kill -15</code> 忽略。</h5><h5 id="对于-SIGKILL-信号来说，它是特权信号，所以-sig-kernel-only-sig-true-—-force-sig-kernel-only-sig-false-—-kill-9执行动作。"><a href="#对于-SIGKILL-信号来说，它是特权信号，所以-sig-kernel-only-sig-true-—-force-sig-kernel-only-sig-false-—-kill-9执行动作。" class="headerlink" title="对于 SIGKILL 信号来说，它是特权信号，所以 sig_kernel_only(sig)=true —&gt; !(force &amp;&amp; sig_kernel_only(sig)) = false —&gt; kill -9执行动作。"></a>对于 <code>SIGKILL</code> 信号来说，它是特权信号，所以 <code>sig_kernel_only(sig)=true</code> —&gt; <code>!(force &amp;&amp; sig_kernel_only(sig)) = false</code> —&gt; <code>kill -9</code>执行动作。</h5><p><strong>示例三解释</strong></p>
+<h5 id="示例三其实和示例二的原理一样，因为-docker-stop-背后其实先向容器进程发出-SIGTERM-信号，如果-10s-后进程还在，那么直接再发出-SIGKILL-信号。"><a href="#示例三其实和示例二的原理一样，因为-docker-stop-背后其实先向容器进程发出-SIGTERM-信号，如果-10s-后进程还在，那么直接再发出-SIGKILL-信号。" class="headerlink" title="示例三其实和示例二的原理一样，因为 docker stop &lt;containier-id&gt; 背后其实先向容器进程发出 SIGTERM 信号，如果 10s 后进程还在，那么直接再发出 SIGKILL 信号。"></a>示例三其实和示例二的原理一样，因为 <code>docker stop &lt;containier-id&gt;</code> 背后其实先向容器进程发出 <code>SIGTERM</code> 信号，如果 10s 后进程还在，那么直接再发出 <code>SIGKILL</code> 信号。</h5><p><strong>示例四解释</strong></p>
+<h5 id="再看第四个示例，第四个示例容器的-1-号进程是-Golang-程序，然而-Golang-程序默认自带了-handler，kill-9-发出的是-SIGKILL-信号，不允许被捕获，满足以上三个条件，导致-kill-9-不生效。"><a href="#再看第四个示例，第四个示例容器的-1-号进程是-Golang-程序，然而-Golang-程序默认自带了-handler，kill-9-发出的是-SIGKILL-信号，不允许被捕获，满足以上三个条件，导致-kill-9-不生效。" class="headerlink" title="再看第四个示例，第四个示例容器的 1 号进程是 Golang 程序，然而 Golang 程序默认自带了 handler，kill -9 发出的是 SIGKILL 信号，不允许被捕获，满足以上三个条件，导致 kill -9 不生效。"></a>再看第四个示例，第四个示例容器的 1 号进程是 Golang 程序，然而 Golang 程序默认自带了 handler，kill -9 发出的是 <code>SIGKILL</code> 信号，不允许被捕获，满足以上三个条件，导致 <code>kill -9</code> 不生效。</h5><h5 id="kill-15-发出的是-SIGTERM-信号，该信号允许捕获，所以使用自带的-handler，即不满足条件-2，导致-kill-15-可以杀死进程。"><a href="#kill-15-发出的是-SIGTERM-信号，该信号允许捕获，所以使用自带的-handler，即不满足条件-2，导致-kill-15-可以杀死进程。" class="headerlink" title="kill -15 发出的是 SIGTERM 信号，该信号允许捕获，所以使用自带的 handler，即不满足条件 2，导致 kill -15 可以杀死进程。"></a><code>kill -15</code> 发出的是 <code>SIGTERM</code> 信号，该信号允许捕获，所以使用自带的 handler，即不满足条件 2，导致 <code>kill -15</code> 可以杀死进程。</h5><blockquote>
+<p>Golang 语言 runtime 自动注册了 <code>SIGTERM</code> 信号 handler，<a target="_blank" rel="noopener" href="https://pkg.go.dev/os/signal#section-directories">https://pkg.go.dev/os/signal#section-directories</a></p>
+</blockquote>
+<h5 id="通过上面的分析，我们了解了容器中的-1号进程以及解释了在容器中为什么杀不掉-1-号进程。"><a href="#通过上面的分析，我们了解了容器中的-1号进程以及解释了在容器中为什么杀不掉-1-号进程。" class="headerlink" title="通过上面的分析，我们了解了容器中的 1号进程以及解释了在容器中为什么杀不掉 1 号进程。"></a>通过上面的分析，我们了解了容器中的 1号进程以及解释了在容器中为什么杀不掉 1 号进程。</h5><hr>
+<h2 id="1-号进程与-init-进程"><a href="#1-号进程与-init-进程" class="headerlink" title="1 号进程与 init 进程"></a>1 号进程与 init 进程</h2><h5 id="在-Linux-中-1号进程也叫-init-进程，但是在不同环境下-1号进程与-init-进程并不是等价的。"><a href="#在-Linux-中-1号进程也叫-init-进程，但是在不同环境下-1号进程与-init-进程并不是等价的。" class="headerlink" title="在 Linux 中 1号进程也叫 init 进程，但是在不同环境下 1号进程与 init 进程并不是等价的。"></a>在 Linux 中 1号进程也叫 init 进程，但是在不同环境下 1号进程与 init 进程并不是等价的。</h5><h5 id="1-号进程与-init-进程是什么关系，又有什么区别？"><a href="#1-号进程与-init-进程是什么关系，又有什么区别？" class="headerlink" title="1 号进程与 init 进程是什么关系，又有什么区别？"></a>1 号进程与 init 进程是什么关系，又有什么区别？</h5><h5 id="init-进程就是-1-号进程，但是-1-号进程不一定是-init-进程。"><a href="#init-进程就是-1-号进程，但是-1-号进程不一定是-init-进程。" class="headerlink" title="init 进程就是 1 号进程，但是 1 号进程不一定是 init 进程。"></a>init 进程就是 1 号进程，但是 1 号进程不一定是 init 进程。</h5><h5 id="我们看看-1-号进程和-init-进程的特性："><a href="#我们看看-1-号进程和-init-进程的特性：" class="headerlink" title="我们看看 1 号进程和 init 进程的特性："></a>我们看看 1 号进程和 init 进程的特性：</h5><h3 id="1-号进程"><a href="#1-号进程" class="headerlink" title="1 号进程"></a><strong>1 号进程</strong></h3><ul>
+<li><h5 id="•-操作系统第一个进程"><a href="#•-操作系统第一个进程" class="headerlink" title="• 操作系统第一个进程"></a>• 操作系统第一个进程</h5></li>
+<li><h5 id="•-是所有用户态进程的父进程"><a href="#•-是所有用户态进程的父进程" class="headerlink" title="• 是所有用户态进程的父进程"></a>• 是所有用户态进程的父进程</h5></li>
+</ul>
+<h3 id="init-进程"><a href="#init-进程" class="headerlink" title="init 进程"></a><strong>init 进程</strong></h3><ul>
+<li><h5 id="•-操作系统第一个进程-1"><a href="#•-操作系统第一个进程-1" class="headerlink" title="• 操作系统第一个进程"></a>• 操作系统第一个进程</h5></li>
+<li><h5 id="•-是所有用户态进程的父进程-1"><a href="#•-是所有用户态进程的父进程-1" class="headerlink" title="• 是所有用户态进程的父进程"></a>• 是所有用户态进程的父进程</h5></li>
+<li><h5 id="•-可以回收僵尸进程-失去了父进程的子进程就都会以-init-作为它们的父进程"><a href="#•-可以回收僵尸进程-失去了父进程的子进程就都会以-init-作为它们的父进程" class="headerlink" title="• 可以回收僵尸进程(失去了父进程的子进程就都会以 init 作为它们的父进程)"></a>• 可以回收<strong>僵尸进程</strong>(失去了父进程的子进程就都会以 init 作为它们的父进程)</h5></li>
+<li><h5 id="•-可以向子进程发送操作系统信号"><a href="#•-可以向子进程发送操作系统信号" class="headerlink" title="• 可以向子进程发送操作系统信号"></a>• 可以向子进程发送操作系统信号</h5></li>
+</ul>
+<h5 id="对于宿主机和容器的关系，在宿主机中-1-号进程和-init-进程是等价的，在容器中-1-号进程不一定是-init-进程，取决与用户对容器的定义，下面详细看看。"><a href="#对于宿主机和容器的关系，在宿主机中-1-号进程和-init-进程是等价的，在容器中-1-号进程不一定是-init-进程，取决与用户对容器的定义，下面详细看看。" class="headerlink" title="对于宿主机和容器的关系，在宿主机中 1 号进程和 init 进程是等价的，在容器中 1 号进程不一定是 init 进程，取决与用户对容器的定义，下面详细看看。"></a>对于宿主机和容器的关系，在宿主机中 1 号进程和 init 进程是等价的，在容器中 1 号进程不一定是 init 进程，取决与用户对容器的定义，下面详细看看。</h5><hr>
+<h2 id="容器中的-init-进程"><a href="#容器中的-init-进程" class="headerlink" title="容器中的 init 进程"></a>容器中的 init 进程</h2><h5 id="容器中的-1-号进程是否具有-init-进程的特性取决于容器启动的命令。在-Dockerfile-中，CMD、ENTRYPOINT-可以启动容器，它们都有两种模式：shell-模式，exec-模式"><a href="#容器中的-1-号进程是否具有-init-进程的特性取决于容器启动的命令。在-Dockerfile-中，CMD、ENTRYPOINT-可以启动容器，它们都有两种模式：shell-模式，exec-模式" class="headerlink" title="容器中的 1 号进程是否具有 init 进程的特性取决于容器启动的命令。在 Dockerfile 中，CMD、ENTRYPOINT 可以启动容器，它们都有两种模式：shell 模式，exec 模式"></a>容器中的 1 号进程是否具有 init 进程的特性取决于容器启动的命令。在 Dockerfile 中，CMD、ENTRYPOINT 可以启动容器，它们都有两种模式：<strong>shell 模式</strong>，<strong>exec 模式</strong></h5><h5 id="这里用-ENTRYPOINT-举例，CMD-是一样的。"><a href="#这里用-ENTRYPOINT-举例，CMD-是一样的。" class="headerlink" title="这里用 ENTRYPOINT 举例，CMD 是一样的。"></a>这里用 ENTRYPOINT 举例，CMD 是一样的。</h5><h3 id="shell-模式"><a href="#shell-模式" class="headerlink" title="shell 模式"></a>shell 模式</h3><h5 id="该模式下会开启一个-shell-来执行后面的命令，即使用-bin-sh-c-启动业务进程，那么容器中的-1-号进程就是-shell。用法：ENTRYPOINT-command"><a href="#该模式下会开启一个-shell-来执行后面的命令，即使用-bin-sh-c-启动业务进程，那么容器中的-1-号进程就是-shell。用法：ENTRYPOINT-command" class="headerlink" title="该模式下会开启一个 shell 来执行后面的命令，即使用 /bin/sh -c 启动业务进程，那么容器中的 1 号进程就是 shell。用法：ENTRYPOINT command"></a>该模式下会开启一个 shell 来执行后面的命令，即使用 <code>/bin/sh -c</code> 启动业务进程，那么容器中的 1 号进程就是 shell。用法：<code>ENTRYPOINT command</code></h5><figure class="highlight maxima"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs maxima">FROM ubuntu<br># <span class="hljs-built_in">go</span>-<span class="hljs-built_in">demo</span> 是 <span class="hljs-built_in">go</span> 语言程序, 内部是 sleep 100s<br>COPY <span class="hljs-built_in">go</span>-<span class="hljs-built_in">demo</span> .<br>ENTRYPOINT ./<span class="hljs-built_in">go</span>-<span class="hljs-built_in">demo</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="启动该容器后，容器的-1-号进程就是-sh-，go-demo-是-sh-的子进程。"><a href="#启动该容器后，容器的-1-号进程就是-sh-，go-demo-是-sh-的子进程。" class="headerlink" title="启动该容器后，容器的 1 号进程就是 sh ，go-demo 是 sh 的子进程。"></a>启动该容器后，容器的 1 号进程就是 <code>sh</code> ，<code>go-demo</code> 是 <code>sh</code> 的子进程。</h5><figure class="highlight tap"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs tap">$ docker exec -it test-go-init ps -ef<br>UID         PID   PPID  C STIME TTY          TIME CMD<br>root         <span class="hljs-number"> 1 </span>    <span class="hljs-number"> 0 </span><span class="hljs-number"> 0 </span>08:45 ?        00:00:00 /bin/sh -c ./go-demo<br>root         <span class="hljs-number"> 6 </span>    <span class="hljs-number"> 1 </span><span class="hljs-number"> 0 </span>08:45 ?        00:00:00 ./go-demo<br>root        <span class="hljs-number"> 11 </span>    <span class="hljs-number"> 0 </span><span class="hljs-number"> 0 </span>08:46 pts/0    00:00:00 ps -ef<br></code></pre></td></tr></table></figure>
+
+<h3 id="exec-模式"><a href="#exec-模式" class="headerlink" title="exec 模式"></a>exec 模式</h3><h5 id="该模式下直接运行命令，容器中的-1-号进程就是业务应用进程。用法：ENTRYPOINT-command"><a href="#该模式下直接运行命令，容器中的-1-号进程就是业务应用进程。用法：ENTRYPOINT-command" class="headerlink" title="该模式下直接运行命令，容器中的 1 号进程就是业务应用进程。用法：ENTRYPOINT [&quot;command&quot;]"></a>该模式下直接运行命令，容器中的 1 号进程就是业务应用进程。用法：<code>ENTRYPOINT [&quot;command&quot;]</code></h5><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-keyword">FROM</span> ubuntu<br><span class="hljs-keyword">COPY</span><span class="language-bash"> go-demo .</span><br><span class="hljs-keyword">ENTRYPOINT</span><span class="language-bash"> [<span class="hljs-string">&quot;./go-demo&quot;</span>]</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="启动该容器后，容器的-1-号进程就是-go-demo"><a href="#启动该容器后，容器的-1-号进程就是-go-demo" class="headerlink" title="启动该容器后，容器的 1 号进程就是 go-demo"></a>启动该容器后，容器的 1 号进程就是 <code>go-demo</code></h5><figure class="highlight tap"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs tap">$ docker exec -it test-go-init ps -ef<br>UID         PID   PPID  C STIME TTY          TIME CMD<br>root         <span class="hljs-number"> 1 </span>    <span class="hljs-number"> 0 </span><span class="hljs-number"> 0 </span>08:49 ?        00:00:00 ./go-demo<br>root        <span class="hljs-number"> 18 </span>    <span class="hljs-number"> 0 </span><span class="hljs-number"> 0 </span>08:51 pts/0    00:00:00 ps -ef<br></code></pre></td></tr></table></figure>
+
+<h3 id="使用-exec-命令"><a href="#使用-exec-命令" class="headerlink" title="使用 exec 命令"></a>使用 exec 命令</h3><h5 id="在-shell-模式下使用-exec-命令也可以达到-exec-模式的效果，用法：ENTRYPOINT-exec-command"><a href="#在-shell-模式下使用-exec-命令也可以达到-exec-模式的效果，用法：ENTRYPOINT-exec-command" class="headerlink" title="在 shell 模式下使用 exec 命令也可以达到 exec 模式的效果，用法：ENTRYPOINT exec command"></a>在 shell 模式下使用 <code>exec</code> 命令也可以达到 <strong>exec 模式</strong>的效果，用法：<code>ENTRYPOINT exec command</code></h5><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-keyword">FROM</span> ubuntu<br><span class="hljs-keyword">COPY</span><span class="language-bash"> go-demo .</span><br><span class="hljs-keyword">ENTRYPOINT</span><span class="language-bash"> <span class="hljs-built_in">exec</span> ./go-demo</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="同样容器启动后，容器的-1-号进程就是-go-demo"><a href="#同样容器启动后，容器的-1-号进程就是-go-demo" class="headerlink" title="同样容器启动后，容器的 1 号进程就是 go-demo"></a>同样容器启动后，容器的 1 号进程就是 <code>go-demo</code></h5><figure class="highlight tap"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs tap">$ docker exec -it test-go-init ps -ef<br>UID         PID   PPID  C STIME TTY          TIME CMD<br>root         <span class="hljs-number"> 1 </span>    <span class="hljs-number"> 0 </span><span class="hljs-number"> 0 </span>08:59 ?        00:00:00 ./go-demo<br>root        <span class="hljs-number"> 10 </span>    <span class="hljs-number"> 0 </span><span class="hljs-number"> 0 </span>08:59 pts/0    00:00:00 ps -ef<br></code></pre></td></tr></table></figure>
+
+<h3 id="使用-tini"><a href="#使用-tini" class="headerlink" title="使用 tini"></a>使用 tini</h3><h5 id="上面说了如果容器需要实现优雅退出，要么也用进程作为-1号进程且实现-SIGTERM-handler，要么启动-init-进程。下面看看如何在容器中启动-init-进程。"><a href="#上面说了如果容器需要实现优雅退出，要么也用进程作为-1号进程且实现-SIGTERM-handler，要么启动-init-进程。下面看看如何在容器中启动-init-进程。" class="headerlink" title="上面说了如果容器需要实现优雅退出，要么也用进程作为 1号进程且实现 SIGTERM handler，要么启动 init 进程。下面看看如何在容器中启动 init 进程。"></a>上面说了如果容器需要实现优雅退出，要么也用进程作为 1号进程且实现 <strong>SIGTERM</strong> handler，要么启动 init 进程。下面看看如何在容器中启动 init 进程。</h5><h5 id="在容器中添加一个-init-系统。init-系统有很多种，推荐使用-tini-1-，使用如下："><a href="#在容器中添加一个-init-系统。init-系统有很多种，推荐使用-tini-1-，使用如下：" class="headerlink" title="在容器中添加一个 init 系统。init 系统有很多种，推荐使用 tini[1]，使用如下："></a>在容器中添加一个 <strong>init 系统</strong>。init 系统有很多种，推荐使用 tini[1]，使用如下：</h5><ul>
+<li><h5 id="•-安装-tini"><a href="#•-安装-tini" class="headerlink" title="• 安装 tini"></a>• 安装 tini</h5></li>
+<li><h5 id="•-将-tini-作为容器中的-1号进程"><a href="#•-将-tini-作为容器中的-1号进程" class="headerlink" title="• 将 tini 作为容器中的 1号进程"></a>• 将 tini 作为容器中的 1号进程</h5></li>
+<li><p>• <strong>用户进程启动命令</strong>作为 tini 参数</p>
+</li>
+</ul>
+<p>可参考如下 Dockerfile：</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs routeros"><span class="hljs-keyword">FROM</span> ubuntu<br><span class="hljs-built_in">RUN</span> apt-<span class="hljs-built_in">get</span> install tini<br>COPY test.sh .<br><span class="hljs-built_in">RUN</span> chmod +x test.sh<br>ENTRYPOINT [<span class="hljs-string">&quot;/sbin/tini&quot;</span>, <span class="hljs-string">&quot;--&quot;</span>, <span class="hljs-string">&quot;./test.sh&quot;</span>]<br></code></pre></td></tr></table></figure>
+
+<h5 id="现在-tini-就是-1-号进程，它会将收到的系统信号转发给子进程-test-sh-。使用-docker-stop-就可以瞬间杀死容器了，docker-发送-SIGTERM-信号给容器的-tini，tini-将信号转发给-test-sh，如果-test-sh-对-SIGTERM-信号有自定义-handler，那么执行完-handler-退出；"><a href="#现在-tini-就是-1-号进程，它会将收到的系统信号转发给子进程-test-sh-。使用-docker-stop-就可以瞬间杀死容器了，docker-发送-SIGTERM-信号给容器的-tini，tini-将信号转发给-test-sh，如果-test-sh-对-SIGTERM-信号有自定义-handler，那么执行完-handler-退出；" class="headerlink" title="现在 tini 就是 1 号进程，它会将收到的系统信号转发给子进程 test.sh 。使用 docker stop &lt;container-id&gt; 就可以瞬间杀死容器了，docker 发送 SIGTERM 信号给容器的 tini，tini 将信号转发给 test.sh，如果 test.sh 对 SIGTERM 信号有自定义 handler，那么执行完 handler 退出；"></a>现在 tini 就是 <strong>1 号进程</strong>，它会将收到的系统信号转发给子进程 <code>test.sh</code> 。使用 <code>docker stop &lt;container-id&gt;</code> 就可以瞬间杀死容器了，docker 发送 <code>SIGTERM</code> 信号给容器的 tini，tini 将信号转发给 test.sh，如果 test.sh 对 <code>SIGTERM</code> 信号有自定义 handler，那么执行完 handler 退出；</h5><h5 id="如果-test-sh-没有对-SIGTERM-信号处理，那么执行默认行为，即直接退出。因为现在的-test-sh-已经不是-1号进程了，仅仅是一个普通进程，所以并不会上面说的示例二的现象。所以要实现应用进程真正的优雅退出，应用程序也得实现-SIGTERM-的-handler。"><a href="#如果-test-sh-没有对-SIGTERM-信号处理，那么执行默认行为，即直接退出。因为现在的-test-sh-已经不是-1号进程了，仅仅是一个普通进程，所以并不会上面说的示例二的现象。所以要实现应用进程真正的优雅退出，应用程序也得实现-SIGTERM-的-handler。" class="headerlink" title="如果 test.sh 没有对 SIGTERM 信号处理，那么执行默认行为，即直接退出。因为现在的 test.sh 已经不是 1号进程了，仅仅是一个普通进程，所以并不会上面说的示例二的现象。所以要实现应用进程真正的优雅退出，应用程序也得实现 SIGTERM 的 handler。"></a>如果 test.sh 没有对 <code>SIGTERM</code> 信号处理，那么执行默认行为，即直接退出。因为现在的 test.sh 已经不是 1号进程了，仅仅是一个普通进程，所以并不会上面说的<strong>示例二</strong>的现象。所以要实现应用进程真正的优雅退出，应用程序也得实现 <code>SIGTERM</code> 的 handler。</h5><h5 id="tini-作为-init-进程，还可以清理容器中的僵尸进程。"><a href="#tini-作为-init-进程，还可以清理容器中的僵尸进程。" class="headerlink" title="tini 作为 init 进程，还可以清理容器中的僵尸进程。"></a>tini 作为 init 进程，还可以清理容器中的僵尸进程。</h5><blockquote>
+<p>如果你想直接通过 docker 命令来运行容器，可以直接通过参数 <code>--init</code> 来使用 tini，不需要在镜像中安装 tini。如果是 <code>Kubernetes</code> 就不行了，必须手动安装 tini。</p>
+</blockquote>
+<h3 id="使用场景"><a href="#使用场景" class="headerlink" title="使用场景"></a>使用场景</h3><h5 id="那么为什么有-shell-模式和-exec-模式，分别在什么场景下使用？"><a href="#那么为什么有-shell-模式和-exec-模式，分别在什么场景下使用？" class="headerlink" title="那么为什么有 shell 模式和 exec 模式，分别在什么场景下使用？"></a>那么为什么有 <strong>shell 模式</strong>和 <strong>exec 模式</strong>，分别在什么场景下使用？</h5><p><strong>优雅退出</strong></p>
+<h5 id="shell-模式的一号进程是-sh，而且-sh-不能传递信号，所以就无法实现容器内进程优雅退出了-docker-stop-只能等待-10s-强制杀死-，这时候就可以就考虑使用-exec-模式，"><a href="#shell-模式的一号进程是-sh，而且-sh-不能传递信号，所以就无法实现容器内进程优雅退出了-docker-stop-只能等待-10s-强制杀死-，这时候就可以就考虑使用-exec-模式，" class="headerlink" title="shell 模式的一号进程是 sh，而且 sh 不能传递信号，所以就无法实现容器内进程优雅退出了( docker stop &lt;container-id&gt; 只能等待 10s 强制杀死)，这时候就可以就考虑使用 exec 模式，"></a><strong>shell 模式</strong>的一号进程是 <code>sh</code>，而且 <code>sh</code> 不能传递信号，所以就无法实现容器内进程优雅退出了( <code>docker stop &lt;container-id&gt;</code> 只能等待 10s 强制杀死)，这时候就可以就考虑使用 <strong>exec 模式</strong>，</h5><h5 id="因为-exec-模式的-1号进程就是自身，自身实现-SIGTERM-handler-即可。"><a href="#因为-exec-模式的-1号进程就是自身，自身实现-SIGTERM-handler-即可。" class="headerlink" title="因为 exec 模式的 1号进程就是自身，自身实现 SIGTERM handler 即可。"></a>因为 <strong>exec 模式</strong>的 1号进程就是自身，自身实现 <code>SIGTERM</code> handler 即可。</h5><p><strong>环境变量</strong></p>
+<h5 id="在-exec-模式下，没有办法获取容器内的环境变量，Dockerfile-如下："><a href="#在-exec-模式下，没有办法获取容器内的环境变量，Dockerfile-如下：" class="headerlink" title="在 exec 模式下，没有办法获取容器内的环境变量，Dockerfile 如下："></a>在 <strong>exec 模式</strong>下，没有办法获取容器内的<strong>环境变量</strong>，Dockerfile 如下：</h5><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-keyword">FROM</span> ubuntu<br><span class="hljs-comment"># 自定义环境变量</span><br><span class="hljs-keyword">ENV</span> CUSTOMENAME test-exec<br><span class="hljs-comment"># 输出自定义环境变量和系统自带环境变量的值</span><br><span class="hljs-keyword">ENTRYPOINT</span><span class="language-bash"> [<span class="hljs-string">&quot;echo&quot;</span>, <span class="hljs-string">&quot;Welcome, <span class="hljs-variable">$CUSTOMENAME</span> <span class="hljs-variable">$HOSTNAME</span>&quot;</span>]</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="运行输出发现并没有输出对应值。"><a href="#运行输出发现并没有输出对应值。" class="headerlink" title="运行输出发现并没有输出对应值。"></a>运行输出发现并没有输出对应值。</h5><figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs powershell"><span class="hljs-variable">$</span> docker run <span class="hljs-literal">--rm</span> <span class="hljs-built_in">test-exec</span>:v1<br>Welcome, <span class="hljs-variable">$CUSTOMENAME</span><span class="hljs-string">&quot;, &quot;</span><span class="hljs-variable">$HOSTNAME</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="使用-shell-模式或者-exec-命令看看。"><a href="#使用-shell-模式或者-exec-命令看看。" class="headerlink" title="使用 shell 模式或者 exec 命令看看。"></a>使用 <strong>shell 模式</strong>或者 <strong>exec 命令</strong>看看。</h5><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-keyword">FROM</span> ubuntu<br><span class="hljs-comment"># 自定义环境变量</span><br><span class="hljs-keyword">ENV</span> CUSTOMENAME test-exec<br><span class="hljs-comment"># 输出自定义环境变量和系统自带环境变量的值</span><br><span class="hljs-keyword">ENTRYPOINT</span><span class="language-bash"> <span class="hljs-built_in">echo</span> <span class="hljs-variable">$CUSTOMENAME</span></span><br></code></pre></td></tr></table></figure>
+
+<h5 id="运行输出可以输出环境变量的值"><a href="#运行输出可以输出环境变量的值" class="headerlink" title="运行输出可以输出环境变量的值"></a>运行输出可以输出环境变量的值</h5><figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs stata">$ docker <span class="hljs-keyword">run</span> --<span class="hljs-keyword">rm</span> <span class="hljs-keyword">test</span>-exec:v1<br><span class="hljs-keyword">test</span>-exec<br></code></pre></td></tr></table></figure>
+
+<h5 id="所以-shell-模式和-exec-模式都有对应的使用限制和优势。"><a href="#所以-shell-模式和-exec-模式都有对应的使用限制和优势。" class="headerlink" title="所以 shell 模式和 exec 模式都有对应的使用限制和优势。"></a>所以 <strong>shell 模式</strong>和 <strong>exec 模式</strong>都有对应的使用限制和优势。</h5><hr>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><h5 id="本文主要讲述了两段内容："><a href="#本文主要讲述了两段内容：" class="headerlink" title="本文主要讲述了两段内容："></a>本文主要讲述了两段内容：</h5><ul>
+<li><h5 id="•-通过-Linux-信号处理的机制分析了在容器中为什么杀不死-1号进程的原因；"><a href="#•-通过-Linux-信号处理的机制分析了在容器中为什么杀不死-1号进程的原因；" class="headerlink" title="• 通过 Linux 信号处理的机制分析了在容器中为什么杀不死 1号进程的原因；"></a>• 通过 Linux 信号处理的机制分析了在容器中为什么杀不死 1号进程的原因；</h5></li>
+<li><h5 id="•-介绍了-1号进程和-init-进程的关系和区别，同时展开说明容器中的-1-号进程和-init-进程的使用。"><a href="#•-介绍了-1号进程和-init-进程的关系和区别，同时展开说明容器中的-1-号进程和-init-进程的使用。" class="headerlink" title="• 介绍了 1号进程和 init 进程的关系和区别，同时展开说明容器中的 1 号进程和 init 进程的使用。"></a>• 介绍了 1号进程和 init 进程的关系和区别，同时展开说明容器中的 1 号进程和 init 进程的使用。</h5></li>
+</ul>
+<h5 id="相信看完这篇文章，可以对容器中的进程有了一些原理性的理解。"><a href="#相信看完这篇文章，可以对容器中的进程有了一些原理性的理解。" class="headerlink" title="相信看完这篇文章，可以对容器中的进程有了一些原理性的理解。"></a>相信看完这篇文章，可以对容器中的进程有了一些原理性的理解。</h5><h5 id="上文-为什么杀不掉容器中-1号进程-的示例中的-Dockerfile-都是-exec-模式，如果换成-shell-模式，是否会出现不同情况，有兴趣可以实验验证下。"><a href="#上文-为什么杀不掉容器中-1号进程-的示例中的-Dockerfile-都是-exec-模式，如果换成-shell-模式，是否会出现不同情况，有兴趣可以实验验证下。" class="headerlink" title="上文 为什么杀不掉容器中 1号进程 的示例中的 Dockerfile 都是 exec 模式，如果换成 shell 模式，是否会出现不同情况，有兴趣可以实验验证下。"></a>上文 <strong>为什么杀不掉容器中 1号进程</strong> 的示例中的 Dockerfile 都是 <strong>exec 模式</strong>，如果换成 <strong>shell 模式</strong>，是否会出现不同情况，有兴趣可以实验验证下。</h5><h4 id="引用链接"><a href="#引用链接" class="headerlink" title="引用链接"></a>引用链接</h4><p><code>[1]</code> tini: <em><a target="_blank" rel="noopener" href="https://github.com/krallin/tini.git">https://github.com/krallin/tini.git</a></em></p>
+<hr>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>容器内的 1 号进程 2024-04-03 14:46:29.998</div>
+      <div>http://example.com/2025/01/16/容器内的 1 号进程-rong-qi-nei-de-1-hao-jin-cheng/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E5%BF%AB%E9%80%9F%E6%8C%87%E5%8D%97-kuai-su-zhi-nan/" title="快速指南 2023-09-28 15:28:25.71">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">快速指南 2023-09-28 15:28:25.71</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E5%BC%80%E5%A7%8B%E4%BD%BF%E7%94%A8%20cilium-kai-shi-shi-yong-cilium/" title="开始使用 cilium 2023-09-28 15:34:49.205">
+                        <span class="hidden-mobile">开始使用 cilium 2023-09-28 15:34:49.205</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

@@ -1,0 +1,912 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="一、基础命令在Kubernetes中，基础命令用于日常的查询和基本操作。以下表格展示了这些基础命令，它们的说明，以及相应的使用举例。    命令 说明 举例    kubectl version 显示客户端和服务器的Kubernetes版本。 kubectl version   kubectl api-versions 列出可用的API版本。 kubectl api-versions   kube">
+<meta property="og:type" content="article">
+<meta property="og:title" content="K8S命令指南 2024-04-03 15:14:14.207">
+<meta property="og:url" content="http://example.com/2025/01/16/K8S%E5%91%BD%E4%BB%A4%E6%8C%87%E5%8D%97-k8s-ming-ling-zhi-nan/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="一、基础命令在Kubernetes中，基础命令用于日常的查询和基本操作。以下表格展示了这些基础命令，它们的说明，以及相应的使用举例。    命令 说明 举例    kubectl version 显示客户端和服务器的Kubernetes版本。 kubectl version   kubectl api-versions 列出可用的API版本。 kubectl api-versions   kube">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-01-16T02:08:28.056Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:18.736Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>K8S命令指南 2024-04-03 15:14:14.207 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="K8S命令指南 2024-04-03 15:14:14.207"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          10 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">K8S命令指南 2024-04-03 15:14:14.207</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="一、基础命令"><a href="#一、基础命令" class="headerlink" title="一、基础命令"></a>一、基础命令</h1><p>在Kubernetes中，基础命令用于日常的查询和基本操作。以下表格展示了这些基础命令，它们的说明，以及相应的使用举例。</p>
+<table>
+<thead>
+<tr>
+<th align="left">命令</th>
+<th align="left">说明</th>
+<th align="left">举例</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><code>kubectl version</code></td>
+<td align="left">显示客户端和服务器的Kubernetes版本。</td>
+<td align="left"><code>kubectl version</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl api-versions</code></td>
+<td align="left">列出可用的API版本。</td>
+<td align="left"><code>kubectl api-versions</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl get</code></td>
+<td align="left">列出一个或多个资源。</td>
+<td align="left"><code>kubectl get pods</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl describe</code></td>
+<td align="left">显示一个或多个资源的详细信息。</td>
+<td align="left"><code>kubectl describe nodes my-node</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl logs</code></td>
+<td align="left">打印容器的日志。</td>
+<td align="left"><code>kubectl logs my-pod</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl attach</code></td>
+<td align="left">附加到正在运行的容器进行交互。</td>
+<td align="left"><code>kubectl attach my-pod -i</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl exec</code></td>
+<td align="left">在容器内执行命令。</td>
+<td align="left"><code>kubectl exec my-pod -- ls /</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl port-forward</code></td>
+<td align="left">为Pod中的容器端口转发。</td>
+<td align="left"><code>kubectl port-forward my-pod 5000:6000</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl proxy</code></td>
+<td align="left">运行一个代理到Kubernetes API服务器。</td>
+<td align="left"><code>kubectl proxy</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl cp</code></td>
+<td align="left">在容器和本地文件系统之间复制文件&#x2F;目录。</td>
+<td align="left"><code>kubectl cp /tmp/foo_dir my-pod:/tmp/bar_dir</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl run</code></td>
+<td align="left">在集群中快速启动一个指定的镜像。</td>
+<td align="left"><code>kubectl run nginx --image=nginx</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl expose</code></td>
+<td align="left">将Pod或其他资源类型暴露为Kubernetes服务。</td>
+<td align="left"><code>kubectl expose deployment nginx --port=80</code></td>
+</tr>
+</tbody></table>
+<p>这些命令为Kubernetes用户提供了强大的工具集，用于管理和调试在Kubernetes集群中运行的应用。</p>
+<h1 id="二、资源创建与管理"><a href="#二、资源创建与管理" class="headerlink" title="二、资源创建与管理"></a>二、资源创建与管理</h1><p>在Kubernetes中，资源创建与管理命令是用于部署、更新和维护集群资源的关键工具。以下表格展示了这些命令，以及它们的说明和使用示例。</p>
+<table>
+<thead>
+<tr>
+<th align="left">命令</th>
+<th align="left">说明</th>
+<th align="left">举例</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><code>kubectl create</code></td>
+<td align="left">从文件或stdin创建一个或多个资源。</td>
+<td align="left"><code>kubectl create -f my-resource.yaml</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl delete</code></td>
+<td align="left">从文件、stdin或指定标签、名称、资源选择器删除资源。</td>
+<td align="left"><code>kubectl delete -f my-resource.yaml</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl apply</code></td>
+<td align="left">应用一个或多个资源的更改。</td>
+<td align="left"><code>kubectl apply -f my-resource.yaml</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl edit</code></td>
+<td align="left">编辑并更新服务器上一个或多个资源的定义。</td>
+<td align="left"><code>kubectl edit svc/my-service</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl replace</code></td>
+<td align="left">从文件或stdin替换资源。</td>
+<td align="left"><code>kubectl replace -f my-resource.yaml</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl scale</code></td>
+<td align="left">更新资源的大小。</td>
+<td align="left"><code>kubectl scale --replicas=3 deployment/my-deployment</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl autoscale</code></td>
+<td align="left">自动扩展Pod的数量。</td>
+<td align="left"><code>kubectl autoscale deployment my-deployment --min=10 --max=15</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl rollout</code></td>
+<td align="left">管理资源的部署。</td>
+<td align="left"><code>kubectl rollout status deployment/my-deployment</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl set</code></td>
+<td align="left">设置特定资源的特定字段。</td>
+<td align="left"><code>kubectl set image deployment/my-deployment nginx=nginx:1.9.1</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl auth</code></td>
+<td align="left">检查用户对于资源的权限。</td>
+<td align="left"><code>kubectl auth can-i create deployments</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl patch</code></td>
+<td align="left">使用补丁部分更新资源的特定字段。</td>
+<td align="left"><code>kubectl patch node k8s-node-1 -p &#39;&#123;&quot;spec&quot;:&#123;&quot;unschedulable&quot;:true&#125;&#125;&#39;</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl convert</code></td>
+<td align="left">转换配置文件到不同的API版本。</td>
+<td align="left"><code>kubectl convert -f ./pod.yaml --output-version=v1</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl rollout history</code></td>
+<td align="left">查看Deployment或StatefulSet的历史版本。</td>
+<td align="left"><code>kubectl rollout history deployment/nginx</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl rollout undo</code></td>
+<td align="left">回滚到Deployment或StatefulSet的旧版本。</td>
+<td align="left"><code>kubectl rollout undo deployment/nginx</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl completion</code></td>
+<td align="left">生成shell自动补全的脚本。</td>
+<td align="left"><code>kubectl completion bash</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl api-resources</code></td>
+<td align="left">列出API服务器上可用的资源类型。</td>
+<td align="left"><code>kubectl api-resources</code></td>
+</tr>
+</tbody></table>
+<p>这些命令为开发者和系统管理员提供了广泛的工具，以灵活地处理Kubernetes资源的生命周期，包括创建、更新、删除和自动化管理。</p>
+<h1 id="三、集群管理与维护"><a href="#三、集群管理与维护" class="headerlink" title="三、集群管理与维护"></a>三、集群管理与维护</h1><p>Kubernetes的集群管理与维护命令涉及到集群的日常运行和维护任务，包括监控资源、管理节点和配置集群级别的设置。以下是这些命令的详细列表：</p>
+<table>
+<thead>
+<tr>
+<th align="left">命令</th>
+<th align="left">说明</th>
+<th align="left">举例</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><code>kubectl cluster-info</code></td>
+<td align="left">显示集群信息。</td>
+<td align="left"><code>kubectl cluster-info</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl top</code></td>
+<td align="left">显示集群中资源的当前使用情况。</td>
+<td align="left"><code>kubectl top nodes</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl cordon</code></td>
+<td align="left">标记节点为不可调度，防止新的pods被调度到该节点。</td>
+<td align="left"><code>kubectl cordon my-node</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl uncordon</code></td>
+<td align="left">解除节点的不可调度状态。</td>
+<td align="left"><code>kubectl uncordon my-node</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl drain</code></td>
+<td align="left">准备节点进行维护，安全地驱逐节点上的pods。</td>
+<td align="left"><code>kubectl drain my-node</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl quota</code></td>
+<td align="left">显示资源配额。</td>
+<td align="left"><code>kubectl quota -n my-namespace</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl annotate</code></td>
+<td align="left">添加或更新资源的注释。</td>
+<td align="left"><code>kubectl annotate pods my-pod icon-url=http://my-icon.com</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl label</code></td>
+<td align="left">更新资源的标签。</td>
+<td align="left"><code>kubectl label pods my-pod new-label=my-label</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl taint</code></td>
+<td align="left">为节点添加或删除污点。</td>
+<td align="left"><code>kubectl taint nodes my-node key=value:NoSchedule</code></td>
+</tr>
+</tbody></table>
+<p>这些命令为集群管理员提供了丰富的工具，用于监控和管理Kubernetes集群的健康和性能，确保集群的稳定性和效率。</p>
+<h1 id="四、其他指令"><a href="#四、其他指令" class="headerlink" title="四、其他指令"></a>四、其他指令</h1><p>Kubernetes 还提供了一系列其他指令，用于执行特定的高级操作、配置管理、调试和集成扩展功能。这些指令对于深入理解和有效管理 Kubernetes 集群至关重要。</p>
+<h2 id="配置管理"><a href="#配置管理" class="headerlink" title="配置管理"></a>配置管理</h2><table>
+<thead>
+<tr>
+<th align="left">命令</th>
+<th align="left">说明</th>
+<th align="left">举例</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><code>kubectl config</code></td>
+<td align="left">查看或修改kubeconfig文件。</td>
+<td align="left"><code>kubectl config view</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl config get-contexts</code></td>
+<td align="left">查看所有的kubeconfig上下文。</td>
+<td align="left"><code>kubectl config get-contexts</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl certificate</code></td>
+<td align="left">修改证书资源。</td>
+<td align="left"><code>kubectl certificate approve my-cert</code></td>
+</tr>
+</tbody></table>
+<h2 id="调试和诊断"><a href="#调试和诊断" class="headerlink" title="调试和诊断"></a>调试和诊断</h2><table>
+<thead>
+<tr>
+<th align="left">命令</th>
+<th align="left">说明</th>
+<th align="left">举例</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><code>kubectl debug</code></td>
+<td align="left">创建调试会话。</td>
+<td align="left"><code>kubectl debug node/my-node -it</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl diff</code></td>
+<td align="left">比较当前状态与所期望的状态。</td>
+<td align="left"><code>kubectl diff -f my-resource.yaml</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl explain</code></td>
+<td align="left">获取资源的文档。</td>
+<td align="left"><code>kubectl explain pods</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl wait</code></td>
+<td align="left">等待资源达到某个条件。</td>
+<td align="left"><code>kubectl wait --for=condition=Ready pod/my-pod</code></td>
+</tr>
+</tbody></table>
+<h2 id="插件和扩展"><a href="#插件和扩展" class="headerlink" title="插件和扩展"></a>插件和扩展</h2><table>
+<thead>
+<tr>
+<th align="left">命令</th>
+<th align="left">说明</th>
+<th align="left">举例</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><code>kubectl plugin</code></td>
+<td align="left">管理kubectl插件。</td>
+<td align="left"><code>kubectl plugin list</code></td>
+</tr>
+<tr>
+<td align="left"><code>kubectl plugin list</code></td>
+<td align="left">列出已安装的插件。</td>
+<td align="left"><code>kubectl plugin list</code></td>
+</tr>
+</tbody></table>
+<p>这些指令为开发人员和运维人员提供了强大的工具集，用于深入理解和管理 Kubernetes 集群的复杂性，提高日常运维的效率和效果。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>K8S命令指南 2024-04-03 15:14:14.207</div>
+      <div>http://example.com/2025/01/16/K8S命令指南-k8s-ming-ling-zhi-nan/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/K8S%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7-k8s-yuan-de-sheng-ji/" title="K8S原地升级 2024-04-03 15:04:38.125">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">K8S原地升级 2024-04-03 15:04:38.125</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/K8S%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8-k8s-mian-shi-da-quan/" title="K8S面试大全 2024-04-03 15:10:54.493">
+                        <span class="hidden-mobile">K8S面试大全 2024-04-03 15:10:54.493</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

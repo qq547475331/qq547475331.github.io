@@ -1,0 +1,703 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="当你使用 Kubernetes 时，迟早会遇到集群中的问题，需要进行调试和修复，以便你的 Pod 和服务能够按预期运行。无论你是刚刚开始使用 Kubernetes 还是正在处理大规模且更复杂的环境，调试集群内进程并不总是那么简单，而且可能会成为一项耗时且困难的任务。云原生环境中有多种可用的调试解决方案，可帮助你访问集群内信息。然而，其中大多数不提供上下文信息。在这篇博文中，我将向你介绍K8sGPT">
+<meta property="og:type" content="article">
+<meta property="og:title" content="K8S GPT 2024-04-03 15:02:09.127">
+<meta property="og:url" content="http://example.com/2025/01/16/K8S%20GPT-k8sgpt/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="当你使用 Kubernetes 时，迟早会遇到集群中的问题，需要进行调试和修复，以便你的 Pod 和服务能够按预期运行。无论你是刚刚开始使用 Kubernetes 还是正在处理大规模且更复杂的环境，调试集群内进程并不总是那么简单，而且可能会成为一项耗时且困难的任务。云原生环境中有多种可用的调试解决方案，可帮助你访问集群内信息。然而，其中大多数不提供上下文信息。在这篇博文中，我将向你介绍K8sGPT">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061707332.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061708741.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061713133.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061713622.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061714569.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061714659.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.044Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:18.616Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061707332.png">
+  
+  
+  
+  <title>K8S GPT 2024-04-03 15:02:09.127 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="K8S GPT 2024-04-03 15:02:09.127"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          17 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">K8S GPT 2024-04-03 15:02:09.127</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h5 id="当你使用-Kubernetes-时，迟早会遇到集群中的问题，需要进行调试和修复，以便你的-Pod-和服务能够按预期运行。无论你是刚刚开始使用-Kubernetes-还是正在处理大规模且更复杂的环境，调试集群内进程并不总是那么简单，而且可能会成为一项耗时且困难的任务。"><a href="#当你使用-Kubernetes-时，迟早会遇到集群中的问题，需要进行调试和修复，以便你的-Pod-和服务能够按预期运行。无论你是刚刚开始使用-Kubernetes-还是正在处理大规模且更复杂的环境，调试集群内进程并不总是那么简单，而且可能会成为一项耗时且困难的任务。" class="headerlink" title="当你使用 Kubernetes 时，迟早会遇到集群中的问题，需要进行调试和修复，以便你的 Pod 和服务能够按预期运行。无论你是刚刚开始使用 Kubernetes 还是正在处理大规模且更复杂的环境，调试集群内进程并不总是那么简单，而且可能会成为一项耗时且困难的任务。"></a>当你使用 Kubernetes 时，迟早会遇到集群中的问题，需要进行调试和修复，以便你的 Pod 和服务能够按预期运行。无论你是刚刚开始使用 Kubernetes 还是正在处理大规模且更复杂的环境，调试集群内进程并不总是那么简单，而且可能会成为一项耗时且困难的任务。</h5><h5 id="云原生环境中有多种可用的调试解决方案，可帮助你访问集群内信息。然而，其中大多数不提供上下文信息。"><a href="#云原生环境中有多种可用的调试解决方案，可帮助你访问集群内信息。然而，其中大多数不提供上下文信息。" class="headerlink" title="云原生环境中有多种可用的调试解决方案，可帮助你访问集群内信息。然而，其中大多数不提供上下文信息。"></a>云原生环境中有多种可用的调试解决方案，可帮助你访问集群内信息。然而，其中大多数不提供上下文信息。</h5><h5 id="在这篇博文中，我将向你介绍K8sGPT，这个项目旨在为所有人提供-Kubernetes-的超能力。"><a href="#在这篇博文中，我将向你介绍K8sGPT，这个项目旨在为所有人提供-Kubernetes-的超能力。" class="headerlink" title="在这篇博文中，我将向你介绍K8sGPT，这个项目旨在为所有人提供 Kubernetes 的超能力。"></a>在这篇博文中，我将向你介绍K8sGPT，这个项目旨在为所有人提供 Kubernetes 的超能力。</h5><h5 id="K8sGPT-的应用场景"><a href="#K8sGPT-的应用场景" class="headerlink" title="K8sGPT 的应用场景"></a>K8sGPT 的应用场景</h5><h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><h5 id="K8sGPT于2023年4月由一群云原生生态系统中经验丰富的工程师启动。它是一个完全开源的项目。K8sGPT-背后的主要思想是利用-AI-模型提供-Kubernetes-错误消息以及其他集群见解的详细且情境化的解释。"><a href="#K8sGPT于2023年4月由一群云原生生态系统中经验丰富的工程师启动。它是一个完全开源的项目。K8sGPT-背后的主要思想是利用-AI-模型提供-Kubernetes-错误消息以及其他集群见解的详细且情境化的解释。" class="headerlink" title="K8sGPT于2023年4月由一群云原生生态系统中经验丰富的工程师启动。它是一个完全开源的项目。K8sGPT 背后的主要思想是利用 AI 模型提供 Kubernetes 错误消息以及其他集群见解的详细且情境化的解释。"></a>K8sGPT于2023年4月由一群云原生生态系统中经验丰富的工程师启动。它是一个完全开源的项目。K8sGPT 背后的主要思想是利用 AI 模型提供 Kubernetes 错误消息以及其他集群见解的详细且情境化的解释。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061707332.png" srcset="/img/loading.gif" lazyload alt="image-20240306170727284"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061708741.png" srcset="/img/loading.gif" lazyload alt="image-20240306170809686"></p>
+<h5 id="此外，该项目已被两个组织在生产中使用，并已申请成为-CNCF-沙箱项目。从长远来看，该项目的目标是为-Kubernetes-构建面向任务的机器学习模型。"><a href="#此外，该项目已被两个组织在生产中使用，并已申请成为-CNCF-沙箱项目。从长远来看，该项目的目标是为-Kubernetes-构建面向任务的机器学习模型。" class="headerlink" title="此外，该项目已被两个组织在生产中使用，并已申请成为 CNCF 沙箱项目。从长远来看，该项目的目标是为 Kubernetes 构建面向任务的机器学习模型。"></a>此外，该项目已被两个组织在生产中使用，并已申请成为 CNCF 沙箱项目。从长远来看，该项目的目标是为 Kubernetes 构建面向任务的机器学习模型。</h5><h5 id="该项目已经支持多种安装选项和不同的人工智能后端。在这篇博文中，我将向你展示如何安装和开始使用-K8sGPT、CLI-工具和-Operator，以及-K8sGPT-如何支持其他集成。"><a href="#该项目已经支持多种安装选项和不同的人工智能后端。在这篇博文中，我将向你展示如何安装和开始使用-K8sGPT、CLI-工具和-Operator，以及-K8sGPT-如何支持其他集成。" class="headerlink" title="该项目已经支持多种安装选项和不同的人工智能后端。在这篇博文中，我将向你展示如何安装和开始使用 K8sGPT、CLI 工具和 Operator，以及 K8sGPT 如何支持其他集成。"></a>该项目已经支持多种安装选项和不同的人工智能后端。在这篇博文中，我将向你展示如何安装和开始使用 K8sGPT、CLI 工具和 Operator，以及 K8sGPT 如何支持其他集成。</h5><h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><h5 id="根据你的偏好和操作系统，有多种安装选项可用。你可以在K8sGPT文档的安装部分找到不同的选项。"><a href="#根据你的偏好和操作系统，有多种安装选项可用。你可以在K8sGPT文档的安装部分找到不同的选项。" class="headerlink" title="根据你的偏好和操作系统，有多种安装选项可用。你可以在K8sGPT文档的安装部分找到不同的选项。"></a>根据你的偏好和操作系统，有多种安装选项可用。你可以在K8sGPT文档的安装部分找到不同的选项。</h5><h5 id="如下所述安装-K8sGPT-的先决条件是在-Mac-上安装Homebrew或在-Windows-计算机上安装-WSL。"><a href="#如下所述安装-K8sGPT-的先决条件是在-Mac-上安装Homebrew或在-Windows-计算机上安装-WSL。" class="headerlink" title="如下所述安装 K8sGPT 的先决条件是在 Mac 上安装Homebrew或在 Windows 计算机上安装 WSL。"></a>如下所述安装 K8sGPT 的先决条件是在 Mac 上安装Homebrew或在 Windows 计算机上安装 WSL。</h5><h5 id="接下来，你可以运行以下命令："><a href="#接下来，你可以运行以下命令：" class="headerlink" title="接下来，你可以运行以下命令："></a>接下来，你可以运行以下命令：</h5><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">brew tap k8sgpt-ai/k8sgpt<br>brew install k8sgpt<br></code></pre></td></tr></table></figure>
+
+<h3 id="其他安装选项"><a href="#其他安装选项" class="headerlink" title="其他安装选项"></a>其他安装选项</h3><h4 id="基于-RPM-的安装-RedHat-CentOS-Fedora"><a href="#基于-RPM-的安装-RedHat-CentOS-Fedora" class="headerlink" title="基于 RPM 的安装 (RedHat&#x2F;CentOS&#x2F;Fedora)"></a>基于 RPM 的安装 (RedHat&#x2F;CentOS&#x2F;Fedora)</h4><h4 id="32位："><a href="#32位：" class="headerlink" title="32位："></a><strong>32位：</strong></h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">curl -LO https://github.com/k8sgpt-ai/k8sgpt/releases/download/v0.3.6/k8sgpt_386.rpm<br><span class="hljs-built_in">sudo</span> rpm -ivh k8sgpt_386.rpm<br></code></pre></td></tr></table></figure>
+
+<h4 id="64-位："><a href="#64-位：" class="headerlink" title="64 位："></a><strong>64 位：</strong></h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">curl -LO https://github.com/k8sgpt-ai/k8sgpt/releases/download/v0.3.6/k8sgpt_amd64.rpm<br><span class="hljs-built_in">sudo</span> rpm -ivh -i k8sgpt_amd64.rpm<br></code></pre></td></tr></table></figure>
+
+<h4 id="基于-DEB-的安装-Ubuntu-Debian"><a href="#基于-DEB-的安装-Ubuntu-Debian" class="headerlink" title="基于 DEB 的安装 (Ubuntu&#x2F;Debian)"></a>基于 DEB 的安装 (Ubuntu&#x2F;Debian)</h4><h4 id="32位：-1"><a href="#32位：-1" class="headerlink" title="32位："></a><strong>32位：</strong></h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">curl -LO https://github.com/k8sgpt-ai/k8sgpt/releases/download/v0.3.6/k8sgpt_386.deb<br><span class="hljs-built_in">sudo</span> dpkg -i k8sgpt_386.deb<br></code></pre></td></tr></table></figure>
+
+<h4 id="64-位：-1"><a href="#64-位：-1" class="headerlink" title="64 位："></a><strong>64 位：</strong></h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">curl -LO https://github.com/k8sgpt-ai/k8sgpt/releases/download/v0.3.6/k8sgpt_amd64.deb<br><span class="hljs-built_in">sudo</span> dpkg -i k8sgpt_amd64.deb<br></code></pre></td></tr></table></figure>
+
+<p>要验证 K8sGPT 是否安装正确，你可以检查安装的版本：</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">k8sgpt</span> version<br><span class="hljs-attribute">k8sgpt</span>: <span class="hljs-number">0</span>.<span class="hljs-number">3</span>.<span class="hljs-number">6</span> (<span class="hljs-number">9</span>c0efe6), built at: unknown<br></code></pre></td></tr></table></figure>
+
+<h2 id="K8sGPT-CLI"><a href="#K8sGPT-CLI" class="headerlink" title="K8sGPT CLI"></a>K8sGPT CLI</h2><h5 id="要查看-K8sGPT-提供的所有命令，请使用-help-标志："><a href="#要查看-K8sGPT-提供的所有命令，请使用-help-标志：" class="headerlink" title="要查看 K8sGPT 提供的所有命令，请使用 --help 标志："></a>要查看 K8sGPT 提供的所有命令，请使用 <code>--help</code> 标志：</h5><figure class="highlight ada"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ada">k8sgpt <span class="hljs-comment">--help</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="接下来，我们必须授权AI后端。在本文中，我们将使用-OpenAI。"><a href="#接下来，我们必须授权AI后端。在本文中，我们将使用-OpenAI。" class="headerlink" title="接下来，我们必须授权AI后端。在本文中，我们将使用 OpenAI。"></a>接下来，我们必须授权AI后端。在本文中，我们将使用 OpenAI。</h5><p><strong>先决条件</strong></p>
+<h5 id="遵循下一节的先决条件是拥有一个OpneAI-帐户和一个正在运行的-Kubernetes-集群，例如-microk8s-或-minikube-就足够了。"><a href="#遵循下一节的先决条件是拥有一个OpneAI-帐户和一个正在运行的-Kubernetes-集群，例如-microk8s-或-minikube-就足够了。" class="headerlink" title="遵循下一节的先决条件是拥有一个OpneAI 帐户和一个正在运行的 Kubernetes 集群，例如 microk8s 或 minikube 就足够了。"></a>遵循下一节的先决条件是拥有一个OpneAI 帐户和一个正在运行的 Kubernetes 集群，例如 microk8s 或 minikube 就足够了。</h5><h5 id="拥有-OpneAI-帐户后，你需要访问这个地址https-platform-openai-com-account-api-keys生成新的-API-密钥"><a href="#拥有-OpneAI-帐户后，你需要访问这个地址https-platform-openai-com-account-api-keys生成新的-API-密钥" class="headerlink" title="拥有 OpneAI 帐户后，你需要访问这个地址https://platform.openai.com/account/api-keys生成新的 API 密钥"></a>拥有 OpneAI 帐户后，你需要访问这个地址<a target="_blank" rel="noopener" href="https://platform.openai.com/account/api-keys%E7%94%9F%E6%88%90%E6%96%B0%E7%9A%84">https://platform.openai.com/account/api-keys生成新的</a> API 密钥</h5><h5 id="或者，你可以运行以下命令，K8sGPT-将在默认浏览器中打开同一地址："><a href="#或者，你可以运行以下命令，K8sGPT-将在默认浏览器中打开同一地址：" class="headerlink" title="或者，你可以运行以下命令，K8sGPT 将在默认浏览器中打开同一地址："></a>或者，你可以运行以下命令，K8sGPT 将在默认浏览器中打开同一地址：</h5><figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs verilog">k8sgpt <span class="hljs-keyword">generate</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="K8sGPT-与-OpenAI-交互需要此密钥。使用新创建的-API-密钥-令牌授权-K8sGPT："><a href="#K8sGPT-与-OpenAI-交互需要此密钥。使用新创建的-API-密钥-令牌授权-K8sGPT：" class="headerlink" title="K8sGPT 与 OpenAI 交互需要此密钥。使用新创建的 API 密钥&#x2F;令牌授权 K8sGPT："></a>K8sGPT 与 OpenAI 交互需要此密钥。使用新创建的 API 密钥&#x2F;令牌授权 K8sGPT：</h5><figure class="highlight livecodeserver"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs livecodeserver">k8sgpt auth <span class="hljs-built_in">add</span> openai<br>Enter openai Key: openai added <span class="hljs-built_in">to</span> <span class="hljs-keyword">the</span> AI backend provider list<br></code></pre></td></tr></table></figure>
+
+<h5 id="你可以使用以下命令列出你的后端："><a href="#你可以使用以下命令列出你的后端：" class="headerlink" title="你可以使用以下命令列出你的后端："></a>你可以使用以下命令列出你的后端：</h5><figure class="highlight node-repl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs node-repl">k8sgpt auth list<br><br>Default:<br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript">openai</span><br>Active:<br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript">openai</span><br>Unused:<br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript">localai</span><br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript">azureopenai</span><br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript">noopai</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="接下来，我们将在-Kubernetes-集群中部署一个异常的Deployment，Pod-将成为CrashLoopBackOff状态。以下是-YAML："><a href="#接下来，我们将在-Kubernetes-集群中部署一个异常的Deployment，Pod-将成为CrashLoopBackOff状态。以下是-YAML：" class="headerlink" title="接下来，我们将在 Kubernetes 集群中部署一个异常的Deployment，Pod 将成为CrashLoopBackOff状态。以下是 YAML："></a>接下来，我们将在 Kubernetes 集群中部署一个异常的Deployment，Pod 将成为CrashLoopBackOff状态。以下是 YAML：</h5><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">nginx-deployment</span><br>  <span class="hljs-attr">labels:</span><br>    <span class="hljs-attr">app:</span> <span class="hljs-string">nginx</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">replicas:</span> <span class="hljs-number">3</span><br>  <span class="hljs-attr">selector:</span><br>    <span class="hljs-attr">matchLabels:</span><br>      <span class="hljs-attr">app:</span> <span class="hljs-string">nginx</span><br>  <span class="hljs-attr">template:</span><br>    <span class="hljs-attr">metadata:</span><br>      <span class="hljs-attr">labels:</span><br>        <span class="hljs-attr">app:</span> <span class="hljs-string">nginx</span><br>    <span class="hljs-attr">spec:</span><br>      <span class="hljs-attr">containers:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">nginx</span><br>        <span class="hljs-attr">image:</span> <span class="hljs-string">nginx:1.14.2</span><br>        <span class="hljs-attr">ports:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">containerPort:</span> <span class="hljs-number">80</span><br>        <span class="hljs-attr">securityContext:</span><br>          <span class="hljs-attr">readOnlyRootFilesystem:</span> <span class="hljs-literal">true</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="接下来，我们将为示例应用程序创建demo命名空间并安装部署："><a href="#接下来，我们将为示例应用程序创建demo命名空间并安装部署：" class="headerlink" title="接下来，我们将为示例应用程序创建demo命名空间并安装部署："></a>接下来，我们将为示例应用程序创建demo命名空间并安装部署：</h5><figure class="highlight maxima"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs maxima">kubectl create ns <span class="hljs-built_in">demo</span><br>namespace/<span class="hljs-built_in">demo</span> created<br>kubectl <span class="hljs-built_in">apply</span> -f ./deployment.yaml -n <span class="hljs-built_in">demo</span><br>deployment.apps/nginx-deployment created<br></code></pre></td></tr></table></figure>
+
+<h5 id="现在你将看到我们的演示命名空间中的-Pod-抛出错误："><a href="#现在你将看到我们的演示命名空间中的-Pod-抛出错误：" class="headerlink" title="现在你将看到我们的演示命名空间中的 Pod 抛出错误："></a>现在你将看到我们的演示命名空间中的 Pod 抛出错误：</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061713133.png" srcset="/img/loading.gif" lazyload alt="image-20240306171313070"></p>
+<h5 id="如果我们查看其中一个-pod-的事件，但是我们不知道具体问题原因："><a href="#如果我们查看其中一个-pod-的事件，但是我们不知道具体问题原因：" class="headerlink" title="如果我们查看其中一个 pod 的事件，但是我们不知道具体问题原因："></a>如果我们查看其中一个 pod 的事件，但是我们不知道具体问题原因：</h5><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">Warning</span>  BackOff <span class="hljs-number">3</span>s (x8 over <span class="hljs-number">87</span>s)  kubelet         Back-<span class="hljs-literal">off</span> restarting failed container<br></code></pre></td></tr></table></figure>
+
+<h5 id="因此，我们可以运行-K8sGPT-命令来访问有关这些-pod-出错原因的更多详细信息："><a href="#因此，我们可以运行-K8sGPT-命令来访问有关这些-pod-出错原因的更多详细信息：" class="headerlink" title="因此，我们可以运行 K8sGPT 命令来访问有关这些 pod 出错原因的更多详细信息："></a>因此，我们可以运行 K8sGPT 命令来访问有关这些 pod 出错原因的更多详细信息：</h5><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs nginx"><span class="hljs-attribute">k8sgpt</span> analyse<br></code></pre></td></tr></table></figure>
+
+<h5 id="这将向我们展示-k8sGPT-在集群中发现的问题："><a href="#这将向我们展示-k8sGPT-在集群中发现的问题：" class="headerlink" title="这将向我们展示 k8sGPT 在集群中发现的问题："></a>这将向我们展示 k8sGPT 在集群中发现的问题：</h5><figure class="highlight maxima"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs maxima">AI Provider: openai<br><br><span class="hljs-number">0</span> <span class="hljs-built_in">demo</span>/nginx-deployment-5f4c7db77b-hq74n(Deployment/nginx-deployment)<br>- Error: back-off 1m20s restarting failed container=nginx pod=nginx-deployment-5f4c7db77b-hq74n_demo(<span class="hljs-number">7854b793</span>-<span class="hljs-number">21b7</span>-4f81-<span class="hljs-number">86e5</span>-dbb4113f64f4)<br><br><span class="hljs-number">1</span> <span class="hljs-built_in">demo</span>/nginx-deployment-5f4c7db77b-phbq8(Deployment/nginx-deployment)<br>- Error: back-off 1m20s restarting failed container=nginx pod=nginx-deployment-5f4c7db77b-phbq8_demo(<span class="hljs-number">74038531</span>-e362-45a6-a436-cf1a6ea46d8a)<br><br><span class="hljs-number">2</span> <span class="hljs-built_in">demo</span>/nginx-deployment-5f4c7db77b-shkw6(Deployment/nginx-deployment)<br>- Error: back-off 1m20s restarting failed container=nginx pod=nginx-deployment-5f4c7db77b-shkw6_demo(2603f332-3e1c-45da-<span class="hljs-number">8080</span>-e34dd6d956ad)<br></code></pre></td></tr></table></figure>
+
+<p><strong>要接收更多信息以及有关如何解决问题的建议，我们可以使用以下<code>--explain</code>标志：</strong></p>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">k8sgpt <span class="hljs-keyword">analyse</span> <span class="hljs-comment">--explain</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="附加功能"><a href="#附加功能" class="headerlink" title="附加功能"></a>附加功能</h3><h5 id="根据你的集群大小和-K8sGPT-在集群中识别的问题数量，你还可以按特定命名空间和工作负载类型进行过滤。"><a href="#根据你的集群大小和-K8sGPT-在集群中识别的问题数量，你还可以按特定命名空间和工作负载类型进行过滤。" class="headerlink" title="根据你的集群大小和 K8sGPT 在集群中识别的问题数量，你还可以按特定命名空间和工作负载类型进行过滤。"></a>根据你的集群大小和 K8sGPT 在集群中识别的问题数量，你还可以按特定命名空间和工作负载类型进行过滤。</h5><h5 id="此外，如果你或你的组织担心-OpenAI-或其他后端接收有关你的工作负载的敏感信息，你可以使用-anonymize规避应用的敏感信息。"><a href="#此外，如果你或你的组织担心-OpenAI-或其他后端接收有关你的工作负载的敏感信息，你可以使用-anonymize规避应用的敏感信息。" class="headerlink" title="此外，如果你或你的组织担心 OpenAI 或其他后端接收有关你的工作负载的敏感信息，你可以使用--anonymize规避应用的敏感信息。"></a>此外，如果你或你的组织担心 OpenAI 或其他后端接收有关你的工作负载的敏感信息，你可以使用<code>--anonymize</code>规避应用的敏感信息。</h5><h2 id="与其他工具的集成"><a href="#与其他工具的集成" class="headerlink" title="与其他工具的集成"></a>与其他工具的集成</h2><p><strong>云原生生态系统中大多数工具的价值源于它们与其他工具的集成程度。</strong></p>
+<h5 id="在撰写本文时，K8sGPT-提供了与-Gafana-和-Prometheus-等可观察性工具的轻松集成。此外，还可以为-K8sGPT-编写插件。维护者提供的第一个插件是Trivy，一个一体化的云原生安全扫描器。"><a href="#在撰写本文时，K8sGPT-提供了与-Gafana-和-Prometheus-等可观察性工具的轻松集成。此外，还可以为-K8sGPT-编写插件。维护者提供的第一个插件是Trivy，一个一体化的云原生安全扫描器。" class="headerlink" title="在撰写本文时，K8sGPT 提供了与 Gafana 和 Prometheus 等可观察性工具的轻松集成。此外，还可以为 K8sGPT 编写插件。维护者提供的第一个插件是Trivy，一个一体化的云原生安全扫描器。"></a>在撰写本文时，K8sGPT 提供了与 Gafana 和 Prometheus 等可观察性工具的轻松集成。此外，还可以为 K8sGPT 编写插件。维护者提供的第一个插件是Trivy，一个一体化的云原生安全扫描器。</h5><h5 id="你可以使用以下命令列出所有可用的集成："><a href="#你可以使用以下命令列出所有可用的集成：" class="headerlink" title="你可以使用以下命令列出所有可用的集成："></a>你可以使用以下命令列出所有可用的集成：</h5><figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-attribute">k8sgpt integration list</span><br><span class="hljs-attribute">Active</span><span class="hljs-punctuation">:</span><br><span class="hljs-attribute">Unused</span><span class="hljs-punctuation">:</span><br><span class="hljs-punctuation">&gt;</span> <span class="hljs-string">trivy</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="接下来，我们要激活-Trivy-集成："><a href="#接下来，我们要激活-Trivy-集成：" class="headerlink" title="接下来，我们要激活 Trivy 集成："></a>接下来，我们要激活 Trivy 集成：</h5><figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">k8sgpt <span class="hljs-built_in">int</span>egration activate trivy<br></code></pre></td></tr></table></figure>
+
+<h5 id="这将在集群内安装-Trivy-Operator（如果尚未安装）："><a href="#这将在集群内安装-Trivy-Operator（如果尚未安装）：" class="headerlink" title="这将在集群内安装 Trivy Operator（如果尚未安装）："></a>这将在集群内安装 Trivy Operator（如果尚未安装）：</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061713622.png" srcset="/img/loading.gif" lazyload alt="image-20240306171344539"></p>
+<p>激活集成后，我们可以通过 k8sgpt 过滤器，使用 Trivy 创建的漏洞报告作为 K8sGPT 分析的一部分：</p>
+<figure class="highlight node-repl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs node-repl">❯ k8sgpt filters list<br>Active:<br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript"><span class="hljs-title class_">Pod</span></span><br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript"><span class="hljs-title class_">VulnerabilityReport</span> (integration)</span><br>Unused:<br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript"><span class="hljs-title class_">Deployment</span></span><br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript"><span class="hljs-title class_">ReplicaSet</span></span><br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript"><span class="hljs-title class_">Node</span></span><br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript"><span class="hljs-title class_">Service</span></span><br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript"><span class="hljs-title class_">Ingress</span></span><br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript"><span class="hljs-title class_">StatefulSet</span></span><br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript"><span class="hljs-title class_">CronJob</span></span><br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript"><span class="hljs-title class_">PersistentVolumeClaim</span></span><br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript"><span class="hljs-title class_">HorizontalPodAutoScaler</span></span><br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript"><span class="hljs-title class_">PodDisruptionBudget</span></span><br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript"><span class="hljs-title class_">NetworkPolicy</span></span><br></code></pre></td></tr></table></figure>
+
+<h5 id="过滤器对应于-k8sgpt-代码中的特定分析器。分析器仅查看相关信息，例如最关键的漏洞。"><a href="#过滤器对应于-k8sgpt-代码中的特定分析器。分析器仅查看相关信息，例如最关键的漏洞。" class="headerlink" title="过滤器对应于 k8sgpt 代码中的特定分析器。分析器仅查看相关信息，例如最关键的漏洞。"></a>过滤器对应于 k8sgpt 代码中的特定分析器。分析器仅查看相关信息，例如最关键的漏洞。</h5><h5 id="要使用-VulnerabilityReport-过滤器，请使用以下命令："><a href="#要使用-VulnerabilityReport-过滤器，请使用以下命令：" class="headerlink" title="要使用 VulnerabilityReport 过滤器，请使用以下命令："></a>要使用 VulnerabilityReport 过滤器，请使用以下命令：</h5><figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">k8sgpt <span class="hljs-keyword">analyse</span> <span class="hljs-comment">--filter=VulnerabilityReport</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="FIXME-与之前类似，我们也可以要求-K8sGPT-对扫描提供进一步的解释："><a href="#FIXME-与之前类似，我们也可以要求-K8sGPT-对扫描提供进一步的解释：" class="headerlink" title="(FIXME)与之前类似，我们也可以要求 K8sGPT 对扫描提供进一步的解释："></a>(FIXME)与之前类似，我们也可以要求 K8sGPT 对扫描提供进一步的解释：</h5><figure class="highlight brainfuck"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs brainfuck"><span class="hljs-comment">k8sgpt analyse</span> <span class="hljs-literal">--</span><span class="hljs-comment">filter=VulnerabilityReport</span> <span class="hljs-literal">--</span><span class="hljs-comment">explain</span><br></code></pre></td></tr></table></figure>
+
+<h2 id="K8sGPT-Operator"><a href="#K8sGPT-Operator" class="headerlink" title="K8sGPT Operator"></a>K8sGPT Operator</h2><h5 id="虽然-CLI-工具为集群管理员提供了对其基础设施和工作负载执行即席扫描的功能，但-K8sGPT-Operator-在集群中全天候-24-7-运行。它是-Kubernetes-原生的，这意味着它作为-Kubernetes-自定义资源运行，并生成作为-YAML-清单存储在集群中的报告。"><a href="#虽然-CLI-工具为集群管理员提供了对其基础设施和工作负载执行即席扫描的功能，但-K8sGPT-Operator-在集群中全天候-24-7-运行。它是-Kubernetes-原生的，这意味着它作为-Kubernetes-自定义资源运行，并生成作为-YAML-清单存储在集群中的报告。" class="headerlink" title="虽然 CLI 工具为集群管理员提供了对其基础设施和工作负载执行即席扫描的功能，但 K8sGPT Operator 在集群中全天候 (24&#x2F;7) 运行。它是 Kubernetes 原生的，这意味着它作为 Kubernetes 自定义资源运行，并生成作为 YAML 清单存储在集群中的报告。"></a>虽然 CLI 工具为集群管理员提供了对其基础设施和工作负载执行即席扫描的功能，但 K8sGPT Operator 在集群中全天候 (24&#x2F;7) 运行。它是 Kubernetes 原生的，这意味着它作为 Kubernetes 自定义资源运行，并生成作为 YAML 清单存储在集群中的报告。</h5><h5 id="要安装-Operator，请按照以下命令进行操作："><a href="#要安装-Operator，请按照以下命令进行操作：" class="headerlink" title="要安装 Operator，请按照以下命令进行操作："></a>要安装 Operator，请按照以下命令进行操作：</h5><figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">helm repo <span class="hljs-keyword">add</span> k8sgpt https://charts.k8sgpt.ai/<br>helm repo <span class="hljs-keyword">update</span><br>helm install <span class="hljs-keyword">release</span> k8sgpt/k8sgpt-<span class="hljs-keyword">operator</span> -n k8sgpt-<span class="hljs-keyword">operator</span>-<span class="hljs-keyword">system</span> <span class="hljs-comment">--create-namespace</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="如果你想将-K8sGPT-与-Prometheus-和-Grafana-集成，你可以通过向上面的安装提供values-yaml-清单来使用略有不同的安装："><a href="#如果你想将-K8sGPT-与-Prometheus-和-Grafana-集成，你可以通过向上面的安装提供values-yaml-清单来使用略有不同的安装：" class="headerlink" title="如果你想将 K8sGPT 与 Prometheus 和 Grafana 集成，你可以通过向上面的安装提供values.yaml 清单来使用略有不同的安装："></a>如果你想将 K8sGPT 与 Prometheus 和 Grafana 集成，你可以通过向上面的安装提供values.yaml 清单来使用略有不同的安装：</h5><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">serviceMonitor:</span><br>    <span class="hljs-attr">enabled:</span> <span class="hljs-literal">true</span><br><br><span class="hljs-attr">GrafanaDashboard:</span><br>    <span class="hljs-attr">enabled:</span> <span class="hljs-literal">true</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="然后安装-Operator-或更新现有安装："><a href="#然后安装-Operator-或更新现有安装：" class="headerlink" title="然后安装 Operator 或更新现有安装："></a>然后安装 Operator 或更新现有安装：</h5><figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">helm install <span class="hljs-keyword">release</span> k8sgpt/k8sgpt-<span class="hljs-keyword">operator</span> -n k8sgpt-<span class="hljs-keyword">operator</span>-<span class="hljs-keyword">system</span> <span class="hljs-comment">--create-namespace --values values.yaml</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="在本例中，我们告诉-K8sGPT-还安装一个-ServiceMonitor，它将扫描报告中的指标发送到-Prometheus，并为-K8sGPT-创建一个仪表板。如果你使用了此安装，则还需要安装-kube-prometheus-stack-Helm-Chart-才能访问-Grafana-和-Prometheus。这可以通过以下命令来完成："><a href="#在本例中，我们告诉-K8sGPT-还安装一个-ServiceMonitor，它将扫描报告中的指标发送到-Prometheus，并为-K8sGPT-创建一个仪表板。如果你使用了此安装，则还需要安装-kube-prometheus-stack-Helm-Chart-才能访问-Grafana-和-Prometheus。这可以通过以下命令来完成：" class="headerlink" title="在本例中，我们告诉 K8sGPT 还安装一个 ServiceMonitor，它将扫描报告中的指标发送到 Prometheus，并为 K8sGPT 创建一个仪表板。如果你使用了此安装，则还需要安装 kube-prometheus-stack Helm Chart 才能访问 Grafana 和 Prometheus。这可以通过以下命令来完成："></a>在本例中，我们告诉 K8sGPT 还安装一个 ServiceMonitor，它将扫描报告中的指标发送到 Prometheus，并为 K8sGPT 创建一个仪表板。如果你使用了此安装，则还需要安装 kube-prometheus-stack Helm Chart 才能访问 Grafana 和 Prometheus。这可以通过以下命令来完成：</h5><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs cpp">helm repo add prometheus-community https:<span class="hljs-comment">//prometheus-community.github.io/helm-charts</span><br><br>helm repo update<br><br>helm install prom prometheus-community/kube-prometheus-stack -n k8sgpt-<span class="hljs-keyword">operator</span>-system --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=<span class="hljs-literal">false</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="此时，你应该在集群内运行-K8sGPT-Operator-和-Prometheus-Stack-Helm-Chart（也是-Kubernetes-Operator）。"><a href="#此时，你应该在集群内运行-K8sGPT-Operator-和-Prometheus-Stack-Helm-Chart（也是-Kubernetes-Operator）。" class="headerlink" title="此时，你应该在集群内运行 K8sGPT Operator 和 Prometheus Stack Helm Chart（也是 Kubernetes Operator）。"></a>此时，你应该在集群内运行 K8sGPT Operator 和 Prometheus Stack Helm Chart（也是 Kubernetes Operator）。</h5><h5 id="与我们需要向-CLI-提供-OpenAI-API-密钥的方式类似，我们需要使用-API-密钥创建-Kubernetes-密钥。为此，请使用与之前相同的密钥，或者在你的-OpenAI-帐户上生成一个新密钥。"><a href="#与我们需要向-CLI-提供-OpenAI-API-密钥的方式类似，我们需要使用-API-密钥创建-Kubernetes-密钥。为此，请使用与之前相同的密钥，或者在你的-OpenAI-帐户上生成一个新密钥。" class="headerlink" title="与我们需要向 CLI 提供 OpenAI API 密钥的方式类似，我们需要使用 API 密钥创建 Kubernetes 密钥。为此，请使用与之前相同的密钥，或者在你的 OpenAI 帐户上生成一个新密钥。"></a>与我们需要向 CLI 提供 OpenAI API 密钥的方式类似，我们需要使用 API 密钥创建 Kubernetes 密钥。为此，请使用与之前相同的密钥，或者在你的 OpenAI 帐户上生成一个新密钥。</h5><h5 id="要生成-Kubernetes-密钥，请将你的-OpenAI-密钥粘贴到以下命令中："><a href="#要生成-Kubernetes-密钥，请将你的-OpenAI-密钥粘贴到以下命令中：" class="headerlink" title="要生成 Kubernetes 密钥，请将你的 OpenAI 密钥粘贴到以下命令中："></a>要生成 Kubernetes 密钥，请将你的 OpenAI 密钥粘贴到以下命令中：</h5><figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs routeros"><span class="hljs-built_in">export</span> <span class="hljs-attribute">OPENAI_TOKEN</span>=&lt;YOUR API KEY HERE&gt;<br><br>kubectl create<span class="hljs-built_in"> secret </span>generic k8sgpt-sample-secret <span class="hljs-attribute">--from-literal</span>=openai-api-key=$OPENAI_TOKEN -n k8sgpt-operator-system<br></code></pre></td></tr></table></figure>
+
+<h5 id="然后，我们需要配置-K8sGPT-Operator-以了解要使用哪个版本的-K8sGPT-以及哪个-AI-后端："><a href="#然后，我们需要配置-K8sGPT-Operator-以了解要使用哪个版本的-K8sGPT-以及哪个-AI-后端：" class="headerlink" title="然后，我们需要配置 K8sGPT Operator 以了解要使用哪个版本的 K8sGPT 以及哪个 AI 后端："></a>然后，我们需要配置 K8sGPT Operator 以了解要使用哪个版本的 K8sGPT 以及哪个 AI 后端：</h5><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">core.k8sgpt.ai/v1alpha1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">K8sGPT</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">k8sgpt-sample</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">model:</span> <span class="hljs-string">gpt-3.5-turbo</span><br>  <span class="hljs-attr">backend:</span> <span class="hljs-string">openai</span><br>  <span class="hljs-attr">noCache:</span> <span class="hljs-literal">false</span><br>  <span class="hljs-attr">version:</span> <span class="hljs-string">v0.3.2</span><br>  <span class="hljs-attr">enableAI:</span> <span class="hljs-literal">true</span><br>  <span class="hljs-attr">secret:</span><br>    <span class="hljs-attr">name:</span> <span class="hljs-string">k8sgpt-sample-secret</span><br>    <span class="hljs-attr">key:</span> <span class="hljs-string">openai-api-key</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="现在，我们需要将此文件应用到我们的-K8sGPT-集群命名空间："><a href="#现在，我们需要将此文件应用到我们的-K8sGPT-集群命名空间：" class="headerlink" title="现在，我们需要将此文件应用到我们的 K8sGPT 集群命名空间："></a>现在，我们需要将此文件应用到我们的 K8sGPT 集群命名空间：</h5><figure class="highlight maxima"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs maxima">kubectl <span class="hljs-built_in">apply</span> -f k8sgpt-resource.yaml -n k8sgpt-operator-<span class="hljs-built_in">system</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="几秒钟内，Operator-将创建新结果："><a href="#几秒钟内，Operator-将创建新结果：" class="headerlink" title="几秒钟内，Operator 将创建新结果："></a>几秒钟内，Operator 将创建新结果：</h5><figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">kubectl <span class="hljs-keyword">get</span> results -n k8sgpt-<span class="hljs-keyword">operator</span>-<span class="hljs-keyword">system</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="以下是不同命令的屏幕截图，你可以按照这些命令从-K8sGPT-Operator-查看结果报告："><a href="#以下是不同命令的屏幕截图，你可以按照这些命令从-K8sGPT-Operator-查看结果报告：" class="headerlink" title="以下是不同命令的屏幕截图，你可以按照这些命令从 K8sGPT Operator 查看结果报告："></a>以下是不同命令的屏幕截图，你可以按照这些命令从 K8sGPT Operator 查看结果报告：</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061714569.png" srcset="/img/loading.gif" lazyload alt="image-20240306171418481"></p>
+<h5 id="从-K8sGPT-Operator-查看结果报告"><a href="#从-K8sGPT-Operator-查看结果报告" class="headerlink" title="从 K8sGPT Operator 查看结果报告"></a>从 K8sGPT Operator 查看结果报告</h5><h5 id="最后，我们将看一下-Grafana-仪表板。端口转发-Grafana-服务以通过-localhost-访问它："><a href="#最后，我们将看一下-Grafana-仪表板。端口转发-Grafana-服务以通过-localhost-访问它：" class="headerlink" title="最后，我们将看一下 Grafana 仪表板。端口转发 Grafana 服务以通过 localhost 访问它："></a>最后，我们将看一下 Grafana 仪表板。端口转发 Grafana 服务以通过 localhost 访问它：</h5><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">kubectl</span> port-forward service/prom-grafana -n prom <span class="hljs-number">3000</span>:<span class="hljs-number">80</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="打开-localhost-3000，然后导航到-Dashboards-K8sGPT-Overview，然后你将看到包含结果的仪表板："><a href="#打开-localhost-3000，然后导航到-Dashboards-K8sGPT-Overview，然后你将看到包含结果的仪表板：" class="headerlink" title="打开 localhost:3000，然后导航到 Dashboards&gt;K8sGPT Overview，然后你将看到包含结果的仪表板："></a>打开 localhost:3000，然后导航到 Dashboards&gt;K8sGPT Overview，然后你将看到包含结果的仪表板：</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061714659.png" srcset="/img/loading.gif" lazyload alt="image-20240306171435610">Grafana 中的 K8sGPT 仪表板</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ol>
+<li>\1. <a target="_blank" rel="noopener" href="https://k8sgpt.ai/">https://k8sgpt.ai/</a></li>
+<li>\2. <a target="_blank" rel="noopener" href="https://docs.k8sgpt.ai/">https://docs.k8sgpt.ai/</a></li>
+<li>\3. <a target="_blank" rel="noopener" href="https://github.com/k8sgpt-ai">https://github.com/k8sgpt-ai</a></li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>K8S GPT 2024-04-03 15:02:09.127</div>
+      <div>http://example.com/2025/01/16/K8S GPT-k8sgpt/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/K8S%20CSI%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B-k8scsi-pou-xi-yan-jin/" title="K8S CSI剖析演进 2024-03-04 10:52:20.507">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">K8S CSI剖析演进 2024-03-04 10:52:20.507</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/K8S%20CNI%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B-k8scni-pou-xi-yan-jin/" title="K8S CNI剖析演进 2024-03-04 10:51:33.245">
+                        <span class="hidden-mobile">K8S CNI剖析演进 2024-03-04 10:51:33.245</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

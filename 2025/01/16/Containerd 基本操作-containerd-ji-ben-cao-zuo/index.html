@@ -1,0 +1,689 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="镜像基本操作Containerd 默认提供 CLI 命令行工具 ctr，ctr 命名提供基本的镜像和容器操作功能，可以通过如下查看命令帮助： 1[root@localhost ~]# ctr -help  镜像基本操作主要是 ctr image 命令，查看命令帮助 12345678910111213141516171819202122232425[root@localhost ~]# ctr im">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Containerd 基本操作 2024-04-03 14:55:46.786">
+<meta property="og:url" content="http://example.com/2025/01/16/Containerd%20%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C-containerd-ji-ben-cao-zuo/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="镜像基本操作Containerd 默认提供 CLI 命令行工具 ctr，ctr 命名提供基本的镜像和容器操作功能，可以通过如下查看命令帮助： 1[root@localhost ~]# ctr -help  镜像基本操作主要是 ctr image 命令，查看命令帮助 12345678910111213141516171819202122232425[root@localhost ~]# ctr im">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-01-16T02:08:28.041Z">
+<meta property="article:modified_time" content="2025-01-16T02:57:44.794Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>Containerd 基本操作 2024-04-03 14:55:46.786 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Containerd 基本操作 2024-04-03 14:55:46.786"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          9 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Containerd 基本操作 2024-04-03 14:55:46.786</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="镜像基本操作"><a href="#镜像基本操作" class="headerlink" title="镜像基本操作"></a>镜像基本操作</h2><p>Containerd 默认提供 CLI 命令行工具 ctr，ctr 命名提供基本的镜像和容器操作功能，可以通过如下查看命令帮助：</p>
+<figure class="highlight autoit"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs autoit">[root<span class="hljs-symbol">@localhost</span> ~]<span class="hljs-meta"># ctr -help</span><br></code></pre></td></tr></table></figure>
+
+<p>镜像基本操作主要是 ctr image 命令，查看命令帮助</p>
+<figure class="highlight less"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs less"><span class="hljs-selector-attr">[root@localhost ~]</span># <span class="hljs-selector-tag">ctr</span> <span class="hljs-selector-tag">images</span> <span class="hljs-selector-tag">-h</span><br><span class="hljs-selector-tag">NAME</span>:<br>   <span class="hljs-selector-tag">ctr</span> <span class="hljs-selector-tag">images</span> <span class="hljs-selector-tag">-</span> <span class="hljs-selector-tag">Manage</span> <span class="hljs-selector-tag">images</span><br><br><span class="hljs-selector-tag">USAGE</span>:<br>   <span class="hljs-selector-tag">ctr</span> <span class="hljs-selector-tag">images</span> <span class="hljs-selector-tag">command</span> <span class="hljs-selector-attr">[command options]</span> <span class="hljs-selector-attr">[arguments...]</span><br><br><span class="hljs-selector-tag">COMMANDS</span>:<br>   <span class="hljs-selector-tag">check</span>                    <span class="hljs-selector-tag">Check</span> <span class="hljs-selector-tag">existing</span> <span class="hljs-selector-tag">images</span> <span class="hljs-selector-tag">to</span> <span class="hljs-selector-tag">ensure</span> <span class="hljs-keyword">all</span> <span class="hljs-selector-tag">content</span> <span class="hljs-selector-tag">is</span> <span class="hljs-selector-tag">available</span> <span class="hljs-selector-tag">locally</span><br>   <span class="hljs-selector-tag">export</span>                   <span class="hljs-selector-tag">Export</span> <span class="hljs-selector-tag">images</span><br>   <span class="hljs-selector-tag">import</span>                   <span class="hljs-selector-tag">Import</span> <span class="hljs-selector-tag">images</span><br>   <span class="hljs-selector-tag">list</span>, <span class="hljs-selector-tag">ls</span>                 <span class="hljs-selector-tag">List</span> <span class="hljs-selector-tag">images</span> <span class="hljs-selector-tag">known</span> <span class="hljs-selector-tag">to</span> <span class="hljs-selector-tag">containerd</span><br>   <span class="hljs-selector-tag">mount</span>                    <span class="hljs-selector-tag">Mount</span> <span class="hljs-selector-tag">an</span> <span class="hljs-selector-tag">image</span> <span class="hljs-selector-tag">to</span> <span class="hljs-selector-tag">a</span> <span class="hljs-selector-tag">target</span> <span class="hljs-selector-tag">path</span><br>   <span class="hljs-selector-tag">unmount</span>                  <span class="hljs-selector-tag">Unmount</span> <span class="hljs-selector-tag">the</span> <span class="hljs-selector-tag">image</span> <span class="hljs-selector-tag">from</span> <span class="hljs-selector-tag">the</span> <span class="hljs-selector-tag">target</span><br>   <span class="hljs-selector-tag">pull</span>                     <span class="hljs-selector-tag">Pull</span> <span class="hljs-selector-tag">an</span> <span class="hljs-selector-tag">image</span> <span class="hljs-selector-tag">from</span> <span class="hljs-selector-tag">a</span> <span class="hljs-selector-tag">remote</span><br>   <span class="hljs-selector-tag">push</span>                     <span class="hljs-selector-tag">Push</span> <span class="hljs-selector-tag">an</span> <span class="hljs-selector-tag">image</span> <span class="hljs-selector-tag">to</span> <span class="hljs-selector-tag">a</span> <span class="hljs-selector-tag">remote</span><br>   <span class="hljs-selector-tag">prune</span>                    <span class="hljs-selector-tag">Remove</span> <span class="hljs-selector-tag">unused</span> <span class="hljs-selector-tag">images</span><br>   <span class="hljs-selector-tag">delete</span>, <span class="hljs-selector-tag">del</span>, <span class="hljs-selector-tag">remove</span>, <span class="hljs-selector-tag">rm</span>  <span class="hljs-selector-tag">Remove</span> <span class="hljs-selector-tag">one</span> <span class="hljs-selector-tag">or</span> <span class="hljs-selector-tag">more</span> <span class="hljs-selector-tag">images</span> <span class="hljs-selector-tag">by</span> <span class="hljs-selector-tag">reference</span><br>   <span class="hljs-selector-tag">tag</span>                      <span class="hljs-selector-tag">Tag</span> <span class="hljs-selector-tag">an</span> <span class="hljs-selector-tag">image</span><br>   <span class="hljs-selector-tag">label</span>                    <span class="hljs-selector-tag">Set</span> <span class="hljs-selector-tag">and</span> <span class="hljs-selector-tag">clear</span> <span class="hljs-selector-tag">labels</span> <span class="hljs-selector-tag">for</span> <span class="hljs-selector-tag">an</span> <span class="hljs-selector-tag">image</span><br>   <span class="hljs-selector-tag">convert</span>                  <span class="hljs-selector-tag">Convert</span> <span class="hljs-selector-tag">an</span> <span class="hljs-selector-tag">image</span><br>   <span class="hljs-selector-tag">usage</span>                    <span class="hljs-selector-tag">Display</span> <span class="hljs-selector-tag">usage</span> <span class="hljs-selector-tag">of</span> <span class="hljs-selector-tag">snapshots</span> <span class="hljs-selector-tag">for</span> <span class="hljs-selector-tag">a</span> <span class="hljs-selector-tag">given</span> <span class="hljs-selector-tag">image</span> <span class="hljs-selector-tag">ref</span><br><br><span class="hljs-selector-tag">OPTIONS</span>:<br>   <span class="hljs-selector-tag">--help</span>, <span class="hljs-selector-tag">-h</span>  <span class="hljs-selector-tag">show</span> <span class="hljs-selector-tag">help</span><br></code></pre></td></tr></table></figure>
+
+<h2 id="拉取镜像"><a href="#拉取镜像" class="headerlink" title="拉取镜像"></a>拉取镜像</h2><p>containerd支持oci标准的镜像，所以可以直接使用docker官方或dockerfile构建的镜像 需要注意的是，与docker不同，拉取镜像时要加上 ?docker.io&#x2F;liarary</p>
+<figure class="highlight gherkin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs gherkin"><span class="hljs-comment"># 镜像名不能简写</span><br>[root<span class="hljs-meta">@localhost</span> ~]<span class="hljs-comment"># ctr images pull docker.io/library/nginx:alpine</span><br>docker.io/library/nginx:alpine:                                                   resolved       |<span class="hljs-string">++++++++++++++++++++++++++++++++++++++</span>|<span class="hljs-string"> </span><br><span class="hljs-string">index-sha256:3923f8de8d2214b9490e68fd6ae63ea604deddd166df2755b788bef04848b9bc:    done           </span>|<span class="hljs-string">++++++++++++++++++++++++++++++++++++++</span>|<span class="hljs-string"> </span><br><span class="hljs-string">manifest-sha256:558b1480dc5c8f4373601a641c56b4fd24a77105d1246bd80b991f8b5c5dc0fc: done           </span>|<span class="hljs-string">++++++++++++++++++++++++++++++++++++++</span>|<span class="hljs-string"> </span><br><span class="hljs-string">layer-sha256:d7fb62c2e1cc7510e9c63402d02061002604b6ab79deab339ee8abf9f7452fde:    done           </span>|<span class="hljs-string">++++++++++++++++++++++++++++++++++++++</span>|<span class="hljs-string"> </span><br><span class="hljs-string">config-sha256:01e5c69afaf635f66aab0b59404a0ac72db1e2e519c3f41a1ff53d37c35bba41:   done           </span>|<span class="hljs-string">++++++++++++++++++++++++++++++++++++++</span>|<span class="hljs-string"> </span><br><span class="hljs-string">layer-sha256:c926b61bad3b94ae7351bafd0c184c159ebf0643b085f7ef1d47ecdc7316833c:    done           </span>|<span class="hljs-string">++++++++++++++++++++++++++++++++++++++</span>|<span class="hljs-string"> </span><br><span class="hljs-string">layer-sha256:eb2797aa8e799e16f2a041cb7d709dc913519995a8a7dd22509d33c662612c5e:    done           </span>|<span class="hljs-string">++++++++++++++++++++++++++++++++++++++</span>|<span class="hljs-string"> </span><br><span class="hljs-string">layer-sha256:47df6ca4b6bc8e8c42f5fcb7ce4d37737d68cb5fb5056a54605deb2b0d33415b:    done           </span>|<span class="hljs-string">++++++++++++++++++++++++++++++++++++++</span>|<span class="hljs-string"> </span><br><span class="hljs-string">layer-sha256:5ea1ba8ab969c385f95c844167644f56aca56cc947548764033c92654d60a304:    done           </span>|<span class="hljs-string">++++++++++++++++++++++++++++++++++++++</span>|<span class="hljs-string"> </span><br><span class="hljs-string">layer-sha256:6a4b140a5e7cbbec14bdbc3d9e7eced3b5f87652515c1cb65af5abeb53fc9fa8:    done           </span>|<span class="hljs-string">++++++++++++++++++++++++++++++++++++++</span>|<span class="hljs-string"> </span><br><span class="hljs-string">layer-sha256:c99555e79d522323ea54a2e9e5c56c0bc5ed2fd7ffa16fa9cf06e5c231c15db8:    done           </span>|<span class="hljs-string">++++++++++++++++++++++++++++++++++++++</span>|<span class="hljs-string"> </span><br><span class="hljs-string">layer-sha256:f9302969eafdbfd15516462ec6f9a8c8b537abb385d938e2fb154c23998c3851:    done           </span>|<span class="hljs-string">++++++++++++++++++++++++++++++++++++++</span>|<span class="hljs-string"> </span><br><span class="hljs-string">elapsed: 8.1 s                                                                    total:  16.1 M (2.0 MiB/s)                                       </span><br><span class="hljs-string">unpacking linux/amd64 sha256:3923f8de8d2214b9490e68fd6ae63ea604deddd166df2755b788bef04848b9bc...</span><br><span class="hljs-string">done: 781.530658ms</span><br></code></pre></td></tr></table></figure>
+
+<p>指定平台</p>
+<ul>
+<li>–all-platforms：所有平台（amd64 、arm、386 、ppc64le 等），不加的话下载当前平台架构</li>
+<li>–platform：指定linux&#x2F;amd64平台</li>
+</ul>
+<figure class="highlight coffeescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs coffeescript">[root@localhost ~]<span class="hljs-comment"># ctr images pull --all-platforms docker.io/library/nginx:alpine</span><br>[root@localhost ~]<span class="hljs-comment"># ctr images pull --platform linux/amd64 docker.io/library/nginx:alpine</span><br></code></pre></td></tr></table></figure>
+
+<h2 id="查看镜像"><a href="#查看镜像" class="headerlink" title="查看镜像"></a>查看镜像</h2><ul>
+<li>查看镜像可以使用 i 简写或者image</li>
+<li>-q 只打印镜像名称</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@localhost ~]# ctr images list<br>REF                            TYPE                                                      DIGEST                                                                  SIZE     PLATFORMS                                                                                LABELS <br>docker.io/library/nginx:alpine application/vnd.docker.distribution.manifest.list.v2+json sha256:3923f8de8d2214b9490e68fd6ae63ea604deddd166df2755b788bef04848b9bc 17.1 MiB linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64/v8,linux/ppc64le,linux/s390x -<br><br>[root@localhost ~]# ctr i <span class="hljs-built_in">ls</span><br>[root@localhost ~]# ctr i <span class="hljs-built_in">ls</span> -q<br></code></pre></td></tr></table></figure>
+
+<h2 id="检测镜像"><a href="#检测镜像" class="headerlink" title="检测镜像"></a>检测镜像</h2><figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">[root@localhost ~]# ctr images <span class="hljs-keyword">check</span><br><span class="hljs-keyword">REF</span>                            <span class="hljs-keyword">TYPE</span>                                                      DIGEST                                                                  STATUS         SIZE              UNPACKED <br>docker.io/library/nginx:alpine application/vnd.docker.distribution.manifest.list.v2+<span class="hljs-type">json</span> sha256:<span class="hljs-number">3923</span>f8de8d2214b9490e68fd6ae63ea604deddd166df2755b788bef04848b9bc complete (<span class="hljs-number">9</span>/<span class="hljs-number">9</span>) <span class="hljs-number">17.1</span> MiB/<span class="hljs-number">17.1</span> MiB <span class="hljs-keyword">true</span><br></code></pre></td></tr></table></figure>
+
+<p>主要查看其中的 STATUS，complete 表示镜像是完整可用的状态。</p>
+<h2 id="镜像挂载"><a href="#镜像挂载" class="headerlink" title="镜像挂载"></a>镜像挂载</h2><p>把已下载的容器镜像挂载至当前文件系统，是为了方便查看镜像中包含的内容</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@localhost ]# ctr images mount docker.io/library/nginx:alpine /tmp<br>sha256:01bb4fce3eb1b56b05adf99504dafd31907a5aadac736e36b27595c8b92f07f1<br>/tmp<br></code></pre></td></tr></table></figure>
+
+<p>查看挂载内容</p>
+<figure class="highlight tap"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs tap">[root@localhost tmp]<span class="hljs-comment"># ll /tmp/</span><br>总用量 76<br>drwxr-xr-x<span class="hljs-number"> 2 </span>root root<span class="hljs-number"> 4096 </span>11月<span class="hljs-number"> 30 </span>17:32 bin<br>drwxr-xr-x<span class="hljs-number"> 2 </span>root root<span class="hljs-number"> 4096 </span>11月<span class="hljs-number"> 30 </span>17:32 dev<br>drwxr-xr-x<span class="hljs-number"> 1 </span>root root<span class="hljs-number"> 4096 </span>12月 <span class="hljs-number"> 1 </span>15:02 docker-entrypoint.d<br>-rwxrwxr-x<span class="hljs-number"> 1 </span>root root<span class="hljs-number"> 1620 </span>12月 <span class="hljs-number"> 1 </span>15:02 docker-entrypoint.sh<br>drwxr-xr-x<span class="hljs-number"> 1 </span>root root<span class="hljs-number"> 4096 </span>12月 <span class="hljs-number"> 1 </span>15:02 etc<br>drwxr-xr-x<span class="hljs-number"> 2 </span>root root<span class="hljs-number"> 4096 </span>11月<span class="hljs-number"> 30 </span>17:32 home<br>drwxr-xr-x<span class="hljs-number"> 1 </span>root root<span class="hljs-number"> 4096 </span>12月 <span class="hljs-number"> 1 </span>15:02 lib<br>drwxr-xr-x<span class="hljs-number"> 5 </span>root root<span class="hljs-number"> 4096 </span>11月<span class="hljs-number"> 30 </span>17:32 media<br>drwxr-xr-x<span class="hljs-number"> 2 </span>root root<span class="hljs-number"> 4096 </span>11月<span class="hljs-number"> 30 </span>17:32 mnt<br>drwxr-xr-x<span class="hljs-number"> 2 </span>root root<span class="hljs-number"> 4096 </span>11月<span class="hljs-number"> 30 </span>17:32 opt<br>dr-xr-xr-x<span class="hljs-number"> 2 </span>root root<span class="hljs-number"> 4096 </span>11月<span class="hljs-number"> 30 </span>17:32 proc<br>drwx------<span class="hljs-number"> 2 </span>root root<span class="hljs-number"> 4096 </span>11月<span class="hljs-number"> 30 </span>17:32 root<br>drwxr-xr-x<span class="hljs-number"> 2 </span>root root<span class="hljs-number"> 4096 </span>11月<span class="hljs-number"> 30 </span>17:32 run<br>drwxr-xr-x<span class="hljs-number"> 2 </span>root root<span class="hljs-number"> 4096 </span>11月<span class="hljs-number"> 30 </span>17:32 sbin<br>drwxr-xr-x<span class="hljs-number"> 2 </span>root root<span class="hljs-number"> 4096 </span>11月<span class="hljs-number"> 30 </span>17:32 srv<br>drwxr-xr-x<span class="hljs-number"> 2 </span>root root<span class="hljs-number"> 4096 </span>11月<span class="hljs-number"> 30 </span>17:32 sys<br>drwxrwxrwt<span class="hljs-number"> 1 </span>root root<span class="hljs-number"> 4096 </span>12月 <span class="hljs-number"> 1 </span>15:02 tmp<br>drwxr-xr-x<span class="hljs-number"> 1 </span>root root<span class="hljs-number"> 4096 </span>11月<span class="hljs-number"> 30 </span>17:32 usr<br>drwxr-xr-x<span class="hljs-number"> 1 </span>root root<span class="hljs-number"> 4096 </span>11月<span class="hljs-number"> 30 </span>17:32 var<br></code></pre></td></tr></table></figure>
+
+<p>卸载</p>
+<figure class="highlight coffeescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs coffeescript">[root@localhost ]<span class="hljs-comment"># ctr images unmount /tmp</span><br></code></pre></td></tr></table></figure>
+
+<h2 id="镜像导入导出"><a href="#镜像导入导出" class="headerlink" title="镜像导入导出"></a>镜像导入导出</h2><h3 id="导出"><a href="#导出" class="headerlink" title="导出"></a>导出</h3><ul>
+<li>同时导出可以使用–platform导出其它平台的(例如arm)</li>
+<li>–all-platforms为导出所有平台</li>
+</ul>
+<figure class="highlight coffeescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs coffeescript">[root@localhost ]<span class="hljs-comment"># ctr image export --all-platforms mynginx.tar docker.io/library/nginx:alpine</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="导入"><a href="#导入" class="headerlink" title="导入"></a>导入</h3><figure class="highlight moonscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs moonscript">删除本地镜像<br>[root@localhost ]# ctr images rm docker.<span class="hljs-built_in">io</span>/library/<span class="hljs-name">nginx</span>:alpine<br><br>导入<br>[root@localhost ]# ctr images <span class="hljs-keyword">import</span> mynginx.tar<br>unpacking docker.<span class="hljs-built_in">io</span>/library/<span class="hljs-name">nginx</span>:alpine (<span class="hljs-name">sha256</span>:<span class="hljs-number">3923</span>f8de8d2214b9490e68fd6ae63ea604deddd166df2755b788bef04848b9bc)...done<br><br>导入所有平台<br>[root@localhost ]# ctr images <span class="hljs-keyword">import</span> <span class="hljs-comment">--all-platforms mynginx.tar</span><br>unpacking docker.<span class="hljs-built_in">io</span>/library/<span class="hljs-name">nginx</span>:alpine (<span class="hljs-name">sha256</span>:<span class="hljs-number">3923</span>f8de8d2214b9490e68fd6ae63ea604deddd166df2755b788bef04848b9bc)...done<br></code></pre></td></tr></table></figure>
+
+<p>导入可能会出现类似于 ctr: content digest sha256:xxxxxx not found 的错误，要解决这个办法需要 pull 所有平台镜像：</p>
+<figure class="highlight graphql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs graphql"><span class="hljs-punctuation">[</span>root<span class="hljs-meta">@localhost</span> <span class="hljs-punctuation">]</span><span class="hljs-comment"># ctr i pull --all-platforms docker.io/library/nginx:alpine</span><br><span class="hljs-punctuation">[</span>root<span class="hljs-meta">@localhost</span> <span class="hljs-punctuation">]</span><span class="hljs-comment"># ctr i export --all-platforms mynginx.tar docker.io/library/nginx:alpine</span><br><span class="hljs-punctuation">[</span>root<span class="hljs-meta">@localhost</span> <span class="hljs-punctuation">]</span><span class="hljs-comment"># ctr i rm docker.io/library/nginx:alpine</span><br><span class="hljs-punctuation">[</span>root<span class="hljs-meta">@localhost</span> <span class="hljs-punctuation">]</span><span class="hljs-comment"># ctr i import mynginx.tar</span><br></code></pre></td></tr></table></figure>
+
+<h2 id="删除镜像"><a href="#删除镜像" class="headerlink" title="删除镜像"></a>删除镜像</h2><figure class="highlight autoit"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs autoit">[root<span class="hljs-symbol">@localhost</span> ]<span class="hljs-meta"># ctr images rm docker.io/library/nginx:alpine</span><br></code></pre></td></tr></table></figure>
+
+<h2 id="镜像打标签"><a href="#镜像打标签" class="headerlink" title="镜像打标签"></a>镜像打标签</h2><figure class="highlight coffeescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs coffeescript">[root@localhost ~]<span class="hljs-comment"># ctr images tag docker.io/library/nginx:alpine docker.io/bongmu/nginx:alpine</span><br></code></pre></td></tr></table></figure>
+
+<h2 id="推送镜像"><a href="#推送镜像" class="headerlink" title="推送镜像"></a>推送镜像</h2><figure class="highlight gherkin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs gherkin">[root<span class="hljs-meta">@localhost</span> ~]<span class="hljs-comment"># ctr images push  docker.io/bongmu/nginx:alpine</span><br>index-alpine<span class="hljs-meta">@sha256:3923f8de8d2214b9490e68fd6ae63ea604deddd166df2755b788bef04848b9bc:</span> done           |<span class="hljs-string">++++++++++++++++++++++++++++++++++++++</span>|<span class="hljs-string"> </span><br><span class="hljs-string">manifest-sha256:bf575af9dafa90e26c6827b3b9cb2f87900a2a67a899d0fc01023e992cadbbde:     done           </span>|<span class="hljs-string">++++++++++++++++++++++++++++++++++++++</span>|<span class="hljs-string"> </span><br><span class="hljs-string">manifest-sha256:558b1480dc5c8f4373601a641c56b4fd24a77105d1246bd80b991f8b5c5dc0fc:     done           </span>|<span class="hljs-string">++++++++++++++++++++++++++++++++++++++</span>|<span class="hljs-string"> </span><br><span class="hljs-string">manifest-sha256:4937f49e504c3b0a082eec0c9c336315ba10dbd2fa1800575f84a0a69ee9a4d4:     done           </span>|<span class="hljs-string">++++++++++++++++++++++++++++++++++++++</span>|<span class="hljs-string"> </span><br><span class="hljs-string">manifest-sha256:9f6dc3ad07da76ccf600ee39d0524266bbef01414a31466ef67d0b172448c531:     done           </span>|<span class="hljs-string">++++++++++++++++++++++++++++++++++++++</span>|<span class="hljs-string"> </span><br><span class="hljs-string">manifest-sha256:18d2bb20c22e511b92a3ec81f553edfcaeeb74fd1c96a92c56a6c4252c75eec7:     done           </span>|<span class="hljs-string">++++++++++++++++++++++++++++++++++++++</span>|<span class="hljs-string"> </span><br><span class="hljs-string">manifest-sha256:c2b754e66172ca0ca15b9ee2290a2e1b921ceb0a643019a49aa9c68a1dedf4dc:     done           </span>|<span class="hljs-string">++++++++++++++++++++++++++++++++++++++</span>|<span class="hljs-string"> </span><br><span class="hljs-string">manifest-sha256:aed771cbe3afa57b9ba1fbdd83a45b35792ae08046db29dd306fbc411bfc9396:     done           </span>|<span class="hljs-string">++++++++++++++++++++++++++++++++++++++</span>|<span class="hljs-string"> </span><br><span class="hljs-string">config-sha256:92b9e48381c41c7ec99a82b7056f6a194606b241788ca752f0496aa07b538d9d:       done           </span>|<span class="hljs-string">++++++++++++++++++++++++++++++++++++++</span>|<span class="hljs-string"> </span><br><span class="hljs-string">config-sha256:7cae28957771c6e97257fd5e25334c9c3d80fe07781688c7a14f2bb63790f54a:       done           </span>|<span class="hljs-string">++++++++++++++++++++++++++++++++++++++</span>|<span class="hljs-string"> </span><br><span class="hljs-string">config-sha256:0b76d6a71b9e5058ce30cad1e0e03fad54a2d6a31fa0d539312fcce133937b6a:       done           </span>|<span class="hljs-string">++++++++++++++++++++++++++++++++++++++</span>|<span class="hljs-string"> </span><br><span class="hljs-string">config-sha256:01e5c69afaf635f66aab0b59404a0ac72db1e2e519c3f41a1ff53d37c35bba41:       done           </span>|<span class="hljs-string">++++++++++++++++++++++++++++++++++++++</span>|<span class="hljs-string"> </span><br><span class="hljs-string">config-sha256:561adbe2d8b3a9ad5ef35d0661133a4fa0fb665e3d1a75a0c16333ae9494ff90:       done           </span>|<span class="hljs-string">++++++++++++++++++++++++++++++++++++++</span>|<span class="hljs-string"> </span><br><span class="hljs-string">config-sha256:f09fc93534f6a80e1cb9ad70fe8c697b1596faa9f1b50895f203bc02feb9ebb8:       done           </span>|<span class="hljs-string">++++++++++++++++++++++++++++++++++++++</span>|<span class="hljs-string"> </span><br><span class="hljs-string">config-sha256:aa2502e079292fd7c12af367afba401c53dfe37d4eec74693a8dda264be75d70:       done           </span>|<span class="hljs-string">++++++++++++++++++++++++++++++++++++++</span>|<span class="hljs-string"> </span><br><span class="hljs-string">elapsed: 4.5 s</span><br></code></pre></td></tr></table></figure>
+
+<p>推送镜像到带认证的镜像仓库</p>
+<figure class="highlight coffeescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs coffeescript">[root@localhost ~]<span class="hljs-comment"># ctr images push --user bongmu:xx docker.io/bongmu/nginx:alpine</span><br></code></pre></td></tr></table></figure>
+
+<h2 id="命名空间操作"><a href="#命名空间操作" class="headerlink" title="命名空间操作"></a>命名空间操作</h2><p>containerd相比于docker，多了namespace概念，每个image和containe都会在各自的namespace下可见。</p>
+<figure class="highlight oxygene"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs oxygene">[root@localhost ~]# ctr <span class="hljs-keyword">namespace</span> -h<br>NAME:<br>   ctr namespaces - Manage namespaces<br><br>USAGE:<br>   ctr namespaces command [command options] [arguments...]<br><br>COMMANDS:<br>   <span class="hljs-keyword">create</span>, c   <span class="hljs-keyword">Create</span> a <span class="hljs-keyword">new</span> <span class="hljs-keyword">namespace</span><br>   list, ls    List namespaces<br>   <span class="hljs-keyword">remove</span>, rm  <span class="hljs-keyword">Remove</span> one <span class="hljs-keyword">or</span> more namespaces<br>   label       <span class="hljs-keyword">Set</span> <span class="hljs-keyword">and</span> clear labels <span class="hljs-keyword">for</span> a <span class="hljs-keyword">namespace</span><br><br>OPTIONS:<br>   --help, -h  show help<br></code></pre></td></tr></table></figure>
+
+<h3 id="查看命名空间"><a href="#查看命名空间" class="headerlink" title="查看命名空间"></a>查看命名空间</h3><figure class="highlight autoit"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs autoit">[root<span class="hljs-symbol">@localhost</span> ~]<span class="hljs-meta"># ctr namespaces ls</span><br>NAME    LABELS <br><span class="hljs-literal">default</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="创建命名空间"><a href="#创建命名空间" class="headerlink" title="创建命名空间"></a>创建命名空间</h3><figure class="highlight coffeescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs coffeescript">[root@localhost ~]<span class="hljs-comment"># ctr namespaces create test</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="删除命名空间"><a href="#删除命名空间" class="headerlink" title="删除命名空间"></a>删除命名空间</h3><figure class="highlight autoit"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs autoit">[root<span class="hljs-symbol">@localhost</span> ~]<span class="hljs-meta"># ctr namespaces rm test</span><br></code></pre></td></tr></table></figure>
+
+<p>默认containerd会使用default命名空间，Kubernetes 下使用的 containerd 默认命名空间是 ?k8s.io，Docker 使用的 containerd 下面的命名空间默认是 moby。下载镜像的时候命名空间只如果不指定，默认是看不到，这点和k8s namespace作用相同。有了命名空间后就可以在操作资源的时候指定 namespace。</p>
+<figure class="highlight coffeescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs coffeescript">[root@localhost ~]<span class="hljs-comment"># ctr -n test images pull --all-platforms docker.io/library/nginx:alpine</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="查看命名空间镜像"><a href="#查看命名空间镜像" class="headerlink" title="查看命名空间镜像"></a>查看命名空间镜像</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs bash">[root@localhost ~]# ctr images <span class="hljs-built_in">ls</span><br>REF TYPE DIGEST SIZE PLATFORMS LABELS <br>[root@localhost ~]# <br>[root@localhost ~]# ctr -n <span class="hljs-built_in">test</span> images <span class="hljs-built_in">ls</span><br>REF                            TYPE                                                      DIGEST                                                                  SIZE     PLATFORMS                                                                                LABELS <br>docker.io/library/nginx:alpine application/vnd.docker.distribution.manifest.list.v2+json sha256:3923f8de8d2214b9490e68fd6ae63ea604deddd166df2755b788bef04848b9bc 17.1 MiB linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64/v8,linux/ppc64le,linux/s390x -<br></code></pre></td></tr></table></figure>
+
+<p>下一篇文章将介绍Containerd容器管理，请尽情期待！别忘了留个关注哟！</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Containerd 基本操作 2024-04-03 14:55:46.786</div>
+      <div>http://example.com/2025/01/16/Containerd 基本操作-containerd-ji-ben-cao-zuo/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/Docker%E9%87%8D%E8%A6%81%E7%9A%84%E7%BD%91%E7%BB%9C%E7%9F%A5%E8%AF%86%E7%82%B9-docker-zhong-yao-de-wang-luo-zhi-shi-dian/" title="Docker重要的网络知识点  2024-04-03 15:12:10.162">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Docker重要的网络知识点  2024-04-03 15:12:10.162</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/Calico%E7%BD%91%E7%BB%9C%E8%87%AA%E5%AE%9A%E4%B9%89-calico-wang-luo-zi-ding-yi/" title="Calico网络自定义 2024-04-03 15:08:43.394">
+                        <span class="hidden-mobile">Calico网络自定义 2024-04-03 15:08:43.394</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

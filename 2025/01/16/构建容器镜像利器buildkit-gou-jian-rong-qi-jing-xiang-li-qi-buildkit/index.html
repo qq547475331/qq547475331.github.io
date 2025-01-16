@@ -1,0 +1,744 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Docker通过读取Dockerfile中的指令自动构建镜像，Dockerfile是一个文本文件，其中依次包含构建给定镜像所需的所有命令。  上面的解释摘自Docker的官方文档并总结了Dockerfile的用途。Dockerfile的使用非常重要，因为它是我们的蓝图，是我们添加到Docker镜像中的层的记录。 本文，我们将学习如何利用BuildKit功能，这是Docker v18.09上引入的一">
+<meta property="og:type" content="article">
+<meta property="og:title" content="构建容器镜像利器buildkit 2024-08-02 17:49:14.916">
+<meta property="og:url" content="http://example.com/2025/01/16/%E6%9E%84%E5%BB%BA%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E5%88%A9%E5%99%A8buildkit-gou-jian-rong-qi-jing-xiang-li-qi-buildkit/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="Docker通过读取Dockerfile中的指令自动构建镜像，Dockerfile是一个文本文件，其中依次包含构建给定镜像所需的所有命令。  上面的解释摘自Docker的官方文档并总结了Dockerfile的用途。Dockerfile的使用非常重要，因为它是我们的蓝图，是我们添加到Docker镜像中的层的记录。 本文，我们将学习如何利用BuildKit功能，这是Docker v18.09上引入的一">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011444771.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.101Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:19.337Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011444771.png">
+  
+  
+  
+  <title>构建容器镜像利器buildkit 2024-08-02 17:49:14.916 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="构建容器镜像利器buildkit 2024-08-02 17:49:14.916"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          19 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">构建容器镜像利器buildkit 2024-08-02 17:49:14.916</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>Docker通过读取Dockerfile中的指令自动构建镜像，Dockerfile是一个文本文件，其中依次包含构建给定镜像所需的所有命令。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011444771.png" srcset="/img/loading.gif" lazyload alt="image-20240801144458689"></p>
+<p>上面的解释摘自Docker的官方文档并总结了Dockerfile的用途。Dockerfile的使用非常重要，因为它是我们的蓝图，是我们添加到Docker镜像中的层的记录。</p>
+<p>本文，我们将学习如何利用BuildKit功能，这是Docker v18.09上引入的一组增强功能。集成BuildKit将为我们提供更好的性能，存储管理和安全性。</p>
+<h3 id="本文目标"><a href="#本文目标" class="headerlink" title="本文目标"></a>本文目标</h3><ul>
+<li>减少构建时间；</li>
+<li>缩小镜像尺寸；</li>
+<li>获得可维护性；</li>
+<li>获得可重复性；</li>
+<li>了解多阶段Dockerfile;</li>
+<li>了解BuildKit功能。</li>
+</ul>
+<h3 id="先决条件"><a href="#先决条件" class="headerlink" title="先决条件"></a>先决条件</h3><ul>
+<li>Docker概念知识</li>
+<li>已安装Docker（当前使用v19.03）</li>
+<li>一个Java应用程序（在本文中，我使用了一个Jenkins Maven示例应用程序）</li>
+</ul>
+<p>让我们开始吧！</p>
+<h3 id="简单的Dockerfile示例"><a href="#简单的Dockerfile示例" class="headerlink" title="简单的Dockerfile示例"></a>简单的Dockerfile示例</h3><p>以下是一个包含Java应用程序的未优化Dockerfile的示例。我们将逐步进行一些优化。</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs routeros"><span class="hljs-keyword">FROM</span> debian<br>COPY . /app<br><span class="hljs-built_in">RUN</span> apt-<span class="hljs-built_in">get</span> update<br><span class="hljs-built_in">RUN</span> apt-<span class="hljs-built_in">get</span> -y install openjdk-11-jdk ssh emacs<br>CMD [“java”, “-jar”, “/app/target/my-app-1.0-SNAPSHOT.jar”]<br></code></pre></td></tr></table></figure>
+
+<p>在这里，我们可能会问自己：构建需要多长时间？为了回答这个问题，让我们在本地开发环境上创建该Dockerfile，并让Docker构建镜像。</p>
+<figure class="highlight crmsh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs crmsh"><span class="hljs-comment"># enter your Java app folder</span><br>cd simple-java-maven-app-<span class="hljs-keyword">master</span><br><span class="hljs-title"># create</span> a Dockerfile<br>vim Dockerfile<br><span class="hljs-comment"># write content, save and exit</span><br>docker pull debian:latest <span class="hljs-comment"># pull the source image</span><br>time docker build --no-cache -t docker-class . <span class="hljs-comment"># overwrite previous layers</span><br><span class="hljs-comment"># notice the build time</span><br><span class="hljs-number">0</span>,<span class="hljs-number">21s</span> <span class="hljs-keyword">user</span> <span class="hljs-title">0</span>,<span class="hljs-number">23s</span> system <span class="hljs-number">0</span>% cpu <span class="hljs-number">1</span>:<span class="hljs-number">55</span>,<span class="hljs-number">17</span> total<br></code></pre></td></tr></table></figure>
+
+<p>此时，我们的构建需要1m55s。</p>
+<p>如果我们仅启用BuildKit而没有其他更改，会有什么不同吗？</p>
+<h3 id="启用BuildKit"><a href="#启用BuildKit" class="headerlink" title="启用BuildKit"></a>启用BuildKit</h3><p>BuildKit可以通过两种方法启用：</p>
+<p>在调用Docker build命令时设置DOCKER_BUILDKIT &#x3D; 1环境变量，例如：</p>
+<figure class="highlight perl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs perl"><span class="hljs-keyword">time</span> DOCKER_BUILDKIT=<span class="hljs-number">1</span> docker build --<span class="hljs-keyword">no</span>-cache -t docker-<span class="hljs-class"><span class="hljs-keyword">class</span></span><br></code></pre></td></tr></table></figure>
+
+<p>将Docker BuildKit设置为默认开启，需要在&#x2F;etc&#x2F;docker&#x2F;daemon.json进行如下设置，然后重启：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-punctuation">&#123;</span> <span class="hljs-attr">&quot;features&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span> <span class="hljs-attr">&quot;buildkit&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span> <span class="hljs-punctuation">&#125;</span> <span class="hljs-punctuation">&#125;</span><br></code></pre></td></tr></table></figure>
+
+<p>BuildKit最初的效果</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">DOCKER_BUILDKIT</span>=<span class="hljs-number">1</span> docker build --no-cache -t docker-class .<br><span class="hljs-attribute">0</span>,<span class="hljs-number">54</span>s user <span class="hljs-number">0</span>,<span class="hljs-number">93</span>s system <span class="hljs-number">1</span>% cpu <span class="hljs-number">1</span>:<span class="hljs-number">43</span>,<span class="hljs-number">00</span> total<br></code></pre></td></tr></table></figure>
+
+<p>此时，我们的构建需要1m43s。在相同的硬件上，构建花费的时间比以前少了约12秒。这意味着构建几乎无需费力即可节约10％左右的时间。</p>
+<p>现在让我们看看是否可以采取一些额外的步骤来进一步改善。</p>
+<h3 id="从最小到最频繁变化的顺序"><a href="#从最小到最频繁变化的顺序" class="headerlink" title="从最小到最频繁变化的顺序"></a>从最小到最频繁变化的顺序</h3><p>因为顺序对于缓存很重要，所以我们将COPY命令移到更靠近Dockerfile末尾的位置。</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs routeros"><span class="hljs-keyword">FROM</span> debian<br><span class="hljs-built_in">RUN</span> apt-<span class="hljs-built_in">get</span> update<br><span class="hljs-built_in">RUN</span> apt-<span class="hljs-built_in">get</span> -y install openjdk-11-jdk ssh emacs<br><span class="hljs-built_in">RUN</span> COPY . /app<br>CMD [“java”, “-jar”, “/app/target/my-app-1.0-SNAPSHOT.jar”]<br></code></pre></td></tr></table></figure>
+
+<h3 id="避免使用“COPY-”"><a href="#避免使用“COPY-”" class="headerlink" title="避免使用“COPY .”"></a>避免使用“COPY .”</h3><p>选择更具体的COPY参数，以避免缓存中断。仅复制所需内容。</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs routeros"><span class="hljs-keyword">FROM</span> debian<br><span class="hljs-built_in">RUN</span> apt-<span class="hljs-built_in">get</span> update<br><span class="hljs-built_in">RUN</span> apt-<span class="hljs-built_in">get</span> -y install openjdk-11-jdk ssh vim<br>COPY target/my-app-1.0-SNAPSHOT.jar /app<br>CMD [“java”, “-jar”, “/app/my-app-1.0-SNAPSHOT.jar”]<br></code></pre></td></tr></table></figure>
+
+<h3 id="apt-get-update-和install命令一起使用"><a href="#apt-get-update-和install命令一起使用" class="headerlink" title="apt-get update 和install命令一起使用"></a>apt-get update 和install命令一起使用</h3><p>这样可以防止使用过时的程序包缓存。</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-keyword">FROM</span> debian<br><span class="hljs-keyword">RUN</span><span class="language-bash"> apt-get update &amp;&amp; \</span><br><span class="language-bash">    apt-get -y install openjdk-11-jdk ssh vim</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> target/my-app-1.0-SNAPSHOT.jar /app</span><br><span class="hljs-keyword">CMD</span><span class="language-bash"> [“java”, “-jar”, “/app/my-app-1.0-SNAPSHOT.jar”]</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="删除不必要的依赖"><a href="#删除不必要的依赖" class="headerlink" title="删除不必要的依赖"></a>删除不必要的依赖</h3><p>在开始时，不要安装调试和编辑工具，以后可以在需要时安装它们。</p>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs pgsql"><span class="hljs-keyword">FROM</span> debian<br>RUN apt-<span class="hljs-keyword">get</span> <span class="hljs-keyword">update</span> &amp;&amp; \<br>    apt-<span class="hljs-keyword">get</span> -y install <span class="hljs-comment">--no-install-recommends \</span><br>    openjdk<span class="hljs-number">-11</span>-jdk<br><span class="hljs-keyword">COPY</span> target/my-app<span class="hljs-number">-1.0</span>-<span class="hljs-keyword">SNAPSHOT</span>.jar /app<br>CMD [“java”, “-jar”, “/app/my-app<span class="hljs-number">-1.0</span>-<span class="hljs-keyword">SNAPSHOT</span>.jar”]<br></code></pre></td></tr></table></figure>
+
+<h3 id="删除程序包管理器缓存"><a href="#删除程序包管理器缓存" class="headerlink" title="删除程序包管理器缓存"></a>删除程序包管理器缓存</h3><p>你的镜像不需要此缓存数据。借此机会释放一些空间。</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-keyword">FROM</span> debian<br><span class="hljs-keyword">RUN</span><span class="language-bash"> apt-get update &amp;&amp; \</span><br><span class="language-bash">    apt-get -y install --no-install-recommends \</span><br><span class="language-bash">    openjdk-11-jdk &amp;&amp; \</span><br><span class="language-bash">    <span class="hljs-built_in">rm</span> -rf /var/lib/apt/lists/*</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> target/my-app-1.0-SNAPSHOT.jar /app</span><br><span class="hljs-keyword">CMD</span><span class="language-bash"> [“java”, “-jar”, “/app/my-app-1.0-SNAPSHOT.jar”]</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="尽可能使用官方镜像"><a href="#尽可能使用官方镜像" class="headerlink" title="尽可能使用官方镜像"></a>尽可能使用官方镜像</h3><p>使用官方镜像有很多理由，例如减少镜像维护时间和减小镜像尺寸，以及预先配置镜像以供容器使用。</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-keyword">FROM</span> openjdk<br><span class="hljs-keyword">COPY</span><span class="language-bash"> target/my-app-1.0-SNAPSHOT.jar /app</span><br><span class="hljs-keyword">CMD</span><span class="language-bash"> [“java”, “-jar”, “/app/my-app-1.0-SNAPSHOT.jar”]</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="使用特定标签"><a href="#使用特定标签" class="headerlink" title="使用特定标签"></a>使用特定标签</h3><p>请勿使用latest标签。</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-keyword">FROM</span> openjdk:<span class="hljs-number">8</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> target/my-app-1.0-SNAPSHOT.jar /app</span><br><span class="hljs-keyword">CMD</span><span class="language-bash"> [“java”, “-jar”, “/app/my-app-1.0-SNAPSHOT.jar”]</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="寻找最小的镜像"><a href="#寻找最小的镜像" class="headerlink" title="寻找最小的镜像"></a>寻找最小的镜像</h3><p>以下是openjdk镜像列表。选择最适合自己的最轻的那个镜像。</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">REPOSITORY</span> TAG标签 SIZE大小<br><span class="hljs-attribute">openjdk</span> <span class="hljs-number">8</span> <span class="hljs-number">634</span>MB<br><span class="hljs-attribute">openjdk</span> <span class="hljs-number">8</span>-jre <span class="hljs-number">443</span>MB<br><span class="hljs-attribute">openjdk</span> <span class="hljs-number">8</span>-jre-slim <span class="hljs-number">204</span>MB<br><span class="hljs-attribute">openjdk</span> <span class="hljs-number">8</span>-jre-alpine <span class="hljs-number">83</span>MB<br></code></pre></td></tr></table></figure>
+
+<h3 id="在一致的环境中从源构建"><a href="#在一致的环境中从源构建" class="headerlink" title="在一致的环境中从源构建"></a>在一致的环境中从源构建</h3><p>如果你不需要整个JDK，则可以使用Maven Docker镜像作为构建基础。</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-keyword">FROM</span> maven:<span class="hljs-number">3.6</span>-jdk-<span class="hljs-number">8</span>-alpine<br><span class="hljs-keyword">WORKDIR</span><span class="language-bash"> /app</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> pom.xml .</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> src ./src</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> mvn -e -B package</span><br><span class="hljs-keyword">CMD</span><span class="language-bash"> [“java”, “-jar”, “/app/my-app-1.0-SNAPSHOT.jar”]</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="在单独的步骤中获取依赖项"><a href="#在单独的步骤中获取依赖项" class="headerlink" title="在单独的步骤中获取依赖项"></a>在单独的步骤中获取依赖项</h3><p>可以缓存–用于获取依赖项的Dockerfile命令。缓存此步骤将加快构建速度。</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-keyword">FROM</span> maven:<span class="hljs-number">3.6</span>-jdk-<span class="hljs-number">8</span>-alpine<br><span class="hljs-keyword">WORKDIR</span><span class="language-bash"> /app</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> pom.xml .</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> mvn -e -B dependency:resolve</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> src ./src</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> mvn -e -B package</span><br><span class="hljs-keyword">CMD</span><span class="language-bash"> [“java”, “-jar”, “/app/my-app-1.0-SNAPSHOT.jar”]</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="多阶段构建：删除构建依赖项"><a href="#多阶段构建：删除构建依赖项" class="headerlink" title="多阶段构建：删除构建依赖项"></a>多阶段构建：删除构建依赖项</h3><p>为什么要使用多阶段构建？</p>
+<ul>
+<li>将构建与运行时环境分开</li>
+<li>DRY方式</li>
+<li>具有开发，测试等环境的不同详细信息</li>
+<li>线性化依赖关系</li>
+<li>具有特定于平台的阶段</li>
+</ul>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-keyword">FROM</span> maven:<span class="hljs-number">3.6</span>-jdk-<span class="hljs-number">8</span>-alpine AS builder<br><span class="hljs-keyword">WORKDIR</span><span class="language-bash"> /app</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> pom.xml .</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> mvn -e -B dependency:resolve</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> src ./src</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> mvn -e -B package</span><br><br><span class="hljs-keyword">FROM</span> openjdk:<span class="hljs-number">8</span>-jre-alpine<br><span class="hljs-keyword">COPY</span><span class="language-bash"> --from=builder /app/target/my-app-1.0-SNAPSHOT.jar /</span><br><span class="hljs-keyword">CMD</span><span class="language-bash"> [“java”, “-jar”, “/my-app-1.0-SNAPSHOT.jar”]</span><br></code></pre></td></tr></table></figure>
+
+<p>如果你此时构建我们的应用程序，</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">time</span> DOCKER_BUILDKIT=<span class="hljs-number">1</span> docker build --no-cache -t docker-class .<br><span class="hljs-attribute">0</span>,<span class="hljs-number">41</span>s user <span class="hljs-number">0</span>,<span class="hljs-number">54</span>s system <span class="hljs-number">2</span>% cpu <span class="hljs-number">35</span>,<span class="hljs-number">656</span> total<br></code></pre></td></tr></table></figure>
+
+<p>你会注意到我们的应用程序构建需要大约35.66秒的时间。这是一个令人愉快的进步。</p>
+<p>下面，我们将介绍其他场景的功能。</p>
+<h3 id="多阶段构建：不同的镜像风格"><a href="#多阶段构建：不同的镜像风格" class="headerlink" title="多阶段构建：不同的镜像风格"></a>多阶段构建：不同的镜像风格</h3><p>下面的Dockerfile显示了基于Debian和基于Alpine的镜像的不同阶段。</p>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs pgsql"><span class="hljs-keyword">FROM</span> maven:<span class="hljs-number">3.6</span>-jdk<span class="hljs-number">-8</span>-alpine <span class="hljs-keyword">AS</span> builder<br>…<br><span class="hljs-keyword">FROM</span> openjdk:<span class="hljs-number">8</span>-jre-jessie <span class="hljs-keyword">AS</span> <span class="hljs-keyword">release</span>-jessie<br><span class="hljs-keyword">COPY</span> <span class="hljs-comment">--from=builder /app/target/my-app-1.0-SNAPSHOT.jar /</span><br>CMD [“java”, “-jar”, “/my-app<span class="hljs-number">-1.0</span>-<span class="hljs-keyword">SNAPSHOT</span>.jar”]<br><br><span class="hljs-keyword">FROM</span> openjdk:<span class="hljs-number">8</span>-jre-alpine <span class="hljs-keyword">AS</span> <span class="hljs-keyword">release</span>-alpine<br><span class="hljs-keyword">COPY</span> <span class="hljs-comment">--from=builder /app/target/my-app-1.0-SNAPSHOT.jar /</span><br>CMD [“java”, “-jar”, “/my-app<span class="hljs-number">-1.0</span>-<span class="hljs-keyword">SNAPSHOT</span>.jar”]<br></code></pre></td></tr></table></figure>
+
+<p>要构建特定的镜像，我们可以使用–target参数：</p>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs css"><span class="hljs-selector-tag">time</span> docker build <span class="hljs-attr">--no-cache</span> <span class="hljs-attr">--target</span> release-jessie .<br></code></pre></td></tr></table></figure>
+
+<h3 id="不同的镜像风格（DRY-全局ARG）"><a href="#不同的镜像风格（DRY-全局ARG）" class="headerlink" title="不同的镜像风格（DRY &#x2F;全局ARG）"></a>不同的镜像风格（DRY &#x2F;全局ARG）</h3><figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">ARG flavor=alpine<br><span class="hljs-keyword">FROM</span> maven:<span class="hljs-number">3.6</span>-jdk<span class="hljs-number">-8</span>-alpine <span class="hljs-keyword">AS</span> builder<br>…<br><span class="hljs-keyword">FROM</span> openjdk:<span class="hljs-number">8</span>-jre-$flavor <span class="hljs-keyword">AS</span> <span class="hljs-keyword">release</span><br><span class="hljs-keyword">COPY</span> <span class="hljs-comment">--from=builder /app/target/my-app-1.0-SNAPSHOT.jar /</span><br>CMD [“java”, “-jar”, “/my-app<span class="hljs-number">-1.0</span>-<span class="hljs-keyword">SNAPSHOT</span>.jar”]<br></code></pre></td></tr></table></figure>
+
+<p>ARG命令可以指定要构建的镜像。在上面的例子中，我们指定alpine为默认的镜像，但我们也可以在docker build命令中，通过–build-arg flavor&#x3D;参数指定镜像。</p>
+<figure class="highlight mipsasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs mipsasm">time docker <span class="hljs-keyword">build </span>--no-<span class="hljs-keyword">cache </span>--target release --<span class="hljs-keyword">build-arg </span>flavor=<span class="hljs-keyword">jessie </span>.<br></code></pre></td></tr></table></figure>
+
+<h3 id="并发"><a href="#并发" class="headerlink" title="并发"></a>并发</h3><p>并发在构建Docker镜像时很重要，因为它会充分利用可用的CPU线程。在线性Dockerfile中，所有阶段均按顺序执行。通过多阶段构建，我们可以让较小的依赖阶段准备就绪，以供主阶段使用它们。</p>
+<p>BuildKit甚至带来了另一个性能上的好处。如果在以后的构建中不使用该阶段，则在结束时将直接跳过这些阶段，而不是对其进行处理和丢弃。</p>
+<p>下面是一个示例Dockerfile，其中网站的资产是在一个assets阶段中构建的：</p>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs pgsql"><span class="hljs-keyword">FROM</span> maven:<span class="hljs-number">3.6</span>-jdk<span class="hljs-number">-8</span>-alpine <span class="hljs-keyword">AS</span> builder<br>…<br><span class="hljs-keyword">FROM</span> tiborvass/whalesay <span class="hljs-keyword">AS</span> assets<br>RUN whalesay “Hello DockerCon!” &gt; <span class="hljs-keyword">out</span>/assets.html<br><br><span class="hljs-keyword">FROM</span> openjdk:<span class="hljs-number">8</span>-jre-alpine <span class="hljs-keyword">AS</span> <span class="hljs-keyword">release</span><br><span class="hljs-keyword">COPY</span> <span class="hljs-comment">--from=builder /app/my-app-1.0-SNAPSHOT.jar /</span><br><span class="hljs-keyword">COPY</span> <span class="hljs-comment">--from=assets /out /assets</span><br>CMD [“java”, “-jar”, “/my-app<span class="hljs-number">-1.0</span>-<span class="hljs-keyword">SNAPSHOT</span>.jar”]<br></code></pre></td></tr></table></figure>
+
+<p>这是另一个Dockerfile，其中分别编译了C和C ++库，并在builder以后使用该阶段。</p>
+<figure class="highlight sas"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs sas"><span class="hljs-keyword">FROM</span> maven:3.6-jdk-8-alpine <span class="hljs-keyword">AS</span> builder-base<br>…<br><br><span class="hljs-keyword">FROM</span> gcc:8-alpine <span class="hljs-keyword">AS</span> builder-someClib<br>…<br><span class="hljs-keyword">RUN </span>git clone … ./configure --prefix=/<span class="hljs-keyword">out</span> <span class="hljs-variable">&amp;&amp;</span> make <span class="hljs-variable">&amp;&amp;</span> make install<br><br><span class="hljs-keyword">FROM</span> g++:8-alpine <span class="hljs-keyword">AS</span> builder-some CPPlib<br>…<br><span class="hljs-keyword">RUN </span>git clone … <span class="hljs-variable">&amp;&amp;</span> cmake …<br><br><span class="hljs-keyword">FROM</span> builder-base <span class="hljs-keyword">AS</span> builder<br>COPY --<span class="hljs-keyword">from</span>=builder-someClib /<span class="hljs-keyword">out</span> /<br>COPY --<span class="hljs-keyword">from</span>=builder-someCpplib /<span class="hljs-keyword">out</span> /<br></code></pre></td></tr></table></figure>
+
+<h3 id="BuildKit应用程序缓存"><a href="#BuildKit应用程序缓存" class="headerlink" title="BuildKit应用程序缓存"></a>BuildKit应用程序缓存</h3><p>BuildKit具有程序包管理器缓存的特殊功能。以下是一些缓存文件夹位置的示例：</p>
+<p>包管理器 路径</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs awk">apt <span class="hljs-regexp">/var/</span>lib<span class="hljs-regexp">/apt/</span>lists<br>go ~<span class="hljs-regexp">/.cache/g</span>o-build<br>go-modules <span class="hljs-variable">$GOPATH</span><span class="hljs-regexp">/pkg/m</span>od<br>npm ~/.npm<br>pip ~<span class="hljs-regexp">/.cache/</span>pip<br></code></pre></td></tr></table></figure>
+
+<p>我们可以将此Dockerfile与上面介绍的在一致的环境中从源代码构建中介绍的Dockerfile进行比较。这个较早的Dockerfile没有特殊的缓存处理。我们可以使用–mount&#x3D;type&#x3D;cache来做到这一点。</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs routeros"><span class="hljs-keyword">FROM</span> maven:3.6-jdk-8-alpine AS builder<br>WORKDIR /app<br><span class="hljs-built_in">RUN</span> <span class="hljs-attribute">--mount</span>=target=. <span class="hljs-attribute">--mount</span>=type=cache,target /root/.m2 \<br>    &amp;&amp; mvn package <span class="hljs-attribute">-DoutputDirectory</span>=/<br><br><span class="hljs-keyword">FROM</span> openjdk:8-jre-alpine<br>COPY <span class="hljs-attribute">--from</span>=builder /app/target/my-app-1.0-SNAPSHOT.jar /<br>CMD [“java”, “-jar”, “/my-app-1.0-SNAPSHOT.jar”]<br></code></pre></td></tr></table></figure>
+
+<h3 id="BuildKit的安全功能"><a href="#BuildKit的安全功能" class="headerlink" title="BuildKit的安全功能"></a>BuildKit的安全功能</h3><p>BuildKit具有安全功能，下面的示例中，我们使用了–mount&#x3D;type&#x3D;secret隐藏了一些机密文件，例如~&#x2F;.aws&#x2F;credentials。</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-keyword">FROM</span> &lt;baseimage&gt;<br><span class="hljs-keyword">RUN</span><span class="language-bash"> …</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> --mount=<span class="hljs-built_in">type</span>=secret,<span class="hljs-built_in">id</span>=aws,target=/root/.aws/credentials,required \</span><br><span class="language-bash">./fetch-assets-from-s3.sh</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> ./build-scripts.sh</span><br></code></pre></td></tr></table></figure>
+
+<p>要构建此Dockerfile，需要使用–secret参数：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">docker build --secret <span class="hljs-built_in">id</span>=aws,src=~/.aws/credentials<br></code></pre></td></tr></table></figure>
+
+<p>还有为了提高安全性，避免使用诸如COPY .&#x2F;keys&#x2F;private.pem &#x2F;root .ssh&#x2F;private.pem之类的命令，我们可以使用BuildKit中的ssh解决此问题：</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-keyword">FROM</span> alpine<br><span class="hljs-keyword">RUN</span><span class="language-bash"> apk add --no-cache openssh-client</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> <span class="hljs-built_in">mkdir</span> -p -m 0700 ~/.ssh &amp;&amp; ssh-keyscan github.com &gt;&gt; ~/.ssh/known_hosts</span><br><span class="hljs-keyword">ARG</span> REPO_REF=<span class="hljs-number">19</span>ba7bcd9976ef8a9bd086187df19ba7bcd997f2<br><span class="hljs-keyword">RUN</span><span class="language-bash"> --mount=<span class="hljs-built_in">type</span>=ssh,required git <span class="hljs-built_in">clone</span> git@github.com:org/repo /work &amp;&amp; <span class="hljs-built_in">cd</span> /work &amp;&amp; git checkout -b <span class="hljs-variable">$REPO_REF</span></span><br></code></pre></td></tr></table></figure>
+
+<p>要构建此Dockerfile，你需要在ssh-agent中加载到你的SSH私钥。</p>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">eval $(ssh-agent)<br>ssh-<span class="hljs-keyword">add</span> ~/.ssh/id_rsa # this <span class="hljs-keyword">is</span> the SSH key <span class="hljs-keyword">default</span> <span class="hljs-keyword">location</span><br>docker build <span class="hljs-comment">--ssh=default .</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h3><p>本文，我们介绍了使用Docker BuildKit优化Dockerfile，并因此加快了镜像构建时间。这些速度的提高，可以帮助我们提高效率和节省计算能力。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>构建容器镜像利器buildkit 2024-08-02 17:49:14.916</div>
+      <div>http://example.com/2025/01/16/构建容器镜像利器buildkit-gou-jian-rong-qi-jing-xiang-li-qi-buildkit/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E6%9E%81%E5%A4%A7%E6%8F%90%E9%AB%98%E5%B7%A5%E4%BD%9C%E6%95%88%E7%8E%87%E7%9A%84%20Linux%20%E5%91%BD%E4%BB%A4-ji-da-ti-gao-gong-zuo-xiao-lv-de-linux-ming-ling/" title="极大提高工作效率的 Linux 命令 2024-04-03 14:42:46.957">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">极大提高工作效率的 Linux 命令 2024-04-03 14:42:46.957</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E6%B5%81%E9%87%8F%E4%BD%95%E5%A4%84%E6%9D%A5%E4%BD%95%E5%A4%84%E5%8E%BB-liu-liang-he-chu-lai-he-chu-qu/" title="流量何处来何处去 2024-04-03 14:56:20.089">
+                        <span class="hidden-mobile">流量何处来何处去 2024-04-03 14:56:20.089</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

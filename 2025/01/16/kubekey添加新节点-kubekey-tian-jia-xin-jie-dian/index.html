@@ -1,0 +1,690 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="添加新节点KubeSphere 使用一段时间之后，由于工作负载不断增加，您可能需要水平扩展集群。自 KubeSphere v3.0.0 起，您可以使用全新的安装程序 KubeKey 将新节点添加到集群。从根本上说，该操作是基于 Kubelet 的注册机制。换言之，新节点将自动加入现有的 Kubernetes 集群。KubeSphere 支持混合环境，这意味着新添加的主机操作系统可以是 CentOS">
+<meta property="og:type" content="article">
+<meta property="og:title" content="kubekey添加新节点 2024-04-03 15:36:47.646">
+<meta property="og:url" content="http://example.com/2025/01/16/kubekey%E6%B7%BB%E5%8A%A0%E6%96%B0%E8%8A%82%E7%82%B9-kubekey-tian-jia-xin-jie-dian/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="添加新节点KubeSphere 使用一段时间之后，由于工作负载不断增加，您可能需要水平扩展集群。自 KubeSphere v3.0.0 起，您可以使用全新的安装程序 KubeKey 将新节点添加到集群。从根本上说，该操作是基于 Kubelet 的注册机制。换言之，新节点将自动加入现有的 Kubernetes 集群。KubeSphere 支持混合环境，这意味着新添加的主机操作系统可以是 CentOS">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-01-16T02:08:28.075Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:18.982Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>kubekey添加新节点 2024-04-03 15:36:47.646 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="kubekey添加新节点 2024-04-03 15:36:47.646"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          12 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">kubekey添加新节点 2024-04-03 15:36:47.646</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="添加新节点"><a href="#添加新节点" class="headerlink" title="添加新节点"></a>添加新节点</h1><p>KubeSphere 使用一段时间之后，由于工作负载不断增加，您可能需要水平扩展集群。自 KubeSphere v3.0.0 起，您可以使用全新的安装程序 <a target="_blank" rel="noopener" href="https://github.com/kubesphere/kubekey">KubeKey</a> 将新节点添加到集群。从根本上说，该操作是基于 Kubelet 的注册机制。换言之，新节点将自动加入现有的 Kubernetes 集群。KubeSphere 支持混合环境，这意味着新添加的主机操作系统可以是 CentOS 或者 Ubuntu。</p>
+<p>本教程演示了如何将新节点添加到单节点集群。若要水平扩展多节点集群，操作步骤基本相同。</p>
+<h2 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h2><ul>
+<li>您需要一个单节点集群。有关更多信息，请参见<a target="_blank" rel="noopener" href="https://kubesphere.com.cn/docs/quick-start/all-in-one-on-linux/">在 Linux 上以 All-in-One 模式安装 KubeSphere</a>。</li>
+<li>您需要已经<a target="_blank" rel="noopener" href="https://kubesphere.com.cn/docs/installing-on-linux/introduction/multioverview/#%E6%AD%A5%E9%AA%A4-2%E4%B8%8B%E8%BD%BD-kubekey">下载了 KubeKey</a>。</li>
+</ul>
+<p>先执行以下命令以确保您从正确的区域下载 KubeKey。</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs routeros"><span class="hljs-built_in">export</span> <span class="hljs-attribute">KKZONE</span>=cn<br></code></pre></td></tr></table></figure>
+
+<p>执行以下命令下载 KubeKey：</p>
+<figure class="highlight dsconfig"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs dsconfig"><span class="hljs-string">curl</span> -<span class="hljs-string">sfL</span> <span class="hljs-string">https</span>://<span class="hljs-built_in">get-kk.kubesphere.io</span> | <span class="hljs-string">VERSION</span>=<span class="hljs-string">v1</span>.<span class="hljs-string">2</span>.<span class="hljs-string">1</span> <span class="hljs-string">sh</span> -<br></code></pre></td></tr></table></figure>
+
+<p>备注</p>
+<p>下载 KubeKey 后，如果您将其传输至访问 Googleapis 同样受限的新机器，请您在执行以下步骤之前务必再次执行 <code>export KKZONE=cn</code> 命令。</p>
+<p>备注</p>
+<p>执行以上命令会下载最新版 KubeKey (v1.2.1)，您可以修改命令中的版本号下载指定版本。</p>
+<h2 id="添加工作节点"><a href="#添加工作节点" class="headerlink" title="添加工作节点"></a>添加工作节点</h2><p>Ssh分发秘钥</p>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs css">ssh-copy-id -<span class="hljs-selector-tag">i</span> ~/<span class="hljs-selector-class">.ssh</span>/id_rsa -<span class="hljs-selector-tag">p</span> <span class="hljs-number">22</span> root<span class="hljs-keyword">@192</span>.168.1.108<br><br></code></pre></td></tr></table></figure>
+
+
+
+<ol>
+<li><p>使用 KubeKey 检索集群信息。以下命令会创建配置文件 (<code>sample.yaml</code>)。</p>
+<figure class="highlight n1ql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs n1ql">./kk <span class="hljs-keyword">create</span> config3 --<span class="hljs-keyword">from</span>-<span class="hljs-keyword">cluster</span><br></code></pre></td></tr></table></figure>
+
+<p>备注</p>
+<p>如果您的机器上已有配置文件，就可以跳过此步骤。例如，若要将节点添加到由 KubeKey 设置的多节点集群，如果您没有删除该集群，则可能仍拥有该配置文件。</p>
+</li>
+<li><p>在配置文件中，将新节点的信息放在 <code>hosts</code> 和 <code>roleGroups</code> 之下。该示例添加了两个新节点（即 <code>node1</code> 和 <code>node2</code>）。这里的 <code>master1</code> 是现有节点。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-string">···</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">hosts:</span><br>  <span class="hljs-bullet">-</span> &#123;<span class="hljs-attr">name:</span> <span class="hljs-string">master1</span>, <span class="hljs-attr">address:</span> <span class="hljs-number">192.168</span><span class="hljs-number">.0</span><span class="hljs-number">.3</span>, <span class="hljs-attr">internalAddress:</span> <span class="hljs-number">192.168</span><span class="hljs-number">.0</span><span class="hljs-number">.3</span>, <span class="hljs-attr">user:</span> <span class="hljs-string">root</span>, <span class="hljs-attr">password:</span> <span class="hljs-string">Qcloud@123</span>&#125;<br>  <span class="hljs-bullet">-</span> &#123;<span class="hljs-attr">name:</span> <span class="hljs-string">node1</span>, <span class="hljs-attr">address:</span> <span class="hljs-number">192.168</span><span class="hljs-number">.0</span><span class="hljs-number">.4</span>, <span class="hljs-attr">internalAddress:</span> <span class="hljs-number">192.168</span><span class="hljs-number">.0</span><span class="hljs-number">.4</span>, <span class="hljs-attr">user:</span> <span class="hljs-string">root</span>, <span class="hljs-attr">password:</span> <span class="hljs-string">Qcloud@123</span>&#125;<br>  <span class="hljs-bullet">-</span> &#123;<span class="hljs-attr">name:</span> <span class="hljs-string">node2</span>, <span class="hljs-attr">address:</span> <span class="hljs-number">192.168</span><span class="hljs-number">.0</span><span class="hljs-number">.5</span>, <span class="hljs-attr">internalAddress:</span> <span class="hljs-number">192.168</span><span class="hljs-number">.0</span><span class="hljs-number">.5</span>, <span class="hljs-attr">user:</span> <span class="hljs-string">root</span>, <span class="hljs-attr">password:</span> <span class="hljs-string">Qcloud@123</span>&#125;<br>  <span class="hljs-attr">roleGroups:</span><br>    <span class="hljs-attr">etcd:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">master1</span><br>    <span class="hljs-attr">master:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">master1</span><br>    <span class="hljs-attr">worker:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">node1</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">node2</span><br><span class="hljs-string">···</span><br></code></pre></td></tr></table></figure>
+
+<p>备注</p>
+<ul>
+<li>有关更多配置文件的信息，请参见<a target="_blank" rel="noopener" href="https://kubesphere.com.cn/docs/installing-on-linux/introduction/multioverview/#2-%E7%BC%96%E8%BE%91%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6">编辑配置文件</a>。</li>
+<li>添加新节点时，请勿修改现有节点的主机名。</li>
+<li>用自己的主机名替换示例中的主机名。</li>
+</ul>
+</li>
+<li><p>执行以下命令：</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs routeros">./kk <span class="hljs-built_in">add</span> nodes -f config-sample.yaml<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>安装完成后，您将能够在 KubeSphere 的控制台上查看新节点及其信息。在<strong>集群管理</strong>页面，选择左侧菜单<strong>节点</strong>下的<strong>集群节点</strong>，或者执行命令 <code>kubectl get node</code> 以检查更改。</p>
+<figure class="highlight crmsh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs crmsh">$ kubectl get <span class="hljs-keyword">node</span><br><span class="hljs-title">NAME</span>          STATUS   ROLES           AGE   <span class="hljs-keyword">VERSION</span><br>master1       Ready    <span class="hljs-literal">master</span>,worker   <span class="hljs-number">20</span>d   v1.<span class="hljs-number">17.9</span><br>node1         Ready    worker          <span class="hljs-number">31h</span>   v1.<span class="hljs-number">17.9</span><br>node2         Ready    worker          <span class="hljs-number">31h</span>   v1.<span class="hljs-number">17.9</span><br></code></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="添加主节点以实现高可用"><a href="#添加主节点以实现高可用" class="headerlink" title="添加主节点以实现高可用"></a>添加主节点以实现高可用</h2><p>添加主节点的步骤与添加工作节点的步骤大体一致，不过您需要为集群配置负载均衡器。您可以使用任何云负载均衡器或者硬件负载均衡器（例如 F5）。另外，Keepalived 和 <a target="_blank" rel="noopener" href="https://www.haproxy.com/">HAproxy</a>、或者 Nginx 也是创建高可用集群的替代方案。</p>
+<ol>
+<li><p>使用 KubeKey 创建配置文件。</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs lua">./kk <span class="hljs-built_in">create</span> <span class="hljs-built_in">config</span> <span class="hljs-comment">--from-cluster</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p>打开文件，可以看到一些字段预先填充了值。将新节点和负载均衡器的信息添加到文件中。以下示例供您参考：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">kubekey.kubesphere.io/v1alpha1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Cluster</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">sample</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">hosts:</span><br>  <span class="hljs-comment"># You should complete the ssh information of the hosts</span><br>  <span class="hljs-bullet">-</span> &#123;<span class="hljs-attr">name:</span> <span class="hljs-string">master1</span>, <span class="hljs-attr">address:</span> <span class="hljs-number">172.16</span><span class="hljs-number">.0</span><span class="hljs-number">.2</span>, <span class="hljs-attr">internalAddress:</span> <span class="hljs-number">172.16</span><span class="hljs-number">.0</span><span class="hljs-number">.2</span>, <span class="hljs-attr">user:</span> <span class="hljs-string">root</span>, <span class="hljs-attr">password:</span> <span class="hljs-string">Testing123</span>&#125;<br>  <span class="hljs-bullet">-</span> &#123;<span class="hljs-attr">name:</span> <span class="hljs-string">master2</span>, <span class="hljs-attr">address:</span> <span class="hljs-number">172.16</span><span class="hljs-number">.0</span><span class="hljs-number">.5</span>, <span class="hljs-attr">internalAddress:</span> <span class="hljs-number">172.16</span><span class="hljs-number">.0</span><span class="hljs-number">.5</span>, <span class="hljs-attr">user:</span> <span class="hljs-string">root</span>, <span class="hljs-attr">password:</span> <span class="hljs-string">Testing123</span>&#125;<br>  <span class="hljs-bullet">-</span> &#123;<span class="hljs-attr">name:</span> <span class="hljs-string">master3</span>, <span class="hljs-attr">address:</span> <span class="hljs-number">172.16</span><span class="hljs-number">.0</span><span class="hljs-number">.6</span>, <span class="hljs-attr">internalAddress:</span> <span class="hljs-number">172.16</span><span class="hljs-number">.0</span><span class="hljs-number">.6</span>, <span class="hljs-attr">user:</span> <span class="hljs-string">root</span>, <span class="hljs-attr">password:</span> <span class="hljs-string">Testing123</span>&#125;<br>  <span class="hljs-bullet">-</span> &#123;<span class="hljs-attr">name:</span> <span class="hljs-string">worker1</span>, <span class="hljs-attr">address:</span> <span class="hljs-number">172.16</span><span class="hljs-number">.0</span><span class="hljs-number">.3</span>, <span class="hljs-attr">internalAddress:</span> <span class="hljs-number">172.16</span><span class="hljs-number">.0</span><span class="hljs-number">.3</span>, <span class="hljs-attr">user:</span> <span class="hljs-string">root</span>, <span class="hljs-attr">password:</span> <span class="hljs-string">Testing123</span>&#125;<br>  <span class="hljs-bullet">-</span> &#123;<span class="hljs-attr">name:</span> <span class="hljs-string">worker2</span>, <span class="hljs-attr">address:</span> <span class="hljs-number">172.16</span><span class="hljs-number">.0</span><span class="hljs-number">.4</span>, <span class="hljs-attr">internalAddress:</span> <span class="hljs-number">172.16</span><span class="hljs-number">.0</span><span class="hljs-number">.4</span>, <span class="hljs-attr">user:</span> <span class="hljs-string">root</span>, <span class="hljs-attr">password:</span> <span class="hljs-string">Testing123</span>&#125;<br>  <span class="hljs-bullet">-</span> &#123;<span class="hljs-attr">name:</span> <span class="hljs-string">worker3</span>, <span class="hljs-attr">address:</span> <span class="hljs-number">172.16</span><span class="hljs-number">.0</span><span class="hljs-number">.7</span>, <span class="hljs-attr">internalAddress:</span> <span class="hljs-number">172.16</span><span class="hljs-number">.0</span><span class="hljs-number">.7</span>, <span class="hljs-attr">user:</span> <span class="hljs-string">root</span>, <span class="hljs-attr">password:</span> <span class="hljs-string">Testing123</span>&#125;<br>  <span class="hljs-attr">roleGroups:</span><br>    <span class="hljs-attr">etcd:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">master1</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">master2</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">master3</span><br>    <span class="hljs-attr">master:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">master1</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">master2</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">master3</span><br>    <span class="hljs-attr">worker:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">worker1</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">worker2</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">worker3</span><br>  <span class="hljs-attr">controlPlaneEndpoint:</span><br>    <span class="hljs-comment"># If loadbalancer is used, &#x27;address&#x27; should be set to loadbalancer&#x27;s ip.</span><br>    <span class="hljs-attr">domain:</span> <span class="hljs-string">lb.kubesphere.local</span><br>    <span class="hljs-attr">address:</span> <span class="hljs-number">172.16</span><span class="hljs-number">.0</span><span class="hljs-number">.253</span><br>    <span class="hljs-attr">port:</span> <span class="hljs-number">6443</span><br>  <span class="hljs-attr">kubernetes:</span><br>    <span class="hljs-attr">version:</span> <span class="hljs-string">v1.21.5</span><br>    <span class="hljs-attr">imageRepo:</span> <span class="hljs-string">kubesphere</span><br>    <span class="hljs-attr">clusterName:</span> <span class="hljs-string">cluster.local</span><br>    <span class="hljs-attr">proxyMode:</span> <span class="hljs-string">ipvs</span><br>    <span class="hljs-attr">masqueradeAll:</span> <span class="hljs-literal">false</span><br>    <span class="hljs-attr">maxPods:</span> <span class="hljs-number">110</span><br>    <span class="hljs-attr">nodeCidrMaskSize:</span> <span class="hljs-number">24</span><br>  <span class="hljs-attr">network:</span><br>    <span class="hljs-attr">plugin:</span> <span class="hljs-string">calico</span><br>    <span class="hljs-attr">kubePodsCIDR:</span> <span class="hljs-number">10.233</span><span class="hljs-number">.64</span><span class="hljs-number">.0</span><span class="hljs-string">/18</span><br>    <span class="hljs-attr">kubeServiceCIDR:</span> <span class="hljs-number">10.233</span><span class="hljs-number">.0</span><span class="hljs-number">.0</span><span class="hljs-string">/18</span><br>  <span class="hljs-attr">registry:</span><br>    <span class="hljs-attr">privateRegistry:</span> <span class="hljs-string">&quot;&quot;</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p>请注意 <code>controlPlaneEndpoint</code> 字段。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">controlPlaneEndpoint:</span><br>  <span class="hljs-comment"># If you use a load balancer, the address should be set to the load balancer&#x27;s ip.</span><br>  <span class="hljs-attr">domain:</span> <span class="hljs-string">lb.kubesphere.local</span><br>  <span class="hljs-attr">address:</span> <span class="hljs-number">172.16</span><span class="hljs-number">.0</span><span class="hljs-number">.253</span><br>  <span class="hljs-attr">port:</span> <span class="hljs-number">6443</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>负载均衡器的域名默认为 <code>lb.kubesphere.local</code>，用于内部访问。您可以按需进行更改。</li>
+<li>大多数情况下，您需要为 <code>address</code> 字段提供负载均衡器的<strong>私有 IP 地址</strong>。然而，不同的云厂商可能为负载均衡器进行不同的配置。例如，如果您在阿里云上配置服务器负载均衡 (SLB)，该平台会为 SLB 分配一个公共 IP 地址，这意味着您需要为 <code>address</code> 字段指定公共 IP 地址。</li>
+<li><code>port</code> 字段指代 <code>api-server</code> 的端口。</li>
+</ul>
+</li>
+<li><p>保存文件并执行以下命令以应用配置。</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs routeros">./kk <span class="hljs-built_in">add</span> nodes -f sample.yaml<br></code></pre></td></tr></table></figure></li>
+</ol>
+<figure class="highlight crmsh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs crmsh">在Kubernetes（K8s）中，可以通过标签（label）来标识节点（<span class="hljs-keyword">node</span><span class="hljs-title">）的角色。节点可以被标记为master</span>或worker，以便于集群的调度和管理工作。<br><br>要给节点打上<span class="hljs-literal">master</span>或worker标签，可以使用kubectl命令行工具。具体操作如下：<br><br>给节点打上<span class="hljs-literal">master</span>标签：<br><br>bash<br>kubectl label <span class="hljs-keyword">node</span> <span class="hljs-title">&lt;node-name</span>&gt; <span class="hljs-keyword">node</span><span class="hljs-title">-role</span>.kubernetes.io/<span class="hljs-attr">master=</span><span class="hljs-literal">true</span><br>其中，<span class="hljs-tag">&lt;node-name&gt;</span>是要标记的节点的名称。<br><br>给节点打上worker标签：<br><br>bash<br>kubectl label <span class="hljs-keyword">node</span> <span class="hljs-title">&lt;node-name</span>&gt; <span class="hljs-keyword">node</span><span class="hljs-title">-role</span>.kubernetes.io/<span class="hljs-attr">worker=</span><span class="hljs-literal">true</span><br>同样，<span class="hljs-tag">&lt;node-name&gt;</span>是要标记的节点的名称。<br><br>请注意，在执行这些命令之前，需要确保已经正确安装和配置了kubectl工具，并且具有足够的权限来执行这些操作。此外，还需要确保节点已经加入到Kubernetes集群中。<br></code></pre></td></tr></table></figure>
+
+
+
+
+
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>kubekey添加新节点 2024-04-03 15:36:47.646</div>
+      <div>http://example.com/2025/01/16/kubekey添加新节点-kubekey-tian-jia-xin-jie-dian/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/kube-router%20%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-kube-router-wang-luo-zu-jian/" title="kube-router 网络组件 2023-09-28 15:33:20.658">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">kube-router 网络组件 2023-09-28 15:33:20.658</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/k8s%E8%BF%90%E7%BB%B4%E4%B9%8B%E6%B8%85%E7%90%86%E7%A3%81%E7%9B%98-k8s-yun-wei-zhi-qing-li-ci-pan/" title="k8s运维之清理磁盘 2024-04-03 15:13:57.279">
+                        <span class="hidden-mobile">k8s运维之清理磁盘 2024-04-03 15:13:57.279</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

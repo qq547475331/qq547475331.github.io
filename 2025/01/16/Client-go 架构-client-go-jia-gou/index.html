@@ -1,0 +1,640 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="简介Client-go 源码位于 https:&#x2F;&#x2F;github.com&#x2F;kubernetes&#x2F;client-go，是 Kubernetes 项目非常重要的子项目，Client-Go 是负责与 Kubernetes APIServer 服务进行交互的客户端库，利用 Client-Go 与Kubernetes APIServer 进行的交互访问，来对 Kubernetes 中的各类资源对象进行管理操作">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Client-go 架构 2024-04-03 14:48:40.716">
+<meta property="og:url" content="http://example.com/2025/01/16/Client-go%20%E6%9E%B6%E6%9E%84-client-go-jia-gou/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="简介Client-go 源码位于 https:&#x2F;&#x2F;github.com&#x2F;kubernetes&#x2F;client-go，是 Kubernetes 项目非常重要的子项目，Client-Go 是负责与 Kubernetes APIServer 服务进行交互的客户端库，利用 Client-Go 与Kubernetes APIServer 进行的交互访问，来对 Kubernetes 中的各类资源对象进行管理操作">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191512504.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.040Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:18.551Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191512504.png">
+  
+  
+  
+  <title>Client-go 架构 2024-04-03 14:48:40.716 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Client-go 架构 2024-04-03 14:48:40.716"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          798 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          7 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Client-go 架构 2024-04-03 14:48:40.716</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><h5 id="Client-go-源码位于-https-github-com-kubernetes-client-go，是-Kubernetes-项目非常重要的子项目，Client-Go-是负责与-Kubernetes-APIServer-服务进行交互的客户端库，利用-Client-Go-与Kubernetes-APIServer-进行的交互访问，来对-Kubernetes-中的各类资源对象进行管理操作，包括内置的资源对象及CRD。在云原生开发的项目中使用频率非常高，例如开发-operator，k8s-管理平台等。"><a href="#Client-go-源码位于-https-github-com-kubernetes-client-go，是-Kubernetes-项目非常重要的子项目，Client-Go-是负责与-Kubernetes-APIServer-服务进行交互的客户端库，利用-Client-Go-与Kubernetes-APIServer-进行的交互访问，来对-Kubernetes-中的各类资源对象进行管理操作，包括内置的资源对象及CRD。在云原生开发的项目中使用频率非常高，例如开发-operator，k8s-管理平台等。" class="headerlink" title="Client-go 源码位于 https://github.com/kubernetes/client-go，是 Kubernetes 项目非常重要的子项目，Client-Go 是负责与 Kubernetes APIServer 服务进行交互的客户端库，利用 Client-Go 与Kubernetes APIServer 进行的交互访问，来对 Kubernetes 中的各类资源对象进行管理操作，包括内置的资源对象及CRD。在云原生开发的项目中使用频率非常高，例如开发 operator，k8s 管理平台等。"></a>Client-go 源码位于 <a target="_blank" rel="noopener" href="https://github.com/kubernetes/client-go%EF%BC%8C%E6%98%AF">https://github.com/kubernetes/client-go，是</a> Kubernetes 项目非常重要的子项目，Client-Go 是负责与 Kubernetes APIServer 服务进行交互的客户端库，利用 Client-Go 与Kubernetes APIServer 进行的交互访问，来对 Kubernetes 中的各类资源对象进行管理操作，包括内置的资源对象及CRD。在云原生开发的项目中使用频率非常高，例如开发 operator，k8s 管理平台等。</h5><p>公众号</p>
+<hr>
+<h2 id="架构"><a href="#架构" class="headerlink" title="架构"></a>架构</h2><h5 id="Client-go-架构比较复杂，极大程度运用异步处理，提高服务运行效率。"><a href="#Client-go-架构比较复杂，极大程度运用异步处理，提高服务运行效率。" class="headerlink" title="Client-go 架构比较复杂，极大程度运用异步处理，提高服务运行效率。"></a>Client-go 架构比较复杂，极大程度运用异步处理，提高服务运行效率。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191512504.png" srcset="/img/loading.gif" lazyload alt="image-20240319151204442"></p>
+<h5 id="上图上半部分是-client-go-代码组件，下半部分是需要开发者自己实现，主要实现如何对资源事件进行处理，但是-workqueue-也是-client-go-实现的，只不过是在开发者写的程序中进行使用的。"><a href="#上图上半部分是-client-go-代码组件，下半部分是需要开发者自己实现，主要实现如何对资源事件进行处理，但是-workqueue-也是-client-go-实现的，只不过是在开发者写的程序中进行使用的。" class="headerlink" title="上图上半部分是 client-go 代码组件，下半部分是需要开发者自己实现，主要实现如何对资源事件进行处理，但是 workqueue 也是 client-go 实现的，只不过是在开发者写的程序中进行使用的。"></a>上图上半部分是 client-go 代码组件，下半部分是需要开发者自己实现，主要实现如何对资源事件进行处理，但是 workqueue 也是 client-go 实现的，只不过是在开发者写的程序中进行使用的。</h5><h3 id="Reflector"><a href="#Reflector" class="headerlink" title="Reflector"></a>Reflector</h3><h5 id="Reflector-用于监控（Watch）指定的-Kubernetes-资源，当监控的资源发生变化时，例如-Add-事件、Update-事件、Delete-事件，并将其资源对象存放到本地缓存-DeltaFIFO-中。"><a href="#Reflector-用于监控（Watch）指定的-Kubernetes-资源，当监控的资源发生变化时，例如-Add-事件、Update-事件、Delete-事件，并将其资源对象存放到本地缓存-DeltaFIFO-中。" class="headerlink" title="Reflector 用于监控（Watch）指定的 Kubernetes 资源，当监控的资源发生变化时，例如 Add 事件、Update 事件、Delete 事件，并将其资源对象存放到本地缓存 DeltaFIFO 中。"></a>Reflector 用于监控（Watch）指定的 Kubernetes 资源，当监控的资源发生变化时，例如 Add 事件、Update 事件、Delete 事件，并将其资源对象存放到本地缓存 DeltaFIFO 中。</h5><h3 id="Deltafifo"><a href="#Deltafifo" class="headerlink" title="Deltafifo"></a>Deltafifo</h3><h5 id="DeltaFIFO-是一个生产者-消费者的队列，生产者是-Reflector，消费者是-informer-Pop-函数，FIFO-是一个先进先出的队列，而-Delta-是一个资源对象存储，它可以保存资源对象的操作类型，例如-Add-操作类型、Update-操作类型、Delete-操作类型、Sync-操作类型等。"><a href="#DeltaFIFO-是一个生产者-消费者的队列，生产者是-Reflector，消费者是-informer-Pop-函数，FIFO-是一个先进先出的队列，而-Delta-是一个资源对象存储，它可以保存资源对象的操作类型，例如-Add-操作类型、Update-操作类型、Delete-操作类型、Sync-操作类型等。" class="headerlink" title="DeltaFIFO 是一个生产者-消费者的队列，生产者是 Reflector，消费者是 informer Pop 函数，FIFO 是一个先进先出的队列，而 Delta 是一个资源对象存储，它可以保存资源对象的操作类型，例如 Add 操作类型、Update 操作类型、Delete 操作类型、Sync 操作类型等。"></a>DeltaFIFO 是一个生产者-消费者的队列，生产者是 Reflector，消费者是 informer Pop 函数，FIFO 是一个先进先出的队列，而 Delta 是一个资源对象存储，它可以保存资源对象的操作类型，例如 Add 操作类型、Update 操作类型、Delete 操作类型、Sync 操作类型等。</h5><h3 id="Indexer"><a href="#Indexer" class="headerlink" title="Indexer"></a>Indexer</h3><h5 id="Indexer-是-client-go-用来存储资源对象并自带索引功能的本地存储，informer-从-DeltaFIFO-中将消费出来的资源对象存储至-Indexer。Indexer-与-Etcd-集群中的数据保持完全一致。这样我们就可以很方便地从本地存储中读取相应的资源对象数据，而无须每次从远程-APIServer-中读取，以减轻服务器的压力。"><a href="#Indexer-是-client-go-用来存储资源对象并自带索引功能的本地存储，informer-从-DeltaFIFO-中将消费出来的资源对象存储至-Indexer。Indexer-与-Etcd-集群中的数据保持完全一致。这样我们就可以很方便地从本地存储中读取相应的资源对象数据，而无须每次从远程-APIServer-中读取，以减轻服务器的压力。" class="headerlink" title="Indexer 是 client-go 用来存储资源对象并自带索引功能的本地存储，informer 从 DeltaFIFO 中将消费出来的资源对象存储至 Indexer。Indexer 与 Etcd 集群中的数据保持完全一致。这样我们就可以很方便地从本地存储中读取相应的资源对象数据，而无须每次从远程 APIServer 中读取，以减轻服务器的压力。"></a>Indexer 是 client-go 用来存储资源对象并自带索引功能的本地存储，informer 从 DeltaFIFO 中将消费出来的资源对象存储至 Indexer。Indexer 与 Etcd 集群中的数据保持完全一致。这样我们就可以很方便地从本地存储中读取相应的资源对象数据，而无须每次从远程 APIServer 中读取，以减轻服务器的压力。</h5><h3 id="Informer"><a href="#Informer" class="headerlink" title="Informer"></a>Informer</h3><h5 id="Informer-将上述三个组件协同运行起来，保证整个流程串联起来，是-client-go-中的大脑。"><a href="#Informer-将上述三个组件协同运行起来，保证整个流程串联起来，是-client-go-中的大脑。" class="headerlink" title="Informer 将上述三个组件协同运行起来，保证整个流程串联起来，是 client-go 中的大脑。"></a>Informer 将上述三个组件协同运行起来，保证整个流程串联起来，是 client-go 中的大脑。</h5><h3 id="workqueue"><a href="#workqueue" class="headerlink" title="workqueue"></a>workqueue</h3><h5 id="Workqueue-是一个先进先出的队列，informer-将事件获取到并不及时处理，先将事件-push-到-workqueue-中，然后再从-workqueue-消费处理。大大提高运行效率"><a href="#Workqueue-是一个先进先出的队列，informer-将事件获取到并不及时处理，先将事件-push-到-workqueue-中，然后再从-workqueue-消费处理。大大提高运行效率" class="headerlink" title="Workqueue 是一个先进先出的队列，informer 将事件获取到并不及时处理，先将事件 push 到 workqueue 中，然后再从 workqueue 消费处理。大大提高运行效率"></a>Workqueue 是一个先进先出的队列，informer 将事件获取到并不及时处理，先将事件 push 到 workqueue 中，然后再从 workqueue 消费处理。大大提高运行效率</h5><hr>
+<h2 id="运行流程"><a href="#运行流程" class="headerlink" title="运行流程"></a>运行流程</h2><h5 id="例如现在创建一个-pods，kubelet-中的-controller-是如何运行的-K8s-中源码中也大量使用-client-go，主要是大量的-controller"><a href="#例如现在创建一个-pods，kubelet-中的-controller-是如何运行的-K8s-中源码中也大量使用-client-go，主要是大量的-controller" class="headerlink" title="例如现在创建一个 pods，kubelet 中的 controller 是如何运行的(K8s 中源码中也大量使用 client-go，主要是大量的 controller)"></a>例如现在创建一个 pods，kubelet 中的 controller 是如何运行的(K8s 中源码中也大量使用 client-go，主要是大量的 controller)</h5><ul>
+<li><h5 id="•-初始化并启动-informer，informer-启动会初始化并启动-reflector，reflector-从-kube-apiserver-list-所有-pod-资源，并-sync-到-Deltafifo-中。"><a href="#•-初始化并启动-informer，informer-启动会初始化并启动-reflector，reflector-从-kube-apiserver-list-所有-pod-资源，并-sync-到-Deltafifo-中。" class="headerlink" title="• 初始化并启动 informer，informer 启动会初始化并启动 reflector，reflector 从 kube-apiserver list 所有 pod 资源，并 sync 到 Deltafifo 中。"></a>• 初始化并启动 informer，informer 启动会初始化并启动 reflector，reflector 从 kube-apiserver list 所有 pod 资源，并 sync 到 Deltafifo 中。</h5></li>
+<li><h5 id="•-Deltafifo-存有全部-pod-资源，informer-通过-pop-函数消费-deltafifo-事件并存储到-indexer-中。"><a href="#•-Deltafifo-存有全部-pod-资源，informer-通过-pop-函数消费-deltafifo-事件并存储到-indexer-中。" class="headerlink" title="• Deltafifo 存有全部 pod 资源，informer 通过 pop 函数消费 deltafifo 事件并存储到 indexer 中。"></a>• Deltafifo 存有全部 pod 资源，informer 通过 pop 函数消费 deltafifo 事件并存储到 indexer 中。</h5></li>
+<li><h5 id="•-如果需要调用-pod-资源，那么可以直接从-indexer-中获取"><a href="#•-如果需要调用-pod-资源，那么可以直接从-indexer-中获取" class="headerlink" title="• 如果需要调用 pod 资源，那么可以直接从 indexer 中获取"></a>• 如果需要调用 pod 资源，那么可以直接从 indexer 中获取</h5></li>
+<li><h5 id="•-informer-初始化完成后，Reflector-开始-Watch-Pod-相关的事件"><a href="#•-informer-初始化完成后，Reflector-开始-Watch-Pod-相关的事件" class="headerlink" title="• informer 初始化完成后，Reflector 开始 Watch Pod 相关的事件"></a>• informer 初始化完成后，Reflector 开始 Watch Pod 相关的事件</h5></li>
+<li><h5 id="•-如果创建一个-pod，1-那么-Reflector-会监听到这个事件，然后将这个事件发送到-DeltaFIFO-中"><a href="#•-如果创建一个-pod，1-那么-Reflector-会监听到这个事件，然后将这个事件发送到-DeltaFIFO-中" class="headerlink" title="• 如果创建一个 pod，1. 那么 Reflector 会监听到这个事件，然后将这个事件发送到 DeltaFIFO 中"></a>• 如果创建一个 pod，1. 那么 Reflector 会监听到这个事件，然后将这个事件发送到 DeltaFIFO 中</h5></li>
+<li><h5 id="•-informer-pop-消费改-ADD-事件，并将该-pod-存储到-indexer"><a href="#•-informer-pop-消费改-ADD-事件，并将该-pod-存储到-indexer" class="headerlink" title="• informer pop 消费改 ADD 事件，并将该 pod 存储到 indexer"></a>• informer pop 消费改 ADD 事件，并将该 pod 存储到 indexer</h5></li>
+<li><h5 id="•-informer-处理器函数同样拿到该-ADD-事件去处理该事件，通过workqueue获取到事件的key，再通过indexer获取到真正操作的对象"><a href="#•-informer-处理器函数同样拿到该-ADD-事件去处理该事件，通过workqueue获取到事件的key，再通过indexer获取到真正操作的对象" class="headerlink" title="• informer 处理器函数同样拿到该 ADD 事件去处理该事件，通过workqueue获取到事件的key，再通过indexer获取到真正操作的对象"></a>• informer 处理器函数同样拿到该 ADD 事件去处理该事件，通过workqueue获取到事件的key，再通过indexer获取到真正操作的对象</h5></li>
+<li><h5 id="•-reflector-会周期性将-indexer-数据同步到-Deltafifo，防止一些事件处理失败，重新处理。"><a href="#•-reflector-会周期性将-indexer-数据同步到-Deltafifo，防止一些事件处理失败，重新处理。" class="headerlink" title="• reflector 会周期性将 indexer 数据同步到 Deltafifo，防止一些事件处理失败，重新处理。"></a>• reflector 会周期性将 indexer 数据同步到 Deltafifo，防止一些事件处理失败，重新处理。</h5></li>
+<li></li>
+</ul>
+<hr>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>理解 client-go 原理是非常重要的，里面很多设计值得我们去学习，也可以运用到自己项目中。</p>
+<hr>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Client-go 架构 2024-04-03 14:48:40.716</div>
+      <div>http://example.com/2025/01/16/Client-go 架构-client-go-jia-gou/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/Calico%E7%BD%91%E7%BB%9C%E8%87%AA%E5%AE%9A%E4%B9%89-calico-wang-luo-zi-ding-yi/" title="Calico网络自定义 2024-04-03 15:08:43.394">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Calico网络自定义 2024-04-03 15:08:43.394</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/Client-go%20%E5%9B%9B%E7%A7%8D%E5%AE%A2%E6%88%B7%E7%AB%AF-client-go-si-zhong-ke-hu-duan/" title="Client-go 四种客户端 2024-04-03 14:49:34.32">
+                        <span class="hidden-mobile">Client-go 四种客户端 2024-04-03 14:49:34.32</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

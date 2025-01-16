@@ -1,0 +1,680 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="NetDoctor English | 中文  介绍 Kubernetes集群投入使用后集群网络可能会存在种种的连通性问题，因此我们希望可以有一个验收工具，在完成部署后检查集群的网络连通性是否正常。  另一方面，Kosmos是一个跨集群的解决方案，在Kosmos管理多个集群之前，需要先检查各个集群的容器网络自身是否存在问题，部署完成后也需要验证跨集群的网络是否已经被Kosmos连通。  出于以上两">
+<meta property="og:type" content="article">
+<meta property="og:title" content="netctl检测集群pod间连通性 2024-08-02 18:00:36.753">
+<meta property="og:url" content="http://example.com/2025/01/16/netctl%E6%A3%80%E6%B5%8B%E9%9B%86%E7%BE%A4pod%E9%97%B4%E8%BF%9E%E9%80%9A%E6%80%A7-netctl-jian-ce-ji-qun-pod-jian-lian-tong-xing/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="NetDoctor English | 中文  介绍 Kubernetes集群投入使用后集群网络可能会存在种种的连通性问题，因此我们希望可以有一个验收工具，在完成部署后检查集群的网络连通性是否正常。  另一方面，Kosmos是一个跨集群的解决方案，在Kosmos管理多个集群之前，需要先检查各个集群的容器网络自身是否存在问题，部署完成后也需要验证跨集群的网络是否已经被Kosmos连通。  出于以上两">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407151645896.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.078Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:19.017Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407151645896.png">
+  
+  
+  
+  <title>netctl检测集群pod间连通性 2024-08-02 18:00:36.753 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="netctl检测集群pod间连通性 2024-08-02 18:00:36.753"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          11 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">netctl检测集群pod间连通性 2024-08-02 18:00:36.753</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="NetDoctor"><a href="#NetDoctor" class="headerlink" title="NetDoctor"></a>NetDoctor</h1><blockquote>
+<p><a href="README.md">English</a> | 中文</p>
+</blockquote>
+<h2 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h2><ul>
+<li><p>Kubernetes集群投入使用后集群网络可能会存在种种的连通性问题，因此我们希望可以有一个验收工具，在完成部署后检查集群的网络连通性是否正常。</p>
+</li>
+<li><p>另一方面，Kosmos是一个跨集群的解决方案，在Kosmos管理多个集群之前，需要先检查各个集群的容器网络自身是否存在问题，部署完成后也需要验证跨集群的网络是否已经被Kosmos连通。</p>
+</li>
+<li><p>出于以上两个方面，我们设计了<code>NetDoctor</code>工具用于解决Kubernetes集群遇到的网络问题。</p>
+</li>
+</ul>
+<h2 id="架构"><a href="#架构" class="headerlink" title="架构"></a>架构</h2><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407151645896.png" srcset="/img/loading.gif" lazyload alt="image-20240715164552817"></p>
+<h2 id="先决条件"><a href="#先决条件" class="headerlink" title="先决条件"></a>先决条件</h2><ul>
+<li><code>go</code> 版本 v1.15+</li>
+<li><code>kubernetes</code> 版本 v1.16+</li>
+</ul>
+<h2 id="快速开始"><a href="#快速开始" class="headerlink" title="快速开始"></a>快速开始</h2><h3 id="netctl工具"><a href="#netctl工具" class="headerlink" title="netctl工具"></a>netctl工具</h3><ul>
+<li>NetDoctor提供配套工具<code>netctl</code>，您可以方便的通过命令行去进行Kubernetes集群的网络连通性检查。</li>
+</ul>
+<h4 id="从制品库获取"><a href="#从制品库获取" class="headerlink" title="从制品库获取"></a>从制品库获取</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">wget https://github.com/kosmos-io/netdoctor/releases/download/v0.0.1/netctl-linux-amd64 <br><span class="hljs-built_in">mv</span> netctl-linux-amd64 netctl<br></code></pre></td></tr></table></figure>
+
+<h4 id="从源码编译"><a href="#从源码编译" class="headerlink" title="从源码编译"></a>从源码编译</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 下载项目源码</span><br>$ git <span class="hljs-built_in">clone</span> https://github.com/kosmos-io/netdoctor.git<br><span class="hljs-comment"># 执行后netctl会输出至./netdoctor/_output/bin/linux/amd64目录</span><br>$ make netctl<br></code></pre></td></tr></table></figure>
+
+<h3 id="netctl命令"><a href="#netctl命令" class="headerlink" title="netctl命令"></a>netctl命令</h3><ul>
+<li><code>netctl init</code>命令用于在当前目录生成网络检查需要的配置文件<code>config.json</code>，示例如下：</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ netctl init<br>I0205 16:27:26.258964 2765415 init.go:69] write opts success<br>$ <span class="hljs-built_in">cat</span> config.json<br>&#123;<br> <span class="hljs-string">&quot;namespace&quot;</span>: <span class="hljs-string">&quot;kosmos-system&quot;</span>,<br> <span class="hljs-string">&quot;version&quot;</span>: <span class="hljs-string">&quot;v0.2.0&quot;</span>,<br> <span class="hljs-string">&quot;protocol&quot;</span>: <span class="hljs-string">&quot;tcp&quot;</span>,<br> <span class="hljs-string">&quot;podWaitTime&quot;</span>: 30,<br> <span class="hljs-string">&quot;port&quot;</span>: <span class="hljs-string">&quot;8889&quot;</span>,<br> <span class="hljs-string">&quot;maxNum&quot;</span>: 3,<br> <span class="hljs-string">&quot;cmdTimeout&quot;</span>: 10,<br> <span class="hljs-string">&quot;srcKubeConfig&quot;</span>: <span class="hljs-string">&quot;~/.kube/config&quot;</span>,<br> <span class="hljs-string">&quot;srcImageRepository&quot;</span>: <span class="hljs-string">&quot;ghcr.io/kosmos-io&quot;</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><code>netctl check</code>命令会读取<code>config.json</code>，然后创建一个名为<code>Floater</code>的<code>DaemonSet</code>以及相关联的一些资源，之后会获取所有的<code>Floater</code>的<code>IP</code>信息，然后依次进入到<code>Pod</code>中执行<code>Ping</code>或者<code>Curl</code>命令。需要注意的是，这个操作是并发执行的，并发度根据<code>config.json</code>中的<code>maxNum</code>参数动态变化。</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ netctl check<br>I0205 16:34:06.147671 2769373 check.go:61] use config from file!!!!!!<br>I0205 16:34:06.148619 2769373 floater.go:73] create Clusterlink floater, namespace: kosmos-system<br>I0205 16:34:06.157582 2769373 floater.go:83] create Clusterlink floater, apply RBAC<br>I0205 16:34:06.167799 2769373 floater.go:94] create Clusterlink floater, version: v0.2.0<br>I0205 16:34:09.178566 2769373 verify.go:79] pod: clusterlink-floater-9dzsg is ready. status: Running<br>I0205 16:34:09.179593 2769373 verify.go:79] pod: clusterlink-floater-cscdh is ready. status: Running<br>Do check... 100% [================================================================================]  [0s]<br>+-----+----------------+----------------+-----------+-----------+<br>| S/N | SRC NODE NAME  | DST NODE NAME  | TARGET IP |  RESULT   |<br>+-----+----------------+----------------+-----------+-----------+<br>|   1 | ecs-net-dr-001 | ecs-net-dr-001 | 10.0.1.86 | SUCCESSED |<br>|   2 | ecs-net-dr-002 | ecs-net-dr-002 | 10.0.2.29 | SUCCESSED |<br>+-----+----------------+----------------+-----------+-----------+<br><br>+-----+----------------+----------------+-----------+-----------+-------------------------------+<br>| S/N | SRC NODE NAME  | DST NODE NAME  | TARGET IP |  RESULT   |              LOG              |<br>+-----+----------------+----------------+-----------+-----------+-------------------------------+<br>|   1 | ecs-net-dr-002 | ecs-net-dr-001 | 10.0.1.86 | EXCEPTION |<span class="hljs-built_in">exec</span> error: unable to upgrade  |<br>|   2 | ecs-net-dr-001 | ecs-net-dr-002 | 10.0.2.29 | EXCEPTION |connection: container not......|<br>+-----+----------------+----------------+-----------+-----------+-------------------------------+<br>I0205 16:34:09.280220 2769373 do.go:93] write opts success<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>在<code>check</code>命令执行的过程中，会有进度条显示校验进度。命令执行完成后，会打印检查结果，并将结果保存在文件<code>resume.json</code>中。</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs bash">[<br> &#123;<br>  <span class="hljs-string">&quot;Status&quot;</span>: 0,<br>  <span class="hljs-string">&quot;ResultStr&quot;</span>: <span class="hljs-string">&quot;exec error: unable to upgrade connection: container not found (\&quot;floater\&quot;), stderr: &quot;</span>,<br>  <span class="hljs-string">&quot;srcNodeName&quot;</span>: <span class="hljs-string">&quot;ecs-sealos-001&quot;</span>,<br>  <span class="hljs-string">&quot;dstNodeName&quot;</span>: <span class="hljs-string">&quot;ecs-sealos-002&quot;</span>,<br>  <span class="hljs-string">&quot;targetIP&quot;</span>: <span class="hljs-string">&quot;10.0.2.29&quot;</span><br> &#125;,<br> &#123;<br>  <span class="hljs-string">&quot;Status&quot;</span>: 0,<br>  <span class="hljs-string">&quot;ResultStr&quot;</span>: <span class="hljs-string">&quot;exec error: command terminated with exit code 7, stderr  % Total  % Received % Xferd  Average  Speed  Time  Time  Time  Current\n  Dload  Upload  Total  Spent  Left  Speed\n\r  0  0  0  0  0  0  0  0 --:--:-- --:--:-- --:--:--  0\r  0  0  0  0  0  0  0  0 --:--:-- --:--:-- --:--:--  0\ncurl: (7) Failed to connect to 10.0.0.36 port 8889 after 0 ms: Couldn&#x27;t connect to server\n&quot;</span>,<br>  <span class="hljs-string">&quot;srcNodeName&quot;</span>: <span class="hljs-string">&quot;ecs-sealos-002&quot;</span>,<br>  <span class="hljs-string">&quot;dstNodeName&quot;</span>: <span class="hljs-string">&quot;ecs-sealos-001&quot;</span>,<br>  <span class="hljs-string">&quot;targetIP&quot;</span>: <span class="hljs-string">&quot;10.0.0.36&quot;</span><br> &#125;<br>]<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>如果需要检查Kosmos集群联邦中任意两个集群之间的网络连通性，则可以在配置文件<code>config.json</code>增加参数<code>dstKubeConfig</code>和<code>dstImageRepository</code>，这样就可以检查两个集群之间网络连通性了。</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ vim config.json<br>&#123;<br> <span class="hljs-string">&quot;namespace&quot;</span>: <span class="hljs-string">&quot;kosmos-system&quot;</span>,<br> <span class="hljs-string">&quot;version&quot;</span>: <span class="hljs-string">&quot;v0.2.0&quot;</span>,<br> <span class="hljs-string">&quot;protocol&quot;</span>: <span class="hljs-string">&quot;tcp&quot;</span>,<br> <span class="hljs-string">&quot;podWaitTime&quot;</span>: 30,<br> <span class="hljs-string">&quot;port&quot;</span>: <span class="hljs-string">&quot;8889&quot;</span>,<br> <span class="hljs-string">&quot;maxNum&quot;</span>: 3,<br> <span class="hljs-string">&quot;cmdTimeout&quot;</span>: 10,<br> <span class="hljs-string">&quot;srcKubeConfig&quot;</span>: <span class="hljs-string">&quot;~/.kube/src-config&quot;</span>,<br> <span class="hljs-string">&quot;srcImageRepository&quot;</span>: <span class="hljs-string">&quot;ghcr.io/kosmos-io&quot;</span><br> <span class="hljs-string">&quot;dstKubeConfig&quot;</span>: <span class="hljs-string">&quot;~/.kube/dst-config&quot;</span>,<br> <span class="hljs-string">&quot;dstImageRepository&quot;</span>: <span class="hljs-string">&quot;ghcr.io/kosmos-io&quot;</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><code>netctl resume</code>命令用于复测时只检验第一次检查时有问题的集群节点。因为线上环境节点数量很多，单次检查可能会需要比较长的时间才能生成结果，所以我们希望仅对前一次检查异常的节点进行复测。<code>resume</code>命令因此被开发，该命令会读取<code>resume.json</code>文件，并对前一次异常的节点进行再次检查，我们可以重复执行此命令至没有异常的结果后再执行全量检查。</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ netctl resume<br>I0205 16:34:06.147671 2769373 check.go:61] use config from file!!!!!!<br>I0205 16:34:06.148619 2769373 floater.go:73] create Clusterlink floater, namespace: kosmos-system<br>I0205 16:34:06.157582 2769373 floater.go:83] create Clusterlink floater, apply RBAC<br>I0205 16:34:06.167799 2769373 floater.go:94] create Clusterlink floater, version: v0.2.0<br>I0205 16:34:09.178566 2769373 verify.go:79] pod: clusterlink-floater-9dzsg is ready. status: Running<br>I0205 16:34:09.179593 2769373 verify.go:79] pod: clusterlink-floater-cscdh is ready. status: Running<br>Do check... 100% [================================================================================]  [0s]<br>+-----+----------------+----------------+-----------+-----------+<br>| S/N | SRC NODE NAME  | DST NODE NAME  | TARGET IP |  RESULT   |<br>+-----+----------------+----------------+-----------+-----------+<br>|   1 | ecs-net-dr-002 | ecs-net-dr-001 | 10.0.1.86 | SUCCESSED |<br>|   2 | ecs-net-dr-001 | ecs-net-dr-002 | 10.0.2.29 | SUCCESSED |<br>+-----+----------------+----------------+-----------+-----------+<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><code>netctl clean</code>命令用于清理<code>NetDoctor</code>创建的所有资源。</li>
+</ul>
+<h2 id="贡献代码"><a href="#贡献代码" class="headerlink" title="贡献代码"></a>贡献代码</h2><ul>
+<li>我们欢迎任何形式的帮助，包括但不限定于完善文档、提出问题、修复 Bug 和增加特性。</li>
+</ul>
+<h2 id="联系我们"><a href="#联系我们" class="headerlink" title="联系我们"></a>联系我们</h2><ul>
+<li>如果您在使用过程中遇到了任何问题，欢迎提交 <a target="_blank" rel="noopener" href="https://github.com/kosmos-io/netdoctor/issues">Issue</a> 进行反馈。</li>
+<li>您也可以扫描<a href="./docs/img/kosmos-WeChatIMG.png">WeChat</a>加入技术交流群。</li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>netctl检测集群pod间连通性 2024-08-02 18:00:36.753</div>
+      <div>http://example.com/2025/01/16/netctl检测集群pod间连通性-netctl-jian-ce-ji-qun-pod-jian-lian-tong-xing/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/pixie-pixie/" title="pixie 2024-08-02 17:52:17.843">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">pixie 2024-08-02 17:52:17.843</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/network-check-network-check/" title="network-check 2023-09-28 15:36:33.04">
+                        <span class="hidden-mobile">network-check 2023-09-28 15:36:33.04</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

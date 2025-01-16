@@ -1,0 +1,661 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="曾几何时，我们将自己的应用运行在Kubernetes上，每当出现容器异常崩溃时，我们往往都是一边重启容器，一边面对崩溃的容器无从下手。通常在业务研发自己build的镜像内包含了shell，我们还能通过在command中嵌入一个[&quot;sleep&quot;, &quot;3600&quot;]命令来阻塞容器内服务启动，不过也有时候会出现不知道从哪里冒出来一个distroless镜像，这时可能">
+<meta property="og:type" content="article">
+<meta property="og:title" content="K8S调试POD 2024-04-03 14:58:15.293">
+<meta property="og:url" content="http://example.com/2025/01/16/K8S%E8%B0%83%E8%AF%95POD-k8s-diao-shi-pod/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="曾几何时，我们将自己的应用运行在Kubernetes上，每当出现容器异常崩溃时，我们往往都是一边重启容器，一边面对崩溃的容器无从下手。通常在业务研发自己build的镜像内包含了shell，我们还能通过在command中嵌入一个[&quot;sleep&quot;, &quot;3600&quot;]命令来阻塞容器内服务启动，不过也有时候会出现不知道从哪里冒出来一个distroless镜像，这时可能">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403131441744.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.049Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:18.667Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403131441744.png">
+  
+  
+  
+  <title>K8S调试POD 2024-04-03 14:58:15.293 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="K8S调试POD 2024-04-03 14:58:15.293"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          13 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">K8S调试POD 2024-04-03 14:58:15.293</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h5 id="曾几何时，我们将自己的应用运行在Kubernetes上，每当出现容器异常崩溃时，我们往往都是一边重启容器，一边面对崩溃的容器无从下手。通常在业务研发自己build的镜像内包含了shell，我们还能通过在command中嵌入一个-sleep-3600-命令来阻塞容器内服务启动，不过也有时候会出现不知道从哪里冒出来一个distroless镜像，这时可能最先崩溃的就是运维了。那是一种运维这个职业自诞生以来，第一次感受到手足无措并脱离掌控的无助感。于是在k8s环境下无法debug容器的梗开始在坊间广为吐槽。"><a href="#曾几何时，我们将自己的应用运行在Kubernetes上，每当出现容器异常崩溃时，我们往往都是一边重启容器，一边面对崩溃的容器无从下手。通常在业务研发自己build的镜像内包含了shell，我们还能通过在command中嵌入一个-sleep-3600-命令来阻塞容器内服务启动，不过也有时候会出现不知道从哪里冒出来一个distroless镜像，这时可能最先崩溃的就是运维了。那是一种运维这个职业自诞生以来，第一次感受到手足无措并脱离掌控的无助感。于是在k8s环境下无法debug容器的梗开始在坊间广为吐槽。" class="headerlink" title="曾几何时，我们将自己的应用运行在Kubernetes上，每当出现容器异常崩溃时，我们往往都是一边重启容器，一边面对崩溃的容器无从下手。通常在业务研发自己build的镜像内包含了shell，我们还能通过在command中嵌入一个[&quot;sleep&quot;, &quot;3600&quot;]命令来阻塞容器内服务启动，不过也有时候会出现不知道从哪里冒出来一个distroless镜像，这时可能最先崩溃的就是运维了。那是一种运维这个职业自诞生以来，第一次感受到手足无措并脱离掌控的无助感。于是在k8s环境下无法debug容器的梗开始在坊间广为吐槽。"></a>曾几何时，我们将自己的应用运行在Kubernetes上，每当出现<a target="_blank" rel="noopener" href="https://cloud.tencent.com/product/tke?from_column=20065&from=20065">容器</a>异常崩溃时，我们往往都是一边重启容器，一边面对崩溃的容器无从下手。通常在业务研发自己build的镜像内包含了shell，我们还能通过在command中嵌入一个<code>[&quot;sleep&quot;, &quot;3600&quot;]</code>命令来阻塞容器内服务启动，不过也有时候会出现不知道从哪里冒出来一个<code>distroless</code>镜像，这时可能最先崩溃的就是<a target="_blank" rel="noopener" href="https://cloud.tencent.com/solution/operation?from_column=20065&from=20065">运维</a>了。<code>那是一种运维这个职业自诞生以来，第一次感受到手足无措并脱离掌控的无助感</code>。于是在k8s环境下无法debug容器的梗开始在坊间广为吐槽。</h5><h5 id="第一个打破魔咒的是kubectl-debug，它包含了agent和debug-tools两个部分。也是目前全网内搜到文档最全的解决方案。不过目前它的开发似乎已经停止，上一次提交还是在8个月之前，而最近一次Release版本也停留在两年前。更难以接受的是，当前它无法被集成在容器运行时为Containerd的k8s集群。"><a href="#第一个打破魔咒的是kubectl-debug，它包含了agent和debug-tools两个部分。也是目前全网内搜到文档最全的解决方案。不过目前它的开发似乎已经停止，上一次提交还是在8个月之前，而最近一次Release版本也停留在两年前。更难以接受的是，当前它无法被集成在容器运行时为Containerd的k8s集群。" class="headerlink" title="第一个打破魔咒的是kubectl-debug，它包含了agent和debug-tools两个部分。也是目前全网内搜到文档最全的解决方案。不过目前它的开发似乎已经停止，上一次提交还是在8个月之前，而最近一次Release版本也停留在两年前。更难以接受的是，当前它无法被集成在容器运行时为Containerd的k8s集群。"></a>第一个打破魔咒的是kubectl-debug，它包含了<strong>agent</strong>和<strong>debug-tools</strong>两个部分。也是目前全网内搜到文档最全的解决方案。不过目前它的开发似乎已经停止，上一次提交还是在8个月之前，而最近一次Release版本也停留在两年前。更难以接受的是，当前它无法被集成在容器运行时为Containerd的k8s集群。</h5><h5 id="尽管kubectl-debug曾经确实是一款非常好用的容器调试工具，但如今Kubernetes已经有了更好的容器调试解决方案，Ephemeral-Containers"><a href="#尽管kubectl-debug曾经确实是一款非常好用的容器调试工具，但如今Kubernetes已经有了更好的容器调试解决方案，Ephemeral-Containers" class="headerlink" title="尽管kubectl-debug曾经确实是一款非常好用的容器调试工具，但如今Kubernetes已经有了更好的容器调试解决方案，Ephemeral Containers"></a>尽管kubectl-debug曾经确实是一款非常好用的容器调试工具，但如今Kubernetes已经有了更好的容器调试解决方案，<code>Ephemeral Containers</code></h5><h3 id="Ephemeral-Containers"><a href="#Ephemeral-Containers" class="headerlink" title="Ephemeral Containers"></a><strong>Ephemeral Containers</strong></h3><h5 id="Ephemeral-Containers字如其名，它就是一个临时容器。这是一个自Kubernetes-v1-16中作为alpha引入的新功能，虽然当前它还没有GA，不过自从在Kubernetes-v1-18之后，在kubectl内已经集成了debug客户端，我们几乎可以完整的使用并体验它的新特性。"><a href="#Ephemeral-Containers字如其名，它就是一个临时容器。这是一个自Kubernetes-v1-16中作为alpha引入的新功能，虽然当前它还没有GA，不过自从在Kubernetes-v1-18之后，在kubectl内已经集成了debug客户端，我们几乎可以完整的使用并体验它的新特性。" class="headerlink" title="Ephemeral Containers字如其名，它就是一个临时容器。这是一个自Kubernetes v1.16中作为alpha引入的新功能，虽然当前它还没有GA，不过自从在Kubernetes v1.18之后，在kubectl内已经集成了debug客户端，我们几乎可以完整的使用并体验它的新特性。"></a>Ephemeral Containers字如其名，它就是一个临时容器。这是一个自Kubernetes v1.16中作为alpha引入的新功能，虽然当前它还没有GA，不过自从在Kubernetes v1.18之后，在kubectl内已经集成了debug客户端，我们几乎可以完整的使用并体验它的新特性。</h5><h5 id="临时容器的目标是为Kubernetes用户提供一个故障诊断工具，同时具备满足以下需求："><a href="#临时容器的目标是为Kubernetes用户提供一个故障诊断工具，同时具备满足以下需求：" class="headerlink" title="临时容器的目标是为Kubernetes用户提供一个故障诊断工具，同时具备满足以下需求："></a>临时容器的目标是为Kubernetes用户提供一个故障诊断工具，同时具备满足以下需求：</h5><ul>
+<li><h5 id="作为一个开箱即用的平台化工具"><a href="#作为一个开箱即用的平台化工具" class="headerlink" title="作为一个开箱即用的平台化工具"></a>作为一个开箱即用的平台化工具</h5></li>
+<li><h5 id="不依赖于已经包含在容器镜像中的工具"><a href="#不依赖于已经包含在容器镜像中的工具" class="headerlink" title="不依赖于已经包含在容器镜像中的工具"></a>不依赖于已经包含在<a target="_blank" rel="noopener" href="https://cloud.tencent.com/product/tcr?from_column=20065&from=20065">容器镜像</a>中的工具</h5></li>
+<li><h5 id="不需要直接登陆计算节点-可以通过Kubernetes-API的管理访问Node"><a href="#不需要直接登陆计算节点-可以通过Kubernetes-API的管理访问Node" class="headerlink" title="不需要直接登陆计算节点(可以通过Kubernetes API的管理访问Node)"></a>不需要直接登陆计算节点(可以通过Kubernetes API的管理访问Node)</h5></li>
+</ul>
+<h5 id="不过也有东西是临时容器不计划支持的，比如对windows上启用临时容器就不太友好。"><a href="#不过也有东西是临时容器不计划支持的，比如对windows上启用临时容器就不太友好。" class="headerlink" title="不过也有东西是临时容器不计划支持的，比如对windows上启用临时容器就不太友好。"></a>不过也有东西是临时容器不计划支持的，比如对windows上启用临时容器就不太友好。</h5><h5 id="启用临时容器的特性也非常简单，在kubernetes-v1-16之后的版本中将启动参数-feature-gates-EphemeralContainers-true配置到kube-api和kubelet服务上重启即可。"><a href="#启用临时容器的特性也非常简单，在kubernetes-v1-16之后的版本中将启动参数-feature-gates-EphemeralContainers-true配置到kube-api和kubelet服务上重启即可。" class="headerlink" title="启用临时容器的特性也非常简单，在kubernetes v1.16之后的版本中将启动参数--feature-gates=EphemeralContainers=true配置到kube-api和kubelet服务上重启即可。"></a>启用临时容器的特性也非常简单，在kubernetes v1.16之后的版本中将启动参数<code>--feature-gates=EphemeralContainers=true</code>配置到kube-api和kubelet服务上重启即可。</h5><blockquote>
+<h5 id="在1-20之前，kubectl-debug工具被放在alpha中，注意不同版本的命令操作差别-这里推荐使用客户端为1-20-的版本体验会更好"><a href="#在1-20之前，kubectl-debug工具被放在alpha中，注意不同版本的命令操作差别-这里推荐使用客户端为1-20-的版本体验会更好" class="headerlink" title="在1.20之前，kubectl debug工具被放在alpha中，注意不同版本的命令操作差别 这里推荐使用客户端为1.20+的版本体验会更好"></a>在1.20之前，kubectl debug工具被放在alpha中，注意不同版本的命令操作差别 这里推荐使用客户端为1.20+的版本体验会更好</h5></blockquote>
+<h5 id="那么我们有了Ephemeral-Containers能做哪些事情呢？"><a href="#那么我们有了Ephemeral-Containers能做哪些事情呢？" class="headerlink" title="那么我们有了Ephemeral Containers能做哪些事情呢？"></a>那么我们有了Ephemeral Containers能做哪些事情呢？</h5><h4 id="1-POD-Troubleshooting"><a href="#1-POD-Troubleshooting" class="headerlink" title="1. POD Troubleshooting"></a><strong>1. POD Troubleshooting</strong></h4><h5 id="如上文所说，我们可以直接通过kubectl-debug命令进行容器调试。最直接简单的对一个pod进行调试命令如下："><a href="#如上文所说，我们可以直接通过kubectl-debug命令进行容器调试。最直接简单的对一个pod进行调试命令如下：" class="headerlink" title="如上文所说，我们可以直接通过kubectl debug命令进行容器调试。最直接简单的对一个pod进行调试命令如下："></a>如上文所说，我们可以直接通过kubectl debug命令进行容器调试。最直接简单的对一个pod进行调试命令如下：</h5><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs javascript">kubectl debug mypod -it --image=busybox<br></code></pre></td></tr></table></figure>
+
+<p>复制</p>
+<p>默认情况下用户不指定临时容器名称的话，debug容器名称就由kubectl自动生成一个唯一id的名称。如果用户需要自己指定容器名称则使用</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs javascript">kubectl debug mypod -c <span class="hljs-keyword">debugger</span> --image=busybox<br></code></pre></td></tr></table></figure>
+
+<p>复制</p>
+<p>有了临时容器除了日常debug功能外，我们可以扩展出很多新花样的玩法。比如批量跑某个命名空间下的安全扫描的脚本而不用干扰原容器。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs javascript"><span class="hljs-keyword">for</span> pod <span class="hljs-keyword">in</span> $(kubectl get -o name pod); <br><span class="hljs-keyword">do</span><br>    kubectl debug --image security/pod_scanner -p $pod /sanner.<span class="hljs-property">sh</span><br>done<br></code></pre></td></tr></table></figure>
+
+<p>复制</p>
+<h5 id="2-POD-Troubleshooting-by-Copy"><a href="#2-POD-Troubleshooting-by-Copy" class="headerlink" title="2. POD Troubleshooting by Copy"></a><strong>2. POD Troubleshooting by Copy</strong></h5><p>对于没有开启Ephemeral Containers特性的集群，我们就只能通过复制模式来调试容器。它的原理是复制一个指定pod的新容器，并将debug作为sidecar跟随新容器一起启动。通过这种方式也能达到曲线救国的目的。此种方式的几个参数还是挺有意思：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs javascript">--copy-to   指定新pod的名称<br>--replace=<span class="hljs-literal">true</span>   是否删除原容器<br>--same-node=<span class="hljs-literal">true</span>  是否调度到和原容器一样的node上<br>--share-processes=<span class="hljs-literal">true</span>  是否共享容器pid空间<br></code></pre></td></tr></table></figure>
+
+<p>复制</p>
+<p>例如我们就可以启动一个跟需要调试pod一样配置的debug容器如下：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs javascript">kubectl debug mypod -it \<br>--container=debug \<br>--image=busybox \<br>--copy-to=my-<span class="hljs-keyword">debugger</span> \<br>--same-node=<span class="hljs-literal">true</span> \<br>--share-processes=<span class="hljs-literal">true</span> <br></code></pre></td></tr></table></figure>
+
+<p>复制</p>
+<h5 id="3-Node-Troubleshooting"><a href="#3-Node-Troubleshooting" class="headerlink" title="3. Node Troubleshooting"></a><strong>3. Node Troubleshooting</strong></h5><p>对！你没看错！利用Ephemeral Containers还能对Worker节点进行调试。当以节点为目标调用时，kubectl debug 将创建一个带有node名称的pod，并且调度到该节点。同时该容器还具备了<code>hostIPC</code>、<code>hostNetwork</code>和<code>hostPID</code>这些特权模式。不可思议的是<code>Worker节点的根文件系统还被mount到了debug容器下的/host目录下</code>。</p>
+<p>直接执行这个命令就能debug主机。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs javascript">kubectl debug node/mynode -it --image=busybox<br></code></pre></td></tr></table></figure>
+
+<p>复制</p>
+<h3 id="Debug镜像"><a href="#Debug镜像" class="headerlink" title="Debug镜像"></a><strong>Debug镜像</strong></h3><p>工欲善其事，必先利其器。不管怎样我们都需要一套工具完善的debug镜像，在处理问题时能够得心应手。虽然网上也有不少debug镜像，不过都还是不如自己构建来的畅快。</p>
+<p>这里小白分享一个Debug镜像的Dockerfile，大家可以根据自己条件修改即可。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs javascript"><span class="hljs-variable constant_">FROM</span> <span class="hljs-attr">golang</span>:alpine <span class="hljs-keyword">as</span> grpcurl<br><span class="hljs-variable constant_">RUN</span> apk update \<br>  &amp;&amp; apk add --virtual build-dependencies git \<br>  &amp;&amp; apk add bash curl jq \<br>  &amp;&amp; go get -u github.<span class="hljs-property">com</span>/fullstorydev/grpcurl \<br>  &amp;&amp; go install github.<span class="hljs-property">com</span>/fullstorydev/grpcurl/cmd/grpcurl@latest<br><br><span class="hljs-variable constant_">FROM</span> <span class="hljs-attr">alpine</span>:latest<br><span class="hljs-variable constant_">RUN</span> sed -i <span class="hljs-string">&#x27;s/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g&#x27;</span> /etc/apk/repositories &amp;&amp; \<br>    apk update &amp;&amp; \<br>    apk add --no-cache vim bash tcpdump curl wget strace mysql-client iproute2 redis jq iftop tzdata tar nmap bind-tools htop &amp;&amp; \<br>    ln -sf /usr/share/zoneinfo/<span class="hljs-title class_">Asia</span>/<span class="hljs-title class_">Shanghai</span> /etc/localtime<br><span class="hljs-variable constant_">RUN</span> wget -O /usr/bin/httpstat <span class="hljs-attr">https</span>:<span class="hljs-comment">//github.com/davecheney/httpstat/releases/download/v1.0.0/httpstat-linux-amd64-v1.0.0 &amp;&amp; \</span><br>    chmod +x /usr/bin/httpstat<br><span class="hljs-variable constant_">COPY</span> --<span class="hljs-keyword">from</span>=grpcurl  /go/bin/grpcurl /usr/bin/grpcurl<br><span class="hljs-variable constant_">ENV</span> <span class="hljs-variable constant_">TZ</span>=<span class="hljs-title class_">Asia</span>/<span class="hljs-title class_">Shanghai</span> <span class="hljs-variable constant_">LC_ALL</span>=C.<span class="hljs-property">UTF</span>-<span class="hljs-number">8</span> <span class="hljs-variable constant_">LANG</span>=C.<span class="hljs-property">UTF</span>-<span class="hljs-number">8</span> <span class="hljs-variable constant_">LANGUAGE</span>=C.<span class="hljs-property">UTF</span>-<span class="hljs-number">8</span><br><span class="hljs-variable constant_">ENTRYPOINT</span> [ <span class="hljs-string">&quot;/bin/bash&quot;</span> ]<br></code></pre></td></tr></table></figure>
+
+<p>复制</p>
+<p>debug镜像内支持的工具包如下图</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403131441744.png" srcset="/img/loading.gif" lazyload alt="image-20240313144142620"></p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a><strong>总结</strong></h3><p>本文主要讲述了kubernetes在v1.18版本之后被提上alpha的<code>Ephemeral Containers</code>特性，通过临时容器我们可以debug容器，甚至还可以debug主机。它确实是一个非常方便和足以替代kubectl-debug的解决方案。不过，目前临时容器对于用户权限这块并没有特别的说明，特别是用特权模式调试主机的时候，希望后面能够借助PSP（Pod Security Policy）做一个额外的补充。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>K8S调试POD 2024-04-03 14:58:15.293</div>
+      <div>http://example.com/2025/01/16/K8S调试POD-k8s-diao-shi-pod/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/K8S%E4%B9%8Bingress-nginx%E5%8E%9F%E7%90%86%E5%8F%8A%E9%85%8D%E7%BD%AE-k8s-zhi-ingress-nginx-yuan-li-ji-pei-zhi/" title="K8S之ingress-nginx原理及配置 2024-07-05 18:02:14.243">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">K8S之ingress-nginx原理及配置 2024-07-05 18:02:14.243</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/K8S%E7%9A%84POD%E7%B1%BB%E5%9E%8B-k8s-de-pod-lei-xing/" title="K8S的POD类型 2024-04-03 14:57:11.072">
+                        <span class="hidden-mobile">K8S的POD类型 2024-04-03 14:57:11.072</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

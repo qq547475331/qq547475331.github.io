@@ -1,0 +1,774 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="一、Bridge网络bridge网络表现形式就是docker0这个网络接口。容器默认都是通过docker0这个接口进行通信。也可以通过docker0去和本机的以太网接口连接，这样容器内部才能访问互联网。 查看docker0网络，在默认环境中，一个名为docker0的linux bridge自动被创建好了，其上有一个 docker0 内部接口，IP地址为172.17.0.1&#x2F;16。通过命令">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Docker重要的网络知识点  2024-04-03 15:12:10.162">
+<meta property="og:url" content="http://example.com/2025/01/16/Docker%E9%87%8D%E8%A6%81%E7%9A%84%E7%BD%91%E7%BB%9C%E7%9F%A5%E8%AF%86%E7%82%B9-docker-zhong-yao-de-wang-luo-zhi-shi-dian/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="一、Bridge网络bridge网络表现形式就是docker0这个网络接口。容器默认都是通过docker0这个接口进行通信。也可以通过docker0去和本机的以太网接口连接，这样容器内部才能访问互联网。 查看docker0网络，在默认环境中，一个名为docker0的linux bridge自动被创建好了，其上有一个 docker0 内部接口，IP地址为172.17.0.1&#x2F;16。通过命令">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221138515.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221139996.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221139183.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221139844.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221140214.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221140824.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221140170.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221141125.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221141987.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221141804.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221141163.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221142604.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221142843.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.041Z">
+<meta property="article:modified_time" content="2025-01-16T02:57:44.794Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221138515.png">
+  
+  
+  
+  <title>Docker重要的网络知识点  2024-04-03 15:12:10.162 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Docker重要的网络知识点  2024-04-03 15:12:10.162"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          26 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Docker重要的网络知识点  2024-04-03 15:12:10.162</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h4 id="一、Bridge网络"><a href="#一、Bridge网络" class="headerlink" title="一、Bridge网络"></a><strong>一、Bridge网络</strong></h4><p>bridge网络表现形式就是docker0这个网络接口。容器默认都是通过docker0这个接口进行通信。也可以通过docker0去和本机的以太网接口连接，这样容器内部才能访问互联网。</p>
+<p>查看docker0网络，在默认环境中，一个名为docker0的linux bridge自动被创建好了，其上有一个 docker0 内部接口，IP地址为172.17.0.1&#x2F;16。通过命令：<code>ip a</code></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221138515.png" srcset="/img/loading.gif" lazyload alt="image-20240222113826449"></p>
+<p>查看docker网络</p>
+<blockquote>
+<p>docker network ls</p>
+</blockquote>
+<p>查看bridge网络详情。主要关注Containers节点信息。</p>
+<blockquote>
+<figure class="highlight ebnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ebnf"><span class="hljs-attribute">docker network inspect bridge</span><br></code></pre></td></tr></table></figure>
+
+
+</blockquote>
+<p>输出如下：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-punctuation">[</span><br>    <span class="hljs-punctuation">&#123;</span><br>        <span class="hljs-attr">&quot;Name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;bridge&quot;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;Id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;8f2bb7721e07845f809dab6cfeefccc5145cbb99953bbe090d5c349af5bf5fa1&quot;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;Created&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;2024-01-22T22:29:27.110338803+08:00&quot;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;Scope&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;local&quot;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;Driver&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;bridge&quot;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;EnableIPv6&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">false</span></span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;IPAM&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>            <span class="hljs-attr">&quot;Driver&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;default&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-attr">&quot;Options&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">null</span></span><span class="hljs-punctuation">,</span><br>            <span class="hljs-attr">&quot;Config&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><br>                <span class="hljs-punctuation">&#123;</span><br>                    <span class="hljs-attr">&quot;Subnet&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;172.17.0.0/16&quot;</span><span class="hljs-punctuation">,</span><br>                    <span class="hljs-attr">&quot;Gateway&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;172.17.0.1&quot;</span><br>                <span class="hljs-punctuation">&#125;</span><br>            <span class="hljs-punctuation">]</span><br>        <span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;Internal&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">false</span></span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;Attachable&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">false</span></span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;Ingress&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">false</span></span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;ConfigFrom&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>            <span class="hljs-attr">&quot;Network&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;&quot;</span><br>        <span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;ConfigOnly&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">false</span></span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;Containers&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;Options&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>            <span class="hljs-attr">&quot;com.docker.network.bridge.default_bridge&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;true&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-attr">&quot;com.docker.network.bridge.enable_icc&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;true&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-attr">&quot;com.docker.network.bridge.enable_ip_masquerade&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;true&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-attr">&quot;com.docker.network.bridge.host_binding_ipv4&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;0.0.0.0&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-attr">&quot;com.docker.network.bridge.name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;docker0&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-attr">&quot;com.docker.network.driver.mtu&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;1500&quot;</span><br>        <span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;Labels&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><span class="hljs-punctuation">&#125;</span><br>    <span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">]</span><br></code></pre></td></tr></table></figure>
+
+<p>我们看到Containers这个节点下，没有值，也就是没有任何容器加入这个网络环境</p>
+<h5 id="1-1、docker0详解"><a href="#1-1、docker0详解" class="headerlink" title="1.1、docker0详解"></a><strong>1.1、docker0详解</strong></h5><p>1、拉取镜像</p>
+<blockquote>
+<p>docker pull nginx:1.19.3-alpine</p>
+</blockquote>
+<p>2、运行镜像</p>
+<blockquote>
+<p>docker run -itd –name nginx1 nginx:1.19.3-alpine</p>
+</blockquote>
+<p>3、观察bridge网络</p>
+<blockquote>
+<p>docker network inspect bridge</p>
+</blockquote>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221139996.png" srcset="/img/loading.gif" lazyload alt="image-20240222113925889"></p>
+<p>可以看到nginx的网络ip地址是<code>172.17.9.2</code>。这个是因为docker0的网络地址范围是<code>172.17.0.1</code>~&#96;172.17.255.255&#96;</p>
+<p>4、查看宿主机上的网卡</p>
+<blockquote>
+<p>&#x2F;&#x2F; 用于显示或操作系统的网络接口信息</p>
+<p>ip a</p>
+</blockquote>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221139183.png" srcset="/img/loading.gif" lazyload alt="image-20240222113941106"></p>
+<p>发现多出一块网卡<code>veth0ce8f41@if9</code></p>
+<blockquote>
+<p><code>veth</code>（Virtual Ethernet）是Linux网络命名空间中的一种虚拟网络设备类型。它总是成对出现，就像一个虚拟的以太网线缆，一端插在一个网络命名空间，另一端插在另一个网络命名空间或者主机的全局网络命名空间。</p>
+<p><code>veth</code>对在容器技术（如Docker）中实现网络隔离和通信非常有用。例如，当你在Docker中启动一个新的容器时，Docker会创建一对<code>veth</code>接口。一个接口在新的容器的网络命名空间中，另一个接口在主机的网络命名空间中。这样，容器就可以通过这对<code>veth</code>接口与主机和其他容器通信。</p>
+</blockquote>
+<p>Docker创建一个容器的时候，会执行如下操作：</p>
+<ul>
+<li>创建一对虚拟接口&#x2F;网卡，也就是veth pair，分别放到本地主机和新容器中；</li>
+<li>本地主机一端桥接到默认docker0或指定网桥上，并具有一个唯一的名字，如veth0ce8f41@if9&#96;;</li>
+<li>容器一端放到新容器中，并修改名字作为eth0，这个网卡&#x2F;接口只在容器的名字空间可见；</li>
+<li>从网桥可用地址段中（也就是与该bridge对应的network）获取一个空闲地址分配给容器的eth0，并配置默认路由到桥接网卡veth0ce8f41@if9:。</li>
+</ul>
+<p>完成这些之后，容器就可以使用 eth0 虚拟网卡来连接其他容器和其他网络。 如果不指定–network，创建的容器默认都会挂到 docker0 上，使用本地主机上 docker0 接口的 IP 作为 所有容器的默认网关</p>
+<figure class="highlight livecodeserver"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs livecodeserver">第一种方式：<br>docker exec -<span class="hljs-keyword">it</span> nginx1 sh<br>ip <span class="hljs-keyword">a</span><br>第二种方式：<br>docker exec -<span class="hljs-keyword">it</span> nginx1 ip <span class="hljs-keyword">a</span><br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221139844.png" srcset="/img/loading.gif" lazyload alt="image-20240222113958742"></p>
+<p>安装brctl</p>
+<p><code>brctl</code>是一个用于设置和管理Linux桥接设备的命令行工具。在大多数Linux发行版中，<code>brctl</code>包含在<code>bridge-utils</code>软件包中。</p>
+<blockquote>
+<p>yum install -y bridge-utils</p>
+</blockquote>
+<p>运行命令</p>
+<blockquote>
+<p>brctl show</p>
+</blockquote>
+<h5 id="1-2、多容器之间通信"><a href="#1-2、多容器之间通信" class="headerlink" title="1.2、多容器之间通信"></a><strong>1.2、多容器之间通信</strong></h5><p>1、再安装一个nginx</p>
+<blockquote>
+<p>docker run -itd –name nginx2 nginx:1.19.3-alpine</p>
+</blockquote>
+<p>2、查看bridge网络</p>
+<blockquote>
+<p>docker network inspect bridge</p>
+</blockquote>
+<p>3、显示结果</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-attr">&quot;Containers&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>            <span class="hljs-attr">&quot;3c178352ba547b43d84d1027bd268cf037488a7351cf5bb18c09b8a326a7986a&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>                <span class="hljs-attr">&quot;Name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;nginx1&quot;</span><span class="hljs-punctuation">,</span><br>                <span class="hljs-attr">&quot;EndpointID&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;21c8a36dcf1b22414098f112af7ff5a896180fd60d88f918cf220e2de4cb1aeb&quot;</span><span class="hljs-punctuation">,</span><br>                <span class="hljs-attr">&quot;MacAddress&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;02:42:ac:11:00:02&quot;</span><span class="hljs-punctuation">,</span><br>                <span class="hljs-attr">&quot;IPv4Address&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;172.17.0.2/16&quot;</span><span class="hljs-punctuation">,</span><br>                <span class="hljs-attr">&quot;IPv6Address&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;&quot;</span><br>            <span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-attr">&quot;bc60737cd65607de4224337766c01a7e3e0177e401ab1170e76cfe00a4b083c2&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>                <span class="hljs-attr">&quot;Name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;nginx2&quot;</span><span class="hljs-punctuation">,</span><br>                <span class="hljs-attr">&quot;EndpointID&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;b10d02f3435c51053c7ddb4b1c915b2bef9e90a79caf9b0819ae2316a7ef9a4a&quot;</span><span class="hljs-punctuation">,</span><br>                <span class="hljs-attr">&quot;MacAddress&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;02:42:ac:11:00:03&quot;</span><span class="hljs-punctuation">,</span><br>                <span class="hljs-attr">&quot;IPv4Address&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;172.17.0.3/16&quot;</span><span class="hljs-punctuation">,</span><br>                <span class="hljs-attr">&quot;IPv6Address&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;&quot;</span><br>            <span class="hljs-punctuation">&#125;</span><br>        <span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">,</span><br></code></pre></td></tr></table></figure>
+
+<p>4、运行brctl show</p>
+<p><code>brctl show</code>命令用于显示系统中所有的网络桥接器及其相关信息。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221140214.png" srcset="/img/loading.gif" lazyload alt="image-20240222114022127"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221140824.png" srcset="/img/loading.gif" lazyload alt="image-20240222114032731"></p>
+<h5 id="问题点："><a href="#问题点：" class="headerlink" title="问题点："></a><strong>问题点：</strong></h5><p>每次重启docker的时候，容器的ip地址会变，谁先启动，谁获取前面的ip地址。开发人员不能在代码中写死数据库的IP地址。举个例子：</p>
+<p>在企业开发环境中，有个msql服务容器<code>mysql5</code>,还有个web服务容器<code>tomcat8</code>,tomcat8肯定要连接mysql5，需要知道对方的真实ip地址。这时候我们就需要使用容器名来ping，而不是ip地址</p>
+<h4 id="二、新建Bridge网络"><a href="#二、新建Bridge网络" class="headerlink" title="二、新建Bridge网络"></a><strong>二、新建Bridge网络</strong></h4><blockquote>
+<p>docker network create -d bridge test-bridge</p>
+</blockquote>
+<p>这条命令是用来在Docker中创建一个新的网络桥接器的。</p>
+<p><code>docker network create</code>是用来创建新的网络的命令，<code>-d bridge</code>指定了网络的驱动类型为桥接，<code>test-bridge</code>是你为新创建的网络桥接器指定的名称。</p>
+<p>创建完成后，你可以使用<code>docker network ls</code>命令来查看所有的网络，包括你刚刚创建的<code>test-bridge</code>网络。</p>
+<p>你也可以在运行新的容器时，使用<code>--network=test-bridge</code>参数来指定容器使用这个新创建的网络。</p>
+<p>当然如果你就要创建bridge。可以不带-d的参数。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221140170.png" srcset="/img/loading.gif" lazyload alt="image-20240222114052084">image-20240122233909390</p>
+<h5 id="2-1、brctl-show查看"><a href="#2-1、brctl-show查看" class="headerlink" title="2.1、brctl show查看"></a><strong>2.1、brctl show查看</strong></h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221141125.png" srcset="/img/loading.gif" lazyload alt="image-20240222114106035">image-20240122234038290</p>
+<p>说明这个网卡还没有绑定容器</p>
+<h5 id="2-2、启动nginx3绑定test-bridge网卡"><a href="#2-2、启动nginx3绑定test-bridge网卡" class="headerlink" title="2.2、启动nginx3绑定test-bridge网卡"></a><strong>2.2、启动nginx3绑定test-bridge网卡</strong></h5><blockquote>
+<p>docker run -itd –name nginx3 –network test-bridge nginx:1.19.3-alpine</p>
+</blockquote>
+<p>启动一个nginx的容器nginx3，并通过参数network connect来连接test-bridge网络。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221141987.png" srcset="/img/loading.gif" lazyload alt="image-20240222114118906">image-20240122234323512</p>
+<p>bridge绑定了新的网卡</p>
+<h5 id="2-3、把一个运行中容器连接到test-bridge网络"><a href="#2-3、把一个运行中容器连接到test-bridge网络" class="headerlink" title="2.3、把一个运行中容器连接到test-bridge网络"></a><strong>2.3、把一个运行中容器连接到test-bridge网络</strong></h5><blockquote>
+<p>docker network connect test-bridge nginx2</p>
+</blockquote>
+<h5 id="2-4、创建自定义网络的好处"><a href="#2-4、创建自定义网络的好处" class="headerlink" title="2.4、创建自定义网络的好处"></a><strong>2.4、创建自定义网络的好处</strong></h5><p>当你在Docker中创建一个自定义网络时，Docker会为该网络启用一个内置的DNS服务器。这个DNS服务器会自动为加入该网络的每个容器提供DNS解析服务。</p>
+<p>这意味着，当你的容器加入到这个自定义网络时，它们可以使用其他容器的名称来进行网络通信，而不需要知道其他容器的IP地址。这是因为Docker的内置DNS服务器会自动将容器的名称解析为其内部IP地址。</p>
+<p>例如，假设你有两个在同一个自定义网络中的容器，名为<code>container1</code>和<code>container2</code>。在<code>container1</code>中，你可以直接使用<code>ping container2</code>来ping<code>container2</code>，而不需要知道<code>container2</code>的IP地址。</p>
+<p>这个特性使得在Docker中管理和连接容器变得更加简单，因为你不需要手动管理和配置IP地址。</p>
+<h5 id="2-5、docker0默认不能互访的原因"><a href="#2-5、docker0默认不能互访的原因" class="headerlink" title="2.5、docker0默认不能互访的原因"></a><strong>2.5、docker0默认不能互访的原因</strong></h5><p>Docker的默认桥接网络（通常被称为<code>docker0</code>）是在Docker首次安装时创建的。这个默认网络的设计目标是为了让Docker能够“开箱即用”，而不需要用户进行任何额外的网络配置。</p>
+<p>然而，<code>docker0</code>网络并没有启用Docker的内置DNS服务。这意味着在<code>docker0</code>网络中的容器不能直接通过容器名进行通信，必须使用容器的IP地址。这是一个已知的限制，是为了保持向后兼容性和简单性。</p>
+<p>如果你需要使用容器名进行通信，你可以创建一个自定义的桥接网络。在自定义网络中，Docker的内置DNS服务是默认启用的。你可以使用<code>docker network create</code>命令来创建一个自定义网络，然后在运行容器时使用<code>--network</code>参数来指定容器加入这个网络。</p>
+<h4 id="三、none、host网络"><a href="#三、none、host网络" class="headerlink" title="三、none、host网络"></a><strong>三、none、host网络</strong></h4><h5 id="3-1、none网络"><a href="#3-1、none网络" class="headerlink" title="3.1、none网络"></a><strong>3.1、none网络</strong></h5><p>环境准备，先stop和rm掉全部之前开启的容器。并且把前面创建的test-bridge网络也删除。当然，更简单的办法是使用快照方式。将虚拟机恢复到docker初始化安装时。或者手动删除容器与网络</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs powershell">docker <span class="hljs-built_in">rm</span> <span class="hljs-operator">-f</span> <span class="hljs-variable">$</span>(docker <span class="hljs-built_in">ps</span> <span class="hljs-literal">-aq</span>)<br>docker network <span class="hljs-built_in">rm</span> <span class="hljs-built_in">test-bridge</span><br>docker network <span class="hljs-built_in">ls</span><br></code></pre></td></tr></table></figure>
+
+<p>启动一个ngnix的容器nginx1，并且连接到none网络。然后执行docker network inspect none，看看容器信息</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">docker</span> run -itd --name nginx1 --network none nginx:<span class="hljs-number">1</span>.<span class="hljs-number">19</span>.<span class="hljs-number">3</span>-alpine<br><span class="hljs-attribute">docker</span> network inspect none<br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221141804.png" srcset="/img/loading.gif" lazyload alt="image-20240222114139716">image-20240123232817227</p>
+<p>注意，容器使用none模式，是没有物理地址和IP地址。我们可以进入到nginx1容器里，执行<code>ip a</code>命令看 看。只有一个lo接口，没有其他网络接口，没有IP。也就是说，使用none模式，这个容器是不能被其他 容器访问。这种使用场景很少，只有项目安全性很高的功能才能使用到。例如：密码加密算法容器。</p>
+<h5 id="知识点："><a href="#知识点：" class="headerlink" title="知识点："></a><strong>知识点：</strong></h5><p><code>lo</code> 接口，全称为 “loopback” 接口，是一个特殊的网络接口，用于网络软件的测试和本地通信。</p>
+<p>当你向 <code>lo</code> 接口发送数据时，数据不会被发送到网络上，而是直接返回到发送者。这就像你在一个封闭的房间里大声说话，声音会反射回来，你可以听到自己的声音。</p>
+<p><code>lo</code> 接口通常有一个特殊的 IP 地址 <code>127.0.0.1</code>（也被称为 “localhost”）。当你向这个地址发送数据时，数据会被发送到 <code>lo</code> 接口，然后直接返回到发送者。</p>
+<p><code>lo</code> 接口在网络软件的开发和测试中非常有用。例如，你可以在同一台机器上运行客户端和服务器程序，然后使用 <code>lo</code> 接口进行通信，以测试它们的功能。</p>
+<blockquote>
+<p>docker exec -it nginx1 sh</p>
+</blockquote>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221141163.png" srcset="/img/loading.gif" lazyload alt="image-20240222114153074">image-20240123233007075</p>
+<h5 id="3-2、host网络"><a href="#3-2、host网络" class="headerlink" title="3.2、host网络"></a><strong>3.2、host网络</strong></h5><p>启动一个nginx的nginx2容器，连接到host网络。然后docker network inspect host, 看看容器信息</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">docker</span> run -itd --name nginx2 --network host nginx:<span class="hljs-number">1</span>.<span class="hljs-number">19</span>.<span class="hljs-number">3</span>-alpine<br><span class="hljs-attribute">docker</span> network inspect host<br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221142604.png" srcset="/img/loading.gif" lazyload alt="image-20240222114209444">image-20240123233320208</p>
+<p>这里来看，也不显示IP地址。那么是不是和none一样，肯定不是，不然也不会设计none和host网络进 行区分。下面我们进入nginx2容器，执行<code>ip a</code>看看效果。我们在容器里执行<code>ip a</code>，发现打印内容和在 linux本机外执行<code>ip a</code>是一样的。</p>
+<blockquote>
+<p>docker exec -it nginx2 sh</p>
+</blockquote>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221142843.png" srcset="/img/loading.gif" lazyload alt="image-20240222114222720">image-20240123233439168</p>
+<p>这说明什么呢？容器使用了host模式，说明容器和外层linux主机共享一套网络接口。VMware公司的虚拟机管理软件，其中网络设置，也有host这个模式，作用也是一样，虚拟机里面使用网络和你自己外层机器是一模一样的。这种容器和本机使用共享一套网络接口，缺点还是很明显的，例如我们知道web服务器一般端口是80，共享了一套网络接口，那么你这台机器上只能启动一个nginx端口为80的服务器了。否则，出现端口被占用的情况。</p>
+<h4 id="四、总结"><a href="#四、总结" class="headerlink" title="四、总结"></a><strong>四、总结</strong></h4><p>Docker 提供了多种网络模式，以满足不同的应用场景：</p>
+<ol>
+<li><strong>桥接网络（bridge）</strong>：这是 Docker 的默认网络模式。在这种模式下，Docker 为每个容器分配一个私有的网络空间，并为每个容器创建一个虚拟网络接口，然后将这个接口连接到一个虚拟桥接器上。Docker 还会在宿主机上创建一个 <code>docker0</code> 网桥，并将所有容器的虚拟网络接口连接到这个网桥上，从而实现容器之间的通信。</li>
+<li><strong>主机网络（host）</strong>：在这种模式下，容器直接共享宿主机的网络，没有自己的网络空间。这种模式的优点是网络性能高，但缺点是容器的网络隔离性差。</li>
+<li><strong>无网络（none）</strong>：在这种模式下，容器没有自己的网络空间，也不能访问宿主机的网络。这种模式通常用于需要高度隔离的场景。</li>
+<li><strong>用户定义网络（user-defined network）</strong>：Docker 允许用户创建自定义的网络，并将容器连接到这些网络上。用户定义网络可以是桥接网络、覆盖网络（overlay）或者 MACVLAN 网络。覆盖网络用于跨主机的容器通信，MACVLAN 网络用于将容器直接连接到物理网络。</li>
+</ol>
+<p>如果刚接触docker对这块网络没有什么概念的话，安装镜像就会遇到一系列问题。比如我们在使用docker安装es与kibana的时候，会遇到kibana连不上es的问题，直到你了解docker设计的网络的原理，才能正确安装。总之，多多练习。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Docker重要的网络知识点  2024-04-03 15:12:10.162</div>
+      <div>http://example.com/2025/01/16/Docker重要的网络知识点-docker-zhong-yao-de-wang-luo-zhi-shi-dian/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/EX-LB%20%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E9%83%A8%E7%BD%B2-ex-lb-fu-zai-jun-heng-bu-shu/" title="EX-LB 负载均衡部署 2023-09-28 15:28:51.998">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">EX-LB 负载均衡部署 2023-09-28 15:28:51.998</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/Containerd%20%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C-containerd-ji-ben-cao-zuo/" title="Containerd 基本操作 2024-04-03 14:55:46.786">
+                        <span class="hidden-mobile">Containerd 基本操作 2024-04-03 14:55:46.786</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

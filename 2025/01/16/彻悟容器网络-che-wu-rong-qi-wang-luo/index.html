@@ -1,0 +1,1417 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="01 背景 容器网络为何出现 在一个汽车发动机的生产车间中，汽车发动机的各个组件会存在一定的顺序进行组装，这就要求有直接关系的组件必须知道下一个组件的具体位置。当一个汽车发动机组装完成后，距离最后成品汽车，还差了很多部件，比如底盘，车身等。此时，需要将发动机发往一个装配中心进行组合安装，这样我们就必须知道装配中心的地理位置。 这些位置在容器中可以理解为 IP 地址，容器网络便是如此。在上面这个例子">
+<meta property="og:type" content="article">
+<meta property="og:title" content="彻悟容器网络 2024-04-07 10:30:11.55">
+<meta property="og:url" content="http://example.com/2025/01/16/%E5%BD%BB%E6%82%9F%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C-che-wu-rong-qi-wang-luo/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="01 背景 容器网络为何出现 在一个汽车发动机的生产车间中，汽车发动机的各个组件会存在一定的顺序进行组装，这就要求有直接关系的组件必须知道下一个组件的具体位置。当一个汽车发动机组装完成后，距离最后成品汽车，还差了很多部件，比如底盘，车身等。此时，需要将发动机发往一个装配中心进行组合安装，这样我们就必须知道装配中心的地理位置。 这些位置在容器中可以理解为 IP 地址，容器网络便是如此。在上面这个例子">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071021763.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071022389.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071022760.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071023980.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071023503.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071023465.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071023531.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071024283.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071024549.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071024836.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071024731.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071024901.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071025613.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071025502.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071025767.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071025587.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071026043.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071026339.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.098Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:19.283Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071021763.png">
+  
+  
+  
+  <title>彻悟容器网络 2024-04-07 10:30:11.55 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="彻悟容器网络 2024-04-07 10:30:11.55"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          7.3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          62 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">彻悟容器网络 2024-04-07 10:30:11.55</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p><strong>01</strong></p>
+<p><strong>背景</strong></p>
+<p><strong>容器网络为何出现</strong></p>
+<p><strong>在一个汽车发动机的生产车间中，汽车发动机的各个组件会存在一定的顺序进行组装，这就要求有直接关系的组件必须知道下一个组件的具体位置。当一个汽车发动机组装完成后，距离最后成品汽车，还差了很多部件，比如底盘，车身等。此时，需要将发动机发往一个装配中心进行组合安装，这样我们就必须知道装配中心的地理位置。</strong></p>
+<p><strong>这些位置在容器中可以理解为 IP 地址，容器网络便是如此。在上面这个例子里，即描述了容器网络本节点内部互通场景，又描述了跨节点的通信场景。</strong></p>
+<p><strong>随着云计算的发展，应用间通信从物理机网络，虚拟机网络，发展到目前的容器网络。由于容器不同于物理机、虚拟机，容器可以被理解为一个标准的，轻量级的，便携的，独立的集装箱，集装箱之间相互隔离，都使用自己的环境和资源。但随着越来越复杂环境变化，容器在运行中会需要容器间或者容器与集群外部之间的信息传输，这时候容器就要在网络层面拥有一个名字（即 IP 地址），由此容器网络就应运而生。</strong></p>
+<p><strong>再从技术的角度来谈容器网络的由来，首先要从容器本质说起，它是由以下几点来实现的：</strong></p>
+<ul>
+<li><p><strong>cgroup：实现资源的可配额</strong></p>
+</li>
+<li><p><strong>overlay fs：实现文件系统的安全性和便携性</strong></p>
+</li>
+<li><p><strong>namespace：实现资源的隔离性</strong></p>
+</li>
+<li><ul>
+<li><strong>IPC ：System V IPC 和 POSIX 消息队列</strong></li>
+<li><strong>Network：网络设备、网络协议栈、网络端口等</strong></li>
+<li><strong>PID：进程</strong></li>
+<li><strong>Mount：挂载点</strong></li>
+<li><strong>UTS：主机名和域名</strong></li>
+<li><strong>USR：用户和用户组</strong></li>
+</ul>
+</li>
+</ul>
+<p><strong>由于主机与容器、容器与容器间的网络栈并不相通，也没有统一的控制面，导致容器间无法直接的感知。为了解决这个问题，本文中我们要讨论的容器网络出现了，再配合不同的网络虚拟化技术带来了多样化的容器网络方案。</strong></p>
+<p><strong>02</strong></p>
+<p><strong>容器网络的基本要求</strong></p>
+<ul>
+<li><p><strong>IP-per-Pod，每个 Pod 都拥有一个独立 IP 地址，Pod 内所有容器共享一个网络命名空间</strong></p>
+</li>
+<li><p><strong>集群内所有 Pod 都在一个直接连通的扁平网络中，可通过 IP 直接访问</strong></p>
+</li>
+<li><ul>
+<li><strong>所有容器之间无需 NAT 就可以直接互相访问</strong></li>
+<li><strong>所有 Node 和所有容器之间无需 NAT 就可以直接互相访问</strong></li>
+<li><strong>容器自己看到的 IP 跟其他容器看到的一样</strong></li>
+</ul>
+</li>
+<li><p><strong>Service cluster IP 尽可在集群内部访问，外部请求需要通过 NodePort、LoadBalance 或者 Ingress 来访问</strong></p>
+</li>
+</ul>
+<p><strong>02</strong></p>
+<p><strong>网络插件介绍</strong></p>
+<p><em><strong>Aliware</strong></em></p>
+<p><strong>01</strong></p>
+<p><strong>网络插件概述</strong></p>
+<p><strong>容器和该容器所在的宿主机是分隔的两地，如果需要连通就得建立一座桥梁，但由于容器侧还没有名字，就无法建立桥梁，这时候就先需要给容器侧命名，这样才能成功建立起桥梁。网络插件就是起到给容器侧命名和建立桥梁的功能。</strong></p>
+<p><strong>即网络插件将网络接口插入容器网络命名空间（例如，veth 对的一端），并在主机上进行任何必要的改变（例如将 veth 的另一端连接到网桥）。然后通过调用适当的 IPAM 插件（IP 地址管理插件）分配给接口一个空闲的 IP 地址，并设置与此 IP 地址相对应的路由规则。</strong></p>
+<p><strong>对于 K8s 来讲，网络属于最重要的功能之一，因为没有一个良好的网络，集群不同节点之间甚至同一个节点之间的 pod 就无法良好的运行起来。</strong></p>
+<p><strong>但是 K8s 在设计网络的时候，采用的准则就一点：“灵活”！那怎么才能灵活呢？那就是 K8s 自身没有实现太多跟网络相关的操作，而是制定了一个规范：</strong></p>
+<ol>
+<li><strong>有配置文件，能够提供要使用的网络插件名，以及该插件所需信息</strong></li>
+<li><strong>让 CRI 调用这个插件，并把容器的运行时信息，包括容器的命名空间，容器 ID 等信息传给插件</strong></li>
+<li><strong>不关心网络插件内部实现，只需要最后能够输出网络插件提供的 pod IP 即可</strong></li>
+</ol>
+<p><strong>没错一共就这三点，如此简单灵活的规范就是大名鼎鼎的 CNI 规范。</strong></p>
+<p><strong>不过恰恰因为 K8s 自己“啥也不干”，所以大家可以自由发挥，自由实现不同的 CNI 插件，即网络插件。除了社区大名鼎鼎的 Calico、Bifrost 网络插件，阿里也开发了一款功能和性能极优的网络插件 Hybridnet。</strong></p>
+<ul>
+<li><h3 id="Hybridnet"><a href="#Hybridnet" class="headerlink" title="Hybridnet"></a><strong>Hybridnet</strong></h3></li>
+</ul>
+<p><strong>Hybridnet 是专为混合云设计的开源容器网络解决方案，与 Kubernetes 集成，并被以下 PaaS 平台使用:</strong></p>
+<ul>
+<li><strong>阿里云 ACK 发行版</strong></li>
+<li><strong>阿里云 AECP</strong></li>
+<li><strong>蚂蚁金服 SOFAStack</strong></li>
+</ul>
+<p><strong>Hybridnet 专注于高效的大规模集群、异构基础设施和用户友好性。</strong></p>
+<ul>
+<li><h3 id="Calico"><a href="#Calico" class="headerlink" title="Calico"></a><strong>Calico</strong></h3></li>
+</ul>
+<p><strong>Calico 是一种广泛采用、久经考验的开源网络和网络安全解决方案，适用于 Kubernetes、虚拟机和裸机工作负载。Calico 为 Cloud Native 应用程序提供两大服务：</strong></p>
+<ul>
+<li><p><strong>工作负载之间的网络连接</strong></p>
+</li>
+<li><p><strong>工作负载之间的网络安全策略</strong></p>
+</li>
+<li><h3 id="Bifrost"><a href="#Bifrost" class="headerlink" title="Bifrost"></a><strong>Bifrost</strong></h3></li>
+</ul>
+<p><strong>Bifrost 是一个可为 Kubernetes 启用 L2 网络的开源解决方案，支持以下特性</strong></p>
+<ul>
+<li><strong>Bifrost 中的网络流量可以通过传统设备进行管理和监控</strong></li>
+<li><strong>支持 macvlan 对于 service 流量的访问</strong></li>
+</ul>
+<p><strong>02</strong></p>
+<p><strong>通信路径介绍</strong></p>
+<h2 id=""><a href="#" class="headerlink" title=""></a></h2><p><strong>Overlay 方案：意味着将不同主机上的容器用同一个虚拟网络连接起来的跨主机网络</strong></p>
+<ul>
+<li><p><strong>VXLAN</strong></p>
+</li>
+<li><ul>
+<li><strong>VXLAN（Virtual eXtensible Local Area Network，虚拟扩展局域网），是由 IETF 定义的 NVO3（Network Virtualization over Layer 3）标准技术之一，采用 L2 over L4（MAC-in-UDP）的报文封装模式，将二层报文用三层协议进行封装，可实现二层网络在三层范围内进行扩展，同时满足数据中心大二层虚拟迁移和多租户的需求</strong></li>
+</ul>
+</li>
+<li><p><strong>IPIP</strong></p>
+</li>
+<li><ul>
+<li><strong>基于 TUN 设备实现 IPIP 隧道，TUN 网络设备能将三层（IP 网络数据包）数据包封装在另外一个三层数据包之中，Linux 原生支持好几种不同的 IPIP 隧道类型，但都依赖于 TUN 网络设备</strong></li>
+</ul>
+</li>
+<li><ul>
+<li><strong>ipip: 普通的 IPIP 隧道，就是在报文的基础上再封装成一个 IPv4 报文</strong></li>
+<li><strong>gre: 通用路由封装（Generic Routing Encapsulation），定义了在任意网络层协议上封装其他网络层协议的机制，所以对于 IPv4 和 IPv6 都适用</strong></li>
+<li><strong>sit: sit 模式主要用于 IPv4 报文封装 IPv6 报文，即 IPv6 over IPv4</strong></li>
+<li><strong>isatap: 站内自动隧道寻址协议（Intra-Site Automatic Tunnel Addressing Protocol），类似于 sit 也是用于 IPv6 的隧道封装</strong></li>
+<li><strong>vti: 即虚拟隧道接口（Virtual Tunnel Interface），是一种 IPsec 隧道技术</strong></li>
+</ul>
+</li>
+<li><ul>
+<li><strong>本文中我们使用的是 ipip 这种普通的 IPIP 隧道</strong></li>
+</ul>
+</li>
+</ul>
+<p><strong>Underlay 方案：由交换机和路由器等设备组成，借助以太网协议、路由协议和 VLAN 协议等驱动的网络。</strong></p>
+<ul>
+<li><p><strong>BGP</strong></p>
+</li>
+<li><ul>
+<li><strong>边界网关协议BGP（Border Gateway Protocol）是一种实现自治系统AS（Autonomous System）之间的路由可达，并选择最佳路由的距离矢量路由协议</strong></li>
+</ul>
+</li>
+<li><p><strong>Vlan</strong></p>
+</li>
+<li><ul>
+<li><strong>VLAN（Virtual Local Area Network）即虚拟局域网，是将一个物理的LAN在逻辑上划分成多个广播域的通信技术。VLAN内的主机间可以直接通信，而VLAN间不能直接通信，从而将广播报文限制在一个VLAN内</strong></li>
+</ul>
+</li>
+</ul>
+<h2 id="-1"><a href="#-1" class="headerlink" title="****"></a>****</h2><p><strong>03</strong></p>
+<p><strong>网络插件的原理</strong></p>
+<ul>
+<li><strong>calico 利用 IPIP 等隧道技术或者宿主机间建立 BGP 连接完成容器路由的互相学习解决了跨节点通信的问题。</strong></li>
+<li><strong>hybridnet 利用 vxlan 隧道技术、宿主机间建立 BGP 连接完成容器路由的互相学习或者 ARP 代理来解决跨节点通信的问题。</strong></li>
+<li><strong>bifrost 通过内核 macvlan 模块利用交换机 vlan 的能力来解决容器通信问题</strong></li>
+</ul>
+<h2 id="-2"><a href="#-2" class="headerlink" title="****"></a>****</h2><p><strong>04</strong></p>
+<p><strong>网络插件分类及对比</strong></p>
+<ul>
+<li><h3 id="网络插件分类"><a href="#网络插件分类" class="headerlink" title="网络插件分类"></a><strong>网络插件分类</strong></h3></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>****</th>
+<th><strong>overlay 方案</strong></th>
+<th><strong>underlay 方案</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>主流方案</strong></td>
+<td><strong>路由或 SDN 方案:Calico IPIP&#x2F;Calico VXLAN</strong></td>
+<td><strong>Calico BGP&#x2F;MACVLAN&#x2F;IPVLAN</strong></td>
+</tr>
+<tr>
+<td><strong>优点</strong></td>
+<td><strong>对物理网络无侵入维护和管理简单</strong></td>
+<td><strong>高性能网络流量可管理、可监控</strong></td>
+</tr>
+<tr>
+<td><strong>缺点</strong></td>
+<td><strong>容器网络难以监控容器访问集群外部通过 Node SNAT，无法精确管理流量</strong></td>
+<td><strong>对现有组网有侵入维护和管理工作量大占用现网 IP 地址，前期需要详细规划</strong></td>
+</tr>
+</tbody></table>
+<ul>
+<li><h3 id="网络插件对比"><a href="#网络插件对比" class="headerlink" title="网络插件对比"></a><strong>网络插件对比</strong></h3></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>****</th>
+<th><strong>hybridnet</strong></th>
+<th><strong>calico ipip</strong></th>
+<th><strong>calico bgp</strong></th>
+<th><strong>bifrost</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>支持场景</strong></td>
+<td><strong>overlay&#x2F;underlay</strong></td>
+<td><strong>overlay</strong></td>
+<td><strong>underlay</strong></td>
+<td><strong>underlay</strong></td>
+</tr>
+<tr>
+<td><strong>网络栈</strong></td>
+<td><strong>IPv4&#x2F;IPv6</strong></td>
+<td><strong>IPv4</strong></td>
+<td><strong>IPv4&#x2F;IPv6</strong></td>
+<td><strong>IPv4</strong></td>
+</tr>
+<tr>
+<td><strong>通信技术</strong></td>
+<td><strong>vxlan&#x2F;vlan&#x2F;bgp</strong></td>
+<td><strong>ipip</strong></td>
+<td><strong>bgp</strong></td>
+<td><strong>macvlan</strong></td>
+</tr>
+<tr>
+<td><strong>通信机制</strong></td>
+<td><strong>隧道通信&#x2F;二层+三层通信&#x2F;三层通信</strong></td>
+<td><strong>隧道通信</strong></td>
+<td><strong>三层通信</strong></td>
+<td><strong>二层通信</strong></td>
+</tr>
+<tr>
+<td><strong>容器通信</strong></td>
+<td><strong>veth pair</strong></td>
+<td><strong>veth pair</strong></td>
+<td><strong>veth pair</strong></td>
+<td><strong>macvlan子接口</strong></td>
+</tr>
+<tr>
+<td><strong>是否支持固定IP&#x2F;固定IP池</strong></td>
+<td><strong>是</strong></td>
+<td><strong>是</strong></td>
+<td><strong>是</strong></td>
+<td><strong>是</strong></td>
+</tr>
+<tr>
+<td><strong>IPPool模式</strong></td>
+<td><strong>block + detail</strong></td>
+<td><strong>block(如1.1.1.0&#x2F;24)</strong></td>
+<td><strong>block(如1.1.1.0&#x2F;24)</strong></td>
+<td><strong>detail(如1.1.1.1~1.1.1.9)</strong></td>
+</tr>
+<tr>
+<td><strong>南北向流量出口</strong></td>
+<td><strong>SNAT&#x2F;podIP</strong></td>
+<td><strong>SNAT</strong></td>
+<td><strong>SNAT&#x2F;podIP</strong></td>
+<td><strong>podIP</strong></td>
+</tr>
+<tr>
+<td><strong>是否支持网络策略</strong></td>
+<td><strong>是</strong></td>
+<td><strong>是</strong></td>
+<td><strong>是</strong></td>
+<td><strong>商用版支持</strong></td>
+</tr>
+</tbody></table>
+<ul>
+<li><strong>SNAT: 对数据包的源 IP 地址进行转化</strong></li>
+<li><strong>podIP：由 podIP 直接通信</strong></li>
+<li><strong>veth pair：在 Linux 下，可以创建一对 veth pair 的网卡，从一边发送包，另一边就能收到，对于容器流量来说会通过主机侧的 veth pair 网卡进入主机网络栈，即会过主机的 iptables 规则后再由物理网卡发出。</strong></li>
+<li><strong>macvlan子接口：macvlan 子接口和原来的宿主机主接口是完全独立的，可以单独配置 MAC 地址和 IP 地址，对外通信时，容器流量不会进入主机网络栈，既不会过主机的iptables规则，只会经过二层由物理网卡发出。</strong></li>
+</ul>
+<h2 id="-3"><a href="#-3" class="headerlink" title="****"></a>****</h2><p><strong>05</strong></p>
+<p><strong>网络插件应用场景</strong></p>
+<p><strong>针对数据中心复杂的网络情况，我们要按需求出发去选择相对应的容器网络方案</strong></p>
+<ul>
+<li><p><strong>希望对数据中心物理网络较少侵入性，可选择使用隧道方案</strong></p>
+</li>
+<li><ul>
+<li><strong>需支持双栈，则可选 hybridnet vxlan 方案</strong></li>
+<li><strong>只支持单栈 IPv4，则可选 calico IPIP，calico vxlan 方案</strong></li>
+</ul>
+</li>
+<li><p><strong>希望数据中心支持并使用 BGP</strong></p>
+</li>
+<li><ul>
+<li><strong>宿主机处于同网段内，则可选 calico BGP 方案（支持双栈）</strong></li>
+<li><strong>宿主机处于不同网段内，则可选 hybridnet bgp 方案（支持双栈）</strong></li>
+</ul>
+</li>
+<li><p><strong>对于业务的高性能和低延迟的追求，出现了 macvlan，ipvlan l2 等方案</strong></p>
+</li>
+<li><p><strong>公有云场景下，可选用 terway 方案，或者其他 ipvlan l3 方案，或者隧道方案</strong></p>
+</li>
+<li><p><strong>也有为了满足全场景而开发的方案，如 hybridnet、multus 等，Multus 一款为支持其他 CNI 能力的开源容器网络插件</strong></p>
+</li>
+</ul>
+<p><strong>本文我们将对 hybridnet vxlan、hybridnet vlan、hybridnet bgp、calico IPIP、calico BGP 和基于 macvlan 改造的 bifrost 进行 pod 数据链路上的详细分析</strong></p>
+<h1 id="-4"><a href="#-4" class="headerlink" title="****"></a>****</h1><p><strong>03</strong></p>
+<p><strong>网络插件架构及通信路径</strong></p>
+<p><em><strong>Aliware</strong></em></p>
+<p><strong>01</strong></p>
+<p><strong>Hybridnet</strong></p>
+<h2 id="-5"><a href="#-5" class="headerlink" title=""></a></h2><ul>
+<li><h3 id="整体架构"><a href="#整体架构" class="headerlink" title="整体架构"></a><strong>整体架构</strong></h3></li>
+</ul>
+<p><strong><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071021763.png" srcset="/img/loading.gif" lazyload alt="image-20240407102148690"></strong></p>
+<ul>
+<li><strong>Hybridnet-daemon：控制每个节点上的数据平面配置，例如 Iptables 规则，策略路由等</strong></li>
+</ul>
+<h3 id="-6"><a href="#-6" class="headerlink" title="****"></a>****</h3><ul>
+<li><h3 id="通信路径"><a href="#通信路径" class="headerlink" title="通信路径"></a><strong>通信路径</strong></h3></li>
+</ul>
+<h4 id="1、VXLAN-模式"><a href="#1、VXLAN-模式" class="headerlink" title="1、VXLAN 模式"></a><strong>1、VXLAN 模式</strong></h4><ul>
+<li><strong>同节点通信</strong></li>
+</ul>
+<p><strong><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071022389.png" srcset="/img/loading.gif" lazyload alt="image-20240407102230314"></strong></p>
+<p><strong>Pod1 访问 Pod2 的通信过程</strong></p>
+<p><strong>发包过程：</strong></p>
+<ol>
+<li><strong>Pod1 流量通过 veth-pair 网卡，即从 pod1 的 eth0-&gt;主机侧的 hybrXXX，进入主机网络栈中</strong></li>
+<li><strong>根据目的 IP，流量在主机的策略路由匹配到 39999 路由表，并在 39999 路由表中匹配到 Pod2 的路由规则</strong></li>
+<li><strong>流量从 hybrYYY 网卡进入 Pod2 容器网络栈，完成发包动作</strong></li>
+</ol>
+<p><strong>回包过程：</strong></p>
+<ol>
+<li><strong>Pod2 流量通过 veth-pair 网卡，即从pod2的eth0-&gt;主机侧的hybrYYY，进入主机网络栈中</strong></li>
+<li><strong>根据目的 IP，流量在主机的策略路由匹配到39999路由表，并在39999路由表中匹配到 Pod1 的路由规则</strong></li>
+<li><strong>流量从 hybrXXX 网卡进入 Pod1 容器网络栈，完成回包动作</strong></li>
+</ol>
+<ul>
+<li><strong>跨节点通信</strong></li>
+</ul>
+<p><strong><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071022760.png" srcset="/img/loading.gif" lazyload alt="image-20240407102248695"></strong></p>
+<p><strong><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071023980.png" srcset="/img/loading.gif" lazyload alt="image-20240407102302926"></strong></p>
+<p><strong><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071023503.png" srcset="/img/loading.gif" lazyload alt="image-20240407102314449"></strong></p>
+<p><strong>Pod1 访问 Pod2 的通信过程</strong></p>
+<p><strong>发包过程：</strong></p>
+<ol>
+<li><strong>Pod1 流量通过 veth-pair 网卡，即从 pod1 的 eth0-&gt;主机侧的 hybrXXX，进入主机网络栈中</strong></li>
+<li><strong>根据目的 IP，流量在主机的策略路由匹配到 40000 路由表，并在 40000 路由表中匹配到 Pod2 所在网段需要发往 eth0.vxlan20 网卡的路由规则</strong></li>
+<li><strong>eth0.vxlan20 设备的转发表中记录了对端 vtep 的 mac 地址和 remoteip 的对应关系</strong></li>
+<li><strong>流量经过 eth0.vxlan20 网卡，封装一个 UDP 的头部</strong></li>
+<li><strong>经过查询路由，与本机处于同网段，通过 mac 地址查询获取到对端物理网卡的 mac 地址，经由 Node1 eth0 物理网卡发送</strong></li>
+<li><strong>流量从 Node2 eth0 物理网卡进入，并经过 eth0.vxlan20 网卡解封一个 UDP 的头部</strong></li>
+<li><strong>根据 39999 路由表，流量从hybrYYY网卡进入 Pod2 容器网络栈，完成发包动作</strong></li>
+</ol>
+<p><strong>回包过程：</strong></p>
+<ol>
+<li><strong>Pod2 流量通过 veth-pair 网卡，即从 pod2 的 eth0-&gt;主机侧的 hybrYYY，进入主机网络栈中</strong></li>
+<li><strong>根据目的 IP，流量在主机的策略路由匹配到 40000 路由表，并在 40000 路由表中匹配到 Pod1 所在网段需要发往 eth0.vxlan20 网卡的路由规则</strong></li>
+<li><strong>eth0.vxlan20 设备的转发表中记录了对端 vtep 的 mac 地址和 remoteip 的对应关系</strong></li>
+<li><strong>流量经过 eth0.vxlan20 网卡，封装一个 UDP 的头部</strong></li>
+<li><strong>经过查询路由，与本机处于同网段，通过 mac 地址查询获取到对端物理网卡的 mac 地址，经由 Node2 eth0 物理网卡发送</strong></li>
+<li><strong>流量从 Node1 eth0 物理网卡进入，并经过 eth0.vxlan20 网卡解封一个 UDP 的头部</strong></li>
+<li><strong>根据 39999 路由表，流量从 hybrXXX 网卡进入 Pod1 容器网络栈，完成回包动作</strong></li>
+</ol>
+<h4 id="-7"><a href="#-7" class="headerlink" title="****"></a>****</h4><h4 id="2、VLAN-模式"><a href="#2、VLAN-模式" class="headerlink" title="2、VLAN 模式"></a><strong>2、VLAN 模式</strong></h4><ul>
+<li><strong>同节点通信</strong></li>
+</ul>
+<p><strong><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071023465.png" srcset="/img/loading.gif" lazyload alt="image-20240407102340409"></strong></p>
+<p><strong>Pod1 访问 Pod2 的通信过程</strong></p>
+<p><strong>发包过程：</strong></p>
+<ol>
+<li><strong>Pod1 流量通过 veth-pair 网卡，即从 pod1 的 eth0-&gt;主机侧的 hybrXXX，进入主机网络栈中</strong></li>
+<li><strong>根据目的 IP，流量在主机的策略路由匹配到 39999 路由表，并在 39999 路由表中匹配到 Pod2 的路由规则</strong></li>
+<li><strong>流量从 hybrYYY 网卡进入 Pod2 容器网络栈，完成发包动作</strong></li>
+</ol>
+<p><strong>回包过程：</strong></p>
+<ol>
+<li><strong>Pod2 流量通过 veth-pair 网卡，即从 pod2 的 eth0-&gt;主机侧的 hybrYYY，进入主机网络栈中</strong></li>
+<li><strong>根据目的 IP，流量在主机的策略路由匹配到 39999 路由表，并在 39999 路由表中匹配到 Pod1 的路由规则</strong></li>
+<li><strong>流量从 hybrXXX 网卡进入 Pod1 容器网络栈，完成回包动作</strong></li>
+</ol>
+<p><strong>跨节点通信</strong></p>
+<p><strong><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071023531.png" srcset="/img/loading.gif" lazyload alt="image-20240407102353463"></strong></p>
+<p><strong>Pod1 访问 Pod2 的通信过程</strong></p>
+<p><strong>发包过程：</strong></p>
+<ol>
+<li><strong>Pod1 流量通过 veth-pair 网卡，即从 pod1 的 eth0-&gt;主机侧的 hybrXXX，进入主机网络栈中</strong></li>
+<li><strong>根据目的 IP，流量在主机的策略路由匹配到 10001 路由表，并在 10001 路由表中匹配到 Pod2 相对应的路由规则</strong></li>
+<li><strong>根据路由规则，流量从 eth0.20 网卡所对应的 eth0 物理网卡发出，并发往交换机</strong></li>
+<li><strong>在交换机上匹配到 pod2 的 MAC 地址，所以将流量发往 Node2 所对应的 eth0 物理网卡</strong></li>
+<li><strong>流量被 eth0.20 vlan 网卡接收到，并根据 39999 路由表匹配到的路由，将流量从 hybrYYY 网卡打入 pod2 容器网络栈，完成发包动作</strong></li>
+</ol>
+<p><strong>回包过程：</strong></p>
+<ol>
+<li><strong>Pod2 流量通过 veth-pair 网卡，即从 pod2 的 eth0-&gt;主机侧的 hybrYYY，进入主机网络栈中</strong></li>
+<li><strong>根据目的 IP，流量在主机的策略路由匹配到 10001 路由表，并在 10001 路由表中匹配到 Pod1 相对应的路由规则</strong></li>
+<li><strong>根据路由规则，流量从 eth0.20 网卡所对应的 eth0 物理网卡发出，并发往交换机</strong></li>
+<li><strong>在交换机上匹配到 pod1 的 MAC 地址，所以将流量发往 Node1 所对应的 eth0 物理网卡</strong></li>
+<li><strong>流量被 eth0.20 vlan 网卡接收到，并根据 39999 路由表匹配到的路由，将流量从 hybrXXX 网卡打入 pod1 容器网络栈，完成回包动作</strong></li>
+</ol>
+<h4 id="-8"><a href="#-8" class="headerlink" title="****"></a>****</h4><h4 id="3、BGP-模式"><a href="#3、BGP-模式" class="headerlink" title="3、BGP 模式"></a><strong>3、BGP 模式</strong></h4><ul>
+<li><strong>同节点通信</strong></li>
+</ul>
+<p><strong><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071024283.png" srcset="/img/loading.gif" lazyload alt="image-20240407102409225"></strong></p>
+<p><strong>Pod1 访问 Pod2 的通信过程</strong></p>
+<p><strong>发包过程：</strong></p>
+<ol>
+<li><strong>Pod1 流量通过 veth-pair 网卡，即从 pod1 的 eth0-&gt;主机侧的 hybrXXX，进入主机网络栈中</strong></li>
+<li><strong>根据目的 IP，流量在主机的策略路由匹配到 39999 路由表，并在 39999 路由表中匹配到 Pod2 的路由规则</strong></li>
+<li><strong>流量从 hybrYYY 网卡进入 Pod2 容器网络栈，完成发包动作</strong></li>
+</ol>
+<p><strong>回包过程：</strong></p>
+<ol>
+<li><strong>Pod2 流量通过 veth-pair 网卡，即从 pod2 的 eth0-&gt;主机侧的 hybrYYY，进入主机网络栈中</strong></li>
+<li><strong>根据目的 IP，流量在主机的策略路由匹配到 39999 路由表，并在 39999 路由表中匹配到 Pod1 的路由规则</strong></li>
+<li><strong>流量从 hybrXXX 网卡进入 Pod1 容器网络栈，完成回包动作</strong></li>
+</ol>
+<ul>
+<li><strong>跨节点通信</strong></li>
+</ul>
+<p><strong><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071024549.png" srcset="/img/loading.gif" lazyload alt="image-20240407102422486"></strong></p>
+<p><strong>Pod1 访问 Pod2 的通信过程</strong></p>
+<p><strong>发包过程：</strong></p>
+<ol>
+<li><strong>Pod1 流量通过 veth-pair 网卡，即从 pod1 的 eth0-&gt;主机侧的 hybrXXX，进入主机网络栈中</strong></li>
+<li><strong>根据目的 IP，流量在主机的策略路由匹配到 10001 路由表，并在 10001 路由表中匹配到默认路由</strong></li>
+<li><strong>根据路由，将流量发往 10.0.0.1 所对应的交换机</strong></li>
+<li><strong>在交换机上匹配到 pod2 所对应的特定路由，将流量发往 Node2 eth0 物理网卡</strong></li>
+<li><strong>流量从 hybrYYY 网卡进入 Pod2 容器网络栈，完成发包动作</strong></li>
+</ol>
+<p><strong>回包过程：</strong></p>
+<ol>
+<li><strong>Pod2 流量通过 veth-pair 网卡，即从 pod2 的 eth0-&gt;主机侧的 hybrYYY，进入主机网络栈中</strong></li>
+<li><strong>根据目的 IP，流量在主机的策略路由匹配到 10001 路由表，并在 10001 路由表中匹配到默认路由</strong></li>
+<li><strong>根据路由，将流量发往 10.0.0.1 所对应的交换机</strong></li>
+<li><strong>在交换机上匹配到 pod1 所对应的特定路由，将流量发往 Node1 eth0 物理网卡</strong></li>
+<li><strong>流量从 hybrXXX 网卡进入 Pod1 容器网络栈，完成回包动作</strong></li>
+</ol>
+<h2 id="-9"><a href="#-9" class="headerlink" title="****"></a>****</h2><p><strong>02</strong></p>
+<p><strong>Calico</strong></p>
+<p><strong>基本概念：</strong></p>
+<ul>
+<li><strong>纯三层的数据中心网络方案</strong></li>
+<li><strong>利用 Linux Kernel 使得宿主机实现 vRouter 来负责数据转发</strong></li>
+<li><strong>vRouter 通过 BGP 协议传播路由信息</strong></li>
+<li><strong>基于 iptables 还提供了丰富而灵活的网络策略规则</strong></li>
+</ul>
+<h3 id="-10"><a href="#-10" class="headerlink" title="****"></a>****</h3><ul>
+<li><h3 id="整体架构-1"><a href="#整体架构-1" class="headerlink" title="整体架构"></a><strong>整体架构</strong></h3></li>
+</ul>
+<p><strong><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071024836.png" srcset="/img/loading.gif" lazyload alt="image-20240407102434774"></strong></p>
+<ul>
+<li><strong>Felix：运行在每个容器宿主节点上，主要负责配置路由、ACL 等信息来确保容器的联通状态</strong></li>
+<li><strong>Brid：把 Felix 写入 Kernel 的路由信息分发到 Calico 网络，保证容器间的通信有效性</strong></li>
+<li><strong>etcd：分布式的 Key&#x2F;Value 存储，负责网络元数据一致性，确保 Calico 网络状态的准确性</strong></li>
+<li><strong>RR：路由反射器，默认 Calico 工作在 node-mesh 模式，所有节点互相连接， node-mesh 模式在小规模部署时工作是没有问题的，当大规模部署时，连接数会非常大，消耗过多资源，利用 BGP RR ，可以避免这种情况的发生，通过一个或者多个 BGP RR 来完成集中式的路由分发，减少对网络资源的消耗以及提高 Calico 工作效率、稳定性</strong></li>
+</ul>
+<h3 id="-11"><a href="#-11" class="headerlink" title="****"></a>****</h3><ul>
+<li><h3 id="通信路径-1"><a href="#通信路径-1" class="headerlink" title="通信路径"></a><strong>通信路径</strong></h3></li>
+</ul>
+<h4 id="1、IPIP-模式"><a href="#1、IPIP-模式" class="headerlink" title="1、IPIP 模式"></a><strong>1、IPIP 模式</strong></h4><ul>
+<li><strong>同节点通信</strong></li>
+</ul>
+<p><strong><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071024731.png" srcset="/img/loading.gif" lazyload alt="image-20240407102446666"></strong></p>
+<p><strong>Pod1 访问 Pod2 的通信过程</strong></p>
+<p><strong>发包过程：</strong></p>
+<ol>
+<li><strong>Pod1 流量通过 veth-pair 网卡，即从 pod1 的 eth0-&gt;主机侧的 caliXXX，进入主机网络栈中</strong></li>
+<li><strong>根据目的 IP，流量在路由表中匹配到 Pod2 的路由规则</strong></li>
+<li><strong>流量从 caliYYY 网卡进入 Pod2 容器网络栈，完成发包动作</strong></li>
+</ol>
+<p><strong>回包过程：</strong></p>
+<ol>
+<li><strong>Pod2 流量通过 veth-pair 网卡，即从 pod2 的 eth0-&gt;主机侧的 caliYYY，进入主机网络栈中</strong></li>
+<li><strong>根据目的 IP，流量在路由表中匹配到 Pod1 的路由规则</strong></li>
+<li><strong>流量从 caliXXX 网卡进入 Pod1 容器网络栈，完成回包动作</strong></li>
+</ol>
+<ul>
+<li><strong>跨节点通信</strong></li>
+</ul>
+<p><strong><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071024901.png" srcset="/img/loading.gif" lazyload alt="image-20240407102458841"></strong></p>
+<p><strong>Pod1 访问 Pod2 的通信过程</strong></p>
+<p><strong>发包过程：</strong></p>
+<ol>
+<li><p><strong>Pod1 流量通过 veth-pair 网卡，即从 pod1 的 eth0-&gt;主机侧的 caliXXX，进入主机网络栈中</strong></p>
+</li>
+<li><ol>
+<li><strong>src: pod1IP</strong></li>
+<li><strong>dst: pod2IP</strong></li>
+</ol>
+</li>
+<li><p><strong>根据目的 IP，流量在路由表中匹配到将流量转发到 tunl0 网卡上的路由规则</strong></p>
+</li>
+<li><ol>
+<li><strong>src: pod1IP</strong></li>
+<li><strong>dst: pod2IP</strong></li>
+</ol>
+</li>
+<li><p><strong>流量从 tunl0 进行 IPIP 封装（即封装一个 IP 头部），通过 eth0 物理网卡发出</strong></p>
+</li>
+<li><ol>
+<li><strong>src: Node1IP</strong></li>
+<li><strong>dst: Node2IP</strong></li>
+</ol>
+</li>
+<li><p><strong>流量从 Node2 的 eth0 网卡进入 Node2 的主机网络栈</strong></p>
+</li>
+<li><ol>
+<li><strong>src: Node1IP</strong></li>
+<li><strong>dst: Node2IP</strong></li>
+</ol>
+</li>
+<li><p><strong>流量进入 tunl0 进行 IPIP 解包</strong></p>
+</li>
+<li><ol>
+<li><strong>src: pod1IP</strong></li>
+<li><strong>dst: pod2IP</strong></li>
+</ol>
+</li>
+<li><p><strong>流量从 caliYYY 网卡进入 Pod2 容器网络栈，完成发包动作</strong></p>
+</li>
+<li><ol>
+<li><strong>src: pod1IP</strong></li>
+<li><strong>dst: pod2IP</strong></li>
+</ol>
+</li>
+</ol>
+<p><strong>回包过程：</strong></p>
+<ol>
+<li><p><strong>Pod2 流量通过 veth-pair 网卡，即从 pod2 的 eth0-&gt;主机侧的 caliYYY，进入主机网络栈中</strong></p>
+</li>
+<li><ol>
+<li><strong>src: pod2IP</strong></li>
+<li><strong>dst: pod1IP</strong></li>
+</ol>
+</li>
+<li><p><strong>根据目的 IP，流量在路由表中匹配到将流量转发到 tunl0 网卡上的路由规则</strong></p>
+</li>
+<li><ol>
+<li><strong>src: pod2IP</strong></li>
+<li><strong>dst: pod1IP</strong></li>
+</ol>
+</li>
+<li><p><strong>流量从 tunl0 进行 IPIP 封装（即封装一个 IP 头部），通过 eth0 物理网卡发出</strong></p>
+</li>
+<li><ol>
+<li><strong>src: Node2IP</strong></li>
+<li><strong>dst: Node1IP</strong></li>
+</ol>
+</li>
+<li><p><strong>流量从 Node1 的 eth0 网卡进入 Node1 的主机网络栈</strong></p>
+</li>
+<li><ol>
+<li><strong>src: Node2IP</strong></li>
+<li><strong>dst: Node1IP</strong></li>
+</ol>
+</li>
+<li><p><strong>流量进入 tunl0 进行 IPIP 解包</strong></p>
+</li>
+<li><ol>
+<li><strong>src: pod2IP</strong></li>
+<li><strong>dst: pod1IP</strong></li>
+</ol>
+</li>
+<li><p><strong>流量从 caliXXX 网卡进入 Pod1 容器网络栈，完成回包动作</strong></p>
+</li>
+<li><ol>
+<li><strong>src: pod2IP</strong></li>
+<li><strong>dst: pod1IP</strong></li>
+</ol>
+</li>
+</ol>
+<h4 id="2、BGP-模式"><a href="#2、BGP-模式" class="headerlink" title="2、BGP 模式"></a><strong>2、BGP 模式</strong></h4><ul>
+<li><strong>同节点通信</strong></li>
+</ul>
+<p><strong><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071025613.png" srcset="/img/loading.gif" lazyload alt="image-20240407102512554"></strong></p>
+<p><strong>Pod1 访问 Pod2 的通信过程</strong></p>
+<p><strong>发包过程：</strong></p>
+<ol>
+<li><strong>Pod1 流量通过 veth-pair 网卡，即从 pod1 的 eth0-&gt;主机侧的 caliXXX，进入主机网络栈中</strong></li>
+<li><strong>根据目的 IP，流量在路由表中匹配到 Pod2 的路由规则</strong></li>
+<li><strong>流量从 caliYYY 网卡进入 Pod2 容器网络栈，完成发包动作</strong></li>
+</ol>
+<p><strong>回包过程：</strong></p>
+<ol>
+<li><p><strong>Pod2 流量通过 veth-pair 网卡，即从 pod2 的 eth0-&gt;主机侧的 caliYYY，进入主机网络栈中</strong></p>
+</li>
+<li><p><strong>根据目的 IP，流量在路由表中匹配到 Pod1 的路由规则</strong></p>
+</li>
+<li><p><strong>流量从 caliXXX 网卡进入 Pod1 容器网络栈，完成回包动作</strong></p>
+</li>
+</ol>
+<ul>
+<li><strong>跨节点通信</strong></li>
+</ul>
+<p><strong><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071025502.png" srcset="/img/loading.gif" lazyload alt="image-20240407102523444"></strong></p>
+<p><strong>Pod1 访问 Pod2 的通信过程</strong></p>
+<p><strong>发包过程：</strong></p>
+<ol>
+<li><strong>Pod1 流量通过 veth-pair 网卡，即从 pod1 的 eth0-&gt;主机侧的 caliXXX，进入主机网络栈中</strong></li>
+<li><strong>根据目的 IP，流量在路由表中匹配到 Pod2 相对应网段的路由规则，并从 Node1 eth0 物理网卡发出</strong></li>
+<li><strong>流量从 Node2 eth0 物理网卡进入，并从 caliYYY 网卡进入 Pod2 容器网络栈，完成发包动作</strong></li>
+</ol>
+<p><strong>回包过程：</strong></p>
+<ol>
+<li><strong>Pod2 流量通过 veth-pair 网卡，即从 pod2 的 eth0-&gt;主机侧的 caliYYY，进入主机网络栈中</strong></li>
+<li><strong>根据目的 IP，流量在路由表中匹配到 Pod1 相对应网段的路由规则，并从 Node2 eth0 物理网卡发出</strong></li>
+<li><strong>流量从 Node1 eth0 物理网卡进入，并从 caliXXX 网卡进入 Pod1 容器网络栈，完成回包动作</strong></li>
+</ol>
+<h2 id="-12"><a href="#-12" class="headerlink" title="****"></a>****</h2><p><strong>03</strong></p>
+<p><strong>Bifrost</strong></p>
+<ul>
+<li><h3 id="整体架构-2"><a href="#整体架构-2" class="headerlink" title="整体架构"></a><strong>整体架构</strong></h3></li>
+</ul>
+<p><strong><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071025767.png" srcset="/img/loading.gif" lazyload alt="image-20240407102540707"></strong></p>
+<ul>
+<li><strong>veth0-bifrXXX：bifrost 对于 macvlan 实现 service 访问的一套解决方案，通过 veth-pair 网卡完成在主机网络栈中的 kube-proxy + iptables 对于服务流量转化为对 pod 的访问</strong></li>
+<li><strong>eth0：容器内的 eth0 网卡为主机 vlan 子网卡对应的 macvlan 网卡</strong></li>
+</ul>
+<h3 id="-13"><a href="#-13" class="headerlink" title="****"></a>****</h3><ul>
+<li><h3 id="通信路径-2"><a href="#通信路径-2" class="headerlink" title="通信路径"></a><strong>通信路径</strong></h3></li>
+</ul>
+<h4 id="1、MACVLAN-模式"><a href="#1、MACVLAN-模式" class="headerlink" title="1、MACVLAN 模式"></a><strong>1、MACVLAN 模式</strong></h4><ul>
+<li><strong>同节点同 vlan 通信</strong></li>
+</ul>
+<p><strong><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071025587.png" srcset="/img/loading.gif" lazyload alt="image-20240407102552523"></strong></p>
+<p><strong>Pod1 访问 Pod2 的通信过程</strong></p>
+<p><strong>发包过程：</strong></p>
+<ol>
+<li><strong>Pod1 流量通过 macvlan 网卡，即 pod1 的 eth0 走二层网络进入 eth0-10 vlan 子网卡</strong></li>
+<li><strong>由于 macvlan 开启 bridge 模式，能够匹配到 pod2 的 MAC 地址</strong></li>
+<li><strong>流量从 eth0-10 vlan 子网卡进入 Pod2 容器网络栈，完成发包动作</strong></li>
+</ol>
+<p><strong>回包过程：</strong></p>
+<ol>
+<li><strong>Pod2 流量通过 macvlan 网卡，即 pod2 的 eth0 走二层网络进入 eth0-10 vlan 子网卡</strong></li>
+<li><strong>由于 macvlan 开启 bridge 模式，能够匹配到 pod1 的 MAC 地址</strong></li>
+<li><strong>流量从 eth0-10 vlan 子网卡进入 Pod1 容器网络栈，完成回包动作</strong></li>
+</ol>
+<hr>
+<hr>
+<ul>
+<li><strong>同节点跨 vlan 通信</strong></li>
+</ul>
+<p><strong><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071026043.png" srcset="/img/loading.gif" lazyload alt="image-20240407102605973"></strong></p>
+<p><strong>Pod1 访问 Pod2 的通信过程</strong></p>
+<p><strong>发包过程：</strong></p>
+<ol>
+<li><strong>Pod1 流量通过 macvlan 网卡，即 pod1 的 eth0 走默认路由（网关为 5.0.0.1）进入 eth0-5 vlan 子网卡</strong></li>
+<li><strong>由于在 eth0-5 上找到网关 5.0.0.1 的 MAC 地址，所以将流量从 eth0 物理网卡出打到交换机上</strong></li>
+<li><strong>流量在交换机上匹配到了 pod2 的 MAC 地址</strong></li>
+<li><strong>流量进入 Pod2 所在宿主机的物理网卡，并进入相对应的 eth0-10 vlan 子网卡</strong></li>
+<li><strong>流量从 eth0-10 vlan 子网卡进入 Pod2 容器网络栈，完成发包动作</strong></li>
+</ol>
+<p><strong>回包过程：</strong></p>
+<ol>
+<li><strong>Pod2 流量通过 macvlan 网卡，即 pod2 的 eth0 走默认路由（网关为 10.0.0.1）进入 eth0-10 vlan 子网卡</strong></li>
+<li><strong>由于在 eth0-10 上找到网关 10.0.0.1 的 MAC 地址，所以将流量从 eth0 物理网卡出打到交换机上</strong></li>
+<li><strong>流量在交换机上匹配到了 pod1 的 MAC 地址</strong></li>
+<li><strong>流量进入 Pod1 所在宿主机的物理网卡，并进入相对应的 eth0-5 vlan 子网卡</strong></li>
+<li><strong>流量从 eth0-5 vlan 子网卡进入 Pod1 容器网络栈，完成回包动作</strong></li>
+</ol>
+<ul>
+<li><strong>跨节点通信</strong></li>
+</ul>
+<p><strong><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202404071026339.png" srcset="/img/loading.gif" lazyload alt="image-20240407102617281"></strong></p>
+<p><strong>Pod1 访问 Pod2 的通信过程</strong></p>
+<p><strong>发包过程：</strong></p>
+<ol>
+<li><strong>Pod1 流量通过 macvlan 网卡，即 pod1 的 eth0 走默认路由（网关为 5.0.0.1）进入 eth0-5 vlan 子网卡</strong></li>
+<li><strong>由于在 eth0-5 上找到网关 5.0.0.1 的 MAC 地址，所以将流量从 eth0 物理网卡出打到交换机上</strong></li>
+<li><strong>流量在交换机上匹配到了 pod2 的 MAC 地址</strong></li>
+<li><strong>流量进入 Pod2 所在宿主机的物理网卡，并进入相对应的 eth0-10 vlan 子网卡</strong></li>
+<li><strong>流量从 eth0-10 vlan 子网卡进入 Pod2 容器网络栈，完成发包动作</strong></li>
+</ol>
+<p><strong>回包过程：</strong></p>
+<ol>
+<li><strong>Pod2 流量通过 macvlan 网卡，即 pod2 的 eth0 走默认路由（网关为 10.0.0.1）进入 eth0-10 vlan 子网卡</strong></li>
+<li><strong>由于在 eth0-10 上找到网关 10.0.0.1 的 MAC 地址，所以将流量从 eth0 物理网卡出打到交换机上</strong></li>
+<li><strong>流量在交换机上匹配到了 pod1 的 MAC 地址</strong></li>
+<li><strong>流量进入 Pod1 所在宿主机的物理网卡，并进入相对应的 eth0-5 vlan 子网卡</strong></li>
+<li><strong>流量从 eth0-5 vlan 子网卡进入 Pod1 容器网络栈，完成回包动作</strong></li>
+</ol>
+<h1 id="-14"><a href="#-14" class="headerlink" title="****"></a>****</h1><p><strong>04</strong></p>
+<p><strong>面临的问题及未来发展</strong></p>
+<p><em><strong>Aliware</strong></em></p>
+<p><strong>01</strong></p>
+<p><strong>IPv4&#x2F;IPv6 双栈</strong></p>
+<h2 id="-15"><a href="#-15" class="headerlink" title=""></a></h2><ul>
+<li><h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a><strong>背景</strong></h3></li>
+</ul>
+<p><strong>IP 作为互联网最基础的要素，是为计算机网络相互连接进行通信而设计的协议，正是因为有了 IP 协议，因特网才得以迅速发展成为世界上最大的、开放的计算机通信网络。IP 协议随着互联网的发展，产生了 IPv4 和 IPv6 两种协议：</strong></p>
+<ul>
+<li><p><strong>IPv4</strong></p>
+</li>
+<li><ul>
+<li><strong>IPv4 是互联网协议第四版，是计算机网络使用的数据报传输机制，此协议是第一个被广泛部署的 IP 协议。每一个连接 Internet 的设备（不管是交换机、PC 还是其他设备），都会为其分配一个唯一的 IP 地址，如 192.149.252.76，如下图所示，IPv4 使用 32 位（4 字节）地址，大约可以存储 43 亿个地址，但随着越来越多的用户接入到 Internet，全球 IPv4 地址已于 2019 年 11 月已全数耗尽。这也是后续互联网工程任务组（IEIF）提出 IPv6 的原因之一。</strong></li>
+</ul>
+</li>
+<li><p><strong>IPv6</strong></p>
+</li>
+<li><ul>
+<li><strong>IPv6 是由 IEIF 提出的互联网协议第六版，用来替代 IPv4 的下一代协议，它的提出不仅解决了网络地址资源匮乏问题，也解决了多种接入设备接入互联网的障碍。IPv6 的地址长度为 128 位，可支持 340 多万亿个地址。如下图，3ffe:1900:fe21:4545:0000:0000:0000:0000，这是一个 IPv6 地址，IPv6 地址通常分为 8 组，4 个十六进制数为一组，每组之间用冒号分隔。</strong></li>
+</ul>
+</li>
+</ul>
+<p><strong>IPv4 占主流，IPv6 还未兴起时，主要面临的问题：</strong></p>
+<ol>
+<li><strong>IPv4 地址数量已经不再满足需求，需要 IPv6 地址进行扩展</strong></li>
+<li><strong>随着国内下一代互联网发展政策的明确，客户数据中心需要使用 IPv6 来符合更严格的监管</strong></li>
+</ol>
+<h3 id="-16"><a href="#-16" class="headerlink" title="****"></a>****</h3><ul>
+<li><h3 id="现状"><a href="#现状" class="headerlink" title="现状"></a><strong>现状</strong></h3></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>****</th>
+<th><strong>hybridnet</strong></th>
+<th><strong>calico IPIP</strong></th>
+<th><strong>calico BGP</strong></th>
+<th><strong>bifrost</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>是否支持IPv6&#x2F;双栈</strong></td>
+<td><strong>是</strong></td>
+<td><strong>否</strong></td>
+<td><strong>是</strong></td>
+<td><strong>否</strong></td>
+</tr>
+</tbody></table>
+<p><strong>calico IPIP 不支持 IPv6 的原因:</strong></p>
+<ul>
+<li><strong>ipip 是普通的 IPIP 隧道，就是在报文的基础上再封装成一个 IPv4 报文，所以不支持 IPv6 的封包</strong></li>
+</ul>
+<h2 id="-17"><a href="#-17" class="headerlink" title="****"></a>****</h2><p><strong>02</strong></p>
+<p><strong>多网卡（多通信机制）</strong></p>
+<ul>
+<li><h3 id="背景-1"><a href="#背景-1" class="headerlink" title="背景"></a><strong>背景</strong></h3></li>
+</ul>
+<p><strong>通常情况下在 K8s 中，一个 Pod 只有一个接口，即单网卡，用于集群网络中 pod 和 pod 通信。而 Pod 需要和异构网络进行通信时，可选择在 Pod 中建立多个接口，即多网卡。</strong></p>
+<p><strong>目前的问题：</strong></p>
+<ol>
+<li><strong>部分客户真实 IP 资源紧张，导致无法全部使用 underlay 方案</strong></li>
+<li><strong>客户希望把 UDP 网络和 TCP 网络分开，导致如基于 TCP 协议的网络模型无法独立存在于 UDP 网络中</strong></li>
+</ol>
+<h3 id="-18"><a href="#-18" class="headerlink" title="****"></a>****</h3><ul>
+<li><h3 id="现状-1"><a href="#现状-1" class="headerlink" title="现状"></a><strong>现状</strong></h3></li>
+</ul>
+<p><strong>目前实现多网卡的方案，大致两种：</strong></p>
+<ul>
+<li><strong>在单一 CNI 调用 IPAM 时，通过 CNI config 配置生成相对应的网卡并分配合适的 IP 资源</strong></li>
+<li><strong>通过元 CNI 依次调用各个 CNI 来完成相对应的网卡并分配合适的 IP 资源，如 multus 方案</strong></li>
+</ul>
+<h2 id="-19"><a href="#-19" class="headerlink" title=""></a></h2><h2 id="-20"><a href="#-20" class="headerlink" title="****"></a>****</h2><p><strong>03</strong></p>
+<p><strong>网络流量管控</strong></p>
+<ul>
+<li><h3 id="背景-2"><a href="#背景-2" class="headerlink" title="背景"></a><strong>背景</strong></h3></li>
+</ul>
+<p><strong>通常在数据中心中，我们将其网络流量分为两种类型，一种是数据中心外部用户和内部服务器之间交互的流量，这样的流量称作南北向流量或者纵向流量；另外一种就是数据中心内部服务器之间交互的流量，也叫东西向流量或者横向流量。</strong></p>
+<p><strong>那么在容器云范畴内，我们将东西向流量定义为集群内宿主机和容器、容器间或宿主机间的流量，南北向流量为容器云外部与容器云内部之间交互的流量。</strong></p>
+<p><strong>目前的问题：</strong></p>
+<ol>
+<li><strong>传统防火墙在容器云的东西向场景下，难以起到流量管控，需要提供服务间或容器间流量管控的能力</strong></li>
+</ol>
+<h3 id="-21"><a href="#-21" class="headerlink" title="****"></a>****</h3><ul>
+<li><h3 id="现状-2"><a href="#现状-2" class="headerlink" title="现状"></a><strong>现状</strong></h3></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>****</th>
+<th><strong>calico</strong></th>
+<th><strong>cillum</strong></th>
+<th><strong>bifrost-商用版</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>技术基础</strong></td>
+<td><strong>iptables</strong></td>
+<td><strong>ebpf</strong></td>
+<td><strong>ebpf</strong></td>
+</tr>
+<tr>
+<td><strong>适配性</strong></td>
+<td><strong>三层路由且流量经过主机网络栈</strong></td>
+<td><strong>二层且满足cillum通信方式</strong></td>
+<td><strong>主流CNI插件</strong></td>
+</tr>
+</tbody></table>
+<h1 id="-22"><a href="#-22" class="headerlink" title="****"></a>****</h1><h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a><em><strong>参考资料</strong></em></h1><p><em><strong>1、calico vxlan ipv4 overlay组网跨主机通信分析</strong></em></p>
+<p><em><strong><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/5edd6982e3be">https://www.jianshu.com/p/5edd6982e3be</a></strong></em></p>
+<p><em><strong>2、Qunar容器平台网络之道：Calico</strong></em></p>
+<p><em><strong><a target="_blank" rel="noopener" href="http://dockone.io/article/2434328">http://dockone.io/article/2434328</a></strong></em></p>
+<p><em><strong>3、最好的vxlan介绍</strong></em></p>
+<p><em><strong><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/cccfb481d548">https://www.jianshu.com/p/cccfb481d548</a></strong></em></p>
+<p><em><strong>4、揭秘 IPIP 隧道</strong></em></p>
+<p><em><strong><a target="_blank" rel="noopener" href="https://morven.life/posts/networking-3-ipip/">https://morven.life/posts/networking-3-ipip/</a></strong></em></p>
+<p><em><strong>5、BGP基础知识</strong></em></p>
+<p><em><strong><a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_38265137/article/details/80439561">https://blog.csdn.net/qq_38265137/article/details/80439561</a></strong></em></p>
+<p><em><strong>6、VLAN基础知识</strong></em></p>
+<p><em><strong><a target="_blank" rel="noopener" href="https://cshihong.github.io/2017/11/05/VLAN%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/">https://cshihong.github.io/2017/11/05/VLAN%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/</a></strong></em></p>
+<p><em><strong>7、Overlay和Underlay网络协议区别及概述讲解</strong></em></p>
+<p><em><strong><a target="_blank" rel="noopener" href="https://www.cnblogs.com/fengdejiyixx/p/15567609.html#%E4%BA%8Cunderlay%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%9E%8B">https://www.cnblogs.com/fengdejiyixx/p/15567609.html#%E4%BA%8Cunderlay%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%9E%8B</a></strong></em></p>
+<p><em><strong>8、东西向流量牵引方案小结</strong></em></p>
+<p><em><strong><a target="_blank" rel="noopener" href="http://blog.nsfocus.net/east-west-flow-sum/">http://blog.nsfocus.net/east-west-flow-sum/</a></strong></em></p>
+<p><em><strong>9、容器网络接口（CNI）</strong></em></p>
+<p><em><strong><a target="_blank" rel="noopener" href="https://jimmysong.io/kubernetes-handbook/concepts/cni.html">https://jimmysong.io/kubernetes-handbook/concepts/cni.html</a></strong></em></p>
+<p><em><strong>10、K8s 网络之深入理解 CNI</strong></em></p>
+<p><em><strong><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/450140876">https://zhuanlan.zhihu.com/p/450140876</a></strong></em></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>彻悟容器网络 2024-04-07 10:30:11.55</div>
+      <div>http://example.com/2025/01/16/彻悟容器网络-che-wu-rong-qi-wang-luo/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4-li-xian-an-zhuang-ji-qun/" title="离线安装集群 2023-09-28 15:29:14.742">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">离线安装集群 2023-09-28 15:29:14.742</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E7%A3%81%E7%9B%98%E6%95%B0%E6%8D%AE%E6%81%A2%E5%A4%8D-ci-pan-shu-ju-hui-fu/" title="磁盘数据恢复 2024-04-03 14:59:27.839">
+                        <span class="hidden-mobile">磁盘数据恢复 2024-04-03 14:59:27.839</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

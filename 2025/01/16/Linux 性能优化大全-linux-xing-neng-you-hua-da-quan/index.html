@@ -1,0 +1,1029 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="性能优化 性能指标高并发和响应快对应着性能优化的两个核心指标：吞吐和延时  应用负载角度：直接影响了产品终端的用户体验 系统资源角度：资源使用率、饱和度等  性能问题的本质就是系统资源已经到达瓶颈，但请求的处理还不够快，无法支撑更多的请求。性能分析实际上就是找出应用或系统的瓶颈，设法去避免或缓解它们。 选择指标评估应用程序和系统性能 为应用程序和系统设置性能目标 进行性能基准测试 性能分析定位瓶颈">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux 性能优化大全 2024-04-03 15:09:06.854">
+<meta property="og:url" content="http://example.com/2025/01/16/Linux%20%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%A4%A7%E5%85%A8-linux-xing-neng-you-hua-da-quan/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="性能优化 性能指标高并发和响应快对应着性能优化的两个核心指标：吞吐和延时  应用负载角度：直接影响了产品终端的用户体验 系统资源角度：资源使用率、饱和度等  性能问题的本质就是系统资源已经到达瓶颈，但请求的处理还不够快，无法支撑更多的请求。性能分析实际上就是找出应用或系统的瓶颈，设法去避免或缓解它们。 选择指标评估应用程序和系统性能 为应用程序和系统设置性能目标 进行性能基准测试 性能分析定位瓶颈">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402261533052.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402261533139.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402261536136.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402261536865.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402261539987.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402261539512.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.064Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:18.849Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402261533052.png">
+  
+  
+  
+  <title>Linux 性能优化大全 2024-04-03 15:09:06.854 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Linux 性能优化大全 2024-04-03 15:09:06.854"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          11k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          94 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Linux 性能优化大全 2024-04-03 15:09:06.854</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p><strong>性能优化</strong></p>
+<h4 id="性能指标"><a href="#性能指标" class="headerlink" title="性能指标"></a><strong>性能指标</strong></h4><h5 id="高并发和响应快对应着性能优化的两个核心指标：吞吐和延时"><a href="#高并发和响应快对应着性能优化的两个核心指标：吞吐和延时" class="headerlink" title="高并发和响应快对应着性能优化的两个核心指标：吞吐和延时"></a>高并发和响应快对应着性能优化的两个核心指标：吞吐和延时</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402261533052.png" srcset="/img/loading.gif" lazyload alt="image-20240226153330970"></p>
+<ul>
+<li><h5 id="应用负载角度：直接影响了产品终端的用户体验"><a href="#应用负载角度：直接影响了产品终端的用户体验" class="headerlink" title="应用负载角度：直接影响了产品终端的用户体验"></a>应用负载角度：直接影响了产品终端的用户体验</h5></li>
+<li><h5 id="系统资源角度：资源使用率、饱和度等"><a href="#系统资源角度：资源使用率、饱和度等" class="headerlink" title="系统资源角度：资源使用率、饱和度等"></a>系统资源角度：资源使用率、饱和度等</h5></li>
+</ul>
+<h5 id="性能问题的本质就是系统资源已经到达瓶颈，但请求的处理还不够快，无法支撑更多的请求。性能分析实际上就是找出应用或系统的瓶颈，设法去避免或缓解它们。"><a href="#性能问题的本质就是系统资源已经到达瓶颈，但请求的处理还不够快，无法支撑更多的请求。性能分析实际上就是找出应用或系统的瓶颈，设法去避免或缓解它们。" class="headerlink" title="性能问题的本质就是系统资源已经到达瓶颈，但请求的处理还不够快，无法支撑更多的请求。性能分析实际上就是找出应用或系统的瓶颈，设法去避免或缓解它们。"></a>性能问题的本质就是系统资源已经到达瓶颈，但请求的处理还不够快，无法支撑更多的请求。性能分析实际上就是找出应用或系统的瓶颈，设法去避免或缓解它们。</h5><ul>
+<li><h5 id="选择指标评估应用程序和系统性能"><a href="#选择指标评估应用程序和系统性能" class="headerlink" title="选择指标评估应用程序和系统性能"></a>选择指标评估应用程序和系统性能</h5></li>
+<li><h5 id="为应用程序和系统设置性能目标"><a href="#为应用程序和系统设置性能目标" class="headerlink" title="为应用程序和系统设置性能目标"></a>为应用程序和系统设置性能目标</h5></li>
+<li><h5 id="进行性能基准测试"><a href="#进行性能基准测试" class="headerlink" title="进行性能基准测试"></a>进行性能基准测试</h5></li>
+<li><h5 id="性能分析定位瓶颈"><a href="#性能分析定位瓶颈" class="headerlink" title="性能分析定位瓶颈"></a>性能分析定位瓶颈</h5></li>
+<li><h5 id="性能监控和告警"><a href="#性能监控和告警" class="headerlink" title="性能监控和告警"></a>性能监控和告警</h5></li>
+</ul>
+<h5 id="对于不同的性能问题要选取不同的性能分析工具。下面是常用的Linux-Performance-Tools以及对应分析的性能问题类型。"><a href="#对于不同的性能问题要选取不同的性能分析工具。下面是常用的Linux-Performance-Tools以及对应分析的性能问题类型。" class="headerlink" title="对于不同的性能问题要选取不同的性能分析工具。下面是常用的Linux Performance Tools以及对应分析的性能问题类型。"></a>对于不同的性能问题要选取不同的性能分析工具。下面是常用的Linux Performance Tools以及对应分析的性能问题类型。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402261533139.png" srcset="/img/loading.gif" lazyload alt="image-20240226153358031"></p>
+<h4 id="到底应该怎么理解”平均负载”"><a href="#到底应该怎么理解”平均负载”" class="headerlink" title="到底应该怎么理解”平均负载”"></a><strong>到底应该怎么理解”平均负载”</strong></h4><h5 id="平均负载：单位时间内，系统处于可运行状态和不可中断状态的平均进程数，也就是平均活跃进程数。它和我们传统意义上理解的CPU使用率并没有直接关系。"><a href="#平均负载：单位时间内，系统处于可运行状态和不可中断状态的平均进程数，也就是平均活跃进程数。它和我们传统意义上理解的CPU使用率并没有直接关系。" class="headerlink" title="平均负载：单位时间内，系统处于可运行状态和不可中断状态的平均进程数，也就是平均活跃进程数。它和我们传统意义上理解的CPU使用率并没有直接关系。"></a>平均负载：单位时间内，系统处于可运行状态和不可中断状态的平均进程数，也就是平均活跃进程数。它和我们传统意义上理解的CPU使用率并没有直接关系。</h5><h5 id="其中不可中断进程是正处于内核态关键流程中的进程（如常见的等待设备的I-O响应）。不可中断状态实际上是系统对进程和硬件设备的一种保护机制。"><a href="#其中不可中断进程是正处于内核态关键流程中的进程（如常见的等待设备的I-O响应）。不可中断状态实际上是系统对进程和硬件设备的一种保护机制。" class="headerlink" title="其中不可中断进程是正处于内核态关键流程中的进程（如常见的等待设备的I&#x2F;O响应）。不可中断状态实际上是系统对进程和硬件设备的一种保护机制。"></a>其中不可中断进程是正处于内核态关键流程中的进程（如常见的等待设备的I&#x2F;O响应）。不可中断状态实际上是系统对进程和硬件设备的一种保护机制。</h5><h4 id="平均负载多少时合理"><a href="#平均负载多少时合理" class="headerlink" title="平均负载多少时合理"></a><strong>平均负载多少时合理</strong></h4><h5 id="实际生产环境中将系统的平均负载监控起来，根据历史数据判断负载的变化趋势。当负载存在明显升高趋势时，及时进行分析和调查。当然也可以当设置阈值（如当平均负载高于CPU数量的70-时）"><a href="#实际生产环境中将系统的平均负载监控起来，根据历史数据判断负载的变化趋势。当负载存在明显升高趋势时，及时进行分析和调查。当然也可以当设置阈值（如当平均负载高于CPU数量的70-时）" class="headerlink" title="实际生产环境中将系统的平均负载监控起来，根据历史数据判断负载的变化趋势。当负载存在明显升高趋势时，及时进行分析和调查。当然也可以当设置阈值（如当平均负载高于CPU数量的70%时）"></a>实际生产环境中将系统的平均负载监控起来，根据历史数据判断负载的变化趋势。当负载存在明显升高趋势时，及时进行分析和调查。当然也可以当设置阈值（如当平均负载高于CPU数量的70%时）</h5><h5 id="现实工作中我们会经常混淆平均负载和CPU使用率的概念，其实两者并不完全对等："><a href="#现实工作中我们会经常混淆平均负载和CPU使用率的概念，其实两者并不完全对等：" class="headerlink" title="现实工作中我们会经常混淆平均负载和CPU使用率的概念，其实两者并不完全对等："></a>现实工作中我们会经常混淆平均负载和CPU使用率的概念，其实两者并不完全对等：</h5><ul>
+<li><h5 id="CPU-密集型进程，大量-CPU-使用会导致平均负载升高，此时两者一致"><a href="#CPU-密集型进程，大量-CPU-使用会导致平均负载升高，此时两者一致" class="headerlink" title="CPU 密集型进程，大量 CPU 使用会导致平均负载升高，此时两者一致"></a>CPU 密集型进程，大量 CPU 使用会导致平均负载升高，此时两者一致</h5></li>
+<li><h5 id="I-O-密集型进程，等待-I-O-也会导致平均负载升高，此时-CPU-使用率并不一定高"><a href="#I-O-密集型进程，等待-I-O-也会导致平均负载升高，此时-CPU-使用率并不一定高" class="headerlink" title="I&#x2F;O 密集型进程，等待 I&#x2F;O 也会导致平均负载升高，此时 CPU 使用率并不一定高"></a>I&#x2F;O 密集型进程，等待 I&#x2F;O 也会导致平均负载升高，此时 CPU 使用率并不一定高</h5></li>
+<li><h5 id="大量等待-CPU-的进程调度会导致平均负载升高，此时-CPU-使用率也会比较高"><a href="#大量等待-CPU-的进程调度会导致平均负载升高，此时-CPU-使用率也会比较高" class="headerlink" title="大量等待 CPU 的进程调度会导致平均负载升高，此时 CPU 使用率也会比较高"></a>大量等待 CPU 的进程调度会导致平均负载升高，此时 CPU 使用率也会比较高</h5></li>
+</ul>
+<h5 id="平均负载高时可能是-CPU-密集型进程导致，也可能是-I-O-繁忙导致。具体分析时可以结合-mpstat-pidstat-工具辅助分析负载来源。"><a href="#平均负载高时可能是-CPU-密集型进程导致，也可能是-I-O-繁忙导致。具体分析时可以结合-mpstat-pidstat-工具辅助分析负载来源。" class="headerlink" title="平均负载高时可能是 CPU 密集型进程导致，也可能是 I&#x2F;O 繁忙导致。具体分析时可以结合 mpstat&#x2F;pidstat 工具辅助分析负载来源。"></a>平均负载高时可能是 CPU 密集型进程导致，也可能是 I&#x2F;O 繁忙导致。具体分析时可以结合 mpstat&#x2F;pidstat 工具辅助分析负载来源。</h5><h3 id="CPU"><a href="#CPU" class="headerlink" title="CPU"></a><strong>CPU</strong></h3><h4 id="CPU上下文切换-上"><a href="#CPU上下文切换-上" class="headerlink" title="CPU上下文切换(上)"></a><strong>CPU上下文切换(上)</strong></h4><h5 id="CPU-上下文切换，就是把前一个任务的-CPU-上下文（CPU-寄存器和-PC）保存起来，然后加载新任务的上下文到这些寄存器和程序计数器，最后再跳转到程序计数器所指的位置，运行新任务。其中，保存下来的上下文会存储在系统内核中，待任务重新调度执行时再加载，保证原来的任务状态不受影响。"><a href="#CPU-上下文切换，就是把前一个任务的-CPU-上下文（CPU-寄存器和-PC）保存起来，然后加载新任务的上下文到这些寄存器和程序计数器，最后再跳转到程序计数器所指的位置，运行新任务。其中，保存下来的上下文会存储在系统内核中，待任务重新调度执行时再加载，保证原来的任务状态不受影响。" class="headerlink" title="CPU 上下文切换，就是把前一个任务的 CPU 上下文（CPU 寄存器和 PC）保存起来，然后加载新任务的上下文到这些寄存器和程序计数器，最后再跳转到程序计数器所指的位置，运行新任务。其中，保存下来的上下文会存储在系统内核中，待任务重新调度执行时再加载，保证原来的任务状态不受影响。"></a>CPU 上下文切换，就是把前一个任务的 CPU 上下文（CPU 寄存器和 PC）保存起来，然后加载新任务的上下文到这些寄存器和程序计数器，最后再跳转到程序计数器所指的位置，运行新任务。其中，保存下来的上下文会存储在系统内核中，待任务重新调度执行时再加载，保证原来的任务状态不受影响。</h5><h5 id="按照任务类型，CPU-上下文切换分为："><a href="#按照任务类型，CPU-上下文切换分为：" class="headerlink" title="按照任务类型，CPU 上下文切换分为："></a>按照任务类型，CPU 上下文切换分为：</h5><ul>
+<li><h5 id="进程上下文切换"><a href="#进程上下文切换" class="headerlink" title="进程上下文切换"></a>进程上下文切换</h5></li>
+<li><h5 id="线程上下文切换"><a href="#线程上下文切换" class="headerlink" title="线程上下文切换"></a>线程上下文切换</h5></li>
+<li><h5 id="中断上下文切换"><a href="#中断上下文切换" class="headerlink" title="中断上下文切换"></a>中断上下文切换</h5></li>
+</ul>
+<h5 id="进程上下文切换-1"><a href="#进程上下文切换-1" class="headerlink" title="进程上下文切换"></a><strong>进程上下文切换</strong></h5><h5 id="Linux-进程按照等级权限将进程的运行空间分为内核空间和用户空间。从用户态向内核态转变时需要通过系统调用来完成。"><a href="#Linux-进程按照等级权限将进程的运行空间分为内核空间和用户空间。从用户态向内核态转变时需要通过系统调用来完成。" class="headerlink" title="Linux 进程按照等级权限将进程的运行空间分为内核空间和用户空间。从用户态向内核态转变时需要通过系统调用来完成。"></a>Linux 进程按照等级权限将进程的运行空间分为内核空间和用户空间。从用户态向内核态转变时需要通过系统调用来完成。</h5><h5 id="一次系统调用过程其实进行了两次-CPU-上下文切换："><a href="#一次系统调用过程其实进行了两次-CPU-上下文切换：" class="headerlink" title="一次系统调用过程其实进行了两次 CPU 上下文切换："></a>一次系统调用过程其实进行了两次 CPU 上下文切换：</h5><ul>
+<li><h5 id="CPU-寄存器中用户态的指令位置先保存起来，CPU-寄存器更新为内核态指令的位置，跳转到内核态运行内核任务；"><a href="#CPU-寄存器中用户态的指令位置先保存起来，CPU-寄存器更新为内核态指令的位置，跳转到内核态运行内核任务；" class="headerlink" title="CPU 寄存器中用户态的指令位置先保存起来，CPU 寄存器更新为内核态指令的位置，跳转到内核态运行内核任务；"></a>CPU 寄存器中用户态的指令位置先保存起来，CPU 寄存器更新为内核态指令的位置，跳转到内核态运行内核任务；</h5></li>
+<li><h5 id="系统调用结束后，CPU-寄存器恢复原来保存的用户态数据，再切换到用户空间继续运行。"><a href="#系统调用结束后，CPU-寄存器恢复原来保存的用户态数据，再切换到用户空间继续运行。" class="headerlink" title="系统调用结束后，CPU 寄存器恢复原来保存的用户态数据，再切换到用户空间继续运行。"></a>系统调用结束后，CPU 寄存器恢复原来保存的用户态数据，再切换到用户空间继续运行。</h5></li>
+</ul>
+<h5 id="系统调用过程中并不会涉及虚拟内存等进程用户态资源，也不会切换进程。和传统意义上的进程上下文切换不同。因此系统调用通常称为特权模式切换。"><a href="#系统调用过程中并不会涉及虚拟内存等进程用户态资源，也不会切换进程。和传统意义上的进程上下文切换不同。因此系统调用通常称为特权模式切换。" class="headerlink" title="系统调用过程中并不会涉及虚拟内存等进程用户态资源，也不会切换进程。和传统意义上的进程上下文切换不同。因此系统调用通常称为特权模式切换。"></a>系统调用过程中并不会涉及虚拟内存等进程用户态资源，也不会切换进程。和传统意义上的进程上下文切换不同。因此系统调用通常称为特权模式切换。</h5><h5 id="进程是由内核管理和调度的，进程上下文切换只能发生在内核态。因此相比系统调用来说，在保存当前进程的内核状态和CPU寄存器之前，需要先把该进程的虚拟内存，栈保存下来。再加载新进程的内核态后，还要刷新进程的虚拟内存和用户栈。"><a href="#进程是由内核管理和调度的，进程上下文切换只能发生在内核态。因此相比系统调用来说，在保存当前进程的内核状态和CPU寄存器之前，需要先把该进程的虚拟内存，栈保存下来。再加载新进程的内核态后，还要刷新进程的虚拟内存和用户栈。" class="headerlink" title="进程是由内核管理和调度的，进程上下文切换只能发生在内核态。因此相比系统调用来说，在保存当前进程的内核状态和CPU寄存器之前，需要先把该进程的虚拟内存，栈保存下来。再加载新进程的内核态后，还要刷新进程的虚拟内存和用户栈。"></a>进程是由内核管理和调度的，进程上下文切换只能发生在内核态。因此相比系统调用来说，在保存当前进程的内核状态和CPU寄存器之前，需要先把该进程的虚拟内存，栈保存下来。再加载新进程的内核态后，还要刷新进程的虚拟内存和用户栈。</h5><h5 id="进程只有在调度到CPU上运行时才需要切换上下文，有以下几种场景：CPU时间片轮流分配，系统资源不足导致进程挂起，进程通过sleep函数主动挂起，高优先级进程抢占时间片，硬件中断时CPU上的进程被挂起转而执行内核中的中断服务。"><a href="#进程只有在调度到CPU上运行时才需要切换上下文，有以下几种场景：CPU时间片轮流分配，系统资源不足导致进程挂起，进程通过sleep函数主动挂起，高优先级进程抢占时间片，硬件中断时CPU上的进程被挂起转而执行内核中的中断服务。" class="headerlink" title="进程只有在调度到CPU上运行时才需要切换上下文，有以下几种场景：CPU时间片轮流分配，系统资源不足导致进程挂起，进程通过sleep函数主动挂起，高优先级进程抢占时间片，硬件中断时CPU上的进程被挂起转而执行内核中的中断服务。"></a>进程只有在调度到CPU上运行时才需要切换上下文，有以下几种场景：CPU时间片轮流分配，系统资源不足导致进程挂起，进程通过sleep函数主动挂起，高优先级进程抢占时间片，硬件中断时CPU上的进程被挂起转而执行内核中的中断服务。</h5><h5 id="线程上下文切换-1"><a href="#线程上下文切换-1" class="headerlink" title="线程上下文切换"></a><strong>线程上下文切换</strong></h5><h5 id="线程上下文切换分为两种："><a href="#线程上下文切换分为两种：" class="headerlink" title="线程上下文切换分为两种："></a>线程上下文切换分为两种：</h5><ul>
+<li><h5 id="前后线程同属于一个进程，切换时虚拟内存资源不变，只需要切换线程的私有数据，寄存器等；"><a href="#前后线程同属于一个进程，切换时虚拟内存资源不变，只需要切换线程的私有数据，寄存器等；" class="headerlink" title="前后线程同属于一个进程，切换时虚拟内存资源不变，只需要切换线程的私有数据，寄存器等；"></a>前后线程同属于一个进程，切换时虚拟内存资源不变，只需要切换线程的私有数据，寄存器等；</h5></li>
+<li><h5 id="前后线程属于不同进程，与进程上下文切换相同。"><a href="#前后线程属于不同进程，与进程上下文切换相同。" class="headerlink" title="前后线程属于不同进程，与进程上下文切换相同。"></a>前后线程属于不同进程，与进程上下文切换相同。</h5></li>
+</ul>
+<h5 id="同进程的线程切换消耗资源较少，这也是多线程的优势。"><a href="#同进程的线程切换消耗资源较少，这也是多线程的优势。" class="headerlink" title="同进程的线程切换消耗资源较少，这也是多线程的优势。"></a>同进程的线程切换消耗资源较少，这也是多线程的优势。</h5><h5 id="中断上下文切换-1"><a href="#中断上下文切换-1" class="headerlink" title="中断上下文切换"></a><strong>中断上下文切换</strong></h5><h5 id="中断上下文切换并不涉及到进程的用户态，因此中断上下文只包括内核态中断服务程序执行所必须的状态（CPU寄存器，内核堆栈，硬件中断参数等）。"><a href="#中断上下文切换并不涉及到进程的用户态，因此中断上下文只包括内核态中断服务程序执行所必须的状态（CPU寄存器，内核堆栈，硬件中断参数等）。" class="headerlink" title="中断上下文切换并不涉及到进程的用户态，因此中断上下文只包括内核态中断服务程序执行所必须的状态（CPU寄存器，内核堆栈，硬件中断参数等）。"></a>中断上下文切换并不涉及到进程的用户态，因此中断上下文只包括内核态中断服务程序执行所必须的状态（CPU寄存器，内核堆栈，硬件中断参数等）。</h5><h5 id="中断处理优先级比进程高，所以中断上下文切换和进程上下文切换不会同时发生"><a href="#中断处理优先级比进程高，所以中断上下文切换和进程上下文切换不会同时发生" class="headerlink" title="中断处理优先级比进程高，所以中断上下文切换和进程上下文切换不会同时发生"></a>中断处理优先级比进程高，所以中断上下文切换和进程上下文切换不会同时发生</h5><h4 id="CPU上下文切换-下"><a href="#CPU上下文切换-下" class="headerlink" title="CPU上下文切换(下)"></a><strong>CPU上下文切换(下)</strong></h4><p>通过 vmstat 可以查看系统总体的上下文切换情况</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">vmstat</span> <span class="hljs-number">5</span>         #每隔<span class="hljs-number">5</span>s输出一组数据procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu----- r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st <span class="hljs-number">1</span>  <span class="hljs-number">0</span>      <span class="hljs-number">0</span> <span class="hljs-number">103388</span> <span class="hljs-number">145412</span> <span class="hljs-number">511056</span>    <span class="hljs-number">0</span>    <span class="hljs-number">0</span>    <span class="hljs-number">18</span>    <span class="hljs-number">60</span>    <span class="hljs-number">1</span>    <span class="hljs-number">1</span>  <span class="hljs-number">2</span>  <span class="hljs-number">1</span> <span class="hljs-number">96</span>  <span class="hljs-number">0</span>  <span class="hljs-number">0</span> <span class="hljs-number">0</span>  <span class="hljs-number">0</span>      <span class="hljs-number">0</span> <span class="hljs-number">103388</span> <span class="hljs-number">145412</span> <span class="hljs-number">511076</span>    <span class="hljs-number">0</span>    <span class="hljs-number">0</span>     <span class="hljs-number">0</span>     <span class="hljs-number">2</span>  <span class="hljs-number">450</span> <span class="hljs-number">1176</span>  <span class="hljs-number">1</span>  <span class="hljs-number">1</span> <span class="hljs-number">99</span>  <span class="hljs-number">0</span>  <span class="hljs-number">0</span> <span class="hljs-number">0</span>  <span class="hljs-number">0</span>      <span class="hljs-number">0</span> <span class="hljs-number">103388</span> <span class="hljs-number">145412</span> <span class="hljs-number">511076</span>    <span class="hljs-number">0</span>    <span class="hljs-number">0</span>     <span class="hljs-number">0</span>     <span class="hljs-number">8</span>  <span class="hljs-number">429</span> <span class="hljs-number">1135</span>  <span class="hljs-number">1</span>  <span class="hljs-number">1</span> <span class="hljs-number">98</span>  <span class="hljs-number">0</span>  <span class="hljs-number">0</span> <span class="hljs-number">0</span>  <span class="hljs-number">0</span>      <span class="hljs-number">0</span> <span class="hljs-number">103388</span> <span class="hljs-number">145412</span> <span class="hljs-number">511076</span>    <span class="hljs-number">0</span>    <span class="hljs-number">0</span>     <span class="hljs-number">0</span>     <span class="hljs-number">0</span>  <span class="hljs-number">431</span> <span class="hljs-number">1132</span>  <span class="hljs-number">1</span>  <span class="hljs-number">1</span> <span class="hljs-number">98</span>  <span class="hljs-number">0</span>  <span class="hljs-number">0</span> <span class="hljs-number">0</span>  <span class="hljs-number">0</span>      <span class="hljs-number">0</span> <span class="hljs-number">103388</span> <span class="hljs-number">145412</span> <span class="hljs-number">511076</span>    <span class="hljs-number">0</span>    <span class="hljs-number">0</span>     <span class="hljs-number">0</span>    <span class="hljs-number">10</span>  <span class="hljs-number">467</span> <span class="hljs-number">1195</span>  <span class="hljs-number">1</span>  <span class="hljs-number">1</span> <span class="hljs-number">98</span>  <span class="hljs-number">0</span>  <span class="hljs-number">0</span> <span class="hljs-number">1</span>  <span class="hljs-number">0</span>      <span class="hljs-number">0</span> <span class="hljs-number">103388</span> <span class="hljs-number">145412</span> <span class="hljs-number">511076</span>    <span class="hljs-number">0</span>    <span class="hljs-number">0</span>     <span class="hljs-number">0</span>     <span class="hljs-number">2</span>  <span class="hljs-number">426</span> <span class="hljs-number">1139</span>  <span class="hljs-number">1</span>  <span class="hljs-number">0</span> <span class="hljs-number">99</span>  <span class="hljs-number">0</span>  <span class="hljs-number">0</span> <span class="hljs-number">4</span>  <span class="hljs-number">0</span>      <span class="hljs-number">0</span>  <span class="hljs-number">95184</span> <span class="hljs-number">145412</span> <span class="hljs-number">511108</span>    <span class="hljs-number">0</span>    <span class="hljs-number">0</span>     <span class="hljs-number">0</span>    <span class="hljs-number">74</span>  <span class="hljs-number">500</span> <span class="hljs-number">1228</span>  <span class="hljs-number">4</span>  <span class="hljs-number">1</span> <span class="hljs-number">94</span>  <span class="hljs-number">0</span>  <span class="hljs-number">0</span> <span class="hljs-number">0</span>  <span class="hljs-number">0</span>      <span class="hljs-number">0</span> <span class="hljs-number">103512</span> <span class="hljs-number">145416</span> <span class="hljs-number">511076</span>    <span class="hljs-number">0</span>    <span class="hljs-number">0</span>     <span class="hljs-number">0</span>   <span class="hljs-number">455</span>  <span class="hljs-number">723</span> <span class="hljs-number">1573</span> <span class="hljs-number">12</span>  <span class="hljs-number">3</span> <span class="hljs-number">83</span>  <span class="hljs-number">2</span>  <span class="hljs-number">0</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><h5 id="cs-（context-switch）-每秒上下文切换次数"><a href="#cs-（context-switch）-每秒上下文切换次数" class="headerlink" title="cs （context switch） 每秒上下文切换次数"></a>cs （context switch） 每秒上下文切换次数</h5></li>
+<li><h5 id="in-（interrupt）-每秒中断次数"><a href="#in-（interrupt）-每秒中断次数" class="headerlink" title="in （interrupt） 每秒中断次数"></a>in （interrupt） 每秒中断次数</h5></li>
+<li><h5 id="r-（runnning-or-runnable）就绪队列的长度，正在运行和等待CPU的进程数"><a href="#r-（runnning-or-runnable）就绪队列的长度，正在运行和等待CPU的进程数" class="headerlink" title="r （runnning or runnable）就绪队列的长度，正在运行和等待CPU的进程数"></a>r （runnning or runnable）就绪队列的长度，正在运行和等待CPU的进程数</h5></li>
+<li><h5 id="b-（Blocked）-处于不可中断睡眠状态的进程数"><a href="#b-（Blocked）-处于不可中断睡眠状态的进程数" class="headerlink" title="b （Blocked） 处于不可中断睡眠状态的进程数"></a>b （Blocked） 处于不可中断睡眠状态的进程数</h5></li>
+</ul>
+<h5 id="要查看每个进程的详细情况，需要使用pidstat来查看每个进程上下文切换情况"><a href="#要查看每个进程的详细情况，需要使用pidstat来查看每个进程上下文切换情况" class="headerlink" title="要查看每个进程的详细情况，需要使用pidstat来查看每个进程上下文切换情况"></a>要查看每个进程的详细情况，需要使用pidstat来查看每个进程上下文切换情况</h5><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">pidstat</span> -w <span class="hljs-number">514</span>时<span class="hljs-number">51</span>分<span class="hljs-number">16</span>秒   UID       PID   cswch/s nvcswch/s  Command14时<span class="hljs-number">51</span>分<span class="hljs-number">21</span>秒     <span class="hljs-number">0</span>         <span class="hljs-number">1</span>      <span class="hljs-number">0</span>.<span class="hljs-number">80</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>  systemd14时<span class="hljs-number">51</span>分<span class="hljs-number">21</span>秒     <span class="hljs-number">0</span>         <span class="hljs-number">6</span>      <span class="hljs-number">1</span>.<span class="hljs-number">40</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>  ksoftirqd/<span class="hljs-number">014</span>时<span class="hljs-number">51</span>分<span class="hljs-number">21</span>秒     <span class="hljs-number">0</span>         <span class="hljs-number">9</span>     <span class="hljs-number">32</span>.<span class="hljs-number">67</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>  rcu_sched14时<span class="hljs-number">51</span>分<span class="hljs-number">21</span>秒     <span class="hljs-number">0</span>        <span class="hljs-number">11</span>      <span class="hljs-number">0</span>.<span class="hljs-number">40</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>  watchdog/<span class="hljs-number">014</span>时<span class="hljs-number">51</span>分<span class="hljs-number">21</span>秒     <span class="hljs-number">0</span>        <span class="hljs-number">32</span>      <span class="hljs-number">0</span>.<span class="hljs-number">20</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>  khugepaged14时<span class="hljs-number">51</span>分<span class="hljs-number">21</span>秒     <span class="hljs-number">0</span>       <span class="hljs-number">271</span>      <span class="hljs-number">0</span>.<span class="hljs-number">20</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>  jbd2/vda1-<span class="hljs-number">814</span>时<span class="hljs-number">51</span>分<span class="hljs-number">21</span>秒     <span class="hljs-number">0</span>      <span class="hljs-number">1332</span>      <span class="hljs-number">0</span>.<span class="hljs-number">20</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>  argusagent14时<span class="hljs-number">51</span>分<span class="hljs-number">21</span>秒     <span class="hljs-number">0</span>      <span class="hljs-number">5265</span>     <span class="hljs-number">10</span>.<span class="hljs-number">02</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>  AliSecGuard14时<span class="hljs-number">51</span>分<span class="hljs-number">21</span>秒     <span class="hljs-number">0</span>      <span class="hljs-number">7439</span>      <span class="hljs-number">7</span>.<span class="hljs-number">82</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>  kworker/<span class="hljs-number">0</span>:<span class="hljs-number">214</span>时<span class="hljs-number">51</span>分<span class="hljs-number">21</span>秒     <span class="hljs-number">0</span>      <span class="hljs-number">7906</span>      <span class="hljs-number">0</span>.<span class="hljs-number">20</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>  pidstat14时<span class="hljs-number">51</span>分<span class="hljs-number">21</span>秒     <span class="hljs-number">0</span>      <span class="hljs-number">8346</span>      <span class="hljs-number">0</span>.<span class="hljs-number">20</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>  sshd14时<span class="hljs-number">51</span>分<span class="hljs-number">21</span>秒     <span class="hljs-number">0</span>     <span class="hljs-number">20654</span>      <span class="hljs-number">9</span>.<span class="hljs-number">82</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>  AliYunDun14时<span class="hljs-number">51</span>分<span class="hljs-number">21</span>秒     <span class="hljs-number">0</span>     <span class="hljs-number">25766</span>      <span class="hljs-number">0</span>.<span class="hljs-number">20</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>  kworker/u2:<span class="hljs-number">114</span>时<span class="hljs-number">51</span>分<span class="hljs-number">21</span>秒     <span class="hljs-number">0</span>     <span class="hljs-number">28603</span>      <span class="hljs-number">1</span>.<span class="hljs-number">00</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>  python3<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><h5 id="cswch-每秒自愿上下文切换次数（进程无法获取所需资源导致的上下文切换）"><a href="#cswch-每秒自愿上下文切换次数（进程无法获取所需资源导致的上下文切换）" class="headerlink" title="cswch 每秒自愿上下文切换次数（进程无法获取所需资源导致的上下文切换）"></a>cswch 每秒自愿上下文切换次数（进程无法获取所需资源导致的上下文切换）</h5></li>
+<li><h5 id="nvcswch-每秒非自愿上下文切换次数（时间片轮流等系统强制调度）"><a href="#nvcswch-每秒非自愿上下文切换次数（时间片轮流等系统强制调度）" class="headerlink" title="nvcswch 每秒非自愿上下文切换次数（时间片轮流等系统强制调度）"></a>nvcswch 每秒非自愿上下文切换次数（时间片轮流等系统强制调度）</h5></li>
+</ul>
+<figure class="highlight x86asm"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs x86asm">vmstat <span class="hljs-number">1</span> <span class="hljs-number">1</span>    #新终端观察上下文切换情况此时发现<span class="hljs-built_in">cs</span>数据明显升高，同时观察其他指标：r列：远超系统<span class="hljs-meta">CPU</span>个数，说明存在大量<span class="hljs-meta">CPU</span>竞争us和sy列：sy列占比<span class="hljs-number">80</span>%，说明<span class="hljs-meta">CPU</span>主要被内核占用<span class="hljs-keyword">in</span>列：中断次数明显上升，说明中断处理也是潜在问题<br></code></pre></td></tr></table></figure>
+
+<h5 id="说明运行-等待CPU的进程过多，导致大量的上下文切换，上下文切换导致系统的CPU占用率高"><a href="#说明运行-等待CPU的进程过多，导致大量的上下文切换，上下文切换导致系统的CPU占用率高" class="headerlink" title="说明运行&#x2F;等待CPU的进程过多，导致大量的上下文切换，上下文切换导致系统的CPU占用率高"></a>说明运行&#x2F;等待CPU的进程过多，导致大量的上下文切换，上下文切换导致系统的CPU占用率高</h5><p>- </p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs nginx"><span class="hljs-attribute">pidstat</span> -w -u <span class="hljs-number">1</span>  <span class="hljs-comment">#查看到底哪个进程导致的问题</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="从结果中看出是-sysbench-导致-CPU-使用率过高，但是-pidstat-输出的上下文次数加起来也并不多。分析-sysbench-模拟的是线程的切换，因此需要在-pidstat-后加-t-参数查看线程指标。"><a href="#从结果中看出是-sysbench-导致-CPU-使用率过高，但是-pidstat-输出的上下文次数加起来也并不多。分析-sysbench-模拟的是线程的切换，因此需要在-pidstat-后加-t-参数查看线程指标。" class="headerlink" title="从结果中看出是 sysbench 导致 CPU 使用率过高，但是 pidstat 输出的上下文次数加起来也并不多。分析 sysbench 模拟的是线程的切换，因此需要在 pidstat 后加 -t 参数查看线程指标。"></a>从结果中看出是 sysbench 导致 CPU 使用率过高，但是 pidstat 输出的上下文次数加起来也并不多。分析 sysbench 模拟的是线程的切换，因此需要在 pidstat 后加 -t 参数查看线程指标。</h5><h5 id="另外对于中断次数过多，我们可以通过-proc-interrupts-文件读取"><a href="#另外对于中断次数过多，我们可以通过-proc-interrupts-文件读取" class="headerlink" title="另外对于中断次数过多，我们可以通过 &#x2F;proc&#x2F;interrupts 文件读取"></a>另外对于中断次数过多，我们可以通过 &#x2F;proc&#x2F;interrupts 文件读取</h5><p>- </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">watch -d <span class="hljs-built_in">cat</span> /proc/interrupts<br></code></pre></td></tr></table></figure>
+
+<h5 id="发现次数变化速度最快的是重调度中断（RES），该中断用来唤醒空闲状态的CPU来调度新的任务运行。分析还是因为过多任务的调度问题，和上下文切换分析一致。"><a href="#发现次数变化速度最快的是重调度中断（RES），该中断用来唤醒空闲状态的CPU来调度新的任务运行。分析还是因为过多任务的调度问题，和上下文切换分析一致。" class="headerlink" title="发现次数变化速度最快的是重调度中断（RES），该中断用来唤醒空闲状态的CPU来调度新的任务运行。分析还是因为过多任务的调度问题，和上下文切换分析一致。"></a>发现次数变化速度最快的是重调度中断（RES），该中断用来唤醒空闲状态的CPU来调度新的任务运行。分析还是因为过多任务的调度问题，和上下文切换分析一致。</h5><p><strong>某个应用的CPU使用率达到100%，怎么办？</strong></p>
+<h5 id="Linux作为多任务操作系统，将CPU时间划分为很短的时间片，通过调度器轮流分配给各个任务使用。为了维护CPU时间，Linux通过事先定义的节拍率，触发时间中断，并使用全局变了jiffies记录开机以来的节拍数。时间中断发生一次该值-1"><a href="#Linux作为多任务操作系统，将CPU时间划分为很短的时间片，通过调度器轮流分配给各个任务使用。为了维护CPU时间，Linux通过事先定义的节拍率，触发时间中断，并使用全局变了jiffies记录开机以来的节拍数。时间中断发生一次该值-1" class="headerlink" title="Linux作为多任务操作系统，将CPU时间划分为很短的时间片，通过调度器轮流分配给各个任务使用。为了维护CPU时间，Linux通过事先定义的节拍率，触发时间中断，并使用全局变了jiffies记录开机以来的节拍数。时间中断发生一次该值+1."></a>Linux作为多任务操作系统，将CPU时间划分为很短的时间片，通过调度器轮流分配给各个任务使用。为了维护CPU时间，Linux通过事先定义的节拍率，触发时间中断，并使用全局变了jiffies记录开机以来的节拍数。时间中断发生一次该值+1.</h5><h5 id="CPU使用率，除了空闲时间以外的其他时间占总CPU时间的百分比。可以通过-proc-stat中的数据来计算出CPU使用率。因为-proc-stat时开机以来的节拍数累加值，计算出来的是开机以来的平均CPU使用率，一般意义不大。可以间隔取一段时间的两次值作差来计算该段时间内的平均CPU使用率。性能分析工具给出的都是间隔一段时间的平均CPU使用率，要注意间隔时间的设置。"><a href="#CPU使用率，除了空闲时间以外的其他时间占总CPU时间的百分比。可以通过-proc-stat中的数据来计算出CPU使用率。因为-proc-stat时开机以来的节拍数累加值，计算出来的是开机以来的平均CPU使用率，一般意义不大。可以间隔取一段时间的两次值作差来计算该段时间内的平均CPU使用率。性能分析工具给出的都是间隔一段时间的平均CPU使用率，要注意间隔时间的设置。" class="headerlink" title="CPU使用率，除了空闲时间以外的其他时间占总CPU时间的百分比。可以通过&#x2F;proc&#x2F;stat中的数据来计算出CPU使用率。因为&#x2F;proc&#x2F;stat时开机以来的节拍数累加值，计算出来的是开机以来的平均CPU使用率，一般意义不大。可以间隔取一段时间的两次值作差来计算该段时间内的平均CPU使用率。性能分析工具给出的都是间隔一段时间的平均CPU使用率，要注意间隔时间的设置。"></a>CPU使用率，除了空闲时间以外的其他时间占总CPU时间的百分比。可以通过&#x2F;proc&#x2F;stat中的数据来计算出CPU使用率。因为&#x2F;proc&#x2F;stat时开机以来的节拍数累加值，计算出来的是开机以来的平均CPU使用率，一般意义不大。可以间隔取一段时间的两次值作差来计算该段时间内的平均CPU使用率。性能分析工具给出的都是间隔一段时间的平均CPU使用率，要注意间隔时间的设置。</h5><h5 id="CPU使用率可以通过top-或-ps来查看。分析进程的CPU问题可以通过perf，它以性能事件采样为基础，不仅可以分析系统的各种事件和内核性能，还可以用来分析指定应用程序的性能问题。"><a href="#CPU使用率可以通过top-或-ps来查看。分析进程的CPU问题可以通过perf，它以性能事件采样为基础，不仅可以分析系统的各种事件和内核性能，还可以用来分析指定应用程序的性能问题。" class="headerlink" title="CPU使用率可以通过top 或 ps来查看。分析进程的CPU问题可以通过perf，它以性能事件采样为基础，不仅可以分析系统的各种事件和内核性能，还可以用来分析指定应用程序的性能问题。"></a>CPU使用率可以通过top 或 ps来查看。分析进程的CPU问题可以通过perf，它以性能事件采样为基础，不仅可以分析系统的各种事件和内核性能，还可以用来分析指定应用程序的性能问题。</h5><h5 id="perf-top-perf-record-perf-report-（-g-开启调用关系的采样）"><a href="#perf-top-perf-record-perf-report-（-g-开启调用关系的采样）" class="headerlink" title="perf top &#x2F; perf record &#x2F; perf report （-g 开启调用关系的采样）"></a>perf top &#x2F; perf record &#x2F; perf report （-g 开启调用关系的采样）</h5><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">sudo</span> docker run --name nginx -p <span class="hljs-number">10000</span>:<span class="hljs-number">80</span> -itd feisky/nginxsudo docker run --name phpfpm -itd --network container:nginx feisky/php-fpm<br><span class="hljs-attribute">ab</span> -c <span class="hljs-number">10</span> -n <span class="hljs-number">100</span> http://XXX.XXX.XXX.XXX:<span class="hljs-number">10000</span>/ #测试Nginx服务性能<br></code></pre></td></tr></table></figure>
+
+<h5 id="发现此时每秒可承受请求给长少，此时将测试的请求数从100增加到10000。在另外一个终端运行top查看每个CPU的使用率。发现系统中几个php-fpm进程导致CPU使用率骤升。"><a href="#发现此时每秒可承受请求给长少，此时将测试的请求数从100增加到10000。在另外一个终端运行top查看每个CPU的使用率。发现系统中几个php-fpm进程导致CPU使用率骤升。" class="headerlink" title="发现此时每秒可承受请求给长少，此时将测试的请求数从100增加到10000。在另外一个终端运行top查看每个CPU的使用率。发现系统中几个php-fpm进程导致CPU使用率骤升。"></a>发现此时每秒可承受请求给长少，此时将测试的请求数从100增加到10000。在另外一个终端运行top查看每个CPU的使用率。发现系统中几个php-fpm进程导致CPU使用率骤升。</h5><h5 id="接着用perf来分析具体是php-fpm中哪个函数导致该问题。"><a href="#接着用perf来分析具体是php-fpm中哪个函数导致该问题。" class="headerlink" title="接着用perf来分析具体是php-fpm中哪个函数导致该问题。"></a>接着用perf来分析具体是php-fpm中哪个函数导致该问题。</h5><figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs css">perf <span class="hljs-attribute">top</span> -<span class="hljs-selector-tag">g</span> -<span class="hljs-selector-tag">p</span> XXXX #对某一个php-fpm进程进行分析<br></code></pre></td></tr></table></figure>
+
+<h5 id="发现其中-sqrt-和-add-function-占用-CPU-过多，-此时查看源码找到原来是sqrt中在发布前没有删除测试代码段，存在一个百万次的循环导致。将该无用代码删除后发现nginx负载能力明显提升"><a href="#发现其中-sqrt-和-add-function-占用-CPU-过多，-此时查看源码找到原来是sqrt中在发布前没有删除测试代码段，存在一个百万次的循环导致。将该无用代码删除后发现nginx负载能力明显提升" class="headerlink" title="发现其中 sqrt 和 add_function 占用 CPU 过多， 此时查看源码找到原来是sqrt中在发布前没有删除测试代码段，存在一个百万次的循环导致。将该无用代码删除后发现nginx负载能力明显提升"></a>发现其中 sqrt 和 add_function 占用 CPU 过多， 此时查看源码找到原来是sqrt中在发布前没有删除测试代码段，存在一个百万次的循环导致。将该无用代码删除后发现nginx负载能力明显提升</h5><p><strong>系统的CPU使用率很高，为什么找不到高CPU的应用？</strong></p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">sudo</span> docker run --name nginx -p <span class="hljs-number">10000</span>:<span class="hljs-number">80</span> -itd feisky/nginx:spsudo docker run --name phpfpm -itd --network container:nginx feisky/php-fpm:spab -c <span class="hljs-number">100</span> -n <span class="hljs-number">1000</span> http://XXX.XXX.XXX.XXX:<span class="hljs-number">10000</span>/ #并发<span class="hljs-number">100</span>个请求测试<br></code></pre></td></tr></table></figure>
+
+<h5 id="实验结果中每秒请求数依旧不高，我们将并发请求数降为5后，nginx负载能力依旧很低。"><a href="#实验结果中每秒请求数依旧不高，我们将并发请求数降为5后，nginx负载能力依旧很低。" class="headerlink" title="实验结果中每秒请求数依旧不高，我们将并发请求数降为5后，nginx负载能力依旧很低。"></a>实验结果中每秒请求数依旧不高，我们将并发请求数降为5后，nginx负载能力依旧很低。</h5><h5 id="此时用top和pidstat发现系统CPU使用率过高，但是并没有发现CPU使用率高的进程。"><a href="#此时用top和pidstat发现系统CPU使用率过高，但是并没有发现CPU使用率高的进程。" class="headerlink" title="此时用top和pidstat发现系统CPU使用率过高，但是并没有发现CPU使用率高的进程。"></a>此时用top和pidstat发现系统CPU使用率过高，但是并没有发现CPU使用率高的进程。</h5><h5 id="出现这种情况一般时我们分析时遗漏的什么信息，重新运行top命令并观察一会。发现就绪队列中处于Running状态的进行过多，超过了我们的并发请求次数5-再仔细查看进程运行数据，发现nginx和php-fpm都处于sleep状态，真正处于运行的却是几个stress进程。"><a href="#出现这种情况一般时我们分析时遗漏的什么信息，重新运行top命令并观察一会。发现就绪队列中处于Running状态的进行过多，超过了我们的并发请求次数5-再仔细查看进程运行数据，发现nginx和php-fpm都处于sleep状态，真正处于运行的却是几个stress进程。" class="headerlink" title="出现这种情况一般时我们分析时遗漏的什么信息，重新运行top命令并观察一会。发现就绪队列中处于Running状态的进行过多，超过了我们的并发请求次数5. 再仔细查看进程运行数据，发现nginx和php-fpm都处于sleep状态，真正处于运行的却是几个stress进程。"></a>出现这种情况一般时我们分析时遗漏的什么信息，重新运行top命令并观察一会。发现就绪队列中处于Running状态的进行过多，超过了我们的并发请求次数5. 再仔细查看进程运行数据，发现nginx和php-fpm都处于sleep状态，真正处于运行的却是几个stress进程。</h5><h5 id="下一步就利用pidstat分析这几个stress进程，发现没有任何输出。用ps-aux交叉验证发现依旧不存在该进程。说明不是工具的问题。再top查看发现stress进程的进程号变化了，此时有可能时以下两种原因导致："><a href="#下一步就利用pidstat分析这几个stress进程，发现没有任何输出。用ps-aux交叉验证发现依旧不存在该进程。说明不是工具的问题。再top查看发现stress进程的进程号变化了，此时有可能时以下两种原因导致：" class="headerlink" title="下一步就利用pidstat分析这几个stress进程，发现没有任何输出。用ps aux交叉验证发现依旧不存在该进程。说明不是工具的问题。再top查看发现stress进程的进程号变化了，此时有可能时以下两种原因导致："></a>下一步就利用pidstat分析这几个stress进程，发现没有任何输出。用ps aux交叉验证发现依旧不存在该进程。说明不是工具的问题。再top查看发现stress进程的进程号变化了，此时有可能时以下两种原因导致：</h5><ul>
+<li><h5 id="进程不停的崩溃重启（如段错误-配置错误等），此时进程退出后可能又被监控系统重启；"><a href="#进程不停的崩溃重启（如段错误-配置错误等），此时进程退出后可能又被监控系统重启；" class="headerlink" title="进程不停的崩溃重启（如段错误&#x2F;配置错误等），此时进程退出后可能又被监控系统重启；"></a>进程不停的崩溃重启（如段错误&#x2F;配置错误等），此时进程退出后可能又被监控系统重启；</h5></li>
+<li><h5 id="短时进程导致，即其他应用内部通过-exec-调用的外面命令，这些命令一般只运行很短时间就结束，很难用top这种间隔较长的工具来发现"><a href="#短时进程导致，即其他应用内部通过-exec-调用的外面命令，这些命令一般只运行很短时间就结束，很难用top这种间隔较长的工具来发现" class="headerlink" title="短时进程导致，即其他应用内部通过 exec 调用的外面命令，这些命令一般只运行很短时间就结束，很难用top这种间隔较长的工具来发现"></a>短时进程导致，即其他应用内部通过 exec 调用的外面命令，这些命令一般只运行很短时间就结束，很难用top这种间隔较长的工具来发现</h5></li>
+</ul>
+<h5 id="可以通过pstree来查找-stress-的父进程，找出调用关系。"><a href="#可以通过pstree来查找-stress-的父进程，找出调用关系。" class="headerlink" title="可以通过pstree来查找 stress 的父进程，找出调用关系。"></a>可以通过pstree来查找 stress 的父进程，找出调用关系。</h5><figure class="highlight 1c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs 1c">pstree <span class="hljs-string">| grep stress</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="发现是php-fpm调用的该子进程，此时去查看源码可以看出每个请求都会调用一个stress命令来模拟I-O压力。之前top显示的结果是CPU使用率升高，是否真的是由该stress命令导致的，还需要继续分析。代码中给每个请求加了verbose-1的参数后可以查看stress命令的输出，在中断测试该命令结果显示stress命令运行时存在因权限问题导致的文件创建失败的bug。"><a href="#发现是php-fpm调用的该子进程，此时去查看源码可以看出每个请求都会调用一个stress命令来模拟I-O压力。之前top显示的结果是CPU使用率升高，是否真的是由该stress命令导致的，还需要继续分析。代码中给每个请求加了verbose-1的参数后可以查看stress命令的输出，在中断测试该命令结果显示stress命令运行时存在因权限问题导致的文件创建失败的bug。" class="headerlink" title="发现是php-fpm调用的该子进程，此时去查看源码可以看出每个请求都会调用一个stress命令来模拟I&#x2F;O压力。之前top显示的结果是CPU使用率升高，是否真的是由该stress命令导致的，还需要继续分析。代码中给每个请求加了verbose&#x3D;1的参数后可以查看stress命令的输出，在中断测试该命令结果显示stress命令运行时存在因权限问题导致的文件创建失败的bug。"></a>发现是php-fpm调用的该子进程，此时去查看源码可以看出每个请求都会调用一个stress命令来模拟I&#x2F;O压力。之前top显示的结果是CPU使用率升高，是否真的是由该stress命令导致的，还需要继续分析。代码中给每个请求加了verbose&#x3D;1的参数后可以查看stress命令的输出，在中断测试该命令结果显示stress命令运行时存在因权限问题导致的文件创建失败的bug。</h5><h5 id="此时依旧只是猜测，下一步继续通过perf工具来分析。性能报告显示确实时stress占用了大量的CPU，通过修复权限问题来优化解决即可。"><a href="#此时依旧只是猜测，下一步继续通过perf工具来分析。性能报告显示确实时stress占用了大量的CPU，通过修复权限问题来优化解决即可。" class="headerlink" title="此时依旧只是猜测，下一步继续通过perf工具来分析。性能报告显示确实时stress占用了大量的CPU，通过修复权限问题来优化解决即可。"></a>此时依旧只是猜测，下一步继续通过perf工具来分析。性能报告显示确实时stress占用了大量的CPU，通过修复权限问题来优化解决即可。</h5><p><strong>系统中出现大量不可中断进程和僵尸进程怎么办？</strong></p>
+<p><strong>进程状态</strong></p>
+<blockquote>
+<p><strong>R</strong> Running&#x2F;Runnable，表示进程在CPU的就绪队列中，正在运行或者等待运行；<br><strong>D</strong> Disk Sleep，不可中断状态睡眠，一般表示进程正在跟硬件交互，并且交互过程中不允许被其他进程中断；<br><strong>Z</strong> Zombie，僵尸进程，表示进程实际上已经结束，但是父进程还没有回收它的资源；<br><strong>S</strong> Interruptible Sleep，可中断睡眠状态，表示进程因为等待某个事件而被系统挂起，当等待事件发生则会被唤醒并进入R状态；<br><strong>I</strong> Idle，空闲状态，用在不可中断睡眠的内核线程上。该状态不会导致平均负载升高；<br><strong>T</strong> Stop&#x2F;Traced，表示进程处于暂停或跟踪状态（SIGSTOP&#x2F;SIGCONT， GDB调试）；<br><strong>X</strong> Dead，进程已经消亡，不会在top&#x2F;ps中看到。</p>
+</blockquote>
+<h5 id="对于不可中断状态，一般都是在很短时间内结束，可忽略。但是如果系统或硬件发生故障，进程可能会保持不可中断状态很久，甚至系统中出现大量不可中断状态，此时需注意是否出现了I-O性能问题。"><a href="#对于不可中断状态，一般都是在很短时间内结束，可忽略。但是如果系统或硬件发生故障，进程可能会保持不可中断状态很久，甚至系统中出现大量不可中断状态，此时需注意是否出现了I-O性能问题。" class="headerlink" title="对于不可中断状态，一般都是在很短时间内结束，可忽略。但是如果系统或硬件发生故障，进程可能会保持不可中断状态很久，甚至系统中出现大量不可中断状态，此时需注意是否出现了I&#x2F;O性能问题。"></a>对于不可中断状态，一般都是在很短时间内结束，可忽略。但是如果系统或硬件发生故障，进程可能会保持不可中断状态很久，甚至系统中出现大量不可中断状态，此时需注意是否出现了I&#x2F;O性能问题。</h5><h5 id="僵尸进程一般多进程应用容易遇到，父进程来不及处理子进程状态时子进程就提前退出，此时子进程就变成了僵尸进程。大量的僵尸进程会用尽PID进程号，导致新进程无法建立。"><a href="#僵尸进程一般多进程应用容易遇到，父进程来不及处理子进程状态时子进程就提前退出，此时子进程就变成了僵尸进程。大量的僵尸进程会用尽PID进程号，导致新进程无法建立。" class="headerlink" title="僵尸进程一般多进程应用容易遇到，父进程来不及处理子进程状态时子进程就提前退出，此时子进程就变成了僵尸进程。大量的僵尸进程会用尽PID进程号，导致新进程无法建立。"></a>僵尸进程一般多进程应用容易遇到，父进程来不及处理子进程状态时子进程就提前退出，此时子进程就变成了僵尸进程。大量的僵尸进程会用尽PID进程号，导致新进程无法建立。</h5><p><strong>磁盘O_DIRECT问题</strong></p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs routeros">sudo docker <span class="hljs-built_in">run</span> --privileged <span class="hljs-attribute">--name</span>=app -itd feisky/app:iowaitps aux | grep <span class="hljs-string">&#x27;/app&#x27;</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="可以看到此时有多个app进程运行，状态分别时Ss-和D-。其中后面s表示进程是一个会话的领导进程，-号表示前台进程组。"><a href="#可以看到此时有多个app进程运行，状态分别时Ss-和D-。其中后面s表示进程是一个会话的领导进程，-号表示前台进程组。" class="headerlink" title="可以看到此时有多个app进程运行，状态分别时Ss+和D+。其中后面s表示进程是一个会话的领导进程，+号表示前台进程组。"></a>可以看到此时有多个app进程运行，状态分别时Ss+和D+。其中后面s表示进程是一个会话的领导进程，+号表示前台进程组。</h5><h5 id="其中进程组表示一组相互关联的进程，子进程是父进程所在组的组员。会话指共享同一个控制终端的一个或多个进程组。"><a href="#其中进程组表示一组相互关联的进程，子进程是父进程所在组的组员。会话指共享同一个控制终端的一个或多个进程组。" class="headerlink" title="其中进程组表示一组相互关联的进程，子进程是父进程所在组的组员。会话指共享同一个控制终端的一个或多个进程组。"></a>其中进程组表示一组相互关联的进程，子进程是父进程所在组的组员。会话指共享同一个控制终端的一个或多个进程组。</h5><h5 id="用top查看系统资源发现：1）平均负载在逐渐增加，且1分钟内平均负载达到了CPU个数，说明系统可能已经有了性能瓶颈；2）僵尸进程比较多且在不停增加；3）us和sys-CPU使用率都不高，iowait却比较高；4）每个进程CPU使用率也不高，但有两个进程处于D状态，可能在等待IO。"><a href="#用top查看系统资源发现：1）平均负载在逐渐增加，且1分钟内平均负载达到了CPU个数，说明系统可能已经有了性能瓶颈；2）僵尸进程比较多且在不停增加；3）us和sys-CPU使用率都不高，iowait却比较高；4）每个进程CPU使用率也不高，但有两个进程处于D状态，可能在等待IO。" class="headerlink" title="用top查看系统资源发现：1）平均负载在逐渐增加，且1分钟内平均负载达到了CPU个数，说明系统可能已经有了性能瓶颈；2）僵尸进程比较多且在不停增加；3）us和sys CPU使用率都不高，iowait却比较高；4）每个进程CPU使用率也不高，但有两个进程处于D状态，可能在等待IO。"></a>用top查看系统资源发现：1）平均负载在逐渐增加，且1分钟内平均负载达到了CPU个数，说明系统可能已经有了性能瓶颈；2）僵尸进程比较多且在不停增加；3）us和sys CPU使用率都不高，iowait却比较高；4）每个进程CPU使用率也不高，但有两个进程处于D状态，可能在等待IO。</h5><h5 id="分析目前数据可知：iowait过高导致系统平均负载升高，僵尸进程不断增长说明有程序没能正确清理子进程资源。"><a href="#分析目前数据可知：iowait过高导致系统平均负载升高，僵尸进程不断增长说明有程序没能正确清理子进程资源。" class="headerlink" title="分析目前数据可知：iowait过高导致系统平均负载升高，僵尸进程不断增长说明有程序没能正确清理子进程资源。"></a>分析目前数据可知：iowait过高导致系统平均负载升高，僵尸进程不断增长说明有程序没能正确清理子进程资源。</h5><h5 id="用dstat来分析，因为它可以同时查看CPU和I-O两种资源的使用情况，便于对比分析。"><a href="#用dstat来分析，因为它可以同时查看CPU和I-O两种资源的使用情况，便于对比分析。" class="headerlink" title="用dstat来分析，因为它可以同时查看CPU和I&#x2F;O两种资源的使用情况，便于对比分析。"></a>用dstat来分析，因为它可以同时查看CPU和I&#x2F;O两种资源的使用情况，便于对比分析。</h5><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">dstat</span> <span class="hljs-number">1</span> <span class="hljs-number">10</span>    #间隔<span class="hljs-number">1</span>秒输出<span class="hljs-number">10</span>组数据<br></code></pre></td></tr></table></figure>
+
+<h5 id="可以看到当wai（iowait）升高时磁盘请求read都会很大，说明iowait的升高和磁盘的读请求有关。接下来分析到底时哪个进程在读磁盘。"><a href="#可以看到当wai（iowait）升高时磁盘请求read都会很大，说明iowait的升高和磁盘的读请求有关。接下来分析到底时哪个进程在读磁盘。" class="headerlink" title="可以看到当wai（iowait）升高时磁盘请求read都会很大，说明iowait的升高和磁盘的读请求有关。接下来分析到底时哪个进程在读磁盘。"></a>可以看到当wai（iowait）升高时磁盘请求read都会很大，说明iowait的升高和磁盘的读请求有关。接下来分析到底时哪个进程在读磁盘。</h5><h5 id="之前-Top-查看的处于-D-状态的进程号，用-pidstat-d-p-XXX-展示进程的-I-O-统计数据。发现处于-D-状态的进程都没有任何读写操作。在用-pidstat-d-查看所有进程的-I-O统计数据，看到-app-进程在进行磁盘读操作，每秒读取-32MB-的数据。进程访问磁盘必须使用系统调用处于内核态，接下来重点就是找到app进程的系统调用。"><a href="#之前-Top-查看的处于-D-状态的进程号，用-pidstat-d-p-XXX-展示进程的-I-O-统计数据。发现处于-D-状态的进程都没有任何读写操作。在用-pidstat-d-查看所有进程的-I-O统计数据，看到-app-进程在进行磁盘读操作，每秒读取-32MB-的数据。进程访问磁盘必须使用系统调用处于内核态，接下来重点就是找到app进程的系统调用。" class="headerlink" title="之前 Top 查看的处于 D 状态的进程号，用 pidstat -d -p XXX 展示进程的 I&#x2F;O 统计数据。发现处于 D 状态的进程都没有任何读写操作。在用 pidstat -d 查看所有进程的 I&#x2F;O统计数据，看到 app 进程在进行磁盘读操作，每秒读取 32MB 的数据。进程访问磁盘必须使用系统调用处于内核态，接下来重点就是找到app进程的系统调用。"></a>之前 Top 查看的处于 D 状态的进程号，用 pidstat -d -p XXX 展示进程的 I&#x2F;O 统计数据。发现处于 D 状态的进程都没有任何读写操作。在用 pidstat -d 查看所有进程的 I&#x2F;O统计数据，看到 app 进程在进行磁盘读操作，每秒读取 32MB 的数据。进程访问磁盘必须使用系统调用处于内核态，接下来重点就是找到app进程的系统调用。</h5><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">sudo</span> strace -p XXX <span class="hljs-comment">#对app进程调用进行跟踪</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="报错没有权限，因为已经时-root-权限了。所以遇到这种情况，首先要检查进程状态是否正常。ps-命令查找该进程已经处于Z状态，即僵尸进程。"><a href="#报错没有权限，因为已经时-root-权限了。所以遇到这种情况，首先要检查进程状态是否正常。ps-命令查找该进程已经处于Z状态，即僵尸进程。" class="headerlink" title="报错没有权限，因为已经时 root 权限了。所以遇到这种情况，首先要检查进程状态是否正常。ps 命令查找该进程已经处于Z状态，即僵尸进程。"></a>报错没有权限，因为已经时 root 权限了。所以遇到这种情况，首先要检查进程状态是否正常。ps 命令查找该进程已经处于Z状态，即僵尸进程。</h5><h5 id="这种情况下top-pidstat之类的工具无法给出更多的信息，此时像第5篇一样，用-perf-record-d和-perf-report-进行分析，查看app进程调用栈。"><a href="#这种情况下top-pidstat之类的工具无法给出更多的信息，此时像第5篇一样，用-perf-record-d和-perf-report-进行分析，查看app进程调用栈。" class="headerlink" title="这种情况下top pidstat之类的工具无法给出更多的信息，此时像第5篇一样，用 perf record -d和 perf report 进行分析，查看app进程调用栈。"></a>这种情况下top pidstat之类的工具无法给出更多的信息，此时像第5篇一样，用 perf record -d和 perf report 进行分析，查看app进程调用栈。</h5><h5 id="看到-app-确实在通过系统调用-sys-read-读取数据，并且从-new-sync-read和-blkdev-direct-IO看出进程时进行直接读操作，请求直接从磁盘读，没有通过缓存导致iowait升高。"><a href="#看到-app-确实在通过系统调用-sys-read-读取数据，并且从-new-sync-read和-blkdev-direct-IO看出进程时进行直接读操作，请求直接从磁盘读，没有通过缓存导致iowait升高。" class="headerlink" title="看到 app 确实在通过系统调用 sys_read() 读取数据，并且从 new_sync_read和 blkdev_direct_IO看出进程时进行直接读操作，请求直接从磁盘读，没有通过缓存导致iowait升高。"></a>看到 app 确实在通过系统调用 sys_read() 读取数据，并且从 new_sync_read和 blkdev_direct_IO看出进程时进行直接读操作，请求直接从磁盘读，没有通过缓存导致iowait升高。</h5><h5 id="通过层层分析后，root-cause-是-app-内部进行了磁盘的直接I-O。然后定位到具体代码位置进行优化即可。"><a href="#通过层层分析后，root-cause-是-app-内部进行了磁盘的直接I-O。然后定位到具体代码位置进行优化即可。" class="headerlink" title="通过层层分析后，root cause 是 app 内部进行了磁盘的直接I&#x2F;O。然后定位到具体代码位置进行优化即可。"></a>通过层层分析后，root cause 是 app 内部进行了磁盘的直接I&#x2F;O。然后定位到具体代码位置进行优化即可。</h5><p><strong>僵尸进程</strong></p>
+<h5 id="上述优化后-iowait-显著下降，但是僵尸进程数量仍旧在增加。首先要定位僵尸进程的父进程，通过pstree-aps-XXX，打印出该僵尸进程的调用树，发现父进程就是app进程。"><a href="#上述优化后-iowait-显著下降，但是僵尸进程数量仍旧在增加。首先要定位僵尸进程的父进程，通过pstree-aps-XXX，打印出该僵尸进程的调用树，发现父进程就是app进程。" class="headerlink" title="上述优化后 iowait 显著下降，但是僵尸进程数量仍旧在增加。首先要定位僵尸进程的父进程，通过pstree -aps XXX，打印出该僵尸进程的调用树，发现父进程就是app进程。"></a>上述优化后 iowait 显著下降，但是僵尸进程数量仍旧在增加。首先要定位僵尸进程的父进程，通过pstree -aps XXX，打印出该僵尸进程的调用树，发现父进程就是app进程。</h5><h5 id="查看app代码，看看子进程结束的处理是否正确（是否调用wait-waitpid-，有没有注册SIGCHILD信号的处理函数等）。"><a href="#查看app代码，看看子进程结束的处理是否正确（是否调用wait-waitpid-，有没有注册SIGCHILD信号的处理函数等）。" class="headerlink" title="查看app代码，看看子进程结束的处理是否正确（是否调用wait()&#x2F;waitpid()，有没有注册SIGCHILD信号的处理函数等）。"></a>查看app代码，看看子进程结束的处理是否正确（是否调用wait()&#x2F;waitpid()，有没有注册SIGCHILD信号的处理函数等）。</h5><h5 id="碰到iowait升高时，先用dstat-pidstat等工具确认是否存在磁盘I-O问题，再找是哪些进程导致I-O，不能用strace直接分析进程调用时可以通过perf工具分析。"><a href="#碰到iowait升高时，先用dstat-pidstat等工具确认是否存在磁盘I-O问题，再找是哪些进程导致I-O，不能用strace直接分析进程调用时可以通过perf工具分析。" class="headerlink" title="碰到iowait升高时，先用dstat pidstat等工具确认是否存在磁盘I&#x2F;O问题，再找是哪些进程导致I&#x2F;O，不能用strace直接分析进程调用时可以通过perf工具分析。"></a>碰到iowait升高时，先用dstat pidstat等工具确认是否存在磁盘I&#x2F;O问题，再找是哪些进程导致I&#x2F;O，不能用strace直接分析进程调用时可以通过perf工具分析。</h5><h5 id="对于僵尸问题，用pstree找到父进程，然后看源码检查子进程结束的处理逻辑即可。"><a href="#对于僵尸问题，用pstree找到父进程，然后看源码检查子进程结束的处理逻辑即可。" class="headerlink" title="对于僵尸问题，用pstree找到父进程，然后看源码检查子进程结束的处理逻辑即可。"></a>对于僵尸问题，用pstree找到父进程，然后看源码检查子进程结束的处理逻辑即可。</h5><h4 id="CPU性能指标"><a href="#CPU性能指标" class="headerlink" title="CPU性能指标"></a><strong>CPU性能指标</strong></h4><ul>
+<li><p><strong>CPU使用率</strong></p>
+</li>
+<li><ul>
+<li><h5 id="用户CPU使用率-包括用户态-user-和低优先级用户态-nice-该指标过高说明应用程序比较繁忙"><a href="#用户CPU使用率-包括用户态-user-和低优先级用户态-nice-该指标过高说明应用程序比较繁忙" class="headerlink" title="用户CPU使用率, 包括用户态(user)和低优先级用户态(nice). 该指标过高说明应用程序比较繁忙."></a>用户CPU使用率, 包括用户态(user)和低优先级用户态(nice). 该指标过高说明应用程序比较繁忙.</h5></li>
+<li><h5 id="系统CPU使用率-CPU在内核态运行的时间百分比-不含中断-该指标高说明内核比较繁忙"><a href="#系统CPU使用率-CPU在内核态运行的时间百分比-不含中断-该指标高说明内核比较繁忙" class="headerlink" title="系统CPU使用率, CPU在内核态运行的时间百分比(不含中断). 该指标高说明内核比较繁忙."></a>系统CPU使用率, CPU在内核态运行的时间百分比(不含中断). 该指标高说明内核比较繁忙.</h5></li>
+<li><h5 id="等待I-O的CPU使用率-iowait-该指标高说明系统与硬件设备I-O交互时间比较长"><a href="#等待I-O的CPU使用率-iowait-该指标高说明系统与硬件设备I-O交互时间比较长" class="headerlink" title="等待I&#x2F;O的CPU使用率, iowait, 该指标高说明系统与硬件设备I&#x2F;O交互时间比较长."></a>等待I&#x2F;O的CPU使用率, iowait, 该指标高说明系统与硬件设备I&#x2F;O交互时间比较长.</h5></li>
+<li><h5 id="软-硬中断CPU使用率-该指标高说明系统中发生大量中断"><a href="#软-硬中断CPU使用率-该指标高说明系统中发生大量中断" class="headerlink" title="软&#x2F;硬中断CPU使用率, 该指标高说明系统中发生大量中断."></a>软&#x2F;硬中断CPU使用率, 该指标高说明系统中发生大量中断.</h5></li>
+<li><h5 id="steal-CPU-guest-CPU-表示虚拟机占用的CPU百分比"><a href="#steal-CPU-guest-CPU-表示虚拟机占用的CPU百分比" class="headerlink" title="steal CPU &#x2F; guest CPU, 表示虚拟机占用的CPU百分比."></a>steal CPU &#x2F; guest CPU, 表示虚拟机占用的CPU百分比.</h5></li>
+</ul>
+</li>
+<li><p><strong>平均负载</strong></p>
+</li>
+<li><ul>
+<li><h5 id="理想情况下平均负载等于逻辑CPU个数-表示每个CPU都被充分利用-若大于则说明系统负载较重"><a href="#理想情况下平均负载等于逻辑CPU个数-表示每个CPU都被充分利用-若大于则说明系统负载较重" class="headerlink" title="理想情况下平均负载等于逻辑CPU个数,表示每个CPU都被充分利用. 若大于则说明系统负载较重."></a>理想情况下平均负载等于逻辑CPU个数,表示每个CPU都被充分利用. 若大于则说明系统负载较重.</h5></li>
+</ul>
+</li>
+<li><p><strong>进程上下文切换</strong></p>
+</li>
+<li><ul>
+<li><h5 id="包括无法获取资源的自愿切换和系统强制调度时的非自愿切换-上下文切换本身是保证Linux正常运行的一项核心功能-过多的切换则会将原本运行进程的CPU时间消耗在寄存器-内核占及虚拟内存等数据保存和恢复上"><a href="#包括无法获取资源的自愿切换和系统强制调度时的非自愿切换-上下文切换本身是保证Linux正常运行的一项核心功能-过多的切换则会将原本运行进程的CPU时间消耗在寄存器-内核占及虚拟内存等数据保存和恢复上" class="headerlink" title="包括无法获取资源的自愿切换和系统强制调度时的非自愿切换. 上下文切换本身是保证Linux正常运行的一项核心功能. 过多的切换则会将原本运行进程的CPU时间消耗在寄存器,内核占及虚拟内存等数据保存和恢复上"></a>包括无法获取资源的自愿切换和系统强制调度时的非自愿切换. 上下文切换本身是保证Linux正常运行的一项核心功能. 过多的切换则会将原本运行进程的CPU时间消耗在寄存器,内核占及虚拟内存等数据保存和恢复上</h5></li>
+</ul>
+</li>
+<li><p><strong>CPU缓存命中率</strong></p>
+</li>
+<li><ul>
+<li><h5 id="CPU缓存的复用情况-命中率越高性能越好-其中L1-L2常用在单核-L3则用在多核中"><a href="#CPU缓存的复用情况-命中率越高性能越好-其中L1-L2常用在单核-L3则用在多核中" class="headerlink" title="CPU缓存的复用情况,命中率越高性能越好. 其中L1&#x2F;L2常用在单核,L3则用在多核中"></a>CPU缓存的复用情况,命中率越高性能越好. 其中L1&#x2F;L2常用在单核,L3则用在多核中</h5></li>
+</ul>
+</li>
+</ul>
+<h4 id="性能工具"><a href="#性能工具" class="headerlink" title="性能工具"></a><strong>性能工具</strong></h4><ul>
+<li><p><strong>平均负载案例</strong></p>
+</li>
+<li><ul>
+<li><h5 id="先用uptime查看系统平均负载"><a href="#先用uptime查看系统平均负载" class="headerlink" title="先用uptime查看系统平均负载"></a>先用uptime查看系统平均负载</h5></li>
+<li><h5 id="判断负载在升高后再用mpstat和pidstat分别查看每个CPU和每个进程CPU使用情况-找出导致平均负载较高的进程"><a href="#判断负载在升高后再用mpstat和pidstat分别查看每个CPU和每个进程CPU使用情况-找出导致平均负载较高的进程" class="headerlink" title="判断负载在升高后再用mpstat和pidstat分别查看每个CPU和每个进程CPU使用情况.找出导致平均负载较高的进程."></a>判断负载在升高后再用mpstat和pidstat分别查看每个CPU和每个进程CPU使用情况.找出导致平均负载较高的进程.</h5></li>
+</ul>
+</li>
+<li><p><strong>上下文切换案例</strong></p>
+</li>
+<li><ul>
+<li><h5 id="先用vmstat查看系统上下文切换和中断次数"><a href="#先用vmstat查看系统上下文切换和中断次数" class="headerlink" title="先用vmstat查看系统上下文切换和中断次数"></a>先用vmstat查看系统上下文切换和中断次数</h5></li>
+<li><h5 id="再用pidstat观察进程的自愿和非自愿上下文切换情况"><a href="#再用pidstat观察进程的自愿和非自愿上下文切换情况" class="headerlink" title="再用pidstat观察进程的自愿和非自愿上下文切换情况"></a>再用pidstat观察进程的自愿和非自愿上下文切换情况</h5></li>
+<li><h5 id="最后通过pidstat观察线程的上下文切换情况"><a href="#最后通过pidstat观察线程的上下文切换情况" class="headerlink" title="最后通过pidstat观察线程的上下文切换情况"></a>最后通过pidstat观察线程的上下文切换情况</h5></li>
+</ul>
+</li>
+<li><p><strong>进程CPU使用率高案例</strong></p>
+</li>
+<li><ul>
+<li><h5 id="先用top查看系统和进程的CPU使用情况-定位到进程"><a href="#先用top查看系统和进程的CPU使用情况-定位到进程" class="headerlink" title="先用top查看系统和进程的CPU使用情况,定位到进程"></a>先用top查看系统和进程的CPU使用情况,定位到进程</h5></li>
+<li><h5 id="再用perf-top观察进程调用链-定位到具体函数"><a href="#再用perf-top观察进程调用链-定位到具体函数" class="headerlink" title="再用perf top观察进程调用链,定位到具体函数"></a>再用perf top观察进程调用链,定位到具体函数</h5></li>
+</ul>
+</li>
+<li><p><strong>系统CPU使用率高案例</strong></p>
+</li>
+<li><ul>
+<li><h5 id="先用top查看系统和进程的CPU使用情况-top-pidstat都无法找到CPU使用率高的进程"><a href="#先用top查看系统和进程的CPU使用情况-top-pidstat都无法找到CPU使用率高的进程" class="headerlink" title="先用top查看系统和进程的CPU使用情况,top&#x2F;pidstat都无法找到CPU使用率高的进程"></a>先用top查看系统和进程的CPU使用情况,top&#x2F;pidstat都无法找到CPU使用率高的进程</h5></li>
+<li><h5 id="重新审视top输出"><a href="#重新审视top输出" class="headerlink" title="重新审视top输出"></a>重新审视top输出</h5></li>
+<li><h5 id="从CPU使用率不高-但是处于Running状态的进程入手"><a href="#从CPU使用率不高-但是处于Running状态的进程入手" class="headerlink" title="从CPU使用率不高,但是处于Running状态的进程入手"></a>从CPU使用率不高,但是处于Running状态的进程入手</h5></li>
+<li><h5 id="perf-record-report发现短时进程导致-execsnoop工具"><a href="#perf-record-report发现短时进程导致-execsnoop工具" class="headerlink" title="perf record&#x2F;report发现短时进程导致 (execsnoop工具)"></a>perf record&#x2F;report发现短时进程导致 (execsnoop工具)</h5></li>
+</ul>
+</li>
+<li><p><strong>不可中断和僵尸进程案例</strong></p>
+</li>
+<li><ul>
+<li><h5 id="先用top观察iowait升高-发现大量不可中断和僵尸进程"><a href="#先用top观察iowait升高-发现大量不可中断和僵尸进程" class="headerlink" title="先用top观察iowait升高,发现大量不可中断和僵尸进程"></a>先用top观察iowait升高,发现大量不可中断和僵尸进程</h5></li>
+<li><h5 id="strace无法跟踪进程系统调用"><a href="#strace无法跟踪进程系统调用" class="headerlink" title="strace无法跟踪进程系统调用"></a>strace无法跟踪进程系统调用</h5></li>
+<li><h5 id="perf分析调用链发现根源来自磁盘直接I-O"><a href="#perf分析调用链发现根源来自磁盘直接I-O" class="headerlink" title="perf分析调用链发现根源来自磁盘直接I&#x2F;O"></a>perf分析调用链发现根源来自磁盘直接I&#x2F;O</h5></li>
+</ul>
+</li>
+<li><p><strong>软中断案例</strong></p>
+</li>
+<li><ul>
+<li><h5 id="top观察系统软中断CPU使用率高"><a href="#top观察系统软中断CPU使用率高" class="headerlink" title="top观察系统软中断CPU使用率高"></a>top观察系统软中断CPU使用率高</h5></li>
+<li><h5 id="查看-proc-softirqs找到变化速率较快的几种软中断"><a href="#查看-proc-softirqs找到变化速率较快的几种软中断" class="headerlink" title="查看&#x2F;proc&#x2F;softirqs找到变化速率较快的几种软中断"></a>查看&#x2F;proc&#x2F;softirqs找到变化速率较快的几种软中断</h5></li>
+<li><h5 id="sar命令发现是网络小包问题"><a href="#sar命令发现是网络小包问题" class="headerlink" title="sar命令发现是网络小包问题"></a>sar命令发现是网络小包问题</h5></li>
+<li><h5 id="tcpdump找出网络帧的类型和来源，确定SYN-FLOOD攻击导致"><a href="#tcpdump找出网络帧的类型和来源，确定SYN-FLOOD攻击导致" class="headerlink" title="tcpdump找出网络帧的类型和来源，确定SYN FLOOD攻击导致"></a>tcpdump找出网络帧的类型和来源，确定SYN FLOOD攻击导致</h5></li>
+</ul>
+</li>
+</ul>
+<h5 id="根据不同的性能指标来找合适的工具："><a href="#根据不同的性能指标来找合适的工具：" class="headerlink" title="根据不同的性能指标来找合适的工具："></a>根据不同的性能指标来找合适的工具：</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402261536136.png" srcset="/img/loading.gif" lazyload alt="image-20240226153633005"></p>
+<p>先运行几个支持指标较多的工具，如 top&#x2F;vmstat&#x2F;pidstat，根据它们的输出可以得出是哪种类型的性能问题。定位到进程后再用 strace&#x2F;perf 分析调用情况进一步分析。如果是软中断导致用 &#x2F;proc&#x2F;softirqs</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402261536865.png" srcset="/img/loading.gif" lazyload alt="image-20240226153643766"></p>
+<h4 id="CPU优化"><a href="#CPU优化" class="headerlink" title="CPU优化"></a><strong>CPU优化</strong></h4><ul>
+<li><p><strong>应用程序优化</strong></p>
+</li>
+<li><ul>
+<li><h5 id="编译器优化：编译阶段开启优化选项，如gcc-O2"><a href="#编译器优化：编译阶段开启优化选项，如gcc-O2" class="headerlink" title="编译器优化：编译阶段开启优化选项，如gcc -O2"></a>编译器优化：编译阶段开启优化选项，如gcc -O2</h5></li>
+<li><h5 id="算法优化"><a href="#算法优化" class="headerlink" title="算法优化"></a>算法优化</h5></li>
+<li><h5 id="异步处理：避免程序因为等待某个资源而一直阻塞，提升程序的并发处理能力。-将轮询替换为事件通知"><a href="#异步处理：避免程序因为等待某个资源而一直阻塞，提升程序的并发处理能力。-将轮询替换为事件通知" class="headerlink" title="异步处理：避免程序因为等待某个资源而一直阻塞，提升程序的并发处理能力。(将轮询替换为事件通知)"></a>异步处理：避免程序因为等待某个资源而一直阻塞，提升程序的并发处理能力。(将轮询替换为事件通知)</h5></li>
+<li><h5 id="多线程代替多进程：减少上下文切换成本"><a href="#多线程代替多进程：减少上下文切换成本" class="headerlink" title="多线程代替多进程：减少上下文切换成本"></a>多线程代替多进程：减少上下文切换成本</h5></li>
+<li><h5 id="善用缓存：加快程序处理速度"><a href="#善用缓存：加快程序处理速度" class="headerlink" title="善用缓存：加快程序处理速度"></a>善用缓存：加快程序处理速度</h5></li>
+</ul>
+</li>
+<li><p><strong>系统优化</strong></p>
+</li>
+<li><ul>
+<li><h5 id="CPU绑定：将进程绑定要1个-多个CPU上，提高CPU缓存命中率，减少CPU调度带来的上下文切换"><a href="#CPU绑定：将进程绑定要1个-多个CPU上，提高CPU缓存命中率，减少CPU调度带来的上下文切换" class="headerlink" title="CPU绑定：将进程绑定要1个&#x2F;多个CPU上，提高CPU缓存命中率，减少CPU调度带来的上下文切换"></a>CPU绑定：将进程绑定要1个&#x2F;多个CPU上，提高CPU缓存命中率，减少CPU调度带来的上下文切换</h5></li>
+<li><h5 id="CPU独占：CPU亲和性机制来分配进程"><a href="#CPU独占：CPU亲和性机制来分配进程" class="headerlink" title="CPU独占：CPU亲和性机制来分配进程"></a>CPU独占：CPU亲和性机制来分配进程</h5></li>
+<li><h5 id="优先级调整：使用nice适当降低非核心应用的优先级"><a href="#优先级调整：使用nice适当降低非核心应用的优先级" class="headerlink" title="优先级调整：使用nice适当降低非核心应用的优先级"></a>优先级调整：使用nice适当降低非核心应用的优先级</h5></li>
+<li><h5 id="为进程设置资源显示-cgroups设置使用上限，防止由某个应用自身问题耗尽系统资源"><a href="#为进程设置资源显示-cgroups设置使用上限，防止由某个应用自身问题耗尽系统资源" class="headerlink" title="为进程设置资源显示: cgroups设置使用上限，防止由某个应用自身问题耗尽系统资源"></a>为进程设置资源显示: cgroups设置使用上限，防止由某个应用自身问题耗尽系统资源</h5></li>
+<li><h5 id="NUMA优化-CPU尽可能访问本地内存"><a href="#NUMA优化-CPU尽可能访问本地内存" class="headerlink" title="NUMA优化: CPU尽可能访问本地内存"></a>NUMA优化: CPU尽可能访问本地内存</h5></li>
+<li><h5 id="中断负载均衡-irpbalance，将中断处理过程自动负载均衡到各个CPU上"><a href="#中断负载均衡-irpbalance，将中断处理过程自动负载均衡到各个CPU上" class="headerlink" title="中断负载均衡: irpbalance，将中断处理过程自动负载均衡到各个CPU上"></a>中断负载均衡: irpbalance，将中断处理过程自动负载均衡到各个CPU上</h5></li>
+</ul>
+</li>
+<li><p><strong>TPS、QPS、系统吞吐量的区别和理解</strong></p>
+</li>
+<li><ul>
+<li><h5 id="QPS（TPS）"><a href="#QPS（TPS）" class="headerlink" title="QPS（TPS）"></a>QPS（TPS）</h5></li>
+<li><h5 id="并发数"><a href="#并发数" class="headerlink" title="并发数"></a>并发数</h5></li>
+<li><h5 id="响应时间"><a href="#响应时间" class="headerlink" title="响应时间"></a>响应时间</h5></li>
+<li><h5 id="QPS（TPS）-并发数-平均相应时间"><a href="#QPS（TPS）-并发数-平均相应时间" class="headerlink" title="QPS（TPS）&#x3D;并发数&#x2F;平均相应时间"></a>QPS（TPS）&#x3D;并发数&#x2F;平均相应时间</h5></li>
+<li><h5 id="用户请求服务器"><a href="#用户请求服务器" class="headerlink" title="用户请求服务器"></a>用户请求服务器</h5></li>
+<li><h5 id="服务器内部处理"><a href="#服务器内部处理" class="headerlink" title="服务器内部处理"></a>服务器内部处理</h5></li>
+<li><h5 id="服务器返回给客户"><a href="#服务器返回给客户" class="headerlink" title="服务器返回给客户"></a>服务器返回给客户</h5><h5 id="QPS-类似-TPS，但是对于一个页面的访问形成一个-TPS，但是一次页面请求可能包含多次对服务器的请求，可能计入多次-QPS"><a href="#QPS-类似-TPS，但是对于一个页面的访问形成一个-TPS，但是一次页面请求可能包含多次对服务器的请求，可能计入多次-QPS" class="headerlink" title="QPS 类似 TPS，但是对于一个页面的访问形成一个 TPS，但是一次页面请求可能包含多次对服务器的请求，可能计入多次 QPS"></a>QPS 类似 TPS，但是对于一个页面的访问形成一个 TPS，但是一次页面请求可能包含多次对服务器的请求，可能计入多次 QPS</h5></li>
+<li><h5 id="QPS（Queries-Per-Second）每秒查询率，一台服务器每秒能够响应的查询次数"><a href="#QPS（Queries-Per-Second）每秒查询率，一台服务器每秒能够响应的查询次数" class="headerlink" title="QPS（Queries Per Second）每秒查询率，一台服务器每秒能够响应的查询次数."></a>QPS（Queries Per Second）每秒查询率，一台服务器每秒能够响应的查询次数.</h5></li>
+<li><h5 id="TPS（Transactions-Per-Second）每秒事务数，软件测试的结果"><a href="#TPS（Transactions-Per-Second）每秒事务数，软件测试的结果" class="headerlink" title="TPS（Transactions Per Second）每秒事务数，软件测试的结果."></a>TPS（Transactions Per Second）每秒事务数，软件测试的结果.</h5></li>
+</ul>
+</li>
+<li><h5 id="系统吞吐量，包括几个重要参数："><a href="#系统吞吐量，包括几个重要参数：" class="headerlink" title="系统吞吐量，包括几个重要参数："></a>系统吞吐量，包括几个重要参数：</h5></li>
+<li><h5 id="QPS-TPS"><a href="#QPS-TPS" class="headerlink" title="QPS(TPS)"></a>QPS(TPS)</h5></li>
+<li><h5 id="并发数-1"><a href="#并发数-1" class="headerlink" title="并发数"></a>并发数</h5></li>
+<li><h5 id="响应时间-1"><a href="#响应时间-1" class="headerlink" title="响应时间"></a>响应时间</h5></li>
+<li><h5 id="QPS-TPS-并发数-平均相应时间"><a href="#QPS-TPS-并发数-平均相应时间" class="headerlink" title="QPS(TPS)&#x3D;并发数&#x2F;平均相应时间"></a>QPS(TPS)&#x3D;并发数&#x2F;平均相应时间</h5></li>
+</ul>
+<h3 id="内存"><a href="#内存" class="headerlink" title="内存"></a><strong>内存</strong></h3><h4 id="Linux内存是怎么工作的"><a href="#Linux内存是怎么工作的" class="headerlink" title="Linux内存是怎么工作的"></a><strong>Linux内存是怎么工作的</strong></h4><h5 id="内存映射"><a href="#内存映射" class="headerlink" title="内存映射"></a><strong>内存映射</strong></h5><h5 id="大多数计算机用的主存都是动态随机访问内存-DRAM-，只有内核才可以直接访问物理内存。Linux内核给每个进程提供了一个独立的虚拟地址空间，并且这个地址空间是连续的。这样进程就可以很方便的访问内存-虚拟内存-。"><a href="#大多数计算机用的主存都是动态随机访问内存-DRAM-，只有内核才可以直接访问物理内存。Linux内核给每个进程提供了一个独立的虚拟地址空间，并且这个地址空间是连续的。这样进程就可以很方便的访问内存-虚拟内存-。" class="headerlink" title="大多数计算机用的主存都是动态随机访问内存(DRAM)，只有内核才可以直接访问物理内存。Linux内核给每个进程提供了一个独立的虚拟地址空间，并且这个地址空间是连续的。这样进程就可以很方便的访问内存(虚拟内存)。"></a>大多数计算机用的主存都是动态随机访问内存(DRAM)，只有内核才可以直接访问物理内存。Linux内核给每个进程提供了一个独立的虚拟地址空间，并且这个地址空间是连续的。这样进程就可以很方便的访问内存(虚拟内存)。</h5><h5 id="虚拟地址空间的内部分为内核空间和用户空间两部分，不同字长的处理器地址空间的范围不同。32位系统内核空间占用1G，用户空间占3G。64位系统内核空间和用户空间都是128T，分别占内存空间的最高和最低处，中间部分为未定义。"><a href="#虚拟地址空间的内部分为内核空间和用户空间两部分，不同字长的处理器地址空间的范围不同。32位系统内核空间占用1G，用户空间占3G。64位系统内核空间和用户空间都是128T，分别占内存空间的最高和最低处，中间部分为未定义。" class="headerlink" title="虚拟地址空间的内部分为内核空间和用户空间两部分，不同字长的处理器地址空间的范围不同。32位系统内核空间占用1G，用户空间占3G。64位系统内核空间和用户空间都是128T，分别占内存空间的最高和最低处，中间部分为未定义。"></a>虚拟地址空间的内部分为内核空间和用户空间两部分，不同字长的处理器地址空间的范围不同。32位系统内核空间占用1G，用户空间占3G。64位系统内核空间和用户空间都是128T，分别占内存空间的最高和最低处，中间部分为未定义。</h5><h5 id="并不是所有的虚拟内存都会分配物理内存，只有实际使用的才会。分配后的物理内存通过内存映射管理。为了完成内存映射，内核为每个进程都维护了一个页表，记录虚拟地址和物理地址的映射关系。页表实际存储在CPU的内存管理单元MMU中，处理器可以直接通过硬件找出要访问的内存。"><a href="#并不是所有的虚拟内存都会分配物理内存，只有实际使用的才会。分配后的物理内存通过内存映射管理。为了完成内存映射，内核为每个进程都维护了一个页表，记录虚拟地址和物理地址的映射关系。页表实际存储在CPU的内存管理单元MMU中，处理器可以直接通过硬件找出要访问的内存。" class="headerlink" title="并不是所有的虚拟内存都会分配物理内存，只有实际使用的才会。分配后的物理内存通过内存映射管理。为了完成内存映射，内核为每个进程都维护了一个页表，记录虚拟地址和物理地址的映射关系。页表实际存储在CPU的内存管理单元MMU中，处理器可以直接通过硬件找出要访问的内存。"></a>并不是所有的虚拟内存都会分配物理内存，只有实际使用的才会。分配后的物理内存通过内存映射管理。为了完成内存映射，内核为每个进程都维护了一个页表，记录虚拟地址和物理地址的映射关系。页表实际存储在CPU的内存管理单元MMU中，处理器可以直接通过硬件找出要访问的内存。</h5><h5 id="当进程访问的虚拟地址在页表中查不到时，系统会产生一个缺页异常，进入内核空间分配物理内存，更新进程页表，再返回用户空间恢复进程的运行。"><a href="#当进程访问的虚拟地址在页表中查不到时，系统会产生一个缺页异常，进入内核空间分配物理内存，更新进程页表，再返回用户空间恢复进程的运行。" class="headerlink" title="当进程访问的虚拟地址在页表中查不到时，系统会产生一个缺页异常，进入内核空间分配物理内存，更新进程页表，再返回用户空间恢复进程的运行。"></a>当进程访问的虚拟地址在页表中查不到时，系统会产生一个缺页异常，进入内核空间分配物理内存，更新进程页表，再返回用户空间恢复进程的运行。</h5><h5 id="MMU以页为单位管理内存，页大小4KB。为了解决页表项过多问题Linux提供了多级页表和HugePage的机制。"><a href="#MMU以页为单位管理内存，页大小4KB。为了解决页表项过多问题Linux提供了多级页表和HugePage的机制。" class="headerlink" title="MMU以页为单位管理内存，页大小4KB。为了解决页表项过多问题Linux提供了多级页表和HugePage的机制。"></a>MMU以页为单位管理内存，页大小4KB。为了解决页表项过多问题Linux提供了多级页表和HugePage的机制。</h5><h5 id="虚拟内存空间分布"><a href="#虚拟内存空间分布" class="headerlink" title="虚拟内存空间分布"></a><strong>虚拟内存空间分布</strong></h5><h5 id="用户空间内存从低到高是五种不同的内存段："><a href="#用户空间内存从低到高是五种不同的内存段：" class="headerlink" title="用户空间内存从低到高是五种不同的内存段："></a>用户空间内存从低到高是五种不同的内存段：</h5><ul>
+<li><h5 id="只读段-代码和常量等"><a href="#只读段-代码和常量等" class="headerlink" title="只读段 代码和常量等"></a><strong>只读段</strong> 代码和常量等</h5></li>
+<li><h5 id="数据段-全局变量等"><a href="#数据段-全局变量等" class="headerlink" title="数据段 全局变量等"></a><strong>数据段</strong> 全局变量等</h5></li>
+<li><h5 id="堆-动态分配的内存，从低地址开始向上增长"><a href="#堆-动态分配的内存，从低地址开始向上增长" class="headerlink" title="堆 动态分配的内存，从低地址开始向上增长"></a>堆 动态分配的内存，从低地址开始向上增长</h5></li>
+<li><h5 id="文件映射-动态库、共享内存等，从高地址开始向下增长"><a href="#文件映射-动态库、共享内存等，从高地址开始向下增长" class="headerlink" title="文件映射 动态库、共享内存等，从高地址开始向下增长"></a><strong>文件映射</strong> 动态库、共享内存等，从高地址开始向下增长</h5></li>
+<li><h5 id="栈-包括局部变量和函数调用的上下文等，栈的大小是固定的。一般8MB"><a href="#栈-包括局部变量和函数调用的上下文等，栈的大小是固定的。一般8MB" class="headerlink" title="栈 包括局部变量和函数调用的上下文等，栈的大小是固定的。一般8MB"></a><strong>栈</strong> 包括局部变量和函数调用的上下文等，栈的大小是固定的。一般8MB</h5></li>
+</ul>
+<h5 id="内存分配与回收"><a href="#内存分配与回收" class="headerlink" title="内存分配与回收"></a><strong>内存分配与回收</strong></h5><p><strong>分配</strong></p>
+<h5 id="malloc-对应到系统调用上有两种实现方式："><a href="#malloc-对应到系统调用上有两种实现方式：" class="headerlink" title="malloc 对应到系统调用上有两种实现方式："></a>malloc 对应到系统调用上有两种实现方式：</h5><ul>
+<li><h5 id="brk-针对小块内存"><a href="#brk-针对小块内存" class="headerlink" title="brk() 针对小块内存(&lt;128K)，通过移动堆顶位置来分配。"></a>brk() 针对小块内存(&lt;128K)，通过移动堆顶位置来分配。</h5><h5 id="内存释放后不立即归还内存，而是被缓存起来。"><a href="#内存释放后不立即归还内存，而是被缓存起来。" class="headerlink" title="内存释放后不立即归还内存，而是被缓存起来。"></a>内存释放后不立即归还内存，而是被缓存起来。</h5></li>
+<li><h5 id="mmap-针对大块内存-128K-，直接用内存映射来分配，即在文件映射段找一块空闲内存分配。"><a href="#mmap-针对大块内存-128K-，直接用内存映射来分配，即在文件映射段找一块空闲内存分配。" class="headerlink" title="mmap()针对大块内存(&gt;128K)，直接用内存映射来分配，即在文件映射段找一块空闲内存分配。"></a>mmap()针对大块内存(&gt;128K)，直接用内存映射来分配，即在文件映射段找一块空闲内存分配。</h5></li>
+</ul>
+<h5 id="前者的缓存可以减少缺页异常的发生，提高内存访问效率。但是由于内存没有归还系统，在内存工作繁忙时，频繁的内存分配-释放会造成内存碎片。"><a href="#前者的缓存可以减少缺页异常的发生，提高内存访问效率。但是由于内存没有归还系统，在内存工作繁忙时，频繁的内存分配-释放会造成内存碎片。" class="headerlink" title="前者的缓存可以减少缺页异常的发生，提高内存访问效率。但是由于内存没有归还系统，在内存工作繁忙时，频繁的内存分配&#x2F;释放会造成内存碎片。"></a>前者的缓存可以减少缺页异常的发生，提高内存访问效率。但是由于内存没有归还系统，在内存工作繁忙时，频繁的内存分配&#x2F;释放会造成内存碎片。</h5><h5 id="后者在释放时直接归还系统，所以每次mmap都会发生缺页异常。"><a href="#后者在释放时直接归还系统，所以每次mmap都会发生缺页异常。" class="headerlink" title="后者在释放时直接归还系统，所以每次mmap都会发生缺页异常。"></a>后者在释放时直接归还系统，所以每次mmap都会发生缺页异常。</h5><h5 id="在内存工作繁忙时，频繁内存分配会导致大量缺页异常，使内核管理负担增加。"><a href="#在内存工作繁忙时，频繁内存分配会导致大量缺页异常，使内核管理负担增加。" class="headerlink" title="在内存工作繁忙时，频繁内存分配会导致大量缺页异常，使内核管理负担增加。"></a>在内存工作繁忙时，频繁内存分配会导致大量缺页异常，使内核管理负担增加。</h5><h5 id="上述两种调用并没有真正分配内存，这些内存只有在首次访问时，才通过缺页异常进入内核中，由内核来分配。"><a href="#上述两种调用并没有真正分配内存，这些内存只有在首次访问时，才通过缺页异常进入内核中，由内核来分配。" class="headerlink" title="上述两种调用并没有真正分配内存，这些内存只有在首次访问时，才通过缺页异常进入内核中，由内核来分配。"></a>上述两种调用并没有真正分配内存，这些内存只有在首次访问时，才通过缺页异常进入内核中，由内核来分配。</h5><p><strong>回收</strong></p>
+<h5 id="内存紧张时，系统通过以下方式来回收内存："><a href="#内存紧张时，系统通过以下方式来回收内存：" class="headerlink" title="内存紧张时，系统通过以下方式来回收内存："></a>内存紧张时，系统通过以下方式来回收内存：</h5><ul>
+<li><h5 id="回收缓存：LRU算法回收最近最少使用的内存页面；"><a href="#回收缓存：LRU算法回收最近最少使用的内存页面；" class="headerlink" title="回收缓存：LRU算法回收最近最少使用的内存页面；"></a>回收缓存：LRU算法回收最近最少使用的内存页面；</h5></li>
+<li><h5 id="回收不常访问内存：把不常用的内存通过交换分区写入磁盘"><a href="#回收不常访问内存：把不常用的内存通过交换分区写入磁盘" class="headerlink" title="回收不常访问内存：把不常用的内存通过交换分区写入磁盘"></a>回收不常访问内存：把不常用的内存通过交换分区写入磁盘</h5></li>
+<li><h5 id="杀死进程：OOM内核保护机制（进程消耗内存越大-oom-score-越大，占用-CPU-越多-oom-score-越小，可以通过-proc-手动调整-oom-adj）"><a href="#杀死进程：OOM内核保护机制（进程消耗内存越大-oom-score-越大，占用-CPU-越多-oom-score-越小，可以通过-proc-手动调整-oom-adj）" class="headerlink" title="杀死进程：OOM内核保护机制（进程消耗内存越大 oom_score 越大，占用 CPU 越多 oom_score 越小，可以通过 &#x2F;proc 手动调整 oom_adj）"></a>杀死进程：OOM内核保护机制（进程消耗内存越大 oom_score 越大，占用 CPU 越多 oom_score 越小，可以通过 &#x2F;proc 手动调整 oom_adj）</h5></li>
+<li></li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">echo</span> -16 &gt; /proc/$(pidof XXX)/oom_adj<br></code></pre></td></tr></table></figure>
+
+<p><strong>如何查看内存使用情况</strong></p>
+<h5 id="free来查看整个系统的内存使用情况"><a href="#free来查看整个系统的内存使用情况" class="headerlink" title="free来查看整个系统的内存使用情况"></a>free来查看整个系统的内存使用情况</h5><h5 id="top-ps来查看某个进程的内存使用情况"><a href="#top-ps来查看某个进程的内存使用情况" class="headerlink" title="top&#x2F;ps来查看某个进程的内存使用情况"></a>top&#x2F;ps来查看某个进程的内存使用情况</h5><ul>
+<li><h5 id="VIRT-进程的虚拟内存大小"><a href="#VIRT-进程的虚拟内存大小" class="headerlink" title="VIRT 进程的虚拟内存大小"></a>VIRT 进程的虚拟内存大小</h5></li>
+<li><h5 id="RES-常驻内存的大小，即进程实际使用的物理内存大小，不包括swap和共享内存"><a href="#RES-常驻内存的大小，即进程实际使用的物理内存大小，不包括swap和共享内存" class="headerlink" title="RES 常驻内存的大小，即进程实际使用的物理内存大小，不包括swap和共享内存"></a>RES 常驻内存的大小，即进程实际使用的物理内存大小，不包括swap和共享内存</h5></li>
+<li><h5 id="SHR-共享内存大小，与其他进程共享的内存，加载的动态链接库以及程序代码段"><a href="#SHR-共享内存大小，与其他进程共享的内存，加载的动态链接库以及程序代码段" class="headerlink" title="SHR 共享内存大小，与其他进程共享的内存，加载的动态链接库以及程序代码段"></a>SHR 共享内存大小，与其他进程共享的内存，加载的动态链接库以及程序代码段</h5></li>
+<li><h5 id="MEM-进程使用物理内存占系统总内存的百分比"><a href="#MEM-进程使用物理内存占系统总内存的百分比" class="headerlink" title="%MEM 进程使用物理内存占系统总内存的百分比"></a>%MEM 进程使用物理内存占系统总内存的百分比</h5></li>
+</ul>
+<blockquote>
+<p>怎样理解内存中的Buffer和Cache？</p>
+</blockquote>
+<h5 id="buffer是对磁盘数据的缓存，cache是对文件数据的缓存，它们既会用在读请求也会用在写请求中"><a href="#buffer是对磁盘数据的缓存，cache是对文件数据的缓存，它们既会用在读请求也会用在写请求中" class="headerlink" title="buffer是对磁盘数据的缓存，cache是对文件数据的缓存，它们既会用在读请求也会用在写请求中"></a>buffer是对磁盘数据的缓存，cache是对文件数据的缓存，它们既会用在读请求也会用在写请求中</h5><blockquote>
+<p>如何利用系统缓存优化程序的运行效率</p>
+</blockquote>
+<p><strong>缓存命中率</strong></p>
+<h5 id="缓存命中率是指直接通过缓存获取数据的请求次数，占所有请求次数的百分比。命中率越高说明缓存带来的收益越高，应用程序的性能也就越好。"><a href="#缓存命中率是指直接通过缓存获取数据的请求次数，占所有请求次数的百分比。命中率越高说明缓存带来的收益越高，应用程序的性能也就越好。" class="headerlink" title="缓存命中率是指直接通过缓存获取数据的请求次数，占所有请求次数的百分比。命中率越高说明缓存带来的收益越高，应用程序的性能也就越好。"></a>缓存命中率是指直接通过缓存获取数据的请求次数，占所有请求次数的百分比。命中率越高说明缓存带来的收益越高，应用程序的性能也就越好。</h5><h5 id="安装bcc包后可以通过cachestat和cachetop来监测缓存的读写命中情况。"><a href="#安装bcc包后可以通过cachestat和cachetop来监测缓存的读写命中情况。" class="headerlink" title="安装bcc包后可以通过cachestat和cachetop来监测缓存的读写命中情况。"></a>安装bcc包后可以通过cachestat和cachetop来监测缓存的读写命中情况。</h5><h5 id="安装pcstat后可以查看文件在内存中的缓存大小以及缓存比例"><a href="#安装pcstat后可以查看文件在内存中的缓存大小以及缓存比例" class="headerlink" title="安装pcstat后可以查看文件在内存中的缓存大小以及缓存比例"></a>安装pcstat后可以查看文件在内存中的缓存大小以及缓存比例</h5><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_">#</span><span class="language-bash">首先安装Goexport GOPATH=~/goexport PATH=~/go/bin:<span class="hljs-variable">$PATHgo</span> get golang.org/x/sys/unixgo ge github.com/tobert/pcstat/pcstat</span><br></code></pre></td></tr></table></figure>
+
+<p><strong>dd缓存加速</strong></p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs routeros">dd <span class="hljs-attribute">if</span>=/dev/sda1 <span class="hljs-attribute">of</span>=file <span class="hljs-attribute">bs</span>=1M <span class="hljs-attribute">count</span>=512 #生产一个512MB的临时文件echo 3 &gt; /proc/sys/vm/drop_caches #清理缓存pcstat file #确定刚才生成文件不在系统缓存中，此时cached和percent都是0cachetop 5dd <span class="hljs-attribute">if</span>=file <span class="hljs-attribute">of</span>=/dev/null <span class="hljs-attribute">bs</span>=1M #测试文件读取速度#此时文件读取性能为30+MB/s，查看cachetop结果发现并不是所有的读都落在磁盘上，读缓存命中率只有50%。dd <span class="hljs-attribute">if</span>=file <span class="hljs-attribute">of</span>=/dev/null <span class="hljs-attribute">bs</span>=1M #重复上述读文件测试#此时文件读取性能为4+GB/s，读缓存命中率为100%pcstat file #查看文件file的缓存情况，100%全部缓存<br></code></pre></td></tr></table></figure>
+
+<p><strong>O_DIRECT选项绕过系统缓存</strong></p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">cachetop</span> <span class="hljs-number">5</span>sudo docker run --privileged --name=app -itd feisky/app:io-directsudo docker logs app #确认案例启动成功#实验结果表明每读<span class="hljs-number">32</span>MB数据都要花<span class="hljs-number">0</span>.<span class="hljs-number">9</span>s，且cachetop输出中显示<span class="hljs-number">1024</span>次缓存全部命中<br></code></pre></td></tr></table></figure>
+
+<h5 id="但是凭感觉可知如果缓存命中读速度不应如此慢，读次数时1024，页大小为4K，五秒的时间内读取了1024-4KB数据，即每秒0-8MB，和结果中32MB相差较大。说明该案例没有充分利用缓存，怀疑系统调用设置了直接I-O标志绕过系统缓存。因此接下来观察系统调用。"><a href="#但是凭感觉可知如果缓存命中读速度不应如此慢，读次数时1024，页大小为4K，五秒的时间内读取了1024-4KB数据，即每秒0-8MB，和结果中32MB相差较大。说明该案例没有充分利用缓存，怀疑系统调用设置了直接I-O标志绕过系统缓存。因此接下来观察系统调用。" class="headerlink" title="但是凭感觉可知如果缓存命中读速度不应如此慢，读次数时1024，页大小为4K，五秒的时间内读取了1024*4KB数据，即每秒0.8MB，和结果中32MB相差较大。说明该案例没有充分利用缓存，怀疑系统调用设置了直接I&#x2F;O标志绕过系统缓存。因此接下来观察系统调用。"></a>但是凭感觉可知如果缓存命中读速度不应如此慢，读次数时1024，页大小为4K，五秒的时间内读取了1024*4KB数据，即每秒0.8MB，和结果中32MB相差较大。说明该案例没有充分利用缓存，怀疑系统调用设置了直接I&#x2F;O标志绕过系统缓存。因此接下来观察系统调用。</h5><figure class="highlight crystal"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs crystal">strace -p <span class="hljs-variable">$(</span>pgrep app)<span class="hljs-comment">#strace 结果可以看到openat打开磁盘分区/dev/sdb1，传入参数为O_RDONLY|O_DIRECT</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="这就解释了为什么读32MB数据那么慢，直接从磁盘读写肯定远远慢于缓存。找出问题后我们再看案例的源代码发现flags中指定了直接IO标志。删除该选项后重跑，验证性能变化。"><a href="#这就解释了为什么读32MB数据那么慢，直接从磁盘读写肯定远远慢于缓存。找出问题后我们再看案例的源代码发现flags中指定了直接IO标志。删除该选项后重跑，验证性能变化。" class="headerlink" title="这就解释了为什么读32MB数据那么慢，直接从磁盘读写肯定远远慢于缓存。找出问题后我们再看案例的源代码发现flags中指定了直接IO标志。删除该选项后重跑，验证性能变化。"></a>这就解释了为什么读32MB数据那么慢，直接从磁盘读写肯定远远慢于缓存。找出问题后我们再看案例的源代码发现flags中指定了直接IO标志。删除该选项后重跑，验证性能变化。</h5><h4 id="内存泄漏，如何定位和处理？"><a href="#内存泄漏，如何定位和处理？" class="headerlink" title="内存泄漏，如何定位和处理？"></a><strong>内存泄漏，如何定位和处理？</strong></h4><h5 id="对应用程序来说，动态内存的分配和回收是核心又复杂的一个逻辑功能模块。管理内存的过程中会发生各种各样的“事故”："><a href="#对应用程序来说，动态内存的分配和回收是核心又复杂的一个逻辑功能模块。管理内存的过程中会发生各种各样的“事故”：" class="headerlink" title="对应用程序来说，动态内存的分配和回收是核心又复杂的一个逻辑功能模块。管理内存的过程中会发生各种各样的“事故”："></a>对应用程序来说，动态内存的分配和回收是核心又复杂的一个逻辑功能模块。管理内存的过程中会发生各种各样的“事故”：</h5><ul>
+<li><h5 id="没正确回收分配的内存，导致了泄漏"><a href="#没正确回收分配的内存，导致了泄漏" class="headerlink" title="没正确回收分配的内存，导致了泄漏"></a>没正确回收分配的内存，导致了泄漏</h5></li>
+<li><h5 id="访问的是已分配内存边界外的地址，导致程序异常退出"><a href="#访问的是已分配内存边界外的地址，导致程序异常退出" class="headerlink" title="访问的是已分配内存边界外的地址，导致程序异常退出"></a>访问的是已分配内存边界外的地址，导致程序异常退出</h5></li>
+</ul>
+<p><strong>内存的分配与回收</strong></p>
+<h5 id="虚拟内存分布从低到高分别是只读段，数据段，堆，内存映射段，栈五部分。其中会导致内存泄漏的是："><a href="#虚拟内存分布从低到高分别是只读段，数据段，堆，内存映射段，栈五部分。其中会导致内存泄漏的是：" class="headerlink" title="虚拟内存分布从低到高分别是只读段，数据段，堆，内存映射段，栈五部分。其中会导致内存泄漏的是："></a>虚拟内存分布从低到高分别是只读段，数据段，堆，内存映射段，栈五部分。其中会导致内存泄漏的是：</h5><ul>
+<li><h5 id="堆：由应用程序自己来分配和管理，除非程序退出这些堆内存不会被系统自动释放。"><a href="#堆：由应用程序自己来分配和管理，除非程序退出这些堆内存不会被系统自动释放。" class="headerlink" title="堆：由应用程序自己来分配和管理，除非程序退出这些堆内存不会被系统自动释放。"></a>堆：由应用程序自己来分配和管理，除非程序退出这些堆内存不会被系统自动释放。</h5></li>
+<li><h5 id="内存映射段：包括动态链接库和共享内存，其中共享内存由程序自动分配和管理"><a href="#内存映射段：包括动态链接库和共享内存，其中共享内存由程序自动分配和管理" class="headerlink" title="内存映射段：包括动态链接库和共享内存，其中共享内存由程序自动分配和管理"></a>内存映射段：包括动态链接库和共享内存，其中共享内存由程序自动分配和管理</h5></li>
+</ul>
+<h5 id="内存泄漏的危害比较大，这些忘记释放的内存，不仅应用程序自己不能访问，系统也不能把它们再次分配给其他应用。内存泄漏不断累积甚至会耗尽系统内存。"><a href="#内存泄漏的危害比较大，这些忘记释放的内存，不仅应用程序自己不能访问，系统也不能把它们再次分配给其他应用。内存泄漏不断累积甚至会耗尽系统内存。" class="headerlink" title="内存泄漏的危害比较大，这些忘记释放的内存，不仅应用程序自己不能访问，系统也不能把它们再次分配给其他应用。内存泄漏不断累积甚至会耗尽系统内存。"></a>内存泄漏的危害比较大，这些忘记释放的内存，不仅应用程序自己不能访问，系统也不能把它们再次分配给其他应用。内存泄漏不断累积甚至会耗尽系统内存。</h5><p><strong>如何检测内存泄漏</strong></p>
+<h5 id="预先安装systat，docker，bcc"><a href="#预先安装systat，docker，bcc" class="headerlink" title="预先安装systat，docker，bcc"></a>预先安装systat，docker，bcc</h5><figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs routeros">sudo docker <span class="hljs-built_in">run</span> <span class="hljs-attribute">--name</span>=app -itd feisky/app:mem-leaksudo docker logs appvmstat 3<br></code></pre></td></tr></table></figure>
+
+<h5 id="可以看到free在不断下降，buffer和cache基本保持不变。说明系统的内存一致在升高。但并不能说明存在内存泄漏。此时可以通过memleak工具来跟踪系统或进程的内存分配-释放请求"><a href="#可以看到free在不断下降，buffer和cache基本保持不变。说明系统的内存一致在升高。但并不能说明存在内存泄漏。此时可以通过memleak工具来跟踪系统或进程的内存分配-释放请求" class="headerlink" title="可以看到free在不断下降，buffer和cache基本保持不变。说明系统的内存一致在升高。但并不能说明存在内存泄漏。此时可以通过memleak工具来跟踪系统或进程的内存分配&#x2F;释放请求"></a>可以看到free在不断下降，buffer和cache基本保持不变。说明系统的内存一致在升高。但并不能说明存在内存泄漏。此时可以通过memleak工具来跟踪系统或进程的内存分配&#x2F;释放请求</h5><figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs awk"><span class="hljs-regexp">/usr/</span>share<span class="hljs-regexp">/bcc/</span>tools/memleak -a -p $(pidof app)<br></code></pre></td></tr></table></figure>
+
+<h5 id="从-memleak-输出可以看到，应用在不停地分配内存，并且这些分配的地址并没有被回收。通过调用栈看到是-fibonacci-函数分配的内存没有释放。定位到源码后查看源码来修复增加内存释放函数即可。"><a href="#从-memleak-输出可以看到，应用在不停地分配内存，并且这些分配的地址并没有被回收。通过调用栈看到是-fibonacci-函数分配的内存没有释放。定位到源码后查看源码来修复增加内存释放函数即可。" class="headerlink" title="从 memleak 输出可以看到，应用在不停地分配内存，并且这些分配的地址并没有被回收。通过调用栈看到是 fibonacci 函数分配的内存没有释放。定位到源码后查看源码来修复增加内存释放函数即可。"></a>从 memleak 输出可以看到，应用在不停地分配内存，并且这些分配的地址并没有被回收。通过调用栈看到是 fibonacci 函数分配的内存没有释放。定位到源码后查看源码来修复增加内存释放函数即可。</h5><h4 id="为什么系统的-Swap-变高"><a href="#为什么系统的-Swap-变高" class="headerlink" title="为什么系统的 Swap 变高"></a><strong>为什么系统的 Swap 变高</strong></h4><h5 id="系统内存资源紧张时通过内存回收和OOM杀死进程来解决。其中可回收内存包括："><a href="#系统内存资源紧张时通过内存回收和OOM杀死进程来解决。其中可回收内存包括：" class="headerlink" title="系统内存资源紧张时通过内存回收和OOM杀死进程来解决。其中可回收内存包括："></a>系统内存资源紧张时通过内存回收和OOM杀死进程来解决。其中可回收内存包括：</h5><ul>
+<li><h5 id="缓存-缓冲区，属于可回收资源，在文件管理中通常叫做文件页"><a href="#缓存-缓冲区，属于可回收资源，在文件管理中通常叫做文件页" class="headerlink" title="缓存&#x2F;缓冲区，属于可回收资源，在文件管理中通常叫做文件页"></a>缓存&#x2F;缓冲区，属于可回收资源，在文件管理中通常叫做文件页</h5></li>
+<li><ul>
+<li><h5 id="在应用程序中通过fsync将脏页同步到磁盘"><a href="#在应用程序中通过fsync将脏页同步到磁盘" class="headerlink" title="在应用程序中通过fsync将脏页同步到磁盘"></a>在应用程序中通过fsync将脏页同步到磁盘</h5></li>
+<li><h5 id="交给系统，内核线程pdflush负责这些脏页的刷新"><a href="#交给系统，内核线程pdflush负责这些脏页的刷新" class="headerlink" title="交给系统，内核线程pdflush负责这些脏页的刷新"></a>交给系统，内核线程pdflush负责这些脏页的刷新</h5></li>
+<li><h5 id="被应用程序修改过暂时没写入磁盘的数据-脏页-，要先写入磁盘然后才能内存释放"><a href="#被应用程序修改过暂时没写入磁盘的数据-脏页-，要先写入磁盘然后才能内存释放" class="headerlink" title="被应用程序修改过暂时没写入磁盘的数据(脏页)，要先写入磁盘然后才能内存释放"></a>被应用程序修改过暂时没写入磁盘的数据(脏页)，要先写入磁盘然后才能内存释放</h5></li>
+</ul>
+</li>
+<li><h5 id="内存映射获取的文件映射页，也可以被释放掉，下次访问时从文件重新读取"><a href="#内存映射获取的文件映射页，也可以被释放掉，下次访问时从文件重新读取" class="headerlink" title="内存映射获取的文件映射页，也可以被释放掉，下次访问时从文件重新读取"></a>内存映射获取的文件映射页，也可以被释放掉，下次访问时从文件重新读取</h5></li>
+</ul>
+<h5 id="对于程序自动分配的堆内存，也就是我们在内存管理中的匿名页，虽然这些内存不能直接释放，但是-Linux-提供了-Swap-机制将不常访问的内存写入到磁盘来释放内存，再次访问时从磁盘读取到内存即可。"><a href="#对于程序自动分配的堆内存，也就是我们在内存管理中的匿名页，虽然这些内存不能直接释放，但是-Linux-提供了-Swap-机制将不常访问的内存写入到磁盘来释放内存，再次访问时从磁盘读取到内存即可。" class="headerlink" title="对于程序自动分配的堆内存，也就是我们在内存管理中的匿名页，虽然这些内存不能直接释放，但是 Linux 提供了 Swap 机制将不常访问的内存写入到磁盘来释放内存，再次访问时从磁盘读取到内存即可。"></a>对于程序自动分配的堆内存，也就是我们在内存管理中的匿名页，虽然这些内存不能直接释放，但是 Linux 提供了 Swap 机制将不常访问的内存写入到磁盘来释放内存，再次访问时从磁盘读取到内存即可。</h5><h5 id="Swap原理"><a href="#Swap原理" class="headerlink" title="Swap原理"></a><strong>Swap原理</strong></h5><h5 id="Swap本质就是把一块磁盘空间或者一个本地文件当作内存来使用，包括换入和换出两个过程："><a href="#Swap本质就是把一块磁盘空间或者一个本地文件当作内存来使用，包括换入和换出两个过程：" class="headerlink" title="Swap本质就是把一块磁盘空间或者一个本地文件当作内存来使用，包括换入和换出两个过程："></a>Swap本质就是把一块磁盘空间或者一个本地文件当作内存来使用，包括换入和换出两个过程：</h5><ul>
+<li><h5 id="换出：将进程暂时不用的内存数据存储到磁盘中，并释放这些内存"><a href="#换出：将进程暂时不用的内存数据存储到磁盘中，并释放这些内存" class="headerlink" title="换出：将进程暂时不用的内存数据存储到磁盘中，并释放这些内存"></a>换出：将进程暂时不用的内存数据存储到磁盘中，并释放这些内存</h5></li>
+<li><h5 id="换入：进程再次访问内存时，将它们从磁盘读到内存中"><a href="#换入：进程再次访问内存时，将它们从磁盘读到内存中" class="headerlink" title="换入：进程再次访问内存时，将它们从磁盘读到内存中"></a>换入：进程再次访问内存时，将它们从磁盘读到内存中</h5></li>
+</ul>
+<p><strong>Linux如何衡量内存资源是否紧张？</strong></p>
+<ul>
+<li><h5 id="直接内存回收新的大块内存分配请求，但剩余内存不足。"><a href="#直接内存回收新的大块内存分配请求，但剩余内存不足。" class="headerlink" title="直接内存回收新的大块内存分配请求，但剩余内存不足。"></a>直接内存回收新的大块内存分配请求，但剩余内存不足。</h5><h5 id="此时系统会回收一部分内存；"><a href="#此时系统会回收一部分内存；" class="headerlink" title="此时系统会回收一部分内存；"></a>此时系统会回收一部分内存；</h5></li>
+<li><h5 id="kswapd0-内核线程定期回收内存。"><a href="#kswapd0-内核线程定期回收内存。" class="headerlink" title="kswapd0 内核线程定期回收内存。"></a>kswapd0 内核线程定期回收内存。</h5><h5 id="为了衡量内存使用情况，定义了pages-min，pages-low，pages-high-三个阈值，并根据其来进行内存的回收操作。"><a href="#为了衡量内存使用情况，定义了pages-min，pages-low，pages-high-三个阈值，并根据其来进行内存的回收操作。" class="headerlink" title="为了衡量内存使用情况，定义了pages_min，pages_low，pages_high 三个阈值，并根据其来进行内存的回收操作。"></a>为了衡量内存使用情况，定义了pages_min，pages_low，pages_high 三个阈值，并根据其来进行内存的回收操作。</h5></li>
+<li><ul>
+<li><h5 id="剩余内存-pages-min，进程可用内存耗尽了，只有内核才可以分配内存"><a href="#剩余内存-pages-min，进程可用内存耗尽了，只有内核才可以分配内存" class="headerlink" title="剩余内存 &lt; pages_min，进程可用内存耗尽了，只有内核才可以分配内存"></a>剩余内存 &lt; pages_min，进程可用内存耗尽了，只有内核才可以分配内存</h5></li>
+<li><h5 id="pages-min-剩余内存-pages-low-内存压力较大，kswapd0执行内存回收，直到剩余内存-pages-high"><a href="#pages-min-剩余内存-pages-low-内存压力较大，kswapd0执行内存回收，直到剩余内存-pages-high" class="headerlink" title="pages_min &lt; 剩余内存 &lt; pages_low,内存压力较大，kswapd0执行内存回收，直到剩余内存 &gt; pages_high"></a>pages_min &lt; 剩余内存 &lt; pages_low,内存压力较大，kswapd0执行内存回收，直到剩余内存 &gt; pages_high</h5></li>
+<li><h5 id="pages-low-剩余内存-pages-high，内存有一定压力，但可以满足新内存请求"><a href="#pages-low-剩余内存-pages-high，内存有一定压力，但可以满足新内存请求" class="headerlink" title="pages_low &lt; 剩余内存 &lt; pages_high，内存有一定压力，但可以满足新内存请求"></a>pages_low &lt; 剩余内存 &lt; pages_high，内存有一定压力，但可以满足新内存请求</h5></li>
+<li><h5 id="剩余内存-pages-high，说明剩余内存较多，无内存压力"><a href="#剩余内存-pages-high，说明剩余内存较多，无内存压力" class="headerlink" title="剩余内存 &gt; pages_high，说明剩余内存较多，无内存压力"></a>剩余内存 &gt; pages_high，说明剩余内存较多，无内存压力</h5><h5 id="pages-low-pages-min-5-4-pages-high-pages-min-3-2"><a href="#pages-low-pages-min-5-4-pages-high-pages-min-3-2" class="headerlink" title="pages_low &#x3D; pages_min 5 &#x2F; 4 pages_high &#x3D; pages_min 3 &#x2F; 2"></a>pages_low &#x3D; pages_min 5 &#x2F; 4 pages_high &#x3D; pages_min 3 &#x2F; 2</h5></li>
+</ul>
+</li>
+</ul>
+<h5 id="NUMA-与-SWAP"><a href="#NUMA-与-SWAP" class="headerlink" title="NUMA 与 SWAP"></a><strong>NUMA 与 SWAP</strong></h5><h5 id="很多情况下系统剩余内存较多，但-SWAP-依旧升高，这是由于处理器的-NUMA-架构。"><a href="#很多情况下系统剩余内存较多，但-SWAP-依旧升高，这是由于处理器的-NUMA-架构。" class="headerlink" title="很多情况下系统剩余内存较多，但 SWAP 依旧升高，这是由于处理器的 NUMA 架构。"></a>很多情况下系统剩余内存较多，但 SWAP 依旧升高，这是由于处理器的 NUMA 架构。</h5><h5 id="在NUMA架构下多个处理器划分到不同的-Node，每个Node都拥有自己的本地内存空间。在分析内存的使用时应该针对每个Node单独分析"><a href="#在NUMA架构下多个处理器划分到不同的-Node，每个Node都拥有自己的本地内存空间。在分析内存的使用时应该针对每个Node单独分析" class="headerlink" title="在NUMA架构下多个处理器划分到不同的 Node，每个Node都拥有自己的本地内存空间。在分析内存的使用时应该针对每个Node单独分析"></a>在NUMA架构下多个处理器划分到不同的 Node，每个Node都拥有自己的本地内存空间。在分析内存的使用时应该针对每个Node单独分析</h5><p>- </p>
+<figure class="highlight dsconfig"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs dsconfig"><span class="hljs-string">numactl</span> <span class="hljs-built_in">--hardware</span> <span class="hljs-comment">#查看处理器在Node的分布情况，以及每个Node的内存使用情况</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="内存三个阈值可以通过-proc-zoneinfo-来查看，该文件中还包括活跃和非活跃的匿名页-文件页数。"><a href="#内存三个阈值可以通过-proc-zoneinfo-来查看，该文件中还包括活跃和非活跃的匿名页-文件页数。" class="headerlink" title="内存三个阈值可以通过 &#x2F;proc&#x2F;zoneinfo 来查看，该文件中还包括活跃和非活跃的匿名页&#x2F;文件页数。"></a>内存三个阈值可以通过 &#x2F;proc&#x2F;zoneinfo 来查看，该文件中还包括活跃和非活跃的匿名页&#x2F;文件页数。</h5><h5 id="当某个Node内存不足时，系统可以从其他Node寻找空闲资源，也可以从本地内存中回收内存。通过-proc-sys-vm-zone-raclaim-mode来调整。"><a href="#当某个Node内存不足时，系统可以从其他Node寻找空闲资源，也可以从本地内存中回收内存。通过-proc-sys-vm-zone-raclaim-mode来调整。" class="headerlink" title="当某个Node内存不足时，系统可以从其他Node寻找空闲资源，也可以从本地内存中回收内存。通过&#x2F;proc&#x2F;sys&#x2F;vm&#x2F;zone_raclaim_mode来调整。"></a>当某个Node内存不足时，系统可以从其他Node寻找空闲资源，也可以从本地内存中回收内存。通过&#x2F;proc&#x2F;sys&#x2F;vm&#x2F;zone_raclaim_mode来调整。</h5><ul>
+<li><h5 id="0表示既可以从其他Node寻找空闲资源，也可以从本地回收内存"><a href="#0表示既可以从其他Node寻找空闲资源，也可以从本地回收内存" class="headerlink" title="0表示既可以从其他Node寻找空闲资源，也可以从本地回收内存"></a>0表示既可以从其他Node寻找空闲资源，也可以从本地回收内存</h5></li>
+<li><h5 id="1，2，4-表示只回收本地内存，2表示可以会回脏数据回收内存，4表示可以用Swap方式回收内存。"><a href="#1，2，4-表示只回收本地内存，2表示可以会回脏数据回收内存，4表示可以用Swap方式回收内存。" class="headerlink" title="1，2，4 表示只回收本地内存，2表示可以会回脏数据回收内存，4表示可以用Swap方式回收内存。"></a>1，2，4 表示只回收本地内存，2表示可以会回脏数据回收内存，4表示可以用Swap方式回收内存。</h5></li>
+</ul>
+<h5 id="swappiness"><a href="#swappiness" class="headerlink" title="swappiness"></a><strong>swappiness</strong></h5><h5 id="在实际回收过程中Linux根据-proc-sys-vm-swapiness-选项来调整使用Swap的积极程度，从-0-100，数值越大越积极使用-Swap，即更倾向于回收匿名页；数值越小越消极使用-Swap，即更倾向于回收文件页。"><a href="#在实际回收过程中Linux根据-proc-sys-vm-swapiness-选项来调整使用Swap的积极程度，从-0-100，数值越大越积极使用-Swap，即更倾向于回收匿名页；数值越小越消极使用-Swap，即更倾向于回收文件页。" class="headerlink" title="在实际回收过程中Linux根据 &#x2F;proc&#x2F;sys&#x2F;vm&#x2F;swapiness 选项来调整使用Swap的积极程度，从 0-100，数值越大越积极使用 Swap，即更倾向于回收匿名页；数值越小越消极使用 Swap，即更倾向于回收文件页。"></a>在实际回收过程中Linux根据 &#x2F;proc&#x2F;sys&#x2F;vm&#x2F;swapiness 选项来调整使用Swap的积极程度，从 0-100，数值越大越积极使用 Swap，即更倾向于回收匿名页；数值越小越消极使用 Swap，即更倾向于回收文件页。</h5><h5 id="注意：这只是调整-Swap-积极程度的权重，即使设置为0，当剩余内存-文件页小于页高阈值时，还是会发生-Swap。"><a href="#注意：这只是调整-Swap-积极程度的权重，即使设置为0，当剩余内存-文件页小于页高阈值时，还是会发生-Swap。" class="headerlink" title="注意：这只是调整 Swap 积极程度的权重，即使设置为0，当剩余内存+文件页小于页高阈值时，还是会发生 Swap。"></a>注意：这只是调整 Swap 积极程度的权重，即使设置为0，当剩余内存+文件页小于页高阈值时，还是会发生 Swap。</h5><p><strong>Swap升高时如何定位分析</strong></p>
+<figure class="highlight clean"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs clean">free #首先通过free查看swap使用情况，若swap=<span class="hljs-number">0</span>表示未配置Swap#先创建并开启swapfallocate -l <span class="hljs-number">8</span>G /mnt/swapfilechmod <span class="hljs-number">600</span> /mnt/swapfilemkswap /mnt/swapfileswapon /mnt/swapfile<br>free #再次执行free确保Swap配置成功<br>dd <span class="hljs-keyword">if</span>=/dev/sda1 <span class="hljs-keyword">of</span>=/dev/null bs=<span class="hljs-number">1</span>G count=<span class="hljs-number">2048</span> #模拟大文件读取sar -r -S <span class="hljs-number">1</span>  #查看内存各个指标变化 -r内存 -S swap#根据结果可以看出，%memused在不断增长，剩余内存kbmemfress不断减少，缓冲区kbbuffers不断增大，由此可知剩余内存不断分配给了缓冲区#一段时间之后，剩余内存很小，而缓冲区占用了大部分内存。此时Swap使用之间增大，缓冲区和剩余内存只在小范围波动<br>停下sar命令cachetop5 #观察缓存#可以看到dd进程读写只有<span class="hljs-number">50</span>%的命中率，未命中数为<span class="hljs-number">4</span>w+页，说明正式dd进程导致缓冲区使用升高watch -d grep -A <span class="hljs-number">15</span> ‘Normal’ /proc/zoneinfo #观察内存指标变化#发现升级内存在一个小范围不停的波动，低于页低阈值时会突然增大到一个大于页高阈值的值<br></code></pre></td></tr></table></figure>
+
+<h5 id="说明剩余内存和缓冲区的波动变化正是由于内存回收和缓存再次分配的循环往复。有时候-Swap-用的多，有时候缓冲区波动更多。此时查看-swappiness-值为60，是一个相对中和的配置，系统会根据实际运行情况来选去合适的回收类型。"><a href="#说明剩余内存和缓冲区的波动变化正是由于内存回收和缓存再次分配的循环往复。有时候-Swap-用的多，有时候缓冲区波动更多。此时查看-swappiness-值为60，是一个相对中和的配置，系统会根据实际运行情况来选去合适的回收类型。" class="headerlink" title="说明剩余内存和缓冲区的波动变化正是由于内存回收和缓存再次分配的循环往复。有时候 Swap 用的多，有时候缓冲区波动更多。此时查看 swappiness 值为60，是一个相对中和的配置，系统会根据实际运行情况来选去合适的回收类型。"></a>说明剩余内存和缓冲区的波动变化正是由于内存回收和缓存再次分配的循环往复。有时候 Swap 用的多，有时候缓冲区波动更多。此时查看 swappiness 值为60，是一个相对中和的配置，系统会根据实际运行情况来选去合适的回收类型。</h5><p><strong>如何“快准狠”找到系统内存存在的问题</strong></p>
+<p><strong>内存性能指标</strong></p>
+<ul>
+<li><h5 id="系统内存指标"><a href="#系统内存指标" class="headerlink" title="系统内存指标"></a>系统内存指标</h5></li>
+<li><h5 id="已用内存-剩余内存"><a href="#已用内存-剩余内存" class="headerlink" title="已用内存&#x2F;剩余内存"></a>已用内存&#x2F;剩余内存</h5></li>
+<li><h5 id="共享内存-（tmpfs实现）"><a href="#共享内存-（tmpfs实现）" class="headerlink" title="共享内存 （tmpfs实现）"></a>共享内存 （tmpfs实现）</h5></li>
+<li><h5 id="可用内存：包括剩余内存和可回收内存"><a href="#可用内存：包括剩余内存和可回收内存" class="headerlink" title="可用内存：包括剩余内存和可回收内存"></a>可用内存：包括剩余内存和可回收内存</h5></li>
+<li><h5 id="缓存：磁盘读取文件的页缓存，slab分配器中的可回收部分"><a href="#缓存：磁盘读取文件的页缓存，slab分配器中的可回收部分" class="headerlink" title="缓存：磁盘读取文件的页缓存，slab分配器中的可回收部分"></a>缓存：磁盘读取文件的页缓存，slab分配器中的可回收部分</h5></li>
+<li><h5 id="缓冲区：原始磁盘块的临时存储，缓存将要写入磁盘的数据"><a href="#缓冲区：原始磁盘块的临时存储，缓存将要写入磁盘的数据" class="headerlink" title="缓冲区：原始磁盘块的临时存储，缓存将要写入磁盘的数据"></a>缓冲区：原始磁盘块的临时存储，缓存将要写入磁盘的数据</h5></li>
+</ul>
+<p><strong>进程内存指标</strong></p>
+<ul>
+<li><h5 id="虚拟内存：5大部分"><a href="#虚拟内存：5大部分" class="headerlink" title="虚拟内存：5大部分"></a>虚拟内存：5大部分</h5></li>
+<li><h5 id="常驻内存：进程实际使用的物理内存，不包括Swap和共享内存"><a href="#常驻内存：进程实际使用的物理内存，不包括Swap和共享内存" class="headerlink" title="常驻内存：进程实际使用的物理内存，不包括Swap和共享内存"></a>常驻内存：进程实际使用的物理内存，不包括Swap和共享内存</h5></li>
+<li><h5 id="共享内存：与其他进程共享的内存，以及动态链接库和程序的代码段"><a href="#共享内存：与其他进程共享的内存，以及动态链接库和程序的代码段" class="headerlink" title="共享内存：与其他进程共享的内存，以及动态链接库和程序的代码段"></a>共享内存：与其他进程共享的内存，以及动态链接库和程序的代码段</h5></li>
+<li><h5 id="Swap-内存：通过Swap换出到磁盘的内存"><a href="#Swap-内存：通过Swap换出到磁盘的内存" class="headerlink" title="Swap 内存：通过Swap换出到磁盘的内存"></a>Swap 内存：通过Swap换出到磁盘的内存</h5></li>
+</ul>
+<p><strong>缺页异常</strong></p>
+<ul>
+<li>可以直接从物理内存中分配，次缺页异常</li>
+<li>需要磁盘 IO 介入（如 Swap），主缺页异常。此时内存访问会慢很多</li>
+</ul>
+<h5 id="内存性能工具"><a href="#内存性能工具" class="headerlink" title="内存性能工具"></a><strong>内存性能工具</strong></h5><p>根据不同的性能指标来找合适的工具：</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402261539987.png" srcset="/img/loading.gif" lazyload alt="image-20240226153944860"></p>
+<p>内存分析工具包含的性能指标：</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402261539512.png" srcset="/img/loading.gif" lazyload alt="image-20240226153956399"></p>
+<h4 id="如何迅速分析内存的性能瓶颈"><a href="#如何迅速分析内存的性能瓶颈" class="headerlink" title="如何迅速分析内存的性能瓶颈"></a><strong>如何迅速分析内存的性能瓶颈</strong></h4><p>通常先运行几个覆盖面比较大的性能工具，如 free，top，vmstat，pidstat 等</p>
+<ul>
+<li>先用 free 和 top 查看系统整体内存使用情况</li>
+<li>再用 vmstat 和 pidstat，查看一段时间的趋势，从而判断内存问题的类型</li>
+<li>最后进行详细分析，比如内存分配分析，缓存&#x2F;缓冲区分析，具体进程的内存使用分析等</li>
+</ul>
+<p><strong>常见的优化思路：</strong></p>
+<ul>
+<li>最好禁止 Swap，若必须开启则尽量降低 swappiness 的值</li>
+<li>减少内存的动态分配，如可以用内存池，HugePage 等</li>
+<li>尽量使用缓存和缓冲区来访问数据。如用堆栈明确声明内存空间来存储需要缓存的数据，或者用 Redis 外部缓存组件来优化数据的访问</li>
+<li>cgroups 等方式来限制进程的内存使用情况，确保系统内存不被异常进程耗尽</li>
+<li>&#x2F;proc&#x2F;pid&#x2F;oom_adj 调整核心应用的 oom_score，保证即使内存紧张核心应用也不会被OOM杀死</li>
+</ul>
+<p><strong>vmstat 使用详解</strong></p>
+<p>vmstat 命令是最常见的 Linux&#x2F;Unix 监控工具，可以展现给定时间间隔的服务器的状态值，包括服务器的 CPU 使用率，内存使用，虚拟内存交换情况，IO读写情况。可以看到整个机器的 CPU，内存，IO 的使用情况，而不是单单看到各个进程的 CPU 使用率和内存使用率（使用场景不一样）。</p>
+<figure class="highlight dns"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><code class="hljs dns">vmstat <span class="hljs-number">2</span><br>procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----<br> r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st<br> <span class="hljs-number">1</span>  <span class="hljs-number">0</span>      <span class="hljs-number">0 1379064</span> <span class="hljs-number">282244</span> <span class="hljs-number">11537528</span>    <span class="hljs-number">0</span>    <span class="hljs-number">0</span>     <span class="hljs-number">3</span>   <span class="hljs-number">104</span>    <span class="hljs-number">0</span>    <span class="hljs-number">0</span>  <span class="hljs-number">3</span>  <span class="hljs-number">0</span> <span class="hljs-number">97</span>  <span class="hljs-number">0</span>  <span class="hljs-number">0</span><br> <span class="hljs-number">0</span>  <span class="hljs-number">0</span>      <span class="hljs-number">0 1372716</span> <span class="hljs-number">282244</span> <span class="hljs-number">11537544</span>    <span class="hljs-number">0</span>    <span class="hljs-number">0</span>     <span class="hljs-number">0</span>    <span class="hljs-number">24</span> <span class="hljs-number">4893 8947</span>  <span class="hljs-number">1</span>  <span class="hljs-number">0</span> <span class="hljs-number">98</span>  <span class="hljs-number">0</span>  <span class="hljs-number">0</span><br> <span class="hljs-number">0</span>  <span class="hljs-number">0</span>      <span class="hljs-number">0 1373404</span> <span class="hljs-number">282248</span> <span class="hljs-number">11537544</span>    <span class="hljs-number">0</span>    <span class="hljs-number">0</span>     <span class="hljs-number">0</span>    <span class="hljs-number">96</span> <span class="hljs-number">5105 9278</span>  <span class="hljs-number">2</span>  <span class="hljs-number">0</span> <span class="hljs-number">98</span>  <span class="hljs-number">0</span>  <span class="hljs-number">0</span><br> <span class="hljs-number">0</span>  <span class="hljs-number">0</span>      <span class="hljs-number">0 1374168</span> <span class="hljs-number">282248</span> <span class="hljs-number">11537556</span>    <span class="hljs-number">0</span>    <span class="hljs-number">0</span>     <span class="hljs-number">0</span>     <span class="hljs-number">0</span> <span class="hljs-number">5001 9208</span>  <span class="hljs-number">1</span>  <span class="hljs-number">0</span> <span class="hljs-number">99</span>  <span class="hljs-number">0</span>  <span class="hljs-number">0</span><br> <span class="hljs-number">0</span>  <span class="hljs-number">0</span>      <span class="hljs-number">0 1376948</span> <span class="hljs-number">282248</span> <span class="hljs-number">11537564</span>    <span class="hljs-number">0</span>    <span class="hljs-number">0</span>     <span class="hljs-number">0</span>    <span class="hljs-number">80</span> <span class="hljs-number">5176 9388</span>  <span class="hljs-number">2</span>  <span class="hljs-number">0</span> <span class="hljs-number">98</span>  <span class="hljs-number">0</span>  <span class="hljs-number">0</span><br> <span class="hljs-number">0</span>  <span class="hljs-number">0</span>      <span class="hljs-number">0 1379356</span> <span class="hljs-number">282256</span> <span class="hljs-number">11537580</span>    <span class="hljs-number">0</span>    <span class="hljs-number">0</span>     <span class="hljs-number">0</span>   <span class="hljs-number">202 5474</span> <span class="hljs-number">9519</span>  <span class="hljs-number">2</span>  <span class="hljs-number">0</span> <span class="hljs-number">98</span>  <span class="hljs-number">0</span>  <span class="hljs-number">0</span><br> <span class="hljs-number">1</span>  <span class="hljs-number">0</span>      <span class="hljs-number">0 1368376</span> <span class="hljs-number">282256</span> <span class="hljs-number">11543696</span>    <span class="hljs-number">0</span>    <span class="hljs-number">0</span>     <span class="hljs-number">0</span>     <span class="hljs-number">0</span> <span class="hljs-number">5894 8940</span> <span class="hljs-number">12</span>  <span class="hljs-number">0</span> <span class="hljs-number">88</span>  <span class="hljs-number">0</span>  <span class="hljs-number">0</span><br> <span class="hljs-number">1</span>  <span class="hljs-number">0</span>      <span class="hljs-number">0 1371936</span> <span class="hljs-number">282256</span> <span class="hljs-number">11539240</span>    <span class="hljs-number">0</span>    <span class="hljs-number">0</span>     <span class="hljs-number">0 10554</span> <span class="hljs-number">6176 9481</span> <span class="hljs-number">14</span>  <span class="hljs-number">1</span> <span class="hljs-number">85</span>  <span class="hljs-number">1</span>  <span class="hljs-number">0</span><br> <span class="hljs-number">1</span>  <span class="hljs-number">0</span>      <span class="hljs-number">0 1366184</span> <span class="hljs-number">282260</span> <span class="hljs-number">11542292</span>    <span class="hljs-number">0</span>    <span class="hljs-number">0</span>     <span class="hljs-number">0</span>  <span class="hljs-number">7456 6102</span> <span class="hljs-number">9983</span>  <span class="hljs-number">7</span>  <span class="hljs-number">1</span> <span class="hljs-number">91</span>  <span class="hljs-number">0</span>  <span class="hljs-number">0</span><br> <span class="hljs-number">1</span>  <span class="hljs-number">0</span>      <span class="hljs-number">0 1353040</span> <span class="hljs-number">282260</span> <span class="hljs-number">11556176</span>    <span class="hljs-number">0</span>    <span class="hljs-number">0</span>     <span class="hljs-number">0 16924</span> <span class="hljs-number">7233 9578</span> <span class="hljs-number">18</span>  <span class="hljs-number">1</span> <span class="hljs-number">80</span>  <span class="hljs-number">1</span>  <span class="hljs-number">0</span><br> <span class="hljs-number">0</span>  <span class="hljs-number">0</span>      <span class="hljs-number">0 1359432</span> <span class="hljs-number">282260</span> <span class="hljs-number">11549124</span>    <span class="hljs-number">0</span>    <span class="hljs-number">0</span>     <span class="hljs-number">0 12576</span> <span class="hljs-number">5495 9271</span>  <span class="hljs-number">7</span>  <span class="hljs-number">0</span> <span class="hljs-number">92</span>  <span class="hljs-number">1</span>  <span class="hljs-number">0</span><br> <span class="hljs-number">0</span>  <span class="hljs-number">0</span>      <span class="hljs-number">0 1361744</span> <span class="hljs-number">282264</span> <span class="hljs-number">11549132</span>    <span class="hljs-number">0</span>    <span class="hljs-number">0</span>     <span class="hljs-number">0</span>    <span class="hljs-number">58</span> <span class="hljs-number">8606 15079</span>  <span class="hljs-number">4</span>  <span class="hljs-number">2</span> <span class="hljs-number">95</span>  <span class="hljs-number">0</span>  <span class="hljs-number">0</span><br> <span class="hljs-number">1</span>  <span class="hljs-number">0</span>      <span class="hljs-number">0 1367120</span> <span class="hljs-number">282264</span> <span class="hljs-number">11549140</span>    <span class="hljs-number">0</span>    <span class="hljs-number">0</span>     <span class="hljs-number">0</span>     <span class="hljs-number">2</span> <span class="hljs-number">5716 9205</span>  <span class="hljs-number">8</span>  <span class="hljs-number">0</span> <span class="hljs-number">92</span>  <span class="hljs-number">0</span>  <span class="hljs-number">0</span><br> <span class="hljs-number">0</span>  <span class="hljs-number">0</span>      <span class="hljs-number">0 1346580</span> <span class="hljs-number">282264</span> <span class="hljs-number">11562644</span>    <span class="hljs-number">0</span>    <span class="hljs-number">0</span>     <span class="hljs-number">0</span>    <span class="hljs-number">70</span> <span class="hljs-number">6416 9944</span> <span class="hljs-number">12</span>  <span class="hljs-number">0</span> <span class="hljs-number">88</span>  <span class="hljs-number">0</span>  <span class="hljs-number">0</span><br> <span class="hljs-number">0</span>  <span class="hljs-number">0</span>      <span class="hljs-number">0 1359164</span> <span class="hljs-number">282264</span> <span class="hljs-number">11550108</span>    <span class="hljs-number">0</span>    <span class="hljs-number">0</span>     <span class="hljs-number">0</span>  <span class="hljs-number">2922 4941</span> <span class="hljs-number">8969</span>  <span class="hljs-number">3</span>  <span class="hljs-number">0</span> <span class="hljs-number">97</span>  <span class="hljs-number">0</span>  <span class="hljs-number">0</span><br> <span class="hljs-number">1</span>  <span class="hljs-number">0</span>      <span class="hljs-number">0 1353992</span> <span class="hljs-number">282264</span> <span class="hljs-number">11557044</span>    <span class="hljs-number">0</span>    <span class="hljs-number">0</span>     <span class="hljs-number">0</span>     <span class="hljs-number">0</span> <span class="hljs-number">6023 8917</span> <span class="hljs-number">15</span>  <span class="hljs-number">0</span> <span class="hljs-number">84</span>  <span class="hljs-number">0</span>  <span class="hljs-number">0</span><br><br># 结果说明<br>- r 表示运行队列(就是说多少个进程真的分配到CPU)，我测试的服务器目前CPU比较空闲，没什么程序在跑，当这个值超过了CPU数目，就会出现CPU瓶颈了。这个也和top的负载有关系，一般负载超过了<span class="hljs-number">3</span>就比较高，超过了<span class="hljs-number">5</span>就高，超过了<span class="hljs-number">10</span>就不正常了，服务器的状态很危险。top的负载类似每秒的运行队列。如果运行队列过大，表示你的CPU很繁忙，一般会造成CPU使用率很高。<br><br>- b 表示阻塞的进程,这个不多说，进程阻塞，大家懂的。<br><br>- swpd 虚拟内存已使用的大小，如果大于<span class="hljs-number">0</span>，表示你的机器物理内存不足了，如果不是程序内存泄露的原因，那么你该升级内存了或者把耗内存的任务迁移到其他机器。<br><br>- free   空闲的物理内存的大小，我的机器内存总共<span class="hljs-number">8</span>G，剩余<span class="hljs-number">3415</span>M。<br><br>- buff   Linux/Unix系统是用来存储，目录里面有什么内容，权限等的缓存，我本机大概占用<span class="hljs-number">300</span>多M<br><br>- cache cache直接用来记忆我们打开的文件,给文件做缓冲，我本机大概占用<span class="hljs-number">300</span>多M(这里是Linux/Unix的聪明之处，把空闲的物理内存的一部分拿来做文件和目录的缓存，是为了提高 程序执行的性能，当程序使用内存时，buffer/cached会很快地被使用。)<br><br>- si  每秒从磁盘读入虚拟内存的大小，如果这个值大于<span class="hljs-number">0</span>，表示物理内存不够用或者内存泄露了，要查找耗内存进程解决掉。我的机器内存充裕，一切正常。<br><br>- so  每秒虚拟内存写入磁盘的大小，如果这个值大于<span class="hljs-number">0</span>，同上。<br><br>- bi  块设备每秒接收的块数量，这里的块设备是指系统上所有的磁盘和其他块设备，默认块大小是<span class="hljs-number">1024</span>byte，我本机上没什么IO操作，所以一直是<span class="hljs-number">0</span>，但是我曾在处理拷贝大量数据(<span class="hljs-number">2</span>-<span class="hljs-number">3</span>T)的机器上看过可以达到<span class="hljs-number">140000</span>/s，磁盘写入速度差不多<span class="hljs-number">140</span>M每秒<br><br>- bo 块设备每秒发送的块数量，例如我们读取文件，bo就要大于<span class="hljs-number">0</span>。bi和bo一般都要接近<span class="hljs-number">0</span>，不然就是IO过于频繁，需要调整。<br><br>- in 每秒CPU的中断次数，包括时间中断<br><br>- cs 每秒上下文切换次数，例如我们调用系统函数，就要进行上下文切换，线程的切换，也要进程上下文切换，这个值要越小越好，太大了，要考虑调低线程或者进程的数目,例如在apache和nginx这种web服务器中，我们一般做性能测试时会进行几千并发甚至几万并发的测试，选择web服务器的进程可以由进程或者线程的峰值一直下调，压测，直到cs到一个比较小的值，这个进程和线程数就是比较合适的值了。系统调用也是，每次调用系统函数，我们的代码就会进入内核空间，导致上下文切换，这个是很耗资源，也要尽量避免频繁调用系统函数。上下文切换次数过多表示你的CPU大部分浪费在上下文切换，导致CPU干正经事的时间少了，CPU没有充分利用，是不可取的。<br><br>- us 用户CPU时间，我曾经在一个做加密解密很频繁的服务器上，可以看到us接近<span class="hljs-number">100</span>,r运行队列达到<span class="hljs-number">80</span>(机器在做压力测试，性能表现不佳)。<br><br>- sy 系统CPU时间，如果太高，表示系统调用时间长，例如是IO操作频繁。<br><br>- id 空闲CPU时间，一般来说，id + us + sy = <span class="hljs-number">100</span>,一般我认为id是空闲CPU使用率，us是用户CPU使用率，sy是系统CPU使用率。<br><br>- wt 等待IO CPU时间<br></code></pre></td></tr></table></figure>
+
+<p><strong>pidstat 使用详解</strong></p>
+<h5 id="pidstat-主要用于监控全部或指定进程占用系统资源的情况，如CPU，内存、设备IO、任务切换、线程等。"><a href="#pidstat-主要用于监控全部或指定进程占用系统资源的情况，如CPU，内存、设备IO、任务切换、线程等。" class="headerlink" title="pidstat 主要用于监控全部或指定进程占用系统资源的情况，如CPU，内存、设备IO、任务切换、线程等。"></a>pidstat 主要用于监控全部或指定进程占用系统资源的情况，如CPU，内存、设备IO、任务切换、线程等。</h5><p>使用方法：</p>
+<ul>
+<li><h5 id="pidstat-–d-interval-times-统计各个进程的IO使用情况"><a href="#pidstat-–d-interval-times-统计各个进程的IO使用情况" class="headerlink" title="pidstat –d interval times 统计各个进程的IO使用情况"></a>pidstat –d interval times 统计各个进程的IO使用情况</h5></li>
+<li><h5 id="pidstat-–u-interval-times-统计各个进程的CPU统计信息"><a href="#pidstat-–u-interval-times-统计各个进程的CPU统计信息" class="headerlink" title="pidstat –u interval times 统计各个进程的CPU统计信息"></a>pidstat –u interval times 统计各个进程的CPU统计信息</h5></li>
+<li><h5 id="pidstat-–r-interval-times-统计各个进程的内存使用信息"><a href="#pidstat-–r-interval-times-统计各个进程的内存使用信息" class="headerlink" title="pidstat –r interval times 统计各个进程的内存使用信息"></a>pidstat –r interval times 统计各个进程的内存使用信息</h5></li>
+<li><h5 id="pidstat-w-interval-times-统计各个进程的上下文切换"><a href="#pidstat-w-interval-times-统计各个进程的上下文切换" class="headerlink" title="pidstat -w interval times 统计各个进程的上下文切换"></a>pidstat -w interval times 统计各个进程的上下文切换</h5></li>
+<li><h5 id="p-PID-指定PID"><a href="#p-PID-指定PID" class="headerlink" title="p PID 指定PID"></a>p PID 指定PID</h5></li>
+</ul>
+<p><strong>1、统计 IO 使用情况</strong></p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">pidstat</span> -d <span class="hljs-number">1</span> <span class="hljs-number">10</span><br><span class="hljs-attribute">03</span>:<span class="hljs-number">02</span>:<span class="hljs-number">02</span> PM   UID       PID   kB_rd/s   kB_wr/s kB_ccwr/s  Command03:<span class="hljs-number">02</span>:<span class="hljs-number">03</span> PM     <span class="hljs-number">0</span>       <span class="hljs-number">816</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>    <span class="hljs-number">918</span>.<span class="hljs-number">81</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>  jbd2/vda1-<span class="hljs-number">803</span>:<span class="hljs-number">02</span>:<span class="hljs-number">03</span> PM     <span class="hljs-number">0</span>      <span class="hljs-number">1007</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>      <span class="hljs-number">3</span>.<span class="hljs-number">96</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>  AliYunDun03:<span class="hljs-number">02</span>:<span class="hljs-number">03</span> PM   <span class="hljs-number">997</span>      <span class="hljs-number">7326</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>   <span class="hljs-number">1904</span>.<span class="hljs-number">95</span>    <span class="hljs-number">918</span>.<span class="hljs-number">81</span>  java03:<span class="hljs-number">02</span>:<span class="hljs-number">03</span> PM   <span class="hljs-number">997</span>      <span class="hljs-number">8539</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>      <span class="hljs-number">3</span>.<span class="hljs-number">96</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>  java03:<span class="hljs-number">02</span>:<span class="hljs-number">03</span> PM     <span class="hljs-number">0</span>     <span class="hljs-number">16066</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>     <span class="hljs-number">35</span>.<span class="hljs-number">64</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>  cmagent<br><span class="hljs-attribute">03</span>:<span class="hljs-number">02</span>:<span class="hljs-number">03</span> PM   UID       PID   kB_rd/s   kB_wr/s kB_ccwr/s  Command03:<span class="hljs-number">02</span>:<span class="hljs-number">04</span> PM     <span class="hljs-number">0</span>       <span class="hljs-number">816</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>   <span class="hljs-number">1924</span>.<span class="hljs-number">00</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>  jbd2/vda1-<span class="hljs-number">803</span>:<span class="hljs-number">02</span>:<span class="hljs-number">04</span> PM   <span class="hljs-number">997</span>      <span class="hljs-number">7326</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>  <span class="hljs-number">11156</span>.<span class="hljs-number">00</span>   <span class="hljs-number">1888</span>.<span class="hljs-number">00</span>  java03:<span class="hljs-number">02</span>:<span class="hljs-number">04</span> PM   <span class="hljs-number">997</span>      <span class="hljs-number">8539</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>      <span class="hljs-number">4</span>.<span class="hljs-number">00</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>  java<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>UID</li>
+<li>PID</li>
+<li>kB_rd&#x2F;s：每秒进程从磁盘读取的数据量 KB 单位 read from disk each second KB</li>
+<li>kB_wr&#x2F;s：每秒进程向磁盘写的数据量 KB 单位 write to disk each second KB</li>
+<li>kB_ccwr&#x2F;s：每秒进程向磁盘写入，但是被取消的数据量，This may occur when the task truncates some dirty pagecache.</li>
+<li>iodelay：Block I&#x2F;O delay，measured in clock ticks</li>
+<li>Command：进程名 task name</li>
+</ul>
+<p><strong>2、统计 CPU 使用情况</strong></p>
+<figure class="highlight gcode"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs gcode"><span class="hljs-attr"># 统计CPUpidstat -u 1</span> <span class="hljs-number">1003</span>:<span class="hljs-number">03</span>:<span class="hljs-number">33</span> PM   UID       PID    <span class="hljs-meta">%</span>usr <span class="hljs-meta">%</span>system  <span class="hljs-meta">%</span>guest    <span class="hljs-meta">%</span>CPU   CPU  Comma<span class="hljs-symbol">nd03</span>:<span class="hljs-number">03</span>:<span class="hljs-number">34</span> PM     <span class="hljs-number">0</span>      <span class="hljs-number">2321</span>    <span class="hljs-number">3.96</span>    <span class="hljs-number">0.00</span>    <span class="hljs-number">0.00</span>    <span class="hljs-number">3.96</span>     <span class="hljs-number">0</span>  a<span class="hljs-symbol">nsible03</span>:<span class="hljs-number">03</span>:<span class="hljs-number">34</span> PM     <span class="hljs-number">0</span>      <span class="hljs-number">7110</span>    <span class="hljs-number">0.00</span>    <span class="hljs-number">0.99</span>    <span class="hljs-number">0.00</span>    <span class="hljs-number">0.99</span>     <span class="hljs-number">4</span>  pidstat<span class="hljs-number">03</span>:<span class="hljs-number">03</span>:<span class="hljs-number">34</span> PM   <span class="hljs-number">997</span>      <span class="hljs-number">8539</span>    <span class="hljs-number">0.99</span>    <span class="hljs-number">0.00</span>    <span class="hljs-number">0.00</span>    <span class="hljs-number">0.99</span>     <span class="hljs-number">5</span>  java<span class="hljs-number">03</span>:<span class="hljs-number">03</span>:<span class="hljs-number">34</span> PM   <span class="hljs-number">984</span>     <span class="hljs-number">15517</span>    <span class="hljs-number">0.99</span>    <span class="hljs-number">0.00</span>    <span class="hljs-number">0.00</span>    <span class="hljs-number">0.99</span>     <span class="hljs-number">5</span>  java<span class="hljs-number">03</span>:<span class="hljs-number">03</span>:<span class="hljs-number">34</span> PM     <span class="hljs-number">0</span>     <span class="hljs-number">24406</span>    <span class="hljs-number">0.99</span>    <span class="hljs-number">0.00</span>    <span class="hljs-number">0.00</span>    <span class="hljs-number">0.99</span>     <span class="hljs-number">5</span>  java<span class="hljs-number">03</span>:<span class="hljs-number">03</span>:<span class="hljs-number">34</span> PM     <span class="hljs-number">0</span>     <span class="hljs-number">32158</span>    <span class="hljs-number">3.96</span>    <span class="hljs-number">0.00</span>    <span class="hljs-number">0.00</span>    <span class="hljs-number">3.96</span>     <span class="hljs-number">2</span>  a<span class="hljs-symbol">nsible</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>UID</li>
+<li>PID</li>
+<li>%usr: 进程在用户空间占用 cpu 的百分比</li>
+<li>%system: 进程在内核空间占用 CPU 百分比</li>
+<li>%guest: 进程在虚拟机占用 CPU 百分比</li>
+<li>%wait: 进程等待运行的百分比</li>
+<li>%CPU: 进程占用 CPU 百分比</li>
+<li>CPU: 处理进程的 CPU 编号</li>
+<li>Command: 进程名</li>
+</ul>
+<p><strong>3、统计内存使用情况</strong></p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-comment"># 统计内存</span><br><span class="hljs-attribute">pidstat</span> -r <span class="hljs-number">1</span> <span class="hljs-number">10</span><br><span class="hljs-attribute">Average</span>:      UID       PID  minflt/s  majflt/s     VSZ    RSS   %MEM  Command<br><span class="hljs-attribute">Average</span>:        <span class="hljs-number">0</span>         <span class="hljs-number">1</span>      <span class="hljs-number">0</span>.<span class="hljs-number">20</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>  <span class="hljs-number">191256</span>   <span class="hljs-number">3064</span>   <span class="hljs-number">0</span>.<span class="hljs-number">01</span>  systemd<br><span class="hljs-attribute">Average</span>:        <span class="hljs-number">0</span>      <span class="hljs-number">1007</span>      <span class="hljs-number">1</span>.<span class="hljs-number">30</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>  <span class="hljs-number">143256</span>  <span class="hljs-number">22720</span>   <span class="hljs-number">0</span>.<span class="hljs-number">07</span>  AliYunDun<br><span class="hljs-attribute">Average</span>:        <span class="hljs-number">0</span>      <span class="hljs-number">6642</span>      <span class="hljs-number">0</span>.<span class="hljs-number">10</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span> <span class="hljs-number">6301904</span> <span class="hljs-number">107680</span>   <span class="hljs-number">0</span>.<span class="hljs-number">33</span>  java<br><span class="hljs-attribute">Average</span>:      <span class="hljs-number">997</span>      <span class="hljs-number">7326</span>     <span class="hljs-number">10</span>.<span class="hljs-number">89</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span> <span class="hljs-number">13468904</span> <span class="hljs-number">8395848</span>  <span class="hljs-number">26</span>.<span class="hljs-number">04</span>  java<br><span class="hljs-attribute">Average</span>:        <span class="hljs-number">0</span>      <span class="hljs-number">7795</span>    <span class="hljs-number">348</span>.<span class="hljs-number">15</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>  <span class="hljs-number">108376</span>   <span class="hljs-number">1233</span>   <span class="hljs-number">0</span>.<span class="hljs-number">00</span>  pidstat<br><span class="hljs-attribute">Average</span>:      <span class="hljs-number">997</span>      <span class="hljs-number">8539</span>      <span class="hljs-number">0</span>.<span class="hljs-number">50</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span> <span class="hljs-number">8242256</span> <span class="hljs-number">2062228</span>   <span class="hljs-number">6</span>.<span class="hljs-number">40</span>  java<br><span class="hljs-attribute">Average</span>:      <span class="hljs-number">987</span>      <span class="hljs-number">9518</span>      <span class="hljs-number">0</span>.<span class="hljs-number">20</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span> <span class="hljs-number">6300944</span> <span class="hljs-number">1242924</span>   <span class="hljs-number">3</span>.<span class="hljs-number">85</span>  java<br><span class="hljs-attribute">Average</span>:        <span class="hljs-number">0</span>     <span class="hljs-number">10280</span>      <span class="hljs-number">3</span>.<span class="hljs-number">70</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>  <span class="hljs-number">807372</span>   <span class="hljs-number">8344</span>   <span class="hljs-number">0</span>.<span class="hljs-number">03</span>  aliyun-service<br><span class="hljs-attribute">Average</span>:      <span class="hljs-number">984</span>     <span class="hljs-number">15517</span>      <span class="hljs-number">0</span>.<span class="hljs-number">40</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span> <span class="hljs-number">6386464</span> <span class="hljs-number">1464572</span>   <span class="hljs-number">4</span>.<span class="hljs-number">54</span>  java<br><span class="hljs-attribute">Average</span>:        <span class="hljs-number">0</span>     <span class="hljs-number">16066</span>    <span class="hljs-number">236</span>.<span class="hljs-number">46</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span> <span class="hljs-number">2678332</span>  <span class="hljs-number">71020</span>   <span class="hljs-number">0</span>.<span class="hljs-number">22</span>  cmagent<br><span class="hljs-attribute">Average</span>:      <span class="hljs-number">995</span>     <span class="hljs-number">20955</span>      <span class="hljs-number">0</span>.<span class="hljs-number">30</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span> <span class="hljs-number">6312520</span> <span class="hljs-number">1408040</span>   <span class="hljs-number">4</span>.<span class="hljs-number">37</span>  java<br><span class="hljs-attribute">Average</span>:      <span class="hljs-number">995</span>     <span class="hljs-number">20956</span>      <span class="hljs-number">0</span>.<span class="hljs-number">20</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span> <span class="hljs-number">6093764</span> <span class="hljs-number">1505028</span>   <span class="hljs-number">4</span>.<span class="hljs-number">67</span>  java<br><span class="hljs-attribute">Average</span>:        <span class="hljs-number">0</span>     <span class="hljs-number">23936</span>      <span class="hljs-number">0</span>.<span class="hljs-number">10</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span> <span class="hljs-number">5302416</span> <span class="hljs-number">110804</span>   <span class="hljs-number">0</span>.<span class="hljs-number">34</span>  java<br><span class="hljs-attribute">Average</span>:        <span class="hljs-number">0</span>     <span class="hljs-number">24406</span>      <span class="hljs-number">0</span>.<span class="hljs-number">70</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span> <span class="hljs-number">10211672</span> <span class="hljs-number">2361304</span>   <span class="hljs-number">7</span>.<span class="hljs-number">32</span>  java<br><span class="hljs-attribute">Average</span>:        <span class="hljs-number">0</span>     <span class="hljs-number">26870</span>      <span class="hljs-number">1</span>.<span class="hljs-number">40</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span> <span class="hljs-number">1470212</span>  <span class="hljs-number">36084</span>   <span class="hljs-number">0</span>.<span class="hljs-number">11</span>  promtail<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>UID</li>
+<li>PID</li>
+<li>Minflt&#x2F;s : 每秒次缺页错误次数 （minor page faults），虚拟内存地址映射成物理内存地址产生的 page fault 次数</li>
+<li>Majflt&#x2F;s : 每秒主缺页错误次数 (major page faults), 虚拟内存地址映射成物理内存地址时，相应 page 在 swap 中</li>
+<li>VSZ virtual memory usage : 该进程使用的虚拟内存 KB 单位</li>
+<li>RSS : 该进程使用的物理内存 KB 单位</li>
+<li>%MEM : 内存使用率</li>
+<li>Command : 该进程的命令 task name</li>
+</ul>
+<p><strong>4、查看具体进程使用情况</strong></p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">pidstat</span> -T <span class="hljs-literal">ALL</span> -r -p <span class="hljs-number">20955</span> <span class="hljs-number">1</span> <span class="hljs-number">10</span><br><span class="hljs-attribute">03</span>:<span class="hljs-number">12</span>:<span class="hljs-number">16</span> PM   UID       PID  minflt/s  majflt/s     VSZ    RSS   %MEM  Command<br><span class="hljs-attribute">03</span>:<span class="hljs-number">12</span>:<span class="hljs-number">17</span> PM   <span class="hljs-number">995</span>     <span class="hljs-number">20955</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span>      <span class="hljs-number">0</span>.<span class="hljs-number">00</span> <span class="hljs-number">6312520</span> <span class="hljs-number">1408040</span>   <span class="hljs-number">4</span>.<span class="hljs-number">37</span>  java<br><br><span class="hljs-attribute">03</span>:<span class="hljs-number">12</span>:<span class="hljs-number">16</span> PM   UID       PID minflt-nr majflt-nr  Command<br><span class="hljs-attribute">03</span>:<span class="hljs-number">12</span>:<span class="hljs-number">17</span> PM   <span class="hljs-number">995</span>     <span class="hljs-number">20955</span>         <span class="hljs-number">0</span>         <span class="hljs-number">0</span>  java<br></code></pre></td></tr></table></figure>
+
+<blockquote>
+<p>本内容由社区会员上传分享，仅供读者交流学习，版权归原作者所有，若所引用的图片、数据、文字等来源标注有误或涉及侵权或内容不完整，请及时联系处理。</p>
+<p>原文地址：<a target="_blank" rel="noopener" href="https://www.ctq6.cn/linux%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">https://www.ctq6.cn/linux%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/</a></p>
+<p><strong>觉得本文有用，请转发或点击“在看”，让更多同行看到</strong></p>
+</blockquote>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Linux 性能优化大全 2024-04-03 15:09:06.854</div>
+      <div>http://example.com/2025/01/16/Linux 性能优化大全-linux-xing-neng-you-hua-da-quan/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/Kubernetes%20%E6%BA%90%E7%A0%81%E7%BB%93%E6%9E%84-kubernetes-yuan-ma-jie-gou/" title="Kubernetes 源码结构 2024-04-03 14:48:05.954">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Kubernetes 源码结构 2024-04-03 14:48:05.954</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/Kubernetes%20%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3(%E9%89%B4%E6%9D%83)-kubernetes-zheng-shu-xiang-jie--jian-quan-/" title="Kubernetes 证书详解(鉴权) 2024-04-03 14:49:04.385">
+                        <span class="hidden-mobile">Kubernetes 证书详解(鉴权) 2024-04-03 14:49:04.385</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

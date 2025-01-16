@@ -1,0 +1,680 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="一.相关介绍1.生成步骤 （1）生成私钥（Private Key）：使用 OpenSSL 工具生成一个私钥文件，用于加密和解密传输的数据。（2）生成证书签名请求（Certificate Signing Request，CSR）：使用 OpenSSL 工具生成一个 CSR 文件，其中包含你的服务器公钥和相关的信息，以便用于生成证书。（3）自签名证书生成：使用 OpenSSL 工具根据 CSR 文件和">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ssl证书自签发 2024-04-03">
+<meta property="og:url" content="http://example.com/2025/01/16/ssl%E8%AF%81%E4%B9%A6%E8%87%AA%E7%AD%BE%E5%8F%91-ssl-zheng-shu-zi-qian-fa/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="一.相关介绍1.生成步骤 （1）生成私钥（Private Key）：使用 OpenSSL 工具生成一个私钥文件，用于加密和解密传输的数据。（2）生成证书签名请求（Certificate Signing Request，CSR）：使用 OpenSSL 工具生成一个 CSR 文件，其中包含你的服务器公钥和相关的信息，以便用于生成证书。（3）自签名证书生成：使用 OpenSSL 工具根据 CSR 文件和">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403081005897.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403081005976.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403081005755.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403081006590.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403081006452.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403081007830.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403081008206.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403081008515.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.081Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:19.051Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403081005897.png">
+  
+  
+  
+  <title>ssl证书自签发 2024-04-03 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="ssl证书自签发 2024-04-03"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          10 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">ssl证书自签发 2024-04-03</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>一.相关介绍<br>1.生成步骤</p>
+<h5 id="（1）生成私钥（Private-Key）：使用-OpenSSL-工具生成一个私钥文件，用于加密和解密传输的数据。"><a href="#（1）生成私钥（Private-Key）：使用-OpenSSL-工具生成一个私钥文件，用于加密和解密传输的数据。" class="headerlink" title="（1）生成私钥（Private Key）：使用 OpenSSL 工具生成一个私钥文件，用于加密和解密传输的数据。"></a>（1）生成私钥（Private Key）：使用 OpenSSL 工具生成一个私钥文件，用于加密和解密传输的数据。</h5><h5 id="（2）生成证书签名请求（Certificate-Signing-Request，CSR）：使用-OpenSSL-工具生成一个-CSR-文件，其中包含你的服务器公钥和相关的信息，以便用于生成证书。"><a href="#（2）生成证书签名请求（Certificate-Signing-Request，CSR）：使用-OpenSSL-工具生成一个-CSR-文件，其中包含你的服务器公钥和相关的信息，以便用于生成证书。" class="headerlink" title="（2）生成证书签名请求（Certificate Signing Request，CSR）：使用 OpenSSL 工具生成一个 CSR 文件，其中包含你的服务器公钥和相关的信息，以便用于生成证书。"></a>（2）生成证书签名请求（Certificate Signing Request，CSR）：使用 OpenSSL 工具生成一个 CSR 文件，其中包含你的服务器公钥和相关的信息，以便用于生成证书。</h5><h5 id="（3）自签名证书生成：使用-OpenSSL-工具根据-CSR-文件和私钥生成自签名的-SSL-证书文件。"><a href="#（3）自签名证书生成：使用-OpenSSL-工具根据-CSR-文件和私钥生成自签名的-SSL-证书文件。" class="headerlink" title="（3）自签名证书生成：使用 OpenSSL 工具根据 CSR 文件和私钥生成自签名的 SSL 证书文件。"></a>（3）自签名证书生成：使用 OpenSSL 工具根据 CSR 文件和私钥生成自签名的 SSL 证书文件。</h5><h5 id="（4）Nginx-配置修改：在-Nginx-配置文件中进行相应的修改，包括指定-SSL-证书文件路径、私钥文件路径以及其他相关的-SSL-配置项。"><a href="#（4）Nginx-配置修改：在-Nginx-配置文件中进行相应的修改，包括指定-SSL-证书文件路径、私钥文件路径以及其他相关的-SSL-配置项。" class="headerlink" title="（4）Nginx 配置修改：在 Nginx 配置文件中进行相应的修改，包括指定 SSL 证书文件路径、私钥文件路径以及其他相关的 SSL 配置项。"></a>（4）Nginx 配置修改：在 Nginx 配置文件中进行相应的修改，包括指定 SSL 证书文件路径、私钥文件路径以及其他相关的 SSL 配置项。</h5><h5 id="总：Nginx-就可以使用自签名-SSL-证书来启用-HTTPS，实现加密和安全的通信。需要注意的是，自签名-SSL-证书不会受到公信任的证书颁发机构（Certificate-Authority）认可，因此浏览器会显示安全警告。在生产环境中，建议使用由受信任的证书颁发机构签发的证书来获得更高的安全性和可信度。"><a href="#总：Nginx-就可以使用自签名-SSL-证书来启用-HTTPS，实现加密和安全的通信。需要注意的是，自签名-SSL-证书不会受到公信任的证书颁发机构（Certificate-Authority）认可，因此浏览器会显示安全警告。在生产环境中，建议使用由受信任的证书颁发机构签发的证书来获得更高的安全性和可信度。" class="headerlink" title="总：Nginx 就可以使用自签名 SSL 证书来启用 HTTPS，实现加密和安全的通信。需要注意的是，自签名 SSL 证书不会受到公信任的证书颁发机构（Certificate Authority）认可，因此浏览器会显示安全警告。在生产环境中，建议使用由受信任的证书颁发机构签发的证书来获得更高的安全性和可信度。"></a>总：Nginx 就可以使用自签名 SSL 证书来启用 HTTPS，实现加密和安全的通信。需要注意的是，自签名 SSL 证书不会受到公信任的证书颁发机构（Certificate Authority）认可，因此浏览器会显示安全警告。在生产环境中，建议使用由受信任的证书颁发机构签发的证书来获得更高的安全性和可信度。</h5><p>1<br>2.相关名词介绍</p>
+<h5 id="（1）私钥（Key）生成：使用-OpenSSL-工具的-“genrsa”-命令生成私钥文件，其中私钥是用于加密和解密数据的关键。"><a href="#（1）私钥（Key）生成：使用-OpenSSL-工具的-“genrsa”-命令生成私钥文件，其中私钥是用于加密和解密数据的关键。" class="headerlink" title="（1）私钥（Key）生成：使用 OpenSSL 工具的 “genrsa” 命令生成私钥文件，其中私钥是用于加密和解密数据的关键。"></a>（1）私钥（Key）生成：使用 OpenSSL 工具的 “genrsa” 命令生成私钥文件，其中私钥是用于加密和解密数据的关键。</h5><h5 id="（2）公钥（CSR）生成：使用私钥文件生成证书签名请求（Certificate-Signing-Request，CSR），其中包含公钥和其他相关信息。这个公钥将被用于生成证书，并在浏览器连接时进行身份验证。"><a href="#（2）公钥（CSR）生成：使用私钥文件生成证书签名请求（Certificate-Signing-Request，CSR），其中包含公钥和其他相关信息。这个公钥将被用于生成证书，并在浏览器连接时进行身份验证。" class="headerlink" title="（2）公钥（CSR）生成：使用私钥文件生成证书签名请求（Certificate Signing Request，CSR），其中包含公钥和其他相关信息。这个公钥将被用于生成证书，并在浏览器连接时进行身份验证。"></a>（2）公钥（CSR）生成：使用私钥文件生成证书签名请求（Certificate Signing Request，CSR），其中包含公钥和其他相关信息。这个公钥将被用于生成证书，并在浏览器连接时进行身份验证。</h5><h5 id="（3）证书（CRT）生成：证书由公钥（CSR）和签名组成。签名可以是自签名的，也可以是由受信任的证书颁发机构（CA）签名的。通过使用私钥（Key）与公钥（CSR）进行签名，最终生成证书（CRT）文件。"><a href="#（3）证书（CRT）生成：证书由公钥（CSR）和签名组成。签名可以是自签名的，也可以是由受信任的证书颁发机构（CA）签名的。通过使用私钥（Key）与公钥（CSR）进行签名，最终生成证书（CRT）文件。" class="headerlink" title="（3）证书（CRT）生成：证书由公钥（CSR）和签名组成。签名可以是自签名的，也可以是由受信任的证书颁发机构（CA）签名的。通过使用私钥（Key）与公钥（CSR）进行签名，最终生成证书（CRT）文件。"></a>（3）证书（CRT）生成：证书由公钥（CSR）和签名组成。签名可以是自签名的，也可以是由受信任的证书颁发机构（CA）签名的。通过使用私钥（Key）与公钥（CSR）进行签名，最终生成证书（CRT）文件。</h5><h5 id="（4）服务器证书（server-crt）：生成的证书文件就是服务器证书，通常命名为-“server-crt”。"><a href="#（4）服务器证书（server-crt）：生成的证书文件就是服务器证书，通常命名为-“server-crt”。" class="headerlink" title="（4）服务器证书（server.crt）：生成的证书文件就是服务器证书，通常命名为 “server.crt”。"></a>（4）服务器证书（server.crt）：生成的证书文件就是服务器证书，通常命名为 “server.crt”。</h5><h5 id="（5）签名过程：签名是使用私钥（Key）与公钥（CSR）进行证书生成的过程。私钥用于对公钥进行签名，以确保证书的完整性和身份验证。"><a href="#（5）签名过程：签名是使用私钥（Key）与公钥（CSR）进行证书生成的过程。私钥用于对公钥进行签名，以确保证书的完整性和身份验证。" class="headerlink" title="（5）签名过程：签名是使用私钥（Key）与公钥（CSR）进行证书生成的过程。私钥用于对公钥进行签名，以确保证书的完整性和身份验证。"></a>（5）签名过程：签名是使用私钥（Key）与公钥（CSR）进行证书生成的过程。私钥用于对公钥进行签名，以确保证书的完整性和身份验证。</h5><h5 id="二-Nginx中实现自签名SSL证书生成与配置"><a href="#二-Nginx中实现自签名SSL证书生成与配置" class="headerlink" title="二.Nginx中实现自签名SSL证书生成与配置"></a>二.Nginx中实现自签名SSL证书生成与配置</h5><h5 id="1-私钥生成"><a href="#1-私钥生成" class="headerlink" title="1.私钥生成"></a>1.私钥生成</h5><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-comment">#关闭防火墙及安全机制</span><br><span class="hljs-attribute">systemctl</span> stop firewalld.service <br><span class="hljs-attribute">setenforce</span> <span class="hljs-number">0</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="在root用户的家目录下执行"><a href="#在root用户的家目录下执行" class="headerlink" title="#在root用户的家目录下执行"></a>#在root用户的家目录下执行</h5><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">cd</span> ~<br><span class="hljs-comment">#使用ssl生成私钥名为 server.key</span><br><span class="hljs-attribute">openssl</span> genrsa -des3 -out server.key <span class="hljs-number">1024</span><br><br><span class="hljs-attribute">openssl</span> genrsa -des3 -out server.key <span class="hljs-number">2048</span><br><span class="hljs-comment">#回车，输入自定义的密码文本，此处设置为12345</span><br><span class="hljs-comment">#输入两次</span><br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403081005897.png" srcset="/img/loading.gif" lazyload alt="image-20240308100510817"></p>
+<figure class="highlight axapta"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs axapta"><span class="hljs-meta">#查看生成的私钥</span><br>cat <span class="hljs-keyword">server</span>.key <br></code></pre></td></tr></table></figure>
+
+
+
+
+<h5 id="2-公钥生成"><a href="#2-公钥生成" class="headerlink" title="2.公钥生成"></a>2.公钥生成</h5><figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">#基于创建的<span class="hljs-keyword">server</span>.key私钥创建<span class="hljs-keyword">server</span>.csr公钥<br>openssl req -<span class="hljs-built_in">new</span> -key <span class="hljs-keyword">server</span>.key -<span class="hljs-keyword">out</span> <span class="hljs-keyword">server</span>.csr<br>#查看私钥加密的内容<br>openssl req -<span class="hljs-type">text</span> -<span class="hljs-keyword">in</span> <span class="hljs-keyword">server</span>.csr -noout<br></code></pre></td></tr></table></figure>
+
+
+
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403081005976.png" srcset="/img/loading.gif" lazyload alt="image-20240308100539901"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403081005755.png" srcset="/img/loading.gif" lazyload alt="image-20240308100553682"></p>
+<h5 id="3-生成解密的私钥key"><a href="#3-生成解密的私钥key" class="headerlink" title="3.生成解密的私钥key"></a>3.生成解密的私钥key</h5><figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">#基于<span class="hljs-keyword">server</span>.key私钥生成<span class="hljs-keyword">server</span>.key.unsecure的解密私钥<br>openssl rsa -<span class="hljs-keyword">in</span> <span class="hljs-keyword">server</span>.key -<span class="hljs-keyword">out</span> <span class="hljs-keyword">server</span>.key.unsecure<br></code></pre></td></tr></table></figure>
+
+
+
+<h5 id="4-签名生成证书"><a href="#4-签名生成证书" class="headerlink" title="4.签名生成证书"></a>4.签名生成证书</h5><figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs stylus">方法<span class="hljs-number">1</span>：<br>#方法<span class="hljs-number">1</span>需要输入密码，私钥密码为<span class="hljs-number">12345</span><br>openssl  x509 -req -days <span class="hljs-number">1000</span> -<span class="hljs-keyword">in</span> server<span class="hljs-selector-class">.csr</span> -signkey server<span class="hljs-selector-class">.key</span> -out server<span class="hljs-selector-class">.crt</span><br><br>openssl  x509 -req -days <span class="hljs-number">36500</span> -<span class="hljs-keyword">in</span> server<span class="hljs-selector-class">.csr</span> -signkey server<span class="hljs-selector-class">.key</span> -out server<span class="hljs-selector-class">.crt</span><br>#使用私钥和公钥生成server.crt签名证书，-days为<span class="hljs-number">1000</span>天 -<span class="hljs-keyword">in</span>指定公钥，-signkey指定私钥，生成的前面证书为server<span class="hljs-selector-class">.crt</span><br>方法<span class="hljs-number">2</span>：<br>openssl x509 -req -days <span class="hljs-number">1000</span> -<span class="hljs-keyword">in</span> server<span class="hljs-selector-class">.csr</span> -signkey server<span class="hljs-selector-class">.key</span><span class="hljs-selector-class">.unsecure</span> -out server1<span class="hljs-selector-class">.crt</span><br><br><br>openssl x509 -req -days <span class="hljs-number">3650</span> -<span class="hljs-keyword">in</span> server<span class="hljs-selector-class">.csr</span> -signkey server<span class="hljs-selector-class">.key</span><span class="hljs-selector-class">.unsecure</span> -out server1<span class="hljs-selector-class">.crt</span><br>#使用解密私钥和公钥生成server.crt签名证书，-days为<span class="hljs-number">1000</span>天 -<span class="hljs-keyword">in</span>指定公钥，-signkey指定解密后的私钥，生成的前面证书为server.crt<br></code></pre></td></tr></table></figure>
+
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403081006590.png" srcset="/img/loading.gif" lazyload alt="image-20240308100624517"></p>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">#查看证书的内容，<span class="hljs-keyword">server</span>.crt内容<br>openssl x509 -<span class="hljs-type">text</span> -<span class="hljs-keyword">in</span> <span class="hljs-keyword">server</span>.crt -noout<br><br>openssl x509 -<span class="hljs-type">text</span> -<span class="hljs-keyword">in</span> server1.crt -noout<br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403081006452.png" srcset="/img/loading.gif" lazyload alt="image-20240308100640377"></p>
+<p>5.配置证书并验证</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs nginx"><span class="hljs-comment">#安装额外源 并安装启动nginx</span><br><span class="hljs-attribute">yum</span> install epel-release -y <br>yum install nginx -y<br>systemctl start nginx <br><br>vim  /etc/nginx/nginx.conf<br><span class="hljs-comment">#编辑nginx主配置文件文件末尾添加内容如下</span><br>server &#123;<br>    <span class="hljs-attribute">listen</span>       <span class="hljs-number">443</span> ssl ;    <br>    <span class="hljs-attribute">server_name</span> localhost ;<br>    <span class="hljs-attribute">ssl_certificate</span> <span class="hljs-string">&quot;/root/server.key&quot;</span>;<br>    <span class="hljs-attribute">ssl_certificate_key</span> <span class="hljs-string">&quot;/root/server.key.unsecure&quot;</span>;<br>&#125;<br><span class="hljs-comment">#创建一个新的server模块，注意要在http模块里面，listen表示监听端口，server_name写主机地址或localhost都可以，ssl_certificate是签名证书的路径，ssl_certificate_key是私钥的路径，本文私钥路径写了解密后的私钥，写加密时的私钥有报错</span><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight crmsh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs crmsh"><span class="hljs-comment">#重启nginx到浏览器上访问验证</span><br>systemctl <span class="hljs-literal">start</span> nginx <br></code></pre></td></tr></table></figure>
+
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs routeros">报错信息：<br><br>[root@test5 ~]# systemctl restart nginx<br>Job <span class="hljs-keyword">for</span> nginx.service failed because the control process exited with <span class="hljs-built_in">error</span> code. See “systemctl status nginx.service” <span class="hljs-keyword">and</span> “journalctl -xe” <span class="hljs-keyword">for</span> details.<br>[root@test5 ~]# systemctl status nginx.service<br>● nginx.service - The nginx HTTP <span class="hljs-keyword">and</span> reverse<span class="hljs-built_in"> proxy server</span><br><span class="hljs-built_in"></span>Loaded: loaded (/usr/lib/systemd/system/nginx.service; disabled; vendor preset: disabled)<br>Active: failed (Result: exit-code) since 四 2023-09-07 17:47:46 CST; 15s ago<br>Process: 54283 <span class="hljs-attribute">ExecStart</span>=/usr/sbin/nginx (<span class="hljs-attribute">code</span>=exited, <span class="hljs-attribute">status</span>=0/SUCCESS)<br>Process: 55399 <span class="hljs-attribute">ExecStartPre</span>=/usr/sbin/nginx -t (<span class="hljs-attribute">code</span>=exited, <span class="hljs-attribute">status</span>=1/FAILURE)<br>Process: 55397 <span class="hljs-attribute">ExecStartPre</span>=/usr/bin/rm -f /run/nginx.pid (<span class="hljs-attribute">code</span>=exited, <span class="hljs-attribute">status</span>=0/SUCCESS)<br>Main PID: 54285 (<span class="hljs-attribute">code</span>=exited, <span class="hljs-attribute">status</span>=0/SUCCESS)<br><br>9月 07 17:47:46 test5 systemd[1]: Starting The nginx HTTP <span class="hljs-keyword">and</span> reverse<span class="hljs-built_in"> proxy </span>se…<br>9月 07 17:47:46 test5 nginx[55399]: nginx: [emerg] cannot load certificate key…e)<br>9月 07 17:47:46 test5 nginx[55399]: nginx: configuration file /etc/nginx/nginx…ed<br>9月 07 17:47:46 test5 systemd[1]: nginx.service: control process exited, <span class="hljs-attribute">code</span>=…=1<br>9月 07 17:47:46 test5 systemd[1]: Failed <span class="hljs-keyword">to</span> start The nginx HTTP <span class="hljs-keyword">and</span> reverse p…r.<br>9月 07 17:47:46 test5 systemd[1]: Unit nginx.service entered failed state.<br>9月 07 17:47:46 test5 systemd[1]: nginx.service failed.<br>Hint: Some lines were ellipsized, use -l <span class="hljs-keyword">to</span> show <span class="hljs-keyword">in</span> full.<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs awk">解决方案：里面使用解密后的私钥文件路径<br><br>vim <span class="hljs-regexp">/etc/</span>nginx/nginx.conf<br><br>ssl_certificate “<span class="hljs-regexp">/root/</span>server.crt”;<br><br>systemctl start nginx <br></code></pre></td></tr></table></figure>
+
+
+
+<h5 id="6-登录"><a href="#6-登录" class="headerlink" title="6.登录"></a>6.登录</h5><figure class="highlight dts"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs dts"><span class="hljs-symbol">https:</span><span class="hljs-comment">//192.168.198.15/</span><br></code></pre></td></tr></table></figure>
+
+
+
+
+
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403081007830.png" srcset="/img/loading.gif" lazyload alt="image-20240308100750745"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403081008206.png" srcset="/img/loading.gif" lazyload alt="image-20240308100804124"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403081008515.png" srcset="/img/loading.gif" lazyload alt="image-20240308100815441"></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>ssl证书自签发 2024-04-03</div>
+      <div>http://example.com/2025/01/16/ssl证书自签发-ssl-zheng-shu-zi-qian-fa/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E4%BD%BF%E7%94%A8%20OpenFunction%20%E5%9C%A8%E4%BB%BB%E4%BD%95%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E4%B8%8A%E8%BF%90%E8%A1%8C%E6%97%A0%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%B7%A5%E4%BD%9C%E8%B4%9F%E8%BD%BD-shi-yong-openfunction-zai-ren-he-ji-chu-she-shi-shang-yun-xing-wu-fu-wu-qi-gong-zuo-fu-zai/" title="使用 OpenFunction 在任何基础设施上运行无服务器工作负载 2024-01-21 04:02:44.459">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">使用 OpenFunction 在任何基础设施上运行无服务器工作负载 2024-01-21 04:02:44.459</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E5%8D%95master%E5%8D%95etcd%E6%94%B9%E9%80%A0%E4%B8%BA3master3etcd-dan-master-dan-etcd-gai-zao-wei-3master3etcd/" title="单master单etcd改造为3master3etcd 2024-08-02 17:57:00.592">
+                        <span class="hidden-mobile">单master单etcd改造为3master3etcd 2024-08-02 17:57:00.592</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

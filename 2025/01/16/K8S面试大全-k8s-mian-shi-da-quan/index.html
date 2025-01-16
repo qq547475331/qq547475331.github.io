@@ -1,0 +1,699 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="一、Kubernetes 基础知识面试题10 道面试题 1、什么是 Kubernetes？ Kubernetes 是一个开源容器管理工具，负责容器部署，容器扩缩容以及负载平衡。它提供了出色的社区，并与所有云提供商合作。因此，我们可以说 Kubernetes 不是一个容器化平台，而是一个多容器管理解决方案。2、 Kubernetes 与 docker 什么关系？ Docker 提供容器的生命周期管理">
+<meta property="og:type" content="article">
+<meta property="og:title" content="K8S面试大全 2024-04-03 15:10:54.493">
+<meta property="og:url" content="http://example.com/2025/01/16/K8S%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8-k8s-mian-shi-da-quan/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="一、Kubernetes 基础知识面试题10 道面试题 1、什么是 Kubernetes？ Kubernetes 是一个开源容器管理工具，负责容器部署，容器扩缩容以及负载平衡。它提供了出色的社区，并与所有云提供商合作。因此，我们可以说 Kubernetes 不是一个容器化平台，而是一个多容器管理解决方案。2、 Kubernetes 与 docker 什么关系？ Docker 提供容器的生命周期管理">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221059641.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221059626.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221100911.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221100300.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221101104.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.055Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:18.734Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221059641.png">
+  
+  
+  
+  <title>K8S面试大全 2024-04-03 15:10:54.493 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="K8S面试大全 2024-04-03 15:10:54.493"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          5.3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          45 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">K8S面试大全 2024-04-03 15:10:54.493</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p><strong>一、Kubernetes 基础知识面试题10 道面试题</strong></p>
+<p><strong>1、什么是 Kubernetes？</strong></p>
+<h5 id="Kubernetes-是一个开源容器管理工具，负责容器部署，容器扩缩容以及负载平衡。它提供了出色的社区，并与所有云提供商合作。因此，我们可以说-Kubernetes-不是一个容器化平台，而是一个多容器管理解决方案。"><a href="#Kubernetes-是一个开源容器管理工具，负责容器部署，容器扩缩容以及负载平衡。它提供了出色的社区，并与所有云提供商合作。因此，我们可以说-Kubernetes-不是一个容器化平台，而是一个多容器管理解决方案。" class="headerlink" title="Kubernetes 是一个开源容器管理工具，负责容器部署，容器扩缩容以及负载平衡。它提供了出色的社区，并与所有云提供商合作。因此，我们可以说 Kubernetes 不是一个容器化平台，而是一个多容器管理解决方案。"></a>Kubernetes 是一个开源容器管理工具，负责容器部署，容器扩缩容以及负载平衡。它提供了出色的社区，并与所有云提供商合作。因此，我们可以说 Kubernetes 不是一个容器化平台，而是一个多容器管理解决方案。</h5><p><strong>2、 Kubernetes 与 docker 什么关系？</strong></p>
+<h5 id="Docker-提供容器的生命周期管理，Docker-镜像构建运行时容器。但是，由于这些单独的容器必须通信，因此使用-Kubernetes。因此，我们说-Docker-构建容器，这些容器通过-Kubernetes-相互通信。因此，可以使用-Kubernetes-手动关联和编排在多个主机上运行的容器。"><a href="#Docker-提供容器的生命周期管理，Docker-镜像构建运行时容器。但是，由于这些单独的容器必须通信，因此使用-Kubernetes。因此，我们说-Docker-构建容器，这些容器通过-Kubernetes-相互通信。因此，可以使用-Kubernetes-手动关联和编排在多个主机上运行的容器。" class="headerlink" title="Docker 提供容器的生命周期管理，Docker 镜像构建运行时容器。但是，由于这些单独的容器必须通信，因此使用 Kubernetes。因此，我们说 Docker 构建容器，这些容器通过 Kubernetes 相互通信。因此，可以使用 Kubernetes 手动关联和编排在多个主机上运行的容器。"></a>Docker 提供容器的生命周期管理，Docker 镜像构建运行时容器。但是，由于这些单独的容器必须通信，因此使用 Kubernetes。因此，我们说 Docker 构建容器，这些容器通过 Kubernetes 相互通信。因此，可以使用 Kubernetes 手动关联和编排在多个主机上运行的容器。</h5><p><strong>3、Kubernetes 与 Docker Swarm 的区别？</strong></p>
+<h5 id="Docker-Swarm-和-Kubernetes-都可以用于类似目的。它们都是容器编排工具。"><a href="#Docker-Swarm-和-Kubernetes-都可以用于类似目的。它们都是容器编排工具。" class="headerlink" title="Docker Swarm 和 Kubernetes 都可以用于类似目的。它们都是容器编排工具。"></a>Docker Swarm 和 Kubernetes 都可以用于类似目的。它们都是容器编排工具。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221059641.png" srcset="/img/loading.gif" lazyload alt="image-20240222105935530"></p>
+<p><strong>4、在主机和容器上部署应用程序有什么区别？</strong></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221059626.png" srcset="/img/loading.gif" lazyload alt="image-20240222105949456"></p>
+<h5 id="上图左侧架构表示在主机上部署应用程序。因此，这种架构将具有操作系统，然后操作系统将具有内核，该内核将在应用程序所需的操作系统上安装各种库。因此，在这种框架中，你可以拥有-n-个应用程序，并且所有应用程序将共享该操作系统中存在的库。"><a href="#上图左侧架构表示在主机上部署应用程序。因此，这种架构将具有操作系统，然后操作系统将具有内核，该内核将在应用程序所需的操作系统上安装各种库。因此，在这种框架中，你可以拥有-n-个应用程序，并且所有应用程序将共享该操作系统中存在的库。" class="headerlink" title="上图左侧架构表示在主机上部署应用程序。因此，这种架构将具有操作系统，然后操作系统将具有内核，该内核将在应用程序所需的操作系统上安装各种库。因此，在这种框架中，你可以拥有 n 个应用程序，并且所有应用程序将共享该操作系统中存在的库。"></a><strong>上图左</strong>侧架构表示在主机上部署应用程序。因此，这种架构将具有操作系统，然后操作系统将具有内核，该内核将在应用程序所需的操作系统上安装各种库。因此，在这种框架中，你可以拥有 n 个应用程序，并且所有应用程序将共享该操作系统中存在的库。</h5><h5 id="上图右侧架构是容器中部署应用程序。这种架构将有一个内核，这是唯一一个在所有应用程序之间唯一共同的东西。各个块基本上是容器化的，并且这些块与其他应用程序隔离。因此，应用程序具有与系统其余部分隔离的必要库和二进制文件，并且不能被任何其他应用程序侵占。"><a href="#上图右侧架构是容器中部署应用程序。这种架构将有一个内核，这是唯一一个在所有应用程序之间唯一共同的东西。各个块基本上是容器化的，并且这些块与其他应用程序隔离。因此，应用程序具有与系统其余部分隔离的必要库和二进制文件，并且不能被任何其他应用程序侵占。" class="headerlink" title="上图右侧架构是容器中部署应用程序。这种架构将有一个内核，这是唯一一个在所有应用程序之间唯一共同的东西。各个块基本上是容器化的，并且这些块与其他应用程序隔离。因此，应用程序具有与系统其余部分隔离的必要库和二进制文件，并且不能被任何其他应用程序侵占。"></a><strong>上图右</strong>侧架构是容器中部署应用程序。这种架构将有一个内核，这是唯一一个在所有应用程序之间唯一共同的东西。各个块基本上是容器化的，并且这些块与其他应用程序隔离。因此，应用程序具有与系统其余部分隔离的必要库和二进制文件，并且不能被任何其他应用程序侵占。</h5><p><strong>5、Kubernetes 如何简化容器化部署？</strong></p>
+<h5 id="跨主机的容器都需要相互通信。因此，要做到这一点，你需要一些能够负载平衡，扩展和监控容器的东西。由于-Kubernetes-与云无关并且可以在任何公共-私有提供商上运行，因此可以简化容器化部署程序。"><a href="#跨主机的容器都需要相互通信。因此，要做到这一点，你需要一些能够负载平衡，扩展和监控容器的东西。由于-Kubernetes-与云无关并且可以在任何公共-私有提供商上运行，因此可以简化容器化部署程序。" class="headerlink" title="跨主机的容器都需要相互通信。因此，要做到这一点，你需要一些能够负载平衡，扩展和监控容器的东西。由于 Kubernetes 与云无关并且可以在任何公共&#x2F;私有提供商上运行，因此可以简化容器化部署程序。"></a>跨主机的容器都需要相互通信。因此，要做到这一点，你需要一些能够负载平衡，扩展和监控容器的东西。由于 Kubernetes 与云无关并且可以在任何公共&#x2F;私有提供商上运行，因此可以简化容器化部署程序。</h5><p><strong>6、什么是 kubectl？</strong></p>
+<h5 id="Kubectl-是一个平台，可以使用该平台将命令传递给集群。因此，它基本上为CLI-提供了针对-Kubernetes-集群运行命令的方法，以及创建和管理-Kubernetes组件的各种方法。"><a href="#Kubectl-是一个平台，可以使用该平台将命令传递给集群。因此，它基本上为CLI-提供了针对-Kubernetes-集群运行命令的方法，以及创建和管理-Kubernetes组件的各种方法。" class="headerlink" title="Kubectl 是一个平台，可以使用该平台将命令传递给集群。因此，它基本上为CLI 提供了针对 Kubernetes 集群运行命令的方法，以及创建和管理 Kubernetes组件的各种方法。"></a>Kubectl 是一个平台，可以使用该平台将命令传递给集群。因此，它基本上为CLI 提供了针对 Kubernetes 集群运行命令的方法，以及创建和管理 Kubernetes组件的各种方法。</h5><p><strong>7、什么是 kubelet？</strong></p>
+<h5 id="这是一个代理服务，它在每个节点上运行，并使从服务器与主服务器通信。因此，Kubelet-处理-PodSpec-中提供给它的容器的描述，并确保-PodSpec-中描述的容器运行正常。可以创建-pod、删除-pod。"><a href="#这是一个代理服务，它在每个节点上运行，并使从服务器与主服务器通信。因此，Kubelet-处理-PodSpec-中提供给它的容器的描述，并确保-PodSpec-中描述的容器运行正常。可以创建-pod、删除-pod。" class="headerlink" title="这是一个代理服务，它在每个节点上运行，并使从服务器与主服务器通信。因此，Kubelet 处理 PodSpec 中提供给它的容器的描述，并确保 PodSpec 中描述的容器运行正常。可以创建 pod、删除 pod。"></a>这是一个代理服务，它在每个节点上运行，并使从服务器与主服务器通信。因此，Kubelet 处理 PodSpec 中提供给它的容器的描述，并确保 PodSpec 中描述的容器运行正常。可以创建 pod、删除 pod。</h5><p><strong>8、k8s 有哪些组件？</strong></p>
+<h5 id="1、etcd-保存了整个集群的状态；"><a href="#1、etcd-保存了整个集群的状态；" class="headerlink" title="1、etcd 保存了整个集群的状态；"></a>1、etcd 保存了整个集群的状态；</h5><h5 id="2、apiserver-提供了资源操作的唯一入口，并提供认证、授权、访问控制、API-注册和发现等机制；"><a href="#2、apiserver-提供了资源操作的唯一入口，并提供认证、授权、访问控制、API-注册和发现等机制；" class="headerlink" title="2、apiserver 提供了资源操作的唯一入口，并提供认证、授权、访问控制、API 注册和发现等机制；"></a>2、apiserver 提供了资源操作的唯一入口，并提供认证、授权、访问控制、API 注册和发现等机制；</h5><h5 id="3、controller-manager-负责维护集群的状态，比如故障检测、自动扩展、滚动更新等；"><a href="#3、controller-manager-负责维护集群的状态，比如故障检测、自动扩展、滚动更新等；" class="headerlink" title="3、controller manager 负责维护集群的状态，比如故障检测、自动扩展、滚动更新等；"></a>3、controller manager 负责维护集群的状态，比如故障检测、自动扩展、滚动更新等；</h5><h5 id="4、scheduler-负责资源的调度，按照预定的调度策略将-Pod-调度到相应的机器上；"><a href="#4、scheduler-负责资源的调度，按照预定的调度策略将-Pod-调度到相应的机器上；" class="headerlink" title="4、scheduler 负责资源的调度，按照预定的调度策略将 Pod 调度到相应的机器上；"></a>4、scheduler 负责资源的调度，按照预定的调度策略将 Pod 调度到相应的机器上；</h5><h5 id="5、kubelet-负责维护容器的生命周期，同时也负责-Volume（CVI）和网络（CNI）的管理；"><a href="#5、kubelet-负责维护容器的生命周期，同时也负责-Volume（CVI）和网络（CNI）的管理；" class="headerlink" title="5、kubelet 负责维护容器的生命周期，同时也负责 Volume（CVI）和网络（CNI）的管理；"></a>5、kubelet 负责维护容器的生命周期，同时也负责 Volume（CVI）和网络（CNI）的管理；</h5><h5 id="6、Container-runtime-负责镜像管理以及-Pod-和容器的真正运行（CRI）；"><a href="#6、Container-runtime-负责镜像管理以及-Pod-和容器的真正运行（CRI）；" class="headerlink" title="6、Container runtime 负责镜像管理以及 Pod 和容器的真正运行（CRI）；"></a>6、Container runtime 负责镜像管理以及 Pod 和容器的真正运行（CRI）；</h5><h5 id="7、kube-proxy-负责为-Service-提供-cluster-内部的服务发现和负载均衡。"><a href="#7、kube-proxy-负责为-Service-提供-cluster-内部的服务发现和负载均衡。" class="headerlink" title="7、kube-proxy 负责为 Service 提供 cluster 内部的服务发现和负载均衡。"></a>7、kube-proxy 负责为 Service 提供 cluster 内部的服务发现和负载均衡。</h5><p><strong>9、Pod SVC Node Container 之间如何相互访问</strong>：</p>
+<h5 id="1、同-Pod-内的容器：同一个-Pod-的容器共享同一个网络命名空间可以直接进行通讯"><a href="#1、同-Pod-内的容器：同一个-Pod-的容器共享同一个网络命名空间可以直接进行通讯" class="headerlink" title="1、同 Pod 内的容器：同一个 Pod 的容器共享同一个网络命名空间可以直接进行通讯"></a>1、同 Pod 内的容器：同一个 Pod 的容器共享同一个网络命名空间可以直接进行通讯</h5><h5 id="2、同-Node-内不同-Pod-的容器：多个-Pod-都关联在同一个-Docker0-网桥上，通过-docker0-网桥完成相互通讯。"><a href="#2、同-Node-内不同-Pod-的容器：多个-Pod-都关联在同一个-Docker0-网桥上，通过-docker0-网桥完成相互通讯。" class="headerlink" title="2、同 Node 内不同 Pod 的容器：多个 Pod 都关联在同一个 Docker0 网桥上，通过 docker0 网桥完成相互通讯。"></a>2、同 Node 内不同 Pod 的容器：多个 Pod 都关联在同一个 Docker0 网桥上，通过 docker0 网桥完成相互通讯。</h5><h5 id="3、不同-Node-内-Pod-的容器：不同-Node-上的-docker0-可能会相同，PodIP-和-docker0-是同网段的，所以需要将-PodIP-和-NodeIP-进行关联且保障唯"><a href="#3、不同-Node-内-Pod-的容器：不同-Node-上的-docker0-可能会相同，PodIP-和-docker0-是同网段的，所以需要将-PodIP-和-NodeIP-进行关联且保障唯" class="headerlink" title="3、不同 Node 内 Pod 的容器：不同 Node 上的 docker0 可能会相同，PodIP 和 docker0 是同网段的，所以需要将 PodIP 和 NodeIP 进行关联且保障唯"></a>3、不同 Node 内 Pod 的容器：不同 Node 上的 docker0 可能会相同，PodIP 和 docker0 是同网段的，所以需要将 PodIP 和 NodeIP 进行关联且保障唯</h5><h5 id="4，不同-Pod-之间的数据通过物理机的端口进行转发即可完成通讯。"><a href="#4，不同-Pod-之间的数据通过物理机的端口进行转发即可完成通讯。" class="headerlink" title="4，不同 Pod 之间的数据通过物理机的端口进行转发即可完成通讯。"></a>4，不同 Pod 之间的数据通过物理机的端口进行转发即可完成通讯。</h5><p><strong>二、Kubernetes 架构面试题10 道面试题</strong></p>
+<p><strong>1、kubernetes 控制节点组件有哪些？</strong></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221100911.png" srcset="/img/loading.gif" lazyload alt="image-20240222110025841"></p>
+<h5 id="Kubernetes-控制节点组件：kube-controller-manager，kube-apiserver，kube-scheduler、Kubernetes"><a href="#Kubernetes-控制节点组件：kube-controller-manager，kube-apiserver，kube-scheduler、Kubernetes" class="headerlink" title="Kubernetes 控制节点组件：kube-controller-manager，kube-apiserver，kube-scheduler、Kubernetes"></a><strong>Kubernetes 控制节点组件：</strong>kube-controller-manager，kube-apiserver，kube-scheduler、Kubernetes</h5><h5 id="工作节点组件：kubelet-和-kube-proxy"><a href="#工作节点组件：kubelet-和-kube-proxy" class="headerlink" title="工作节点组件：kubelet 和 kube-proxy"></a><strong>工作节点组件：</strong>kubelet 和 kube-proxy</h5><p><strong>2、谈谈你对 kube-proxy 的理解？</strong></p>
+<h5 id="kube-proxy-是-Kubernetes-的核心组件，部署在每个-Node-节点上，它是实现Kubernetes-Service-的通信与负载均衡机制的重要组件-kube-proxy-负责为-Pod-创建代理服务，从-apiserver-获取所有-server-信息，并根据-server-信息创建代理服务，实现server-到-Pod-的请求路由和转发，从而实现-K8s-层级的虚拟转发网络。"><a href="#kube-proxy-是-Kubernetes-的核心组件，部署在每个-Node-节点上，它是实现Kubernetes-Service-的通信与负载均衡机制的重要组件-kube-proxy-负责为-Pod-创建代理服务，从-apiserver-获取所有-server-信息，并根据-server-信息创建代理服务，实现server-到-Pod-的请求路由和转发，从而实现-K8s-层级的虚拟转发网络。" class="headerlink" title="kube-proxy 是 Kubernetes 的核心组件，部署在每个 Node 节点上，它是实现Kubernetes Service 的通信与负载均衡机制的重要组件; kube-proxy 负责为 Pod 创建代理服务，从 apiserver 获取所有 server 信息，并根据 server 信息创建代理服务，实现server 到 Pod 的请求路由和转发，从而实现 K8s 层级的虚拟转发网络。"></a>kube-proxy 是 Kubernetes 的核心组件，部署在每个 Node 节点上，它是实现Kubernetes Service 的通信与负载均衡机制的重要组件; kube-proxy 负责为 Pod 创建代理服务，从 apiserver 获取所有 server 信息，并根据 server 信息创建代理服务，实现server 到 Pod 的请求路由和转发，从而实现 K8s 层级的虚拟转发网络。</h5><p><strong>3、kube-apiserver 和 kube-scheduler 的作用是什么？</strong></p>
+<h5 id="kube-apiserver-遵循横向扩展架构，是主节点控制平面的前端。将公开Kubernetes-主节点组件的所有-API，并负责在-Kubernetes-节点和-Kubernetes主组件之间建立通信。"><a href="#kube-apiserver-遵循横向扩展架构，是主节点控制平面的前端。将公开Kubernetes-主节点组件的所有-API，并负责在-Kubernetes-节点和-Kubernetes主组件之间建立通信。" class="headerlink" title="kube -apiserver 遵循横向扩展架构，是主节点控制平面的前端。将公开Kubernetes 主节点组件的所有 API，并负责在 Kubernetes 节点和 Kubernetes主组件之间建立通信。"></a><strong>kube -apiserver</strong> 遵循横向扩展架构，是主节点控制平面的前端。将公开Kubernetes 主节点组件的所有 API，并负责在 Kubernetes 节点和 Kubernetes主组件之间建立通信。</h5><h5 id="kube-scheduler-是调度器，负责根据资源需求选择最合适的节点来运行未调度的-pod，并跟踪资源利用率。它确保不在资源已满的节点上调度-pod。"><a href="#kube-scheduler-是调度器，负责根据资源需求选择最合适的节点来运行未调度的-pod，并跟踪资源利用率。它确保不在资源已满的节点上调度-pod。" class="headerlink" title="kube-scheduler 是调度器，负责根据资源需求选择最合适的节点来运行未调度的 pod，并跟踪资源利用率。它确保不在资源已满的节点上调度 pod。"></a><strong>kube-scheduler</strong> 是调度器，负责根据资源需求选择最合适的节点来运行未调度的 pod，并跟踪资源利用率。它确保不在资源已满的节点上调度 pod。</h5><p><strong>4、你能简要介绍一下 Kubernetes 控制管理器吗？</strong></p>
+<h5 id="Controller-Manager-作为集群内部的管理控制中心，负责集群内的-Node、Pod-副本、服务端点（Endpoint）、命名空间（Namespace）、服务账号（ServiceAccount）、资源定额（ResourceQuota）的管理，当某个-Node-意外宕机时，Controller-Manager-会及时发现并执行自动化修复流程，确保集群始终处于预期的工作状态。"><a href="#Controller-Manager-作为集群内部的管理控制中心，负责集群内的-Node、Pod-副本、服务端点（Endpoint）、命名空间（Namespace）、服务账号（ServiceAccount）、资源定额（ResourceQuota）的管理，当某个-Node-意外宕机时，Controller-Manager-会及时发现并执行自动化修复流程，确保集群始终处于预期的工作状态。" class="headerlink" title="Controller Manager 作为集群内部的管理控制中心，负责集群内的 Node、Pod 副本、服务端点（Endpoint）、命名空间（Namespace）、服务账号（ServiceAccount）、资源定额（ResourceQuota）的管理，当某个 Node 意外宕机时，Controller Manager 会及时发现并执行自动化修复流程，确保集群始终处于预期的工作状态。"></a>Controller Manager 作为集群内部的管理控制中心，负责集群内的 Node、Pod 副本、服务端点（Endpoint）、命名空间（Namespace）、服务账号（ServiceAccount）、资源定额（ResourceQuota）的管理，当某个 Node 意外宕机时，Controller Manager 会及时发现并执行自动化修复流程，确保集群始终处于预期的工作状态。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221100300.png" srcset="/img/loading.gif" lazyload alt="image-20240222110044243"></p>
+<p><strong>5、Kubernetes 如何简化容器化部署？</strong></p>
+<h5 id="跨主机的容器都需要相互通信。因此，要做到这一点，你需要一些能够负载平衡，扩展和监控容器的东西。由于-Kubernetes-与云无关并且可以在任何公共-私有提供商上运行，因此可以简化容器化部署程序。-1"><a href="#跨主机的容器都需要相互通信。因此，要做到这一点，你需要一些能够负载平衡，扩展和监控容器的东西。由于-Kubernetes-与云无关并且可以在任何公共-私有提供商上运行，因此可以简化容器化部署程序。-1" class="headerlink" title="跨主机的容器都需要相互通信。因此，要做到这一点，你需要一些能够负载平衡，扩展和监控容器的东西。由于 Kubernetes 与云无关并且可以在任何公共&#x2F;私有提供商上运行，因此可以简化容器化部署程序。"></a>跨主机的容器都需要相互通信。因此，要做到这一点，你需要一些能够负载平衡，扩展和监控容器的东西。由于 Kubernetes 与云无关并且可以在任何公共&#x2F;私有提供商上运行，因此可以简化容器化部署程序。</h5><p><strong>6、什么是 ETCD?</strong></p>
+<h5 id="Etcd-是用-Go-编程语言编写的，是一个分布式键值存储，用于协调分布式工作。因此，Etcd-存储-Kubernetes-集群的配置数据，表示在任何给定时间点的集群状态。"><a href="#Etcd-是用-Go-编程语言编写的，是一个分布式键值存储，用于协调分布式工作。因此，Etcd-存储-Kubernetes-集群的配置数据，表示在任何给定时间点的集群状态。" class="headerlink" title="Etcd 是用 Go 编程语言编写的，是一个分布式键值存储，用于协调分布式工作。因此，Etcd 存储 Kubernetes 集群的配置数据，表示在任何给定时间点的集群状态。"></a>Etcd 是用 Go 编程语言编写的，是一个分布式键值存储，用于协调分布式工作。因此，Etcd 存储 Kubernetes 集群的配置数据，表示在任何给定时间点的集群状态。</h5><p><strong>7、什么是 Ingress，它是如何工作的？</strong></p>
+<h5 id="Ingress-网络是一组规则，充当-Kubernetes-集群的入口点。这允许入站连接，可以将其配置为通过可访问的-URL，负载平衡流量或通过提供基于名称的虚拟主机从外部提供服务。因此，Ingress-是一个-API-对象，通常通过-HTTP-管理集群中服务的外部访问，是暴露服务的最有效方式。"><a href="#Ingress-网络是一组规则，充当-Kubernetes-集群的入口点。这允许入站连接，可以将其配置为通过可访问的-URL，负载平衡流量或通过提供基于名称的虚拟主机从外部提供服务。因此，Ingress-是一个-API-对象，通常通过-HTTP-管理集群中服务的外部访问，是暴露服务的最有效方式。" class="headerlink" title="Ingress 网络是一组规则，充当 Kubernetes 集群的入口点。这允许入站连接，可以将其配置为通过可访问的 URL，负载平衡流量或通过提供基于名称的虚拟主机从外部提供服务。因此，Ingress 是一个 API 对象，通常通过 HTTP 管理集群中服务的外部访问，是暴露服务的最有效方式。"></a>Ingress 网络是一组规则，充当 Kubernetes 集群的入口点。这允许入站连接，可以将其配置为通过可访问的 URL，负载平衡流量或通过提供基于名称的虚拟主机从外部提供服务。因此，Ingress 是一个 API 对象，通常通过 HTTP 管理集群中服务的外部访问，是暴露服务的最有效方式。</h5><p><strong>8、什么是 Headless Service？</strong></p>
+<h5 id="Headless-Service-类似于“普通”服务，但没有群集-IP。此服务使您可以直接访问pod，而无需通过代理访问它。"><a href="#Headless-Service-类似于“普通”服务，但没有群集-IP。此服务使您可以直接访问pod，而无需通过代理访问它。" class="headerlink" title="Headless Service 类似于“普通”服务，但没有群集 IP。此服务使您可以直接访问pod，而无需通过代理访问它。"></a>Headless Service 类似于“普通”服务，但没有群集 IP。此服务使您可以直接访问pod，而无需通过代理访问它。</h5><p><strong>2.1.9 什么是集群联邦</strong></p>
+<h5 id="在联邦集群的帮助下，可以将多个-Kubernetes-集群作为单个集群进行管理。因此，您可以在数据中心-云中创建多个-Kubernetes-集群，并使用联邦来在一个位置控制-管理它们。"><a href="#在联邦集群的帮助下，可以将多个-Kubernetes-集群作为单个集群进行管理。因此，您可以在数据中心-云中创建多个-Kubernetes-集群，并使用联邦来在一个位置控制-管理它们。" class="headerlink" title="在联邦集群的帮助下，可以将多个 Kubernetes 集群作为单个集群进行管理。因此，您可以在数据中心&#x2F;云中创建多个 Kubernetes 集群，并使用联邦来在一个位置控制&#x2F;管理它们。"></a>在联邦集群的帮助下，可以将多个 Kubernetes 集群作为单个集群进行管理。因此，您可以在数据中心&#x2F;云中创建多个 Kubernetes 集群，并使用联邦来在一个位置控制&#x2F;管理它们。</h5><p><strong>9、 k8s 提供几种服务发现</strong></p>
+<p><strong>两种服务发现：</strong></p>
+<h5 id="1、环境变量：当创建一个-Pod-的时候，kubelet-会在该-Pod-中注入集群内所有Service-的相关环境变量。"><a href="#1、环境变量：当创建一个-Pod-的时候，kubelet-会在该-Pod-中注入集群内所有Service-的相关环境变量。" class="headerlink" title="1、环境变量：当创建一个 Pod 的时候，kubelet 会在该 Pod 中注入集群内所有Service 的相关环境变量。"></a>1、环境变量：当创建一个 Pod 的时候，kubelet 会在该 Pod 中注入集群内所有Service 的相关环境变量。</h5><h5 id="2、DNS：可以通过-cluster-add-on-的方式轻松的创建-CoreDNS-来对集群内的Service-进行服务发现。"><a href="#2、DNS：可以通过-cluster-add-on-的方式轻松的创建-CoreDNS-来对集群内的Service-进行服务发现。" class="headerlink" title="2、DNS：可以通过 cluster add-on 的方式轻松的创建 CoreDNS 来对集群内的Service 进行服务发现。"></a>2、DNS：可以通过 cluster add-on 的方式轻松的创建 CoreDNS 来对集群内的Service 进行服务发现。</h5><h5 id="以上两种方式，一个是基于-TCP，DNS-基于-UDP，它们都是建立在四层协议之上。"><a href="#以上两种方式，一个是基于-TCP，DNS-基于-UDP，它们都是建立在四层协议之上。" class="headerlink" title="以上两种方式，一个是基于 TCP，DNS 基于 UDP，它们都是建立在四层协议之上。"></a>以上两种方式，一个是基于 TCP，DNS 基于 UDP，它们都是建立在四层协议之上。</h5><p><strong>10、Pod 中的应用共享几种资源</strong></p>
+<h5 id="1、PID-命名空间：Pod-中的不同应用程序可以看到其他应用程序的进程-ID。"><a href="#1、PID-命名空间：Pod-中的不同应用程序可以看到其他应用程序的进程-ID。" class="headerlink" title="1、PID 命名空间：Pod 中的不同应用程序可以看到其他应用程序的进程 ID。"></a>1、PID 命名空间：Pod 中的不同应用程序可以看到其他应用程序的进程 ID。</h5><h5 id="2、网络命名空间：Pod-中的多个容器能够访问同一个-IP-和端口范围。"><a href="#2、网络命名空间：Pod-中的多个容器能够访问同一个-IP-和端口范围。" class="headerlink" title="2、网络命名空间：Pod 中的多个容器能够访问同一个 IP 和端口范围。"></a>2、网络命名空间：Pod 中的多个容器能够访问同一个 IP 和端口范围。</h5><h5 id="3、IPC-命名空间：Pod-中的多个容器能够使用-SystemV-IPC-或-POSIX-消息队列进行通信。"><a href="#3、IPC-命名空间：Pod-中的多个容器能够使用-SystemV-IPC-或-POSIX-消息队列进行通信。" class="headerlink" title="3、IPC 命名空间：Pod 中的多个容器能够使用 SystemV IPC 或 POSIX 消息队列进行通信。"></a>3、IPC 命名空间：Pod 中的多个容器能够使用 SystemV IPC 或 POSIX 消息队列进行通信。</h5><h5 id="4、UTS-命名空间：Pod-中的多个容器共享一个主机名。"><a href="#4、UTS-命名空间：Pod-中的多个容器共享一个主机名。" class="headerlink" title="4、UTS 命名空间：Pod 中的多个容器共享一个主机名。"></a>4、UTS 命名空间：Pod 中的多个容器共享一个主机名。</h5><h5 id="5、Volumes（共享存储卷）：Pod-中的各个容器可以访问在-Pod-级别定义的Volumes。"><a href="#5、Volumes（共享存储卷）：Pod-中的各个容器可以访问在-Pod-级别定义的Volumes。" class="headerlink" title="5、Volumes（共享存储卷）：Pod 中的各个容器可以访问在 Pod 级别定义的Volumes。"></a>5、Volumes（共享存储卷）：Pod 中的各个容器可以访问在 Pod 级别定义的Volumes。</h5><p><strong>三、k8s 使用场景面试题10 道面试题</strong></p>
+<p><strong>场景 1：</strong></p>
+<h5 id="假设一家基于单一架构的公司处理众多产品。现在，随着公司在当今的扩展行业的扩展，他们的单一架构开始引发问题。"><a href="#假设一家基于单一架构的公司处理众多产品。现在，随着公司在当今的扩展行业的扩展，他们的单一架构开始引发问题。" class="headerlink" title="假设一家基于单一架构的公司处理众多产品。现在，随着公司在当今的扩展行业的扩展，他们的单一架构开始引发问题。"></a>假设一家基于单一架构的公司处理众多产品。现在，随着公司在当今的扩展行业的扩展，他们的单一架构开始引发问题。</h5><h5 id="您如何看待公司从单一服务转向微服务并部署其服务容器？"><a href="#您如何看待公司从单一服务转向微服务并部署其服务容器？" class="headerlink" title="您如何看待公司从单一服务转向微服务并部署其服务容器？"></a>您如何看待公司从单一服务转向微服务并部署其服务容器？</h5><p><strong>解：</strong></p>
+<h5 id="由于公司的目标是从单一应用程序转向微服务，它们最终可以逐个构建，并行构建，只需在后台切换配置。然后他们可以将这些内置微服务放在-Kubernetes-平台上。因此他们可以从一次或两次迁移服务开始，并监控它们以确保一切运行稳定。一旦他们觉得一切顺利，他们就可以将其余的应用程序迁移到他们的-Kubernetes-集群中。"><a href="#由于公司的目标是从单一应用程序转向微服务，它们最终可以逐个构建，并行构建，只需在后台切换配置。然后他们可以将这些内置微服务放在-Kubernetes-平台上。因此他们可以从一次或两次迁移服务开始，并监控它们以确保一切运行稳定。一旦他们觉得一切顺利，他们就可以将其余的应用程序迁移到他们的-Kubernetes-集群中。" class="headerlink" title="由于公司的目标是从单一应用程序转向微服务，它们最终可以逐个构建，并行构建，只需在后台切换配置。然后他们可以将这些内置微服务放在 Kubernetes 平台上。因此他们可以从一次或两次迁移服务开始，并监控它们以确保一切运行稳定。一旦他们觉得一切顺利，他们就可以将其余的应用程序迁移到他们的 Kubernetes 集群中。"></a>由于公司的目标是从单一应用程序转向微服务，它们最终可以逐个构建，并行构建，只需在后台切换配置。然后他们可以将这些内置微服务放在 Kubernetes 平台上。因此他们可以从一次或两次迁移服务开始，并监控它们以确保一切运行稳定。一旦他们觉得一切顺利，他们就可以将其余的应用程序迁移到他们的 Kubernetes 集群中。</h5><p><strong>场景 2：</strong></p>
+<h5 id="考虑一家拥有分布式系统的跨国公司，拥有大量数据中心，虚拟机和许多从事各种任务的员工。"><a href="#考虑一家拥有分布式系统的跨国公司，拥有大量数据中心，虚拟机和许多从事各种任务的员工。" class="headerlink" title="考虑一家拥有分布式系统的跨国公司，拥有大量数据中心，虚拟机和许多从事各种任务的员工。"></a>考虑一家拥有分布式系统的跨国公司，拥有大量数据中心，虚拟机和许多从事各种任务的员工。</h5><h5 id="您认为这样-的公司如何以与-Kubernetes-一致的方式管理所有任务？"><a href="#您认为这样-的公司如何以与-Kubernetes-一致的方式管理所有任务？" class="headerlink" title="您认为这样 的公司如何以与 Kubernetes 一致的方式管理所有任务？"></a>您认为这样 的公司如何以与 Kubernetes 一致的方式管理所有任务？</h5><p><strong>解：</strong></p>
+<h5 id="正如我们所有人都知道-IT-部门推出了数千个容器，其任务在分布式系统中遍布全球众多节点。在这种情况下，公司可以使用能够为基于云的应用程序提供敏捷性，横向扩展功能和DevOps-实践的东西。因此，该公司可以使用-Kubernetes-来定制他们的调度架构并支持多种容器格式。这使得容器任务之间的亲和性成为可能，从而提供更高的效率，并为各种容器网络解决方案和容器存储提供广泛支持。"><a href="#正如我们所有人都知道-IT-部门推出了数千个容器，其任务在分布式系统中遍布全球众多节点。在这种情况下，公司可以使用能够为基于云的应用程序提供敏捷性，横向扩展功能和DevOps-实践的东西。因此，该公司可以使用-Kubernetes-来定制他们的调度架构并支持多种容器格式。这使得容器任务之间的亲和性成为可能，从而提供更高的效率，并为各种容器网络解决方案和容器存储提供广泛支持。" class="headerlink" title="正如我们所有人都知道 IT 部门推出了数千个容器，其任务在分布式系统中遍布全球众多节点。在这种情况下，公司可以使用能够为基于云的应用程序提供敏捷性，横向扩展功能和DevOps 实践的东西。因此，该公司可以使用 Kubernetes 来定制他们的调度架构并支持多种容器格式。这使得容器任务之间的亲和性成为可能，从而提供更高的效率，并为各种容器网络解决方案和容器存储提供广泛支持。"></a>正如我们所有人都知道 IT 部门推出了数千个容器，其任务在分布式系统中遍布全球众多节点。在这种情况下，公司可以使用能够为基于云的应用程序提供敏捷性，横向扩展功能和DevOps 实践的东西。因此，该公司可以使用 Kubernetes 来定制他们的调度架构并支持多种容器格式。这使得容器任务之间的亲和性成为可能，从而提供更高的效率，并为各种容器网络解决方案和容器存储提供广泛支持。</h5><p><strong>场景 3：</strong></p>
+<h5 id="考虑一种情况，即公司希望通过维持最低成本来提高其效率和技术运营速度。您认为公司将如何实现这一目标？"><a href="#考虑一种情况，即公司希望通过维持最低成本来提高其效率和技术运营速度。您认为公司将如何实现这一目标？" class="headerlink" title="考虑一种情况，即公司希望通过维持最低成本来提高其效率和技术运营速度。您认为公司将如何实现这一目标？"></a>考虑一种情况，即公司希望通过维持最低成本来提高其效率和技术运营速度。您认为公司将如何实现这一目标？</h5><p><strong>解：</strong></p>
+<h5 id="公司可以通过构建-CI-CD-管道来实现-DevOps-方法，但是这里可能出现的一个问题是配置可能需要一段时间才能启动并运行。因此，在实施-CI-CD-管道之后，公司的下一步应该是在云环境中工作。一旦他们开始处理云环境，他们就可以在集群上安排容器，并可以在-Kubernetes-的帮助下进行协调。这种方法将有助于公司缩短部署时间，并在各种环境中加快速度。"><a href="#公司可以通过构建-CI-CD-管道来实现-DevOps-方法，但是这里可能出现的一个问题是配置可能需要一段时间才能启动并运行。因此，在实施-CI-CD-管道之后，公司的下一步应该是在云环境中工作。一旦他们开始处理云环境，他们就可以在集群上安排容器，并可以在-Kubernetes-的帮助下进行协调。这种方法将有助于公司缩短部署时间，并在各种环境中加快速度。" class="headerlink" title="公司可以通过构建 CI&#x2F;CD 管道来实现 DevOps 方法，但是这里可能出现的一个问题是配置可能需要一段时间才能启动并运行。因此，在实施 CI&#x2F;CD 管道之后，公司的下一步应该是在云环境中工作。一旦他们开始处理云环境，他们就可以在集群上安排容器，并可以在 Kubernetes 的帮助下进行协调。这种方法将有助于公司缩短部署时间，并在各种环境中加快速度。"></a>公司可以通过构建 CI&#x2F;CD 管道来实现 DevOps 方法，但是这里可能出现的一个问题是配置可能需要一段时间才能启动并运行。因此，在实施 CI&#x2F;CD 管道之后，公司的下一步应该是在云环境中工作。一旦他们开始处理云环境，他们就可以在集群上安排容器，并可以在 Kubernetes 的帮助下进行协调。这种方法将有助于公司缩短部署时间，并在各种环境中加快速度。</h5><p><strong>场景 4：</strong></p>
+<h5 id="假设一家公司想要修改它的部署方法，并希望建立一个更具可扩展性和响应性的平台。"><a href="#假设一家公司想要修改它的部署方法，并希望建立一个更具可扩展性和响应性的平台。" class="headerlink" title="假设一家公司想要修改它的部署方法，并希望建立一个更具可扩展性和响应性的平台。"></a>假设一家公司想要修改它的部署方法，并希望建立一个更具可扩展性和响应性的平台。</h5><h5 id="您如何看待这家公司能够实现这一目标以满足客户需求？"><a href="#您如何看待这家公司能够实现这一目标以满足客户需求？" class="headerlink" title="您如何看待这家公司能够实现这一目标以满足客户需求？"></a>您如何看待这家公司能够实现这一目标以满足客户需求？</h5><p><strong>解：</strong></p>
+<h5 id="为了给数百万客户提供他们期望的数字体验，公司需要一个可扩展且响应迅速的平台，以便他们能够快速地将数据发送到客户网站。现在，要做到这一点，公司应该从他们的私有数据中心（如果他们使用任何）转移到任何云环境，如-AWS。不仅如此，他们还应该实现微服务架构，以便他们可以开始使用-Docker-容器。一旦他们准备好基础框架，他们就可以开始使用最好的编排平台，即-Kubernetes。这将使团队能够自主地构建应用程序并快速交付它们。"><a href="#为了给数百万客户提供他们期望的数字体验，公司需要一个可扩展且响应迅速的平台，以便他们能够快速地将数据发送到客户网站。现在，要做到这一点，公司应该从他们的私有数据中心（如果他们使用任何）转移到任何云环境，如-AWS。不仅如此，他们还应该实现微服务架构，以便他们可以开始使用-Docker-容器。一旦他们准备好基础框架，他们就可以开始使用最好的编排平台，即-Kubernetes。这将使团队能够自主地构建应用程序并快速交付它们。" class="headerlink" title="为了给数百万客户提供他们期望的数字体验，公司需要一个可扩展且响应迅速的平台，以便他们能够快速地将数据发送到客户网站。现在，要做到这一点，公司应该从他们的私有数据中心（如果他们使用任何）转移到任何云环境，如 AWS。不仅如此，他们还应该实现微服务架构，以便他们可以开始使用 Docker 容器。一旦他们准备好基础框架，他们就可以开始使用最好的编排平台，即 Kubernetes。这将使团队能够自主地构建应用程序并快速交付它们。"></a>为了给数百万客户提供他们期望的数字体验，公司需要一个可扩展且响应迅速的平台，以便他们能够快速地将数据发送到客户网站。现在，要做到这一点，公司应该从他们的私有数据中心（如果他们使用任何）转移到任何云环境，如 AWS。不仅如此，他们还应该实现微服务架构，以便他们可以开始使用 Docker 容器。一旦他们准备好基础框架，他们就可以开始使用最好的编排平台，即 Kubernetes。这将使团队能够自主地构建应用程序并快速交付它们。</h5><p><strong>场景 5：</strong></p>
+<h5 id="考虑一家拥有非常分散的系统的跨国公司，期待解决整体代码库问题。"><a href="#考虑一家拥有非常分散的系统的跨国公司，期待解决整体代码库问题。" class="headerlink" title="考虑一家拥有非常分散的系统的跨国公司，期待解决整体代码库问题。"></a>考虑一家拥有非常分散的系统的跨国公司，期待解决整体代码库问题。</h5><h5 id="您认为公司如何解决他们的问题？"><a href="#您认为公司如何解决他们的问题？" class="headerlink" title="您认为公司如何解决他们的问题？"></a>您认为公司如何解决他们的问题？</h5><p><strong>解</strong></p>
+<h5 id="那么，为了解决这个问题，我们可以将他们的单片代码库转移到微服务设计，然后每个微服务都可以被视为一个容器。因此，所有这些容器都可以在-Kubernetes-的帮助下进行部署和协调。"><a href="#那么，为了解决这个问题，我们可以将他们的单片代码库转移到微服务设计，然后每个微服务都可以被视为一个容器。因此，所有这些容器都可以在-Kubernetes-的帮助下进行部署和协调。" class="headerlink" title="那么，为了解决这个问题，我们可以将他们的单片代码库转移到微服务设计，然后每个微服务都可以被视为一个容器。因此，所有这些容器都可以在 Kubernetes 的帮助下进行部署和协调。"></a>那么，为了解决这个问题，我们可以将他们的单片代码库转移到微服务设计，然后每个微服务都可以被视为一个容器。因此，所有这些容器都可以在 Kubernetes 的帮助下进行部署和协调。</h5><p><strong>场景 6：</strong></p>
+<h5 id="我们所有人都知道，从单片到微服务的转变解决了开发方面的问题，但却增加了部署方面的问题。"><a href="#我们所有人都知道，从单片到微服务的转变解决了开发方面的问题，但却增加了部署方面的问题。" class="headerlink" title="我们所有人都知道，从单片到微服务的转变解决了开发方面的问题，但却增加了部署方面的问题。"></a>我们所有人都知道，从单片到微服务的转变解决了开发方面的问题，但却增加了部署方面的问题。</h5><h5 id="公司如何解决部署方面的问题？"><a href="#公司如何解决部署方面的问题？" class="headerlink" title="公司如何解决部署方面的问题？"></a>公司如何解决部署方面的问题？</h5><p><strong>解</strong></p>
+<h5 id="团队可以试验容器编排平台，例如-Kubernetes，并在数据中心运行。因此，通过这种方式，公司可以生成模板化应用程序，在五分钟内部署它，并在此时将实际实例集中在暂存环境中。这种-Kubernetes-项目将有数十个并行运行的微服务，以提高生产率，即使节点出现故障，也可以立即重新安排，而不会影响性能。"><a href="#团队可以试验容器编排平台，例如-Kubernetes，并在数据中心运行。因此，通过这种方式，公司可以生成模板化应用程序，在五分钟内部署它，并在此时将实际实例集中在暂存环境中。这种-Kubernetes-项目将有数十个并行运行的微服务，以提高生产率，即使节点出现故障，也可以立即重新安排，而不会影响性能。" class="headerlink" title="团队可以试验容器编排平台，例如 Kubernetes，并在数据中心运行。因此，通过这种方式，公司可以生成模板化应用程序，在五分钟内部署它，并在此时将实际实例集中在暂存环境中。这种 Kubernetes 项目将有数十个并行运行的微服务，以提高生产率，即使节点出现故障，也可以立即重新安排，而不会影响性能。"></a>团队可以试验容器编排平台，例如 Kubernetes，并在数据中心运行。因此，通过这种方式，公司可以生成模板化应用程序，在五分钟内部署它，并在此时将实际实例集中在暂存环境中。这种 Kubernetes 项目将有数十个并行运行的微服务，以提高生产率，即使节点出现故障，也可以立即重新安排，而不会影响性能。</h5><p><strong>场景 7：</strong></p>
+<h5 id="假设一家公司希望通过采用新技术来优化其工作负载的分配。"><a href="#假设一家公司希望通过采用新技术来优化其工作负载的分配。" class="headerlink" title="假设一家公司希望通过采用新技术来优化其工作负载的分配。"></a>假设一家公司希望通过采用新技术来优化其工作负载的分配。</h5><h5 id="公司如何有效地实现这种资源分配？"><a href="#公司如何有效地实现这种资源分配？" class="headerlink" title="公司如何有效地实现这种资源分配？"></a>公司如何有效地实现这种资源分配？</h5><p><strong>解</strong></p>
+<h5 id="这个问题的解决方案就是-Kubernetes。Kubernetes-确保资源得到有效优化，并且只使用特定应用程序所需的那些资源。因此，通过使用最佳容器编排工具，公司可以有效地实现资源分配"><a href="#这个问题的解决方案就是-Kubernetes。Kubernetes-确保资源得到有效优化，并且只使用特定应用程序所需的那些资源。因此，通过使用最佳容器编排工具，公司可以有效地实现资源分配" class="headerlink" title="这个问题的解决方案就是 Kubernetes。Kubernetes 确保资源得到有效优化，并且只使用特定应用程序所需的那些资源。因此，通过使用最佳容器编排工具，公司可以有效地实现资源分配"></a>这个问题的解决方案就是 Kubernetes。Kubernetes 确保资源得到有效优化，并且只使用特定应用程序所需的那些资源。因此，通过使用最佳容器编排工具，公司可以有效地实现资源分配</h5><p><strong>场景 8：</strong></p>
+<h5 id="考虑一家拼车公司希望通过同时扩展其平台来增加服务器数量。"><a href="#考虑一家拼车公司希望通过同时扩展其平台来增加服务器数量。" class="headerlink" title="考虑一家拼车公司希望通过同时扩展其平台来增加服务器数量。"></a>考虑一家拼车公司希望通过同时扩展其平台来增加服务器数量。</h5><h5 id="您认为公司如何处理服务器及其安装？"><a href="#您认为公司如何处理服务器及其安装？" class="headerlink" title="您认为公司如何处理服务器及其安装？"></a>您认为公司如何处理服务器及其安装？</h5><p><strong>解</strong></p>
+<h5 id="公司可以采用集装箱化的概念。一旦他们将所有应用程序部署到容器中，他们就可以使用-Kubernetes-进行编排，并使用像-Prometheus-这样的容器监视工具来监视容器中的操作。因此，利用容器的这种使用，在数据中心中为它们提供更好的容量规划，因为它们现在将受到更少的限制，因为服务和它们运行的硬件之间存在抽象。"><a href="#公司可以采用集装箱化的概念。一旦他们将所有应用程序部署到容器中，他们就可以使用-Kubernetes-进行编排，并使用像-Prometheus-这样的容器监视工具来监视容器中的操作。因此，利用容器的这种使用，在数据中心中为它们提供更好的容量规划，因为它们现在将受到更少的限制，因为服务和它们运行的硬件之间存在抽象。" class="headerlink" title="公司可以采用集装箱化的概念。一旦他们将所有应用程序部署到容器中，他们就可以使用 Kubernetes 进行编排，并使用像 Prometheus 这样的容器监视工具来监视容器中的操作。因此，利用容器的这种使用，在数据中心中为它们提供更好的容量规划，因为它们现在将受到更少的限制，因为服务和它们运行的硬件之间存在抽象。"></a>公司可以采用集装箱化的概念。一旦他们将所有应用程序部署到容器中，他们就可以使用 Kubernetes 进行编排，并使用像 Prometheus 这样的容器监视工具来监视容器中的操作。因此，利用容器的这种使用，在数据中心中为它们提供更好的容量规划，因为它们现在将受到更少的限制，因为服务和它们运行的硬件之间存在抽象。</h5><p><strong>场景 9：</strong></p>
+<h5 id="考虑一种情况，公司希望向具有各种环境的客户提供所有必需的分发。您认为他们如何以动态的方式实现这一关键目标？"><a href="#考虑一种情况，公司希望向具有各种环境的客户提供所有必需的分发。您认为他们如何以动态的方式实现这一关键目标？" class="headerlink" title="考虑一种情况，公司希望向具有各种环境的客户提供所有必需的分发。您认为他们如何以动态的方式实现这一关键目标？"></a>考虑一种情况，公司希望向具有各种环境的客户提供所有必需的分发。您认为他们如何以动态的方式实现这一关键目标？</h5><p><strong>解</strong></p>
+<h5 id="该公司可以使用-Docker-环境，组建一个横截面团队，使用-Kubernetes-构建-Web应用程序。这种框架将帮助公司实现在最短的时间内将所需产品投入生产的目标。因此，在这样的机器运行的情况下，公司可以向所有具有各种环境的客户发放电子邮件。"><a href="#该公司可以使用-Docker-环境，组建一个横截面团队，使用-Kubernetes-构建-Web应用程序。这种框架将帮助公司实现在最短的时间内将所需产品投入生产的目标。因此，在这样的机器运行的情况下，公司可以向所有具有各种环境的客户发放电子邮件。" class="headerlink" title="该公司可以使用 Docker 环境，组建一个横截面团队，使用 Kubernetes 构建 Web应用程序。这种框架将帮助公司实现在最短的时间内将所需产品投入生产的目标。因此，在这样的机器运行的情况下，公司可以向所有具有各种环境的客户发放电子邮件。"></a>该公司可以使用 Docker 环境，组建一个横截面团队，使用 Kubernetes 构建 Web应用程序。这种框架将帮助公司实现在最短的时间内将所需产品投入生产的目标。因此，在这样的机器运行的情况下，公司可以向所有具有各种环境的客户发放电子邮件。</h5><p><strong>场景 10：</strong></p>
+<h5 id="假设公司希望在不同的云基础架构上运行各种工作负载，从裸机到公共云。"><a href="#假设公司希望在不同的云基础架构上运行各种工作负载，从裸机到公共云。" class="headerlink" title="假设公司希望在不同的云基础架构上运行各种工作负载，从裸机到公共云。"></a>假设公司希望在不同的云基础架构上运行各种工作负载，从裸机到公共云。</h5><h5 id="公司将如何在不同界面的存在下实现这一目标？"><a href="#公司将如何在不同界面的存在下实现这一目标？" class="headerlink" title="公司将如何在不同界面的存在下实现这一目标？"></a>公司将如何在不同界面的存在下实现这一目标？</h5><p><strong>解</strong></p>
+<h5 id="该公司可以将其基础设施分解为微服务，然后采用-Kubernetes。这将使公司在不同的云基础架构上运行各种工作负载。"><a href="#该公司可以将其基础设施分解为微服务，然后采用-Kubernetes。这将使公司在不同的云基础架构上运行各种工作负载。" class="headerlink" title="该公司可以将其基础设施分解为微服务，然后采用 Kubernetes。这将使公司在不同的云基础架构上运行各种工作负载。"></a>该公司可以将其基础设施分解为微服务，然后采用 Kubernetes。这将使公司在不同的云基础架构上运行各种工作负载。</h5><p><strong>四、k8s 真实面试场景-面试题总结12 道面试题</strong></p>
+<p><strong>1、deployment 创建 pod 流程？</strong></p>
+<h5 id="1）、kubectl-提交创建-pod-命令-api-响应命令-通过一系列认证授权-把-pod-数据存储到etcd-创建-deployment-资源并初始化"><a href="#1）、kubectl-提交创建-pod-命令-api-响应命令-通过一系列认证授权-把-pod-数据存储到etcd-创建-deployment-资源并初始化" class="headerlink" title="1）、kubectl 提交创建 pod 命令,api 响应命令,通过一系列认证授权,把 pod 数据存储到etcd,创建 deployment 资源并初始化."></a>1）、kubectl 提交创建 pod 命令,api 响应命令,通过一系列认证授权,把 pod 数据存储到etcd,创建 deployment 资源并初始化.</h5><h5 id="2）、controller-通过-list-watch-机制-监测发现新的-deployment-将该资源加入到内部工作队列-发现该资源没有关联的-pod-和-replicaset-启用-deployment-controller-创建replicaset-资源-再启用-replicaset-controller-创建-pod"><a href="#2）、controller-通过-list-watch-机制-监测发现新的-deployment-将该资源加入到内部工作队列-发现该资源没有关联的-pod-和-replicaset-启用-deployment-controller-创建replicaset-资源-再启用-replicaset-controller-创建-pod" class="headerlink" title="2）、controller 通过 list-watch 机制,监测发现新的 deployment,将该资源加入到内部工作队列,发现该资源没有关联的 pod 和 replicaset,启用 deployment controller 创建replicaset 资源,再启用 replicaset controller 创建 pod."></a>2）、controller 通过 list-watch 机制,监测发现新的 deployment,将该资源加入到内部工作队列,发现该资源没有关联的 pod 和 replicaset,启用 deployment controller 创建replicaset 资源,再启用 replicaset controller 创建 pod.</h5><h5 id="3）、所有-controller-正常后-将-deployment-replicaset-pod-资源更新存储到etcd"><a href="#3）、所有-controller-正常后-将-deployment-replicaset-pod-资源更新存储到etcd" class="headerlink" title="3）、所有 controller 正常后.将 deployment,replicaset,pod 资源更新存储到etcd."></a>3）、所有 controller 正常后.将 deployment,replicaset,pod 资源更新存储到etcd.</h5><h5 id="4）、scheduler-通过-list-watch-机制-监测发现新的-pod-经过主机过滤主机打分规则-将pod-绑定-binding-到合适的主机"><a href="#4）、scheduler-通过-list-watch-机制-监测发现新的-pod-经过主机过滤主机打分规则-将pod-绑定-binding-到合适的主机" class="headerlink" title="4）、scheduler 通过 list-watch 机制,监测发现新的 pod,经过主机过滤主机打分规则,将pod 绑定(binding)到合适的主机."></a>4）、scheduler 通过 list-watch 机制,监测发现新的 pod,经过主机过滤主机打分规则,将pod 绑定(binding)到合适的主机.</h5><h5 id="5）、将绑定结果存储到-etcd"><a href="#5）、将绑定结果存储到-etcd" class="headerlink" title="5）、将绑定结果存储到 etcd"></a>5）、将绑定结果存储到 etcd</h5><h5 id="6）、kubelet-每隔-20s-可以自定义-向-kube-apiserver-通过-NodeName-获取自身Node-上所要运行的-pod-清单-通过与自己的内部缓存进行比较-新增加-pod"><a href="#6）、kubelet-每隔-20s-可以自定义-向-kube-apiserver-通过-NodeName-获取自身Node-上所要运行的-pod-清单-通过与自己的内部缓存进行比较-新增加-pod" class="headerlink" title="6）、kubelet 每隔 20s(可以自定义)向 kube-apiserver 通过 NodeName 获取自身Node 上所要运行的 pod 清单.通过与自己的内部缓存进行比较,新增加 pod."></a>6）、kubelet 每隔 20s(可以自定义)向 kube-apiserver 通过 NodeName 获取自身Node 上所要运行的 pod 清单.通过与自己的内部缓存进行比较,新增加 pod.</h5><h5 id="7）、启动-pod-启动容器"><a href="#7）、启动-pod-启动容器" class="headerlink" title="7）、启动 pod 启动容器"></a>7）、启动 pod 启动容器</h5><p><strong>2、你知道 HPA 吗？HPA 有什么缺点？</strong></p>
+<h5 id="hpa-是-k8s-的自动扩缩容策略。v1-版可支持基于-cpu-的扩缩容，v2-版可支持基于-cpu、内存、自定义指标的扩容。默认情况下，pod-是一台台扩容的，所以类似于-微博热搜之类的-突然间-访问量剧增的情况下就显有些无力。所以需要修改-k8s-的调度规则。如果波动量比较大的服务容易造成业务抖动。主要是很被动，无法进行提前被容。"><a href="#hpa-是-k8s-的自动扩缩容策略。v1-版可支持基于-cpu-的扩缩容，v2-版可支持基于-cpu、内存、自定义指标的扩容。默认情况下，pod-是一台台扩容的，所以类似于-微博热搜之类的-突然间-访问量剧增的情况下就显有些无力。所以需要修改-k8s-的调度规则。如果波动量比较大的服务容易造成业务抖动。主要是很被动，无法进行提前被容。" class="headerlink" title="hpa 是 k8s 的自动扩缩容策略。v1 版可支持基于 cpu 的扩缩容，v2 版可支持基于 cpu、内存、自定义指标的扩容。默认情况下，pod 是一台台扩容的，所以类似于 微博热搜之类的 突然间 访问量剧增的情况下就显有些无力。所以需要修改 k8s 的调度规则。如果波动量比较大的服务容易造成业务抖动。主要是很被动，无法进行提前被容。"></a>hpa 是 k8s 的自动扩缩容策略。v1 版可支持基于 cpu 的扩缩容，v2 版可支持基于 cpu、内存、自定义指标的扩容。默认情况下，pod 是一台台扩容的，所以类似于 微博热搜之类的 突然间 访问量剧增的情况下就显有些无力。所以需要修改 k8s 的调度规则。如果波动量比较大的服务容易造成业务抖动。主要是很被动，无法进行提前被容。</h5><h5 id="HPA-可针对-cpu-和内存自定义参数弹性扩容，有-5-分钟的安全时间，不适合访问量波动大的业务。"><a href="#HPA-可针对-cpu-和内存自定义参数弹性扩容，有-5-分钟的安全时间，不适合访问量波动大的业务。" class="headerlink" title="HPA 可针对 cpu 和内存自定义参数弹性扩容，有 5 分钟的安全时间，不适合访问量波动大的业务。"></a>HPA 可针对 cpu 和内存自定义参数弹性扩容，有 5 分钟的安全时间，不适合访问量波动大的业务。</h5><p><strong>3、蓝绿发布和灰度发布 k8s 怎么实现的？</strong></p>
+<h5 id="蓝绿发布通过-deployment-部署-pod，改变-service-或者-ingress-切换流量可以实现灰度发布通过-Ingress-Controller-或者-istio-可以实现"><a href="#蓝绿发布通过-deployment-部署-pod，改变-service-或者-ingress-切换流量可以实现灰度发布通过-Ingress-Controller-或者-istio-可以实现" class="headerlink" title="蓝绿发布通过 deployment 部署 pod，改变 service 或者 ingress 切换流量可以实现灰度发布通过 Ingress Controller 或者 istio 可以实现"></a>蓝绿发布通过 deployment 部署 pod，改变 service 或者 ingress 切换流量可以实现灰度发布通过 Ingress Controller 或者 istio 可以实现</h5><p><strong>4、如果一个 pod 创建过程中一直处于 pending 状态，你的处理思路是什么？</strong></p>
+<h5 id="1）通过-describe-查看-pod-详细信息"><a href="#1）通过-describe-查看-pod-详细信息" class="headerlink" title="1）通过 describe 查看 pod 详细信息"></a>1）通过 describe 查看 pod 详细信息</h5><h5 id="2）通过-logs-查看-pod-日志"><a href="#2）通过-logs-查看-pod-日志" class="headerlink" title="2）通过 logs 查看 pod 日志"></a>2）通过 logs 查看 pod 日志</h5><h5 id="通过详细信息和日志基本就可以把问题定位出来了"><a href="#通过详细信息和日志基本就可以把问题定位出来了" class="headerlink" title="通过详细信息和日志基本就可以把问题定位出来了"></a>通过详细信息和日志基本就可以把问题定位出来了</h5><p><strong>5、k8s 如何实现持久化存储？有几种方式?</strong></p>
+<h5 id="emptyDir、hostPath、pv、storageclass、ceph、nfs、gluster-等都可以实现-k8s数据持久化，也可以通过-storageclass-动态的从-nfs-provisioner-或者-cephprovisioner-等供应商动态的划分存储做成-pv"><a href="#emptyDir、hostPath、pv、storageclass、ceph、nfs、gluster-等都可以实现-k8s数据持久化，也可以通过-storageclass-动态的从-nfs-provisioner-或者-cephprovisioner-等供应商动态的划分存储做成-pv" class="headerlink" title="emptyDir、hostPath、pv、storageclass、ceph、nfs、gluster 等都可以实现 k8s数据持久化，也可以通过 storageclass 动态的从 nfs provisioner 或者 cephprovisioner 等供应商动态的划分存储做成 pv"></a>emptyDir、hostPath、pv、storageclass、ceph、nfs、gluster 等都可以实现 k8s数据持久化，也可以通过 storageclass 动态的从 nfs provisioner 或者 cephprovisioner 等供应商动态的划分存储做成 pv</h5><p><strong>6、service 的 type 类型有几种？</strong></p>
+<h5 id="ClusterIp：集群内部相关访问"><a href="#ClusterIp：集群内部相关访问" class="headerlink" title="ClusterIp：集群内部相关访问"></a>ClusterIp：集群内部相关访问</h5><h5 id="NodePort：可以在物理机映射端口"><a href="#NodePort：可以在物理机映射端口" class="headerlink" title="NodePort：可以在物理机映射端口"></a>NodePort：可以在物理机映射端口</h5><h5 id="ExternalName：可以对-service-做软连接"><a href="#ExternalName：可以对-service-做软连接" class="headerlink" title="ExternalName：可以对 service 做软连接"></a>ExternalName：可以对 service 做软连接</h5><h5 id="LoadBalancer：使用的是云的-slb"><a href="#LoadBalancer：使用的是云的-slb" class="headerlink" title="LoadBalancer：使用的是云的 slb"></a>LoadBalancer：使用的是云的 slb</h5><p><strong>7、ceph 架构是什么？</strong></p>
+<h5 id="Ceph-是统一存储系统，支持三种接口："><a href="#Ceph-是统一存储系统，支持三种接口：" class="headerlink" title="Ceph 是统一存储系统，支持三种接口："></a>Ceph 是统一存储系统，支持三种接口：</h5><p><strong>1）、Object：有原生的 API，而且也兼容 Swift 和 S3 的 API</strong></p>
+<p><strong>2）、Block：支持精简配置、快照、克隆</strong></p>
+<p><strong>3）、File：Posix 接口，支持快照</strong></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221101104.png" srcset="/img/loading.gif" lazyload alt="image-20240222110125980"></p>
+<p><strong>Ceph 也是分布式存储系统，它的特点是：</strong></p>
+<h5 id="高扩展性：使用普通-x86-服务器，支持-10-1000-台服务器，支持-TB-到-PB-级的扩展。"><a href="#高扩展性：使用普通-x86-服务器，支持-10-1000-台服务器，支持-TB-到-PB-级的扩展。" class="headerlink" title="高扩展性：使用普通 x86 服务器，支持 10~1000 台服务器，支持 TB 到 PB 级的扩展。"></a><strong>高扩展性：</strong>使用普通 x86 服务器，支持 10~1000 台服务器，支持 TB 到 PB 级的扩展。</h5><h5 id="高可靠性：没有单点故障，多数据副本，自动管理，自动修复。"><a href="#高可靠性：没有单点故障，多数据副本，自动管理，自动修复。" class="headerlink" title="高可靠性：没有单点故障，多数据副本，自动管理，自动修复。"></a><strong>高可靠性：</strong>没有单点故障，多数据副本，自动管理，自动修复。</h5><h5 id="高性能：数据分布均衡，并行化度高。对于-objects-storage-和-block-storage-不需要元数据服务器。"><a href="#高性能：数据分布均衡，并行化度高。对于-objects-storage-和-block-storage-不需要元数据服务器。" class="headerlink" title="高性能：数据分布均衡，并行化度高。对于 objects storage 和 block storage,不需要元数据服务器。"></a><strong>高性能：</strong>数据分布均衡，并行化度高。对于 objects storage 和 block storage,不需要元数据服务器。</h5><p><strong>8、k8s 怎么对接 ceph？</strong></p>
+<h5 id="把-ceph-rbd-或者-cephfs-做成-pvStorageclass-可以动态从-ceph-provisioner-找到-ceph，然后生成-pv"><a href="#把-ceph-rbd-或者-cephfs-做成-pvStorageclass-可以动态从-ceph-provisioner-找到-ceph，然后生成-pv" class="headerlink" title="把 ceph rbd 或者 cephfs 做成 pvStorageclass 可以动态从 ceph provisioner 找到 ceph，然后生成 pv"></a>把 ceph rbd 或者 cephfs 做成 pvStorageclass 可以动态从 ceph provisioner 找到 ceph，然后生成 pv</h5><p><strong>9、k8s 挂载 cephfs 和 ceph rbd 适用场景分析</strong></p>
+<h5 id="K8s-挂载-cephfs-可以支持跨-node-节点-pod-挂载"><a href="#K8s-挂载-cephfs-可以支持跨-node-节点-pod-挂载" class="headerlink" title="K8s 挂载 cephfs 可以支持跨 node 节点 pod 挂载"></a>K8s 挂载 cephfs 可以支持跨 node 节点 pod 挂载</h5><h5 id="K8s-挂载-ceph-rbd-不支持跨-node-节点-pod-挂载"><a href="#K8s-挂载-ceph-rbd-不支持跨-node-节点-pod-挂载" class="headerlink" title="K8s 挂载 ceph rbd 不支持跨 node 节点 pod 挂载"></a>K8s 挂载 ceph rbd 不支持跨 node 节点 pod 挂载</h5><p><strong>10、k8s 有几种探测方式，分别描述下具体作用？</strong></p>
+<p><strong>livenessProbe：存活性探测</strong></p>
+<h5 id="许多应用程序经过长时间运行，最终过渡到无法运行的状态，除了重启，无法恢复。通常情况下，K8S-会发现应用程序已经终止，然后重启应用程序-pod。有时应用程序可能因为某些原因（后端服务故障等）导致暂时无法对外提供服务，但应用软件没有终止，导致K8S-无法隔离有故障的-pod，调用者可能会访问到有故障的-pod，导致业务不稳定。K8S提供-livenessProbe-来检测容器是否正常运行，并且对相应状况进行相应的补救措施。"><a href="#许多应用程序经过长时间运行，最终过渡到无法运行的状态，除了重启，无法恢复。通常情况下，K8S-会发现应用程序已经终止，然后重启应用程序-pod。有时应用程序可能因为某些原因（后端服务故障等）导致暂时无法对外提供服务，但应用软件没有终止，导致K8S-无法隔离有故障的-pod，调用者可能会访问到有故障的-pod，导致业务不稳定。K8S提供-livenessProbe-来检测容器是否正常运行，并且对相应状况进行相应的补救措施。" class="headerlink" title="许多应用程序经过长时间运行，最终过渡到无法运行的状态，除了重启，无法恢复。通常情况下，K8S 会发现应用程序已经终止，然后重启应用程序 pod。有时应用程序可能因为某些原因（后端服务故障等）导致暂时无法对外提供服务，但应用软件没有终止，导致K8S 无法隔离有故障的 pod，调用者可能会访问到有故障的 pod，导致业务不稳定。K8S提供 livenessProbe 来检测容器是否正常运行，并且对相应状况进行相应的补救措施。"></a>许多应用程序经过长时间运行，最终过渡到无法运行的状态，除了重启，无法恢复。通常情况下，K8S 会发现应用程序已经终止，然后重启应用程序 pod。有时应用程序可能因为某些原因（后端服务故障等）导致暂时无法对外提供服务，但应用软件没有终止，导致K8S 无法隔离有故障的 pod，调用者可能会访问到有故障的 pod，导致业务不稳定。K8S提供 livenessProbe 来检测容器是否正常运行，并且对相应状况进行相应的补救措施。</h5><p><strong>readinessProbe：就绪性探测</strong></p>
+<h5 id="在没有配置-readinessProbe-的资源对象中，pod-中的容器启动完成后，就认为-pod-中的应用程序可以对外提供服务，该-pod-就会加入相对应的-service，对外提供服务。但有时一些应用程序启动后，需要较长时间的加载才能对外服务，如果这时对外提供服务，执行结果必然无法达到预期效果，影响用户体验。比如使用-tomcat-的应用程序来说，并不是简单地说-tomcat-启动成功就可以对外提供服务的，还需要等待-spring-容器初始化，数据库连接上等等。"><a href="#在没有配置-readinessProbe-的资源对象中，pod-中的容器启动完成后，就认为-pod-中的应用程序可以对外提供服务，该-pod-就会加入相对应的-service，对外提供服务。但有时一些应用程序启动后，需要较长时间的加载才能对外服务，如果这时对外提供服务，执行结果必然无法达到预期效果，影响用户体验。比如使用-tomcat-的应用程序来说，并不是简单地说-tomcat-启动成功就可以对外提供服务的，还需要等待-spring-容器初始化，数据库连接上等等。" class="headerlink" title="在没有配置 readinessProbe 的资源对象中，pod 中的容器启动完成后，就认为 pod 中的应用程序可以对外提供服务，该 pod 就会加入相对应的 service，对外提供服务。但有时一些应用程序启动后，需要较长时间的加载才能对外服务，如果这时对外提供服务，执行结果必然无法达到预期效果，影响用户体验。比如使用 tomcat 的应用程序来说，并不是简单地说 tomcat 启动成功就可以对外提供服务的，还需要等待 spring 容器初始化，数据库连接上等等。"></a>在没有配置 readinessProbe 的资源对象中，pod 中的容器启动完成后，就认为 pod 中的应用程序可以对外提供服务，该 pod 就会加入相对应的 service，对外提供服务。但有时一些应用程序启动后，需要较长时间的加载才能对外服务，如果这时对外提供服务，执行结果必然无法达到预期效果，影响用户体验。比如使用 tomcat 的应用程序来说，并不是简单地说 tomcat 启动成功就可以对外提供服务的，还需要等待 spring 容器初始化，数据库连接上等等。</h5><p><strong>startupProbe:</strong> <strong>探测容器中的应用是否已经启动</strong>。</p>
+<h5 id="如果提供了启动探测-startupprobe-，则禁用所有其他探测，直到它成功为止。如果启动探测失败，kubelet-将杀死容器，容器服从其重启策略进行重启。如果容器没有提供启动探测，则默认状态为成功Success。"><a href="#如果提供了启动探测-startupprobe-，则禁用所有其他探测，直到它成功为止。如果启动探测失败，kubelet-将杀死容器，容器服从其重启策略进行重启。如果容器没有提供启动探测，则默认状态为成功Success。" class="headerlink" title="如果提供了启动探测(startupprobe)，则禁用所有其他探测，直到它成功为止。如果启动探测失败，kubelet 将杀死容器，容器服从其重启策略进行重启。如果容器没有提供启动探测，则默认状态为成功Success。"></a>如果提供了启动探测(startupprobe)，则禁用所有其他探测，直到它成功为止。如果启动探测失败，kubelet 将杀死容器，容器服从其重启策略进行重启。如果容器没有提供启动探测，则默认状态为成功Success。</h5><p><strong>11、 k8s 的 service 与 Ingress 区别</strong></p>
+<h5 id="Service-是四层代理，只能基于-ip-和端口代理后端服务Ingress-controller-是七层代理，可以通过-http-或者-https-的域名基于-cookie、地域、请求头、百分比进行代理转发。Ingress-controller-代理需要找到对应的-Service，由-Service-向后代理-Pod"><a href="#Service-是四层代理，只能基于-ip-和端口代理后端服务Ingress-controller-是七层代理，可以通过-http-或者-https-的域名基于-cookie、地域、请求头、百分比进行代理转发。Ingress-controller-代理需要找到对应的-Service，由-Service-向后代理-Pod" class="headerlink" title="Service 是四层代理，只能基于 ip 和端口代理后端服务Ingress controller 是七层代理，可以通过 http 或者 https 的域名基于 cookie、地域、请求头、百分比进行代理转发。Ingress controller 代理需要找到对应的 Service，由 Service 向后代理 Pod"></a>Service 是四层代理，只能基于 ip 和端口代理后端服务Ingress controller 是七层代理，可以通过 http 或者 https 的域名基于 cookie、地域、请求头、百分比进行代理转发。Ingress controller 代理需要找到对应的 Service，由 Service 向后代理 Pod</h5><p><strong>12、说几个 k8s 的网络插件，说一下他们的差异</strong></p>
+<h5 id="flannel：支持地址分配，不支持网络策略-。"><a href="#flannel：支持地址分配，不支持网络策略-。" class="headerlink" title="flannel：支持地址分配，不支持网络策略 。"></a>flannel：支持地址分配，不支持网络策略 。</h5><h5 id="calico：支持地址分配，支持网络策略。"><a href="#calico：支持地址分配，支持网络策略。" class="headerlink" title="calico：支持地址分配，支持网络策略。"></a>calico：支持地址分配，支持网络策略。</h5><h5 id="flannel："><a href="#flannel：" class="headerlink" title="flannel："></a>flannel：</h5><h5 id="vxlan：-扩展的虚拟局域网"><a href="#vxlan：-扩展的虚拟局域网" class="headerlink" title="vxlan：#扩展的虚拟局域网"></a>vxlan：#扩展的虚拟局域网</h5><h5 id="V-虚拟的"><a href="#V-虚拟的" class="headerlink" title="V 虚拟的"></a>V 虚拟的</h5><h5 id="X-扩展的"><a href="#X-扩展的" class="headerlink" title="X 扩展的"></a>X 扩展的</h5><h5 id="lan-局域网"><a href="#lan-局域网" class="headerlink" title="lan 局域网"></a>lan 局域网</h5><p><strong>flannel 支持多种后端：</strong></p>
+<p><strong>1、VxLAN</strong>：</p>
+<h5 id="1-vxlan-叠加网络模式"><a href="#1-vxlan-叠加网络模式" class="headerlink" title="(1) vxlan 叠加网络模式"></a>(1) vxlan 叠加网络模式</h5><h5 id="2-Directrouting"><a href="#2-Directrouting" class="headerlink" title="(2) Directrouting"></a>(2) Directrouting</h5><p><strong>2、host-gw: Host Gateway</strong></p>
+<h5 id="直接路由模式，不推荐，只能在二层网络中，不支持跨网络，如果有成千上万的-Pod，容易产生广播风暴"><a href="#直接路由模式，不推荐，只能在二层网络中，不支持跨网络，如果有成千上万的-Pod，容易产生广播风暴" class="headerlink" title="#直接路由模式，不推荐，只能在二层网络中，不支持跨网络，如果有成千上万的 Pod，容易产生广播风暴"></a>#直接路由模式，不推荐，只能在二层网络中，不支持跨网络，如果有成千上万的 Pod，容易产生广播风暴</h5><p><strong>3、UDP：一般不用这个模式，性能差</strong></p>
+<h5 id="flannel-方案：需要在每个节点上把发向容器的数据包进行封装后，再用隧道将封装后的数据包发送到运行着目标-Pod-的-node-节点上。目标-node-节点再负责去掉封装，将去除封装的数据包发送到目标-Pod-上。数据通信性能则大受影响"><a href="#flannel-方案：需要在每个节点上把发向容器的数据包进行封装后，再用隧道将封装后的数据包发送到运行着目标-Pod-的-node-节点上。目标-node-节点再负责去掉封装，将去除封装的数据包发送到目标-Pod-上。数据通信性能则大受影响" class="headerlink" title="flannel 方案：需要在每个节点上把发向容器的数据包进行封装后，再用隧道将封装后的数据包发送到运行着目标 Pod 的 node 节点上。目标 node 节点再负责去掉封装，将去除封装的数据包发送到目标 Pod 上。数据通信性能则大受影响"></a>flannel 方案：需要在每个节点上把发向容器的数据包进行封装后，再用隧道将封装后的数据包发送到运行着目标 Pod 的 node 节点上。目标 node 节点再负责去掉封装，将去除封装的数据包发送到目标 Pod 上。数据通信性能则大受影响</h5><h5 id="4、calico-方案：在-k8s-多个网路解决方案中选择了延迟表现最好的-calico-方案，可以设置网络策略适用于大型集群。"><a href="#4、calico-方案：在-k8s-多个网路解决方案中选择了延迟表现最好的-calico-方案，可以设置网络策略适用于大型集群。" class="headerlink" title="4、calico 方案：在 k8s 多个网路解决方案中选择了延迟表现最好的-calico 方案，可以设置网络策略适用于大型集群。"></a><strong>4、calico 方案：</strong>在 k8s 多个网路解决方案中选择了延迟表现最好的-calico 方案，可以设置网络策略适用于大型集群。</h5>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>K8S面试大全 2024-04-03 15:10:54.493</div>
+      <div>http://example.com/2025/01/16/K8S面试大全-k8s-mian-shi-da-quan/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/K8S%E5%91%BD%E4%BB%A4%E6%8C%87%E5%8D%97-k8s-ming-ling-zhi-nan/" title="K8S命令指南 2024-04-03 15:14:14.207">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">K8S命令指南 2024-04-03 15:14:14.207</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/K8S%E9%9D%A2%E8%AF%95%E5%AE%9D%E5%85%B8-k8s-mian-shi-bao-dian/" title="K8S面试宝典 2024-04-03 15:11:09.316">
+                        <span class="hidden-mobile">K8S面试宝典 2024-04-03 15:11:09.316</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

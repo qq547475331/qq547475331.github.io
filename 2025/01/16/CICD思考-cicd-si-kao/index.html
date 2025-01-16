@@ -1,0 +1,700 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="本文旨在介绍ZBJ DevOps团队倾力打造的DevOps平台中关于CI&#x2F;CD流水线部分的实践。历经三次大版本迭代更新的流水线，完美切合ZBJ各种业务发展需求，在满足高频率交付的同时，提高了研发效率，降低了研发成本，保证了交付质量。持续集成（Continuous Integration）简称CI，持续集成强调开发人员提交了新代码之后，立刻进行构建、（单元）测试。根据结果，我们可以确定新代">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CICD思考 2024-04-03 15:11:24.151">
+<meta property="og:url" content="http://example.com/2025/01/16/CICD%E6%80%9D%E8%80%83-cicd-si-kao/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="本文旨在介绍ZBJ DevOps团队倾力打造的DevOps平台中关于CI&#x2F;CD流水线部分的实践。历经三次大版本迭代更新的流水线，完美切合ZBJ各种业务发展需求，在满足高频率交付的同时，提高了研发效率，降低了研发成本，保证了交付质量。持续集成（Continuous Integration）简称CI，持续集成强调开发人员提交了新代码之后，立刻进行构建、（单元）测试。根据结果，我们可以确定新代">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231546203.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231546898.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231546923.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231547776.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231548464.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231549628.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231549749.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231549614.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231549783.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231550898.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231550311.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231550891.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231550192.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231551703.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231551317.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231551916.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231552115.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231552066.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231552340.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231553495.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231553580.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231553452.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.039Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:18.532Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231546203.png">
+  
+  
+  
+  <title>CICD思考 2024-04-03 15:11:24.151 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="CICD思考 2024-04-03 15:11:24.151"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.8k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          32 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">CICD思考 2024-04-03 15:11:24.151</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h5 id="本文旨在介绍ZBJ-DevOps团队倾力打造的DevOps平台中关于CI-CD流水线部分的实践。历经三次大版本迭代更新的流水线，完美切合ZBJ各种业务发展需求，在满足高频率交付的同时，提高了研发效率，降低了研发成本，保证了交付质量。"><a href="#本文旨在介绍ZBJ-DevOps团队倾力打造的DevOps平台中关于CI-CD流水线部分的实践。历经三次大版本迭代更新的流水线，完美切合ZBJ各种业务发展需求，在满足高频率交付的同时，提高了研发效率，降低了研发成本，保证了交付质量。" class="headerlink" title="本文旨在介绍ZBJ DevOps团队倾力打造的DevOps平台中关于CI&#x2F;CD流水线部分的实践。历经三次大版本迭代更新的流水线，完美切合ZBJ各种业务发展需求，在满足高频率交付的同时，提高了研发效率，降低了研发成本，保证了交付质量。"></a>本文旨在介绍ZBJ DevOps团队倾力打造的DevOps平台中关于CI&#x2F;CD流水线部分的实践。历经三次大版本迭代更新的流水线，完美切合ZBJ各种业务发展需求，在满足高频率交付的同时，提高了研发效率，降低了研发成本，保证了交付质量。</h5><h5 id="持续集成（Continuous-Integration）简称CI，持续集成强调开发人员提交了新代码之后，立刻进行构建、（单元）测试。根据结果，我们可以确定新代码和原有代码能否正确地集成在一起。持续集成过程中很重视自动化测试验证结果，对可能出现的一些问题进行预警，以保障最终集成的代码没有问题。持续交付（Continuous-Delivery）简称CD，持续交付在持续集成的基础上，将集成后的代码部署到更贴近真实运行环境的「类生产环境」（test，testing）中，然后交付给质量团队，以供评审。如果评审通过，代码就进入生产阶段。持续交付并不是指软件每一个改动都要尽快部署到产品环境中，它指的是任何的代码修改都可以在任何时候实施部署。有的人也把CD称为Continuous-Deployment（持续部署），持续部署是指当交付的代码通过评审之后，可以部署到生产环境中。这里需要注意的是，持续部署应该是持续交付的最高阶段，持续交付是一种能力，持续部署是一种持续交付的表现方式。"><a href="#持续集成（Continuous-Integration）简称CI，持续集成强调开发人员提交了新代码之后，立刻进行构建、（单元）测试。根据结果，我们可以确定新代码和原有代码能否正确地集成在一起。持续集成过程中很重视自动化测试验证结果，对可能出现的一些问题进行预警，以保障最终集成的代码没有问题。持续交付（Continuous-Delivery）简称CD，持续交付在持续集成的基础上，将集成后的代码部署到更贴近真实运行环境的「类生产环境」（test，testing）中，然后交付给质量团队，以供评审。如果评审通过，代码就进入生产阶段。持续交付并不是指软件每一个改动都要尽快部署到产品环境中，它指的是任何的代码修改都可以在任何时候实施部署。有的人也把CD称为Continuous-Deployment（持续部署），持续部署是指当交付的代码通过评审之后，可以部署到生产环境中。这里需要注意的是，持续部署应该是持续交付的最高阶段，持续交付是一种能力，持续部署是一种持续交付的表现方式。" class="headerlink" title="持续集成（Continuous Integration）简称CI，持续集成强调开发人员提交了新代码之后，立刻进行构建、（单元）测试。根据结果，我们可以确定新代码和原有代码能否正确地集成在一起。持续集成过程中很重视自动化测试验证结果，对可能出现的一些问题进行预警，以保障最终集成的代码没有问题。持续交付（Continuous Delivery）简称CD，持续交付在持续集成的基础上，将集成后的代码部署到更贴近真实运行环境的「类生产环境」（test，testing）中，然后交付给质量团队，以供评审。如果评审通过，代码就进入生产阶段。持续交付并不是指软件每一个改动都要尽快部署到产品环境中，它指的是任何的代码修改都可以在任何时候实施部署。有的人也把CD称为Continuous Deployment（持续部署），持续部署是指当交付的代码通过评审之后，可以部署到生产环境中。这里需要注意的是，持续部署应该是持续交付的最高阶段，持续交付是一种能力，持续部署是一种持续交付的表现方式。"></a>持续集成（Continuous Integration）简称CI，持续集成强调开发人员提交了新代码之后，立刻进行构建、（单元）测试。根据结果，我们可以确定新代码和原有代码能否正确地集成在一起。持续集成过程中很重视自动化测试验证结果，对可能出现的一些问题进行预警，以保障最终集成的代码没有问题。持续交付（Continuous Delivery）简称CD，持续交付在持续集成的基础上，将集成后的代码部署到更贴近真实运行环境的「类生产环境」（test，testing）中，然后交付给质量团队，以供评审。如果评审通过，代码就进入生产阶段。持续交付并不是指软件每一个改动都要尽快部署到产品环境中，它指的是任何的代码修改都可以在任何时候实施部署。有的人也把CD称为Continuous Deployment（持续部署），持续部署是指当交付的代码通过评审之后，可以部署到生产环境中。这里需要注意的是，持续部署应该是持续交付的最高阶段，持续交付是一种能力，持续部署是一种持续交付的表现方式。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231546203.png" srcset="/img/loading.gif" lazyload alt="image-20240223154614128"></p>
+<h5 id="CI-CD过程示意图"><a href="#CI-CD过程示意图" class="headerlink" title="CI&#x2F;CD过程示意图"></a>CI&#x2F;CD过程示意图</h5><p><strong>背景介绍</strong></p>
+<h5 id="在提到ZBJ-DevOps流水线之前，先交代一下历史背景。2015年前，猪八戒网80-的项目都是用PHP语言开发的，剩下的少部分使用的是Nodejs和Java。2015年，ZBJ研发中心进行了自发性的“工业革命”——腾云七号行动——使用Java语言将核心业务代码进行了重构和拆解，建立了以Dubbo为核心的SOA微服务框架，使用ZooKeeper-Swoole为核心的业务调用提供机制。满足新业务使用Java语言编写、老业务仍然使用PHP编写，同时支持两种语言（Nodejs-PHP）调用Dubbo服务的能力。"><a href="#在提到ZBJ-DevOps流水线之前，先交代一下历史背景。2015年前，猪八戒网80-的项目都是用PHP语言开发的，剩下的少部分使用的是Nodejs和Java。2015年，ZBJ研发中心进行了自发性的“工业革命”——腾云七号行动——使用Java语言将核心业务代码进行了重构和拆解，建立了以Dubbo为核心的SOA微服务框架，使用ZooKeeper-Swoole为核心的业务调用提供机制。满足新业务使用Java语言编写、老业务仍然使用PHP编写，同时支持两种语言（Nodejs-PHP）调用Dubbo服务的能力。" class="headerlink" title="在提到ZBJ DevOps流水线之前，先交代一下历史背景。2015年前，猪八戒网80%的项目都是用PHP语言开发的，剩下的少部分使用的是Nodejs和Java。2015年，ZBJ研发中心进行了自发性的“工业革命”——腾云七号行动——使用Java语言将核心业务代码进行了重构和拆解，建立了以Dubbo为核心的SOA微服务框架，使用ZooKeeper+Swoole为核心的业务调用提供机制。满足新业务使用Java语言编写、老业务仍然使用PHP编写，同时支持两种语言（Nodejs&amp;PHP）调用Dubbo服务的能力。"></a>在提到ZBJ DevOps流水线之前，先交代一下历史背景。2015年前，猪八戒网80%的项目都是用PHP语言开发的，剩下的少部分使用的是Nodejs和Java。2015年，ZBJ研发中心进行了自发性的“工业革命”——腾云七号行动——使用Java语言将核心业务代码进行了重构和拆解，建立了以Dubbo为核心的SOA微服务框架，使用ZooKeeper+Swoole为核心的业务调用提供机制。满足新业务使用Java语言编写、老业务仍然使用PHP编写，同时支持两种语言（Nodejs&amp;PHP）调用Dubbo服务的能力。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231546898.png" srcset="/img/loading.gif" lazyload alt="image-20240223154641828"></p>
+<h5 id="之后，开始全面推行前后端分离，于是流行了沿用至今的主流架构："><a href="#之后，开始全面推行前后端分离，于是流行了沿用至今的主流架构：" class="headerlink" title="之后，开始全面推行前后端分离，于是流行了沿用至今的主流架构："></a>之后，开始全面推行前后端分离，于是流行了沿用至今的主流架构：</h5><ul>
+<li><h5 id="Nodejs：负责前端"><a href="#Nodejs：负责前端" class="headerlink" title="Nodejs：负责前端"></a>Nodejs：负责前端</h5></li>
+<li><h5 id="Java：负责后端"><a href="#Java：负责后端" class="headerlink" title="Java：负责后端"></a>Java：负责后端</h5></li>
+<li><h5 id="PHP：负责老项目维护"><a href="#PHP：负责老项目维护" class="headerlink" title="PHP：负责老项目维护"></a>PHP：负责老项目维护</h5></li>
+</ul>
+<h5 id="剩余部分小系统或者边缘化的工具使用其他语言开发，或者在此三种语言基础上的一些变种："><a href="#剩余部分小系统或者边缘化的工具使用其他语言开发，或者在此三种语言基础上的一些变种：" class="headerlink" title="剩余部分小系统或者边缘化的工具使用其他语言开发，或者在此三种语言基础上的一些变种："></a>剩余部分小系统或者边缘化的工具使用其他语言开发，或者在此三种语言基础上的一些变种：</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231546923.png" srcset="/img/loading.gif" lazyload alt="image-20240223154653807"></p>
+<h5 id="而随着项目工程数量的快速增长，交付开始变得频繁，传统开发模式的一两个月交付一次远远不能满足交付要求，改变迫在眉睫。"><a href="#而随着项目工程数量的快速增长，交付开始变得频繁，传统开发模式的一两个月交付一次远远不能满足交付要求，改变迫在眉睫。" class="headerlink" title="而随着项目工程数量的快速增长，交付开始变得频繁，传统开发模式的一两个月交付一次远远不能满足交付要求，改变迫在眉睫。"></a>而随着项目工程数量的快速增长，交付开始变得频繁，传统开发模式的一两个月交付一次远远不能满足交付要求，改变迫在眉睫。</h5><h5 id="2016年Q3季度，感受到改变迫在眉睫，ZBJ研发中心经充分准备后决定抽调部分运维同学和开发同学组建一支名为“DevOps取经团”的团队，力图打造属于ZBJ自己的以提高研发效率为目标的平台。"><a href="#2016年Q3季度，感受到改变迫在眉睫，ZBJ研发中心经充分准备后决定抽调部分运维同学和开发同学组建一支名为“DevOps取经团”的团队，力图打造属于ZBJ自己的以提高研发效率为目标的平台。" class="headerlink" title="2016年Q3季度，感受到改变迫在眉睫，ZBJ研发中心经充分准备后决定抽调部分运维同学和开发同学组建一支名为“DevOps取经团”的团队，力图打造属于ZBJ自己的以提高研发效率为目标的平台。"></a>2016年Q3季度，感受到改变迫在眉睫，ZBJ研发中心经充分准备后决定抽调部分运维同学和开发同学组建一支名为“DevOps取经团”的团队，力图打造属于ZBJ自己的以提高研发效率为目标的平台。</h5><p><strong>ZBJ CI&#x2F;CD发展史</strong></p>
+<p><strong>第一阶段：2015年以前</strong></p>
+<h5 id="2015年以前，此时“工业革命”还未开始，ZBJ所谓的流水线先后经历了“大锅饭年代”、“公交车模式”。"><a href="#2015年以前，此时“工业革命”还未开始，ZBJ所谓的流水线先后经历了“大锅饭年代”、“公交车模式”。" class="headerlink" title="2015年以前，此时“工业革命”还未开始，ZBJ所谓的流水线先后经历了“大锅饭年代”、“公交车模式”。"></a>2015年以前，此时“工业革命”还未开始，ZBJ所谓的流水线先后经历了“大锅饭年代”、“公交车模式”。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231547776.png" srcset="/img/loading.gif" lazyload alt="image-20240223154720656"></p>
+<h5 id="可以看到，无论是“大锅饭年代”，还是“公交车模式”都会面临很多问题："><a href="#可以看到，无论是“大锅饭年代”，还是“公交车模式”都会面临很多问题：" class="headerlink" title="可以看到，无论是“大锅饭年代”，还是“公交车模式”都会面临很多问题："></a>可以看到，无论是“大锅饭年代”，还是“公交车模式”都会面临很多问题：</h5><h5 id=""><a href="#" class="headerlink" title=""></a></h5><ul>
+<li><h5 id="项目耦合度太高，容易导致合并冲突，环境冲突等。"><a href="#项目耦合度太高，容易导致合并冲突，环境冲突等。" class="headerlink" title="项目耦合度太高，容易导致合并冲突，环境冲突等。"></a>项目耦合度太高，容易导致合并冲突，环境冲突等。</h5></li>
+<li><h5 id="集成过程中未对代码进行审查，错误代码发布到测试环境后，会影响依赖方的测试。"><a href="#集成过程中未对代码进行审查，错误代码发布到测试环境后，会影响依赖方的测试。" class="headerlink" title="集成过程中未对代码进行审查，错误代码发布到测试环境后，会影响依赖方的测试。"></a>集成过程中未对代码进行审查，错误代码发布到测试环境后，会影响依赖方的测试。</h5></li>
+<li><h5 id="发布受限制，必须在专门时间由专人发布。"><a href="#发布受限制，必须在专门时间由专人发布。" class="headerlink" title="发布受限制，必须在专门时间由专人发布。"></a>发布受限制，必须在专门时间由专人发布。</h5></li>
+<li><h5 id="发布异常时，回滚工作异常艰难。"><a href="#发布异常时，回滚工作异常艰难。" class="headerlink" title="发布异常时，回滚工作异常艰难。"></a>发布异常时，回滚工作异常艰难。</h5></li>
+</ul>
+<p><strong>第二阶段（2016-2017）：私家车模式</strong></p>
+<h5 id="通过“工业革命”的变革，对系统的重构和拆解，同时引入工程责任制，给每个工程指定负责人，对工程的各种权限进行了管控，业务范围和边界变得更加清晰，使得项目耦合度太高的问题得到了很大的缓解。"><a href="#通过“工业革命”的变革，对系统的重构和拆解，同时引入工程责任制，给每个工程指定负责人，对工程的各种权限进行了管控，业务范围和边界变得更加清晰，使得项目耦合度太高的问题得到了很大的缓解。" class="headerlink" title="通过“工业革命”的变革，对系统的重构和拆解，同时引入工程责任制，给每个工程指定负责人，对工程的各种权限进行了管控，业务范围和边界变得更加清晰，使得项目耦合度太高的问题得到了很大的缓解。"></a>通过“工业革命”的变革，对系统的重构和拆解，同时引入工程责任制，给每个工程指定负责人，对工程的各种权限进行了管控，业务范围和边界变得更加清晰，使得项目耦合度太高的问题得到了很大的缓解。</h5><h5 id="解决了项目耦合度高的问题，接下来解决如何实现随时由开发团队自主发代码的问题。"><a href="#解决了项目耦合度高的问题，接下来解决如何实现随时由开发团队自主发代码的问题。" class="headerlink" title="解决了项目耦合度高的问题，接下来解决如何实现随时由开发团队自主发代码的问题。"></a>解决了项目耦合度高的问题，接下来解决如何实现随时由开发团队自主发代码的问题。</h5><h5 id="用Jira做研发流程管理，制定针对ZBJ需求上线的流程："><a href="#用Jira做研发流程管理，制定针对ZBJ需求上线的流程：" class="headerlink" title="用Jira做研发流程管理，制定针对ZBJ需求上线的流程："></a>用Jira做研发流程管理，制定针对ZBJ需求上线的流程：</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231548464.png" srcset="/img/loading.gif" lazyload alt="image-20240223154850411"></p>
+<h5 id="需求上线流程每个环节对应流水线的每个环境，只有到达某个环节，才能推送对应环境，每个环节会制定对应的准入准出，保证每走到的下一步都离成功部署更近一步。"><a href="#需求上线流程每个环节对应流水线的每个环境，只有到达某个环节，才能推送对应环境，每个环节会制定对应的准入准出，保证每走到的下一步都离成功部署更近一步。" class="headerlink" title="需求上线流程每个环节对应流水线的每个环境，只有到达某个环节，才能推送对应环境，每个环节会制定对应的准入准出，保证每走到的下一步都离成功部署更近一步。"></a>需求上线流程每个环节对应流水线的每个环境，只有到达某个环节，才能推送对应环境，每个环节会制定对应的准入准出，保证每走到的下一步都离成功部署更近一步。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231549628.png" srcset="/img/loading.gif" lazyload alt="image-20240223154907548"></p>
+<h5 id="推送环境示意图"><a href="#推送环境示意图" class="headerlink" title="推送环境示意图"></a>推送环境示意图</h5><h5 id="每个环境制定不一样的执行任务，基本包括Jira状态校验，代码审查（单元测试），编译构建，上传包到制品库，拉取制品库中的包部署到对应环境。"><a href="#每个环境制定不一样的执行任务，基本包括Jira状态校验，代码审查（单元测试），编译构建，上传包到制品库，拉取制品库中的包部署到对应环境。" class="headerlink" title="每个环境制定不一样的执行任务，基本包括Jira状态校验，代码审查（单元测试），编译构建，上传包到制品库，拉取制品库中的包部署到对应环境。"></a>每个环境制定不一样的执行任务，基本包括Jira状态校验，代码审查（单元测试），编译构建，上传包到制品库，拉取制品库中的包部署到对应环境。</h5><h5 id="值得注意的是，我们引入了Docker发布，所以我们的流水线是支持容器和虚拟机的混合发布的。虚拟机发布方式的制品是存放在一个叫做文件服务器的地方，容器发布方式的制品是push到Harbor仓库的。"><a href="#值得注意的是，我们引入了Docker发布，所以我们的流水线是支持容器和虚拟机的混合发布的。虚拟机发布方式的制品是存放在一个叫做文件服务器的地方，容器发布方式的制品是push到Harbor仓库的。" class="headerlink" title="值得注意的是，我们引入了Docker发布，所以我们的流水线是支持容器和虚拟机的混合发布的。虚拟机发布方式的制品是存放在一个叫做文件服务器的地方，容器发布方式的制品是push到Harbor仓库的。"></a>值得注意的是，我们引入了Docker发布，所以我们的流水线是支持容器和虚拟机的混合发布的。虚拟机发布方式的制品是存放在一个叫做文件服务器的地方，容器发布方式的制品是push到Harbor仓库的。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231549749.png" srcset="/img/loading.gif" lazyload alt="image-20240223154920687"></p>
+<h5 id="容器发布-虚拟机构建打包示意图"><a href="#容器发布-虚拟机构建打包示意图" class="headerlink" title="容器发布&amp;虚拟机构建打包示意图"></a>容器发布&amp;虚拟机构建打包示意图</h5><h5 id="采用的分支策略是：branches开发，master发布，tags存档（我们使用GitLab作为源码管理工具）。在测试环境通常为非master分支，测试完毕后合并到master，推送预发布，并针对当前版本打一个tag。针对这种情况，我们的“一次构建，处处使用”指的是测试环境用测试环境构建好的包，其他环境用预发布构建好的包。"><a href="#采用的分支策略是：branches开发，master发布，tags存档（我们使用GitLab作为源码管理工具）。在测试环境通常为非master分支，测试完毕后合并到master，推送预发布，并针对当前版本打一个tag。针对这种情况，我们的“一次构建，处处使用”指的是测试环境用测试环境构建好的包，其他环境用预发布构建好的包。" class="headerlink" title="采用的分支策略是：branches开发，master发布，tags存档（我们使用GitLab作为源码管理工具）。在测试环境通常为非master分支，测试完毕后合并到master，推送预发布，并针对当前版本打一个tag。针对这种情况，我们的“一次构建，处处使用”指的是测试环境用测试环境构建好的包，其他环境用预发布构建好的包。"></a>采用的分支策略是：branches开发，master发布，tags存档（我们使用GitLab作为源码管理工具）。在测试环境通常为非master分支，测试完毕后合并到master，推送预发布，并针对当前版本打一个tag。针对这种情况，我们的“一次构建，处处使用”指的是测试环境用测试环境构建好的包，其他环境用预发布构建好的包。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231549614.png" srcset="/img/loading.gif" lazyload alt="image-20240223154938539"></p>
+<h5 id="各环境使用制品示意图"><a href="#各环境使用制品示意图" class="headerlink" title="各环境使用制品示意图"></a>各环境使用制品示意图</h5><h5 id="在推送每一个环境（test环境除外）时，都会校验当前版本的代码是否为前置环境推送过的最新代码，保证不会将没有经过审查的代码交付到线上。"><a href="#在推送每一个环境（test环境除外）时，都会校验当前版本的代码是否为前置环境推送过的最新代码，保证不会将没有经过审查的代码交付到线上。" class="headerlink" title="在推送每一个环境（test环境除外）时，都会校验当前版本的代码是否为前置环境推送过的最新代码，保证不会将没有经过审查的代码交付到线上。"></a>在推送每一个环境（test环境除外）时，都会校验当前版本的代码是否为前置环境推送过的最新代码，保证不会将没有经过审查的代码交付到线上。</h5><h5 id="在测试环境每一次编译构建之前，都会对代码进行一次安全扫描，Java语言的工程通过解析pom文件对其所有的依赖进行递归扫描，Nodejs语言的工程通过对node-module里下载的包进行递归扫描，确保有安全漏洞的代码不会被带入到生产环境。"><a href="#在测试环境每一次编译构建之前，都会对代码进行一次安全扫描，Java语言的工程通过解析pom文件对其所有的依赖进行递归扫描，Nodejs语言的工程通过对node-module里下载的包进行递归扫描，确保有安全漏洞的代码不会被带入到生产环境。" class="headerlink" title="在测试环境每一次编译构建之前，都会对代码进行一次安全扫描，Java语言的工程通过解析pom文件对其所有的依赖进行递归扫描，Nodejs语言的工程通过对node_module里下载的包进行递归扫描，确保有安全漏洞的代码不会被带入到生产环境。"></a>在测试环境每一次编译构建之前，都会对代码进行一次安全扫描，Java语言的工程通过解析pom文件对其所有的依赖进行递归扫描，Nodejs语言的工程通过对node_module里下载的包进行递归扫描，确保有安全漏洞的代码不会被带入到生产环境。</h5><h5 id="编译构建时，会根据开发语言的不同，执行不同的编译脚本，根据发布方式的不同（虚拟机发布或者容器发布），执行不一样的后续操作步骤。"><a href="#编译构建时，会根据开发语言的不同，执行不同的编译脚本，根据发布方式的不同（虚拟机发布或者容器发布），执行不一样的后续操作步骤。" class="headerlink" title="编译构建时，会根据开发语言的不同，执行不同的编译脚本，根据发布方式的不同（虚拟机发布或者容器发布），执行不一样的后续操作步骤。"></a>编译构建时，会根据开发语言的不同，执行不同的编译脚本，根据发布方式的不同（虚拟机发布或者容器发布），执行不一样的后续操作步骤。</h5><h5 id="我们将Jenkins作为后台编译服务器，采用的是多master多slave的架构，我们并未直接使用Jenkins的流水线，而是开发了一个叫Pipeline的系统，与Jenkins做对接（此时的对接方式是调用Jenkins的API），由Pipeline系统提供Jenkins作业所需要的全部信息，另外编写了整个过程需要具体执行操作的脚本，通过Jenkins的job配置“Execute-shell”的方式每次在构建之前导入到工作空间。"><a href="#我们将Jenkins作为后台编译服务器，采用的是多master多slave的架构，我们并未直接使用Jenkins的流水线，而是开发了一个叫Pipeline的系统，与Jenkins做对接（此时的对接方式是调用Jenkins的API），由Pipeline系统提供Jenkins作业所需要的全部信息，另外编写了整个过程需要具体执行操作的脚本，通过Jenkins的job配置“Execute-shell”的方式每次在构建之前导入到工作空间。" class="headerlink" title="我们将Jenkins作为后台编译服务器，采用的是多master多slave的架构，我们并未直接使用Jenkins的流水线，而是开发了一个叫Pipeline的系统，与Jenkins做对接（此时的对接方式是调用Jenkins的API），由Pipeline系统提供Jenkins作业所需要的全部信息，另外编写了整个过程需要具体执行操作的脚本，通过Jenkins的job配置“Execute shell”的方式每次在构建之前导入到工作空间。"></a>我们将Jenkins作为后台编译服务器，采用的是多master多slave的架构，我们并未直接使用Jenkins的流水线，而是开发了一个叫Pipeline的系统，与Jenkins做对接（此时的对接方式是调用Jenkins的API），由Pipeline系统提供Jenkins作业所需要的全部信息，另外编写了整个过程需要具体执行操作的脚本，通过Jenkins的job配置“Execute shell”的方式每次在构建之前导入到工作空间。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231549783.png" srcset="/img/loading.gif" lazyload alt="image-20240223154952730"></p>
+<h5 id="流水线标准生产过程大体如下："><a href="#流水线标准生产过程大体如下：" class="headerlink" title="流水线标准生产过程大体如下："></a>流水线标准生产过程大体如下：</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231550898.png" srcset="/img/loading.gif" lazyload alt="image-20240223155008711"></p>
+<h5 id="流水线标准生产过程示意图"><a href="#流水线标准生产过程示意图" class="headerlink" title="流水线标准生产过程示意图"></a>流水线标准生产过程示意图</h5><h5 id="另外，针对回滚的情况，因为每次在上线前都会在预发布会构建一个稳定的版本，并打一个tag，并且记录下tag对应的制品（包或者镜像）版本，所以在回滚的时候，只要选择要回滚的版本，便能找到对应版本的制品，进行重新发布，以此达到回滚的目的。"><a href="#另外，针对回滚的情况，因为每次在上线前都会在预发布会构建一个稳定的版本，并打一个tag，并且记录下tag对应的制品（包或者镜像）版本，所以在回滚的时候，只要选择要回滚的版本，便能找到对应版本的制品，进行重新发布，以此达到回滚的目的。" class="headerlink" title="另外，针对回滚的情况，因为每次在上线前都会在预发布会构建一个稳定的版本，并打一个tag，并且记录下tag对应的制品（包或者镜像）版本，所以在回滚的时候，只要选择要回滚的版本，便能找到对应版本的制品，进行重新发布，以此达到回滚的目的。"></a>另外，针对回滚的情况，因为每次在上线前都会在预发布会构建一个稳定的版本，并打一个tag，并且记录下tag对应的制品（包或者镜像）版本，所以在回滚的时候，只要选择要回滚的版本，便能找到对应版本的制品，进行重新发布，以此达到回滚的目的。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231550311.png" srcset="/img/loading.gif" lazyload alt="image-20240223155023259"></p>
+<h5 id="回滚流程"><a href="#回滚流程" class="headerlink" title="回滚流程"></a>回滚流程</h5><h5 id="至此，第二阶段大体实现了以下功能："><a href="#至此，第二阶段大体实现了以下功能：" class="headerlink" title="至此，第二阶段大体实现了以下功能："></a>至此，第二阶段大体实现了以下功能：</h5><ul>
+<li><h5 id="通过用Jira需求上线流程和流水线做整合，以及多种推送前的校验，保证了上线过程的每一步都是可靠的"><a href="#通过用Jira需求上线流程和流水线做整合，以及多种推送前的校验，保证了上线过程的每一步都是可靠的" class="headerlink" title="通过用Jira需求上线流程和流水线做整合，以及多种推送前的校验，保证了上线过程的每一步都是可靠的"></a>通过用Jira需求上线流程和流水线做整合，以及多种推送前的校验，保证了上线过程的每一步都是可靠的</h5></li>
+<li><h5 id="每一个环境的集成和发布都是自动化的"><a href="#每一个环境的集成和发布都是自动化的" class="headerlink" title="每一个环境的集成和发布都是自动化的"></a>每一个环境的集成和发布都是自动化的</h5></li>
+<li><h5 id="因为过程变得可靠且自动化，使得将发布过程开放给研发团队成为了可能，达到了随时自主上线的目的。"><a href="#因为过程变得可靠且自动化，使得将发布过程开放给研发团队成为了可能，达到了随时自主上线的目的。" class="headerlink" title="因为过程变得可靠且自动化，使得将发布过程开放给研发团队成为了可能，达到了随时自主上线的目的。"></a>因为过程变得可靠且自动化，使得将发布过程开放给研发团队成为了可能，达到了随时自主上线的目的。</h5></li>
+</ul>
+<h5 id="然而这样的流水线也有诸多问题："><a href="#然而这样的流水线也有诸多问题：" class="headerlink" title="然而这样的流水线也有诸多问题："></a>然而这样的流水线也有诸多问题：</h5><ul>
+<li><h5 id="不够灵活，如在推送测试环境时，整个过程执行的步骤是固定的的，即第一步做什么，第二步做什么都是固定的，不能新增也不能删减，如某些团队需要进行单元测试，有的不需要，但流水线都会去执行单元测试，通常情况下单元测试过程是一个花费时间比较长的过程，这对于需要频繁更改和部署的业务是不友好的。"><a href="#不够灵活，如在推送测试环境时，整个过程执行的步骤是固定的的，即第一步做什么，第二步做什么都是固定的，不能新增也不能删减，如某些团队需要进行单元测试，有的不需要，但流水线都会去执行单元测试，通常情况下单元测试过程是一个花费时间比较长的过程，这对于需要频繁更改和部署的业务是不友好的。" class="headerlink" title="不够灵活，如在推送测试环境时，整个过程执行的步骤是固定的的，即第一步做什么，第二步做什么都是固定的，不能新增也不能删减，如某些团队需要进行单元测试，有的不需要，但流水线都会去执行单元测试，通常情况下单元测试过程是一个花费时间比较长的过程，这对于需要频繁更改和部署的业务是不友好的。"></a>不够灵活，如在推送测试环境时，整个过程执行的步骤是固定的的，即第一步做什么，第二步做什么都是固定的，不能新增也不能删减，如某些团队需要进行单元测试，有的不需要，但流水线都会去执行单元测试，通常情况下单元测试过程是一个花费时间比较长的过程，这对于需要频繁更改和部署的业务是不友好的。</h5></li>
+<li><h5 id="推送成功率不高，因为整个过程是串联的，某一个环节出现错误，将会导致本次推送失败，而某些环节本不应该影响构建结果的，最后导致了构建失败。"><a href="#推送成功率不高，因为整个过程是串联的，某一个环节出现错误，将会导致本次推送失败，而某些环节本不应该影响构建结果的，最后导致了构建失败。" class="headerlink" title="推送成功率不高，因为整个过程是串联的，某一个环节出现错误，将会导致本次推送失败，而某些环节本不应该影响构建结果的，最后导致了构建失败。"></a>推送成功率不高，因为整个过程是串联的，某一个环节出现错误，将会导致本次推送失败，而某些环节本不应该影响构建结果的，最后导致了构建失败。</h5></li>
+</ul>
+<p><strong>第三阶段（2017-2019）：拥有灵活车道的私家车模式</strong></p>
+<h5 id="考虑到前面提到的两点，ZBJ-DevOps团队在17年底对流水线做了二次改造："><a href="#考虑到前面提到的两点，ZBJ-DevOps团队在17年底对流水线做了二次改造：" class="headerlink" title="考虑到前面提到的两点，ZBJ DevOps团队在17年底对流水线做了二次改造："></a>考虑到前面提到的两点，ZBJ DevOps团队在17年底对流水线做了二次改造：</h5><h5 id="1、所有执行步骤拆解成独立原子任务，建立原子任务库；"><a href="#1、所有执行步骤拆解成独立原子任务，建立原子任务库；" class="headerlink" title="1、所有执行步骤拆解成独立原子任务，建立原子任务库；"></a>1、所有执行步骤拆解成独立原子任务，建立原子任务库；</h5><h5 id="2、将原子任务根据功能性分为两种，校验类以及执行类，校验类原子任务主要是是做准入准出的判断，执行类主要是编译构建，打镜像，上传hub仓库以及部署。"><a href="#2、将原子任务根据功能性分为两种，校验类以及执行类，校验类原子任务主要是是做准入准出的判断，执行类主要是编译构建，打镜像，上传hub仓库以及部署。" class="headerlink" title="2、将原子任务根据功能性分为两种，校验类以及执行类，校验类原子任务主要是是做准入准出的判断，执行类主要是编译构建，打镜像，上传hub仓库以及部署。"></a>2、将原子任务根据功能性分为两种，校验类以及执行类，校验类原子任务主要是是做准入准出的判断，执行类主要是编译构建，打镜像，上传hub仓库以及部署。</h5><h5 id="3、将原子任务根据执行载体分为两种，Java类和Jenkins类，直接用Java程序执行的任务为Java类，需要Jenkins执行的任务为Jenkins类。"><a href="#3、将原子任务根据执行载体分为两种，Java类和Jenkins类，直接用Java程序执行的任务为Java类，需要Jenkins执行的任务为Jenkins类。" class="headerlink" title="3、将原子任务根据执行载体分为两种，Java类和Jenkins类，直接用Java程序执行的任务为Java类，需要Jenkins执行的任务为Jenkins类。"></a>3、将原子任务根据执行载体分为两种，Java类和Jenkins类，直接用Java程序执行的任务为Java类，需要Jenkins执行的任务为Jenkins类。</h5><h5 id="4、根据开发语言、发布方式、业务类型的不同，从原子任务库中选取不同原子任务组成一条标准有序的执行流水线。"><a href="#4、根据开发语言、发布方式、业务类型的不同，从原子任务库中选取不同原子任务组成一条标准有序的执行流水线。" class="headerlink" title="4、根据开发语言、发布方式、业务类型的不同，从原子任务库中选取不同原子任务组成一条标准有序的执行流水线。"></a>4、根据开发语言、发布方式、业务类型的不同，从原子任务库中选取不同原子任务组成一条标准有序的执行流水线。</h5><h5 id="5、提供工程特殊配置，如有些工程需要增强校验，有的工程需要减少校验，则可以通过启用和禁用的方式进行特殊配置，如下图所示，根据1、2和3步骤后可最终生成一条本次执行的流水线任务列表。"><a href="#5、提供工程特殊配置，如有些工程需要增强校验，有的工程需要减少校验，则可以通过启用和禁用的方式进行特殊配置，如下图所示，根据1、2和3步骤后可最终生成一条本次执行的流水线任务列表。" class="headerlink" title="5、提供工程特殊配置，如有些工程需要增强校验，有的工程需要减少校验，则可以通过启用和禁用的方式进行特殊配置，如下图所示，根据1、2和3步骤后可最终生成一条本次执行的流水线任务列表。"></a>5、提供工程特殊配置，如有些工程需要增强校验，有的工程需要减少校验，则可以通过启用和禁用的方式进行特殊配置，如下图所示，根据1、2和3步骤后可最终生成一条本次执行的流水线任务列表。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231550891.png" srcset="/img/loading.gif" lazyload alt="image-20240223155042797"></p>
+<p>原子任务一览表</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231550192.png" srcset="/img/loading.gif" lazyload alt="image-20240223155058116"></p>
+<p>执行效果图</p>
+<h5 id="6、根据原子任务的制定，我们将Jenkins执行的job也拆分成了对应的几类，每一类拥有足够多数量的job进行任务的执行。"><a href="#6、根据原子任务的制定，我们将Jenkins执行的job也拆分成了对应的几类，每一类拥有足够多数量的job进行任务的执行。" class="headerlink" title="6、根据原子任务的制定，我们将Jenkins执行的job也拆分成了对应的几类，每一类拥有足够多数量的job进行任务的执行。"></a>6、根据原子任务的制定，我们将Jenkins执行的job也拆分成了对应的几类，每一类拥有足够多数量的job进行任务的执行。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231551703.png" srcset="/img/loading.gif" lazyload alt="image-20240223155127628"></p>
+<h5 id="7、升级了Pieline系统和Jenkins通信架构，通过编写一个RabbitMQ的插件植入到Jenkins-Master上，从原来调用API的方式，改成用RabbitMQ的方式进行通信，大大提高了效率和成功率。"><a href="#7、升级了Pieline系统和Jenkins通信架构，通过编写一个RabbitMQ的插件植入到Jenkins-Master上，从原来调用API的方式，改成用RabbitMQ的方式进行通信，大大提高了效率和成功率。" class="headerlink" title="7、升级了Pieline系统和Jenkins通信架构，通过编写一个RabbitMQ的插件植入到Jenkins Master上，从原来调用API的方式，改成用RabbitMQ的方式进行通信，大大提高了效率和成功率。"></a>7、升级了Pieline系统和Jenkins通信架构，通过编写一个RabbitMQ的插件植入到Jenkins Master上，从原来调用API的方式，改成用RabbitMQ的方式进行通信，大大提高了效率和成功率。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231551317.png" srcset="/img/loading.gif" lazyload alt="image-20240223155143254"></p>
+<p>通信示意图</p>
+<h5 id="8、升级了Jenkins架构，构建一个能适配ZBJ所有开发语言的镜像，利用Jenkins-Master的Kubernetes插件，将原来的虚拟机slave节点全部替换成容器slave节点，并且这个slave集群完全由Jenkins-Master的Kubernetes插件调度，不论在高并发和低并发的时候都能及时扩缩容，满足业务需求。"><a href="#8、升级了Jenkins架构，构建一个能适配ZBJ所有开发语言的镜像，利用Jenkins-Master的Kubernetes插件，将原来的虚拟机slave节点全部替换成容器slave节点，并且这个slave集群完全由Jenkins-Master的Kubernetes插件调度，不论在高并发和低并发的时候都能及时扩缩容，满足业务需求。" class="headerlink" title="8、升级了Jenkins架构，构建一个能适配ZBJ所有开发语言的镜像，利用Jenkins Master的Kubernetes插件，将原来的虚拟机slave节点全部替换成容器slave节点，并且这个slave集群完全由Jenkins Master的Kubernetes插件调度，不论在高并发和低并发的时候都能及时扩缩容，满足业务需求。"></a>8、升级了Jenkins架构，构建一个能适配ZBJ所有开发语言的镜像，利用Jenkins Master的Kubernetes插件，将原来的虚拟机slave节点全部替换成容器slave节点，并且这个slave集群完全由Jenkins Master的Kubernetes插件调度，不论在高并发和低并发的时候都能及时扩缩容，满足业务需求。</h5><p><strong>第四阶段（2020-至今）：智能驾驶模式</strong></p>
+<h5 id="可以看到，到第三个阶段为止，我们的每一次编译过程，都需要研发同学“推送一下”，而且这个过程也是需要花费一些时间的，比如一个正常的Nodejs工程平均编译时长至少需要花费100-s以上，一个正常的Java工程平均编译时长至少也是需要30s以上，由于我们提供了推送过程“可视化”的功能，且没有执行结果的通知，导致用户必须关注推送过程以确保本次推送是成功的，大大浪费了研发同学的时间。"><a href="#可以看到，到第三个阶段为止，我们的每一次编译过程，都需要研发同学“推送一下”，而且这个过程也是需要花费一些时间的，比如一个正常的Nodejs工程平均编译时长至少需要花费100-s以上，一个正常的Java工程平均编译时长至少也是需要30s以上，由于我们提供了推送过程“可视化”的功能，且没有执行结果的通知，导致用户必须关注推送过程以确保本次推送是成功的，大大浪费了研发同学的时间。" class="headerlink" title="可以看到，到第三个阶段为止，我们的每一次编译过程，都需要研发同学“推送一下”，而且这个过程也是需要花费一些时间的，比如一个正常的Nodejs工程平均编译时长至少需要花费100+s以上，一个正常的Java工程平均编译时长至少也是需要30s以上，由于我们提供了推送过程“可视化”的功能，且没有执行结果的通知，导致用户必须关注推送过程以确保本次推送是成功的，大大浪费了研发同学的时间。"></a>可以看到，到第三个阶段为止，我们的每一次编译过程，都需要研发同学“推送一下”，而且这个过程也是需要花费一些时间的，比如一个正常的Nodejs工程平均编译时长至少需要花费100+s以上，一个正常的Java工程平均编译时长至少也是需要30s以上，由于我们提供了推送过程“可视化”的功能，且没有执行结果的通知，导致用户必须关注推送过程以确保本次推送是成功的，大大浪费了研发同学的时间。</h5><h5 id="在此基础上，我们进一步做出了以下优化："><a href="#在此基础上，我们进一步做出了以下优化：" class="headerlink" title="在此基础上，我们进一步做出了以下优化："></a>在此基础上，我们进一步做出了以下优化：</h5><h5 id="1、为每一个GitLab上的工程添加一个Webhook，每当开发人员向仓库push一次，便会触发Webhook，调用Pipeline系统接口进行一次快速构建。"><a href="#1、为每一个GitLab上的工程添加一个Webhook，每当开发人员向仓库push一次，便会触发Webhook，调用Pipeline系统接口进行一次快速构建。" class="headerlink" title="1、为每一个GitLab上的工程添加一个Webhook，每当开发人员向仓库push一次，便会触发Webhook，调用Pipeline系统接口进行一次快速构建。"></a>1、为每一个GitLab上的工程添加一个Webhook，每当开发人员向仓库push一次，便会触发Webhook，调用Pipeline系统接口进行一次快速构建。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231551916.png" srcset="/img/loading.gif" lazyload alt="image-20240223155159826"></p>
+<h5 id="注意：并不是每次push都会进行一次快速构建，为了防止开发同学频繁修改少量代码提交到版本库，我们规定了一个“暗号”，只有当开发同学在commit-message中添加这个“暗号”，才会触发一次快速构建。"><a href="#注意：并不是每次push都会进行一次快速构建，为了防止开发同学频繁修改少量代码提交到版本库，我们规定了一个“暗号”，只有当开发同学在commit-message中添加这个“暗号”，才会触发一次快速构建。" class="headerlink" title="注意：并不是每次push都会进行一次快速构建，为了防止开发同学频繁修改少量代码提交到版本库，我们规定了一个“暗号”，只有当开发同学在commit message中添加这个“暗号”，才会触发一次快速构建。"></a>注意：并不是每次push都会进行一次快速构建，为了防止开发同学频繁修改少量代码提交到版本库，我们规定了一个“暗号”，只有当开发同学在commit message中添加这个“暗号”，才会触发一次快速构建。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231552115.png" srcset="/img/loading.gif" lazyload alt="image-20240223155216070"></p>
+<h5 id="auto-trigger-build就是暗号内容"><a href="#auto-trigger-build就是暗号内容" class="headerlink" title="auto_trigger_build就是暗号内容"></a>auto_trigger_build就是暗号内容</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231552066.png" srcset="/img/loading.gif" lazyload alt="image-20240223155228004"></p>
+<h5 id="2、快速构建的结果是构建一个包或者一个镜像，存放在前文提到过的文件服务器或者Harbor仓库。在下一次用户“推送”的时候，便会根据分支和版本判断是否存在已编译过的包或者镜像，如果存在，则直接使用，跳过编译过程。"><a href="#2、快速构建的结果是构建一个包或者一个镜像，存放在前文提到过的文件服务器或者Harbor仓库。在下一次用户“推送”的时候，便会根据分支和版本判断是否存在已编译过的包或者镜像，如果存在，则直接使用，跳过编译过程。" class="headerlink" title="2、快速构建的结果是构建一个包或者一个镜像，存放在前文提到过的文件服务器或者Harbor仓库。在下一次用户“推送”的时候，便会根据分支和版本判断是否存在已编译过的包或者镜像，如果存在，则直接使用，跳过编译过程。"></a>2、快速构建的结果是构建一个包或者一个镜像，存放在前文提到过的文件服务器或者Harbor仓库。在下一次用户“推送”的时候，便会根据分支和版本判断是否存在已编译过的包或者镜像，如果存在，则直接使用，跳过编译过程。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231552340.png" srcset="/img/loading.gif" lazyload alt="image-20240223155248289"></p>
+<h5 id="3、增加快速构建结果通知，因为整个快速构建过程是后台执行的，所以流水线系统通过企业微信的方式通知到用户本次快速构建的结果。"><a href="#3、增加快速构建结果通知，因为整个快速构建过程是后台执行的，所以流水线系统通过企业微信的方式通知到用户本次快速构建的结果。" class="headerlink" title="3、增加快速构建结果通知，因为整个快速构建过程是后台执行的，所以流水线系统通过企业微信的方式通知到用户本次快速构建的结果。"></a>3、增加快速构建结果通知，因为整个快速构建过程是后台执行的，所以流水线系统通过企业微信的方式通知到用户本次快速构建的结果。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231553495.png" srcset="/img/loading.gif" lazyload alt="image-20240223155306422"></p>
+<h5 id="4、除了增加快速构建的通知，我们还增加了推送的通知。用户再也不用关注推送过程，只需要在推送后继续做其他事情，推送结果由企业微信通知到用户。"><a href="#4、除了增加快速构建的通知，我们还增加了推送的通知。用户再也不用关注推送过程，只需要在推送后继续做其他事情，推送结果由企业微信通知到用户。" class="headerlink" title="4、除了增加快速构建的通知，我们还增加了推送的通知。用户再也不用关注推送过程，只需要在推送后继续做其他事情，推送结果由企业微信通知到用户。"></a>4、除了增加快速构建的通知，我们还增加了推送的通知。用户再也不用关注推送过程，只需要在推送后继续做其他事情，推送结果由企业微信通知到用户。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231553580.png" srcset="/img/loading.gif" lazyload alt="image-20240223155319493"></p>
+<h5 id="值得注意的是，当推送失败后，流水线系统也会通知到用户，进行对应问题的排查。"><a href="#值得注意的是，当推送失败后，流水线系统也会通知到用户，进行对应问题的排查。" class="headerlink" title="值得注意的是，当推送失败后，流水线系统也会通知到用户，进行对应问题的排查。"></a>值得注意的是，当推送失败后，流水线系统也会通知到用户，进行对应问题的排查。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402231553452.png" srcset="/img/loading.gif" lazyload alt="image-20240223155331381"></p>
+<h5 id="至此，ZBJ的CI-CD实践之路基本介绍完毕，当然，其中也还有很多细节方面，因为涉及的东西太多，不便铺开来讲。"><a href="#至此，ZBJ的CI-CD实践之路基本介绍完毕，当然，其中也还有很多细节方面，因为涉及的东西太多，不便铺开来讲。" class="headerlink" title="至此，ZBJ的CI&#x2F;CD实践之路基本介绍完毕，当然，其中也还有很多细节方面，因为涉及的东西太多，不便铺开来讲。"></a>至此，ZBJ的CI&#x2F;CD实践之路基本介绍完毕，当然，其中也还有很多细节方面，因为涉及的东西太多，不便铺开来讲。</h5><h5 id="总结三次重大改造的结果"><a href="#总结三次重大改造的结果" class="headerlink" title="总结三次重大改造的结果"></a>总结三次重大改造的结果</h5><h5 id="第一次改造：奠定了ZBJ的CI-CD基础，打造了一条标准的流水线，解放了运维劳动力（过程全自动化），提高了研发效率，降低了研发成本（运维同学由最多时候的三四十个减少到了不到十个人）。"><a href="#第一次改造：奠定了ZBJ的CI-CD基础，打造了一条标准的流水线，解放了运维劳动力（过程全自动化），提高了研发效率，降低了研发成本（运维同学由最多时候的三四十个减少到了不到十个人）。" class="headerlink" title="第一次改造：奠定了ZBJ的CI&#x2F;CD基础，打造了一条标准的流水线，解放了运维劳动力（过程全自动化），提高了研发效率，降低了研发成本（运维同学由最多时候的三四十个减少到了不到十个人）。"></a>第一次改造：奠定了ZBJ的CI&#x2F;CD基础，打造了一条标准的流水线，解放了运维劳动力（过程全自动化），提高了研发效率，降低了研发成本（运维同学由最多时候的三四十个减少到了不到十个人）。</h5><h5 id="第二次改造：流水线实现了高可用，同时其灵活的配置能完美满足不同业务团队的需求。"><a href="#第二次改造：流水线实现了高可用，同时其灵活的配置能完美满足不同业务团队的需求。" class="headerlink" title="第二次改造：流水线实现了高可用，同时其灵活的配置能完美满足不同业务团队的需求。"></a>第二次改造：流水线实现了高可用，同时其灵活的配置能完美满足不同业务团队的需求。</h5><h5 id="第三次改造：提升了流水线效率，弱化推送过程，增强以人为本的体验，使推送过程更加智能化。"><a href="#第三次改造：提升了流水线效率，弱化推送过程，增强以人为本的体验，使推送过程更加智能化。" class="headerlink" title="第三次改造：提升了流水线效率，弱化推送过程，增强以人为本的体验，使推送过程更加智能化。"></a>第三次改造：提升了流水线效率，弱化推送过程，增强以人为本的体验，使推送过程更加智能化。</h5><p>谈谈未来</p>
+<h5 id="CI-CD实践之路还在继续，因为不同公司有不同的业务场景，而同一公司的业务也会随着时代的发展不断变化，只有适合自己的才是最好的，只有能拥抱变化的才是最好的，但万变不离其宗的，我觉得应该有一下几点："><a href="#CI-CD实践之路还在继续，因为不同公司有不同的业务场景，而同一公司的业务也会随着时代的发展不断变化，只有适合自己的才是最好的，只有能拥抱变化的才是最好的，但万变不离其宗的，我觉得应该有一下几点：" class="headerlink" title="CI&#x2F;CD实践之路还在继续，因为不同公司有不同的业务场景，而同一公司的业务也会随着时代的发展不断变化，只有适合自己的才是最好的，只有能拥抱变化的才是最好的，但万变不离其宗的，我觉得应该有一下几点："></a>CI&#x2F;CD实践之路还在继续，因为不同公司有不同的业务场景，而同一公司的业务也会随着时代的发展不断变化，只有适合自己的才是最好的，只有能拥抱变化的才是最好的，但万变不离其宗的，我觉得应该有一下几点：</h5><ul>
+<li><h5 id="CI-CD应该是以提高研发效率为目标的实践，一切脱离这个目标只是为了迎合什么口号而做什么的是都是耍牛氓。而实现这个目标是一个比较漫长的过程，一开始会比较容易，后面就会越来越难，这需要不断思考和学习的过程。"><a href="#CI-CD应该是以提高研发效率为目标的实践，一切脱离这个目标只是为了迎合什么口号而做什么的是都是耍牛氓。而实现这个目标是一个比较漫长的过程，一开始会比较容易，后面就会越来越难，这需要不断思考和学习的过程。" class="headerlink" title="CI&#x2F;CD应该是以提高研发效率为目标的实践，一切脱离这个目标只是为了迎合什么口号而做什么的是都是耍牛氓。而实现这个目标是一个比较漫长的过程，一开始会比较容易，后面就会越来越难，这需要不断思考和学习的过程。"></a>CI&#x2F;CD应该是以提高研发效率为目标的实践，一切脱离这个目标只是为了迎合什么口号而做什么的是都是耍牛氓。而实现这个目标是一个比较漫长的过程，一开始会比较容易，后面就会越来越难，这需要不断思考和学习的过程。</h5></li>
+<li><h5 id="CI-CD应该是紧贴业务的，因为业务的不同，要求的技术架构也会有所不同，随之而来，要求的交付方式也会有所不同。"><a href="#CI-CD应该是紧贴业务的，因为业务的不同，要求的技术架构也会有所不同，随之而来，要求的交付方式也会有所不同。" class="headerlink" title="CI&#x2F;CD应该是紧贴业务的，因为业务的不同，要求的技术架构也会有所不同，随之而来，要求的交付方式也会有所不同。"></a>CI&#x2F;CD应该是紧贴业务的，因为业务的不同，要求的技术架构也会有所不同，随之而来，要求的交付方式也会有所不同。</h5></li>
+<li><h5 id="CI-CD应该是以人为本的，我们应该尽可能地将一切繁琐的过程交给程序去执行，而人只需要“坐享其成”或者做少量的决策即可。"><a href="#CI-CD应该是以人为本的，我们应该尽可能地将一切繁琐的过程交给程序去执行，而人只需要“坐享其成”或者做少量的决策即可。" class="headerlink" title="CI&#x2F;CD应该是以人为本的，我们应该尽可能地将一切繁琐的过程交给程序去执行，而人只需要“坐享其成”或者做少量的决策即可。"></a>CI&#x2F;CD应该是以人为本的，我们应该尽可能地将一切繁琐的过程交给程序去执行，而人只需要“坐享其成”或者做少量的决策即可。</h5></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>CICD思考 2024-04-03 15:11:24.151</div>
+      <div>http://example.com/2025/01/16/CICD思考-cicd-si-kao/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/Client-go%20%E5%9B%9B%E7%A7%8D%E5%AE%A2%E6%88%B7%E7%AB%AF-client-go-si-zhong-ke-hu-duan/" title="Client-go 四种客户端 2024-04-03 14:49:34.32">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Client-go 四种客户端 2024-04-03 14:49:34.32</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/CNI%E6%8F%92%E4%BB%B6%E9%80%89%E5%9E%8B-cni-cha-jian-xuan-xing/" title="CNI插件选型 2024-04-03 15:01:51.29">
+                        <span class="hidden-mobile">CNI插件选型 2024-04-03 15:01:51.29</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

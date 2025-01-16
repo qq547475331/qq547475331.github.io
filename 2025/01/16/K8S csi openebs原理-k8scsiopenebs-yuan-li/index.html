@@ -1,0 +1,711 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Kubernetes CSI (二): OpenEBS 原理简介在 Kubernetes CSI (一): Kubernetes 存储原理 一文中详细讲解了 Kubernetes CSI 的原理，本篇文章通过原理和源码走读形式讲解 OpenEBS 原理。OpenEBS 是一款使用Go语言编写的基于容器的块存储开源软件。OpenEBS 使得在容器中运行关键性任务和需要数据持久化的负载变得更可靠。实现">
+<meta property="og:type" content="article">
+<meta property="og:title" content="K8S csi openebs原理 2024-04-03 14:44:48.967">
+<meta property="og:url" content="http://example.com/2025/01/16/K8S%20csi%20openebs%E5%8E%9F%E7%90%86-k8scsiopenebs-yuan-li/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="Kubernetes CSI (二): OpenEBS 原理简介在 Kubernetes CSI (一): Kubernetes 存储原理 一文中详细讲解了 Kubernetes CSI 的原理，本篇文章通过原理和源码走读形式讲解 OpenEBS 原理。OpenEBS 是一款使用Go语言编写的基于容器的块存储开源软件。OpenEBS 使得在容器中运行关键性任务和需要数据持久化的负载变得更可靠。实现">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191605670.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191606214.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191606939.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191606359.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.045Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:18.618Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191605670.png">
+  
+  
+  
+  <title>K8S csi openebs原理 2024-04-03 14:44:48.967 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="K8S csi openebs原理 2024-04-03 14:44:48.967"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          34 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">K8S csi openebs原理 2024-04-03 14:44:48.967</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="Kubernetes-CSI-二-OpenEBS-原理"><a href="#Kubernetes-CSI-二-OpenEBS-原理" class="headerlink" title="Kubernetes CSI (二): OpenEBS 原理"></a>Kubernetes CSI (二): OpenEBS 原理</h1><h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><h5 id="在-Kubernetes-CSI-一-Kubernetes-存储原理-一文中详细讲解了-Kubernetes-CSI-的原理，本篇文章通过原理和源码走读形式讲解-OpenEBS-原理。"><a href="#在-Kubernetes-CSI-一-Kubernetes-存储原理-一文中详细讲解了-Kubernetes-CSI-的原理，本篇文章通过原理和源码走读形式讲解-OpenEBS-原理。" class="headerlink" title="在 Kubernetes CSI (一): Kubernetes 存储原理 一文中详细讲解了 Kubernetes CSI 的原理，本篇文章通过原理和源码走读形式讲解 OpenEBS 原理。"></a>在 Kubernetes CSI (一): Kubernetes 存储原理 一文中详细讲解了 Kubernetes CSI 的原理，本篇文章通过原理和源码走读形式讲解 <strong>OpenEBS</strong> 原理。</h5><h5 id="OpenEBS-是一款使用Go语言编写的基于容器的块存储开源软件。OpenEBS-使得在容器中运行关键性任务和需要数据持久化的负载变得更可靠。实现了-Kubernetes-CSI，所以可以很方便对接-Kubernetes-存储功能。"><a href="#OpenEBS-是一款使用Go语言编写的基于容器的块存储开源软件。OpenEBS-使得在容器中运行关键性任务和需要数据持久化的负载变得更可靠。实现了-Kubernetes-CSI，所以可以很方便对接-Kubernetes-存储功能。" class="headerlink" title="OpenEBS 是一款使用Go语言编写的基于容器的块存储开源软件。OpenEBS 使得在容器中运行关键性任务和需要数据持久化的负载变得更可靠。实现了 Kubernetes CSI，所以可以很方便对接 Kubernetes 存储功能。"></a>OpenEBS 是一款使用Go语言编写的基于容器的块存储开源软件。OpenEBS 使得在容器中运行关键性任务和需要数据持久化的负载变得更可靠。实现了 <strong>Kubernetes CSI</strong>，所以可以很方便对接 Kubernetes 存储功能。</h5><h5 id="对于大部分第三方存储厂商，它们都只实现了分布式存储，OpenEBS-可以为-Kubernetes-有状态负载-StatefulSet-提供本地存储卷和分布式存储卷。"><a href="#对于大部分第三方存储厂商，它们都只实现了分布式存储，OpenEBS-可以为-Kubernetes-有状态负载-StatefulSet-提供本地存储卷和分布式存储卷。" class="headerlink" title="对于大部分第三方存储厂商，它们都只实现了分布式存储，OpenEBS 可以为 Kubernetes 有状态负载( StatefulSet ) 提供本地存储卷和分布式存储卷。"></a>对于大部分第三方存储厂商，它们都只实现了分布式存储，OpenEBS 可以为 Kubernetes 有状态负载( StatefulSet ) 提供本地存储卷和分布式存储卷。</h5><p>本篇文章重点讲解 OpenEBS 的<strong>本地存储卷</strong>。</p>
+<hr>
+<h2 id="本地存储卷"><a href="#本地存储卷" class="headerlink" title="本地存储卷"></a>本地存储卷</h2><h5 id="本地存储卷很容易理解，在-Kubernetes-中本身就支持-Hostpath-类型的存储卷，"><a href="#本地存储卷很容易理解，在-Kubernetes-中本身就支持-Hostpath-类型的存储卷，" class="headerlink" title="本地存储卷很容易理解，在 Kubernetes 中本身就支持 Hostpath 类型的存储卷，"></a>本地存储卷很容易理解，在 Kubernetes 中本身就支持 <strong>Hostpath</strong> 类型的存储卷，</h5><h5 id="使用-HostPath-有一个局限性就是，我们的-Pod-不能随便漂移，需要固定到一个节点上，因为一旦漂移到其他节点上去了宿主机上面就没有对应的数据了，所以我们在使用-HostPath-的时候都会搭配-nodeSelector-来进行使用。"><a href="#使用-HostPath-有一个局限性就是，我们的-Pod-不能随便漂移，需要固定到一个节点上，因为一旦漂移到其他节点上去了宿主机上面就没有对应的数据了，所以我们在使用-HostPath-的时候都会搭配-nodeSelector-来进行使用。" class="headerlink" title="使用 HostPath 有一个局限性就是，我们的 Pod 不能随便漂移，需要固定到一个节点上，因为一旦漂移到其他节点上去了宿主机上面就没有对应的数据了，所以我们在使用 HostPath 的时候都会搭配 nodeSelector 来进行使用。"></a>使用 HostPath 有一个局限性就是，我们的 Pod 不能随便漂移，需要固定到一个节点上，因为一旦漂移到其他节点上去了宿主机上面就没有对应的数据了，所以我们在使用 HostPath 的时候都会搭配 nodeSelector 来进行使用。</h5><h5 id="但是使用-HostPath-明显也有一些好处的，因为-PV-直接使用的是本地磁盘，尤其是-SSD-盘，它的读写性能相比于大多数远程存储来说，要好得多，所以对于一些对磁盘-IO-要求比较高的应用，比如-etcd-就非常实用了。不过呢，相比于正常的-PV-来说，使用了-HostPath-的这些节点一旦宕机数据就可能丢失，所以这就要求使用-HostPath-的应用必须具备数据备份和恢复的能力，允许你把这些数据定时备份在其他位置。"><a href="#但是使用-HostPath-明显也有一些好处的，因为-PV-直接使用的是本地磁盘，尤其是-SSD-盘，它的读写性能相比于大多数远程存储来说，要好得多，所以对于一些对磁盘-IO-要求比较高的应用，比如-etcd-就非常实用了。不过呢，相比于正常的-PV-来说，使用了-HostPath-的这些节点一旦宕机数据就可能丢失，所以这就要求使用-HostPath-的应用必须具备数据备份和恢复的能力，允许你把这些数据定时备份在其他位置。" class="headerlink" title="但是使用 HostPath 明显也有一些好处的，因为 PV 直接使用的是本地磁盘，尤其是 SSD 盘，它的读写性能相比于大多数远程存储来说，要好得多，所以对于一些对磁盘 IO 要求比较高的应用，比如 etcd 就非常实用了。不过呢，相比于正常的 PV 来说，使用了 HostPath 的这些节点一旦宕机数据就可能丢失，所以这就要求使用 HostPath 的应用必须具备数据备份和恢复的能力，允许你把这些数据定时备份在其他位置。"></a>但是使用 HostPath 明显也有一些好处的，因为 PV 直接使用的是本地磁盘，尤其是 SSD 盘，它的读写性能相比于大多数远程存储来说，要好得多，所以对于一些对磁盘 IO 要求比较高的应用，比如 etcd 就非常实用了。不过呢，相比于正常的 PV 来说，使用了 HostPath 的这些节点一旦宕机数据就可能丢失，所以这就要求使用 HostPath 的应用必须具备数据备份和恢复的能力，允许你把这些数据定时备份在其他位置。</h5><h5 id="所以在-HostPath-的基础上，Kubernetes-依靠-PV、PVC-实现了一个新的特性，这个特性的名字叫作：Local-Persistent-Volume，也就是我们说的-Local-PV。"><a href="#所以在-HostPath-的基础上，Kubernetes-依靠-PV、PVC-实现了一个新的特性，这个特性的名字叫作：Local-Persistent-Volume，也就是我们说的-Local-PV。" class="headerlink" title="所以在 HostPath 的基础上，Kubernetes 依靠 PV、PVC 实现了一个新的特性，这个特性的名字叫作：Local Persistent Volume，也就是我们说的 Local PV。"></a>所以在 HostPath 的基础上，Kubernetes 依靠 PV、PVC 实现了一个新的特性，这个特性的名字叫作：<code>Local Persistent Volume</code>，也就是我们说的 <code>Local PV</code>。</h5><h5 id="要想使用-Local-PV-考虑的因素也比较多，下面详细看看："><a href="#要想使用-Local-PV-考虑的因素也比较多，下面详细看看：" class="headerlink" title="要想使用 Local PV 考虑的因素也比较多，下面详细看看："></a>要想使用 <code>Local PV</code> 考虑的因素也比较多，下面详细看看：</h5><h3 id="Local-PV"><a href="#Local-PV" class="headerlink" title="Local PV"></a>Local PV</h3><h5 id="其实-Local-PV-实现的功能就非常类似于-HostPath-加上-nodeAffinity-，即表示该-PV-就是一个-Hostpath-类型卷。"><a href="#其实-Local-PV-实现的功能就非常类似于-HostPath-加上-nodeAffinity-，即表示该-PV-就是一个-Hostpath-类型卷。" class="headerlink" title="其实 Local PV 实现的功能就非常类似于 HostPath 加上 nodeAffinity ，即表示该 PV 就是一个 Hostpath 类型卷。"></a>其实 <code>Local PV</code> 实现的功能就非常类似于 <code>HostPath</code> 加上 <code>nodeAffinity</code> ，即表示该 PV 就是一个 <code>Hostpath</code> 类型卷。</h5><figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">v1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">PersistentVolume</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">pv-local</span><br><span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">capacity</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">storage</span><span class="hljs-punctuation">:</span> <span class="hljs-string">5Gi</span><br>  <span class="hljs-attribute">volumeMode</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Filesystem</span><br>  <span class="hljs-attribute">accessModes</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">ReadWriteOnce</span><br>  <span class="hljs-attribute">persistentVolumeReclaimPolicy</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Delete</span><br>  <span class="hljs-attribute">storageClassName</span><span class="hljs-punctuation">:</span> <span class="hljs-string">local-storage</span><br>  <span class="hljs-attribute">local</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">path</span><span class="hljs-punctuation">:</span> <span class="hljs-string">/data/k8s/localpv # 对应主机上数据目录</span><br>  <span class="hljs-comment"># 该 pv 与节点绑定</span><br>  <span class="hljs-attribute">nodeAffinity</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">required</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-attribute">nodeSelectorTerms</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-string">matchExpressions:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-string">key: kubernetes.io/hostname</span><br>          <span class="hljs-attribute">operator</span><span class="hljs-punctuation">:</span> <span class="hljs-string">In</span><br>          <span class="hljs-attribute">values</span><span class="hljs-punctuation">:</span><br>          <span class="hljs-bullet">-</span> <span class="hljs-string">node-1</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="Local-PV-不仅仅支持-Filesystem-类型存储，还支持-Block，LVM-类型"><a href="#Local-PV-不仅仅支持-Filesystem-类型存储，还支持-Block，LVM-类型" class="headerlink" title="Local PV 不仅仅支持 Filesystem 类型存储，还支持 Block，LVM 类型"></a><code>Local PV</code> 不仅仅支持 Filesystem 类型存储，还支持 Block，LVM 类型</h5><h3 id="延迟绑定"><a href="#延迟绑定" class="headerlink" title="延迟绑定"></a>延迟绑定</h3><h5 id="延迟绑定就是在-Pod-调度完成之后，再绑定对应的-PVC、PV。对于使用-Local-PV-的-Pod，必须延迟绑定。"><a href="#延迟绑定就是在-Pod-调度完成之后，再绑定对应的-PVC、PV。对于使用-Local-PV-的-Pod，必须延迟绑定。" class="headerlink" title="延迟绑定就是在 Pod 调度完成之后，再绑定对应的 PVC、PV。对于使用 Local PV 的 Pod，必须延迟绑定。"></a><strong>延迟绑定</strong>就是在 Pod 调度完成之后，再绑定对应的 PVC、PV。对于使用 <code>Local PV</code> 的 Pod，必须延迟绑定。</h5><h5 id="比如现在明确规定，这个-Pod-只能运行在-node-1-这个节点上，且该-Pod-申请了一个-PVC。对于没有延迟属性的-StorageClass，那么就会在-Pod-调度到某个节点之前就将该-PVC-绑定到合适的-PV，如果集群-node-1，node-2-都存在-PV-可以和该-PVC-绑定，那么就有可能该-PVC-绑定了-node-2-的-PV，就会导致-Pod-调度失败。"><a href="#比如现在明确规定，这个-Pod-只能运行在-node-1-这个节点上，且该-Pod-申请了一个-PVC。对于没有延迟属性的-StorageClass，那么就会在-Pod-调度到某个节点之前就将该-PVC-绑定到合适的-PV，如果集群-node-1，node-2-都存在-PV-可以和该-PVC-绑定，那么就有可能该-PVC-绑定了-node-2-的-PV，就会导致-Pod-调度失败。" class="headerlink" title="比如现在明确规定，这个 Pod 只能运行在 node-1 这个节点上，且该 Pod 申请了一个 PVC。对于没有延迟属性的 StorageClass，那么就会在 Pod 调度到某个节点之前就将该 PVC 绑定到合适的 PV，如果集群 node-1，node-2 都存在 PV 可以和该 PVC 绑定，那么就有可能该 PVC 绑定了 node-2 的 PV，就会导致 Pod 调度失败。"></a>比如现在明确规定，这个 Pod 只能运行在 <code>node-1</code> 这个节点上，且该 Pod 申请了一个 PVC。对于没有延迟属性的 StorageClass，那么就会在 Pod 调度到某个节点之前就将该 PVC 绑定到合适的 PV，如果集群 <code>node-1，node-2</code> 都存在 PV 可以和该 PVC 绑定，那么就有可能该 PVC 绑定了 <code>node-2</code> 的 PV，就会导致 Pod 调度失败。</h5><h5 id="所以为了避免这种现象，就必须在-PVC-和-PV-绑定之前就将-Pod-调度完成。所以我们在使用-Local-PV-的时候，就必须延迟绑定操作，即延迟到-Pod-调度完成之后再绑定-PVC。"><a href="#所以为了避免这种现象，就必须在-PVC-和-PV-绑定之前就将-Pod-调度完成。所以我们在使用-Local-PV-的时候，就必须延迟绑定操作，即延迟到-Pod-调度完成之后再绑定-PVC。" class="headerlink" title="所以为了避免这种现象，就必须在 PVC 和 PV 绑定之前就将 Pod 调度完成。所以我们在使用 Local PV 的时候，就必须延迟绑定操作，即延迟到 Pod 调度完成之后再绑定 PVC。"></a>所以为了避免这种现象，就必须在 PVC 和 PV 绑定之前就将 Pod 调度完成。所以我们在使用 <code>Local PV</code> 的时候，就必须<strong>延迟绑定</strong>操作，即延迟到 Pod 调度完成之后再绑定 PVC。</h5><h5 id="那么怎么才能实现延迟绑定？"><a href="#那么怎么才能实现延迟绑定？" class="headerlink" title="那么怎么才能实现延迟绑定？"></a>那么怎么才能实现<strong>延迟绑定</strong>？</h5><h5 id="对于-Local-PV-类型的-StorageClass-需要配置-volumeBindingMode-WaitForFirstConsumer-的属性，就是告诉-Kubernetes-在发现这个-StorageClass-关联的-PVC-与-PV-可以绑定在一起，但不要现在就立刻执行绑定操作（即：设置-PVC-的-VolumeName-字段），而是要等到第一个声明使用该-PVC-的-Pod-出现在调度器之后，调度器再综合考虑所有的调度规则，当然也包括每个-PV所在的节点位置，来统一决定。这个-Pod-声明的-PVC，到底应该跟哪个-PV-进行绑定。通过这个延迟绑定机制，原本实时发生的-PVC-和-PV-的绑定过程，就被延迟到了-Pod-第一次调度的时候在调度器中进行，从而保证了这个绑定结果不会影响-Pod-的正常调度。"><a href="#对于-Local-PV-类型的-StorageClass-需要配置-volumeBindingMode-WaitForFirstConsumer-的属性，就是告诉-Kubernetes-在发现这个-StorageClass-关联的-PVC-与-PV-可以绑定在一起，但不要现在就立刻执行绑定操作（即：设置-PVC-的-VolumeName-字段），而是要等到第一个声明使用该-PVC-的-Pod-出现在调度器之后，调度器再综合考虑所有的调度规则，当然也包括每个-PV所在的节点位置，来统一决定。这个-Pod-声明的-PVC，到底应该跟哪个-PV-进行绑定。通过这个延迟绑定机制，原本实时发生的-PVC-和-PV-的绑定过程，就被延迟到了-Pod-第一次调度的时候在调度器中进行，从而保证了这个绑定结果不会影响-Pod-的正常调度。" class="headerlink" title="对于 Local PV 类型的 StorageClass 需要配置 volumeBindingMode=WaitForFirstConsumer 的属性，就是告诉 Kubernetes 在发现这个 StorageClass 关联的 PVC 与 PV 可以绑定在一起，但不要现在就立刻执行绑定操作（即：设置 PVC 的 VolumeName 字段），而是要等到第一个声明使用该 PVC 的 Pod 出现在调度器之后，调度器再综合考虑所有的调度规则，当然也包括每个 PV所在的节点位置，来统一决定。这个 Pod 声明的 PVC，到底应该跟哪个 PV 进行绑定。通过这个延迟绑定机制，原本实时发生的 PVC 和 PV 的绑定过程，就被延迟到了 Pod 第一次调度的时候在调度器中进行，从而保证了这个绑定结果不会影响 Pod 的正常调度。"></a>对于 <code>Local PV</code> 类型的 StorageClass 需要配置 <code>volumeBindingMode=WaitForFirstConsumer</code> 的属性，就是告诉 Kubernetes 在发现这个 StorageClass 关联的 PVC 与 PV 可以绑定在一起，但不要现在就立刻执行绑定操作（即：设置 PVC 的 VolumeName 字段），而是要等到第一个声明使用该 PVC 的 Pod 出现在调度器之后，调度器再综合考虑所有的调度规则，当然也包括每个 PV所在的节点位置，来统一决定。这个 Pod 声明的 PVC，到底应该跟哪个 PV 进行绑定。通过这个延迟绑定机制，原本实时发生的 PVC 和 PV 的绑定过程，就被延迟到了 Pod 第一次调度的时候在调度器中进行，从而保证了这个绑定结果不会影响 Pod 的正常调度。</h5><figure class="highlight dts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs dts"><span class="hljs-symbol">apiVersion:</span> storage.k8s.io/v1<br><span class="hljs-symbol">kind:</span> StorageClass<br><span class="hljs-symbol">metadata:</span><br><span class="hljs-symbol">  name:</span> local-storage<br><span class="hljs-symbol">provisioner:</span> kubernetes.io/no-provisioner<br><span class="hljs-meta"># 延迟绑定属性</span><br><span class="hljs-symbol">volumeBindingMode:</span> WaitForFirstConsumer<br></code></pre></td></tr></table></figure>
+
+<h3 id="原地重启"><a href="#原地重启" class="headerlink" title="原地重启"></a>原地重启</h3><h5 id="我们知道使用-Hostpath-存储卷类型-Pod-如果不设置节点选择器，那么重启后会调度到其他节点上运行，这样就会导致之前数据丢失。"><a href="#我们知道使用-Hostpath-存储卷类型-Pod-如果不设置节点选择器，那么重启后会调度到其他节点上运行，这样就会导致之前数据丢失。" class="headerlink" title="我们知道使用 Hostpath 存储卷类型 Pod 如果不设置节点选择器，那么重启后会调度到其他节点上运行，这样就会导致之前数据丢失。"></a>我们知道使用 Hostpath 存储卷类型 Pod 如果不设置节点选择器，那么重启后会调度到其他节点上运行，这样就会导致之前数据丢失。</h5><h5 id="使用-Local-PV-存储卷就无需担心该问题，因为根据-Local-PV-的特性会保证该-Pod-重启后始终在当前节点运行。当然这里涉及到-Kubernetes-调度器和-PVC、PV的相关原理，下面我们简单描述下。"><a href="#使用-Local-PV-存储卷就无需担心该问题，因为根据-Local-PV-的特性会保证该-Pod-重启后始终在当前节点运行。当然这里涉及到-Kubernetes-调度器和-PVC、PV的相关原理，下面我们简单描述下。" class="headerlink" title="使用 Local PV 存储卷就无需担心该问题，因为根据 Local PV 的特性会保证该 Pod 重启后始终在当前节点运行。当然这里涉及到 Kubernetes 调度器和 PVC、PV的相关原理，下面我们简单描述下。"></a>使用 Local PV 存储卷就无需担心该问题，因为根据 Local PV 的特性会保证该 Pod 重启后始终在<strong>当前节点</strong>运行。当然这里涉及到 Kubernetes 调度器和 PVC、PV的相关原理，下面我们简单描述下。</h5><h5 id="当-Pod-重启后，调度器首先判断该-Pod下的-PVC-是否已经绑定，如果已经绑定，那么就根据-PVC-Annotation-volume-kubernetes-io-selected-node-字段过滤到其他-node。"><a href="#当-Pod-重启后，调度器首先判断该-Pod下的-PVC-是否已经绑定，如果已经绑定，那么就根据-PVC-Annotation-volume-kubernetes-io-selected-node-字段过滤到其他-node。" class="headerlink" title="当 Pod 重启后，调度器首先判断该 Pod下的 PVC 是否已经绑定，如果已经绑定，那么就根据 PVC Annotation volume.kubernetes.io/selected-node 字段过滤到其他 node。"></a>当 Pod 重启后，调度器首先判断该 Pod下的 PVC 是否已经绑定，如果已经绑定，那么就根据 PVC Annotation <code>volume.kubernetes.io/selected-node</code> 字段过滤到其他 node。</h5><h5 id="这样就保证该-Pod-就一直在-PV-所在-node-上运行。"><a href="#这样就保证该-Pod-就一直在-PV-所在-node-上运行。" class="headerlink" title="这样就保证该 Pod 就一直在 PV 所在 node 上运行。"></a>这样就保证该 Pod 就一直在 PV 所在 node 上运行。</h5><h5 id="这段代码逻辑参考以下："><a href="#这段代码逻辑参考以下：" class="headerlink" title="这段代码逻辑参考以下："></a>这段代码逻辑参考以下：</h5><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// For PVCs that are bound, then it checks that the corresponding PV&#x27;s node affinity is</span><br><span class="hljs-comment">// satisfied by the given node.</span><br><br><span class="hljs-comment">// kubernetes/pkg/scheduler/framework/plugins/volumebinding/binder.go:316</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(b *volumeBinder)</span></span> FindPodVolumes(pod *v1.Pod, boundClaims, claimsToBind []*v1.PersistentVolumeClaim, node *v1.Node) (podVolumes *PodVolumes, reasons ConflictReasons, err <span class="hljs-type">error</span>) &#123;<br>...<br>        <span class="hljs-comment">// Find matching volumes and node for unbound claims</span><br>    <span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(claimsToBind) &gt; <span class="hljs-number">0</span> &#123;<br>        <span class="hljs-keyword">var</span> (<br>            claimsToFindMatching []*v1.PersistentVolumeClaim<br>            claimsToProvision    []*v1.PersistentVolumeClaim<br>        )<br><br>        <span class="hljs-comment">// 调度器对集群中的 node 与 pvc Annotation volume.kubernetes.io/selected-node 字段比较，过滤掉不匹配 node</span><br>        <span class="hljs-keyword">for</span> _, claim := <span class="hljs-keyword">range</span> claimsToBind &#123;<br>            <span class="hljs-keyword">if</span> selectedNode, ok := claim.Annotations[volume.AnnSelectedNode]; ok &#123;<br>                <span class="hljs-keyword">if</span> selectedNode != node.Name &#123;<br>                    <span class="hljs-comment">// Fast path, skip unmatched node.</span><br>                    unboundVolumesSatisfied = <span class="hljs-literal">false</span><br>                    <span class="hljs-keyword">return</span><br>                &#125;<br>                claimsToProvision = <span class="hljs-built_in">append</span>(claimsToProvision, claim)<br>            &#125; <span class="hljs-keyword">else</span> &#123;<br>                claimsToFindMatching = <span class="hljs-built_in">append</span>(claimsToFindMatching, claim)<br>            &#125;<br>        &#125;<br>...<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h5 id="上面说的-PVC-Annotation-是在-Pod-调度完成后，调度器设置该-Annotation，其-value-是节点名称。"><a href="#上面说的-PVC-Annotation-是在-Pod-调度完成后，调度器设置该-Annotation，其-value-是节点名称。" class="headerlink" title="上面说的 PVC Annotation 是在 Pod 调度完成后，调度器设置该 Annotation，其 value 是节点名称。"></a>上面说的 PVC Annotation 是在 Pod 调度完成后，调度器设置该 Annotation，其 value 是<strong>节点名称</strong>。</h5><h5 id="这段代码逻辑参考以下：-1"><a href="#这段代码逻辑参考以下：-1" class="headerlink" title="这段代码逻辑参考以下："></a>这段代码逻辑参考以下：</h5><figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs stylus"><span class="hljs-comment">// AssumePodVolumes will take the matching PVs and PVCs to provision in pod&#x27;s</span><br><span class="hljs-comment">// volume information for the chosen node, and:</span><br><span class="hljs-comment">// 1. Update the pvCache with the new prebound PV.</span><br><span class="hljs-comment">// 2. Update the pvcCache with the new PVCs with annotations set</span><br><span class="hljs-comment">// 3. Update PodVolumes again with cached API updates for PVs and PVCs.</span><br><br><span class="hljs-comment">// kubernetes/pkg/scheduler/framework/plugins/volumebinding/binder.go:359</span><br>func (<span class="hljs-selector-tag">b</span> *volumeBinder) <span class="hljs-built_in">AssumePodVolumes</span>(assumedPod *v1<span class="hljs-selector-class">.Pod</span>, nodeName string, podVolumes *PodVolumes) (allFullyBound bool, err error) &#123;<br>    ...<br><br>    newProvisionedPVCs := <span class="hljs-selector-attr">[]</span>*v1.PersistentVolumeClaim&#123;&#125;<br>    <span class="hljs-keyword">for</span> _, claim := range podVolumes<span class="hljs-selector-class">.DynamicProvisions</span> &#123;<br>        claimClone := claim<span class="hljs-selector-class">.DeepCopy</span>()<br>        <span class="hljs-comment">// 设置 volume.kubernetes.io/selected-node annotation，value 为该 pod 调度的 nodeName</span><br>        metav1<span class="hljs-selector-class">.SetMetaDataAnnotation</span>(&amp;claimClone<span class="hljs-selector-class">.ObjectMeta</span>, volume<span class="hljs-selector-class">.AnnSelectedNode</span>, nodeName)<br>        err = <span class="hljs-selector-tag">b</span><span class="hljs-selector-class">.pvcCache</span><span class="hljs-selector-class">.Assume</span>(claimClone)<br>        <span class="hljs-keyword">if</span> err != nil &#123;<br>            <span class="hljs-selector-tag">b</span><span class="hljs-selector-class">.revertAssumedPVs</span>(newBindings)<br>            <span class="hljs-selector-tag">b</span><span class="hljs-selector-class">.revertAssumedPVCs</span>(newProvisionedPVCs)<br>            return<br>        &#125;<br><br>        newProvisionedPVCs = <span class="hljs-built_in">append</span>(newProvisionedPVCs, claimClone)<br>    &#125;<br><br>    podVolumes<span class="hljs-selector-class">.StaticBindings</span> = newBindings<br>    podVolumes<span class="hljs-selector-class">.DynamicProvisions</span> = newProvisionedPVCs<br>    return<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="OpenEBS-使用"><a href="#OpenEBS-使用" class="headerlink" title="OpenEBS 使用"></a>OpenEBS 使用</h2><h5 id="OpenEBS-对本地存储卷功能支持非常好："><a href="#OpenEBS-对本地存储卷功能支持非常好：" class="headerlink" title="OpenEBS 对本地存储卷功能支持非常好："></a>OpenEBS 对本地存储卷功能支持非常好：</h5><ul>
+<li><h5 id="•-OpenEBS可以使用宿主机裸块设备或分区，或者使用Hostpaths上的子目录，或者使用LVM、ZFS来创建持久化卷"><a href="#•-OpenEBS可以使用宿主机裸块设备或分区，或者使用Hostpaths上的子目录，或者使用LVM、ZFS来创建持久化卷" class="headerlink" title="• OpenEBS可以使用宿主机裸块设备或分区，或者使用Hostpaths上的子目录，或者使用LVM、ZFS来创建持久化卷"></a>• <code>OpenEBS</code>可以使用宿主机<code>裸块设备或分区</code>，或者使用<code>Hostpaths</code>上的子目录，或者使用<code>LVM</code>、<code>ZFS</code>来创建持久化卷</h5></li>
+<li><h5 id="•-本地卷直接挂载到StatefulSet-Pod中，而不需要OpenEBS在数据路径中增加任何开销"><a href="#•-本地卷直接挂载到StatefulSet-Pod中，而不需要OpenEBS在数据路径中增加任何开销" class="headerlink" title="• 本地卷直接挂载到StatefulSet Pod中，而不需要OpenEBS在数据路径中增加任何开销"></a>• 本地卷直接挂载到<code>StatefulSet Pod</code>中，而不需要<code>OpenEBS</code>在数据路径中增加任何开销</h5></li>
+<li><h5 id="•-OpenEBS为本地卷提供了额外的工具，用于监控、备份-恢复、灾难恢复、由ZFS或LVM支持的快照等"><a href="#•-OpenEBS为本地卷提供了额外的工具，用于监控、备份-恢复、灾难恢复、由ZFS或LVM支持的快照等" class="headerlink" title="• OpenEBS为本地卷提供了额外的工具，用于监控、备份&#x2F;恢复、灾难恢复、由ZFS或LVM支持的快照等"></a>• <code>OpenEBS</code>为本地卷提供了额外的工具，用于监控、备份&#x2F;恢复、灾难恢复、由<code>ZFS</code>或<code>LVM</code>支持的快照等</h5></li>
+</ul>
+<h5 id="同时-OpenEBS-屏蔽了我们使用-Local-PV-复杂性。OpenEBS-部署及使用也是非常方便。"><a href="#同时-OpenEBS-屏蔽了我们使用-Local-PV-复杂性。OpenEBS-部署及使用也是非常方便。" class="headerlink" title="同时 OpenEBS 屏蔽了我们使用 Local PV 复杂性。OpenEBS 部署及使用也是非常方便。"></a>同时 OpenEBS 屏蔽了我们使用 Local PV 复杂性。OpenEBS 部署及使用也是非常方便。</h5><h5 id="这里我们只使用-local-pv-hostpath，即使用本地文件系统的存储，根据官网介绍，不需要提前安装-iscsi"><a href="#这里我们只使用-local-pv-hostpath，即使用本地文件系统的存储，根据官网介绍，不需要提前安装-iscsi" class="headerlink" title="这里我们只使用 local-pv-hostpath，即使用本地文件系统的存储，根据官网介绍，不需要提前安装 iscsi"></a>这里我们只使用 <strong>local-pv-hostpath</strong>，即使用本地文件系统的存储，根据官网介绍，不需要提前安装 <strong>iscsi</strong></h5><h3 id="Helm-部署"><a href="#Helm-部署" class="headerlink" title="Helm 部署"></a>Helm 部署</h3><figure class="highlight oxygene"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs oxygene">$ helm repo <span class="hljs-keyword">add</span> openebs https:<span class="hljs-comment">//openebs.github.io/charts</span><br>$ helm repo update<br>$ helm install openebs --<span class="hljs-keyword">namespace</span> openebs openebs/openebs --<span class="hljs-keyword">create</span>-<span class="hljs-keyword">namespace</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="kubectl-部署"><a href="#kubectl-部署" class="headerlink" title="kubectl 部署"></a>kubectl 部署</h3><figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs awk">kubectl apply -f https:<span class="hljs-regexp">//</span>openebs.github.io<span class="hljs-regexp">/charts/</span>openebs-operator.yaml<br></code></pre></td></tr></table></figure>
+
+<h5 id="安装成功后，默认会部署两个-storageclass-，我们目前需要-openebs-hostpath。"><a href="#安装成功后，默认会部署两个-storageclass-，我们目前需要-openebs-hostpath。" class="headerlink" title="安装成功后，默认会部署两个 storageclass ，我们目前需要 openebs-hostpath。"></a>安装成功后，默认会部署两个 <strong>storageclass</strong> ，我们目前需要 <strong>openebs-hostpath。</strong></h5><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs sql">$ kubectl <span class="hljs-keyword">get</span> pods <span class="hljs-operator">-</span>n openebs<br>NAME                                           READY   STATUS    RESTARTS   AGE<br>openebs<span class="hljs-operator">-</span>localpv<span class="hljs-operator">-</span>provisioner<span class="hljs-number">-69</span>c8648db7<span class="hljs-operator">-</span>cnj45   <span class="hljs-number">1</span><span class="hljs-operator">/</span><span class="hljs-number">1</span>     <span class="hljs-keyword">Running</span>   <span class="hljs-number">0</span>          <span class="hljs-number">33</span>m<br>openebs<span class="hljs-operator">-</span>ndm<span class="hljs-operator">-</span>bbgpv                              <span class="hljs-number">1</span><span class="hljs-operator">/</span><span class="hljs-number">1</span>     <span class="hljs-keyword">Running</span>   <span class="hljs-number">0</span>          <span class="hljs-number">33</span>m<br>openebs<span class="hljs-operator">-</span>ndm<span class="hljs-operator">-</span>bxsbb                              <span class="hljs-number">1</span><span class="hljs-operator">/</span><span class="hljs-number">1</span>     <span class="hljs-keyword">Running</span>   <span class="hljs-number">0</span>          <span class="hljs-number">33</span>m<br>openebs<span class="hljs-operator">-</span>ndm<span class="hljs-operator">-</span>cluster<span class="hljs-operator">-</span>exporter<span class="hljs-number">-9</span>d75d564d<span class="hljs-operator">-</span>qvqz6   <span class="hljs-number">1</span><span class="hljs-operator">/</span><span class="hljs-number">1</span>     <span class="hljs-keyword">Running</span>   <span class="hljs-number">0</span>          <span class="hljs-number">33</span>m<br>openebs<span class="hljs-operator">-</span>ndm<span class="hljs-operator">-</span>kdg7b                              <span class="hljs-number">1</span><span class="hljs-operator">/</span><span class="hljs-number">1</span>     <span class="hljs-keyword">Running</span>   <span class="hljs-number">0</span>          <span class="hljs-number">33</span>m<br>openebs<span class="hljs-operator">-</span>ndm<span class="hljs-operator">-</span>node<span class="hljs-operator">-</span>exporter<span class="hljs-number">-9</span>zm62                <span class="hljs-number">1</span><span class="hljs-operator">/</span><span class="hljs-number">1</span>     <span class="hljs-keyword">Running</span>   <span class="hljs-number">0</span>          <span class="hljs-number">33</span>m<br>openebs<span class="hljs-operator">-</span>ndm<span class="hljs-operator">-</span>node<span class="hljs-operator">-</span>exporter<span class="hljs-operator">-</span>hlj7h                <span class="hljs-number">1</span><span class="hljs-operator">/</span><span class="hljs-number">1</span>     <span class="hljs-keyword">Running</span>   <span class="hljs-number">0</span>          <span class="hljs-number">33</span>m<br>openebs<span class="hljs-operator">-</span>ndm<span class="hljs-operator">-</span>node<span class="hljs-operator">-</span>exporter<span class="hljs-operator">-</span>j6wj7                <span class="hljs-number">1</span><span class="hljs-operator">/</span><span class="hljs-number">1</span>     <span class="hljs-keyword">Running</span>   <span class="hljs-number">0</span>          <span class="hljs-number">33</span>m<br>openebs<span class="hljs-operator">-</span>ndm<span class="hljs-operator">-</span>node<span class="hljs-operator">-</span>exporter<span class="hljs-operator">-</span>s5hk4                <span class="hljs-number">1</span><span class="hljs-operator">/</span><span class="hljs-number">1</span>     <span class="hljs-keyword">Running</span>   <span class="hljs-number">0</span>          <span class="hljs-number">33</span>m<br>openebs<span class="hljs-operator">-</span>ndm<span class="hljs-operator">-</span>operator<span class="hljs-number">-789985</span>cc47<span class="hljs-operator">-</span>r4hwj          <span class="hljs-number">1</span><span class="hljs-operator">/</span><span class="hljs-number">1</span>     <span class="hljs-keyword">Running</span>   <span class="hljs-number">0</span>          <span class="hljs-number">33</span>m<br>openebs<span class="hljs-operator">-</span>ndm<span class="hljs-operator">-</span>qm4sw                              <span class="hljs-number">1</span><span class="hljs-operator">/</span><span class="hljs-number">1</span>     <span class="hljs-keyword">Running</span>   <span class="hljs-number">0</span>          <span class="hljs-number">33</span>m<br>$ kubectl <span class="hljs-keyword">get</span> sc<br>NAME               PROVISIONER        RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE<br>openebs<span class="hljs-operator">-</span>device     openebs.io<span class="hljs-operator">/</span><span class="hljs-keyword">local</span>   <span class="hljs-keyword">Delete</span>          WaitForFirstConsumer   <span class="hljs-literal">false</span>                  <span class="hljs-number">116</span>s<br>openebs<span class="hljs-operator">-</span>hostpath   openebs.io<span class="hljs-operator">/</span><span class="hljs-keyword">local</span>   <span class="hljs-keyword">Delete</span>          WaitForFirstConsumer   <span class="hljs-literal">false</span>                  <span class="hljs-number">116</span>s<br></code></pre></td></tr></table></figure>
+
+<h5 id="默认存储目录为-var-openebs-local-如果需要更改的话，直接修改-openebs-operator-yaml，value-字段即可"><a href="#默认存储目录为-var-openebs-local-如果需要更改的话，直接修改-openebs-operator-yaml，value-字段即可" class="headerlink" title="默认存储目录为 ****/var/openebs/local, 如果需要更改的话，直接修改 openebs-operator.yaml，value 字段即可"></a>默认存储目录为 ****<code>/var/openebs/local</code>, 如果需要更改的话，直接修改 <code>openebs-operator.yaml</code>，<code>value</code> 字段即可</h5><figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">storage.k8s.io/v1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">StorageClass</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">openebs-hostpath</span><br>  <span class="hljs-attribute">annotations</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">openebs.io/cas-type</span><span class="hljs-punctuation">:</span> <span class="hljs-string">local</span><br>    <span class="hljs-attribute">cas.openebs.io/config</span><span class="hljs-punctuation">:</span> <span class="hljs-string">|</span><br>      <span class="hljs-comment">#hostpath type will create a PV by </span><br>      <span class="hljs-comment"># creating a sub-directory under the</span><br>      <span class="hljs-comment"># BASEPATH provided below.</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-string">name: StorageType</span><br>        <span class="hljs-attribute">value</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;hostpath&quot;</span><br>      <span class="hljs-comment">#Specify the location (directory) where</span><br>      <span class="hljs-comment"># where PV(volume) data will be saved. </span><br>      <span class="hljs-comment"># A sub-directory with pv-name will be </span><br>      <span class="hljs-comment"># created. When the volume is deleted, </span><br>      <span class="hljs-comment"># the PV sub-directory will be deleted.</span><br>      <span class="hljs-comment">#Default value is /var/openebs/local</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-string">name: BasePath</span><br>        <span class="hljs-attribute">value</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;/var/openebs/local/&quot;</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="验证"><a href="#验证" class="headerlink" title="验证"></a>验证</h3><h5 id="接下来我们创建一个-PVC-资源对象，Pod-使用这个-PVC-就可以从-OpenEBS-动态-Local-PV-Provisioner-中请求-Hostpath-Local-PV-了。"><a href="#接下来我们创建一个-PVC-资源对象，Pod-使用这个-PVC-就可以从-OpenEBS-动态-Local-PV-Provisioner-中请求-Hostpath-Local-PV-了。" class="headerlink" title="接下来我们创建一个 PVC 资源对象，Pod 使用这个 PVC 就可以从 OpenEBS 动态 Local PV Provisioner 中请求 Hostpath Local PV 了。"></a>接下来我们创建一个 PVC 资源对象，Pod 使用这个 PVC 就可以从 OpenEBS 动态 Local PV Provisioner 中请求 Hostpath Local PV 了。</h5><figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-comment"># local-hostpath-pvc.yaml</span><br><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">v1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">PersistentVolumeClaim</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">local-hostpath-pvc</span><br><span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">storageClassName</span><span class="hljs-punctuation">:</span> <span class="hljs-string">openebs-hostpath</span><br>  <span class="hljs-attribute">accessModes</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">ReadWriteOnce</span><br>  <span class="hljs-attribute">resources</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">requests</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-attribute">storage</span><span class="hljs-punctuation">:</span> <span class="hljs-string">5Gi</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="直接创建这个-PVC-即可："><a href="#直接创建这个-PVC-即可：" class="headerlink" title="直接创建这个 PVC 即可："></a>直接创建这个 PVC 即可：</h5><figure class="highlight fortran"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs fortran">$ kubectl apply -f <span class="hljs-keyword">local</span>-hostpath-pvc.yaml<br>$ kubectl get pvc <span class="hljs-keyword">local</span>-hostpath-pvc<br><span class="hljs-keyword">NAME</span>                 <span class="hljs-keyword">STATUS</span>    VOLUME   CAPACITY   <span class="hljs-keyword">ACCESS</span> MODES   STORAGECLASS       AGE<br><span class="hljs-keyword">local</span>-hostpath-pvc   Pending                                      openebs-hostpath   <span class="hljs-number">12</span>s<br></code></pre></td></tr></table></figure>
+
+<h5 id="我们可以看到这个-PVC-的状态是-Pending，这是因为对应的-StorageClass-是延迟绑定模式，所以需要等到-Pod-消费这个-PVC-后才会去绑定，接下来我们去创建一个-Pod-来使用这个-PVC。"><a href="#我们可以看到这个-PVC-的状态是-Pending，这是因为对应的-StorageClass-是延迟绑定模式，所以需要等到-Pod-消费这个-PVC-后才会去绑定，接下来我们去创建一个-Pod-来使用这个-PVC。" class="headerlink" title="我们可以看到这个 PVC 的状态是 Pending，这是因为对应的 StorageClass 是延迟绑定模式，所以需要等到 Pod 消费这个 PVC 后才会去绑定，接下来我们去创建一个 Pod 来使用这个 PVC。"></a>我们可以看到这个 PVC 的状态是 <code>Pending</code>，这是因为对应的 StorageClass 是延迟绑定模式，所以需要等到 Pod 消费这个 PVC 后才会去绑定，接下来我们去创建一个 Pod 来使用这个 PVC。</h5><h5 id="声明一个如下所示的-Pod-资源清单："><a href="#声明一个如下所示的-Pod-资源清单：" class="headerlink" title="声明一个如下所示的 Pod 资源清单："></a>声明一个如下所示的 Pod 资源清单：</h5><figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-comment"># local-hostpath-pod.yaml</span><br><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">v1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Pod</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">hello-local-hostpath-pod</span><br><span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">volumes</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: local-storage</span><br>    <span class="hljs-attribute">persistentVolumeClaim</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-attribute">claimName</span><span class="hljs-punctuation">:</span> <span class="hljs-string">local-hostpath-pvc</span><br>  <span class="hljs-attribute">containers</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: hello-container</span><br>    <span class="hljs-attribute">image</span><span class="hljs-punctuation">:</span> <span class="hljs-string">busybox</span><br>    <span class="hljs-attribute">command</span><span class="hljs-punctuation">:</span><br>       <span class="hljs-bullet">-</span> <span class="hljs-string">sh</span><br>       <span class="hljs-bullet">-</span> <span class="hljs-string">-c</span><br>       <span class="hljs-bullet">-</span> <span class="hljs-string">&#x27;while true; do echo &quot;`date` [`hostname`] Hello from OpenEBS Local PV.&quot; &gt;&gt; /mnt/store/greet.txt; sleep $(($RANDOM % 5 + 300)); done&#x27;</span><br>    <span class="hljs-attribute">volumeMounts</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">mountPath: /mnt/store</span><br>      <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">local-storage</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="直接创建这个-Pod："><a href="#直接创建这个-Pod：" class="headerlink" title="直接创建这个 Pod："></a>直接创建这个 Pod：</h5><figure class="highlight fortran"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs fortran">$ kubectl apply -f <span class="hljs-keyword">local</span>-hostpath-pod.yaml<br>$ kubectl get pods hello-<span class="hljs-keyword">local</span>-hostpath-pod<br><span class="hljs-keyword">NAME</span>                       READY   <span class="hljs-keyword">STATUS</span>    RESTARTS   AGE<br>hello-<span class="hljs-keyword">local</span>-hostpath-pod   <span class="hljs-number">1</span>/<span class="hljs-number">1</span>     Running   <span class="hljs-number">0</span>          <span class="hljs-number">2</span>m7s<br>$ kubectl get pvc <span class="hljs-keyword">local</span>-hostpath-pvc<br><span class="hljs-keyword">NAME</span>                 <span class="hljs-keyword">STATUS</span>   VOLUME                                     CAPACITY   <span class="hljs-keyword">ACCESS</span> MODES   STORAGECLASS       AGE<br><span class="hljs-keyword">local</span>-hostpath-pvc   Bound    pvc-<span class="hljs-number">3</span>f4a1a65-<span class="hljs-number">6</span>cbc-<span class="hljs-number">42</span>bf-a1f8-<span class="hljs-number">87</span>ad238c0b88   <span class="hljs-number">5</span>Gi        RWO            openebs-hostpath   <span class="hljs-number">5</span>m41s<br></code></pre></td></tr></table></figure>
+
+<h5 id="可以看到-Pod-运行成功后，PVC-也绑定上了一个自动生成的-PV，我们可以查看这个-PV-的详细信息："><a href="#可以看到-Pod-运行成功后，PVC-也绑定上了一个自动生成的-PV，我们可以查看这个-PV-的详细信息：" class="headerlink" title="可以看到 Pod 运行成功后，PVC 也绑定上了一个自动生成的 PV，我们可以查看这个 PV 的详细信息："></a>可以看到 Pod 运行成功后，PVC 也绑定上了一个自动生成的 PV，我们可以查看这个 PV 的详细信息：</h5><figure class="highlight dts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><code class="hljs dts">$ kubectl get pv pvc<span class="hljs-number">-3</span>f4a1a65<span class="hljs-number">-6</span>cbc<span class="hljs-number">-42</span>bf-a1f8<span class="hljs-number">-87</span>ad238c0b88 -o yaml<br><span class="hljs-symbol">apiVersion:</span> v1<br><span class="hljs-symbol">kind:</span> PersistentVolume<br><span class="hljs-symbol">metadata:</span><br><span class="hljs-symbol">  annotations:</span><br>    pv.kubernetes.io/provisioned-by: openebs.io/local<br><span class="hljs-symbol">  creationTimestamp:</span> <span class="hljs-string">&quot;2021-01-07T02:48:14Z&quot;</span><br><span class="hljs-symbol">  finalizers:</span><br>  - kubernetes.io/pv-protection<br><span class="hljs-symbol">  labels:</span><br>    openebs.io/cas-type: local-hostpath<br>  ......<br><span class="hljs-symbol">  name:</span> pvc<span class="hljs-number">-3</span>f4a1a65<span class="hljs-number">-6</span>cbc<span class="hljs-number">-42</span>bf-a1f8<span class="hljs-number">-87</span>ad238c0b88<br><span class="hljs-symbol">  resourceVersion:</span> <span class="hljs-string">&quot;21193802&quot;</span><br><span class="hljs-symbol">  selfLink:</span> <span class="hljs-keyword">/api/</span>v1<span class="hljs-keyword">/persistentvolumes/</span>pvc<span class="hljs-number">-3</span>f4a1a65<span class="hljs-number">-6</span>cbc<span class="hljs-number">-42</span>bf-a1f8<span class="hljs-number">-87</span>ad238c0b88<br><span class="hljs-symbol">  uid:</span> f7cccdb3-d23a<span class="hljs-number">-4831</span><span class="hljs-number">-86</span>c3<span class="hljs-number">-4363</span>eb1a8dee<br><span class="hljs-symbol">spec:</span><br><span class="hljs-symbol">  accessModes:</span><br>  - ReadWriteOnce<br><span class="hljs-symbol">  capacity:</span><br><span class="hljs-symbol">    storage:</span> <span class="hljs-number">5</span>Gi<br><span class="hljs-symbol">  claimRef:</span><br><span class="hljs-symbol">    apiVersion:</span> v1<br><span class="hljs-symbol">    kind:</span> PersistentVolumeClaim<br><span class="hljs-symbol">    name:</span> local-hostpath-pvc<br><span class="hljs-symbol">    namespace:</span> default<br><span class="hljs-symbol">    resourceVersion:</span> <span class="hljs-string">&quot;21193645&quot;</span><br><span class="hljs-symbol">    uid:</span> <span class="hljs-number">3f</span>4a1a65<span class="hljs-number">-6</span>cbc<span class="hljs-number">-42</span>bf-a1f8<span class="hljs-number">-87</span>ad238c0b88<br><span class="hljs-symbol">  local:</span><br><span class="hljs-symbol">    fsType:</span> <span class="hljs-string">&quot;&quot;</span><br><span class="hljs-symbol">    path:</span> <span class="hljs-keyword">/var/</span>openebs<span class="hljs-keyword">/local/</span>pvc<span class="hljs-number">-3</span>f4a1a65<span class="hljs-number">-6</span>cbc<span class="hljs-number">-42</span>bf-a1f8<span class="hljs-number">-87</span>ad238c0b88<br><span class="hljs-symbol">  nodeAffinity:</span><br><span class="hljs-symbol">    required:</span><br><span class="hljs-symbol">      nodeSelectorTerms:</span><br>      - matchExpressions:<br>        - key: kubernetes.io/hostname<br><span class="hljs-symbol">          operator:</span> In<br><span class="hljs-symbol">          values:</span><br>          - node2<br><span class="hljs-symbol">  persistentVolumeReclaimPolicy:</span> Delete<br><span class="hljs-symbol">  storageClassName:</span> openebs-hostpath<br><span class="hljs-symbol">  volumeMode:</span> Filesystem<br><span class="hljs-symbol">status:</span><br><span class="hljs-symbol">  phase:</span> Bound<br></code></pre></td></tr></table></figure>
+
+<h5 id="本地数据目录位于-var-openebs-local-pvc-3f4a1a65-6cbc-42bf-a1f8-87ad238c0b88-下面。"><a href="#本地数据目录位于-var-openebs-local-pvc-3f4a1a65-6cbc-42bf-a1f8-87ad238c0b88-下面。" class="headerlink" title="本地数据目录位于 /var/openebs/local/pvc-3f4a1a65-6cbc-42bf-a1f8-87ad238c0b88 下面。"></a>本地数据目录位于 <code>/var/openebs/local/pvc-3f4a1a65-6cbc-42bf-a1f8-87ad238c0b88</code> 下面。</h5><h5 id="接着我们来验证下-volume-数据，前往-node2-节点查看下上面的数据目录中的数据："><a href="#接着我们来验证下-volume-数据，前往-node2-节点查看下上面的数据目录中的数据：" class="headerlink" title="接着我们来验证下 volume 数据，前往 node2 节点查看下上面的数据目录中的数据："></a>接着我们来验证下 volume 数据，前往 node2 节点查看下上面的数据目录中的数据：</h5><figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs stata">$ <span class="hljs-keyword">ls</span> /<span class="hljs-keyword">var</span>/openebs/<span class="hljs-keyword">local</span>/pvc-3f4a1a65-6cbc-42bf-a1f8-87ad238c0b88<br>greet.txt<br>$ <span class="hljs-keyword">cat</span> /<span class="hljs-keyword">var</span>/openebs/<span class="hljs-keyword">local</span>/pvc-3f4a1a65-6cbc-42bf-a1f8-87ad238c0b88/greet.txt<br>Thu Jan  7 10:48:49 CST 2021 [hello-<span class="hljs-keyword">local</span>-hostpath-pod] Hello from OpenEBS <span class="hljs-keyword">Local</span> PV.<br>Thu Jan  7 10:53:50 CST 2021 [hello-<span class="hljs-keyword">local</span>-hostpath-pod] Hello from OpenEBS <span class="hljs-keyword">Local</span> PV.<br></code></pre></td></tr></table></figure>
+
+<h5 id="可以看到-Pod-容器中的数据已经持久化到-Local-PV-对应的目录中去了。但是需要注意的是-StorageClass-默认的数据回收策略是-Delete，所以如果将-PVC-删掉后数据会自动删除，我们可以-Velero-这样的工具来进行备份还原。"><a href="#可以看到-Pod-容器中的数据已经持久化到-Local-PV-对应的目录中去了。但是需要注意的是-StorageClass-默认的数据回收策略是-Delete，所以如果将-PVC-删掉后数据会自动删除，我们可以-Velero-这样的工具来进行备份还原。" class="headerlink" title="可以看到 Pod 容器中的数据已经持久化到 Local PV 对应的目录中去了。但是需要注意的是 StorageClass 默认的数据回收策略是 Delete，所以如果将 PVC 删掉后数据会自动删除，我们可以 Velero 这样的工具来进行备份还原。"></a>可以看到 Pod 容器中的数据已经持久化到 Local PV 对应的目录中去了。但是需要注意的是 StorageClass 默认的数据回收策略是 Delete，所以如果将 PVC 删掉后数据会自动删除，我们可以 <code>Velero</code> 这样的工具来进行备份还原。</h5><hr>
+<h2 id="OpenEBS-Local-PV-原理"><a href="#OpenEBS-Local-PV-原理" class="headerlink" title="OpenEBS Local PV 原理"></a>OpenEBS Local PV 原理</h2><h5 id="由于-OpenEBS-实现了多种存储，由于篇幅问题，下面只详细讲解-Hostpath-类型原理"><a href="#由于-OpenEBS-实现了多种存储，由于篇幅问题，下面只详细讲解-Hostpath-类型原理" class="headerlink" title="由于 OpenEBS 实现了多种存储，由于篇幅问题，下面只详细讲解 Hostpath 类型原理"></a>由于 OpenEBS 实现了多种存储，由于篇幅问题，下面只详细讲解 <strong>Hostpath</strong> 类型原理</h5><h3 id="OpenEBS-Local-PV-部署架构"><a href="#OpenEBS-Local-PV-部署架构" class="headerlink" title="OpenEBS Local PV 部署架构"></a>OpenEBS Local PV 部署架构</h3><h5 id="根据上一篇-Kubernetes-CSI-一-Kubernetes-存储原理-说到-CSI-分为两部分："><a href="#根据上一篇-Kubernetes-CSI-一-Kubernetes-存储原理-说到-CSI-分为两部分：" class="headerlink" title="根据上一篇 Kubernetes CSI (一): Kubernetes 存储原理 说到 CSI 分为两部分："></a>根据上一篇 Kubernetes CSI (一): Kubernetes 存储原理 说到 CSI 分为两部分：</h5><ul>
+<li>• External component( Kubernetes Team )</li>
+<li>• CSI Driver</li>
+</ul>
+<h5 id="具体作用和原理可查看原文。"><a href="#具体作用和原理可查看原文。" class="headerlink" title="具体作用和原理可查看原文。"></a>具体作用和原理可查看原文。</h5><h5 id="OpenEBS-同样也实现了-CSI，所以它的部署架构遵从-CSI-部署统一标准。但是对于-Local-PV-Hostpath-类型并不需要那么复杂。"><a href="#OpenEBS-同样也实现了-CSI，所以它的部署架构遵从-CSI-部署统一标准。但是对于-Local-PV-Hostpath-类型并不需要那么复杂。" class="headerlink" title="OpenEBS 同样也实现了 CSI，所以它的部署架构遵从 CSI 部署统一标准。但是对于 Local PV (Hostpath) 类型并不需要那么复杂。"></a>OpenEBS 同样也实现了 CSI，所以它的部署架构遵从 CSI 部署统一标准。但是对于 Local PV (Hostpath) 类型并不需要那么复杂。</h5><h5 id="只需提供-openebs-localpv-provisioner-即可，无需提供-CSI-Driver，因为本地数据目录挂载-Kubelet-就可以完成，无需第三方-CSI。"><a href="#只需提供-openebs-localpv-provisioner-即可，无需提供-CSI-Driver，因为本地数据目录挂载-Kubelet-就可以完成，无需第三方-CSI。" class="headerlink" title="只需提供 openebs-localpv-provisioner 即可，无需提供 CSI Driver，因为本地数据目录挂载 Kubelet 就可以完成，无需第三方 CSI。"></a>只需提供 <strong>openebs-localpv-provisioner</strong> 即可，无需提供 CSI Driver，因为本地数据目录挂载 Kubelet 就可以完成，无需第三方 CSI。</h5><figure class="highlight fortran"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs fortran">$ kubectl get pods -n openebs<br><span class="hljs-keyword">NAME</span>                                           READY   <span class="hljs-keyword">STATUS</span>    RESTARTS   AGE<br>openebs-localpv-provisioner-<span class="hljs-number">69</span>c8648db7-cnj45   <span class="hljs-number">1</span>/<span class="hljs-number">1</span>     Running   <span class="hljs-number">0</span>          <span class="hljs-number">33</span>m<br></code></pre></td></tr></table></figure>
+
+<h5 id="根据上一篇文章讲解，openebs-localpv-provisioner-应该是一个-Deployment-或者-DaemonSet，由-External-component-Kubernetes-Team-sideCar-和-CSI-Identity-CSI-Controller-组成。"><a href="#根据上一篇文章讲解，openebs-localpv-provisioner-应该是一个-Deployment-或者-DaemonSet，由-External-component-Kubernetes-Team-sideCar-和-CSI-Identity-CSI-Controller-组成。" class="headerlink" title="根据上一篇文章讲解，openebs-localpv-provisioner 应该是一个 Deployment 或者 DaemonSet，由 External component( Kubernetes Team ) sideCar 和 CSI Identity + CSI Controller 组成。"></a>根据上一篇文章讲解，<strong>openebs-localpv-provisioner</strong> 应该是一个 Deployment 或者 DaemonSet，由 External component( Kubernetes Team ) sideCar 和 CSI Identity + CSI Controller 组成。</h5><figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">apps/v1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Deployment</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">labels</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">openebs-localpv-provisioner</span><br>    <span class="hljs-attribute">openebs.io/component-name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">openebs-localpv-provisioner</span><br>    <span class="hljs-attribute">openebs.io/version</span><span class="hljs-punctuation">:</span> <span class="hljs-string">3.0.0</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">openebs-localpv-provisioner</span><br>  <span class="hljs-attribute">namespace</span><span class="hljs-punctuation">:</span> <span class="hljs-string">openebs</span><br><span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">progressDeadlineSeconds</span><span class="hljs-punctuation">:</span> <span class="hljs-string">600</span><br>  <span class="hljs-attribute">replicas</span><span class="hljs-punctuation">:</span> <span class="hljs-string">1</span><br>  <span class="hljs-attribute">revisionHistoryLimit</span><span class="hljs-punctuation">:</span> <span class="hljs-string">10</span><br>  <span class="hljs-attribute">selector</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">matchLabels</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">openebs-localpv-provisioner</span><br>      <span class="hljs-attribute">openebs.io/component-name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">openebs-localpv-provisioner</span><br>  <span class="hljs-attribute">strategy</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">type</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Recreate</span><br>  <span class="hljs-attribute">template</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-attribute">creationTimestamp</span><span class="hljs-punctuation">:</span> <span class="hljs-string">null</span><br>      <span class="hljs-attribute">labels</span><span class="hljs-punctuation">:</span><br>        <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">openebs-localpv-provisioner</span><br>        <span class="hljs-attribute">openebs.io/component-name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">openebs-localpv-provisioner</span><br>        <span class="hljs-attribute">openebs.io/version</span><span class="hljs-punctuation">:</span> <span class="hljs-string">3.0.0</span><br>    <span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-attribute">containers</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-string">args:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-string">--bd-time-out=$(BDC_BD_BIND_RETRIES)</span><br>        <span class="hljs-attribute">env</span><span class="hljs-punctuation">:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-string">name: BDC_BD_BIND_RETRIES</span><br>          <span class="hljs-attribute">value</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;12&quot;</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-string">name: NODE_NAME</span><br>          <span class="hljs-attribute">valueFrom</span><span class="hljs-punctuation">:</span><br>            <span class="hljs-attribute">fieldRef</span><span class="hljs-punctuation">:</span><br>              <span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">v1</span><br>              <span class="hljs-attribute">fieldPath</span><span class="hljs-punctuation">:</span> <span class="hljs-string">spec.nodeName</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-string">name: OPENEBS_NAMESPACE</span><br>          <span class="hljs-attribute">valueFrom</span><span class="hljs-punctuation">:</span><br>            <span class="hljs-attribute">fieldRef</span><span class="hljs-punctuation">:</span><br>              <span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">v1</span><br>              <span class="hljs-attribute">fieldPath</span><span class="hljs-punctuation">:</span> <span class="hljs-string">metadata.namespace</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-string">name: OPENEBS_SERVICE_ACCOUNT</span><br>          <span class="hljs-attribute">valueFrom</span><span class="hljs-punctuation">:</span><br>            <span class="hljs-attribute">fieldRef</span><span class="hljs-punctuation">:</span><br>              <span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">v1</span><br>              <span class="hljs-attribute">fieldPath</span><span class="hljs-punctuation">:</span> <span class="hljs-string">spec.serviceAccountName</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-string">name: OPENEBS_IO_ENABLE_ANALYTICS</span><br>          <span class="hljs-attribute">value</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;true&quot;</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-string">name: OPENEBS_IO_INSTALLER_TYPE</span><br>          <span class="hljs-attribute">value</span><span class="hljs-punctuation">:</span> <span class="hljs-string">openebs-operator</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-string">name: OPENEBS_IO_HELPER_IMAGE</span><br>          <span class="hljs-attribute">value</span><span class="hljs-punctuation">:</span> <span class="hljs-string">openes.io/linux-utils:3.0.0</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-string">name: OPENEBS_IO_BASE_PATH</span><br>          <span class="hljs-attribute">value</span><span class="hljs-punctuation">:</span> <span class="hljs-string">/data/kubernetes/var/lib/moss</span><br>        <span class="hljs-attribute">image</span><span class="hljs-punctuation">:</span> <span class="hljs-string">openes.io/provisioner-localpv:3.0.0</span><br>        <span class="hljs-attribute">imagePullPolicy</span><span class="hljs-punctuation">:</span> <span class="hljs-string">IfNotPresent</span><br>        <span class="hljs-attribute">livenessProbe</span><span class="hljs-punctuation">:</span><br>          <span class="hljs-attribute">exec</span><span class="hljs-punctuation">:</span><br>            <span class="hljs-attribute">command</span><span class="hljs-punctuation">:</span><br>            <span class="hljs-bullet">-</span> <span class="hljs-string">sh</span><br>            <span class="hljs-bullet">-</span> <span class="hljs-string">-c</span><br>            <span class="hljs-bullet">-</span> <span class="hljs-string">test `pgrep -c &quot;^provisioner-loc.*&quot;` = 1</span><br>          <span class="hljs-attribute">failureThreshold</span><span class="hljs-punctuation">:</span> <span class="hljs-string">3</span><br>          <span class="hljs-attribute">initialDelaySeconds</span><span class="hljs-punctuation">:</span> <span class="hljs-string">30</span><br>          <span class="hljs-attribute">periodSeconds</span><span class="hljs-punctuation">:</span> <span class="hljs-string">60</span><br>          <span class="hljs-attribute">successThreshold</span><span class="hljs-punctuation">:</span> <span class="hljs-string">1</span><br>          <span class="hljs-attribute">timeoutSeconds</span><span class="hljs-punctuation">:</span> <span class="hljs-string">1</span><br>        <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">openebs-provisioner-hostpath</span><br>        <span class="hljs-attribute">resources</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&#123;&#125;</span><br>        <span class="hljs-attribute">terminationMessagePath</span><span class="hljs-punctuation">:</span> <span class="hljs-string">/dev/termination-log</span><br>        <span class="hljs-attribute">terminationMessagePolicy</span><span class="hljs-punctuation">:</span> <span class="hljs-string">File</span><br>      <span class="hljs-attribute">dnsPolicy</span><span class="hljs-punctuation">:</span> <span class="hljs-string">ClusterFirst</span><br>      <span class="hljs-attribute">restartPolicy</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Always</span><br>      <span class="hljs-attribute">schedulerName</span><span class="hljs-punctuation">:</span> <span class="hljs-string">default-scheduler</span><br>      <span class="hljs-attribute">securityContext</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&#123;&#125;</span><br>      <span class="hljs-attribute">serviceAccount</span><span class="hljs-punctuation">:</span> <span class="hljs-string">openebs-maya-operator</span><br>      <span class="hljs-attribute">serviceAccountName</span><span class="hljs-punctuation">:</span> <span class="hljs-string">openebs-maya-operator</span><br>      <span class="hljs-attribute">terminationGracePeriodSeconds</span><span class="hljs-punctuation">:</span> <span class="hljs-string">30</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="可以发现-openebs-localpv-provisioner-并没有-External-component-Kubernetes-Team-sideCar，通过阅读该组件代码发现，该组件本身已经集成了-External-provisioner-sig-storage-lib-external-provisioner-库-功能，在后文会通过源码来解释。"><a href="#可以发现-openebs-localpv-provisioner-并没有-External-component-Kubernetes-Team-sideCar，通过阅读该组件代码发现，该组件本身已经集成了-External-provisioner-sig-storage-lib-external-provisioner-库-功能，在后文会通过源码来解释。" class="headerlink" title="可以发现 openebs-localpv-provisioner 并没有 External component( Kubernetes Team ) sideCar，通过阅读该组件代码发现，该组件本身已经集成了 External provisioner (sig-storage-lib-external-provisioner 库) 功能，在后文会通过源码来解释。"></a>可以发现 <strong>openebs-localpv-provisioner</strong> 并没有 External component( Kubernetes Team ) sideCar，通过阅读该组件代码发现，该组件本身已经集成了 <strong>External provisioner (sig-storage-lib-external-provisioner 库)</strong> 功能，在后文会通过源码来解释。</h5><h5 id="那么在-Kubernetes-集群中，当一个-Pod-利用-OpenEBS-Hostpath-是如何被创建出来的。"><a href="#那么在-Kubernetes-集群中，当一个-Pod-利用-OpenEBS-Hostpath-是如何被创建出来的。" class="headerlink" title="那么在 Kubernetes 集群中，当一个 Pod 利用 OpenEBS Hostpath 是如何被创建出来的。"></a>那么在 Kubernetes 集群中，当一个 Pod 利用 OpenEBS Hostpath 是如何被创建出来的。</h5><ul>
+<li><h5 id="•-Before-Provisioning："><a href="#•-Before-Provisioning：" class="headerlink" title="• Before Provisioning："></a>• Before Provisioning：</h5></li>
+<li><ul>
+<li><h5 id="•-PV-Controller-首先判断-PVC-使用的-StorageClass-是-in-tree-还是-out-of-tree：通过查看-StorageClass-的-Provisioner-字段是否包含-kubernetes-io-前缀来判断；"><a href="#•-PV-Controller-首先判断-PVC-使用的-StorageClass-是-in-tree-还是-out-of-tree：通过查看-StorageClass-的-Provisioner-字段是否包含-kubernetes-io-前缀来判断；" class="headerlink" title="• PV-Controller 首先判断 PVC 使用的 StorageClass 是 in-tree 还是 out-of-tree：通过查看 StorageClass 的 Provisioner 字段是否包含 kubernetes.io/ 前缀来判断；"></a>• PV-Controller 首先判断 PVC 使用的 StorageClass 是 in-tree 还是 out-of-tree：通过查看 StorageClass 的 <code>Provisioner</code> 字段是否包含 <code>kubernetes.io/</code> 前缀来判断；</h5></li>
+<li><h5 id="•-PV-Controller-更新-PVC-的-annotation：volume-beta-kubernetes-io-storage-provisioner-openebs-io-local"><a href="#•-PV-Controller-更新-PVC-的-annotation：volume-beta-kubernetes-io-storage-provisioner-openebs-io-local" class="headerlink" title="• PV-Controller 更新 PVC 的 annotation：volume.beta.kubernetes.io/storage-provisioner = openebs.io/local"></a>• PV-Controller 更新 PVC 的 annotation：<code>volume.beta.kubernetes.io/storage-provisioner = openebs.io/local</code></h5></li>
+</ul>
+</li>
+<li><h5 id="•-out-of-tree-Provisioning（external-provisioning）："><a href="#•-out-of-tree-Provisioning（external-provisioning）：" class="headerlink" title="• out-of-tree Provisioning（external provisioning）："></a>• out-of-tree Provisioning（external provisioning）：</h5></li>
+<li><ul>
+<li><h5 id="•-openebs-localpv-provisioner-sig-storage-lib-external-provisioner-Watch-到-PVC；"><a href="#•-openebs-localpv-provisioner-sig-storage-lib-external-provisioner-Watch-到-PVC；" class="headerlink" title="• openebs-localpv-provisioner( sig-storage-lib-external-provisioner) Watch 到 PVC；"></a>• openebs-localpv-provisioner( sig-storage-lib-external-provisioner) Watch 到 PVC；</h5></li>
+<li><h5 id="•-openebs-localpv-provisioner-sig-storage-lib-external-provisioner-检查-PVC-中的-Spec-VolumeName-是否为空，不为空则直接跳过该-PVC；"><a href="#•-openebs-localpv-provisioner-sig-storage-lib-external-provisioner-检查-PVC-中的-Spec-VolumeName-是否为空，不为空则直接跳过该-PVC；" class="headerlink" title="• openebs-localpv-provisioner( sig-storage-lib-external-provisioner) 检查 PVC 中的          Spec.VolumeName 是否为空，不为空则直接跳过该 PVC；"></a>• openebs-localpv-provisioner( sig-storage-lib-external-provisioner) 检查 PVC 中的          <code>Spec.VolumeName</code> 是否为空，不为空则直接跳过该 PVC；</h5></li>
+<li><h5 id="•-openebs-localpv-provisioner-sig-storage-lib-external-provisioner-检查-PVC-中的-Annotations-“volume-beta-kubernetes-io-storage-provisioner”-是否等于自己的-Provisioner-Name-openebs-io-local-；"><a href="#•-openebs-localpv-provisioner-sig-storage-lib-external-provisioner-检查-PVC-中的-Annotations-“volume-beta-kubernetes-io-storage-provisioner”-是否等于自己的-Provisioner-Name-openebs-io-local-；" class="headerlink" title="• openebs-localpv-provisioner( sig-storage-lib-external-provisioner) 检查 PVC 中的          Annotations[“volume.beta.kubernetes.io/storage-provisioner”]是否等于自己的 Provisioner Name( openebs.io/local )；"></a>• openebs-localpv-provisioner( sig-storage-lib-external-provisioner) 检查 PVC 中的          <code>Annotations[“volume.beta.kubernetes.io/storage-provisioner”]</code>是否等于自己的 Provisioner Name( <code>openebs.io/local</code> )；</h5></li>
+<li><h5 id="•-openebs-localpv-provisioner-sig-storage-lib-external-provisioner-检查到-StorageClass-的-VolumeBindingMode-WaitForFirstConsumer，所以需要延迟绑定，等待-Pod-调度完成；"><a href="#•-openebs-localpv-provisioner-sig-storage-lib-external-provisioner-检查到-StorageClass-的-VolumeBindingMode-WaitForFirstConsumer，所以需要延迟绑定，等待-Pod-调度完成；" class="headerlink" title="• openebs-localpv-provisioner( sig-storage-lib-external-provisioner) 检查到 StorageClass 的  VolumeBindingMode = WaitForFirstConsumer，所以需要延迟绑定，等待 Pod 调度完成；"></a>• openebs-localpv-provisioner( sig-storage-lib-external-provisioner) 检查到 StorageClass 的  <code>VolumeBindingMode = WaitForFirstConsumer</code>，所以需要延迟绑定，等待 Pod 调度完成；</h5></li>
+<li><h5 id="•-pod-调度完成后，openebs-localpv-provisioner-sig-storage-lib-external-provisioner-根据-PVC-Annotation-volume-kubernetes-io-selected-node-值选择-PV-所在节点；"><a href="#•-pod-调度完成后，openebs-localpv-provisioner-sig-storage-lib-external-provisioner-根据-PVC-Annotation-volume-kubernetes-io-selected-node-值选择-PV-所在节点；" class="headerlink" title="• pod 调度完成后，openebs-localpv-provisioner( sig-storage-lib-external-provisioner) 根据 PVC Annotation volume.kubernetes.io/selected-node 值选择 PV 所在节点；"></a>• pod 调度完成后，openebs-localpv-provisioner( sig-storage-lib-external-provisioner) 根据 PVC Annotation <code>volume.kubernetes.io/selected-node</code> 值选择 PV 所在节点；</h5></li>
+<li><h5 id="•-openebs-localpv-provisioner-sig-storage-lib-external-provisioner-调用-openebs-localpv-provisioner-方法创建本地数据目录并返回-PV-结构体对象；"><a href="#•-openebs-localpv-provisioner-sig-storage-lib-external-provisioner-调用-openebs-localpv-provisioner-方法创建本地数据目录并返回-PV-结构体对象；" class="headerlink" title="• openebs-localpv-provisioner( sig-storage-lib-external-provisioner) 调用 openebs-localpv-provisioner 方法创建本地数据目录并返回 PV 结构体对象；"></a>• openebs-localpv-provisioner( sig-storage-lib-external-provisioner) 调用 openebs-localpv-provisioner 方法创建本地数据目录并返回 PV 结构体对象；</h5></li>
+<li><h5 id="•-openebs-localpv-provisioner-sig-storage-lib-external-provisioner-创建-PV"><a href="#•-openebs-localpv-provisioner-sig-storage-lib-external-provisioner-创建-PV" class="headerlink" title="• openebs-localpv-provisioner( sig-storage-lib-external-provisioner) 创建 PV"></a>• openebs-localpv-provisioner( sig-storage-lib-external-provisioner) 创建 PV</h5></li>
+<li><h5 id="•-PV-Controller-同时将该-PV-与之前的-PVC-做绑定。"><a href="#•-PV-Controller-同时将该-PV-与之前的-PVC-做绑定。" class="headerlink" title="• PV-Controller 同时将该 PV 与之前的 PVC 做绑定。"></a>• PV-Controller 同时将该 PV 与之前的 PVC 做绑定。</h5></li>
+</ul>
+</li>
+<li><h5 id="•-kube-scheduler-watch-到-Pod，并根据一系列算法选择节点；"><a href="#•-kube-scheduler-watch-到-Pod，并根据一系列算法选择节点；" class="headerlink" title="• kube-scheduler watch 到 Pod，并根据一系列算法选择节点；"></a>• kube-scheduler watch 到 Pod，并根据一系列算法选择节点；</h5></li>
+<li><ul>
+<li><h5 id="•-在这过程中会检查-Pod-的-PVC-是否已经绑定，如果绑定了就根据该-PVC-Annotation-volume-kubernetes-io-selected-node-选择该节点作为最终运行的节点；"><a href="#•-在这过程中会检查-Pod-的-PVC-是否已经绑定，如果绑定了就根据该-PVC-Annotation-volume-kubernetes-io-selected-node-选择该节点作为最终运行的节点；" class="headerlink" title="• 在这过程中会检查 Pod 的 PVC 是否已经绑定，如果绑定了就根据该 PVC Annotation volume.kubernetes.io/selected-node 选择该节点作为最终运行的节点；"></a>• 在这过程中会检查 Pod 的 PVC 是否已经绑定，如果绑定了就根据该 PVC Annotation <code>volume.kubernetes.io/selected-node</code> 选择该节点作为最终运行的节点；</h5></li>
+<li><h5 id="•-如果-PVC-没有绑定，那么-kube-scheduler-就根据调度算法选择合适节点，并设置该-PVC-Annotation-volume-kubernetes-io-selected-node-node-name-。"><a href="#•-如果-PVC-没有绑定，那么-kube-scheduler-就根据调度算法选择合适节点，并设置该-PVC-Annotation-volume-kubernetes-io-selected-node-node-name-。" class="headerlink" title="• 如果 PVC 没有绑定，那么 kube-scheduler 就根据调度算法选择合适节点，并设置该 PVC Annotation volume.kubernetes.io/selected-node = node.name 。"></a>• 如果 PVC 没有绑定，那么 kube-scheduler 就根据调度算法选择合适节点，并设置该 PVC Annotation <code>volume.kubernetes.io/selected-node = node.name</code> 。</h5></li>
+</ul>
+</li>
+<li><h5 id="•-Kubelet-将-PV-的数据目录绑定到-Pod-容器内部。"><a href="#•-Kubelet-将-PV-的数据目录绑定到-Pod-容器内部。" class="headerlink" title="• Kubelet 将 PV 的数据目录绑定到 Pod 容器内部。"></a>• Kubelet 将 PV 的数据目录绑定到 Pod 容器内部。</h5></li>
+</ul>
+<h5 id="下图简单描述以上流程："><a href="#下图简单描述以上流程：" class="headerlink" title="下图简单描述以上流程："></a>下图简单描述以上流程：</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191605670.png" srcset="/img/loading.gif" lazyload alt="image-20240319160554590"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191606214.png" srcset="/img/loading.gif" lazyload alt="image-20240319160610150"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191606939.png" srcset="/img/loading.gif" lazyload alt="image-20240319160621875"></p>
+<h3 id="openebs-localpv-provisioner-源码解析"><a href="#openebs-localpv-provisioner-源码解析" class="headerlink" title="openebs-localpv-provisioner 源码解析"></a>openebs-localpv-provisioner 源码解析</h3><h5 id="上面分析了创建一个申请了-Local-PV-的-Pod-的流程，下面通过源码走读分析以上流程。组件源码地址：https-github-com-openebs-dynamic-localpv-provisioner-git"><a href="#上面分析了创建一个申请了-Local-PV-的-Pod-的流程，下面通过源码走读分析以上流程。组件源码地址：https-github-com-openebs-dynamic-localpv-provisioner-git" class="headerlink" title="上面分析了创建一个申请了 Local PV 的 Pod 的流程，下面通过源码走读分析以上流程。组件源码地址：https://github.com/openebs/dynamic-localpv-provisioner.git"></a>上面分析了创建一个申请了 <code>Local PV</code> 的 Pod 的流程，下面通过源码走读分析以上流程。组件源码地址：<a target="_blank" rel="noopener" href="https://github.com/openebs/dynamic-localpv-provisioner.git">https://github.com/openebs/dynamic-localpv-provisioner.git</a></h5><h5 id="然后-dynamic-localpv-provisoner-组件集成了-external-provisoner-的功能，使用的是-sig-storage-lib-external-provisioner-库，源码地址：https-github-com-kubernetes-sigs-sig-storage-lib-external-provisioner-git"><a href="#然后-dynamic-localpv-provisoner-组件集成了-external-provisoner-的功能，使用的是-sig-storage-lib-external-provisioner-库，源码地址：https-github-com-kubernetes-sigs-sig-storage-lib-external-provisioner-git" class="headerlink" title="然后 dynamic-localpv-provisoner 组件集成了 external-provisoner 的功能，使用的是 sig-storage-lib-external-provisioner 库，源码地址：https://github.com/kubernetes-sigs/sig-storage-lib-external-provisioner.git"></a>然后 dynamic-localpv-provisoner 组件集成了 external-provisoner 的功能，使用的是 <code>sig-storage-lib-external-provisioner</code> 库，源码地址：<a target="_blank" rel="noopener" href="https://github.com/kubernetes-sigs/sig-storage-lib-external-provisioner.git">https://github.com/kubernetes-sigs/sig-storage-lib-external-provisioner.git</a></h5><h5 id="dynamic-localpv-provisoner-启动后-Watch-到-PVC，根据上述流程对-PVC-一系列检查，判断是否创建-PV；"><a href="#dynamic-localpv-provisoner-启动后-Watch-到-PVC，根据上述流程对-PVC-一系列检查，判断是否创建-PV；" class="headerlink" title="dynamic-localpv-provisoner 启动后 Watch 到 PVC，根据上述流程对 PVC 一系列检查，判断是否创建 PV；"></a>dynamic-localpv-provisoner 启动后 Watch 到 PVC，根据上述流程对 PVC 一系列检查，判断是否创建 PV；</h5><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// sigs.k8s.io/sig-storage-lib-external-provisioner/v7@v7.0.1/controller/controller.go:1124</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(ctrl *ProvisionController)</span></span> shouldProvision(ctx context.Context, claim *v1.PersistentVolumeClaim) (<span class="hljs-type">bool</span>, <span class="hljs-type">error</span>) &#123;<br>  <span class="hljs-comment">// dynamic-localpv-provisoner 启动后 Watch 到 PVC，检查 PVC 中的 `Spec.VolumeName` 是否为空，不为空则直接跳过该 PVC。</span><br>    <span class="hljs-keyword">if</span> claim.Spec.VolumeName != <span class="hljs-string">&quot;&quot;</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, <span class="hljs-literal">nil</span><br>    &#125;<br><br>    <span class="hljs-keyword">if</span> qualifier, ok := ctrl.provisioner.(Qualifier); ok &#123;<br>        <span class="hljs-keyword">if</span> !qualifier.ShouldProvision(ctx, claim) &#123;<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, <span class="hljs-literal">nil</span><br>        &#125;<br>    &#125;<br>    <br>    <span class="hljs-comment">// 检查 PVC 中的 Annotations[“volume.beta.kubernetes.io/storage-provisioner”]是否等于自己的 Provisioner Name( openebs.io/local )</span><br>    <span class="hljs-keyword">if</span> provisioner, found := claim.Annotations[annStorageProvisioner]; found &#123;<br>        <span class="hljs-keyword">if</span> ctrl.knownProvisioner(provisioner) &#123;<br>            claimClass := util.GetPersistentVolumeClaimClass(claim)<br>            class, err := ctrl.getStorageClass(claimClass)<br>            <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>                <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, err<br>            &#125;<br>            <span class="hljs-comment">// 查到 StorageClass 的 VolumeBindingMode = WaitForFirstConsumer，所以需要延迟绑定</span><br>            <span class="hljs-keyword">if</span> class.VolumeBindingMode != <span class="hljs-literal">nil</span> &amp;&amp; *class.VolumeBindingMode == storage.VolumeBindingWaitForFirstConsumer &#123;<br>                <span class="hljs-comment">// 根据 PVC Annotation volume.kubernetes.io/selected-node 值选择 PV 所在节点</span><br>                <span class="hljs-keyword">if</span> selectedNode, ok := claim.Annotations[annSelectedNode]; ok &amp;&amp; selectedNode != <span class="hljs-string">&quot;&quot;</span> &#123;<br>                    <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>, <span class="hljs-literal">nil</span><br>                &#125;<br>                <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, <span class="hljs-literal">nil</span><br>            &#125;<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>, <span class="hljs-literal">nil</span><br>        &#125;<br>    &#125;<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, <span class="hljs-literal">nil</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h5 id="检查过后，就需要在节点上创建-Hostpath-数据目录了，dynamic-localpv-provisoner-组件是通过创建一个临时-pod-来完成此次操作，创建完成后会被删除；"><a href="#检查过后，就需要在节点上创建-Hostpath-数据目录了，dynamic-localpv-provisoner-组件是通过创建一个临时-pod-来完成此次操作，创建完成后会被删除；" class="headerlink" title="检查过后，就需要在节点上创建 Hostpath 数据目录了，dynamic-localpv-provisoner 组件是通过创建一个临时 pod 来完成此次操作，创建完成后会被删除；"></a>检查过后，就需要在节点上创建 Hostpath 数据目录了，dynamic-localpv-provisoner 组件是通过创建一个临时 pod 来完成此次操作，创建完成后会被删除；</h5><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// dynamic-localpv-provisioner/cmd/provisioner-localpv/app/helper_hostpath.go:167</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *Provisioner)</span></span> createInitPod(ctx context.Context, pOpts *HelperPodOptions) <span class="hljs-type">error</span> &#123;<br>    <span class="hljs-keyword">var</span> config podConfig<br>    config.pOpts, config.podName = pOpts, <span class="hljs-string">&quot;init&quot;</span><br>    <span class="hljs-comment">//err := pOpts.validate()</span><br>    <span class="hljs-keyword">if</span> err := pOpts.validate(); err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> err<br>    &#125;<br><br>    <span class="hljs-keyword">var</span> vErr <span class="hljs-type">error</span><br>    config.parentDir, config.volumeDir, vErr = hostpath.NewBuilder().WithPath(pOpts.path).<br>        WithCheckf(hostpath.IsNonRoot(), <span class="hljs-string">&quot;volume directory &#123;%v&#125; should not be under root directory&quot;</span>, pOpts.path).<br>        ExtractSubPath()<br>    <span class="hljs-keyword">if</span> vErr != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> vErr<br>    &#125;<br><br>    config.taints = pOpts.selectedNodeTaints<br><br>    config.pOpts.cmdsForPath = <span class="hljs-built_in">append</span>(config.pOpts.cmdsForPath, filepath.Join(<span class="hljs-string">&quot;/data/&quot;</span>, config.volumeDir))<br><br>    <span class="hljs-comment">// 该 pod 用于在调度节点上创建数据目录</span><br>    iPod, err := p.launchPod(ctx, config)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> err<br>    &#125;<br><br>    <span class="hljs-comment">// 创建完即可删除</span><br>    <span class="hljs-keyword">if</span> err := p.exitPod(ctx, iPod); err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> err<br>    &#125;<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h5 id="数据目录创建完成后，就表示-volume-存储卷创建完成，就可以创建-PV-了"><a href="#数据目录创建完成后，就表示-volume-存储卷创建完成，就可以创建-PV-了" class="headerlink" title="数据目录创建完成后，就表示 volume 存储卷创建完成，就可以创建 PV 了"></a>数据目录创建完成后，就表示 volume 存储卷创建完成，就可以创建 PV 了</h5><h5 id="创建-PV-是在-external-provisoner-完成的，在-dynamic-localpv-provisoner-组件里也就是-sig-storage-lib-external-provisioner-库"><a href="#创建-PV-是在-external-provisoner-完成的，在-dynamic-localpv-provisoner-组件里也就是-sig-storage-lib-external-provisioner-库" class="headerlink" title="创建 PV 是在 external-provisoner 完成的，在 dynamic-localpv-provisoner 组件里也就是 sig-storage-lib-external-provisioner 库"></a>创建 PV 是在 <strong>external-provisoner</strong> 完成的，在 dynamic-localpv-provisoner 组件里也就是 <code>sig-storage-lib-external-provisioner</code> 库</h5><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// sig-storage-lib-external-provisioner/v7@v7.0.1/controller/volume_store.go:208</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(b *backoffStore)</span></span> StoreVolume(claim *v1.PersistentVolumeClaim, volume *v1.PersistentVolume) <span class="hljs-type">error</span> &#123;<br>    <span class="hljs-comment">// Try to create the PV object several times</span><br>    <span class="hljs-keyword">var</span> lastSaveError <span class="hljs-type">error</span><br>    err := wait.ExponentialBackoff(*b.backoff, <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> (<span class="hljs-type">bool</span>, <span class="hljs-type">error</span>) &#123;<br>        klog.Infof(<span class="hljs-string">&quot;Trying to save persistentvolume %q&quot;</span>, volume.Name)<br>        <span class="hljs-keyword">var</span> err <span class="hljs-type">error</span><br>        <span class="hljs-comment">// 创建 pv</span><br>        <span class="hljs-keyword">if</span> _, err = b.client.CoreV1().PersistentVolumes().Create(context.Background(), volume, metav1.CreateOptions&#123;&#125;); err == <span class="hljs-literal">nil</span> || apierrs.IsAlreadyExists(err) &#123;<br>            <span class="hljs-comment">// Save succeeded.</span><br>            <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>                klog.Infof(<span class="hljs-string">&quot;persistentvolume %q already exists, reusing&quot;</span>, volume.Name)<br>            &#125; <span class="hljs-keyword">else</span> &#123;<br>                klog.Infof(<span class="hljs-string">&quot;persistentvolume %q saved&quot;</span>, volume.Name)<br>            &#125;<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>, <span class="hljs-literal">nil</span><br>        &#125;<br>        <span class="hljs-comment">// Save failed, try again after a while.</span><br>        klog.Infof(<span class="hljs-string">&quot;Failed to save persistentvolume %q: %v&quot;</span>, volume.Name, err)<br>        lastSaveError = err<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, <span class="hljs-literal">nil</span><br>    &#125;)<br><br>    <span class="hljs-keyword">if</span> err == <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-comment">// Save succeeded</span><br>        msg := fmt.Sprintf(<span class="hljs-string">&quot;Successfully provisioned volume %s&quot;</span>, volume.Name)<br>        b.eventRecorder.Event(claim, v1.EventTypeNormal, <span class="hljs-string">&quot;ProvisioningSucceeded&quot;</span>, msg)<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>    &#125;<br><br>    <span class="hljs-comment">// Save failed. Now we have a storage asset outside of Kubernetes,</span><br>    <span class="hljs-comment">// but we don&#x27;t have appropriate PV object for it.</span><br>    <span class="hljs-comment">// Emit some event here and try to delete the storage asset several</span><br>    <span class="hljs-comment">// times.</span><br>    strerr := fmt.Sprintf(<span class="hljs-string">&quot;Error creating provisioned PV object for claim %s: %v. Deleting the volume.&quot;</span>, claimToClaimKey(claim), lastSaveError)<br>    klog.Error(strerr)<br>    b.eventRecorder.Event(claim, v1.EventTypeWarning, <span class="hljs-string">&quot;ProvisioningFailed&quot;</span>, strerr)<br><br>    <span class="hljs-keyword">var</span> lastDeleteError <span class="hljs-type">error</span><br>    err = wait.ExponentialBackoff(*b.backoff, <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> (<span class="hljs-type">bool</span>, <span class="hljs-type">error</span>) &#123;<br>        <span class="hljs-keyword">if</span> err = b.ctrl.provisioner.Delete(context.Background(), volume); err == <span class="hljs-literal">nil</span> &#123;<br>            <span class="hljs-comment">// Delete succeeded</span><br>            klog.Infof(<span class="hljs-string">&quot;Cleaning volume %q succeeded&quot;</span>, volume.Name)<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>, <span class="hljs-literal">nil</span><br>        &#125;<br>        <span class="hljs-comment">// Delete failed, try again after a while.</span><br>        klog.Infof(<span class="hljs-string">&quot;Failed to clean volume %q: %v&quot;</span>, volume.Name, err)<br>        lastDeleteError = err<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, <span class="hljs-literal">nil</span><br>    &#125;)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-comment">// Delete failed several times. There is an orphaned volume and there</span><br>        <span class="hljs-comment">// is nothing we can do about it.</span><br>        strerr := fmt.Sprintf(<span class="hljs-string">&quot;Error cleaning provisioned volume for claim %s: %v. Please delete manually.&quot;</span>, claimToClaimKey(claim), lastDeleteError)<br>        klog.Error(strerr)<br>        b.eventRecorder.Event(claim, v1.EventTypeWarning, <span class="hljs-string">&quot;ProvisioningCleanupFailed&quot;</span>, strerr)<br>    &#125;<br><br>    <span class="hljs-keyword">return</span> lastSaveError<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h5 id="接下来就是-PV-Controller-将-PVC-和-PV-进行绑定，Kubelet-Local-Volume-将-PV-数据目录挂载到-Pod-容器内部。"><a href="#接下来就是-PV-Controller-将-PVC-和-PV-进行绑定，Kubelet-Local-Volume-将-PV-数据目录挂载到-Pod-容器内部。" class="headerlink" title="接下来就是 PV Controller 将 PVC 和 PV 进行绑定，Kubelet Local-Volume 将 PV 数据目录挂载到 Pod 容器内部。"></a>接下来就是 PV Controller 将 PVC 和 PV 进行绑定，Kubelet Local-Volume 将 PV 数据目录挂载到 Pod 容器内部。</h5><h5 id="整个-dynamic-localpv-provisoner-组件函数调用关系如下图："><a href="#整个-dynamic-localpv-provisoner-组件函数调用关系如下图：" class="headerlink" title="整个 dynamic-localpv-provisoner 组件函数调用关系如下图："></a>整个 dynamic-localpv-provisoner 组件函数调用关系如下图：</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191606359.png" srcset="/img/loading.gif" lazyload alt="image-20240319160649216"></p>
+<hr>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>至此 OpenEBS Local PV( Hostpath ) 类型原理就讲解完了，这只是 OpenEBS 最简单的 CSI 实现，但也是使用很频繁的一类 CSI，其原理和上一篇分析的 CSI 大体原理基本类似。</p>
+<p>结合 OpenEBS 的简单使用和源码解析，可以对 Kubernetes CSI 的原理理解更深一层，同时我们也可以自行实现一款 CSI 与 Kubernetes 对接。</p>
+<hr>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>K8S csi openebs原理 2024-04-03 14:44:48.967</div>
+      <div>http://example.com/2025/01/16/K8S csi openebs原理-k8scsiopenebs-yuan-li/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/K8S%20%E6%8E%A2%E9%92%88%E5%8E%9F%E7%90%86-k8s-tan-zhen-yuan-li/" title="K8S 探针原理 2024-04-03 14:53:29.429">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">K8S 探针原理 2024-04-03 14:53:29.429</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/K8S%20%E8%B0%83%E5%BA%A6%E5%99%A8%20scheduler_onego%20%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-diao-du-qi-scheduleronego-yuan-ma-jie-du/" title="K8S 调度器 scheduler_one.go 源码解读 2024-04-09 11:45:28.22">
+                        <span class="hidden-mobile">K8S 调度器 scheduler_one.go 源码解读 2024-04-09 11:45:28.22</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

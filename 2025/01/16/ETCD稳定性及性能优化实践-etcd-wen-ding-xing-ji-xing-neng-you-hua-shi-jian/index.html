@@ -1,0 +1,760 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="背景与挑战随着腾讯自研上云及公有云用户的迅速增长，一方面，腾讯云容器服务TKE服务数量和核数大幅增长, 另一方面我们提供的容器服务类型（TKE托管及独立集群、EKS弹性集群、edge边缘计算集群、mesh服务网格、serverless knative）也越来越丰富。各类容器服务类型背后的核心都是K8s，K8s核心的存储etcd又统一由我们基于K8s构建的etcd平台进行管理。基于它我们目前管理了千">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ETCD稳定性及性能优化实践 2024-04-03 15:06:31.141">
+<meta property="og:url" content="http://example.com/2025/01/16/ETCD%E7%A8%B3%E5%AE%9A%E6%80%A7%E5%8F%8A%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%AE%9E%E8%B7%B5-etcd-wen-ding-xing-ji-xing-neng-you-hua-shi-jian/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="背景与挑战随着腾讯自研上云及公有云用户的迅速增长，一方面，腾讯云容器服务TKE服务数量和核数大幅增长, 另一方面我们提供的容器服务类型（TKE托管及独立集群、EKS弹性集群、edge边缘计算集群、mesh服务网格、serverless knative）也越来越丰富。各类容器服务类型背后的核心都是K8s，K8s核心的存储etcd又统一由我们基于K8s构建的etcd平台进行管理。基于它我们目前管理了千">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011117394.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011117778.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011118843.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011119313.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011120792.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011120851.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011120756.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011121460.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011121867.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011122488.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.042Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:18.583Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011117394.png">
+  
+  
+  
+  <title>ETCD稳定性及性能优化实践 2024-04-03 15:06:31.141 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="ETCD稳定性及性能优化实践 2024-04-03 15:06:31.141"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          8.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          68 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">ETCD稳定性及性能优化实践 2024-04-03 15:06:31.141</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="背景与挑战"><a href="#背景与挑战" class="headerlink" title="背景与挑战"></a>背景与挑战</h2><p>随着腾讯自研上云及公有云用户的迅速增长，一方面，腾讯云容器服务TKE服务数量和核数大幅增长, 另一方面我们提供的容器服务类型（TKE托管及独立集群、EKS弹性集群、edge边缘计算集群、mesh服务网格、serverless knative）也越来越丰富。各类容器服务类型背后的核心都是K8s，K8s核心的存储etcd又统一由我们基于K8s构建的etcd平台进行管理。基于它我们目前管理了千级etcd集群，背后支撑了万级K8s集群。</p>
+<p><strong>在万级K8s集群规模下的我们如何高效保障etcd集群的稳定性?</strong> </p>
+<p>etcd集群的稳定性风险又来自哪里？</p>
+<p>我们通过基于业务场景、历史遗留问题、现网运营经验等进行稳定性风险模型分析，<strong>风险主要来自旧TKE etcd架构设计不合理、etcd稳定性、etcd性能部分场景无法满足业务、测试用例覆盖不足、变更管理不严谨、监控是否全面覆盖、隐患点是否能自动巡检发现、极端灾难故障数据安全是否能保障。</strong></p>
+<p>前面所描述的etcd平台已经从架构设计上、变更管理上、监控及巡检、数据迁移、备份几个方面程度解决了我们管理的各类容器服务的etcd可扩展性、可运维性、可观测性以及数据安全性，因此<strong>本文将重点描述我们在万级K8s场景下面临的etcd内核稳定性及性能挑战</strong>，比如:</p>
+<ul>
+<li>数据不一致</li>
+<li>内存泄露</li>
+<li>死锁</li>
+<li>进程Crash</li>
+<li>大包请求导致etcd OOM及丢包</li>
+<li>较大数据量场景下启动慢</li>
+<li>鉴权及查询key数量、查询指定数量记录接口性能较差</li>
+</ul>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011117394.png" srcset="/img/loading.gif" lazyload alt="image-20240301111728306"></p>
+<p>本文将简易描述我们是如何发现、分析、复现、解决以上问题及挑战，以及从以上过程中我们获得了哪些经验及教训，并将之应用到我们的各类容器服务存储稳定性保障中。</p>
+<p>同时，<strong>我们将解决方案全部贡献、回馈给etcd开源社区， 截止目前我们贡献的30+ pr已全部合并到社区。腾讯云TKE etcd团队是etcd社区2020年上半年最活跃的贡献团队之一, 为etcd的发展贡献我们的一点力量, 在这过程中特别感谢社区AWS、Google、Ali等maintainer的支持与帮助。</strong></p>
+<h2 id="稳定性优化案例剖析"><a href="#稳定性优化案例剖析" class="headerlink" title="稳定性优化案例剖析"></a>稳定性优化案例剖析</h2><p>从GitLab误删主库丢失部分数据到GitHub数据不一致导致中断24小时，再到号称”不沉航母”的AWS S3故障数小时等，无一例外都是存储服务。稳定性对于一个存储服务、乃至一个公司的口碑而言至关重要，它决定着一个产品生与死。稳定性优化案例我们将从数据不一致的严重性、两个etcd数据不一致的bug、lease内存泄露、mvcc 死锁、wal crash方面阐述，我们是如何发现、分析、复现、解决以上case，并分享我们从每个case中的获得的收获和反思，从中汲取经验，防患于未然。</p>
+<h3 id="数据不一致（Data-Inconsistency）"><a href="#数据不一致（Data-Inconsistency）" class="headerlink" title="数据不一致（Data Inconsistency）"></a><strong>数据不一致（Data Inconsistency）</strong></h3><h5 id="谈到数据不一致导致的大故障，就不得不详细提下GitHub在18年一次因网络设备的例行维护工作导致的美国东海岸网络中心与东海岸主要数据中心之间的连接断开。虽然网络的连通性在43秒内得以恢复，但是短暂的中断引发了一系列事件，最终导致GitHub-24小时11分钟的服务降级，部分功能不可用。"><a href="#谈到数据不一致导致的大故障，就不得不详细提下GitHub在18年一次因网络设备的例行维护工作导致的美国东海岸网络中心与东海岸主要数据中心之间的连接断开。虽然网络的连通性在43秒内得以恢复，但是短暂的中断引发了一系列事件，最终导致GitHub-24小时11分钟的服务降级，部分功能不可用。" class="headerlink" title="谈到数据不一致导致的大故障，就不得不详细提下GitHub在18年一次因网络设备的例行维护工作导致的美国东海岸网络中心与东海岸主要数据中心之间的连接断开。虽然网络的连通性在43秒内得以恢复，但是短暂的中断引发了一系列事件，最终导致GitHub 24小时11分钟的服务降级，部分功能不可用。"></a>谈到数据不一致导致的大故障，就不得不详细提下GitHub在18年一次因网络设备的例行维护工作导致的美国东海岸网络中心与东海岸主要数据中心之间的连接断开。虽然网络的连通性在43秒内得以恢复，但是短暂的中断引发了一系列事件，最终导致GitHub 24小时11分钟的服务降级，部分功能不可用。</h5><h5 id="GitHub使用了大量的MySQL集群存储GitHub的meta-data-如issue、pr、page等等，同时做了东西海岸跨城级别的容灾。故障核心原因是网络异常时GitHub的MySQL仲裁服务Orchestrator进行了故障转移，将写入数据定向到美国西海岸的MySQL集群-故障前primary在东海岸-，然而美国东海岸的MySQL包含一小段写入，尚未复制到美国西海岸集群，同时故障转移后由于两个数据中心的集群现在都包含另一个数据中心中不存在的写入，因此又无法安全地将主数据库故障转移回美国东海岸。"><a href="#GitHub使用了大量的MySQL集群存储GitHub的meta-data-如issue、pr、page等等，同时做了东西海岸跨城级别的容灾。故障核心原因是网络异常时GitHub的MySQL仲裁服务Orchestrator进行了故障转移，将写入数据定向到美国西海岸的MySQL集群-故障前primary在东海岸-，然而美国东海岸的MySQL包含一小段写入，尚未复制到美国西海岸集群，同时故障转移后由于两个数据中心的集群现在都包含另一个数据中心中不存在的写入，因此又无法安全地将主数据库故障转移回美国东海岸。" class="headerlink" title="GitHub使用了大量的MySQL集群存储GitHub的meta data,如issue、pr、page等等，同时做了东西海岸跨城级别的容灾。故障核心原因是网络异常时GitHub的MySQL仲裁服务Orchestrator进行了故障转移，将写入数据定向到美国西海岸的MySQL集群(故障前primary在东海岸)，然而美国东海岸的MySQL包含一小段写入，尚未复制到美国西海岸集群，同时故障转移后由于两个数据中心的集群现在都包含另一个数据中心中不存在的写入，因此又无法安全地将主数据库故障转移回美国东海岸。"></a>GitHub使用了大量的MySQL集群存储GitHub的meta data,如issue、pr、page等等，同时做了东西海岸跨城级别的容灾。故障核心原因是网络异常时GitHub的MySQL仲裁服务Orchestrator进行了故障转移，将写入数据定向到美国西海岸的MySQL集群(故障前primary在东海岸)，然而美国东海岸的MySQL包含一小段写入，尚未复制到美国西海岸集群，同时故障转移后由于两个数据中心的集群现在都包含另一个数据中心中不存在的写入，因此又无法安全地将主数据库故障转移回美国东海岸。</h5><h5 id="最终-为了保证保证用户数据不丢失，GitHub不得不以24小时的服务降级为代价来修复数据一致性。"><a href="#最终-为了保证保证用户数据不丢失，GitHub不得不以24小时的服务降级为代价来修复数据一致性。" class="headerlink" title="最终, 为了保证保证用户数据不丢失，GitHub不得不以24小时的服务降级为代价来修复数据一致性。"></a>最终, 为了保证保证用户数据不丢失，GitHub不得不以24小时的服务降级为代价来修复数据一致性。</h5><h5 id="数据不一致的故障严重性不言而喻，然而etcd是基于raft协议实现的分布式高可靠存储系统，我们也并未做跨城容灾，按理数据不一致这种看起来高大上bug我们是很难遇到的。然而梦想是美好的，现实是残酷的，我们不仅遇到了不可思议的数据不一致bug-还一踩就是两个，一个是重启etcd有较低的概率触发，一个是升级etcd版本时如果开启了鉴权，在K8s场景下较大概率触发。在详细讨论这两个bug前，我们先看看在K8s场景下etcd数据不一致会导致哪些问题呢？"><a href="#数据不一致的故障严重性不言而喻，然而etcd是基于raft协议实现的分布式高可靠存储系统，我们也并未做跨城容灾，按理数据不一致这种看起来高大上bug我们是很难遇到的。然而梦想是美好的，现实是残酷的，我们不仅遇到了不可思议的数据不一致bug-还一踩就是两个，一个是重启etcd有较低的概率触发，一个是升级etcd版本时如果开启了鉴权，在K8s场景下较大概率触发。在详细讨论这两个bug前，我们先看看在K8s场景下etcd数据不一致会导致哪些问题呢？" class="headerlink" title="数据不一致的故障严重性不言而喻，然而etcd是基于raft协议实现的分布式高可靠存储系统，我们也并未做跨城容灾，按理数据不一致这种看起来高大上bug我们是很难遇到的。然而梦想是美好的，现实是残酷的，我们不仅遇到了不可思议的数据不一致bug, 还一踩就是两个，一个是重启etcd有较低的概率触发，一个是升级etcd版本时如果开启了鉴权，在K8s场景下较大概率触发。在详细讨论这两个bug前，我们先看看在K8s场景下etcd数据不一致会导致哪些问题呢？"></a>数据不一致的故障严重性不言而喻，然而etcd是基于raft协议实现的分布式高可靠存储系统，我们也并未做跨城容灾，按理数据不一致这种看起来高大上bug我们是很难遇到的。然而梦想是美好的，现实是残酷的，我们不仅遇到了不可思议的数据不一致bug, 还一踩就是两个，一个是重启etcd有较低的概率触发，一个是升级etcd版本时如果开启了鉴权，在K8s场景下较大概率触发。在详细讨论这两个bug前，我们先看看在K8s场景下etcd数据不一致会导致哪些问题呢？</h5><ul>
+<li><h5 id="数据不一致最恐怖之处在于client写入是成功的，但可能在部分节点读取到空或者是旧数据-client无法感知到写入在部分节点是失败的和可能读到旧数据"><a href="#数据不一致最恐怖之处在于client写入是成功的，但可能在部分节点读取到空或者是旧数据-client无法感知到写入在部分节点是失败的和可能读到旧数据" class="headerlink" title="数据不一致最恐怖之处在于client写入是成功的，但可能在部分节点读取到空或者是旧数据,client无法感知到写入在部分节点是失败的和可能读到旧数据"></a>数据不一致最恐怖之处在于client写入是成功的，但可能在部分节点读取到空或者是旧数据,client无法感知到写入在部分节点是失败的和可能读到旧数据</h5></li>
+<li><h5 id="读到空可能会导致业务Node消失、Pod消失、Node上Service路由规则消失，一般场景下，只会影响用户变更的服务"><a href="#读到空可能会导致业务Node消失、Pod消失、Node上Service路由规则消失，一般场景下，只会影响用户变更的服务" class="headerlink" title="读到空可能会导致业务Node消失、Pod消失、Node上Service路由规则消失，一般场景下，只会影响用户变更的服务"></a>读到空可能会导致业务Node消失、Pod消失、Node上Service路由规则消失，一般场景下，只会影响用户变更的服务</h5></li>
+<li><h5 id="读到老数据会导致业务变更不生效，如服务扩缩容、Service-rs替换、变更镜像异常等待，一般场景下，只会影响用户变更的服务"><a href="#读到老数据会导致业务变更不生效，如服务扩缩容、Service-rs替换、变更镜像异常等待，一般场景下，只会影响用户变更的服务" class="headerlink" title="读到老数据会导致业务变更不生效，如服务扩缩容、Service rs替换、变更镜像异常等待，一般场景下，只会影响用户变更的服务"></a>读到老数据会导致业务变更不生效，如服务扩缩容、Service rs替换、变更镜像异常等待，一般场景下，只会影响用户变更的服务</h5></li>
+<li><h5 id="在etcd平台迁移场景下，client无法感知到写入失败，若校验数据一致性也无异常时（校验时连接到了正常节点），会导致迁移后整个集群全面故障（apiserver连接到了异常节点），用户的Node、部署的服务、lb等会被全部删除，严重影响用户业务"><a href="#在etcd平台迁移场景下，client无法感知到写入失败，若校验数据一致性也无异常时（校验时连接到了正常节点），会导致迁移后整个集群全面故障（apiserver连接到了异常节点），用户的Node、部署的服务、lb等会被全部删除，严重影响用户业务" class="headerlink" title="在etcd平台迁移场景下，client无法感知到写入失败，若校验数据一致性也无异常时（校验时连接到了正常节点），会导致迁移后整个集群全面故障（apiserver连接到了异常节点），用户的Node、部署的服务、lb等会被全部删除，严重影响用户业务"></a>在etcd平台迁移场景下，client无法感知到写入失败，若校验数据一致性也无异常时（校验时连接到了正常节点），会导致迁移后整个集群全面故障（apiserver连接到了异常节点），用户的Node、部署的服务、lb等会被全部删除，严重影响用户业务</h5></li>
+</ul>
+<h5 id="首先第一个不一致bug是重启etcd过程中遇到的，人工尝试复现多次皆失败，分析、定位、复现、解决这个bug之路几经波折，过程很有趣并充满挑战，最终通过我对关键点增加debug日志，编写chaos-monkey模拟各种异常场景、边界条件，实现复现成功。最后的真凶竟然是一个授权接口在重启后重放导致鉴权版本号不一致，然后放大导致多版本数据库不一致-部分节点无法写入新数据-影响所有v3版本的3年之久bug。"><a href="#首先第一个不一致bug是重启etcd过程中遇到的，人工尝试复现多次皆失败，分析、定位、复现、解决这个bug之路几经波折，过程很有趣并充满挑战，最终通过我对关键点增加debug日志，编写chaos-monkey模拟各种异常场景、边界条件，实现复现成功。最后的真凶竟然是一个授权接口在重启后重放导致鉴权版本号不一致，然后放大导致多版本数据库不一致-部分节点无法写入新数据-影响所有v3版本的3年之久bug。" class="headerlink" title="首先第一个不一致bug是重启etcd过程中遇到的，人工尝试复现多次皆失败，分析、定位、复现、解决这个bug之路几经波折，过程很有趣并充满挑战，最终通过我对关键点增加debug日志，编写chaos monkey模拟各种异常场景、边界条件，实现复现成功。最后的真凶竟然是一个授权接口在重启后重放导致鉴权版本号不一致，然后放大导致多版本数据库不一致, 部分节点无法写入新数据, 影响所有v3版本的3年之久bug。"></a>首先第一个不一致bug是重启etcd过程中遇到的，人工尝试复现多次皆失败，分析、定位、复现、解决这个bug之路几经波折，过程很有趣并充满挑战，最终通过我对关键点增加debug日志，编写chaos monkey模拟各种异常场景、边界条件，实现复现成功。最后的真凶竟然是一个授权接口在重启后重放导致鉴权版本号不一致，然后放大导致多版本数据库不一致, 部分节点无法写入新数据, 影响所有v3版本的3年之久bug。</h5><h5 id="随后我们提交若干个相关pr到社区-并全部合并了-最新的etcd-v3-4-9-1-，v3-3-22-2-已修复此问题-同时google的jingyih也已经提K8s-issue和pr-3-将K8s-1-19的etcd-client及server版本升级到最新的v3-4-9。此bug详细可参考超凡同学写的文章三年之久的-etcd3-数据不一致-bug-分析。"><a href="#随后我们提交若干个相关pr到社区-并全部合并了-最新的etcd-v3-4-9-1-，v3-3-22-2-已修复此问题-同时google的jingyih也已经提K8s-issue和pr-3-将K8s-1-19的etcd-client及server版本升级到最新的v3-4-9。此bug详细可参考超凡同学写的文章三年之久的-etcd3-数据不一致-bug-分析。" class="headerlink" title="随后我们提交若干个相关pr到社区, 并全部合并了, 最新的etcd v3.4.9[1]，v3.3.22[2]已修复此问题, 同时google的jingyih也已经提K8s issue和pr[3]将K8s 1.19的etcd client及server版本升级到最新的v3.4.9。此bug详细可参考超凡同学写的文章三年之久的 etcd3 数据不一致 bug 分析。"></a>随后我们提交若干个相关pr到社区, 并全部合并了, 最新的etcd <strong>v3.4.9</strong>[1]，<strong>v3.3.22</strong>[2]已修复此问题, 同时google的jingyih也已经提<strong>K8s issue和pr</strong>[3]将K8s 1.19的etcd client及server版本升级到最新的v3.4.9。此bug详细可参考超凡同学写的文章<a target="_blank" rel="noopener" href="http://mp.weixin.qq.com/s?__biz=Mzg5NjA1MjkxNw==&mid=2247483930&idx=1&sn=536046b272038b92a4ddf4ec30f8aad4&chksm=c007b9c0f77030d6bf9a5038906dfb553b5a618d95578bfa65798ff1bf418c8dde216806a861&scene=21#wechat_redirect">三年之久的 etcd3 数据不一致 bug 分析</a>。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011117778.png" srcset="/img/loading.gif" lazyload alt="image-20240301111757719"></p>
+<h5 id="第二个不一致bug是在升级etcd过程中遇到的，因etcd缺少关键的错误日志，故障现场有效信息不多，定位较困难，只能通过分析代码和复现解决。然而人工尝试复现多次皆失败，于是我们通过chaos-monkey模拟client行为场景，将测试环境所有K8s集群的etcd分配请求调度到我们复现集群，以及对比3-2与3-3版本差异，在可疑点如lease和txn模块增加大量的关键日志，并对etcd-apply-request失败场景打印错误日志。"><a href="#第二个不一致bug是在升级etcd过程中遇到的，因etcd缺少关键的错误日志，故障现场有效信息不多，定位较困难，只能通过分析代码和复现解决。然而人工尝试复现多次皆失败，于是我们通过chaos-monkey模拟client行为场景，将测试环境所有K8s集群的etcd分配请求调度到我们复现集群，以及对比3-2与3-3版本差异，在可疑点如lease和txn模块增加大量的关键日志，并对etcd-apply-request失败场景打印错误日志。" class="headerlink" title="第二个不一致bug是在升级etcd过程中遇到的，因etcd缺少关键的错误日志，故障现场有效信息不多，定位较困难，只能通过分析代码和复现解决。然而人工尝试复现多次皆失败，于是我们通过chaos monkey模拟client行为场景，将测试环境所有K8s集群的etcd分配请求调度到我们复现集群，以及对比3.2与3.3版本差异，在可疑点如lease和txn模块增加大量的关键日志，并对etcd apply request失败场景打印错误日志。"></a>第二个不一致bug是在升级etcd过程中遇到的，因etcd缺少关键的错误日志，故障现场有效信息不多，定位较困难，只能通过分析代码和复现解决。然而人工尝试复现多次皆失败，于是我们通过chaos monkey模拟client行为场景，将测试环境所有K8s集群的etcd分配请求调度到我们复现集群，以及对比3.2与3.3版本差异，在可疑点如lease和txn模块增加大量的关键日志，并对etcd apply request失败场景打印错误日志。</h5><h5 id="通过以上措施，我们比较快就复现成功了-最终通过代码和日志发现是3-2版本与3-3版本在revoke-lease权限上出现了差异，3-2无权限，3-3需要写权限。当lease过期的时候，如果leader是3-2，那么请求在3-3节点就会因无权限导致失败，进而导致key数量不一致，mvcc版本号不一致，导致txn事务部分场景执行失败等。最新的3-2分支也已合并我们提交的修复方案，同时我们增加了etcd核心过程失败的错误日志以提高数据不一致问题定位效率，完善了升级文档，详细说明了lease会在此场景下引起数据不一致性，避免大家再次采坑。"><a href="#通过以上措施，我们比较快就复现成功了-最终通过代码和日志发现是3-2版本与3-3版本在revoke-lease权限上出现了差异，3-2无权限，3-3需要写权限。当lease过期的时候，如果leader是3-2，那么请求在3-3节点就会因无权限导致失败，进而导致key数量不一致，mvcc版本号不一致，导致txn事务部分场景执行失败等。最新的3-2分支也已合并我们提交的修复方案，同时我们增加了etcd核心过程失败的错误日志以提高数据不一致问题定位效率，完善了升级文档，详细说明了lease会在此场景下引起数据不一致性，避免大家再次采坑。" class="headerlink" title="通过以上措施，我们比较快就复现成功了, 最终通过代码和日志发现是3.2版本与3.3版本在revoke lease权限上出现了差异，3.2无权限，3.3需要写权限。当lease过期的时候，如果leader是3.2，那么请求在3.3节点就会因无权限导致失败，进而导致key数量不一致，mvcc版本号不一致，导致txn事务部分场景执行失败等。最新的3.2分支也已合并我们提交的修复方案，同时我们增加了etcd核心过程失败的错误日志以提高数据不一致问题定位效率，完善了升级文档，详细说明了lease会在此场景下引起数据不一致性，避免大家再次采坑。"></a>通过以上措施，我们比较快就复现成功了, 最终通过代码和日志发现是3.2版本与3.3版本在revoke lease权限上出现了差异，3.2无权限，3.3需要写权限。当lease过期的时候，如果leader是3.2，那么请求在3.3节点就会因无权限导致失败，进而导致key数量不一致，mvcc版本号不一致，导致txn事务部分场景执行失败等。最新的3.2分支也已合并我们提交的修复方案，同时我们增加了etcd核心过程失败的错误日志以提高数据不一致问题定位效率，完善了升级文档，详细说明了lease会在此场景下引起数据不一致性，避免大家再次采坑。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011118843.png" srcset="/img/loading.gif" lazyload alt="image-20240301111836792"></p>
+<h5 id="从这两个数据不一致bug中我们获得了以下收获和最佳实践"><a href="#从这两个数据不一致bug中我们获得了以下收获和最佳实践" class="headerlink" title="从这两个数据不一致bug中我们获得了以下收获和最佳实践:"></a>从这两个数据不一致bug中我们获得了以下收获和最佳实践:</h5><ul>
+<li><h5 id="算法理论数据一致性，不代表整体服务实现能保证数据一致性，目前业界对于这种基于日志复制状态机实现的分布式存储系统，没有一个核心的机制能保证raft、wal、mvcc、snapshot等模块协作不出问题，raft只能保证日志状态机的一致性，不能保证应用层去执行这些日志对应的command都会成功"><a href="#算法理论数据一致性，不代表整体服务实现能保证数据一致性，目前业界对于这种基于日志复制状态机实现的分布式存储系统，没有一个核心的机制能保证raft、wal、mvcc、snapshot等模块协作不出问题，raft只能保证日志状态机的一致性，不能保证应用层去执行这些日志对应的command都会成功" class="headerlink" title="算法理论数据一致性，不代表整体服务实现能保证数据一致性，目前业界对于这种基于日志复制状态机实现的分布式存储系统，没有一个核心的机制能保证raft、wal、mvcc、snapshot等模块协作不出问题，raft只能保证日志状态机的一致性，不能保证应用层去执行这些日志对应的command都会成功"></a>算法理论数据一致性，不代表整体服务实现能保证数据一致性，目前业界对于这种基于日志复制状态机实现的分布式存储系统，没有一个核心的机制能保证raft、wal、mvcc、snapshot等模块协作不出问题，raft只能保证日志状态机的一致性，不能保证应用层去执行这些日志对应的command都会成功</h5></li>
+<li><h5 id="etcd版本升级存在一定的风险，需要仔细review代码评估是否存在不兼容的特性，如若存在是否影响鉴权版本号及mvcc版本号，若影响则升级过程中可能会导致数据不一致性，同时一定要灰度变更现网集群"><a href="#etcd版本升级存在一定的风险，需要仔细review代码评估是否存在不兼容的特性，如若存在是否影响鉴权版本号及mvcc版本号，若影响则升级过程中可能会导致数据不一致性，同时一定要灰度变更现网集群" class="headerlink" title="etcd版本升级存在一定的风险，需要仔细review代码评估是否存在不兼容的特性，如若存在是否影响鉴权版本号及mvcc版本号，若影响则升级过程中可能会导致数据不一致性，同时一定要灰度变更现网集群"></a>etcd版本升级存在一定的风险，需要仔细review代码评估是否存在不兼容的特性，如若存在是否影响鉴权版本号及mvcc版本号，若影响则升级过程中可能会导致数据不一致性，同时一定要灰度变更现网集群</h5></li>
+<li><h5 id="对所有etcd集群增加了一致性巡检告警，如revision差异监控、key数量差异监控等"><a href="#对所有etcd集群增加了一致性巡检告警，如revision差异监控、key数量差异监控等" class="headerlink" title="对所有etcd集群增加了一致性巡检告警，如revision差异监控、key数量差异监控等"></a>对所有etcd集群增加了一致性巡检告警，如revision差异监控、key数量差异监控等</h5></li>
+<li><h5 id="定时对etcd集群数据进行备份，再小概率的故障，根据墨菲定律都可能会发生，即便etcd本身虽具备完备的自动化测试-单元测试、集成测试、e2e测试、故障注入测试等-，但测试用例仍有不少场景无法覆盖，我们需要为最坏的场景做准备-如3个节点wal、snap、db文件同时损坏-，降低极端情况下的损失-做到可用备份数据快速恢复"><a href="#定时对etcd集群数据进行备份，再小概率的故障，根据墨菲定律都可能会发生，即便etcd本身虽具备完备的自动化测试-单元测试、集成测试、e2e测试、故障注入测试等-，但测试用例仍有不少场景无法覆盖，我们需要为最坏的场景做准备-如3个节点wal、snap、db文件同时损坏-，降低极端情况下的损失-做到可用备份数据快速恢复" class="headerlink" title="定时对etcd集群数据进行备份，再小概率的故障，根据墨菲定律都可能会发生，即便etcd本身虽具备完备的自动化测试(单元测试、集成测试、e2e测试、故障注入测试等)，但测试用例仍有不少场景无法覆盖，我们需要为最坏的场景做准备(如3个节点wal、snap、db文件同时损坏)，降低极端情况下的损失, 做到可用备份数据快速恢复"></a>定时对etcd集群数据进行备份，再小概率的故障，根据墨菲定律都可能会发生，即便etcd本身虽具备完备的自动化测试(单元测试、集成测试、e2e测试、故障注入测试等)，但测试用例仍有不少场景无法覆盖，我们需要为最坏的场景做准备(如3个节点wal、snap、db文件同时损坏)，降低极端情况下的损失, 做到可用备份数据快速恢复</h5></li>
+<li><h5 id="etcd-v3-4-4后的集群灰度开启data-corruption检测功能，当集群出现不一致时，拒绝集群写入、读取，及时止损，控制不一致的数据范围"><a href="#etcd-v3-4-4后的集群灰度开启data-corruption检测功能，当集群出现不一致时，拒绝集群写入、读取，及时止损，控制不一致的数据范围" class="headerlink" title="etcd v3.4.4后的集群灰度开启data corruption检测功能，当集群出现不一致时，拒绝集群写入、读取，及时止损，控制不一致的数据范围"></a>etcd v3.4.4后的集群灰度开启data corruption检测功能，当集群出现不一致时，拒绝集群写入、读取，及时止损，控制不一致的数据范围</h5></li>
+<li><h5 id="继续完善我们的chaos-monkey和使用etcd本身的故障注入测试框架functional，以协助我们验证、压测新版本稳定性（长时间持续跑），复现隐藏极深的bug-降低线上采坑的概率"><a href="#继续完善我们的chaos-monkey和使用etcd本身的故障注入测试框架functional，以协助我们验证、压测新版本稳定性（长时间持续跑），复现隐藏极深的bug-降低线上采坑的概率" class="headerlink" title="继续完善我们的chaos monkey和使用etcd本身的故障注入测试框架functional，以协助我们验证、压测新版本稳定性（长时间持续跑），复现隐藏极深的bug, 降低线上采坑的概率"></a>继续完善我们的chaos monkey和使用etcd本身的故障注入测试框架functional，以协助我们验证、压测新版本稳定性（长时间持续跑），复现隐藏极深的bug, 降低线上采坑的概率</h5></li>
+</ul>
+<h3 id="内存泄露（OOM）"><a href="#内存泄露（OOM）" class="headerlink" title="内存泄露（OOM）"></a><strong>内存泄露（OOM）</strong></h3><h5 id="众所周知etcd是golang写的，而golang自带垃圾回收机制也会内存泄露吗？首先我们得搞清楚golang垃圾回收的原理，它是通过后台运行一个守护线程，监控各个对象的状态，识别并且丢弃不再使用的对象来释放和重用资源，若你迟迟未释放对象，golang垃圾回收不是万能的，不泄露才怪。比如以下场景会导致内存泄露"><a href="#众所周知etcd是golang写的，而golang自带垃圾回收机制也会内存泄露吗？首先我们得搞清楚golang垃圾回收的原理，它是通过后台运行一个守护线程，监控各个对象的状态，识别并且丢弃不再使用的对象来释放和重用资源，若你迟迟未释放对象，golang垃圾回收不是万能的，不泄露才怪。比如以下场景会导致内存泄露" class="headerlink" title="众所周知etcd是golang写的，而golang自带垃圾回收机制也会内存泄露吗？首先我们得搞清楚golang垃圾回收的原理，它是通过后台运行一个守护线程，监控各个对象的状态，识别并且丢弃不再使用的对象来释放和重用资源，若你迟迟未释放对象，golang垃圾回收不是万能的，不泄露才怪。比如以下场景会导致内存泄露:"></a>众所周知etcd是golang写的，而golang自带垃圾回收机制也会内存泄露吗？首先我们得搞清楚golang垃圾回收的原理，它是通过后台运行一个守护线程，监控各个对象的状态，识别并且丢弃不再使用的对象来释放和重用资源，若你迟迟未释放对象，golang垃圾回收不是万能的，不泄露才怪。比如以下场景会导致内存泄露:</h5><ul>
+<li><h5 id="goroutine泄露"><a href="#goroutine泄露" class="headerlink" title="goroutine泄露"></a>goroutine泄露</h5></li>
+<li><h5 id="deferring-function-calls（如for循环里面未使用匿名函数及时调用defer释放资源，而是整个for循环结束才调用）"><a href="#deferring-function-calls（如for循环里面未使用匿名函数及时调用defer释放资源，而是整个for循环结束才调用）" class="headerlink" title="deferring function calls（如for循环里面未使用匿名函数及时调用defer释放资源，而是整个for循环结束才调用）"></a>deferring function calls（如for循环里面未使用匿名函数及时调用defer释放资源，而是整个for循环结束才调用）</h5></li>
+<li><h5 id="获取string-slice中的一段导致长string-slice未释放（会共享相同的底层内存块）"><a href="#获取string-slice中的一段导致长string-slice未释放（会共享相同的底层内存块）" class="headerlink" title="获取string&#x2F;slice中的一段导致长string&#x2F;slice未释放（会共享相同的底层内存块）"></a>获取string&#x2F;slice中的一段导致长string&#x2F;slice未释放（会共享相同的底层内存块）</h5></li>
+<li><h5 id="应用内存数据结构管理不周导致内存泄露（如为及时清理过期、无效的数据）"><a href="#应用内存数据结构管理不周导致内存泄露（如为及时清理过期、无效的数据）" class="headerlink" title="应用内存数据结构管理不周导致内存泄露（如为及时清理过期、无效的数据）"></a>应用内存数据结构管理不周导致内存泄露（如为及时清理过期、无效的数据）</h5></li>
+</ul>
+<h5 id="接下来看看我们遇到的这个etcd内存泄露属于哪种情况呢？事情起源于3月末的一个周末起床后收到现网3-4集群大量内存超过安全阈值告警，立刻排查了下发现以下现象"><a href="#接下来看看我们遇到的这个etcd内存泄露属于哪种情况呢？事情起源于3月末的一个周末起床后收到现网3-4集群大量内存超过安全阈值告警，立刻排查了下发现以下现象" class="headerlink" title="接下来看看我们遇到的这个etcd内存泄露属于哪种情况呢？事情起源于3月末的一个周末起床后收到现网3.4集群大量内存超过安全阈值告警，立刻排查了下发现以下现象:"></a>接下来看看我们遇到的这个etcd内存泄露属于哪种情况呢？事情起源于3月末的一个周末起床后收到现网3.4集群大量内存超过安全阈值告警，立刻排查了下发现以下现象:</h5><ul>
+<li><h5 id="QPS及流量监控显示都较低，因此排除高负载及慢查询因素"><a href="#QPS及流量监控显示都较低，因此排除高负载及慢查询因素" class="headerlink" title="QPS及流量监控显示都较低，因此排除高负载及慢查询因素"></a>QPS及流量监控显示都较低，因此排除高负载及慢查询因素</h5></li>
+<li><h5 id="一个集群3个节点只有两个follower节点出现异常-leader-4g-follower节点高达23G"><a href="#一个集群3个节点只有两个follower节点出现异常-leader-4g-follower节点高达23G" class="headerlink" title="一个集群3个节点只有两个follower节点出现异常,leader 4g,follower节点高达23G"></a>一个集群3个节点只有两个follower节点出现异常,leader 4g,follower节点高达23G</h5></li>
+<li><h5 id="goroutine、fd等资源未出现泄漏"><a href="#goroutine、fd等资源未出现泄漏" class="headerlink" title="goroutine、fd等资源未出现泄漏"></a>goroutine、fd等资源未出现泄漏</h5></li>
+<li><h5 id="go-runtime-memstats指标显示各个节点申请的内存是一致的，但是follower节点go-memstats-heap-release-bytes远低于leader节点，说明某数据结构可能长期未释放"><a href="#go-runtime-memstats指标显示各个节点申请的内存是一致的，但是follower节点go-memstats-heap-release-bytes远低于leader节点，说明某数据结构可能长期未释放" class="headerlink" title="go runtime memstats指标显示各个节点申请的内存是一致的，但是follower节点go_memstats_heap_release_bytes远低于leader节点，说明某数据结构可能长期未释放"></a>go runtime memstats指标显示各个节点申请的内存是一致的，但是follower节点go_memstats_heap_release_bytes远低于leader节点，说明某数据结构可能长期未释放</h5></li>
+<li><h5 id="生产集群默认关闭了pprof-开启pprof-等待复现-并在社区上搜索释放有类似案例-结果发现有多个用户1月份就报了，没引起社区重视，使用场景和现象跟我们一样"><a href="#生产集群默认关闭了pprof-开启pprof-等待复现-并在社区上搜索释放有类似案例-结果发现有多个用户1月份就报了，没引起社区重视，使用场景和现象跟我们一样" class="headerlink" title="生产集群默认关闭了pprof,开启pprof,等待复现, 并在社区上搜索释放有类似案例, 结果发现有多个用户1月份就报了，没引起社区重视，使用场景和现象跟我们一样"></a>生产集群默认关闭了pprof,开启pprof,等待复现, 并在社区上搜索释放有类似案例, 结果发现有多个用户1月份就报了，没引起社区重视，使用场景和现象跟我们一样</h5></li>
+<li><h5 id="通过社区的heap堆栈快速定位到了是由于etcd通过一个heap堆来管理lease的状态，当lease过期时需要从堆中删除，但是follower节点却无此操作，因此导致follower内存泄露-影响所有3-4版本。"><a href="#通过社区的heap堆栈快速定位到了是由于etcd通过一个heap堆来管理lease的状态，当lease过期时需要从堆中删除，但是follower节点却无此操作，因此导致follower内存泄露-影响所有3-4版本。" class="headerlink" title="通过社区的heap堆栈快速定位到了是由于etcd通过一个heap堆来管理lease的状态，当lease过期时需要从堆中删除，但是follower节点却无此操作，因此导致follower内存泄露, 影响所有3.4版本。"></a>通过社区的heap堆栈快速定位到了是由于etcd通过一个heap堆来管理lease的状态，当lease过期时需要从堆中删除，但是follower节点却无此操作，因此导致follower内存泄露, 影响所有3.4版本。</h5></li>
+<li><h5 id="问题分析清楚后，我提交的修复方案是follower节点不需要维护lease-heap-当leader发生选举时确保新的follower节点能重建lease-heap-老的leader节点则清空lease-heap"><a href="#问题分析清楚后，我提交的修复方案是follower节点不需要维护lease-heap-当leader发生选举时确保新的follower节点能重建lease-heap-老的leader节点则清空lease-heap" class="headerlink" title="问题分析清楚后，我提交的修复方案是follower节点不需要维护lease heap,当leader发生选举时确保新的follower节点能重建lease heap,老的leader节点则清空lease heap."></a>问题分析清楚后，我提交的修复方案是follower节点不需要维护lease heap,当leader发生选举时确保新的follower节点能重建lease heap,老的leader节点则清空lease heap.</h5></li>
+</ul>
+<p><strong>此内存泄露bug属于内存数据结构管理不周导致的，问题修复后，etcd社区立即发布了新的版本（v3.4.6+）以及K8s都立即进行了etcd版本更新。</strong></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011119313.png" srcset="/img/loading.gif" lazyload alt="image-20240301111945250"></p>
+<p>从这个<strong>内存泄露bug中我们获得了以下收获和最佳实践:</strong></p>
+<ul>
+<li><h5 id="持续关注社区issue和pr-别人今天的问题很可能我们明天就会遇到"><a href="#持续关注社区issue和pr-别人今天的问题很可能我们明天就会遇到" class="headerlink" title="持续关注社区issue和pr, 别人今天的问题很可能我们明天就会遇到"></a>持续关注社区issue和pr, 别人今天的问题很可能我们明天就会遇到</h5></li>
+<li><h5 id="etcd本身测试无法覆盖此类需要一定时间运行的才能触发的资源泄露bug-我们内部需要加强此类场景的测试与压测"><a href="#etcd本身测试无法覆盖此类需要一定时间运行的才能触发的资源泄露bug-我们内部需要加强此类场景的测试与压测" class="headerlink" title="etcd本身测试无法覆盖此类需要一定时间运行的才能触发的资源泄露bug,我们内部需要加强此类场景的测试与压测"></a>etcd本身测试无法覆盖此类需要一定时间运行的才能触发的资源泄露bug,我们内部需要加强此类场景的测试与压测</h5></li>
+<li><h5 id="持续完善、丰富etcd平台的各类监控告警，机器留足足够的内存buffer以扛各种意外的因素。"><a href="#持续完善、丰富etcd平台的各类监控告警，机器留足足够的内存buffer以扛各种意外的因素。" class="headerlink" title="持续完善、丰富etcd平台的各类监控告警，机器留足足够的内存buffer以扛各种意外的因素。"></a>持续完善、丰富etcd平台的各类监控告警，机器留足足够的内存buffer以扛各种意外的因素。</h5></li>
+</ul>
+<h3 id="存储层死锁（Mvcc-Deadlock）"><a href="#存储层死锁（Mvcc-Deadlock）" class="headerlink" title="存储层死锁（Mvcc Deadlock）"></a><strong>存储层死锁（Mvcc Deadlock）</strong></h3><h5 id="死锁是指两个或两个以上的goroutine的执行过程中，由于竞争资源相互等待（一般是锁）或由于彼此通信（chan引起）而造成的一种程序卡死现象，无法对外提供服务。deadlock问题因为往往是在并发状态下资源竞争导致的-一般比较难定位和复现-死锁的性质决定着我们必须保留好分析现场，否则分析、复现及其困难。"><a href="#死锁是指两个或两个以上的goroutine的执行过程中，由于竞争资源相互等待（一般是锁）或由于彼此通信（chan引起）而造成的一种程序卡死现象，无法对外提供服务。deadlock问题因为往往是在并发状态下资源竞争导致的-一般比较难定位和复现-死锁的性质决定着我们必须保留好分析现场，否则分析、复现及其困难。" class="headerlink" title="死锁是指两个或两个以上的goroutine的执行过程中，由于竞争资源相互等待（一般是锁）或由于彼此通信（chan引起）而造成的一种程序卡死现象，无法对外提供服务。deadlock问题因为往往是在并发状态下资源竞争导致的, 一般比较难定位和复现, 死锁的性质决定着我们必须保留好分析现场，否则分析、复现及其困难。"></a>死锁是指两个或两个以上的goroutine的执行过程中，由于竞争资源相互等待（一般是锁）或由于彼此通信（chan引起）而造成的一种程序卡死现象，无法对外提供服务。deadlock问题因为往往是在并发状态下资源竞争导致的, 一般比较难定位和复现, 死锁的性质决定着我们必须保留好分析现场，否则分析、复现及其困难。</h5><h5 id="那么我们是如何发现解决这个deadlock-bug呢？问题起源于内部团队在压测etcd集群时，发现一个节点突然故障了，而且一直无法恢复，无法正常获取key数等信息。收到反馈后，我通过分析卡住的etcd进程和查看监控，得到以下结论"><a href="#那么我们是如何发现解决这个deadlock-bug呢？问题起源于内部团队在压测etcd集群时，发现一个节点突然故障了，而且一直无法恢复，无法正常获取key数等信息。收到反馈后，我通过分析卡住的etcd进程和查看监控，得到以下结论" class="headerlink" title="那么我们是如何发现解决这个deadlock bug呢？问题起源于内部团队在压测etcd集群时，发现一个节点突然故障了，而且一直无法恢复，无法正常获取key数等信息。收到反馈后，我通过分析卡住的etcd进程和查看监控，得到以下结论:"></a><strong>那么我们是如何发现解决这个deadlock bug呢？</strong>问题起源于内部团队在压测etcd集群时，发现一个节点突然故障了，而且一直无法恢复，无法正常获取key数等信息。收到反馈后，我通过分析卡住的etcd进程和查看监控，得到以下结论:</h5><ul>
+<li><h5 id="不经过raft及mvcc模块的rpc请求如member-list可以正常返回结果，而经过的rpc请求全部context-timeout"><a href="#不经过raft及mvcc模块的rpc请求如member-list可以正常返回结果，而经过的rpc请求全部context-timeout" class="headerlink" title="不经过raft及mvcc模块的rpc请求如member list可以正常返回结果，而经过的rpc请求全部context timeout"></a>不经过raft及mvcc模块的rpc请求如member list可以正常返回结果，而经过的rpc请求全部context timeout</h5></li>
+<li><h5 id="etcd-health健康监测返回503-503的报错逻辑也是经过了raft及mvcc"><a href="#etcd-health健康监测返回503-503的报错逻辑也是经过了raft及mvcc" class="headerlink" title="etcd health健康监测返回503,503的报错逻辑也是经过了raft及mvcc"></a>etcd health健康监测返回503,503的报错逻辑也是经过了raft及mvcc</h5></li>
+<li><h5 id="通过tcpdump和netstat排除raft网络模块异常，可疑目标缩小到mvcc"><a href="#通过tcpdump和netstat排除raft网络模块异常，可疑目标缩小到mvcc" class="headerlink" title="通过tcpdump和netstat排除raft网络模块异常，可疑目标缩小到mvcc"></a>通过tcpdump和netstat排除raft网络模块异常，可疑目标缩小到mvcc</h5></li>
+<li><h5 id="分析日志发现卡住的时候因数据落后leader较多，接收了一个数据快照，然后执行更新快照的时候卡住了，没有输出快照加载完毕的日志，同时确认日志未丢失"><a href="#分析日志发现卡住的时候因数据落后leader较多，接收了一个数据快照，然后执行更新快照的时候卡住了，没有输出快照加载完毕的日志，同时确认日志未丢失" class="headerlink" title="分析日志发现卡住的时候因数据落后leader较多，接收了一个数据快照，然后执行更新快照的时候卡住了，没有输出快照加载完毕的日志，同时确认日志未丢失"></a>分析日志发现卡住的时候因数据落后leader较多，接收了一个数据快照，然后执行更新快照的时候卡住了，没有输出快照加载完毕的日志，同时确认日志未丢失</h5></li>
+<li><h5 id="排查快照加载的代码，锁定几个可疑的锁和相关goroutine-准备获取卡住的goroutine堆栈"><a href="#排查快照加载的代码，锁定几个可疑的锁和相关goroutine-准备获取卡住的goroutine堆栈" class="headerlink" title="排查快照加载的代码，锁定几个可疑的锁和相关goroutine,准备获取卡住的goroutine堆栈"></a>排查快照加载的代码，锁定几个可疑的锁和相关goroutine,准备获取卡住的goroutine堆栈</h5></li>
+<li><h5 id="通过kill或pprof获取goroutine堆栈，根据goroutine卡住的时间和相关可疑点的代码逻辑，成功找到两个相互竞争资源的goroutine，其中一个正是执行快照加载-重建db的主goroutine，它获取了一把mvcc锁等待所有异步任务结束，而另外一个goroutine则是执行历史key压缩任务，当它收到stop的信号后，立刻退出，调用一个compactBarrier逻辑，而这个逻辑又恰恰需要获取mvcc锁，因此出现死锁，堆栈如下。"><a href="#通过kill或pprof获取goroutine堆栈，根据goroutine卡住的时间和相关可疑点的代码逻辑，成功找到两个相互竞争资源的goroutine，其中一个正是执行快照加载-重建db的主goroutine，它获取了一把mvcc锁等待所有异步任务结束，而另外一个goroutine则是执行历史key压缩任务，当它收到stop的信号后，立刻退出，调用一个compactBarrier逻辑，而这个逻辑又恰恰需要获取mvcc锁，因此出现死锁，堆栈如下。" class="headerlink" title="通过kill或pprof获取goroutine堆栈，根据goroutine卡住的时间和相关可疑点的代码逻辑，成功找到两个相互竞争资源的goroutine，其中一个正是执行快照加载,重建db的主goroutine，它获取了一把mvcc锁等待所有异步任务结束，而另外一个goroutine则是执行历史key压缩任务，当它收到stop的信号后，立刻退出，调用一个compactBarrier逻辑，而这个逻辑又恰恰需要获取mvcc锁，因此出现死锁，堆栈如下。"></a>通过kill或pprof获取goroutine堆栈，根据goroutine卡住的时间和相关可疑点的代码逻辑，成功找到两个相互竞争资源的goroutine，其中一个正是执行快照加载,重建db的主goroutine，它获取了一把mvcc锁等待所有异步任务结束，而另外一个goroutine则是执行历史key压缩任务，当它收到stop的信号后，立刻退出，调用一个compactBarrier逻辑，而这个逻辑又恰恰需要获取mvcc锁，因此出现死锁，堆栈如下。</h5></li>
+</ul>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011120792.png" srcset="/img/loading.gif" lazyload alt="image-20240301112007722"></p>
+<h5 id="这个bug也隐藏了很久，影响所有etcd3版本，在集群中写入量较大，某落后的较多的节点执行了快照重建，同时此时又恰恰在做历史版本压缩，那就会触发。我提交的修复PR目前也已经合并到3-3和3-4分支中，新的版本已经发布（v3-3-21-v3-4-8-）。"><a href="#这个bug也隐藏了很久，影响所有etcd3版本，在集群中写入量较大，某落后的较多的节点执行了快照重建，同时此时又恰恰在做历史版本压缩，那就会触发。我提交的修复PR目前也已经合并到3-3和3-4分支中，新的版本已经发布（v3-3-21-v3-4-8-）。" class="headerlink" title="这个bug也隐藏了很久，影响所有etcd3版本，在集群中写入量较大，某落后的较多的节点执行了快照重建，同时此时又恰恰在做历史版本压缩，那就会触发。我提交的修复PR目前也已经合并到3.3和3.4分支中，新的版本已经发布（v3.3.21+&#x2F;v3.4.8+）。"></a>这个bug也隐藏了很久，影响所有etcd3版本，在集群中写入量较大，某落后的较多的节点执行了快照重建，同时此时又恰恰在做历史版本压缩，那就会触发。我提交的修复PR目前也已经合并到3.3和3.4分支中，新的版本已经发布（v3.3.21+&#x2F;v3.4.8+）。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011120851.png" srcset="/img/loading.gif" lazyload alt="image-20240301112024794"></p>
+<p>从这个<strong>死锁bug中我们获得了以下收获和最佳实践:</strong></p>
+<ul>
+<li><h5 id="多并发场景的组合的etcd自动化测试用例覆盖不到，也较难构建，因此也容易出bug-是否还有其他类似场景存在同样的问题？需要参与社区一起继续提高etcd测试覆盖率（etcd之前官方博客介绍一大半代码已经是测试代码），才能避免此类问题。"><a href="#多并发场景的组合的etcd自动化测试用例覆盖不到，也较难构建，因此也容易出bug-是否还有其他类似场景存在同样的问题？需要参与社区一起继续提高etcd测试覆盖率（etcd之前官方博客介绍一大半代码已经是测试代码），才能避免此类问题。" class="headerlink" title="多并发场景的组合的etcd自动化测试用例覆盖不到，也较难构建，因此也容易出bug, 是否还有其他类似场景存在同样的问题？需要参与社区一起继续提高etcd测试覆盖率（etcd之前官方博客介绍一大半代码已经是测试代码），才能避免此类问题。"></a>多并发场景的组合的etcd自动化测试用例覆盖不到，也较难构建，因此也容易出bug, 是否还有其他类似场景存在同样的问题？需要参与社区一起继续提高etcd测试覆盖率（etcd之前官方博客介绍一大半代码已经是测试代码），才能避免此类问题。</h5></li>
+<li><h5 id="监控虽然能及时发现异常节点宕机，但是死锁这种场景之前我们不会自动重启etcd-因此需要完善我们的健康探测机制（比如curl-health来判断服务是否正常），出现死锁时能够保留堆栈、自动重启恢复服务。"><a href="#监控虽然能及时发现异常节点宕机，但是死锁这种场景之前我们不会自动重启etcd-因此需要完善我们的健康探测机制（比如curl-health来判断服务是否正常），出现死锁时能够保留堆栈、自动重启恢复服务。" class="headerlink" title="监控虽然能及时发现异常节点宕机，但是死锁这种场景之前我们不会自动重启etcd,因此需要完善我们的健康探测机制（比如curl &#x2F;health来判断服务是否正常），出现死锁时能够保留堆栈、自动重启恢复服务。"></a>监控虽然能及时发现异常节点宕机，但是死锁这种场景之前我们不会自动重启etcd,因此需要完善我们的健康探测机制（比如curl &#x2F;health来判断服务是否正常），出现死锁时能够保留堆栈、自动重启恢复服务。</h5></li>
+<li><h5 id="对于读请求较高的场景，需评估3节点集群在一节点宕机后，剩余两节点提供的QPS容量是否能够支持业务，若不够则考虑5节点集群。"><a href="#对于读请求较高的场景，需评估3节点集群在一节点宕机后，剩余两节点提供的QPS容量是否能够支持业务，若不够则考虑5节点集群。" class="headerlink" title="对于读请求较高的场景，需评估3节点集群在一节点宕机后，剩余两节点提供的QPS容量是否能够支持业务，若不够则考虑5节点集群。"></a>对于读请求较高的场景，需评估3节点集群在一节点宕机后，剩余两节点提供的QPS容量是否能够支持业务，若不够则考虑5节点集群。</h5></li>
+</ul>
+<h3 id="Wal-crash（Panic）"><a href="#Wal-crash（Panic）" class="headerlink" title="Wal crash（Panic）"></a><strong>Wal crash（Panic）</strong></h3><h5 id="panic是指出现严重运行时和业务逻辑错误，导致整个进程退出。panic对于我们而言并不陌生，我们在现网遇到过几次，最早遭遇的不稳定性因素就是集群运行过程中panic了。"><a href="#panic是指出现严重运行时和业务逻辑错误，导致整个进程退出。panic对于我们而言并不陌生，我们在现网遇到过几次，最早遭遇的不稳定性因素就是集群运行过程中panic了。" class="headerlink" title="panic是指出现严重运行时和业务逻辑错误，导致整个进程退出。panic对于我们而言并不陌生，我们在现网遇到过几次，最早遭遇的不稳定性因素就是集群运行过程中panic了。"></a>panic是指出现严重运行时和业务逻辑错误，导致整个进程退出。panic对于我们而言并不陌生，我们在现网遇到过几次，最早遭遇的不稳定性因素就是集群运行过程中panic了。</h5><h5 id="虽说我们3节点的etcd集群是可以容忍一个节点故障，但是crash瞬间对用户依然有影响，甚至出现集群拨测连接失败。"><a href="#虽说我们3节点的etcd集群是可以容忍一个节点故障，但是crash瞬间对用户依然有影响，甚至出现集群拨测连接失败。" class="headerlink" title="虽说我们3节点的etcd集群是可以容忍一个节点故障，但是crash瞬间对用户依然有影响，甚至出现集群拨测连接失败。"></a>虽说我们3节点的etcd集群是可以容忍一个节点故障，但是crash瞬间对用户依然有影响，甚至出现集群拨测连接失败。</h5><h5 id="我们遇到的第一个crash-bug，是发现集群链接数较多的时候有一定的概率出现crash-然后根据堆栈查看社区已有人报grpc-crash-issue-4-原因是etcd依赖的组件grpc-go出现了grpc-crash-pr-5-，而最近我们遇到的crash-bug-6-是v3-4-8-v3-3-21新版本发布引起的，这个版本跟我们有很大关系，我们贡献了3个PR到这个版本，占了一大半以上-那么这个crash-bug是如何产生以及复现呢？会不会是我们自己的锅呢？"><a href="#我们遇到的第一个crash-bug，是发现集群链接数较多的时候有一定的概率出现crash-然后根据堆栈查看社区已有人报grpc-crash-issue-4-原因是etcd依赖的组件grpc-go出现了grpc-crash-pr-5-，而最近我们遇到的crash-bug-6-是v3-4-8-v3-3-21新版本发布引起的，这个版本跟我们有很大关系，我们贡献了3个PR到这个版本，占了一大半以上-那么这个crash-bug是如何产生以及复现呢？会不会是我们自己的锅呢？" class="headerlink" title="我们遇到的第一个crash bug，是发现集群链接数较多的时候有一定的概率出现crash, 然后根据堆栈查看社区已有人报grpc crash(issue)[4], 原因是etcd依赖的组件grpc-go出现了grpc crash(pr)[5]，而最近我们遇到的crash bug[6]是v3.4.8&#x2F;v3.3.21新版本发布引起的，这个版本跟我们有很大关系，我们贡献了3个PR到这个版本，占了一大半以上, 那么这个crash bug是如何产生以及复现呢？会不会是我们自己的锅呢？"></a>我们遇到的第一个crash bug，是发现集群链接数较多的时候有一定的概率出现crash, 然后根据堆栈查看社区已有人报<strong>grpc crash(issue)</strong>[4], 原因是etcd依赖的组件grpc-go出现了<strong>grpc crash(pr)</strong>[5]，而最近我们遇到的<strong>crash bug</strong>[6]是v3.4.8&#x2F;v3.3.21新版本发布引起的，这个版本跟我们有很大关系，<strong>我们贡献了3个PR到这个版本，占了一大半以上, 那么这个crash bug是如何产生以及复现呢？</strong>会不会是我们自己的锅呢？</h5><ul>
+<li><h5 id="首先crash报错是walpb-crc-mismatch-而我们并未提交代码修改wal相关逻辑，排除自己的锅。"><a href="#首先crash报错是walpb-crc-mismatch-而我们并未提交代码修改wal相关逻辑，排除自己的锅。" class="headerlink" title="首先crash报错是walpb: crc mismatch, 而我们并未提交代码修改wal相关逻辑，排除自己的锅。"></a>首先crash报错是walpb: crc mismatch, 而我们并未提交代码修改wal相关逻辑，排除自己的锅。</h5></li>
+<li><h5 id="其次通过review新版本pr-目标锁定到google一位大佬在修复一个wal在写入成功后，而snapshot写入失败导致的crash-bug的时候引入的"><a href="#其次通过review新版本pr-目标锁定到google一位大佬在修复一个wal在写入成功后，而snapshot写入失败导致的crash-bug的时候引入的" class="headerlink" title="其次通过review新版本pr, 目标锁定到google一位大佬在修复一个wal在写入成功后，而snapshot写入失败导致的crash bug的时候引入的."></a>其次通过review新版本pr, 目标锁定到google一位大佬在修复一个wal在写入成功后，而snapshot写入失败导致的crash bug的时候引入的.</h5></li>
+<li><h5 id="但是具体是怎么引入的？pr中包含多个测试用例验证新加逻辑，本地创建空集群和使用存量集群-数据比较小-也无法复现"><a href="#但是具体是怎么引入的？pr中包含多个测试用例验证新加逻辑，本地创建空集群和使用存量集群-数据比较小-也无法复现" class="headerlink" title="但是具体是怎么引入的？pr中包含多个测试用例验证新加逻辑，本地创建空集群和使用存量集群(数据比较小)也无法复现."></a>但是具体是怎么引入的？pr中包含多个测试用例验证新加逻辑，本地创建空集群和使用存量集群(数据比较小)也无法复现.</h5></li>
+<li><h5 id="错误日志信息太少，导致无法确定是哪个函数报的错，因此首先还是加日志，对各个可疑点增加错误日志后，在我们测试集群随便找了个老节点替换版本，然后很容易就复现了，并确定是新加的验证快照文件合法性的锅，那么它为什么会出现crc-mismatch呢-首先我们来简单了解下wal文件。"><a href="#错误日志信息太少，导致无法确定是哪个函数报的错，因此首先还是加日志，对各个可疑点增加错误日志后，在我们测试集群随便找了个老节点替换版本，然后很容易就复现了，并确定是新加的验证快照文件合法性的锅，那么它为什么会出现crc-mismatch呢-首先我们来简单了解下wal文件。" class="headerlink" title="错误日志信息太少，导致无法确定是哪个函数报的错，因此首先还是加日志，对各个可疑点增加错误日志后，在我们测试集群随便找了个老节点替换版本，然后很容易就复现了，并确定是新加的验证快照文件合法性的锅，那么它为什么会出现crc mismatch呢? 首先我们来简单了解下wal文件。"></a>错误日志信息太少，导致无法确定是哪个函数报的错，因此首先还是加日志，对各个可疑点增加错误日志后，在我们测试集群随便找了个老节点替换版本，然后很容易就复现了，并确定是新加的验证快照文件合法性的锅，那么它为什么会出现crc mismatch呢? 首先我们来简单了解下wal文件。</h5></li>
+<li><h5 id="etcd任何经过raft的模块的请求在写入etcd-mvcc-db前都会通过wal文件持久化，若进程在apply-command过程中出现被杀等异常-重启时可通过wal文件重放将数据补齐，避免数据丢失。wal文件包含各种请求命令如成员变化信息、涉及key的各个操作等，为了保证数据完整性、未损坏，wal每条记录都会计算其的crc32，写入wal文件。重启后解析wal文件过程中，会校验记录的完整性，如果数据出现损坏或crc32计算算法出现变化则会出现crc32-mismatch"><a href="#etcd任何经过raft的模块的请求在写入etcd-mvcc-db前都会通过wal文件持久化，若进程在apply-command过程中出现被杀等异常-重启时可通过wal文件重放将数据补齐，避免数据丢失。wal文件包含各种请求命令如成员变化信息、涉及key的各个操作等，为了保证数据完整性、未损坏，wal每条记录都会计算其的crc32，写入wal文件。重启后解析wal文件过程中，会校验记录的完整性，如果数据出现损坏或crc32计算算法出现变化则会出现crc32-mismatch" class="headerlink" title="etcd任何经过raft的模块的请求在写入etcd mvcc db前都会通过wal文件持久化，若进程在apply command过程中出现被杀等异常,重启时可通过wal文件重放将数据补齐，避免数据丢失。wal文件包含各种请求命令如成员变化信息、涉及key的各个操作等，为了保证数据完整性、未损坏，wal每条记录都会计算其的crc32，写入wal文件。重启后解析wal文件过程中，会校验记录的完整性，如果数据出现损坏或crc32计算算法出现变化则会出现crc32 mismatch."></a>etcd任何经过raft的模块的请求在写入etcd mvcc db前都会通过wal文件持久化，若进程在apply command过程中出现被杀等异常,重启时可通过wal文件重放将数据补齐，避免数据丢失。wal文件包含各种请求命令如成员变化信息、涉及key的各个操作等，为了保证数据完整性、未损坏，wal每条记录都会计算其的crc32，写入wal文件。重启后解析wal文件过程中，会校验记录的完整性，如果数据出现损坏或crc32计算算法出现变化则会出现crc32 mismatch.</h5></li>
+<li><h5 id="硬盘及文件系统并未出现异常，排除了数据损坏，经过深入排查crc32算法的计算，发现是新增逻辑未处理crc32类型的数据记录，它会影响crc32算法的值，导致出现差异，而且只有在当etcd集群创建产生后的第一个wal文件被回收才会触发，因此对存量运行一段时间的集群，100-复现。"><a href="#硬盘及文件系统并未出现异常，排除了数据损坏，经过深入排查crc32算法的计算，发现是新增逻辑未处理crc32类型的数据记录，它会影响crc32算法的值，导致出现差异，而且只有在当etcd集群创建产生后的第一个wal文件被回收才会触发，因此对存量运行一段时间的集群，100-复现。" class="headerlink" title="硬盘及文件系统并未出现异常，排除了数据损坏，经过深入排查crc32算法的计算，发现是新增逻辑未处理crc32类型的数据记录，它会影响crc32算法的值，导致出现差异，而且只有在当etcd集群创建产生后的第一个wal文件被回收才会触发，因此对存量运行一段时间的集群，100%复现。"></a>硬盘及文件系统并未出现异常，排除了数据损坏，经过深入排查crc32算法的计算，发现是新增逻辑未处理crc32类型的数据记录，它会影响crc32算法的值，导致出现差异，而且只有在当etcd集群创建产生后的第一个wal文件被回收才会触发，因此对存量运行一段时间的集群，100%复现。</h5></li>
+<li><h5 id="解决方案就是通过增加crc32算法的处理逻辑以及增加单元测试覆盖wal文件被回收的场景，社区已合并并发布了新的3-4和3-3版本-v3-4-9-v3-3-22"><a href="#解决方案就是通过增加crc32算法的处理逻辑以及增加单元测试覆盖wal文件被回收的场景，社区已合并并发布了新的3-4和3-3版本-v3-4-9-v3-3-22" class="headerlink" title="解决方案就是通过增加crc32算法的处理逻辑以及增加单元测试覆盖wal文件被回收的场景，社区已合并并发布了新的3.4和3.3版本(v3.4.9&#x2F;v3.3.22)."></a>解决方案就是通过增加crc32算法的处理逻辑以及增加单元测试覆盖wal文件被回收的场景，社区已合并并发布了新的3.4和3.3版本(v3.4.9&#x2F;v3.3.22).</h5></li>
+</ul>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011120756.png" srcset="/img/loading.gif" lazyload alt="image-20240301112048706"></p>
+<h5 id="虽然这个bug是社区用户反馈的，但从这个crash-bug中我们获得了以下收获和最佳实践"><a href="#虽然这个bug是社区用户反馈的，但从这个crash-bug中我们获得了以下收获和最佳实践" class="headerlink" title="虽然这个bug是社区用户反馈的，但从这个crash bug中我们获得了以下收获和最佳实践:"></a>虽然这个bug是社区用户反馈的，但从这个<strong>crash bug中我们获得了以下收获和最佳实践:</strong></h5><ul>
+<li><h5 id="单元测试用例非常有价值，然而编写完备的单元测试用例并不容易，需要考虑各类场景。"><a href="#单元测试用例非常有价值，然而编写完备的单元测试用例并不容易，需要考虑各类场景。" class="headerlink" title="单元测试用例非常有价值，然而编写完备的单元测试用例并不容易，需要考虑各类场景。"></a>单元测试用例非常有价值，然而编写完备的单元测试用例并不容易，需要考虑各类场景。</h5></li>
+<li><h5 id="etcd社区对存量集群升级、各版本之间兼容性测试用例几乎是0，需要大家一起来为其舔砖加瓦，让测试用例覆盖更多场景。"><a href="#etcd社区对存量集群升级、各版本之间兼容性测试用例几乎是0，需要大家一起来为其舔砖加瓦，让测试用例覆盖更多场景。" class="headerlink" title="etcd社区对存量集群升级、各版本之间兼容性测试用例几乎是0，需要大家一起来为其舔砖加瓦，让测试用例覆盖更多场景。"></a>etcd社区对存量集群升级、各版本之间兼容性测试用例几乎是0，需要大家一起来为其舔砖加瓦，让测试用例覆盖更多场景。</h5></li>
+<li><h5 id="新版本上线内部流程标准化、自动化-如测试环境压测、混沌测试、不同版本性能对比、优先在非核心场景使用-如event-、灰度上线等流程必不可少。"><a href="#新版本上线内部流程标准化、自动化-如测试环境压测、混沌测试、不同版本性能对比、优先在非核心场景使用-如event-、灰度上线等流程必不可少。" class="headerlink" title="新版本上线内部流程标准化、自动化, 如测试环境压测、混沌测试、不同版本性能对比、优先在非核心场景使用(如event)、灰度上线等流程必不可少。"></a>新版本上线内部流程标准化、自动化, 如测试环境压测、混沌测试、不同版本性能对比、优先在非核心场景使用(如event)、灰度上线等流程必不可少。</h5></li>
+</ul>
+<h3 id="配额及限速（Quota-QoS）"><a href="#配额及限速（Quota-QoS）" class="headerlink" title="配额及限速（Quota&amp;QoS）"></a><strong>配额及限速（Quota&amp;QoS）</strong></h3><h5 id="etcd面对一些大数据量的查询（expensive-read）和写入操作时（expensive-write），如全key遍历（full-keyspace-fetch）、大量event查询-list-all-Pod-configmap写入等会消耗大量的cpu、内存、带宽资源，极其容易导致过载，乃至雪崩。"><a href="#etcd面对一些大数据量的查询（expensive-read）和写入操作时（expensive-write），如全key遍历（full-keyspace-fetch）、大量event查询-list-all-Pod-configmap写入等会消耗大量的cpu、内存、带宽资源，极其容易导致过载，乃至雪崩。" class="headerlink" title="etcd面对一些大数据量的查询（expensive read）和写入操作时（expensive write），如全key遍历（full keyspace fetch）、大量event查询, list all Pod, configmap写入等会消耗大量的cpu、内存、带宽资源，极其容易导致过载，乃至雪崩。"></a>etcd面对一些大数据量的查询（expensive read）和写入操作时（expensive write），如全key遍历（full keyspace fetch）、大量event查询, list all Pod, configmap写入等会消耗大量的cpu、内存、带宽资源，极其容易导致过载，乃至雪崩。</h5><h5 id="然而，etcd目前只有一个极其简单的限速保护，当etcd的commited-index大于applied-index的阈值大于5000时，会拒绝一切请求，返回Too-Many-Request，其缺陷很明显，无法精确的对expensive-read-write进行限速，无法有效防止集群过载不可用。"><a href="#然而，etcd目前只有一个极其简单的限速保护，当etcd的commited-index大于applied-index的阈值大于5000时，会拒绝一切请求，返回Too-Many-Request，其缺陷很明显，无法精确的对expensive-read-write进行限速，无法有效防止集群过载不可用。" class="headerlink" title="然而，etcd目前只有一个极其简单的限速保护，当etcd的commited index大于applied index的阈值大于5000时，会拒绝一切请求，返回Too Many Request，其缺陷很明显，无法精确的对expensive read&#x2F;write进行限速，无法有效防止集群过载不可用。"></a>然而，etcd目前只有一个极其简单的限速保护，<strong>当etcd的commited index大于applied index的阈值大于5000时，会拒绝一切请求，返回Too Many Request，其缺陷很明显，无法精确的对expensive read&#x2F;write进行限速，无法有效防止集群过载不可用。</strong></h5><p><strong>为了解决以上挑战，避免集群过载目前我们通过以下方案来保障集群稳定性:</strong></p>
+<ul>
+<li><h5 id="基于K8s-apiserver上层限速能力，如apiserver默认写100-s-读200-s"><a href="#基于K8s-apiserver上层限速能力，如apiserver默认写100-s-读200-s" class="headerlink" title="基于K8s apiserver上层限速能力，如apiserver默认写100&#x2F;s,读200&#x2F;s"></a>基于K8s apiserver上层限速能力，如apiserver默认写100&#x2F;s,读200&#x2F;s</h5></li>
+<li><h5 id="基于K8s-resource-quota控制不合理的Pod-configmap-crd数"><a href="#基于K8s-resource-quota控制不合理的Pod-configmap-crd数" class="headerlink" title="基于K8s resource quota控制不合理的Pod&#x2F;configmap&#x2F;crd数"></a>基于K8s resource quota控制不合理的Pod&#x2F;configmap&#x2F;crd数</h5></li>
+<li><h5 id="基于K8s-controller-manager的-terminated-Pod-gc-threshold参数控制无效Pod数量（此参数默认值高达12500，有很大优化空间）"><a href="#基于K8s-controller-manager的-terminated-Pod-gc-threshold参数控制无效Pod数量（此参数默认值高达12500，有很大优化空间）" class="headerlink" title="基于K8s controller-manager的-terminated-Pod-gc-threshold参数控制无效Pod数量（此参数默认值高达12500，有很大优化空间）"></a>基于K8s controller-manager的-terminated-Pod-gc-threshold参数控制无效Pod数量（此参数默认值高达12500，有很大优化空间）</h5></li>
+<li><h5 id="基于K8s的apiserver各类资源可独立的存储的特性-将event-configmap以及其他核心数据分别使用不同的etcd集群，在提高存储性能的同时，减少核心主etcd故障因素"><a href="#基于K8s的apiserver各类资源可独立的存储的特性-将event-configmap以及其他核心数据分别使用不同的etcd集群，在提高存储性能的同时，减少核心主etcd故障因素" class="headerlink" title="基于K8s的apiserver各类资源可独立的存储的特性, 将event&#x2F;configmap以及其他核心数据分别使用不同的etcd集群，在提高存储性能的同时，减少核心主etcd故障因素"></a>基于K8s的apiserver各类资源可独立的存储的特性, 将event&#x2F;configmap以及其他核心数据分别使用不同的etcd集群，在提高存储性能的同时，减少核心主etcd故障因素</h5></li>
+<li><h5 id="基于event-admission-webhook对读写event的apiserver请求进行速率控制"><a href="#基于event-admission-webhook对读写event的apiserver请求进行速率控制" class="headerlink" title="基于event admission webhook对读写event的apiserver请求进行速率控制"></a>基于event admission webhook对读写event的apiserver请求进行速率控制</h5></li>
+<li><h5 id="基于不同业务情况，灵活调整event-ttl时间，尽量减少event数"><a href="#基于不同业务情况，灵活调整event-ttl时间，尽量减少event数" class="headerlink" title="基于不同业务情况，灵活调整event-ttl时间，尽量减少event数"></a>基于不同业务情况，灵活调整event-ttl时间，尽量减少event数</h5></li>
+<li><h5 id="基于etcd开发QoS特性，目前也已经向社区提交了初步设计方案，支持基于多种对象类型设置QoS规则（如按grpcMethod、grpcMethod-请求key前缀路径、traffic、cpu-intensive、latency）"><a href="#基于etcd开发QoS特性，目前也已经向社区提交了初步设计方案，支持基于多种对象类型设置QoS规则（如按grpcMethod、grpcMethod-请求key前缀路径、traffic、cpu-intensive、latency）" class="headerlink" title="基于etcd开发QoS特性，目前也已经向社区提交了初步设计方案，支持基于多种对象类型设置QoS规则（如按grpcMethod、grpcMethod+请求key前缀路径、traffic、cpu-intensive、latency）"></a>基于etcd开发QoS特性，目前也已经向社区提交了初步设计方案，支持基于多种对象类型设置QoS规则（如按grpcMethod、grpcMethod+请求key前缀路径、traffic、cpu-intensive、latency）</h5></li>
+<li><h5 id="通过多维度的集群告警（etcd集群lb及节点本身出入流量告警、内存告警、精细化到每个K8s集群的资源容量异常增长告警、集群资源读写QPS异常增长告警）来提前防范、规避可能出现的集群稳定性问题"><a href="#通过多维度的集群告警（etcd集群lb及节点本身出入流量告警、内存告警、精细化到每个K8s集群的资源容量异常增长告警、集群资源读写QPS异常增长告警）来提前防范、规避可能出现的集群稳定性问题" class="headerlink" title="通过多维度的集群告警（etcd集群lb及节点本身出入流量告警、内存告警、精细化到每个K8s集群的资源容量异常增长告警、集群资源读写QPS异常增长告警）来提前防范、规避可能出现的集群稳定性问题"></a>通过多维度的集群告警（etcd集群lb及节点本身出入流量告警、内存告警、精细化到每个K8s集群的资源容量异常增长告警、集群资源读写QPS异常增长告警）来提前防范、规避可能出现的集群稳定性问题</h5></li>
+</ul>
+<h5 id="多维度的集群告警在我们的etcd稳定性保障中发挥了重要作用，多次帮助我们发现用户和我们自身集群组件问题。用户问题如内部某K8s平台之前出现bug-写入大量的集群CRD资源和client读写CRD-QPS明显偏高。我们自身组件问题如某旧日志组件，当集群规模增大后，因日志组件不合理的频繁调用list-Pod，导致etcd集群流量高达3Gbps-同时apiserver本身也出现5XX错误。"><a href="#多维度的集群告警在我们的etcd稳定性保障中发挥了重要作用，多次帮助我们发现用户和我们自身集群组件问题。用户问题如内部某K8s平台之前出现bug-写入大量的集群CRD资源和client读写CRD-QPS明显偏高。我们自身组件问题如某旧日志组件，当集群规模增大后，因日志组件不合理的频繁调用list-Pod，导致etcd集群流量高达3Gbps-同时apiserver本身也出现5XX错误。" class="headerlink" title="多维度的集群告警在我们的etcd稳定性保障中发挥了重要作用，多次帮助我们发现用户和我们自身集群组件问题。用户问题如内部某K8s平台之前出现bug, 写入大量的集群CRD资源和client读写CRD QPS明显偏高。我们自身组件问题如某旧日志组件，当集群规模增大后，因日志组件不合理的频繁调用list Pod，导致etcd集群流量高达3Gbps, 同时apiserver本身也出现5XX错误。"></a><strong>多维度的集群告警在我们的etcd稳定性保障中发挥了重要作用，多次帮助我们发现用户和我们自身集群组件问题。</strong>用户问题如内部某K8s平台之前出现bug, 写入大量的集群CRD资源和client读写CRD QPS明显偏高。我们自身组件问题如某旧日志组件，当集群规模增大后，因日志组件不合理的频繁调用list Pod，导致etcd集群流量高达3Gbps, 同时apiserver本身也出现5XX错误。</h5><h5 id="虽然通过以上措施，我们能极大的减少因expensive-read导致的稳定性问题，然而从线上实践效果看，目前我们仍然比较依赖集群告警帮助我们定位一些异常client调用行为，无法自动化的对异常client的进行精准智能限速-。etcd层因无法区分是哪个client调用，如果在etcd侧限速会误杀正常client的请求-因此依赖apiserver精细化的限速功能实现。社区目前已在1-18中引入了一个-API-Priority-and-Fairness-7-，目前是alpha版本，期待此特性早日稳定。"><a href="#虽然通过以上措施，我们能极大的减少因expensive-read导致的稳定性问题，然而从线上实践效果看，目前我们仍然比较依赖集群告警帮助我们定位一些异常client调用行为，无法自动化的对异常client的进行精准智能限速-。etcd层因无法区分是哪个client调用，如果在etcd侧限速会误杀正常client的请求-因此依赖apiserver精细化的限速功能实现。社区目前已在1-18中引入了一个-API-Priority-and-Fairness-7-，目前是alpha版本，期待此特性早日稳定。" class="headerlink" title="虽然通过以上措施，我们能极大的减少因expensive read导致的稳定性问题，然而从线上实践效果看，目前我们仍然比较依赖集群告警帮助我们定位一些异常client调用行为，无法自动化的对异常client的进行精准智能限速,。etcd层因无法区分是哪个client调用，如果在etcd侧限速会误杀正常client的请求, 因此依赖apiserver精细化的限速功能实现。社区目前已在1.18中引入了一个**API Priority and Fairness[7]**，目前是alpha版本，期待此特性早日稳定。"></a>虽然通过以上措施，我们能极大的减少因expensive read导致的稳定性问题，然而从线上实践效果看，目前我们仍然比较依赖集群告警帮助我们定位一些异常client调用行为，无法自动化的对异常client的进行精准智能限速,。etcd层因无法区分是哪个client调用，如果在etcd侧限速会误杀正常client的请求, 因此依赖apiserver精细化的限速功能实现。社区目前已在1.18中引入了一个**API Priority and Fairness[7]**，目前是alpha版本，期待此特性早日稳定。</h5><h2 id="性能优化案例剖析"><a href="#性能优化案例剖析" class="headerlink" title="性能优化案例剖析"></a>性能优化案例剖析</h2><h5 id="etcd读写性能决定着我们能支撑多大规模的集群、多少client并发调用，启动耗时决定着我们当重启一个节点或因落后leader太多，收到leader的快照重建时，它重新提供服务需要多久？性能优化案例剖析我们将从启动耗时减少一半、密码鉴权性能提升12倍、查询key数量性能提升3倍等来简单介绍下如何对etcd进行性能优化。"><a href="#etcd读写性能决定着我们能支撑多大规模的集群、多少client并发调用，启动耗时决定着我们当重启一个节点或因落后leader太多，收到leader的快照重建时，它重新提供服务需要多久？性能优化案例剖析我们将从启动耗时减少一半、密码鉴权性能提升12倍、查询key数量性能提升3倍等来简单介绍下如何对etcd进行性能优化。" class="headerlink" title="etcd读写性能决定着我们能支撑多大规模的集群、多少client并发调用，启动耗时决定着我们当重启一个节点或因落后leader太多，收到leader的快照重建时，它重新提供服务需要多久？性能优化案例剖析我们将从启动耗时减少一半、密码鉴权性能提升12倍、查询key数量性能提升3倍等来简单介绍下如何对etcd进行性能优化。"></a>etcd读写性能决定着我们能支撑多大规模的集群、多少client并发调用，启动耗时决定着我们当重启一个节点或因落后leader太多，收到leader的快照重建时，它重新提供服务需要多久？<strong>性能优化案例剖析我们将从启动耗时减少一半、密码鉴权性能提升12倍、查询key数量性能提升3倍等来简单介绍下如何对etcd进行性能优化。</strong></h5><h3 id="启动耗时及查询key数量、查询指定记录数性能优化"><a href="#启动耗时及查询key数量、查询指定记录数性能优化" class="headerlink" title="启动耗时及查询key数量、查询指定记录数性能优化"></a><strong>启动耗时及查询key数量、查询指定记录数性能优化</strong></h3><h5 id="当db-size达到4g时，key数量百万级别时，发现重启一个集群耗时竟然高达5分钟-key数量查询也是超时，调整超时时间后，发现高达21秒，内存暴涨6G。同时查询只返回有限的记录数的场景（如业务使用etcd-grpc-proxy来减少watch数-etcd-grpc-proxy在默认创建watch的时候，会发起对watch路径的一次limit读查询），依然耗时很高且有巨大的内存开销。于是周末空闲的时候我对这几个问题进行了深入调查分析，启动耗时到底花在了哪里？是否有优化空间？查询key数量为何如何耗时，内存开销如此之大？"><a href="#当db-size达到4g时，key数量百万级别时，发现重启一个集群耗时竟然高达5分钟-key数量查询也是超时，调整超时时间后，发现高达21秒，内存暴涨6G。同时查询只返回有限的记录数的场景（如业务使用etcd-grpc-proxy来减少watch数-etcd-grpc-proxy在默认创建watch的时候，会发起对watch路径的一次limit读查询），依然耗时很高且有巨大的内存开销。于是周末空闲的时候我对这几个问题进行了深入调查分析，启动耗时到底花在了哪里？是否有优化空间？查询key数量为何如何耗时，内存开销如此之大？" class="headerlink" title="当db size达到4g时，key数量百万级别时，发现重启一个集群耗时竟然高达5分钟, key数量查询也是超时，调整超时时间后，发现高达21秒，内存暴涨6G。同时查询只返回有限的记录数的场景（如业务使用etcd grpc-proxy来减少watch数,etcd grpc proxy在默认创建watch的时候，会发起对watch路径的一次limit读查询），依然耗时很高且有巨大的内存开销。于是周末空闲的时候我对这几个问题进行了深入调查分析，启动耗时到底花在了哪里？是否有优化空间？查询key数量为何如何耗时，内存开销如此之大？"></a>当db size达到4g时，key数量百万级别时，发现重启一个集群耗时竟然高达5分钟, key数量查询也是超时，调整超时时间后，发现高达21秒，内存暴涨6G。同时查询只返回有限的记录数的场景（如业务使用etcd grpc-proxy来减少watch数,etcd grpc proxy在默认创建watch的时候，会发起对watch路径的一次limit读查询），依然耗时很高且有巨大的内存开销。于是周末空闲的时候我对这几个问题进行了深入调查分析，启动耗时到底花在了哪里？是否有优化空间？查询key数量为何如何耗时，内存开销如此之大？</h5><h5 id="带着这些问题对源码进行了深入分析和定位，首先来看查询key数和查询只返回指定记录数的耗时和内存开销极大的问题，分析结论如下："><a href="#带着这些问题对源码进行了深入分析和定位，首先来看查询key数和查询只返回指定记录数的耗时和内存开销极大的问题，分析结论如下：" class="headerlink" title="带着这些问题对源码进行了深入分析和定位，首先来看查询key数和查询只返回指定记录数的耗时和内存开销极大的问题，分析结论如下："></a>带着这些问题对源码进行了深入分析和定位，首先来看查询key数和查询只返回指定记录数的耗时和内存开销极大的问题，分析结论如下：</h5><ul>
+<li><h5 id="查询key数量时etcd之前实现是遍历整个内存btree-把key对应的revision存放在slice数组里面"><a href="#查询key数量时etcd之前实现是遍历整个内存btree-把key对应的revision存放在slice数组里面" class="headerlink" title="查询key数量时etcd之前实现是遍历整个内存btree,把key对应的revision存放在slice数组里面"></a>查询key数量时etcd之前实现是遍历整个内存btree,把key对应的revision存放在slice数组里面</h5></li>
+<li><h5 id="问题就在于key数量较多时，slice扩容涉及到数据拷贝，以及slice也需要大量的内存开销"><a href="#问题就在于key数量较多时，slice扩容涉及到数据拷贝，以及slice也需要大量的内存开销" class="headerlink" title="问题就在于key数量较多时，slice扩容涉及到数据拷贝，以及slice也需要大量的内存开销"></a>问题就在于key数量较多时，slice扩容涉及到数据拷贝，以及slice也需要大量的内存开销</h5></li>
+<li><h5 id="因此优化方案是新增一个CountRevision来统计key的数量即可，不需要使用slice，此方案优化后性能从21s降低到了7s-同时无任何内存开销"><a href="#因此优化方案是新增一个CountRevision来统计key的数量即可，不需要使用slice，此方案优化后性能从21s降低到了7s-同时无任何内存开销" class="headerlink" title="因此优化方案是新增一个CountRevision来统计key的数量即可，不需要使用slice，此方案优化后性能从21s降低到了7s,同时无任何内存开销"></a>因此优化方案是新增一个CountRevision来统计key的数量即可，不需要使用slice，此方案优化后性能从21s降低到了7s,同时无任何内存开销</h5></li>
+<li><h5 id="对于查询指定记录数据耗时和内存开销非常大的问题，通过分析发现是limit记录数并未下推到索引层，通过将查询limit参数下推到索引层，大数据场景下limit查询性能提升百倍，同时无额外的内存开销。"><a href="#对于查询指定记录数据耗时和内存开销非常大的问题，通过分析发现是limit记录数并未下推到索引层，通过将查询limit参数下推到索引层，大数据场景下limit查询性能提升百倍，同时无额外的内存开销。" class="headerlink" title="对于查询指定记录数据耗时和内存开销非常大的问题，通过分析发现是limit记录数并未下推到索引层，通过将查询limit参数下推到索引层，大数据场景下limit查询性能提升百倍，同时无额外的内存开销。"></a>对于查询指定记录数据耗时和内存开销非常大的问题，通过分析发现是limit记录数并未下推到索引层，<strong>通过将查询limit参数下推到索引层，大数据场景下limit查询性能提升百倍，同时无额外的内存开销。</strong></h5></li>
+</ul>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011121460.png" srcset="/img/loading.gif" lazyload alt="image-20240301112118393"></p>
+<h5 id="再看启动耗时问题过高的问题，通过对启动耗时各阶段增加日志，得到以下结论："><a href="#再看启动耗时问题过高的问题，通过对启动耗时各阶段增加日志，得到以下结论：" class="headerlink" title="再看启动耗时问题过高的问题，通过对启动耗时各阶段增加日志，得到以下结论："></a>再看启动耗时问题过高的问题，通过对启动耗时各阶段增加日志，得到以下结论：</h5><ul>
+<li><p><strong>启动的时候机器上的cpu资源etcd进程未能充分利用</strong></p>
+</li>
+<li><h5 id="9-耗时在打开后端db时，如将整个db文件mmap到内存"><a href="#9-耗时在打开后端db时，如将整个db文件mmap到内存" class="headerlink" title="9%耗时在打开后端db时，如将整个db文件mmap到内存"></a><strong>9%耗时在打开后端db时</strong>，如将整个db文件mmap到内存</h5></li>
+<li><h5 id="91-耗时在重建内存索引btree上。当etcd收到一个请求Get-Key时，请求被层层传递到了mvcc层后，它首先需要从内存索引btree中查找key对应的版本号，随后从boltdb里面根据版本号查出对应的value-然后返回给client-重建内存索引btree数的时候，恰恰是相反的流程，遍历boltdb-从版本号0到最大版本号不断遍历，从value里面解析出对应的key、revision等信息，重建btree，因为这个是个串行操作，所以操作及其耗时"><a href="#91-耗时在重建内存索引btree上。当etcd收到一个请求Get-Key时，请求被层层传递到了mvcc层后，它首先需要从内存索引btree中查找key对应的版本号，随后从boltdb里面根据版本号查出对应的value-然后返回给client-重建内存索引btree数的时候，恰恰是相反的流程，遍历boltdb-从版本号0到最大版本号不断遍历，从value里面解析出对应的key、revision等信息，重建btree，因为这个是个串行操作，所以操作及其耗时" class="headerlink" title="91%耗时在重建内存索引btree上。当etcd收到一个请求Get Key时，请求被层层传递到了mvcc层后，它首先需要从内存索引btree中查找key对应的版本号，随后从boltdb里面根据版本号查出对应的value, 然后返回给client. 重建内存索引btree数的时候，恰恰是相反的流程，遍历boltdb,从版本号0到最大版本号不断遍历，从value里面解析出对应的key、revision等信息，重建btree，因为这个是个串行操作，所以操作及其耗时"></a><strong>91%耗时在重建内存索引btree上。</strong>当etcd收到一个请求Get Key时，请求被层层传递到了mvcc层后，它首先需要从内存索引btree中查找key对应的版本号，随后从boltdb里面根据版本号查出对应的value, 然后返回给client. 重建内存索引btree数的时候，恰恰是相反的流程，遍历boltdb,从版本号0到最大版本号不断遍历，从value里面解析出对应的key、revision等信息，重建btree，因为这个是个串行操作，所以操作及其耗时</h5></li>
+<li><h5 id="尝试将串行构建btree优化成高并发构建，尽量把所有核计算力利用起来，编译新版本测试后发现效果甚微，于是编译新版本打印重建内存索引各阶段的详细耗时分析，结果发现瓶颈在内存btree的插入上，而这个插入拥有一个全局锁，因此几乎无优化空间"><a href="#尝试将串行构建btree优化成高并发构建，尽量把所有核计算力利用起来，编译新版本测试后发现效果甚微，于是编译新版本打印重建内存索引各阶段的详细耗时分析，结果发现瓶颈在内存btree的插入上，而这个插入拥有一个全局锁，因此几乎无优化空间" class="headerlink" title="尝试将串行构建btree优化成高并发构建，尽量把所有核计算力利用起来，编译新版本测试后发现效果甚微，于是编译新版本打印重建内存索引各阶段的详细耗时分析，结果发现瓶颈在内存btree的插入上，而这个插入拥有一个全局锁，因此几乎无优化空间"></a><strong>尝试将串行构建btree优化成高并发构建，尽量把所有核计算力利用起来</strong>，编译新版本测试后发现效果甚微，于是编译新版本打印重建内存索引各阶段的详细耗时分析，结果发现瓶颈在内存btree的插入上，而这个插入拥有一个全局锁，因此几乎无优化空间</h5></li>
+<li><h5 id="继续分析91-耗时发现重建内存索引竟然被调用了两次，第一处是为了获取一个mvcc的关键的consistent-index变量，它是用来保证etcd命令不会被重复执行的关键数据结构，而我们前面提到的一个数据不一致bug恰好也是跟consistent-index有密切关系。"><a href="#继续分析91-耗时发现重建内存索引竟然被调用了两次，第一处是为了获取一个mvcc的关键的consistent-index变量，它是用来保证etcd命令不会被重复执行的关键数据结构，而我们前面提到的一个数据不一致bug恰好也是跟consistent-index有密切关系。" class="headerlink" title="继续分析91%耗时发现重建内存索引竟然被调用了两次，第一处是为了获取一个mvcc的关键的consistent index变量，它是用来保证etcd命令不会被重复执行的关键数据结构，而我们前面提到的一个数据不一致bug恰好也是跟consistent index有密切关系。"></a><strong>继续分析91%耗时发现重建内存索引竟然被调用了两次</strong>，第一处是为了获取一个mvcc的关键的consistent index变量，它是用来保证etcd命令不会被重复执行的关键数据结构，而我们前面提到的一个数据不一致bug恰好也是跟consistent index有密切关系。</h5></li>
+<li><h5 id="consistent-index实现不合理，封装在mvcc层，因此我前面提了一个pr将此特性重构，做为了一个独立的包，提供各类方法给etcdserver、mvcc、auth、lease等模块调用。"><a href="#consistent-index实现不合理，封装在mvcc层，因此我前面提了一个pr将此特性重构，做为了一个独立的包，提供各类方法给etcdserver、mvcc、auth、lease等模块调用。" class="headerlink" title="consistent index实现不合理，封装在mvcc层，因此我前面提了一个pr将此特性重构，做为了一个独立的包，提供各类方法给etcdserver、mvcc、auth、lease等模块调用。"></a><strong>consistent index实现不合理，封装在mvcc层</strong>，因此我前面提了一个pr将此特性重构，做为了一个独立的包，提供各类方法给etcdserver、mvcc、auth、lease等模块调用。</h5></li>
+<li><h5 id="特性重构后的consistent-index在启动的时候就不再需要通过重建内存索引数等逻辑来获取了，优化成调用cindex包的方法快速获取到consistent-index，就将整个耗时从5min从缩短到2分30秒左右。因此优化同时依赖的consistent-index特性重构，改动较大暂未backport到3-4-3-3分支，在未来3-5版本中、数据量较大时可以享受到启动耗时的显著提升。"><a href="#特性重构后的consistent-index在启动的时候就不再需要通过重建内存索引数等逻辑来获取了，优化成调用cindex包的方法快速获取到consistent-index，就将整个耗时从5min从缩短到2分30秒左右。因此优化同时依赖的consistent-index特性重构，改动较大暂未backport到3-4-3-3分支，在未来3-5版本中、数据量较大时可以享受到启动耗时的显著提升。" class="headerlink" title="特性重构后的consistent index在启动的时候就不再需要通过重建内存索引数等逻辑来获取了，优化成调用cindex包的方法快速获取到consistent index，就将整个耗时从5min从缩短到2分30秒左右。因此优化同时依赖的consistent index特性重构，改动较大暂未backport到3.4&#x2F;3.3分支，在未来3.5版本中、数据量较大时可以享受到启动耗时的显著提升。"></a>特性重构后的consistent index在启动的时候就不再需要通过重建内存索引数等逻辑来获取了，优化成调用cindex包的方法快速获取到consistent index，就将整个耗时从5min从缩短到2分30秒左右。因此优化同时依赖的consistent index特性重构，改动较大暂未backport到3.4&#x2F;3.3分支，在未来3.5版本中、数据量较大时可以享受到启动耗时的显著提升。</h5></li>
+</ul>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011121867.png" srcset="/img/loading.gif" lazyload alt="image-20240301112139797"></p>
+<h3 id="密码鉴权性能提升12倍"><a href="#密码鉴权性能提升12倍" class="headerlink" title="密码鉴权性能提升12倍"></a><strong>密码鉴权性能提升12倍</strong></h3><h5 id="某内部业务服务一直跑的好好的，某天client略微增多后，突然现网etcd集群出现大量超时，各种折腾，切换云盘类型、切换部署环境、调整参数都不发挥作用，收到求助后，索要metrics和日志后，经过一番排查后，得到以下结论"><a href="#某内部业务服务一直跑的好好的，某天client略微增多后，突然现网etcd集群出现大量超时，各种折腾，切换云盘类型、切换部署环境、调整参数都不发挥作用，收到求助后，索要metrics和日志后，经过一番排查后，得到以下结论" class="headerlink" title="某内部业务服务一直跑的好好的，某天client略微增多后，突然现网etcd集群出现大量超时，各种折腾，切换云盘类型、切换部署环境、调整参数都不发挥作用，收到求助后，索要metrics和日志后，经过一番排查后，得到以下结论:"></a>某内部业务服务一直跑的好好的，某天client略微增多后，突然现网etcd集群出现大量超时，各种折腾，切换云盘类型、切换部署环境、调整参数都不发挥作用，收到求助后，索要metrics和日志后，经过一番排查后，得到以下结论:</h5><ul>
+<li><h5 id="现象的确很诡异，db延时相关指标显示没任何异常-日志无任何有效信息"><a href="#现象的确很诡异，db延时相关指标显示没任何异常-日志无任何有效信息" class="headerlink" title="现象的确很诡异，db延时相关指标显示没任何异常,日志无任何有效信息"></a>现象的确很诡异，db延时相关指标显示没任何异常,日志无任何有效信息</h5></li>
+<li><h5 id="业务反馈大量读请求超时，甚至可以通过etcdctl客户端工具简单复现，可是metric对应的读请求相关指标数竟然是0"><a href="#业务反馈大量读请求超时，甚至可以通过etcdctl客户端工具简单复现，可是metric对应的读请求相关指标数竟然是0" class="headerlink" title="业务反馈大量读请求超时，甚至可以通过etcdctl客户端工具简单复现，可是metric对应的读请求相关指标数竟然是0"></a>业务反馈大量读请求超时，甚至可以通过etcdctl客户端工具简单复现，可是metric对应的读请求相关指标数竟然是0</h5></li>
+<li><h5 id="引导用户开启trace日志和metrics开启extensive模式，开启后发现无任何trace日志，然而开启extensive后，我发现耗时竟然全部花在了Authenticate接口，业务反馈是通过密码鉴权，而不是基于证书的鉴权"><a href="#引导用户开启trace日志和metrics开启extensive模式，开启后发现无任何trace日志，然而开启extensive后，我发现耗时竟然全部花在了Authenticate接口，业务反馈是通过密码鉴权，而不是基于证书的鉴权" class="headerlink" title="引导用户开启trace日志和metrics开启extensive模式，开启后发现无任何trace日志，然而开启extensive后，我发现耗时竟然全部花在了Authenticate接口，业务反馈是通过密码鉴权，而不是基于证书的鉴权"></a>引导用户开启trace日志和metrics开启extensive模式，开启后发现无任何trace日志，然而开启extensive后，我发现耗时竟然全部花在了Authenticate接口，业务反馈是通过密码鉴权，而不是基于证书的鉴权</h5></li>
+<li><h5 id="尝试让业务同学短暂关闭鉴权测试业务是否恢复，业务同学找了一个节点关闭鉴权后，此节点立刻恢复了正常，于是选择临时通过关闭鉴权来恢复现网业务"><a href="#尝试让业务同学短暂关闭鉴权测试业务是否恢复，业务同学找了一个节点关闭鉴权后，此节点立刻恢复了正常，于是选择临时通过关闭鉴权来恢复现网业务" class="headerlink" title="尝试让业务同学短暂关闭鉴权测试业务是否恢复，业务同学找了一个节点关闭鉴权后，此节点立刻恢复了正常，于是选择临时通过关闭鉴权来恢复现网业务"></a>尝试让业务同学短暂关闭鉴权测试业务是否恢复，业务同学找了一个节点关闭鉴权后，此节点立刻恢复了正常，于是选择临时通过关闭鉴权来恢复现网业务</h5></li>
+<li><h5 id="那鉴权为什么耗时这么慢？我们对可疑之处增加了日志，打印了鉴权各个步骤的耗时，结果发现是在等待锁的过程中出现了超时，而这个锁为什么耗时这么久呢？排查发现是因为加锁过程中会调用bcrpt加密函数计算密码hash值，每次耗费60ms左右，数百并发下等待此锁的最高耗时高达5s-。"><a href="#那鉴权为什么耗时这么慢？我们对可疑之处增加了日志，打印了鉴权各个步骤的耗时，结果发现是在等待锁的过程中出现了超时，而这个锁为什么耗时这么久呢？排查发现是因为加锁过程中会调用bcrpt加密函数计算密码hash值，每次耗费60ms左右，数百并发下等待此锁的最高耗时高达5s-。" class="headerlink" title="那鉴权为什么耗时这么慢？我们对可疑之处增加了日志，打印了鉴权各个步骤的耗时，结果发现是在等待锁的过程中出现了超时，而这个锁为什么耗时这么久呢？排查发现是因为加锁过程中会调用bcrpt加密函数计算密码hash值，每次耗费60ms左右，数百并发下等待此锁的最高耗时高达5s+。"></a>那鉴权为什么耗时这么慢？我们对可疑之处增加了日志，打印了鉴权各个步骤的耗时，结果发现是在等待锁的过程中出现了超时，而这个锁为什么耗时这么久呢？排查发现是因为加锁过程中会调用bcrpt加密函数计算密码hash值，每次耗费60ms左右，数百并发下等待此锁的最高耗时高达5s+。</h5></li>
+<li><h5 id="于是我们编写新版本将锁的范围减少，降低持锁阻塞时间，用户使用新版本后，开启鉴权后，业务不再超时，恢复正常。"><a href="#于是我们编写新版本将锁的范围减少，降低持锁阻塞时间，用户使用新版本后，开启鉴权后，业务不再超时，恢复正常。" class="headerlink" title="于是我们编写新版本将锁的范围减少，降低持锁阻塞时间，用户使用新版本后，开启鉴权后，业务不再超时，恢复正常。"></a>于是我们编写新版本将锁的范围减少，降低持锁阻塞时间，用户使用新版本后，开启鉴权后，业务不再超时，恢复正常。</h5></li>
+<li><h5 id="随后我们将修复方案提交给了社区，并编写了压测工具，测试提升后的性能高达近12倍（8核32G机器，从18-s提升到202-s），但是依然是比较慢，主要是鉴权过程中涉及密码校验计算-社区上也有用户反馈密码鉴权慢问题-目前最新的v3-4-9版本已经包含此优化-同时可以通过调整bcrpt-cost参数来进一步提升性能。"><a href="#随后我们将修复方案提交给了社区，并编写了压测工具，测试提升后的性能高达近12倍（8核32G机器，从18-s提升到202-s），但是依然是比较慢，主要是鉴权过程中涉及密码校验计算-社区上也有用户反馈密码鉴权慢问题-目前最新的v3-4-9版本已经包含此优化-同时可以通过调整bcrpt-cost参数来进一步提升性能。" class="headerlink" title="随后我们将修复方案提交给了社区，并编写了压测工具，测试提升后的性能高达近12倍（8核32G机器，从18&#x2F;s提升到202&#x2F;s），但是依然是比较慢，主要是鉴权过程中涉及密码校验计算, 社区上也有用户反馈密码鉴权慢问题, 目前最新的v3.4.9版本已经包含此优化, 同时可以通过调整bcrpt-cost参数来进一步提升性能。"></a>随后我们将修复方案提交给了社区，并编写了压测工具，测试提升后的性能高达近12倍（8核32G机器，从18&#x2F;s提升到202&#x2F;s），但是依然是比较慢，主要是鉴权过程中涉及密码校验计算, 社区上也有用户反馈密码鉴权慢问题, 目前最新的v3.4.9版本已经包含此优化, 同时可以通过调整bcrpt-cost参数来进一步提升性能。</h5></li>
+</ul>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011122488.png" srcset="/img/loading.gif" lazyload alt="image-20240301112202437"></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><h5 id="本文简单描述了我们在管理万级K8s集群和其他业务过程中遇到的etcd稳定性和性能挑战，以及我们是如何定位、分析、复现、解决这些挑战，并将解决方案贡献给社区。"><a href="#本文简单描述了我们在管理万级K8s集群和其他业务过程中遇到的etcd稳定性和性能挑战，以及我们是如何定位、分析、复现、解决这些挑战，并将解决方案贡献给社区。" class="headerlink" title="本文简单描述了我们在管理万级K8s集群和其他业务过程中遇到的etcd稳定性和性能挑战，以及我们是如何定位、分析、复现、解决这些挑战，并将解决方案贡献给社区。"></a>本文简单描述了我们在管理万级K8s集群和其他业务过程中遇到的etcd稳定性和性能挑战，以及我们是如何定位、分析、复现、解决这些挑战，并将解决方案贡献给社区。</h5><h5 id="同时，详细描述了我们从这些挑战中收获了哪些宝贵的经验和教训，并将之应用到后续的etcd稳定性保障中，以支持更大规模的单集群和总集群数。"><a href="#同时，详细描述了我们从这些挑战中收获了哪些宝贵的经验和教训，并将之应用到后续的etcd稳定性保障中，以支持更大规模的单集群和总集群数。" class="headerlink" title="同时，详细描述了我们从这些挑战中收获了哪些宝贵的经验和教训，并将之应用到后续的etcd稳定性保障中，以支持更大规模的单集群和总集群数。"></a>同时，详细描述了我们从这些挑战中收获了哪些宝贵的经验和教训，并将之应用到后续的etcd稳定性保障中，以支持更大规模的单集群和总集群数。</h5><p>最后我们<strong>面对万级K8s集群数, 千级的etcd集群数, 10几个版本分布，其中不少低版本包含重要的潜在可能触发的严重bug, 我们还需要投入大量工作不断优化我们的etcd平台</strong>，使其更智能、变更更加高效、安全、可控（如支持自动化、可控的集群升级等）, 同时数据安全也至关重要，<strong>目前腾讯云TKE托管集群我们已经全面备份，独立集群的用户后续将引导通过应用市场的etcd备份插件开启定时备份到腾讯云对象存储COS上。</strong></p>
+<p>未来我们将继续紧密融入etcd的社区，为etcd社区的发展贡献我们的力量，与社区一块提升etcd的各个功能。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>ETCD稳定性及性能优化实践 2024-04-03 15:06:31.141</div>
+      <div>http://example.com/2025/01/16/ETCD稳定性及性能优化实践-etcd-wen-ding-xing-ji-xing-neng-you-hua-shi-jian/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/ETCD%E5%A4%87%E4%BB%BD-etcd-bei-fen/" title="ETCD备份 2024-04-03">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">ETCD备份 2024-04-03</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/EX-LB%20%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E9%83%A8%E7%BD%B2-ex-lb-fu-zai-jun-heng-bu-shu/" title="EX-LB 负载均衡部署 2023-09-28 15:28:51.998">
+                        <span class="hidden-mobile">EX-LB 负载均衡部署 2023-09-28 15:28:51.998</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

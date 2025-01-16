@@ -1,0 +1,829 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="近几年，企业基础设施云原生化的趋势越来越强烈，从最开始的 IaaS 化到现在的微服务化，客户的颗粒度精细化和可观测性的需求更加强烈。容器网络为了满足客户更高性能和更高的密度，也一直在高速的发展和演进中，这必然对客户对云原生网络的可观测性带来了极高的门槛和挑战。为了提高云原生网络的可观测性，同时便于客户和前后线同学增加对业务链路的可读性，ACK 产研和 AES 联合共建，合作开发 ack net-e">
+<meta property="og:type" content="article">
+<meta property="og:title" content="flanel网络 2024-04-03 15:05:04.16">
+<meta property="og:url" content="http://example.com/2025/01/16/flanel%E7%BD%91%E7%BB%9C-flanel-wang-luo/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="近几年，企业基础设施云原生化的趋势越来越强烈，从最开始的 IaaS 化到现在的微服务化，客户的颗粒度精细化和可观测性的需求更加强烈。容器网络为了满足客户更高性能和更高的密度，也一直在高速的发展和演进中，这必然对客户对云原生网络的可观测性带来了极高的门槛和挑战。为了提高云原生网络的可观测性，同时便于客户和前后线同学增加对业务链路的可读性，ACK 产研和 AES 联合共建，合作开发 ack net-e">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011511760.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011511274.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011512324.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011512301.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011512153.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011512180.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011513030.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011514257.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011514478.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011515116.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011515312.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011515676.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011516768.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011519087.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011519639.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011520328.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011520901.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011520693.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011521784.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011521028.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011521876.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011522526.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011522824.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011523784.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011523677.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011523137.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011523245.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011524033.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011524093.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011524851.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011525746.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011525687.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011525543.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011526669.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011526633.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011526371.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011527554.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011527441.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011527553.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011528131.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011528457.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011528878.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011529547.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011529583.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011529160.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011530863.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011530947.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011531871.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011531986.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011531372.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.069Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:18.903Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011511760.png">
+  
+  
+  
+  <title>flanel网络 2024-04-03 15:05:04.16 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="flanel网络 2024-04-03 15:05:04.16"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          38 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">flanel网络 2024-04-03 15:05:04.16</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h5 id="近几年，企业基础设施云原生化的趋势越来越强烈，从最开始的-IaaS-化到现在的微服务化，客户的颗粒度精细化和可观测性的需求更加强烈。容器网络为了满足客户更高性能和更高的密度，也一直在高速的发展和演进中，这必然对客户对云原生网络的可观测性带来了极高的门槛和挑战。为了提高云原生网络的可观测性，同时便于客户和前后线同学增加对业务链路的可读性，ACK-产研和-AES-联合共建，合作开发-ack-net-exporter-和云原生网络数据面可观测性系列，帮助客户和前后线同学了解云原生网络架构体系，简化对云原生网络的可观测性的门槛，优化客户运维和售后同学处理疑难问题的体验-，提高云原生网络的链路的稳定性。"><a href="#近几年，企业基础设施云原生化的趋势越来越强烈，从最开始的-IaaS-化到现在的微服务化，客户的颗粒度精细化和可观测性的需求更加强烈。容器网络为了满足客户更高性能和更高的密度，也一直在高速的发展和演进中，这必然对客户对云原生网络的可观测性带来了极高的门槛和挑战。为了提高云原生网络的可观测性，同时便于客户和前后线同学增加对业务链路的可读性，ACK-产研和-AES-联合共建，合作开发-ack-net-exporter-和云原生网络数据面可观测性系列，帮助客户和前后线同学了解云原生网络架构体系，简化对云原生网络的可观测性的门槛，优化客户运维和售后同学处理疑难问题的体验-，提高云原生网络的链路的稳定性。" class="headerlink" title="近几年，企业基础设施云原生化的趋势越来越强烈，从最开始的 IaaS 化到现在的微服务化，客户的颗粒度精细化和可观测性的需求更加强烈。容器网络为了满足客户更高性能和更高的密度，也一直在高速的发展和演进中，这必然对客户对云原生网络的可观测性带来了极高的门槛和挑战。为了提高云原生网络的可观测性，同时便于客户和前后线同学增加对业务链路的可读性，ACK 产研和 AES 联合共建，合作开发 ack net-exporter 和云原生网络数据面可观测性系列，帮助客户和前后线同学了解云原生网络架构体系，简化对云原生网络的可观测性的门槛，优化客户运维和售后同学处理疑难问题的体验 ，提高云原生网络的链路的稳定性。"></a>近几年，企业基础设施云原生化的趋势越来越强烈，从最开始的 IaaS 化到现在的微服务化，客户的颗粒度精细化和可观测性的需求更加强烈。容器网络为了满足客户更高性能和更高的密度，也一直在高速的发展和演进中，这必然对客户对云原生网络的可观测性带来了极高的门槛和挑战。为了提高云原生网络的可观测性，同时便于客户和前后线同学增加对业务链路的可读性，ACK 产研和 AES 联合共建，合作开发 ack net-exporter 和云原生网络数据面可观测性系列，帮助客户和前后线同学了解云原生网络架构体系，简化对云原生网络的可观测性的门槛，优化客户运维和售后同学处理疑难问题的体验 ，提高云原生网络的链路的稳定性。</h5><h5 id="鸟瞰容器网络，整个容器网络可以分为三个部分：Pod-网段，Service-网段和-Node-网段。这三个网络要实现互联互通和访问控制，那么实现的技术原理是什么？整个链路又是什么，限制又是什么呢？Flannel，-Terway-有啥区别？不同模式下网络性能如何？这些，需要客户在下搭建容器之前，就要依据自己的业务场景进行选择，而搭建完毕后，相关的架构又是无法转变，所以客户需要对每种架构特点要有充分了解。比如下图是个简图，Pod-网络既要实现同一个ECS的Pod间的网络互通和控制，又要实现不同-ECS-Pod-间的访问，-Pod-访问-SVC-的后端可能在同一个-ECS-也可能是其他-ECS，这些在不同模式下，数据链转发模式是不同的，从业务侧表现结果也是不一样的。"><a href="#鸟瞰容器网络，整个容器网络可以分为三个部分：Pod-网段，Service-网段和-Node-网段。这三个网络要实现互联互通和访问控制，那么实现的技术原理是什么？整个链路又是什么，限制又是什么呢？Flannel，-Terway-有啥区别？不同模式下网络性能如何？这些，需要客户在下搭建容器之前，就要依据自己的业务场景进行选择，而搭建完毕后，相关的架构又是无法转变，所以客户需要对每种架构特点要有充分了解。比如下图是个简图，Pod-网络既要实现同一个ECS的Pod间的网络互通和控制，又要实现不同-ECS-Pod-间的访问，-Pod-访问-SVC-的后端可能在同一个-ECS-也可能是其他-ECS，这些在不同模式下，数据链转发模式是不同的，从业务侧表现结果也是不一样的。" class="headerlink" title="鸟瞰容器网络，整个容器网络可以分为三个部分：Pod 网段，Service 网段和 Node 网段。这三个网络要实现互联互通和访问控制，那么实现的技术原理是什么？整个链路又是什么，限制又是什么呢？Flannel， Terway 有啥区别？不同模式下网络性能如何？这些，需要客户在下搭建容器之前，就要依据自己的业务场景进行选择，而搭建完毕后，相关的架构又是无法转变，所以客户需要对每种架构特点要有充分了解。比如下图是个简图，Pod 网络既要实现同一个ECS的Pod间的网络互通和控制，又要实现不同 ECS Pod 间的访问， Pod 访问 SVC 的后端可能在同一个 ECS 也可能是其他 ECS，这些在不同模式下，数据链转发模式是不同的，从业务侧表现结果也是不一样的。"></a>鸟瞰容器网络，整个容器网络可以分为三个部分：Pod 网段，Service 网段和 Node 网段。这三个网络要实现互联互通和访问控制，那么实现的技术原理是什么？整个链路又是什么，限制又是什么呢？Flannel， Terway 有啥区别？不同模式下网络性能如何？这些，需要客户在下搭建容器之前，就要依据自己的业务场景进行选择，而搭建完毕后，相关的架构又是无法转变，所以客户需要对每种架构特点要有充分了解。比如下图是个简图，Pod 网络既要实现同一个ECS的Pod间的网络互通和控制，又要实现不同 ECS Pod 间的访问， Pod 访问 SVC 的后端可能在同一个 ECS 也可能是其他 ECS，这些在不同模式下，数据链转发模式是不同的，从业务侧表现结果也是不一样的。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011511760.png" srcset="/img/loading.gif" lazyload alt="image-20240301151100557"></p>
+<h5 id="本文是-全景剖析容器网络数据链路-第一部分，主要介绍-Kubernetes-Flannel-模式下，数据面链路的转转发链路，一是通过了解不同场景下的数据面转发链路，从而探知客户在不同的场景下访问结果表现的原因，帮助客户进一步优化业务架构；另一方面，通过深入了解转发链路，从而在遇到容器网络抖动时候，客户运维以及阿里云同学可以知道在哪些链路点进行部署观测手动，从而进一步定界问题方向和原因。"><a href="#本文是-全景剖析容器网络数据链路-第一部分，主要介绍-Kubernetes-Flannel-模式下，数据面链路的转转发链路，一是通过了解不同场景下的数据面转发链路，从而探知客户在不同的场景下访问结果表现的原因，帮助客户进一步优化业务架构；另一方面，通过深入了解转发链路，从而在遇到容器网络抖动时候，客户运维以及阿里云同学可以知道在哪些链路点进行部署观测手动，从而进一步定界问题方向和原因。" class="headerlink" title="本文是[全景剖析容器网络数据链路]第一部分，主要介绍 Kubernetes Flannel 模式下，数据面链路的转转发链路，一是通过了解不同场景下的数据面转发链路，从而探知客户在不同的场景下访问结果表现的原因，帮助客户进一步优化业务架构；另一方面，通过深入了解转发链路，从而在遇到容器网络抖动时候，客户运维以及阿里云同学可以知道在哪些链路点进行部署观测手动，从而进一步定界问题方向和原因。"></a>本文是[全景剖析容器网络数据链路]第一部分，主要介绍 Kubernetes Flannel 模式下，数据面链路的转转发链路，一是通过了解不同场景下的数据面转发链路，从而探知客户在不同的场景下访问结果表现的原因，帮助客户进一步优化业务架构；另一方面，通过深入了解转发链路，从而在遇到容器网络抖动时候，客户运维以及阿里云同学可以知道在哪些链路点进行部署观测手动，从而进一步定界问题方向和原因。</h5><p>系列二：</p>
+<p>全景剖析阿里云容器网络数据链路（二）：Terway ENI</p>
+<p>系列三：</p>
+<p>全景剖析阿里云容器网络数据链路（三）：Terway ENIIP</p>
+<p>系列四：</p>
+<p>全景剖析阿里云容器网络数据链路（四）：Terway IPVLAN+EBPF</p>
+<p>系列五：</p>
+<p>全景剖析阿里云容器网络数据链路（五）：Terway ENI-Trunking</p>
+<p>系列六：</p>
+<p>全景剖析阿里云容器网络数据链路（六）：ASM Istio</p>
+<p><em><strong>01</strong></em></p>
+<p><strong>Flannel 模式架构设计</strong></p>
+<p>Flannel 模式下，ECS 只有一个主网卡 ENI，无其他附属网卡，ECS 和节点上的 Pod 与外部通信都需要通过主网卡进行。ACK Flannel 会在每个节点创建 cni0 虚拟网卡作为 Pod 网络和 ECS 的主网卡 eth0 之间的桥梁。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011511274.png" srcset="/img/loading.gif" lazyload alt="image-20240301151139161"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011512324.png" srcset="/img/loading.gif" lazyload alt="image-20240301151209218"></p>
+<p>集群的每个节点会起一个 flannel agent，并且会给每个节点预分配一个 Pod CIDR，这个 Pod CIDR 是ACK集群的 Pod CIDR 的子集。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011512301.png" srcset="/img/loading.gif" lazyload alt="image-20240301151221222"></p>
+<h5 id="容器的网络命名空间内会有一个-eth0-的虚拟网卡，同时存在下一跳指向该网卡的路由，该网卡会作为容器和宿主内核进行数据交换的出入口。容器和宿主机之间的数据链路是通过-veth-pair-进行交换的，现在我们已经找到-veth-pair-其中一个，如何去找另一个-veth-呢？"><a href="#容器的网络命名空间内会有一个-eth0-的虚拟网卡，同时存在下一跳指向该网卡的路由，该网卡会作为容器和宿主内核进行数据交换的出入口。容器和宿主机之间的数据链路是通过-veth-pair-进行交换的，现在我们已经找到-veth-pair-其中一个，如何去找另一个-veth-呢？" class="headerlink" title="容器的网络命名空间内会有一个 eth0 的虚拟网卡，同时存在下一跳指向该网卡的路由，该网卡会作为容器和宿主内核进行数据交换的出入口。容器和宿主机之间的数据链路是通过 veth pair 进行交换的，现在我们已经找到 veth pair 其中一个，如何去找另一个 veth 呢？"></a>容器的网络命名空间内会有一个 eth0 的虚拟网卡，同时存在下一跳指向该网卡的路由，该网卡会作为容器和宿主内核进行数据交换的出入口。容器和宿主机之间的数据链路是通过 veth pair 进行交换的，现在我们已经找到 veth pair 其中一个，如何去找另一个 veth 呢？</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011512153.png" srcset="/img/loading.gif" lazyload alt="image-20240301151233081"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011512180.png" srcset="/img/loading.gif" lazyload alt="image-20240301151249111"></p>
+<h5 id="如上图所示，我们可以容器的网络命名空间中通过-p-addr-看到一个-eth0-if81-的标志位，其中-‘81’-这个将会协助我们在-ECS-的-OS-内找到找到和容器网络命名空间中的-veth-pair-相对一个。在-ECS-OS-内我们通过-ip-addr-grep-81-可以找到-vethd7e7c6fd-这个虚拟网卡，这个就是-veth-pair-在-ECS-OS-侧相对的那一个。"><a href="#如上图所示，我们可以容器的网络命名空间中通过-p-addr-看到一个-eth0-if81-的标志位，其中-‘81’-这个将会协助我们在-ECS-的-OS-内找到找到和容器网络命名空间中的-veth-pair-相对一个。在-ECS-OS-内我们通过-ip-addr-grep-81-可以找到-vethd7e7c6fd-这个虚拟网卡，这个就是-veth-pair-在-ECS-OS-侧相对的那一个。" class="headerlink" title="如上图所示，我们可以容器的网络命名空间中通过 p addr 看到一个 eth0@if81 的标志位，其中 ‘81’ 这个将会协助我们在 ECS 的 OS 内找到找到和容器网络命名空间中的 veth pair 相对一个。在 ECS OS 内我们通过 ip addr | grep 81: 可以找到 vethd7e7c6fd 这个虚拟网卡，这个就是 veth pair 在 ECS OS 侧相对的那一个。"></a>如上图所示，我们可以容器的网络命名空间中通过 p addr 看到一个 eth0@if81 的标志位，其中 ‘81’ 这个将会协助我们在 ECS 的 OS 内找到找到和容器网络命名空间中的 veth pair 相对一个。在 ECS OS 内我们通过 ip addr | grep 81: 可以找到 vethd7e7c6fd 这个虚拟网卡，这个就是 veth pair 在 ECS OS 侧相对的那一个。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011513030.png" srcset="/img/loading.gif" lazyload alt="image-20240301151306960"></p>
+<h5 id="到目前为止容器内和-OS-数据链路已经建立链接了，那么-ECS-OS-内对于数据流量是怎么判断去哪个容器呢？通过-OS-Linux-Routing-我们可以看到，所有目的是-Pod-CIDR-网段的流量都会被转发到-cni0-这张虚拟网卡，那么-cni0-是通过-bridge-方式将不同目的的数据链路指向到不同的-vethxxx。到这里为止，ECS-OS-和-Pod-的网络命名空间已经建立好完整的出入链路配置了。"><a href="#到目前为止容器内和-OS-数据链路已经建立链接了，那么-ECS-OS-内对于数据流量是怎么判断去哪个容器呢？通过-OS-Linux-Routing-我们可以看到，所有目的是-Pod-CIDR-网段的流量都会被转发到-cni0-这张虚拟网卡，那么-cni0-是通过-bridge-方式将不同目的的数据链路指向到不同的-vethxxx。到这里为止，ECS-OS-和-Pod-的网络命名空间已经建立好完整的出入链路配置了。" class="headerlink" title="到目前为止容器内和 OS 数据链路已经建立链接了，那么 ECS OS 内对于数据流量是怎么判断去哪个容器呢？通过 OS Linux Routing 我们可以看到，所有目的是 Pod CIDR 网段的流量都会被转发到 cni0 这张虚拟网卡，那么 cni0 是通过 bridge 方式将不同目的的数据链路指向到不同的 vethxxx。到这里为止，ECS OS 和 Pod 的网络命名空间已经建立好完整的出入链路配置了。"></a>到目前为止容器内和 OS 数据链路已经建立链接了，那么 ECS OS 内对于数据流量是怎么判断去哪个容器呢？通过 OS Linux Routing 我们可以看到，所有目的是 Pod CIDR 网段的流量都会被转发到 cni0 这张虚拟网卡，那么 cni0 是通过 bridge 方式将不同目的的数据链路指向到不同的 vethxxx。到这里为止，ECS OS 和 Pod 的网络命名空间已经建立好完整的出入链路配置了。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011514257.png" srcset="/img/loading.gif" lazyload alt="image-20240301151410130"></p>
+<p><em><strong>02</strong></em></p>
+<p><strong>Flannel 模式容器网络数据链路剖析</strong></p>
+<h5 id="针对容器网络特点，我们可以将-Flannel-模式下的网络链路大体分为以-Pod-IP-对外提供服务和以-SVC-对外提供服务两个大的-SOP-场景，进一步细分可以拆分到-10-个不同的小的-SOP-场景。"><a href="#针对容器网络特点，我们可以将-Flannel-模式下的网络链路大体分为以-Pod-IP-对外提供服务和以-SVC-对外提供服务两个大的-SOP-场景，进一步细分可以拆分到-10-个不同的小的-SOP-场景。" class="headerlink" title="针对容器网络特点，我们可以将 Flannel 模式下的网络链路大体分为以 Pod IP 对外提供服务和以 SVC 对外提供服务两个大的 SOP 场景，进一步细分可以拆分到 10 个不同的小的 SOP 场景。"></a>针对容器网络特点，我们可以将 Flannel 模式下的网络链路大体分为以 Pod IP 对外提供服务和以 SVC 对外提供服务两个大的 SOP 场景，进一步细分可以拆分到 10 个不同的小的 SOP 场景。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011514478.png" srcset="/img/loading.gif" lazyload alt="image-20240301151444327"></p>
+<h5 id="对这-10-个场景的数据链路梳理合并，这些场景可以归纳为下面-5-类典型的场景："><a href="#对这-10-个场景的数据链路梳理合并，这些场景可以归纳为下面-5-类典型的场景：" class="headerlink" title="对这 10 个场景的数据链路梳理合并，这些场景可以归纳为下面 5 类典型的场景："></a>对这 10 个场景的数据链路梳理合并，这些场景可以归纳为下面 5 类典型的场景：</h5><ul>
+<li><h5 id="Client-和服务端-Pod-部署于同一个-ECS"><a href="#Client-和服务端-Pod-部署于同一个-ECS" class="headerlink" title="Client 和服务端 Pod 部署于同一个 ECS"></a>Client 和服务端 Pod 部署于同一个 ECS</h5></li>
+<li><h5 id="Client-和服务端-Pod-部署于不同-ECS"><a href="#Client-和服务端-Pod-部署于不同-ECS" class="headerlink" title="Client 和服务端 Pod 部署于不同 ECS"></a>Client 和服务端 Pod 部署于不同 ECS</h5></li>
+<li><h5 id="访问-SVC-External-IP，-ExternalTrafficPolicy-为-Cluster-时，Client-和服务端-Pod-部署于不同ECS，其中client为集群外"><a href="#访问-SVC-External-IP，-ExternalTrafficPolicy-为-Cluster-时，Client-和服务端-Pod-部署于不同ECS，其中client为集群外" class="headerlink" title="访问 SVC External IP， ExternalTrafficPolicy 为 Cluster 时，Client 和服务端 Pod 部署于不同ECS，其中client为集群外"></a>访问 SVC External IP， ExternalTrafficPolicy 为 Cluster 时，Client 和服务端 Pod 部署于不同ECS，其中client为集群外</h5></li>
+<li><h5 id="访问-SVC-External-IP，-ExternalTrafficPolicy-为-Local-时-Client-和服务端-Pod-部署于不同-ECS，其中client为集群内"><a href="#访问-SVC-External-IP，-ExternalTrafficPolicy-为-Local-时-Client-和服务端-Pod-部署于不同-ECS，其中client为集群内" class="headerlink" title="访问 SVC External IP， ExternalTrafficPolicy 为 Local 时, Client 和服务端 Pod 部署于不同 ECS，其中client为集群内"></a>访问 SVC External IP， ExternalTrafficPolicy 为 Local 时, Client 和服务端 Pod 部署于不同 ECS，其中client为集群内</h5></li>
+<li><h5 id="访问-SVC-External-IP，-ExternalTrafficPolicy-为-Local-时-Client-和服务端-Pod-部署于不同-ECS，其中-client-为集群外"><a href="#访问-SVC-External-IP，-ExternalTrafficPolicy-为-Local-时-Client-和服务端-Pod-部署于不同-ECS，其中-client-为集群外" class="headerlink" title="访问 SVC External IP， ExternalTrafficPolicy 为 Local 时, Client 和服务端 Pod 部署于不同 ECS，其中 client 为集群外"></a>访问 SVC External IP， ExternalTrafficPolicy 为 Local 时, Client 和服务端 Pod 部署于不同 ECS，其中 client 为集群外</h5></li>
+</ul>
+<p><strong>1</strong></p>
+<p><strong>场景一：Client和服务端Pod部署于同一个ECS</strong></p>
+<h5 id="此场景包含下面几个子场景，数据链路可以归纳为一种："><a href="#此场景包含下面几个子场景，数据链路可以归纳为一种：" class="headerlink" title="此场景包含下面几个子场景，数据链路可以归纳为一种："></a>此场景包含下面几个子场景，数据链路可以归纳为一种：</h5><ol>
+<li><h5 id="以-Pod-IP-对外提供服务，Client-和-Pod-部署于同一个节点；"><a href="#以-Pod-IP-对外提供服务，Client-和-Pod-部署于同一个节点；" class="headerlink" title="以 Pod IP 对外提供服务，Client 和 Pod 部署于同一个节点；"></a>以 Pod IP 对外提供服务，Client 和 Pod 部署于同一个节点；</h5></li>
+<li><h5 id="以-SVC-ClusterIP-对外提供服务，Client-和-SVC-后端-Pod-部署于同一节点；"><a href="#以-SVC-ClusterIP-对外提供服务，Client-和-SVC-后端-Pod-部署于同一节点；" class="headerlink" title="以 SVC ClusterIP 对外提供服务，Client 和 SVC 后端 Pod 部署于同一节点；"></a>以 SVC ClusterIP 对外提供服务，Client 和 SVC 后端 Pod 部署于同一节点；</h5></li>
+<li><h5 id="以-SVC-ExternalIP-对外提供服务，ExternalTrafficPolicy-为-Cluster-Local-情况下，Client-和-SVC-后端-Pod-部署于同一节点"><a href="#以-SVC-ExternalIP-对外提供服务，ExternalTrafficPolicy-为-Cluster-Local-情况下，Client-和-SVC-后端-Pod-部署于同一节点" class="headerlink" title="以 SVC ExternalIP 对外提供服务，ExternalTrafficPolicy 为 Cluster&#x2F;Local 情况下，Client 和 SVC 后端 Pod 部署于同一节点"></a>以 SVC ExternalIP 对外提供服务，ExternalTrafficPolicy 为 Cluster&#x2F;Local 情况下，Client 和 SVC 后端 Pod 部署于同一节点</h5></li>
+</ol>
+<h3 id="环境"><a href="#环境" class="headerlink" title="环境"></a><strong>环境</strong></h3><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011515116.png" srcset="/img/loading.gif" lazyload alt="image-20240301151506042"></p>
+<p>ap-southeast-1.10.0.0.180 节点上存在两个pod：centos-67756b6dc8-rmmxt  IP地址172.23.96.23  和 nginx-7d6877d777-6jkfg 和172.23.96.24</p>
+<h3 id="内核路由"><a href="#内核路由" class="headerlink" title="内核路由"></a><strong>内核路由</strong></h3><h5 id="centos-67756b6dc8-rmmxt-IP地址172-23-96-23，该容器在宿主机表现的-PID-是503478，该容器网络命名空间有指向容器-eth0-的默认路由"><a href="#centos-67756b6dc8-rmmxt-IP地址172-23-96-23，该容器在宿主机表现的-PID-是503478，该容器网络命名空间有指向容器-eth0-的默认路由" class="headerlink" title="centos-67756b6dc8-rmmxt  IP地址172.23.96.23，该容器在宿主机表现的 PID 是503478，该容器网络命名空间有指向容器 eth0 的默认路由"></a>centos-67756b6dc8-rmmxt  IP地址172.23.96.23，该容器在宿主机表现的 PID 是503478，该容器网络命名空间有指向容器 eth0 的默认路由</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011515312.png" srcset="/img/loading.gif" lazyload alt="image-20240301151530240"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011515676.png" srcset="/img/loading.gif" lazyload alt="image-20240301151550594"></p>
+<h5 id="该容器-eth0-在-ECS-OS-内对应-veth-pair-是-vethd7e7c6fd"><a href="#该容器-eth0-在-ECS-OS-内对应-veth-pair-是-vethd7e7c6fd" class="headerlink" title="该容器 eth0 在 ECS OS 内对应 veth pair 是 vethd7e7c6fd"></a>该容器 eth0 在 ECS OS 内对应 veth pair 是 vethd7e7c6fd</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011516768.png" srcset="/img/loading.gif" lazyload alt="image-20240301151614652"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011519087.png" srcset="/img/loading.gif" lazyload alt="image-20240301151934016"></p>
+<h5 id="通过上述类似的办法，可以找到nginx-7d6877d777-6jkfg-IP地址172-23-96-24，该容器在宿主机表现的-PID-是2981608，该容器-eth0-在-ECS-OS-内对应veth-pair是vethd3fc7ff4"><a href="#通过上述类似的办法，可以找到nginx-7d6877d777-6jkfg-IP地址172-23-96-24，该容器在宿主机表现的-PID-是2981608，该容器-eth0-在-ECS-OS-内对应veth-pair是vethd3fc7ff4" class="headerlink" title="通过上述类似的办法，可以找到nginx-7d6877d777-6jkfg  IP地址172.23.96.24，该容器在宿主机表现的 PID 是2981608，该容器 eth0 在 ECS OS 内对应veth pair是vethd3fc7ff4"></a>通过上述类似的办法，可以找到nginx-7d6877d777-6jkfg  IP地址172.23.96.24，该容器在宿主机表现的 PID 是2981608，该容器 eth0 在 ECS OS 内对应veth pair是vethd3fc7ff4</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011519639.png" srcset="/img/loading.gif" lazyload alt="image-20240301151950571"></p>
+<h5 id="在-ECS-OS-内，有指向-Pod-CIDR，下一跳为-cni0-的路由，以及-cni0-中有两个容器的vethxxx-网桥信息"><a href="#在-ECS-OS-内，有指向-Pod-CIDR，下一跳为-cni0-的路由，以及-cni0-中有两个容器的vethxxx-网桥信息" class="headerlink" title="在 ECS OS 内，有指向 Pod CIDR，下一跳为 cni0 的路由，以及 cni0 中有两个容器的vethxxx 网桥信息"></a>在 ECS OS 内，有指向 Pod CIDR，下一跳为 cni0 的路由，以及 cni0 中有两个容器的vethxxx 网桥信息</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011520328.png" srcset="/img/loading.gif" lazyload alt="image-20240301152001261"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011520901.png" srcset="/img/loading.gif" lazyload alt="image-20240301152013791"></p>
+<h3 id="小结-：可以访问到目的端"><a href="#小结-：可以访问到目的端" class="headerlink" title="小结****：可以访问到目的端"></a><strong>小结****：</strong>可以访问到目的端</h3><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011520693.png" srcset="/img/loading.gif" lazyload alt="image-20240301152037462"></p>
+<p>▲</p>
+<p>数据链路转发示意图</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011521784.png" srcset="/img/loading.gif" lazyload alt="image-20240301152111617"></p>
+<p>▲</p>
+<p>内核协议栈示意图</p>
+<ul>
+<li><h5 id="数据链路：ECS1-Pod1-eth0-vethxxx1-cni0-vethxxxx2-ECS1-Pod2-eth0"><a href="#数据链路：ECS1-Pod1-eth0-vethxxx1-cni0-vethxxxx2-ECS1-Pod2-eth0" class="headerlink" title="数据链路：ECS1 Pod1 eth0 -&gt;  vethxxx1 -&gt; cni0 -&gt; vethxxxx2 -&gt; ECS1 Pod2 eth0"></a>数据链路：ECS1 Pod1 eth0 -&gt;  vethxxx1 -&gt; cni0 -&gt; vethxxxx2 -&gt; ECS1 Pod2 eth0</h5></li>
+<li><h5 id="数据链路要经过三次内核协议栈，分别是-Pod1-协议栈，-ECS-OS-协议栈-和-Pod2-协议栈"><a href="#数据链路要经过三次内核协议栈，分别是-Pod1-协议栈，-ECS-OS-协议栈-和-Pod2-协议栈" class="headerlink" title="数据链路要经过三次内核协议栈，分别是 Pod1 协议栈， ECS OS 协议栈 和 Pod2 协议栈"></a>数据链路要经过三次内核协议栈，分别是 Pod1 协议栈， ECS OS 协议栈 和 Pod2 协议栈</h5></li>
+</ul>
+<p><strong>2</strong></p>
+<p><strong>场景二：Client 和服务端 Pod 部署于不同 ECS</strong></p>
+<h5 id="此场景包含下面几个子场景，数据链路可以归纳为一种：-1"><a href="#此场景包含下面几个子场景，数据链路可以归纳为一种：-1" class="headerlink" title="此场景包含下面几个子场景，数据链路可以归纳为一种："></a>此场景包含下面几个子场景，数据链路可以归纳为一种：</h5><ol>
+<li><h5 id="以-Pod-IP-对外提供服务，Client-和-Pod-部署于不同节点；"><a href="#以-Pod-IP-对外提供服务，Client-和-Pod-部署于不同节点；" class="headerlink" title="以 Pod IP 对外提供服务，Client 和 Pod 部署于不同节点；"></a>以 Pod IP 对外提供服务，Client 和 Pod 部署于不同节点；</h5></li>
+<li><h5 id="以-SVC-ClusterIP-对外提供服务，Client和SVC-后端Pod部署于不同节点；"><a href="#以-SVC-ClusterIP-对外提供服务，Client和SVC-后端Pod部署于不同节点；" class="headerlink" title="以 SVC ClusterIP 对外提供服务，Client和SVC 后端Pod部署于不同节点；"></a>以 SVC ClusterIP 对外提供服务，Client和SVC 后端Pod部署于不同节点；</h5></li>
+<li><h5 id="以-SVC-ExternalIP-对外提供服务，ExternalTrafficPolicy-为-Cluster-情况下，集群内-Client-和-SVC-后端-Pod-部署于不同节点；"><a href="#以-SVC-ExternalIP-对外提供服务，ExternalTrafficPolicy-为-Cluster-情况下，集群内-Client-和-SVC-后端-Pod-部署于不同节点；" class="headerlink" title="以 SVC ExternalIP 对外提供服务，ExternalTrafficPolicy 为 Cluster 情况下，集群内 Client 和 SVC 后端 Pod 部署于不同节点；"></a>以 SVC ExternalIP 对外提供服务，ExternalTrafficPolicy 为 Cluster 情况下，集群内 Client 和 SVC 后端 Pod 部署于不同节点；</h5></li>
+</ol>
+<h3 id="环境-1"><a href="#环境-1" class="headerlink" title="环境"></a><strong>环境</strong></h3><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011521028.png" srcset="/img/loading.gif" lazyload alt="image-20240301152137956"></p>
+<h5 id="ap-southeast-1-10-0-0-180-节点上存在两个-pod：centos-67756b6dc8-rmmxt-IP地址172-23-96-23-和-nginx1-76c99b49df-7plsr-IP-地址172-23-96-163"><a href="#ap-southeast-1-10-0-0-180-节点上存在两个-pod：centos-67756b6dc8-rmmxt-IP地址172-23-96-23-和-nginx1-76c99b49df-7plsr-IP-地址172-23-96-163" class="headerlink" title="ap-southeast-1.10.0.0.180 节点上存在两个 pod：centos-67756b6dc8-rmmxt  IP地址172.23.96.23  和 nginx1-76c99b49df-7plsr  IP 地址172.23.96.163"></a>ap-southeast-1.10.0.0.180 节点上存在两个 pod：centos-67756b6dc8-rmmxt  IP地址172.23.96.23  和 nginx1-76c99b49df-7plsr  IP 地址172.23.96.163</h5><h5 id="Service-nginx1-的-ExternalTrafficPlicy-为-Cluster"><a href="#Service-nginx1-的-ExternalTrafficPlicy-为-Cluster" class="headerlink" title="Service nginx1 的 ExternalTrafficPlicy 为 Cluster"></a>Service nginx1 的 ExternalTrafficPlicy 为 Cluster</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011521876.png" srcset="/img/loading.gif" lazyload alt="image-20240301152152770"></p>
+<h3 id="内核路由-1"><a href="#内核路由-1" class="headerlink" title="内核路由"></a><strong>内核路由</strong></h3><h5 id="Pod-网络空间和-ECS-OS-网络空间的数据交换在-2-1-场景一中已经做了详细描述，此处不再果断篇幅描述。"><a href="#Pod-网络空间和-ECS-OS-网络空间的数据交换在-2-1-场景一中已经做了详细描述，此处不再果断篇幅描述。" class="headerlink" title="Pod 网络空间和 ECS OS 网络空间的数据交换在 2.1 场景一中已经做了详细描述，此处不再果断篇幅描述。"></a>Pod 网络空间和 ECS OS 网络空间的数据交换在 2.1 场景一中已经做了详细描述，此处不再果断篇幅描述。</h5><h3 id="源端-Pod-所在-ECS-的-IPVS-规则"><a href="#源端-Pod-所在-ECS-的-IPVS-规则" class="headerlink" title="源端 Pod 所在 ECS 的 IPVS 规则"></a><strong>源端 Pod 所在 ECS 的 IPVS 规则</strong></h3><h5 id="可以看到，源端数据链路访问-svc-的clusterip-192-168-13-23-时，如果链路到达-ECS-的OS-内，会命中-ipvs-规则，被解析到-svc-的后端-endpoint-之一（本实例中只有一个-pod，所以-endpoint-只有一个）"><a href="#可以看到，源端数据链路访问-svc-的clusterip-192-168-13-23-时，如果链路到达-ECS-的OS-内，会命中-ipvs-规则，被解析到-svc-的后端-endpoint-之一（本实例中只有一个-pod，所以-endpoint-只有一个）" class="headerlink" title="可以看到，源端数据链路访问 svc 的clusterip 192.168.13.23 时，如果链路到达 ECS 的OS 内，会命中 ipvs 规则，被解析到 svc 的后端 endpoint 之一（本实例中只有一个 pod，所以 endpoint 只有一个）"></a>可以看到，源端数据链路访问 svc 的clusterip 192.168.13.23 时，如果链路到达 ECS 的OS 内，会命中 ipvs 规则，被解析到 svc 的后端 endpoint 之一（本实例中只有一个 pod，所以 endpoint 只有一个）</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011522526.png" srcset="/img/loading.gif" lazyload alt="image-20240301152219441"></p>
+<h3 id="小结：可以成功访问到目的端"><a href="#小结：可以成功访问到目的端" class="headerlink" title="小结：可以成功访问到目的端"></a><strong>小结：</strong>可以成功访问到目的端</h3><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011522824.png" srcset="/img/loading.gif" lazyload alt="image-20240301152236568"></p>
+<p>▲</p>
+<p>数据链路转发示意图</p>
+<p>VPC 路由表会自动配置目的地址是 pod CIDR， 下一跳为 POD 网段所归属的 ECS 的自定义路由条目，该规则由 ACK 管控测通过 openapi 调用 VPC 去配置，无需手动配置和删除</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011523784.png" srcset="/img/loading.gif" lazyload alt="image-20240301152303641"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011523677.png" srcset="/img/loading.gif" lazyload alt="image-20240301152318511"></p>
+<p>▲</p>
+<p>内核协议栈示意图</p>
+<p><strong>Conntack 表信息（访问 SVC 情况）</strong></p>
+<p>Node1:</p>
+<p>src是源pod IP，dst是svc的ClusterIP，并且期望是由svc的其中一个endpoint 172.23.96.163 来回消息给源端 pod</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011523137.png" srcset="/img/loading.gif" lazyload alt="image-20240301152334068"></p>
+<p>Node2:</p>
+<p>目的 pod 所在 ECS 上 conntrack 表记录是由源端 pod 访问目的 pod，不会记录 svc 的clusterip 地址</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011523245.png" srcset="/img/loading.gif" lazyload alt="image-20240301152351177"></p>
+<ul>
+<li><h5 id="数据链路：ECS1-Pod1-eth0-vethxxx1-cni0-ECS-1-eth0-VPC-ECS2-eth0-cni0-vethxxxx2-ECS2-Pod2-eth0"><a href="#数据链路：ECS1-Pod1-eth0-vethxxx1-cni0-ECS-1-eth0-VPC-ECS2-eth0-cni0-vethxxxx2-ECS2-Pod2-eth0" class="headerlink" title="数据链路：ECS1 Pod1 eth0 -&gt;  vethxxx1 -&gt; cni0 -&gt; ECS 1 eth0 -&gt;  VPC -&gt; ECS2 eth0 -&gt; cni0 -&gt;  vethxxxx2 -&gt; ECS2 Pod2 eth0"></a>数据链路：ECS1 Pod1 eth0 -&gt;  vethxxx1 -&gt; cni0 -&gt; ECS 1 eth0 -&gt;  VPC -&gt; ECS2 eth0 -&gt; cni0 -&gt;  vethxxxx2 -&gt; ECS2 Pod2 eth0</h5></li>
+<li><h5 id="数据链路要经过四次内核协议栈，分别是-Pod1-协议栈，-ECS1-OS-协议栈-，-ECS2-OS-协议栈和-Pod2-协议栈"><a href="#数据链路要经过四次内核协议栈，分别是-Pod1-协议栈，-ECS1-OS-协议栈-，-ECS2-OS-协议栈和-Pod2-协议栈" class="headerlink" title="数据链路要经过四次内核协议栈，分别是 Pod1 协议栈， ECS1 OS 协议栈 ， ECS2 OS 协议栈和 Pod2 协议栈"></a>数据链路要经过四次内核协议栈，分别是 Pod1 协议栈， ECS1 OS 协议栈 ， ECS2 OS 协议栈和 Pod2 协议栈</h5></li>
+<li><h5 id="VPC-路由表会自动配置目的地址是-pod-CIDR，-下一跳为-POD-网段所归属的-ECS-的自定义路由条目，该规则由-ACK-管控测通过-openapi-调用-VPC-去配置，无需手动配置和删除"><a href="#VPC-路由表会自动配置目的地址是-pod-CIDR，-下一跳为-POD-网段所归属的-ECS-的自定义路由条目，该规则由-ACK-管控测通过-openapi-调用-VPC-去配置，无需手动配置和删除" class="headerlink" title="VPC 路由表会自动配置目的地址是 pod CIDR， 下一跳为 POD 网段所归属的 ECS 的自定义路由条目，该规则由 ACK 管控测通过 openapi 调用 VPC 去配置，无需手动配置和删除"></a>VPC 路由表会自动配置目的地址是 pod CIDR， 下一跳为 POD 网段所归属的 ECS 的自定义路由条目，该规则由 ACK 管控测通过 openapi 调用 VPC 去配置，无需手动配置和删除</h5></li>
+<li><h5 id="如果访问的-SVC-的-cluster-IP，或者是-Cluster-模式下，访问-SVC-的-externalIP，数据链路通过veth-pair进到-ECS-OS-内后，会命中相应的-IPVS-规则，并根据负载规则，选择IPVS的某一个后端，进而打到其中的一个-SVC-的后端-endpoint，SVC-的-IP-只会再-PoD-的-eth0-，-veth-pair-vethxxx-被捕捉到，其他链路环节不会捕捉到-svc-的-IP"><a href="#如果访问的-SVC-的-cluster-IP，或者是-Cluster-模式下，访问-SVC-的-externalIP，数据链路通过veth-pair进到-ECS-OS-内后，会命中相应的-IPVS-规则，并根据负载规则，选择IPVS的某一个后端，进而打到其中的一个-SVC-的后端-endpoint，SVC-的-IP-只会再-PoD-的-eth0-，-veth-pair-vethxxx-被捕捉到，其他链路环节不会捕捉到-svc-的-IP" class="headerlink" title="如果访问的 SVC 的 cluster IP，或者是 Cluster 模式下，访问 SVC 的 externalIP，数据链路通过veth pair进到 ECS OS 内后，会命中相应的 IPVS 规则，并根据负载规则，选择IPVS的某一个后端，进而打到其中的一个 SVC 的后端 endpoint，SVC 的 IP 只会再 PoD 的 eth0 ， veth pair vethxxx 被捕捉到，其他链路环节不会捕捉到 svc 的 IP"></a>如果访问的 SVC 的 cluster IP，或者是 Cluster 模式下，访问 SVC 的 externalIP，数据链路通过veth pair进到 ECS OS 内后，会命中相应的 IPVS 规则，并根据负载规则，选择IPVS的某一个后端，进而打到其中的一个 SVC 的后端 endpoint，SVC 的 IP 只会再 PoD 的 eth0 ， veth pair vethxxx 被捕捉到，其他链路环节不会捕捉到 svc 的 IP</h5></li>
+</ul>
+<p><strong>3</strong></p>
+<p><strong>场景三：ExternalTrafficPolicy 为 Local时，Client 和服务端 Pod 部署于集群内不同 ECS</strong></p>
+<h5 id="此场景包含下面几个子场景，数据链路可以归纳为一种：-2"><a href="#此场景包含下面几个子场景，数据链路可以归纳为一种：-2" class="headerlink" title="此场景包含下面几个子场景，数据链路可以归纳为一种："></a>此场景包含下面几个子场景，数据链路可以归纳为一种：</h5><h5 id="1-以SVC-ExternalIP对外提供服务，ExternalTrafficPolicy-为-Local情况下，集群内-Client-和-SVC-后端-Pod-部署于不同节点；"><a href="#1-以SVC-ExternalIP对外提供服务，ExternalTrafficPolicy-为-Local情况下，集群内-Client-和-SVC-后端-Pod-部署于不同节点；" class="headerlink" title="1.以SVC ExternalIP对外提供服务，ExternalTrafficPolicy 为 Local情况下，集群内 Client 和 SVC 后端 Pod 部署于不同节点；"></a>1.以SVC ExternalIP对外提供服务，ExternalTrafficPolicy 为 Local情况下，集群内 Client 和 SVC 后端 Pod 部署于不同节点；</h5><h3 id="环境-2"><a href="#环境-2" class="headerlink" title="环境"></a><strong>环境</strong></h3><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011524033.png" srcset="/img/loading.gif" lazyload alt="image-20240301152414958"></p>
+<p>ap-southeast-1.10.0.0.180 节点上存在两个pod：centos-67756b6dc8-rmmxt  IP地址172.23.96.23  和 nginx1-76c99b49df-7plsr  IP 地址172.23.96.163</p>
+<p>Service nginx1 ExternalTrafficPolicy 为 Local</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011524093.png" srcset="/img/loading.gif" lazyload alt="image-20240301152427969"></p>
+<h3 id="内核路由-2"><a href="#内核路由-2" class="headerlink" title="内核路由"></a><strong>内核路由</strong></h3><p>Pod 网络空间和 ECS OS 网络空间的数据交换在 2.1 场景一中已经做了详细描述，此处不再果断篇幅描述。</p>
+<h3 id="源端-Pod-所在-ECS-的-IPVS-规则-1"><a href="#源端-Pod-所在-ECS-的-IPVS-规则-1" class="headerlink" title="源端 Pod 所在 ECS 的 IPVS 规则"></a><strong>源端 Pod 所在 ECS 的 IPVS 规则</strong></h3><h5 id="可以看到，源端数据链路访问-svc-的-externalip-8-219-164-113-时，如果链路到达-ECS-的OS内，会命中ipvs规则，但是我们可以看到EcternalIP-并没有相关的后端-endpoint，链路达到-OS-后，会命中-IPVS-规则，但是没有后端-pod，所以会出现-connection-refused"><a href="#可以看到，源端数据链路访问-svc-的-externalip-8-219-164-113-时，如果链路到达-ECS-的OS内，会命中ipvs规则，但是我们可以看到EcternalIP-并没有相关的后端-endpoint，链路达到-OS-后，会命中-IPVS-规则，但是没有后端-pod，所以会出现-connection-refused" class="headerlink" title="可以看到，源端数据链路访问 svc 的 externalip  8.219.164.113 时，如果链路到达 ECS 的OS内，会命中ipvs规则，但是我们可以看到EcternalIP  并没有相关的后端 endpoint，链路达到 OS 后，会命中 IPVS 规则，但是没有后端 pod，所以会出现 connection refused"></a>可以看到，源端数据链路访问 svc 的 externalip  8.219.164.113 时，如果链路到达 ECS 的OS内，会命中ipvs规则，但是我们可以看到EcternalIP  并没有相关的后端 endpoint，链路达到 OS 后，会命中 IPVS 规则，但是没有后端 pod，所以会出现 connection refused</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011524851.png" srcset="/img/loading.gif" lazyload alt="image-20240301152445777"></p>
+<h3 id="小结：不可以访问到目的端，此时会访问失败，Connection-refused"><a href="#小结：不可以访问到目的端，此时会访问失败，Connection-refused" class="headerlink" title="小结：不可以访问到目的端，此时会访问失败，Connection refused"></a><strong>小结：</strong>不可以访问到目的端，此时会访问失败，Connection refused</h3><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011525746.png" srcset="/img/loading.gif" lazyload alt="image-20240301152500520"></p>
+<p>▲</p>
+<p>数据链路转发示意图</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011525687.png" srcset="/img/loading.gif" lazyload alt="image-20240301152523534"></p>
+<p>▲</p>
+<p>内核协议栈示意图</p>
+<ul>
+<li><h5 id="数据链路：ECS1-Pod1-eth0-vethxxx1"><a href="#数据链路：ECS1-Pod1-eth0-vethxxx1" class="headerlink" title="数据链路：ECS1 Pod1 eth0 -&gt;  vethxxx1 -&gt;"></a>数据链路：ECS1 Pod1 eth0 -&gt;  vethxxx1 -&gt;</h5></li>
+<li><h5 id="数据链路要经过一次半内核协议栈，分别是-Pod1-协议栈，半个-ECS1-OS-协议栈"><a href="#数据链路要经过一次半内核协议栈，分别是-Pod1-协议栈，半个-ECS1-OS-协议栈" class="headerlink" title="数据链路要经过一次半内核协议栈，分别是 Pod1 协议栈，半个 ECS1 OS 协议栈"></a>数据链路要经过一次半内核协议栈，分别是 Pod1 协议栈，半个 ECS1 OS 协议栈</h5></li>
+<li><h5 id="如果访问的-SVC-的-External-IP，或者是-Local-模式下，访问-SVC-的-externalIP，数据链路通过-veth-pair-进到-ECS-OS内后，会命中相应的-IPVS-规则，但是由于-Local-模式，External-IP的-IPVS-为空，所以命中规则但是无转发后端，整个链路会在-ipvs-终止，访问失败。所以建议集群内采用-clusterip-访问，这也是-k8s-官方推荐的最佳实践。"><a href="#如果访问的-SVC-的-External-IP，或者是-Local-模式下，访问-SVC-的-externalIP，数据链路通过-veth-pair-进到-ECS-OS内后，会命中相应的-IPVS-规则，但是由于-Local-模式，External-IP的-IPVS-为空，所以命中规则但是无转发后端，整个链路会在-ipvs-终止，访问失败。所以建议集群内采用-clusterip-访问，这也是-k8s-官方推荐的最佳实践。" class="headerlink" title="如果访问的 SVC 的 External IP，或者是 Local 模式下，访问 SVC 的 externalIP，数据链路通过 veth pair 进到 ECS OS内后，会命中相应的 IPVS 规则，但是由于 Local 模式，External IP的 IPVS 为空，所以命中规则但是无转发后端，整个链路会在 ipvs 终止，访问失败。所以建议集群内采用 clusterip 访问，这也是 k8s 官方推荐的最佳实践。"></a>如果访问的 SVC 的 External IP，或者是 Local 模式下，访问 SVC 的 externalIP，数据链路通过 veth pair 进到 ECS OS内后，会命中相应的 IPVS 规则，但是由于 Local 模式，External IP的 IPVS 为空，所以命中规则但是无转发后端，整个链路会在 ipvs 终止，访问失败。所以建议集群内采用 clusterip 访问，这也是 k8s 官方推荐的最佳实践。</h5></li>
+</ul>
+<p><strong>4</strong></p>
+<p><strong>场景四：*<em>ExternalTrafficPolicy 为 Local 时，Client 来自于集群外*</em></strong></p>
+<h5 id="此场景包含下面几个子场景，数据链路可以归纳为一种：-3"><a href="#此场景包含下面几个子场景，数据链路可以归纳为一种：-3" class="headerlink" title="此场景包含下面几个子场景，数据链路可以归纳为一种："></a>此场景包含下面几个子场景，数据链路可以归纳为一种：</h5><h5 id="A-访问SVC-External-IP，-ExternalTrafficPolicy-为-Local时-Client-和服务端-Pod-部署于不同-ECS，其中-client-为集群外"><a href="#A-访问SVC-External-IP，-ExternalTrafficPolicy-为-Local时-Client-和服务端-Pod-部署于不同-ECS，其中-client-为集群外" class="headerlink" title="A.访问SVC External IP， ExternalTrafficPolicy 为 Local时, Client 和服务端 Pod 部署于不同 ECS，其中 client 为集群外"></a>A.访问SVC External IP， ExternalTrafficPolicy 为 Local时, Client 和服务端 Pod 部署于不同 ECS，其中 client 为集群外</h5><h3 id="环境-3"><a href="#环境-3" class="headerlink" title="环境"></a><strong>环境</strong></h3><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011525543.png" srcset="/img/loading.gif" lazyload alt="image-20240301152558466"></p>
+<h5 id="Deployment为nginx1，-分别为三个pod-nginx1-76c99b49df-4zsdj和nginx1-76c99b49df-7plsr-部署在-ap-southeast-1-10-0-1-206-ECS上，最后一个pod-nginx1-76c99b49df-s6z79-部署在其他节点-ap-southeast-1-10-0-1-216-上"><a href="#Deployment为nginx1，-分别为三个pod-nginx1-76c99b49df-4zsdj和nginx1-76c99b49df-7plsr-部署在-ap-southeast-1-10-0-1-206-ECS上，最后一个pod-nginx1-76c99b49df-s6z79-部署在其他节点-ap-southeast-1-10-0-1-216-上" class="headerlink" title="Deployment为nginx1， 分别为三个pod nginx1-76c99b49df-4zsdj和nginx1-76c99b49df-7plsr 部署在 ap-southeast-1.10.0.1.206 ECS上，最后一个pod nginx1-76c99b49df-s6z79 部署在其他节点 ap-southeast-1.10.0.1.216 上"></a>Deployment为nginx1， 分别为三个pod nginx1-76c99b49df-4zsdj和nginx1-76c99b49df-7plsr 部署在 ap-southeast-1.10.0.1.206 ECS上，最后一个pod nginx1-76c99b49df-s6z79 部署在其他节点 ap-southeast-1.10.0.1.216 上</h5><h5 id="Service-nginx1-的ExternalTrafficPlicy-为-Local"><a href="#Service-nginx1-的ExternalTrafficPlicy-为-Local" class="headerlink" title="Service nginx1 的ExternalTrafficPlicy 为 Local"></a>Service nginx1 的ExternalTrafficPlicy 为 Local</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011526669.png" srcset="/img/loading.gif" lazyload alt="image-20240301152614543"></p>
+<h3 id="内核路由-3"><a href="#内核路由-3" class="headerlink" title="内核路由"></a><strong>内核路由</strong></h3><h5 id="Pod-网络空间和-ECS-OS-网络空间的数据交换在-2-1-场景一中已经做了详细描述，此处不再果断篇幅描述。-1"><a href="#Pod-网络空间和-ECS-OS-网络空间的数据交换在-2-1-场景一中已经做了详细描述，此处不再果断篇幅描述。-1" class="headerlink" title="Pod 网络空间和 ECS OS 网络空间的数据交换在 2.1 场景一中已经做了详细描述，此处不再果断篇幅描述。"></a>Pod 网络空间和 ECS OS 网络空间的数据交换在 2.1 场景一中已经做了详细描述，此处不再果断篇幅描述。</h5><h3 id="SLB-相关配置"><a href="#SLB-相关配置" class="headerlink" title="SLB 相关配置"></a><strong>SLB 相关配置</strong></h3><h5 id="从-SLB-控制台，可以看到-SLB-后端的虚拟服务器组中只有两个-ECS-节点ap-southeast-1-10-0-1-216-和-ap-southeast-1-10-0-1-206。集群内的其他节点-，比如-ap-southeast-1-10-0-0-180-并未被加到-SLB-的后端虚拟服务器组中。虚拟服务器组的-IP-为-ECS-的-IP，端口为-service-里面的-nodeport-端口-32580"><a href="#从-SLB-控制台，可以看到-SLB-后端的虚拟服务器组中只有两个-ECS-节点ap-southeast-1-10-0-1-216-和-ap-southeast-1-10-0-1-206。集群内的其他节点-，比如-ap-southeast-1-10-0-0-180-并未被加到-SLB-的后端虚拟服务器组中。虚拟服务器组的-IP-为-ECS-的-IP，端口为-service-里面的-nodeport-端口-32580" class="headerlink" title="从 SLB 控制台，可以看到 SLB 后端的虚拟服务器组中只有两个 ECS 节点ap-southeast-1.10.0.1.216 和 ap-southeast-1.10.0.1.206。集群内的其他节点 ，比如 ap-southeast-1.10.0.0.180 并未被加到 SLB 的后端虚拟服务器组中。虚拟服务器组的 IP 为 ECS 的 IP，端口为 service 里面的 nodeport 端口 32580."></a>从 SLB 控制台，可以看到 SLB 后端的虚拟服务器组中只有两个 ECS 节点ap-southeast-1.10.0.1.216 和 ap-southeast-1.10.0.1.206。集群内的其他节点 ，比如 ap-southeast-1.10.0.0.180 并未被加到 SLB 的后端虚拟服务器组中。虚拟服务器组的 IP 为 ECS 的 IP，端口为 service 里面的 nodeport 端口 32580.</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011526633.png" srcset="/img/loading.gif" lazyload alt="image-20240301152636559"></p>
+<p>故 ExternalTrafficPolicy 为 Local 模式下，只有有 Service 后端 pod 所在的 ECS 节点才会被加入到 SLB 的后端虚拟服务器组中，参与 SLB 的流量转发，集群内的其他节点不参与 SLB 的转发</p>
+<h3 id="SLB-虚拟服务器组-ECS-的-IPVS-规则"><a href="#SLB-虚拟服务器组-ECS-的-IPVS-规则" class="headerlink" title="SLB 虚拟服务器组 ECS 的 IPVS 规则"></a><strong>SLB 虚拟服务器组 ECS 的 IPVS 规则</strong></h3><h5 id="从SLB的虚拟服务器组中的两个-ECS-可以看到，对于-nodeip-nodeport-的-ipvs转发规则是不同。ExternalTrafficPolicy-为-Local-模式下，只有该节点上的护短-pod-才会被加到该节点的-ipvs-转发规则中，其他节点上的后端-pod-不会加进来，这样保证了被-SLB-转发的链路，只会被转到该节点上的-pod，不会转发到其他节点上。"><a href="#从SLB的虚拟服务器组中的两个-ECS-可以看到，对于-nodeip-nodeport-的-ipvs转发规则是不同。ExternalTrafficPolicy-为-Local-模式下，只有该节点上的护短-pod-才会被加到该节点的-ipvs-转发规则中，其他节点上的后端-pod-不会加进来，这样保证了被-SLB-转发的链路，只会被转到该节点上的-pod，不会转发到其他节点上。" class="headerlink" title="从SLB的虚拟服务器组中的两个 ECS 可以看到，对于 nodeip+nodeport 的 ipvs转发规则是不同。ExternalTrafficPolicy 为 Local 模式下，只有该节点上的护短 pod 才会被加到该节点的 ipvs 转发规则中，其他节点上的后端 pod 不会加进来，这样保证了被 SLB 转发的链路，只会被转到该节点上的 pod，不会转发到其他节点上。"></a>从SLB的虚拟服务器组中的两个 ECS 可以看到，对于 nodeip+nodeport 的 ipvs转发规则是不同。ExternalTrafficPolicy 为 Local 模式下，只有该节点上的护短 pod 才会被加到该节点的 ipvs 转发规则中，其他节点上的后端 pod 不会加进来，这样保证了被 SLB 转发的链路，只会被转到该节点上的 pod，不会转发到其他节点上。</h5><h5 id="node1：ap-southeast-1-10-0-1-206"><a href="#node1：ap-southeast-1-10-0-1-206" class="headerlink" title="node1：ap-southeast-1.10.0.1.206"></a>node1：ap-southeast-1.10.0.1.206</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011526371.png" srcset="/img/loading.gif" lazyload alt="image-20240301152651299"></p>
+<h5 id="node1：ap-southeast-1-10-0-1-216"><a href="#node1：ap-southeast-1-10-0-1-216" class="headerlink" title="node1：ap-southeast-1.10.0.1.216"></a>node1：ap-southeast-1.10.0.1.216</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011527554.png" srcset="/img/loading.gif" lazyload alt="image-20240301152708475"></p>
+<h3 id="小结：可以访问到目的端"><a href="#小结：可以访问到目的端" class="headerlink" title="小结：可以访问到目的端"></a><strong>小结</strong>：可以访问到目的端</h3><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011527441.png" srcset="/img/loading.gif" lazyload alt="image-20240301152723282"></p>
+<p>▲</p>
+<p>数据链路转发示意图</p>
+<h5 id="该图示意了只有后端-pod-所在-ECS-才会加到-SLB-后端中，从集群外部访问-SVC-的externalIP（SLB-IP）的情况，可见数据链路只会被转发到虚拟服务器组中的-ECS，不会再被转发到集群内其他节点上。"><a href="#该图示意了只有后端-pod-所在-ECS-才会加到-SLB-后端中，从集群外部访问-SVC-的externalIP（SLB-IP）的情况，可见数据链路只会被转发到虚拟服务器组中的-ECS，不会再被转发到集群内其他节点上。" class="headerlink" title="该图示意了只有后端 pod 所在 ECS 才会加到 SLB 后端中，从集群外部访问 SVC 的externalIP（SLB IP）的情况，可见数据链路只会被转发到虚拟服务器组中的 ECS，不会再被转发到集群内其他节点上。"></a>该图示意了只有后端 pod 所在 ECS 才会加到 SLB 后端中，从集群外部访问 SVC 的externalIP（SLB IP）的情况，可见数据链路只会被转发到虚拟服务器组中的 ECS，不会再被转发到集群内其他节点上。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011527553.png" srcset="/img/loading.gif" lazyload alt="image-20240301152743327"></p>
+<p>▲</p>
+<p>内核协议栈示意图</p>
+<p><strong>Conntack 表信息</strong></p>
+<p>Node:</p>
+<h5 id="src-是集群外部客户端IP，dst-是节点-IP，dport-是-SVC-中的-nodeport。并且期望是由该-ECS-上的-pod-172-23-96-82-来回包给源端"><a href="#src-是集群外部客户端IP，dst-是节点-IP，dport-是-SVC-中的-nodeport。并且期望是由该-ECS-上的-pod-172-23-96-82-来回包给源端" class="headerlink" title="src 是集群外部客户端IP，dst 是节点 IP，dport 是 SVC 中的 nodeport。并且期望是由该 ECS 上的 pod 172.23.96.82 来回包给源端"></a>src 是集群外部客户端IP，dst 是节点 IP，dport 是 SVC 中的 nodeport。并且期望是由该 ECS 上的 pod 172.23.96.82 来回包给源端</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011528131.png" srcset="/img/loading.gif" lazyload alt="image-20240301152801072"></p>
+<ul>
+<li><h5 id="数据链路：client-SLB-ECS-eth0-ECS-nodeport-cni0-vethxxxxx-ECS1-Pod1-eth0"><a href="#数据链路：client-SLB-ECS-eth0-ECS-nodeport-cni0-vethxxxxx-ECS1-Pod1-eth0" class="headerlink" title="数据链路：client -&gt;  SLB  -&gt; ECS eth0 + ECS nodeport  -&gt;  cni0 -&gt;  vethxxxxx -&gt; ECS1 Pod1 eth0"></a>数据链路：client -&gt;  SLB  -&gt; ECS eth0 + ECS nodeport  -&gt;  cni0 -&gt;  vethxxxxx -&gt; ECS1 Pod1 eth0</h5></li>
+<li><h5 id="数据链路要经过两次内核协议栈，分别是-Pod1-协议栈，-ECS1-OS-协议栈"><a href="#数据链路要经过两次内核协议栈，分别是-Pod1-协议栈，-ECS1-OS-协议栈" class="headerlink" title="数据链路要经过两次内核协议栈，分别是 Pod1 协议栈， ECS1 OS 协议栈"></a>数据链路要经过两次内核协议栈，分别是 Pod1 协议栈， ECS1 OS 协议栈</h5></li>
+<li><h5 id="ExternalTrafficPolicy-为-Local-模式下，只有有-Service-后端-pod-所在的-ECS-节点才会被加入到SLB的后端虚拟服务器组中，参与-SLB-的流量转发，集群内的其他节点不参与-SLB-的转发"><a href="#ExternalTrafficPolicy-为-Local-模式下，只有有-Service-后端-pod-所在的-ECS-节点才会被加入到SLB的后端虚拟服务器组中，参与-SLB-的流量转发，集群内的其他节点不参与-SLB-的转发" class="headerlink" title="ExternalTrafficPolicy 为 Local 模式下，只有有 Service 后端 pod 所在的 ECS 节点才会被加入到SLB的后端虚拟服务器组中，参与 SLB 的流量转发，集群内的其他节点不参与 SLB 的转发"></a>ExternalTrafficPolicy 为 Local 模式下，只有有 Service 后端 pod 所在的 ECS 节点才会被加入到SLB的后端虚拟服务器组中，参与 SLB 的流量转发，集群内的其他节点不参与 SLB 的转发</h5></li>
+</ul>
+<p><strong>5</strong></p>
+<p><strong>场景五：*<em>ExternalTrafficPolicy 为 Cluster 时，Client 来自于集群外*</em></strong></p>
+<h5 id="此场景包含下面几个子场景，数据链路可以归纳为一种：-4"><a href="#此场景包含下面几个子场景，数据链路可以归纳为一种：-4" class="headerlink" title="此场景包含下面几个子场景，数据链路可以归纳为一种："></a>此场景包含下面几个子场景，数据链路可以归纳为一种：</h5><h5 id="1-访问-SVCExternal-IP，-ExternalTrafficPolicy-为-Cluster-时-Client-和服务端-Pod部署于不同-ECS，其中-client-为集群外"><a href="#1-访问-SVCExternal-IP，-ExternalTrafficPolicy-为-Cluster-时-Client-和服务端-Pod部署于不同-ECS，其中-client-为集群外" class="headerlink" title="1.访问 SVCExternal IP， ExternalTrafficPolicy 为 Cluster 时, Client 和服务端 Pod部署于不同 ECS，其中 client 为集群外"></a>1.访问 SVCExternal IP， ExternalTrafficPolicy 为 Cluster 时, Client 和服务端 Pod部署于不同 ECS，其中 client 为集群外</h5><h3 id="环境-4"><a href="#环境-4" class="headerlink" title="环境"></a><strong>环境</strong></h3><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011528457.png" srcset="/img/loading.gif" lazyload alt="image-20240301152824373"></p>
+<h5 id="Deployment为nginx1，-分别为三个pod-nginx1-76c99b49df-4zsdj和nginx1-76c99b49df-7plsr-部署在-ap-southeast-1-10-0-1-206-ECS上，最后一个pod-nginx1-76c99b49df-s6z79-部署在其他节点-ap-southeast-1-10-0-1-216-上-1"><a href="#Deployment为nginx1，-分别为三个pod-nginx1-76c99b49df-4zsdj和nginx1-76c99b49df-7plsr-部署在-ap-southeast-1-10-0-1-206-ECS上，最后一个pod-nginx1-76c99b49df-s6z79-部署在其他节点-ap-southeast-1-10-0-1-216-上-1" class="headerlink" title="Deployment为nginx1， 分别为三个pod nginx1-76c99b49df-4zsdj和nginx1-76c99b49df-7plsr 部署在 ap-southeast-1.10.0.1.206 ECS上，最后一个pod nginx1-76c99b49df-s6z79 部署在其他节点 ap-southeast-1.10.0.1.216 上"></a>Deployment为nginx1， 分别为三个pod nginx1-76c99b49df-4zsdj和nginx1-76c99b49df-7plsr 部署在 ap-southeast-1.10.0.1.206 ECS上，最后一个pod nginx1-76c99b49df-s6z79 部署在其他节点 ap-southeast-1.10.0.1.216 上</h5><h5 id="Service-nginx2-的-ExternalTrafficPlicy-为-Cluster"><a href="#Service-nginx2-的-ExternalTrafficPlicy-为-Cluster" class="headerlink" title="Service nginx2 的 ExternalTrafficPlicy 为 Cluster"></a>Service nginx2 的 ExternalTrafficPlicy 为 Cluster</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011528878.png" srcset="/img/loading.gif" lazyload alt="image-20240301152854761"></p>
+<h3 id="内核路由-4"><a href="#内核路由-4" class="headerlink" title="内核路由"></a><strong>内核路由</strong></h3><h5 id="Pod-网络空间和-ECS-OS-网络空间的数据交换在-2-1-场景一中已经做了详细描述，此处不再果断篇幅描述。-2"><a href="#Pod-网络空间和-ECS-OS-网络空间的数据交换在-2-1-场景一中已经做了详细描述，此处不再果断篇幅描述。-2" class="headerlink" title="Pod 网络空间和 ECS OS 网络空间的数据交换在 2.1 场景一中已经做了详细描述，此处不再果断篇幅描述。"></a>Pod 网络空间和 ECS OS 网络空间的数据交换在 2.1 场景一中已经做了详细描述，此处不再果断篇幅描述。</h5><h3 id="SLB-相关配置-1"><a href="#SLB-相关配置-1" class="headerlink" title="SLB 相关配置"></a><strong>SLB 相关配置</strong></h3><h5 id="从SLB-控制台，集群内所有节点ap-southeast-1-10-0-0-180、ap-southeast-1-10-0-1-216-和-ap-southeast-1-10-0-1-206-都被加到SLB的虚拟服务器组中。其中-虚拟服务器组的-IP-为-ECS-的-IP，端口为-service-里面的-nodeport-端口-30875"><a href="#从SLB-控制台，集群内所有节点ap-southeast-1-10-0-0-180、ap-southeast-1-10-0-1-216-和-ap-southeast-1-10-0-1-206-都被加到SLB的虚拟服务器组中。其中-虚拟服务器组的-IP-为-ECS-的-IP，端口为-service-里面的-nodeport-端口-30875" class="headerlink" title="从SLB 控制台，集群内所有节点ap-southeast-1.10.0.0.180、ap-southeast-1.10.0.1.216 和 ap-southeast-1.10.0.1.206 都被加到SLB的虚拟服务器组中。其中 虚拟服务器组的 IP 为 ECS 的 IP，端口为 service 里面的 nodeport 端口 30875."></a>从SLB 控制台，集群内所有节点ap-southeast-1.10.0.0.180、ap-southeast-1.10.0.1.216 和 ap-southeast-1.10.0.1.206 都被加到SLB的虚拟服务器组中。其中 虚拟服务器组的 IP 为 ECS 的 IP，端口为 service 里面的 nodeport 端口 30875.</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011529547.png" srcset="/img/loading.gif" lazyload alt="image-20240301152913449"></p>
+<p>故 ExternalTrafficPolicy 为 CLuster 模式下，集群内所有的 ECS 节点都会被加入到 SLB 的后端虚拟服务器组中，参与 SLB 的流量转发。</p>
+<h3 id="SLB-虚拟服务器组-ECS-的-IPVS-规则-1"><a href="#SLB-虚拟服务器组-ECS-的-IPVS-规则-1" class="headerlink" title="SLB 虚拟服务器组 ECS 的 IPVS 规则"></a><strong>SLB 虚拟服务器组 ECS 的 IPVS 规则</strong></h3><h5 id="从SLB的虚拟服务器组中的可以看到，对于-nodeip-nodeport-的-ipvs-转发规则是一致的。ExternalTrafficPolicy为-CLuster-模式下，所有的-service-后端-pod-都会被加到所有节点的-ipvs-的转发规则中，即使是该节点有后端-pod，流量也不一定会被转发到该节点上-pod，可能会被转发到其他节点上的后端-pod。"><a href="#从SLB的虚拟服务器组中的可以看到，对于-nodeip-nodeport-的-ipvs-转发规则是一致的。ExternalTrafficPolicy为-CLuster-模式下，所有的-service-后端-pod-都会被加到所有节点的-ipvs-的转发规则中，即使是该节点有后端-pod，流量也不一定会被转发到该节点上-pod，可能会被转发到其他节点上的后端-pod。" class="headerlink" title="从SLB的虚拟服务器组中的可以看到，对于 nodeip+nodeport 的 ipvs 转发规则是一致的。ExternalTrafficPolicy为 CLuster 模式下，所有的 service 后端 pod 都会被加到所有节点的 ipvs 的转发规则中，即使是该节点有后端 pod，流量也不一定会被转发到该节点上 pod，可能会被转发到其他节点上的后端 pod。"></a>从SLB的虚拟服务器组中的可以看到，对于 nodeip+nodeport 的 ipvs 转发规则是一致的。ExternalTrafficPolicy为 CLuster 模式下，所有的 service 后端 pod 都会被加到所有节点的 ipvs 的转发规则中，即使是该节点有后端 pod，流量也不一定会被转发到该节点上 pod，可能会被转发到其他节点上的后端 pod。</h5><h5 id="node1：ap-southeast-1-10-0-1-206-该节点有后端pod"><a href="#node1：ap-southeast-1-10-0-1-206-该节点有后端pod" class="headerlink" title="node1：ap-southeast-1.10.0.1.206 (该节点有后端pod)"></a>node1：ap-southeast-1.10.0.1.206 (该节点有后端pod)</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011529583.png" srcset="/img/loading.gif" lazyload alt="image-20240301152929478"></p>
+<h5 id="node1：ap-southeast-1-10-0-1-216-该节点有后端pod"><a href="#node1：ap-southeast-1-10-0-1-216-该节点有后端pod" class="headerlink" title="node1：ap-southeast-1.10.0.1.216 (该节点有后端pod)"></a>node1：ap-southeast-1.10.0.1.216 (该节点有后端pod)</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011529160.png" srcset="/img/loading.gif" lazyload alt="image-20240301152942079"></p>
+<h5 id="node3-ap-southeast-1-10-0-0-180-该节无后端pod"><a href="#node3-ap-southeast-1-10-0-0-180-该节无后端pod" class="headerlink" title="node3:   ap-southeast-1.10.0.0.180 (该节无后端pod)"></a>node3:   ap-southeast-1.10.0.0.180 (该节无后端pod)</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011530863.png" srcset="/img/loading.gif" lazyload alt="image-20240301153012781"></p>
+<h3 id="小结：可以访问到目的端-1"><a href="#小结：可以访问到目的端-1" class="headerlink" title="小结：可以访问到目的端"></a><strong>小结</strong>：可以访问到目的端</h3><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011530947.png" srcset="/img/loading.gif" lazyload alt="image-20240301153043704"></p>
+<p>▲</p>
+<p>数据链路转发示意图</p>
+<h5 id="该图示意了集群内所有-ECS-都会被加到-SLB-后端中，从集群外部访问-SVC-的externalIP（SLB-IP）的情况，数据流量可能会被转发到其他节点上"><a href="#该图示意了集群内所有-ECS-都会被加到-SLB-后端中，从集群外部访问-SVC-的externalIP（SLB-IP）的情况，数据流量可能会被转发到其他节点上" class="headerlink" title="该图示意了集群内所有 ECS 都会被加到 SLB 后端中，从集群外部访问 SVC 的externalIP（SLB IP）的情况，数据流量可能会被转发到其他节点上"></a>该图示意了集群内所有 ECS 都会被加到 SLB 后端中，从集群外部访问 SVC 的externalIP（SLB IP）的情况，数据流量可能会被转发到其他节点上</h5><p><strong>内核协议栈示意图</strong>：</p>
+<h5 id="内核协议栈示意图已经在-2-4-场景一中已经做了详细描述，此处不再果断篇幅描述。"><a href="#内核协议栈示意图已经在-2-4-场景一中已经做了详细描述，此处不再果断篇幅描述。" class="headerlink" title="内核协议栈示意图已经在 2.4 场景一中已经做了详细描述，此处不再果断篇幅描述。"></a>内核协议栈示意图已经在 2.4 场景一中已经做了详细描述，此处不再果断篇幅描述。</h5><p><strong>Conntack 表信息</strong></p>
+<h5 id="链路1："><a href="#链路1：" class="headerlink" title="链路1："></a>链路1：</h5><h5 id="ap-southeast-1-10-0-0-180"><a href="#ap-southeast-1-10-0-0-180" class="headerlink" title="ap-southeast-1.10.0.0.180:"></a>ap-southeast-1.10.0.0.180:</h5><h5 id="此时数据链路对应示意图中的链路1，可以看到数据链路被转到-ap-southeast-1-10-0-0-180-节点，该节点上并没有-service-的后端-pod，通过-conntrack-信息，可以看到"><a href="#此时数据链路对应示意图中的链路1，可以看到数据链路被转到-ap-southeast-1-10-0-0-180-节点，该节点上并没有-service-的后端-pod，通过-conntrack-信息，可以看到" class="headerlink" title="此时数据链路对应示意图中的链路1，可以看到数据链路被转到 ap-southeast-1.10.0.0.180 节点，该节点上并没有 service 的后端 pod，通过 conntrack 信息，可以看到"></a>此时数据链路对应示意图中的链路1，可以看到数据链路被转到 ap-southeast-1.10.0.0.180 节点，该节点上并没有 service 的后端 pod，通过 conntrack 信息，可以看到</h5><h5 id="src-是集群外部客户端-IP，dst-是节点-IP，dport-是-SVC-中的-nodeport。并且期望是172-23-96-163-来回包给-10-0-0-180-。通过前述信息，可以得知172-23-96-163-是nginx1-76c99b49df-7plsr-pod，部署在-ap-southeast-1-10-0-1-206"><a href="#src-是集群外部客户端-IP，dst-是节点-IP，dport-是-SVC-中的-nodeport。并且期望是172-23-96-163-来回包给-10-0-0-180-。通过前述信息，可以得知172-23-96-163-是nginx1-76c99b49df-7plsr-pod，部署在-ap-southeast-1-10-0-1-206" class="headerlink" title="src 是集群外部客户端 IP，dst 是节点 IP，dport 是 SVC 中的 nodeport。并且期望是172.23.96.163 来回包给 10.0.0.180 。通过前述信息，可以得知172.23.96.163 是nginx1-76c99b49df-7plsr pod，部署在 ap-southeast-1.10.0.1.206"></a>src 是集群外部客户端 IP，dst 是节点 IP，dport 是 SVC 中的 nodeport。并且期望是172.23.96.163 来回包给 10.0.0.180 。通过前述信息，可以得知172.23.96.163 是nginx1-76c99b49df-7plsr pod，部署在 ap-southeast-1.10.0.1.206</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011531871.png" srcset="/img/loading.gif" lazyload alt="image-20240301153106812"></p>
+<h5 id="ap-southeast-1-10-0-1-206："><a href="#ap-southeast-1-10-0-1-206：" class="headerlink" title="ap-southeast-1.10.0.1.206："></a>ap-southeast-1.10.0.1.206：</h5><h5 id="通过此节点conntrack-表，可以看到src是-node-ap-southeast-1-10-0-0-180，dst-是-172-23-96-163的80-端口，回包也是直接回给-node-ap-southeast-1-10-0-0-180"><a href="#通过此节点conntrack-表，可以看到src是-node-ap-southeast-1-10-0-0-180，dst-是-172-23-96-163的80-端口，回包也是直接回给-node-ap-southeast-1-10-0-0-180" class="headerlink" title="通过此节点conntrack 表，可以看到src是 node  ap-southeast-1.10.0.0.180，dst 是 172.23.96.163的80 端口，回包也是直接回给 node  ap-southeast-1.10.0.0.180."></a>通过此节点conntrack 表，可以看到src是 node  ap-southeast-1.10.0.0.180，dst 是 172.23.96.163的80 端口，回包也是直接回给 node  ap-southeast-1.10.0.0.180.</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011531986.png" srcset="/img/loading.gif" lazyload alt="image-20240301153125918"></p>
+<h5 id="综上可以看到-src-变换了多次，故在-CLuster-模式下，会存在丢失真实客户端-IP-的情况"><a href="#综上可以看到-src-变换了多次，故在-CLuster-模式下，会存在丢失真实客户端-IP-的情况" class="headerlink" title="综上可以看到 src 变换了多次，故在 CLuster 模式下，会存在丢失真实客户端 IP 的情况"></a>综上可以看到 src 变换了多次，故在 CLuster 模式下，会存在丢失真实客户端 IP 的情况</h5><p>链路2：</p>
+<h5 id="src-是集群外部客户端-IP，dst-是节点IP，dport-是-SVC-中的-nodeport。并且期望是由该-ECS-上的-pod-172-23-96-82-来回包给-172-23-96-65，此地址是-SLB-集群中的一个地址"><a href="#src-是集群外部客户端-IP，dst-是节点IP，dport-是-SVC-中的-nodeport。并且期望是由该-ECS-上的-pod-172-23-96-82-来回包给-172-23-96-65，此地址是-SLB-集群中的一个地址" class="headerlink" title="src 是集群外部客户端 IP，dst 是节点IP，dport 是 SVC 中的 nodeport。并且期望是由该 ECS 上的 pod 172.23.96.82 来回包给 172.23.96.65，此地址是 SLB 集群中的一个地址"></a>src 是集群外部客户端 IP，dst 是节点IP，dport 是 SVC 中的 nodeport。并且期望是由该 ECS 上的 pod 172.23.96.82 来回包给 172.23.96.65，此地址是 SLB 集群中的一个地址</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011531372.png" srcset="/img/loading.gif" lazyload alt="image-20240301153146311"></p>
+<ul>
+<li><p>数据链路：</p>
+<h5 id="情景一：client-SLB-ECS-eth0-ECS-nodeport-cni0-vethxxxxx-ECS1-Pod1-eth0"><a href="#情景一：client-SLB-ECS-eth0-ECS-nodeport-cni0-vethxxxxx-ECS1-Pod1-eth0" class="headerlink" title="情景一：client -&gt;  SLB  -&gt; ECS eth0 + ECS nodeport  -&gt;  cni0 -&gt;  vethxxxxx -&gt; ECS1 Pod1 eth0"></a>情景一：client -&gt;  SLB  -&gt; ECS eth0 + ECS nodeport  -&gt;  cni0 -&gt;  vethxxxxx -&gt; ECS1 Pod1 eth0</h5><h5 id="情景二：client-SLB-ECS1-eth0-ECS1-nodeport-VPC-Routing-ECS2-eth0-pod-port-cni0-vethxxxxx-ECS2-Pod1-eth0"><a href="#情景二：client-SLB-ECS1-eth0-ECS1-nodeport-VPC-Routing-ECS2-eth0-pod-port-cni0-vethxxxxx-ECS2-Pod1-eth0" class="headerlink" title="情景二：client -&gt;  SLB  -&gt; ECS1 eth0 + ECS1 nodeport  -&gt; VPC Routing -&gt;  ECS2 eth0 + pod port  -&gt; cni0 -&gt;  vethxxxxx -&gt; ECS2 Pod1 eth0"></a>情景二：client -&gt;  SLB  -&gt; ECS1 eth0 + ECS1 nodeport  -&gt; VPC Routing -&gt;  ECS2 eth0 + pod port  -&gt; cni0 -&gt;  vethxxxxx -&gt; ECS2 Pod1 eth0</h5></li>
+<li><h5 id="数据链路要经过三次内核协议栈，分别是-ECS1-OS、-ECS2-OS-协议栈-和-Pod-协议栈"><a href="#数据链路要经过三次内核协议栈，分别是-ECS1-OS、-ECS2-OS-协议栈-和-Pod-协议栈" class="headerlink" title="数据链路要经过三次内核协议栈，分别是 ECS1 OS、 ECS2 OS 协议栈 和 Pod 协议栈"></a>数据链路要经过三次内核协议栈，分别是 ECS1 OS、 ECS2 OS 协议栈 和 Pod 协议栈</h5></li>
+<li><h5 id="ExternalTrafficPolicy-为-CLuster-模式下，kubernetes-所有-ECS-节点都会被加入到-SLB-的后端虚拟服务器组中，参与-SLB-的流量转发，此时会存在数据路在集群内被多个-ECS-转发的场景，该情况下会丢失真实客户端IP的情况"><a href="#ExternalTrafficPolicy-为-CLuster-模式下，kubernetes-所有-ECS-节点都会被加入到-SLB-的后端虚拟服务器组中，参与-SLB-的流量转发，此时会存在数据路在集群内被多个-ECS-转发的场景，该情况下会丢失真实客户端IP的情况" class="headerlink" title="ExternalTrafficPolicy 为 CLuster 模式下，kubernetes 所有 ECS 节点都会被加入到 SLB 的后端虚拟服务器组中，参与 SLB 的流量转发，此时会存在数据路在集群内被多个 ECS 转发的场景，该情况下会丢失真实客户端IP的情况"></a>ExternalTrafficPolicy 为 CLuster 模式下，kubernetes 所有 ECS 节点都会被加入到 SLB 的后端虚拟服务器组中，参与 SLB 的流量转发，此时会存在数据路在集群内被多个 ECS 转发的场景，该情况下会丢失真实客户端IP的情况</h5></li>
+</ul>
+<hr>
+<hr>
+<p><em><strong>总结</strong></em></p>
+<p><em>Cloud Native</em>*<br>*</p>
+<h5 id="本篇文章主要聚焦-ACK-在-Flannel-模式下，不同-SOP-场景下的数据链路转发路径。随着微服务化和云原生化，网络场景日趋复杂，作为-kubernetes-原生的网络模型——Flannel，不同的访问环境，一共可以分为10个-SOP-场景。通过深入简出的剖析，可以归纳为5个场景，并对这五个场景的转发链路，技术实现原理，云产品配置等一一梳理并总结，这对我们遇到-Flannel-架构下的链路抖动、最优化配置，链路原理等提供了初步指引方向。接下来将进入到阿里自研的-CNI-接口-Terway-模式，也是目前线上集群使用最多的模式，下一系列我们先带来-Terway-ENI-模式的全景解析——ACK-全景剖析阿里云容器网络数据链路（二）：Terway-ENI。"><a href="#本篇文章主要聚焦-ACK-在-Flannel-模式下，不同-SOP-场景下的数据链路转发路径。随着微服务化和云原生化，网络场景日趋复杂，作为-kubernetes-原生的网络模型——Flannel，不同的访问环境，一共可以分为10个-SOP-场景。通过深入简出的剖析，可以归纳为5个场景，并对这五个场景的转发链路，技术实现原理，云产品配置等一一梳理并总结，这对我们遇到-Flannel-架构下的链路抖动、最优化配置，链路原理等提供了初步指引方向。接下来将进入到阿里自研的-CNI-接口-Terway-模式，也是目前线上集群使用最多的模式，下一系列我们先带来-Terway-ENI-模式的全景解析——ACK-全景剖析阿里云容器网络数据链路（二）：Terway-ENI。" class="headerlink" title="本篇文章主要聚焦 ACK 在 Flannel 模式下，不同 SOP 场景下的数据链路转发路径。随着微服务化和云原生化，网络场景日趋复杂，作为 kubernetes 原生的网络模型——Flannel，不同的访问环境，一共可以分为10个 SOP 场景。通过深入简出的剖析，可以归纳为5个场景，并对这五个场景的转发链路，技术实现原理，云产品配置等一一梳理并总结，这对我们遇到 Flannel 架构下的链路抖动、最优化配置，链路原理等提供了初步指引方向。接下来将进入到阿里自研的 CNI 接口 Terway 模式，也是目前线上集群使用最多的模式，下一系列我们先带来 Terway  ENI 模式的全景解析——ACK 全景剖析阿里云容器网络数据链路（二）：Terway ENI。"></a>本篇文章主要聚焦 ACK 在 Flannel 模式下，不同 SOP 场景下的数据链路转发路径。随着微服务化和云原生化，网络场景日趋复杂，作为 kubernetes 原生的网络模型——Flannel，不同的访问环境，一共可以分为10个 SOP 场景。通过深入简出的剖析，可以归纳为5个场景，并对这五个场景的转发链路，技术实现原理，云产品配置等一一梳理并总结，这对我们遇到 Flannel 架构下的链路抖动、最优化配置，链路原理等提供了初步指引方向。接下来将进入到阿里自研的 CNI 接口 Terway 模式，也是目前线上集群使用最多的模式，下一系列我们先带来 Terway  ENI 模式的全景解析——ACK 全景剖析阿里云容器网络数据链路（二）：Terway ENI。</h5>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>flanel网络 2024-04-03 15:05:04.16</div>
+      <div>http://example.com/2025/01/16/flanel网络-flanel-wang-luo/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/ezctl%20%E5%91%BD%E4%BB%A4%E8%A1%8C%E4%BB%8B%E7%BB%8D-ezctl-ming-ling-xing-jie-shao/" title="ezctl 命令行介绍 2023-09-28 15:28:00.619">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">ezctl 命令行介绍 2023-09-28 15:28:00.619</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/dockerfile%E7%9A%84copy%E5%92%8Cadd%E7%9A%84%E5%8C%BA%E5%88%AB-dockerfile-de-copy-he-add-de-qu-bie/" title="dockerfile的copy和add的区别 2024-04-03 15:01:09.565">
+                        <span class="hidden-mobile">dockerfile的copy和add的区别 2024-04-03 15:01:09.565</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

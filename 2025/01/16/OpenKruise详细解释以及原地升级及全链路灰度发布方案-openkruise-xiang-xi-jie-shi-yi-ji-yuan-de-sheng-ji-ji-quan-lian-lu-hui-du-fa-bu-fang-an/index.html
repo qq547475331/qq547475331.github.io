@@ -1,0 +1,809 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="OpenKruise简介OpenKruise来源它是由阿里巴巴集团的阿里云团队维护和开发的，并且在2018年将其贡献给了云原生计算基金会（CNCF），成为了CNCF的孵化项目。 OpenKruise是什么？OpenKruise 是一个基于 Kubernetes 的扩展项目，旨在增强和扩展 Kubernetes 的原生能力，以更好地支持大规模应用的管理和运维。它通过提供一系列自定义控制器和自定义资源">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenKruise详细解释以及原地升级及全链路灰度发布方案 2024-07-22 11:44:46.892">
+<meta property="og:url" content="http://example.com/2025/01/16/OpenKruise%E8%AF%A6%E7%BB%86%E8%A7%A3%E9%87%8A%E4%BB%A5%E5%8F%8A%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7%E5%8F%8A%E5%85%A8%E9%93%BE%E8%B7%AF%E7%81%B0%E5%BA%A6%E5%8F%91%E5%B8%83%E6%96%B9%E6%A1%88-openkruise-xiang-xi-jie-shi-yi-ji-yuan-de-sheng-ji-ji-quan-lian-lu-hui-du-fa-bu-fang-an/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="OpenKruise简介OpenKruise来源它是由阿里巴巴集团的阿里云团队维护和开发的，并且在2018年将其贡献给了云原生计算基金会（CNCF），成为了CNCF的孵化项目。 OpenKruise是什么？OpenKruise 是一个基于 Kubernetes 的扩展项目，旨在增强和扩展 Kubernetes 的原生能力，以更好地支持大规模应用的管理和运维。它通过提供一系列自定义控制器和自定义资源">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171419991.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171420518.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171420087.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171420533.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171421650.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171422404.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171423218.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171423820.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171423930.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171758387.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171425406.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171425764.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171426838.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171426842.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171801704.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171427999.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171428114.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171803925.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171428559.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.065Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:18.865Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171419991.png">
+  
+  
+  
+  <title>OpenKruise详细解释以及原地升级及全链路灰度发布方案 2024-07-22 11:44:46.892 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="OpenKruise详细解释以及原地升级及全链路灰度发布方案 2024-07-22 11:44:46.892"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.9k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          25 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">OpenKruise详细解释以及原地升级及全链路灰度发布方案 2024-07-22 11:44:46.892</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p><strong>OpenKruise简介</strong><br><strong>OpenKruise来源</strong><br><strong>它是由阿里巴巴集团的阿里云团队维护和开发的，并且在2018年将其贡献给了云原生计算基金会（CNCF），成为了CNCF的孵化项目。</strong></p>
+<p><strong>OpenKruise是什么？</strong><br><strong>OpenKruise 是一个基于 Kubernetes 的扩展项目，旨在增强和扩展 Kubernetes 的原生能力，以更好地支持大规模应用的管理和运维。它通过提供一系列自定义控制器和自定义资源（CRD），帮助用户在 Kubernetes 集群中更加灵活、高效地管理容器化应用。</strong></p>
+<p><strong>核心组件有什么？</strong><br><strong>1.CloneSet:</strong><br><strong>功能:</strong><br><strong>用于管理一组具有相同模板的 Pod。类似于 Kubernetes 的 Deployment，但提供了更多高级特性，如灰度发布、并行和顺序更新策略、最大不可用副本数等。</strong><br><strong>用途:</strong><br><strong>适用于需要复杂更新策略和高可用性的应用场景。</strong></p>
+<p><strong>2.SidecarSet:</strong><br><strong>功能:</strong><br><strong>用于管理 Sidecar 容器。可以动态地将 Sidecar 容器注入到指定的 Pod 中，而不需要修改 Pod 的模板。</strong><br><strong>用途:</strong><br><strong>适用于需要在多个应用 Pod 中添加统一的辅助容器，如日志收集、监控代理等。</strong></p>
+<p><strong>3.StatefulSet:</strong><br><strong>功能:</strong><br><strong>扩展了 Kubernetes 的 StatefulSet 功能。支持有状态应用的管理，提供了更灵活的更新和扩展策略。</strong><br><strong>用途:</strong><br><strong>适用于有状态应用，如数据库、缓存服务等。</strong></p>
+<p><strong>4.Advanced DaemonSet:</strong><br><strong>功能:</strong><br><strong>提供了比原生 Kubernetes DaemonSet 更加灵活的功能，如灰度发布、并行和顺序更新策略等。</strong><br><strong>用途:</strong><br><strong>适用于需要在每个节点上运行一个副本的应用，如监控代理、日志收集代理等。</strong></p>
+<p><strong>5.BroadcastJob:</strong><br><strong>功能:</strong><br><strong>类似于 Kubernetes 的 Job，但用于在集群中所有或部分节点上运行一次性任务。</strong><br><strong>用途:</strong><br><strong>适用于需要在每个节点上执行一次性任务的场景，如节点初始化、数据分发等。</strong></p>
+<p><strong>6.ImagePullJob:</strong><br><strong>功能:</strong><br><strong>用于在集群的所有或部分节点上预拉取镜像，以减少 Pod 启动时的延迟。</strong><br><strong>用途:</strong><br><strong>适用于需要快速启动大量 Pod 的场景，如批量部署、大规模弹性扩容等。</strong></p>
+<p><strong>有什么特性和优势？</strong><br><strong>高级发布策略:</strong><br><strong>支持蓝绿发布、金丝雀发布等高级发布策略，提供更灵活的应用更新方式。</strong><br><strong>高可用性和容错性:</strong><br><strong>通过高级的副本管理和更新策略，确保应用的高可用性和容错性。</strong><br><strong>易于集成:</strong><br><strong>与 Kubernetes 原生功能无缝集成，用户可以在现有 Kubernetes 集群上直接使用 OpenKruise 提供的功能。</strong><br><strong>社区支持:</strong><br><strong>由阿里巴巴开源，并得到社区广泛支持和贡献，持续更新和优化。</strong></p>
+<p><strong>适用于什么场景？</strong><br><strong>互联网企业:</strong><br><strong>需要频繁更新和部署的在线服务，如电商网站、社交平台等。</strong><br><strong>金融行业:</strong><br><strong>高可用性和高安全性要求的金融应用，如银行系统、交易平台等。</strong><br><strong>大数据和 AI:</strong><br><strong>需要大规模计算和数据处理的应用，如数据分析、机器学习等。</strong><br><strong>企业 IT:</strong><br><strong>企业内部的各类业务系统和应用，如 CRM、ERP 系统等</strong></p>
+<p><strong>什么是OpenKruise的原地升级</strong><br><strong>因为后面会使用，这里详细讲一下</strong></p>
+<p><strong>OpenKruise 的原地升级（In-Place Update）是一种更新策略，允许在不销毁和重建 Pod 的情况下直接更新 Pod 内的容器镜像或资源配置。这种方法与传统的替换策略不同，可以显著减少更新过程中应用的中断时间和资源开销。</strong></p>
+<p><strong>原地升级的关键特性</strong><br><strong>无需重建 Pod:</strong><br><strong>优势:</strong><br><strong>避免了 Pod 重建过程中的网络重连、存储重新挂载等操作，减少了因重建导致的潜在服务中断和性能抖动。</strong><br><strong>用途:</strong><br><strong>特别适用于那些对重建敏感的应用，如状态有管理复杂的有状态应用。</strong></p>
+<p><strong>减少资源开销:</strong><br><strong>优势:</strong><br><strong>在更新过程中，不需要重新调度和启动新的 Pod，从而减少了对集群资源的占用。</strong><br><strong>用途:</strong><br><strong>适用于资源紧张的集群环境，可以有效节约计算和存储资源。</strong></p>
+<p><strong>提升更新速度:</strong><br><strong>优势:</strong><br><strong>直接更新现有 Pod 的容器镜像或配置，省去了 Pod 创建和销毁的时间，显著提升了更新操作的效率。</strong><br><strong>用途:</strong><br><strong>适用于需要快速更新的场景，如紧急补丁、快速迭代开发等。</strong></p>
+<p><strong>使用原地升级的组件</strong><br><strong>CloneSet:</strong><br><strong>原地升级功能:</strong><br><strong>通过配置 CloneSet 的 inPlaceUpdateStrategy，可以实现对应用的原地升级。</strong><br><strong>适用场景:</strong><br><strong>需要频繁更新且对更新速度和资源开销有较高要求的无状态应用。</strong></p>
+<p><strong>Advanced StatefulSet:</strong><br><strong>原地升级功能:</strong><br><strong>扩展了原生 StatefulSet 的能力，支持对有状态应用进行原地升级。</strong><br><strong>适用场景:</strong><br><strong>需要高可用性和快速更新的有状态应用，如数据库、缓存服务等。</strong></p>
+<p><strong>原地升级的工作原理</strong><br><strong>镜像更新:</strong><br><strong>操作:</strong><br><strong>修改 Pod 的容器镜像标签或 ID。</strong><br><strong>过程:</strong><br><strong>控制器监控到更新请求后，直接在原有 Pod 上更新容器镜像，触发容器重启但不销毁 Pod。</strong></p>
+<p><strong>资源更新:</strong><br><strong>操作:</strong><br><strong>修改 Pod 的资源请求和限制（如 CPU 和内存）。</strong><br><strong>过程:</strong><br><strong>控制器监控到更新请求后，直接在原有 Pod 上更新资源配置，可能触发资源重调度但不销毁 Pod。</strong></p>
+<p><strong>应用环境</strong></p>
+<p><strong>虚拟机</strong></p>
+<table>
+<thead>
+<tr>
+<th>Ip</th>
+<th>主机名</th>
+<th>cpu</th>
+<th>内存</th>
+<th>硬盘</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>192.168.10.11</td>
+<td>master01</td>
+<td>2cpu双核</td>
+<td>4G</td>
+<td>100G</td>
+</tr>
+<tr>
+<td>192.168.10.12</td>
+<td>worker01</td>
+<td>2cpu双核</td>
+<td>4G</td>
+<td>100G</td>
+</tr>
+<tr>
+<td>192.168.10.13</td>
+<td>worker02</td>
+<td>2cpu双核</td>
+<td>4G</td>
+<td>100G</td>
+</tr>
+</tbody></table>
+<p>版本 centos7.9<br>已部署k8s-1.27</p>
+<h4 id="一、OpenKruise部署"><a href="#一、OpenKruise部署" class="headerlink" title="一、OpenKruise部署"></a>一、OpenKruise部署</h4><p>本案例使用helm方式安装部署</p>
+<p>Helm用于实现kubernetes中相互关联的多个yaml文件的安装部署，相当于linux系统中的yum工具</p>
+<h5 id="1-安装helm客户端工具"><a href="#1-安装helm客户端工具" class="headerlink" title="1.安装helm客户端工具"></a>1.安装helm客户端工具</h5><figure class="highlight livecodeserver"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs livecodeserver">wget <span class="hljs-keyword">https</span>://<span class="hljs-built_in">get</span>.helm.sh/helm-v3<span class="hljs-number">.13</span><span class="hljs-number">.2</span>-linux-amd64.tar.gz<br>tar xf helm-v3<span class="hljs-number">.13</span><span class="hljs-number">.2</span>-linux-amd64.tar.gz<br>mv linux-amd64/helm /usr/bin/<br>helm <span class="hljs-built_in">version</span><br>helm repo <span class="hljs-built_in">add</span> stable <span class="hljs-keyword">http</span>://mirror.azure.cn/kubernetes/charts/<br>helm repo <span class="hljs-built_in">add</span> bitnami <span class="hljs-keyword">https</span>://charts.bitnami.com/bitnami<br>helm repo <span class="hljs-built_in">add</span> prometheus-community <span class="hljs-keyword">https</span>://prometheus-community.github.io/helm-charts<br>helm repo update<br>helm repo list<br><br></code></pre></td></tr></table></figure>
+
+
+
+<p>详情请看<br>链接: <a target="_blank" rel="noopener" href="https://blog.csdn.net/lwxvgdv/article/details/139648068">k8s学习–helm的详细解释及安装和常用命令</a></p>
+<ol start="2">
+<li><p>通过 helm 安装</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs sql">helm repo <span class="hljs-keyword">add</span> openkruise https:<span class="hljs-operator">/</span><span class="hljs-operator">/</span>openkruise.github.io<span class="hljs-operator">/</span>charts<span class="hljs-operator">/</span><br>helm repo <span class="hljs-keyword">update</span><br>helm <span class="hljs-keyword">search</span> repo openkruise<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight n1ql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs n1ql">k <span class="hljs-keyword">create</span> ns kruise-<span class="hljs-keyword">system</span><br># 添加标签  <br>kubectl label <span class="hljs-keyword">namespace</span> kruise-<span class="hljs-keyword">system</span> app.kubernetes.io/managed-<span class="hljs-keyword">by</span>=Helm  <br>  <br># 添加注解  <br>kubectl annotate <span class="hljs-keyword">namespace</span> kruise-<span class="hljs-keyword">system</span> <span class="hljs-built_in">meta</span>.helm.sh/release-name=openkruise  <br>kubectl annotate <span class="hljs-keyword">namespace</span> kruise-<span class="hljs-keyword">system</span> <span class="hljs-built_in">meta</span>.helm.sh/release-<span class="hljs-keyword">namespace</span>=kruise-<span class="hljs-keyword">system</span><br></code></pre></td></tr></table></figure>
+
+
+
+<figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs vim">helm -n newland install redis -<span class="hljs-keyword">f</span> my-<span class="hljs-built_in">values</span>.yaml ./redis<br><br><br>kruise-<span class="hljs-built_in">system</span><br><br><br>featureGates: <span class="hljs-string">&quot;ImagePullJobGate=true&quot;</span><br><br><br>helm -n kruise-<span class="hljs-built_in">system</span> install openkruise -<span class="hljs-keyword">f</span> <span class="hljs-built_in">values</span>.yaml ./ <br><br><br>helm -n kruise-<span class="hljs-built_in">system</span> install openkruise -<span class="hljs-keyword">f</span> my-<span class="hljs-built_in">values</span>.yaml ./  --<span class="hljs-keyword">set</span>  manager.image.repository=<span class="hljs-number">192.168</span>.<span class="hljs-number">0.140</span>:<span class="hljs-number">881</span>/openkruise/kruise-manager<br><br>helm  install openkruise -<span class="hljs-keyword">f</span> my-<span class="hljs-built_in">values</span>.yaml ./ <br><br><br>helm -n kruise-<span class="hljs-built_in">system</span> install openkruise -<span class="hljs-keyword">f</span> my-<span class="hljs-built_in">values</span>.yaml ./  <br><br>--<span class="hljs-keyword">set</span>  manager.image.repository=openkruise-registry.<span class="hljs-keyword">cn</span>-hangzhou.<span class="hljs-keyword">cr</span>.aliyuncs.<span class="hljs-keyword">com</span>/openkruise/kruise-manager<br><br><br>openkruise-registry.<span class="hljs-keyword">cn</span>-hangzhou.<span class="hljs-keyword">cr</span>.aliyuncs.<span class="hljs-keyword">com</span>/openkruise/kruise-manager:v1.<span class="hljs-number">7.0</span>-alpha1.<span class="hljs-number">1</span><br><br><br>openkruise-registry.<span class="hljs-keyword">cn</span>-hangzhou.<span class="hljs-keyword">cr</span>.aliyuncs.<span class="hljs-keyword">com</span>/openkruise/kruise-manager:v1.<span class="hljs-number">7.0</span>-alpha1.<span class="hljs-number">1</span><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight jboss-cli"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs jboss-cli">$ helm install kruise https:<span class="hljs-string">//...</span> <span class="hljs-params">--set</span>  manager.image.repository=openkruise-registry.cn-shanghai.cr.aliyuncs.com/openkruise/kruise-manager<br><br><br><span class="hljs-comment"># Firstly add openkruise charts repository if you haven&#x27;t do this.</span><br>$ helm repo add openkruise https:<span class="hljs-string">//openkruise.github.io/charts/</span><br><br><span class="hljs-comment"># [Optional]</span><br>$ helm repo update<br><br><span class="hljs-comment"># Install the latest version.</span><br>$ helm install kruise openkruise/kruise <span class="hljs-params">--version</span> 1.6.3<br><br>helm install kruise openkruise/kruise <span class="hljs-params">--version</span> 1.6.3 <span class="hljs-params">--set</span>  manager.image.repository=192.168.0.140<span class="hljs-function">:881</span>/openkruise/kruise-manager<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><code class="hljs ini"><span class="hljs-section">[root@longxi-master201 ~]</span><span class="hljs-comment"># cat /usr/lib/systemd/system/docker.service</span><br><span class="hljs-section">[Unit]</span><br><span class="hljs-attr">Description</span>=Docker Application Container Engine<br><span class="hljs-attr">Documentation</span>=https://docs.docker.com<br><span class="hljs-attr">After</span>=network-<span class="hljs-literal">on</span>line.target firewalld.service containerd.service<br><span class="hljs-attr">Wants</span>=network-<span class="hljs-literal">on</span>line.target<br><span class="hljs-attr">Requires</span>=docker.socket containerd.service<br><br><span class="hljs-section">[Service]</span><br><span class="hljs-attr">Type</span>=notify<br><br><span class="hljs-attr">ExecStart</span>=/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock<br><span class="hljs-attr">ExecReload</span>=/bin/kill -s HUP <span class="hljs-variable">$MAINPID</span><br><span class="hljs-attr">TimeoutSec</span>=<span class="hljs-number">0</span><br><span class="hljs-attr">RestartSec</span>=<span class="hljs-number">2</span><br><span class="hljs-attr">Restart</span>=always<br><br><br><br><span class="hljs-attr">StartLimitBurst</span>=<span class="hljs-number">3</span><br><br><br><span class="hljs-attr">StartLimitInterval</span>=<span class="hljs-number">60</span>s<br><br><br><span class="hljs-attr">LimitNOFILE</span>=infinity<br><span class="hljs-attr">LimitNPROC</span>=infinity<br><span class="hljs-attr">LimitCORE</span>=infinity<br><br><br><span class="hljs-attr">TasksMax</span>=infinity<br><br><br><span class="hljs-attr">Delegate</span>=<span class="hljs-literal">yes</span><br><br><br><span class="hljs-attr">KillMode</span>=process<br><span class="hljs-attr">OOMScoreAdjust</span>=-<span class="hljs-number">500</span><br><br><span class="hljs-section">[Install]</span><br><span class="hljs-attr">WantedBy</span>=multi-user.target<br><span class="hljs-section">[root@longxi-master201 ~]</span><span class="hljs-comment">#</span><br><br></code></pre></td></tr></table></figure>
+
+<p>搜索OpenKruise仓库中的Charts</p>
+</li>
+</ol>
+<p>可以看到已经存在</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171419991.png" srcset="/img/loading.gif" lazyload alt="image-20240717141947833"></p>
+<p>由于本次部署在K8S 1.27版本集群，并使用cri-dockerd，所以手动指定CRI。<br>注意：如果是1.24以下，则不需要，因为默认就是docker</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs routeros">helm install kruise openkruise/kruise --version 1.6.3 --<span class="hljs-built_in">set</span> daemon.<span class="hljs-attribute">socketLocation</span>=/var/run --<span class="hljs-built_in">set</span> daemon.<span class="hljs-attribute">socketFile</span>=cri-dockerd.sock<br><br><br>helm install kruise openkruise/kruise --version 1.6.3 --<span class="hljs-built_in">set</span> daemon.<span class="hljs-attribute">socketLocation</span>=/var/run --<span class="hljs-built_in">set</span> daemon.<span class="hljs-attribute">socketFile</span>=cri-dockerd.sock<br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171420518.png" srcset="/img/loading.gif" lazyload alt="image-20240717142010412"></p>
+<p>查看一下</p>
+<figure class="highlight ebnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs ebnf"><span class="hljs-attribute">helm list</span><br><br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171420087.png" srcset="/img/loading.gif" lazyload alt="image-20240717142035027"></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs sql">kubectl  <span class="hljs-operator">-</span>n kruise<span class="hljs-operator">-</span><span class="hljs-keyword">system</span> <span class="hljs-keyword">get</span> <span class="hljs-keyword">all</span><br><br></code></pre></td></tr></table></figure>
+
+<p>可以看到都已经运行起来了</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171420533.png" srcset="/img/loading.gif" lazyload alt="image-20240717142057458"></p>
+<h4 id="二、OpenKruise使用案例"><a href="#二、OpenKruise使用案例" class="headerlink" title="二、OpenKruise使用案例"></a>二、OpenKruise使用案例</h4><h5 id="1-部署应用"><a href="#1-部署应用" class="headerlink" title="1. 部署应用"></a>1. 部署应用</h5><figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs vim"><span class="hljs-built_in">mkdir</span> yaml &amp;&amp; <span class="hljs-keyword">cd</span> yaml<br><span class="hljs-keyword">vim</span> <span class="hljs-number">01</span>-ok.yaml<br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">apps.kruise.io/v1alpha1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">CloneSet</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginxweb1</span><br>  <span class="hljs-attribute">namespace</span><span class="hljs-punctuation">:</span> <span class="hljs-string">default</span><br><span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">replicas</span><span class="hljs-punctuation">:</span> <span class="hljs-string">3</span><br>  <span class="hljs-attribute">selector</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">matchLabels</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-attribute">app</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginxweb1</span><br>  <span class="hljs-attribute">template</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-attribute">labels</span><span class="hljs-punctuation">:</span><br>        <span class="hljs-attribute">app</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginxweb1</span><br>    <span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-attribute">containers</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-string">name: nginx</span><br>        <span class="hljs-attribute">image</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginx:1.20</span><br>        <span class="hljs-attribute">imagePullPolicy</span><span class="hljs-punctuation">:</span> <span class="hljs-string">IfNotPresent</span><br>        <span class="hljs-attribute">ports</span><span class="hljs-punctuation">:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-string">containerPort: 80</span><br><br></code></pre></td></tr></table></figure>
+
+<p>应用yaml文件并查看</p>
+<figure class="highlight maxima"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs maxima">kubectl <span class="hljs-built_in">apply</span> -f <span class="hljs-number">01</span>-ok.yaml<br>kubectl <span class="hljs-built_in">get</span> clonesets<br><br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171421650.png" srcset="/img/loading.gif" lazyload alt="image-20240717142138585"></p>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">kubectl <span class="hljs-keyword">get</span> <span class="hljs-keyword">all</span><br><br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171422404.png" srcset="/img/loading.gif" lazyload alt="image-20240717142206343"></p>
+<p><strong>创建成功之后通过 kubectl get all命令查看对应的信息，可以发现cloneset- controller 是直接创建的 Pod，而原生的Deployment 是通过 ReplicaSet 去创建的 Pod</strong></p>
+<h5 id="2-应用扩容"><a href="#2-应用扩容" class="headerlink" title="2. 应用扩容"></a>2. 应用扩容</h5><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">vim</span> <span class="hljs-number">02</span>-ok.yaml<br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">apps.kruise.io/v1alpha1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">CloneSet</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginxweb1</span><br>  <span class="hljs-attribute">namespace</span><span class="hljs-punctuation">:</span> <span class="hljs-string">default</span><br><span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">minReadySeconds</span><span class="hljs-punctuation">:</span> <span class="hljs-string">30</span><br>  <span class="hljs-attribute">scaleStrategy</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">maxUnavailable</span><span class="hljs-punctuation">:</span> <span class="hljs-string">1</span><br>  <span class="hljs-attribute">replicas</span><span class="hljs-punctuation">:</span> <span class="hljs-string">5</span><br>  <span class="hljs-attribute">selector</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">matchLabels</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-attribute">app</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginxweb1</span><br>  <span class="hljs-attribute">template</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-attribute">labels</span><span class="hljs-punctuation">:</span><br>        <span class="hljs-attribute">app</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginxweb1</span><br>    <span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-attribute">containers</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-string">name: nginx</span><br>        <span class="hljs-attribute">image</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginx:1.20</span><br>        <span class="hljs-attribute">imagePullPolicy</span><span class="hljs-punctuation">:</span> <span class="hljs-string">IfNotPresent</span><br>        <span class="hljs-attribute">ports</span><span class="hljs-punctuation">:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-string">containerPort: 80</span><br><br></code></pre></td></tr></table></figure>
+
+<p>minReadySeconds: 30 创建了一个pod之后30s才会创建第二个<br>应用yaml文件并持续查看<br>注意： watch是持续查看 ctrl+c退出</p>
+<figure class="highlight maxima"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs maxima">kubectl <span class="hljs-built_in">apply</span> -f <span class="hljs-number">02</span>-ok.yaml<br>watch kubectl <span class="hljs-built_in">get</span> pods<br><br></code></pre></td></tr></table></figure>
+
+<p>可以看到30s之后才创建出来的第二个</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171423218.png" srcset="/img/loading.gif" lazyload alt="image-20240717142320144"></p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs routeros">kubectl <span class="hljs-built_in">get</span> cloneset<br><br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171423820.png" srcset="/img/loading.gif" lazyload alt="image-20240717142335669"></p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs routeros">kubectl <span class="hljs-built_in">get</span> pods<br><br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171423930.png" srcset="/img/loading.gif" lazyload alt="image-20240717142350723"></p>
+<h5 id="3-应用缩容"><a href="#3-应用缩容" class="headerlink" title="3. 应用缩容"></a>3. 应用缩容</h5><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">vim</span> <span class="hljs-number">03</span>-ok.yaml<br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">apps.kruise.io/v1alpha1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">CloneSet</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginxweb1</span><br>  <span class="hljs-attribute">namespace</span><span class="hljs-punctuation">:</span> <span class="hljs-string">default</span><br><span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">minReadySeconds</span><span class="hljs-punctuation">:</span> <span class="hljs-string">30</span><br>  <span class="hljs-attribute">scaleStrategy</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">maxUnavailable</span><span class="hljs-punctuation">:</span> <span class="hljs-string">1</span><br>    <span class="hljs-attribute">podsToDelete</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">nginxweb1-frcl2 # 可指定多个</span><br>  <span class="hljs-attribute">replicas</span><span class="hljs-punctuation">:</span> <span class="hljs-string">4</span><br>  <span class="hljs-attribute">selector</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">matchLabels</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-attribute">app</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginxweb1</span><br>  <span class="hljs-attribute">template</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-attribute">labels</span><span class="hljs-punctuation">:</span><br>        <span class="hljs-attribute">app</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginxweb1</span><br>    <span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-attribute">containers</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-string">name: nginx</span><br>        <span class="hljs-attribute">image</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginx:1.20</span><br>        <span class="hljs-attribute">imagePullPolicy</span><span class="hljs-punctuation">:</span> <span class="hljs-string">IfNotPresent</span><br>        <span class="hljs-attribute">ports</span><span class="hljs-punctuation">:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-string">containerPort: 80</span><br><br></code></pre></td></tr></table></figure>
+
+<p>缩容时， CloneSet可以指定一些pod删除，而 StatefulSet 或者 Deployment 做不到:<br>StatefulSet 是根据序号来删除 Pod，而 Deployment&#x2F;ReplicaSet 目前只能根据控制器里定义的排序来删除。<br>而 CloneSet 允许用户在缩小 replicas 数量的同时，指定想要删除的 Pod 名字。<br>如果只是把name加入podsToDelete，而没有修改replicas的话，删完之后会再扩一个pod</p>
+<figure class="highlight maxima"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs maxima">kubectl <span class="hljs-built_in">apply</span> -f <span class="hljs-number">03</span>-ok.yaml<br>kubectl <span class="hljs-built_in">get</span> pods<br><br></code></pre></td></tr></table></figure>
+
+<p>可以看到指定的pod已经被删除</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171758387.png" srcset="/img/loading.gif" lazyload alt="image-20240717175838141"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171425406.png" srcset="/img/loading.gif" lazyload alt="image-20240717142535298"></p>
+<h5 id="4-原地升级"><a href="#4-原地升级" class="headerlink" title="4. 原地升级"></a>4. 原地升级</h5><p>先查看一下pod内nginx的版本</p>
+<figure class="highlight applescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs applescript">kubectl exec -<span class="hljs-keyword">it</span> nginxweb1-g44p9 <span class="hljs-comment">-- nginx -v</span><br><br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171425764.png" srcset="/img/loading.gif" lazyload alt="image-20240717142554700"></p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">vim</span> <span class="hljs-number">04</span>-ok.yaml<br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps.kruise.io/v1alpha1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">CloneSet</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">nginxweb1</span><br>  <span class="hljs-attr">namespace:</span> <span class="hljs-string">default</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">minReadySeconds:</span> <span class="hljs-number">30</span><br>  <span class="hljs-attr">updateStrategy:</span> <span class="hljs-comment">#添加更新策略</span><br>    <span class="hljs-attr">type:</span> <span class="hljs-string">InPlaceIfPossible</span><br>  <span class="hljs-attr">scaleStrategy:</span><br>    <span class="hljs-attr">maxUnavailable:</span> <span class="hljs-number">1</span><br>  <span class="hljs-attr">replicas:</span> <span class="hljs-number">4</span><br>  <span class="hljs-attr">selector:</span><br>    <span class="hljs-attr">matchLabels:</span><br>      <span class="hljs-attr">app:</span> <span class="hljs-string">nginxweb1</span><br>  <span class="hljs-attr">template:</span><br>    <span class="hljs-attr">metadata:</span><br>      <span class="hljs-attr">labels:</span><br>        <span class="hljs-attr">app:</span> <span class="hljs-string">nginxweb1</span><br>    <span class="hljs-attr">spec:</span><br>      <span class="hljs-attr">containers:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">nginx</span><br>        <span class="hljs-attr">image:</span> <span class="hljs-string">nginx:latest</span> <span class="hljs-comment">#更换镜像版本</span><br>        <span class="hljs-attr">imagePullPolicy:</span> <span class="hljs-string">IfNotPresent</span><br>        <span class="hljs-attr">ports:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">containerPort:</span> <span class="hljs-number">80</span><br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">kubectl</span> apply -f <span class="hljs-number">04</span>-ok.yaml<br><br></code></pre></td></tr></table></figure>
+
+<p><strong>更新过程</strong></p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs routeros">watch kubectl <span class="hljs-built_in">get</span> pods<br><br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171426838.png" srcset="/img/loading.gif" lazyload alt="image-20240717142635659"></p>
+<figure class="highlight applescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs applescript">kubectl exec -<span class="hljs-keyword">it</span> nginxweb1-g44p9 <span class="hljs-comment">-- nginx -v</span><br><br></code></pre></td></tr></table></figure>
+
+<p>可以看到nginx版本已经更新成功</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171426842.png" srcset="/img/loading.gif" lazyload alt="image-20240717142656770"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171801704.png" srcset="/img/loading.gif" lazyload alt="image-20240717180101624"></p>
+<h5 id="5-灰度更新"><a href="#5-灰度更新" class="headerlink" title="5. 灰度更新"></a>5. 灰度更新</h5><p>通过灰度更新可以更新部分pod</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">vim</span> <span class="hljs-number">05</span>-ok.yaml<br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps.kruise.io/v1alpha1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">CloneSet</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">nginxweb1</span><br>  <span class="hljs-attr">namespace:</span> <span class="hljs-string">default</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">minReadySeconds:</span> <span class="hljs-number">30</span><br>  <span class="hljs-attr">updateStrategy:</span> <span class="hljs-comment"># 添加更新策略 </span><br>    <span class="hljs-attr">type:</span> <span class="hljs-string">InPlaceIfPossible</span><br>    <span class="hljs-attr">partition:</span> <span class="hljs-number">2</span> <span class="hljs-comment"># 保留旧版本pod数量</span><br>  <span class="hljs-attr">scaleStrategy:</span><br>    <span class="hljs-attr">maxUnavailable:</span> <span class="hljs-number">1</span><br>  <span class="hljs-attr">replicas:</span> <span class="hljs-number">4</span><br>  <span class="hljs-attr">selector:</span><br>    <span class="hljs-attr">matchLabels:</span><br>      <span class="hljs-attr">app:</span> <span class="hljs-string">nginxweb1</span><br>  <span class="hljs-attr">template:</span><br>    <span class="hljs-attr">metadata:</span><br>      <span class="hljs-attr">labels:</span><br>        <span class="hljs-attr">app:</span> <span class="hljs-string">nginxweb1</span><br>    <span class="hljs-attr">spec:</span><br>      <span class="hljs-attr">containers:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">nginx</span><br>        <span class="hljs-attr">image:</span> <span class="hljs-string">nginx:1.20</span><br>        <span class="hljs-attr">imagePullPolicy:</span> <span class="hljs-string">IfNotPresent</span><br>        <span class="hljs-attr">ports:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">containerPort:</span> <span class="hljs-number">80</span><br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs routeros">kubectl <span class="hljs-built_in">get</span> pods<br><br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171427999.png" srcset="/img/loading.gif" lazyload alt="image-20240717142744744"></p>
+<figure class="highlight maxima"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs maxima">kubectl <span class="hljs-built_in">apply</span> -f <span class="hljs-number">05</span>-ok.yaml<br>watch kubectl <span class="hljs-built_in">get</span> pods <br><br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171428114.png" srcset="/img/loading.gif" lazyload alt="image-20240717142806049"></p>
+<p>查看版本</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">kubectl</span> exec -it nginxweb1-g44p9 -- nginx -v<br><span class="hljs-attribute">kubectl</span> exec -it nginxweb1-jjsjp -- nginx -v<br><span class="hljs-attribute">kubectl</span> exec -it nginxweb1-wr8h7 -- nginx -v<br><span class="hljs-attribute">kubectl</span> exec -it nginxweb1-zhqxj -- nginx -v<br><br><br><br><span class="hljs-attribute">nginxweb1</span>-<span class="hljs-number">89</span>nkb   <span class="hljs-number">1</span>/<span class="hljs-number">1</span>     Running   <span class="hljs-number">1</span> (<span class="hljs-number">57</span>s ago)     <span class="hljs-number">6</span>m18s<br><span class="hljs-attribute">nginxweb1</span>-kmp4g   <span class="hljs-number">1</span>/<span class="hljs-number">1</span>     Running   <span class="hljs-number">1</span> (<span class="hljs-number">2</span>m12s ago)   <span class="hljs-number">4</span>m45s<br><span class="hljs-attribute">nginxweb1</span>-pb9qt   <span class="hljs-number">1</span>/<span class="hljs-number">1</span>     Running   <span class="hljs-number">1</span> (<span class="hljs-number">24</span>s ago)     <span class="hljs-number">6</span>m18s<br><span class="hljs-attribute">nginxweb1</span>-x9vbh   <span class="hljs-number">1</span>/<span class="hljs-number">1</span>     Running   <span class="hljs-number">1</span> (<span class="hljs-number">94</span>s ago)     <span class="hljs-number">5</span>m17s<br><br><br><span class="hljs-attribute">kubectl</span> exec -it nginxweb1-<span class="hljs-number">89</span>nkb -- nginx -v<br><span class="hljs-attribute">kubectl</span> exec -it nginxweb1-kmp4g  -- nginx -v<br><span class="hljs-attribute">kubectl</span> exec -it nginxweb1-pb9qt -- nginx -v<br><span class="hljs-attribute">kubectl</span> exec -it nginxweb1-x9vbh -- nginx -v<br></code></pre></td></tr></table></figure>
+
+<p><strong>我们会发现只更新了2个pod，还有2个pod没有更新。</strong></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171803925.png" srcset="/img/loading.gif" lazyload alt="image-20240717180330825"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202407171428559.png" srcset="/img/loading.gif" lazyload alt="image-20240717142831456"></p>
+<p><strong>完成</strong></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p><strong>OpenKruise 通过增强 Kubernetes 的能力，提供了更灵活、高效的应用管理方式。它特别适用于需要高级更新策略、高可用性和大规模部署的场景，是对 Kubernetes 原生功能的强有力补充。</strong></p>
+<figure class="highlight gherkin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br></pre></td><td class="code"><pre><code class="hljs gherkin"><span class="hljs-comment"># Kruise v1.7.0-alpha.1</span><br><br><span class="hljs-comment">## Configuration</span><br><br>The following table lists the configurable parameters of the kruise chart and their default values.<br><br><span class="hljs-comment">### manager parameters</span><br>|<span class="hljs-string"> Parameter                                 </span>|<span class="hljs-string"> Description                                                  </span>|<span class="hljs-string"> Default                       </span>|<br>|<span class="hljs-string"> ----------------------------------------- </span>|<span class="hljs-string"> ------------------------------------------------------------ </span>|<span class="hljs-string"> ----------------------------- </span>|<br>|<span class="hljs-string"> `featureGates`                            </span>|<span class="hljs-string"> Feature gates for Kruise, empty string means all enabled     </span>|<span class="hljs-string"> ` `                           </span>|<br>|<span class="hljs-string"> `installation.namespace`                  </span>|<span class="hljs-string"> namespace for kruise installation                            </span>|<span class="hljs-string"> `kruise-system`               </span>|<br>|<span class="hljs-string"> `installation.createNamespace`            </span>|<span class="hljs-string"> Whether to create the installation.namespace                 </span>|<span class="hljs-string"> `true`                        </span>|<br>|<span class="hljs-string"> `manager.log.level`                       </span>|<span class="hljs-string"> Log level that kruise-manager printed                        </span>|<span class="hljs-string"> `4`                           </span>|<br>|<span class="hljs-string"> `manager.replicas`                        </span>|<span class="hljs-string"> Replicas of kruise-controller-manager deployment             </span>|<span class="hljs-string"> `2`                           </span>|<br>|<span class="hljs-string"> `manager.image.repository`                </span>|<span class="hljs-string"> Repository for kruise-manager image                          </span>|<span class="hljs-string"> `openkruise/kruise-manager`   </span>|<br>|<span class="hljs-string"> `manager.image.tag`                       </span>|<span class="hljs-string"> Tag for kruise-manager image                                 </span>|<span class="hljs-string"> `v1.7.0-alpha.1`                      </span>|<br>|<span class="hljs-string"> `manager.resources.limits.cpu`            </span>|<span class="hljs-string"> CPU resource limit of kruise-manager container               </span>|<span class="hljs-string"> `200m`                        </span>|<br>|<span class="hljs-string"> `manager.resources.limits.memory`         </span>|<span class="hljs-string"> Memory resource limit of kruise-manager container            </span>|<span class="hljs-string"> `512Mi`                       </span>|<br>|<span class="hljs-string"> `manager.resources.requests.cpu`          </span>|<span class="hljs-string"> CPU resource request of kruise-manager container             </span>|<span class="hljs-string"> `100m`                        </span>|<br>|<span class="hljs-string"> `manager.resources.requests.memory`       </span>|<span class="hljs-string"> Memory resource request of kruise-manager container          </span>|<span class="hljs-string"> `256Mi`                       </span>|<br>|<span class="hljs-string"> `manager.metrics.port`                    </span>|<span class="hljs-string"> Port of metrics served                                       </span>|<span class="hljs-string"> `8080`                        </span>|<br>|<span class="hljs-string"> `manager.webhook.port`                    </span>|<span class="hljs-string"> Port of webhook served                                       </span>|<span class="hljs-string"> `9443`                        </span>|<br>|<span class="hljs-string"> `manager.pprofAddr`                       </span>|<span class="hljs-string"> Address of pprof served                                      </span>|<span class="hljs-string"> `localhost:8090`              </span>|<br>|<span class="hljs-string"> `manager.nodeAffinity`                    </span>|<span class="hljs-string"> Node affinity policy for kruise-manager pod                  </span>|<span class="hljs-string"> `&#123;&#125;`                          </span>|<br>|<span class="hljs-string"> `manager.nodeSelector`                    </span>|<span class="hljs-string"> Node labels for kruise-manager pod                           </span>|<span class="hljs-string"> `&#123;&#125;`                          </span>|<br>|<span class="hljs-string"> `manager.tolerations`                     </span>|<span class="hljs-string"> Tolerations for kruise-manager pod                           </span>|<span class="hljs-string"> `[]`                          </span>|<br>|<span class="hljs-string"> `webhookConfiguration.timeoutSeconds`     </span>|<span class="hljs-string"> The timeoutSeconds for all webhook configuration             </span>|<span class="hljs-string"> `30`                          </span>|<br>|<span class="hljs-string"> `crds.managed`                            </span>|<span class="hljs-string"> Kruise will not install CRDs with chart if this is false     </span>|<span class="hljs-string"> `true`                        </span>|<br>|<span class="hljs-string"> `manager.resyncPeriod`                    </span>|<span class="hljs-string"> Resync period of informer kruise-manager, defaults no resync </span>|<span class="hljs-string"> `0`                           </span>|<br>|<span class="hljs-string"> `manager.hostNetwork`                     </span>|<span class="hljs-string"> Whether kruise-manager pod should run with hostnetwork       </span>|<span class="hljs-string"> `false`                       </span>|<br>|<span class="hljs-string"> `imagePullSecrets`                        </span>|<span class="hljs-string"> The list of image pull secrets for kruise image              </span>|<span class="hljs-string"> `false`                       </span>|<br>|<span class="hljs-string"> `enableKubeCacheMutationDetector`         </span>|<span class="hljs-string"> Whether to enable KUBE_CACHE_MUTATION_DETECTOR               </span>|<span class="hljs-string"> `false`                       </span>|<br><br><span class="hljs-comment">### daemon parameters</span><br>|<span class="hljs-string"> Parameter                                 </span>|<span class="hljs-string"> Description                                                  </span>|<span class="hljs-string"> Default                       </span>|<br>|<span class="hljs-string"> ----------------------------------------- </span>|<span class="hljs-string"> ------------------------------------------------------------ </span>|<span class="hljs-string"> ----------------------------- </span>|<br>|<span class="hljs-string"> `daemon.extraEnvs`                        </span>|<span class="hljs-string"> Extra environment variables that will be pass onto pods      </span>|<span class="hljs-string"> `[]`                          </span>|<br>|<span class="hljs-string"> `daemon.log.level`                        </span>|<span class="hljs-string"> Log level that kruise-daemon printed                         </span>|<span class="hljs-string"> `4`                           </span>|<br>|<span class="hljs-string"> `daemon.port`                             </span>|<span class="hljs-string"> Port of metrics and healthz that kruise-daemon served        </span>|<span class="hljs-string"> `10221`                       </span>|<br>|<span class="hljs-string"> `daemon.pprofAddr`                        </span>|<span class="hljs-string"> Address of pprof served                                      </span>|<span class="hljs-string"> `localhost:10222`             </span>|<br>|<span class="hljs-string"> `daemon.resources.limits.cpu`             </span>|<span class="hljs-string"> CPU resource limit of kruise-daemon container                </span>|<span class="hljs-string"> `50m`                         </span>|<br>|<span class="hljs-string"> `daemon.resources.limits.memory`          </span>|<span class="hljs-string"> Memory resource limit of kruise-daemon container             </span>|<span class="hljs-string"> `128Mi`                       </span>|<br>|<span class="hljs-string"> `daemon.resources.requests.cpu`           </span>|<span class="hljs-string"> CPU resource request of kruise-daemon container              </span>|<span class="hljs-string"> `0`                           </span>|<br>|<span class="hljs-string"> `daemon.resources.requests.memory`        </span>|<span class="hljs-string"> Memory resource request of kruise-daemon container           </span>|<span class="hljs-string"> `0`                           </span>|<br>|<span class="hljs-string"> `daemon.affinity`                         </span>|<span class="hljs-string"> Affinity policy for kruise-daemon pod                        </span>|<span class="hljs-string"> `&#123;&#125;`                          </span>|<br>|<span class="hljs-string"> `daemon.socketLocation`                   </span>|<span class="hljs-string"> Location of the container manager control socket             </span>|<span class="hljs-string"> `/var/run`                    </span>|<br>|<span class="hljs-string"> `daemon.socketFile`                       </span>|<span class="hljs-string"> Specify the socket file name in `socketLocation` (if you are not using containerd/docker/pouch/cri-o) </span>|<span class="hljs-string"> ` ` </span>|<br>|<span class="hljs-string"> `daemon.credentialProvider.enable`        </span>|<span class="hljs-string"> Whether to enable credential provider for image pull job     </span>|<span class="hljs-string"> `false`                       </span>|<br>|<span class="hljs-string"> `daemon.credentialProvider.hostPath`      </span>|<span class="hljs-string"> credential provider plugin node dir, will volume mount into kruise-daemon </span>|<span class="hljs-string"> `credential-provider-plugin` </span>|<br>|<span class="hljs-string"> `daemon.credentialProvider.configmap`     </span>|<span class="hljs-string"> credential provider yaml configmap name in kruise-system ns  </span>|<span class="hljs-string"> `credential-provider-config`  </span>|<br><br>Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,<br><br><span class="hljs-comment">### Optional: feature-gate</span><br><br><span class="hljs-keyword">Feature</span>-gate controls some influential features in Kruise:<br><br>|<span class="hljs-string"> Name                                        </span>|<span class="hljs-string"> Description                                                                                                           </span>|<span class="hljs-string"> Default </span>|<span class="hljs-string"> Effect (if closed)                                                                                                </span>|<br>|<span class="hljs-string">---------------------------------------------</span>|<span class="hljs-string">-----------------------------------------------------------------------------------------------------------------------</span>|<span class="hljs-string"> ------- </span>|<span class="hljs-string">-------------------------------------------------------------------------------------------------------------------</span>|<br>|<span class="hljs-string"> `PodWebhook`                                </span>|<span class="hljs-string"> Whether to open a webhook for Pod **create**                                                                          </span>|<span class="hljs-string"> `true`  </span>|<span class="hljs-string"> SidecarSet/KruisePodReadinessGate disabled                                                                        </span>|<br>|<span class="hljs-string"> `KruiseDaemon`                              </span>|<span class="hljs-string"> Whether to deploy `kruise-daemon` DaemonSet                                                                           </span>|<span class="hljs-string"> `true`  </span>|<span class="hljs-string"> ImagePulling/ContainerRecreateRequest disabled                                                                    </span>|<br>|<span class="hljs-string"> `DaemonWatchingPod`                         </span>|<span class="hljs-string"> Should each `kruise-daemon` watch pods on the same node                                                               </span>|<span class="hljs-string"> `true`  </span>|<span class="hljs-string"> For in-place update with same imageID or env from labels/annotations                                              </span>|<br>|<span class="hljs-string"> `CloneSetShortHash`                         </span>|<span class="hljs-string"> Enables CloneSet controller only set revision hash name to pod label                                                  </span>|<span class="hljs-string"> `false` </span>|<span class="hljs-string"> CloneSet name can not be longer than 54 characters                                                                </span>|<br>|<span class="hljs-string"> `KruisePodReadinessGate`                    </span>|<span class="hljs-string"> Enables Kruise webhook to inject &#x27;KruisePodReady&#x27; readiness-gate to all Pods during creation                          </span>|<span class="hljs-string"> `false` </span>|<span class="hljs-string"> The readiness-gate will only be injected to Pods created by Kruise workloads                                      </span>|<br>|<span class="hljs-string"> `PreDownloadImageForInPlaceUpdate`          </span>|<span class="hljs-string"> Enables CloneSet controller to create ImagePullJobs to pre-download images for in-place update                        </span>|<span class="hljs-string"> `true` </span>|<span class="hljs-string"> No image pre-download for in-place update                                                                         </span>|<br>|<span class="hljs-string"> `CloneSetPartitionRollback`                 </span>|<span class="hljs-string"> Enables CloneSet controller to rollback Pods to currentRevision when number of updateRevision pods is bigger than (replicas - partition) </span>|<span class="hljs-string"> `false` </span>|<span class="hljs-string"> CloneSet will only update Pods to updateRevision                                                                  </span>|<br>|<span class="hljs-string"> `ResourcesDeletionProtection`               </span>|<span class="hljs-string"> Enables protection for resources deletion                                                                             </span>|<span class="hljs-string"> `true` </span>|<span class="hljs-string"> No protection for resources deletion                                                                              </span>|<br>|<span class="hljs-string"> `TemplateNoDefaults`                        </span>|<span class="hljs-string"> Whether to disable defaults injection for pod/pvc template in workloads                                               </span>|<span class="hljs-string"> `false` </span>|<span class="hljs-string"> Should not close this feature if it has open                                                                      </span>|<br>|<span class="hljs-string"> `PodUnavailableBudgetDeleteGate`            </span>|<span class="hljs-string"> Enables PodUnavailableBudget for pod deletion, eviction                                                               </span>|<span class="hljs-string"> `true` </span>|<span class="hljs-string"> No protection for pod deletion, eviction                                                                          </span>|<br>|<span class="hljs-string"> `PodUnavailableBudgetUpdateGate`            </span>|<span class="hljs-string"> Enables PodUnavailableBudget for pod.Spec update                                                                      </span>|<span class="hljs-string"> `false` </span>|<span class="hljs-string"> No protection for in-place update                                                                                 </span>|<br>|<span class="hljs-string"> `WorkloadSpread`                            </span>|<span class="hljs-string"> Enables WorkloadSpread to manage multi-domain and elastic deploy                                                      </span>|<span class="hljs-string"> `true` </span>|<span class="hljs-string"> WorkloadSpread disabled                                                                                           </span>|<br>|<span class="hljs-string"> `InPlaceUpdateEnvFromMetadata`              </span>|<span class="hljs-string"> Enables Kruise to in-place update a container in Pod when its env from labels/annotations changed and pod is in-place updating </span>|<span class="hljs-string"> `true` </span>|<span class="hljs-string"> Only container image can be in-place update                                                                       </span>|<br>|<span class="hljs-string"> `StatefulSetAutoDeletePVC`                  </span>|<span class="hljs-string"> Enables policies controlling deletion of PVCs created by a StatefulSet                                                </span>|<span class="hljs-string"> `true` </span>|<span class="hljs-string"> No deletion of PVCs by StatefulSet                                                                                </span>|<br>|<span class="hljs-string"> `PreDownloadImageForDaemonSetUpdate`        </span>|<span class="hljs-string"> Enables DaemonSet controller to create ImagePullJobs to pre-download images for in-place update                       </span>|<span class="hljs-string"> `false` </span>|<span class="hljs-string"> No image pre-download for in-place update                                                                         </span>|<br>|<span class="hljs-string"> `PodProbeMarkerGate`                        </span>|<span class="hljs-string"> Whether to turn on PodProbeMarker ability                                                                             </span>|<span class="hljs-string"> `true` </span>|<span class="hljs-string"> PodProbeMarker disabled                                                                                           </span>|<br>|<span class="hljs-string"> `SidecarSetPatchPodMetadataDefaultsAllowed` </span>|<span class="hljs-string"> Allow SidecarSet patch any annotations to Pod Object                                                                  </span>|<span class="hljs-string"> `false` </span>|<span class="hljs-string"> Annotations are not allowed to patch randomly and need to be configured via SidecarSet_PatchPodMetadata_WhiteList </span>|<br>|<span class="hljs-string"> `SidecarTerminator`                         </span>|<span class="hljs-string"> SidecarTerminator enables SidecarTerminator to stop sidecar containers when all main containers exited                </span>|<span class="hljs-string"> `false` </span>|<span class="hljs-string"> SidecarTerminator disabled                                                                                        </span>|<br>|<span class="hljs-string"> `CloneSetEventHandlerOptimization`          </span>|<span class="hljs-string"> CloneSetEventHandlerOptimization enable optimization for cloneset-controller to reduce the queuing frequency cased by pod update </span>|<span class="hljs-string"> `false` </span>|<span class="hljs-string"> optimization for cloneset-controller to reduce the queuing frequency cased by pod update disabled                 </span>|<br>|<span class="hljs-string"> `PreparingUpdateAsUpdate`                   </span>|<span class="hljs-string"> PreparingUpdateAsUpdate enable CloneSet/Advanced StatefulSet controller to regard preparing-update Pod as updated when calculating update/current revision during scaling. </span>|<span class="hljs-string"> `false` </span>|<span class="hljs-string"> Pods at preparing update state will be regarded as current revision instead of update revision                    </span>|<br>|<span class="hljs-string"> `ImagePullJobGate`                          </span>|<span class="hljs-string"> ImagePullJobGate enable imagepulljob-controller execute ImagePullJob </span>|<span class="hljs-string"> `false` </span>|<span class="hljs-string"> ImagePullJob and PreDownloadImageForInPlaceUpdate are disabled                                                    </span>|<br>|<span class="hljs-string"> `ResourceDistributionGate`                  </span>|<span class="hljs-string"> ResourceDistributionGate enable resourcedistribution-controller execute ResourceDistribution. </span>|<span class="hljs-string"> `false` </span>|<span class="hljs-string"> ResourceDistribution disabled                                                                                     </span>|<br>|<span class="hljs-string"> `DeletionProtectionForCRDCascadingGate`     </span>|<span class="hljs-string"> DeletionProtectionForCRDCascadingGate enable deletionProtection for crd Cascading </span>|<span class="hljs-string"> `false` </span>|<span class="hljs-string"> CustomResourceDefinition deletion protection disabled                                                             </span>|<br><br>If you want to configure the feature-gate, just set the parameter when install or upgrade. Such as:<br><br>```bash<br>$ helm install kruise https://... --set featureGates=<span class="hljs-string">&quot;ResourcesDeletionProtection=true\,PreDownloadImageForInPlaceUpdate=true&quot;</span><br>...<br>```<br><br>If you want to enable all feature-gates, set the parameter as `featureGates=AllAlpha=true`.<br><br><span class="hljs-comment">### Optional: the local image for China</span><br><br>If you are in China and have problem to pull image from official DockerHub, you can use the registry hosted on Alibaba Cloud:<br><br>```bash<br>$ helm install kruise https://... --set  manager.image.repository=openkruise-registry.cn-hangzhou.cr.aliyuncs.com/openkruise/kruise-manager<br>...<br>```<br><br></code></pre></td></tr></table></figure>
+
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>OpenKruise详细解释以及原地升级及全链路灰度发布方案 2024-07-22 11:44:46.892</div>
+      <div>http://example.com/2025/01/16/OpenKruise详细解释以及原地升级及全链路灰度发布方案-openkruise-xiang-xi-jie-shi-yi-ji-yuan-de-sheng-ji-ji-quan-lian-lu-hui-du-fa-bu-fang-an/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/TEG%E4%B8%8Eistio%E9%9B%86%E6%88%90-teg-yu-istio-ji-cheng/" title="TEG与istio集成 2024-08-02 17:51:20.389">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">TEG与istio集成 2024-08-02 17:51:20.389</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/MetalLB%20L2%20%E5%8E%9F%E7%90%86-metallbl2-yuan-li/" title="MetalLB L2 原理 2024-04-03 14:52:24.662">
+                        <span class="hidden-mobile">MetalLB L2 原理 2024-04-03 14:52:24.662</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

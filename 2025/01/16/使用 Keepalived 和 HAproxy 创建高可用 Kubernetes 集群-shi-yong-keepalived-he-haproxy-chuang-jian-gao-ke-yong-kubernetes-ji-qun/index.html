@@ -1,0 +1,896 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群高可用 Kubernetes 集群能够确保应用程序在运行时不会出现服务中断，这也是生产的需求之一。为此，有很多方法可供选择以实现高可用。 本教程演示了如何配置 Keepalived 和 HAproxy 使负载均衡、实现高可用。步骤如下：  准备主机。 配置 Keepalived 和 HAproxy。 使用 Kub">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群 2023-04-12 04:04:09.458">
+<meta property="og:url" content="http://example.com/2025/01/16/%E4%BD%BF%E7%94%A8%20Keepalived%20%E5%92%8C%20HAproxy%20%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8%20Kubernetes%20%E9%9B%86%E7%BE%A4-shi-yong-keepalived-he-haproxy-chuang-jian-gao-ke-yong-kubernetes-ji-qun/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群高可用 Kubernetes 集群能够确保应用程序在运行时不会出现服务中断，这也是生产的需求之一。为此，有很多方法可供选择以实现高可用。 本教程演示了如何配置 Keepalived 和 HAproxy 使负载均衡、实现高可用。步骤如下：  准备主机。 配置 Keepalived 和 HAproxy。 使用 Kub">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/upload/2023/04/image.png">
+<meta property="og:image" content="http://devopsz.top:30090/picture/2022/6/23/image-20220623010743086.png#id=AymyD&originHeight=384&originWidth=893&originalType=binary&ratio=1&rotation=0&showTitle=false&status=done&style=none&title=">
+<meta property="og:image" content="http://devopsz.top:30090/picture/2022/6/23/image-20220623011423415.png#id=CqdXU&originHeight=265&originWidth=956&originalType=binary&ratio=1&rotation=0&showTitle=false&status=done&style=none&title=">
+<meta property="og:image" content="http://devopsz.top:30090/picture/2022/6/23/image-20220623011512649.png#id=cCV5n&originHeight=107&originWidth=889&originalType=binary&ratio=1&rotation=0&showTitle=false&status=done&style=none&title=">
+<meta property="article:published_time" content="2025-01-16T02:08:28.082Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:19.067Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/upload/2023/04/image.png">
+  
+  
+  
+  <title>使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群 2023-04-12 04:04:09.458 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群 2023-04-12 04:04:09.458"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          35 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群 2023-04-12 04:04:09.458</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="使用-Keepalived-和-HAproxy-创建高可用-Kubernetes-集群"><a href="#使用-Keepalived-和-HAproxy-创建高可用-Kubernetes-集群" class="headerlink" title="使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群"></a>使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群</h1><p>高可用 Kubernetes 集群能够确保应用程序在运行时不会出现服务中断，这也是生产的需求之一。为此，有很多方法可供选择以实现高可用。</p>
+<p>本教程演示了如何配置 Keepalived 和 HAproxy 使负载均衡、实现高可用。步骤如下：</p>
+<ol>
+<li>准备主机。</li>
+<li>配置 Keepalived 和 HAproxy。</li>
+<li>使用 KubeKey 创建 Kubernetes 集群，并安装 KubeSphere。</li>
+</ol>
+<h2 id="集群架构"><a href="#集群架构" class="headerlink" title="集群架构"></a>集群架构</h2><p>示例集群有三个主节点，三个工作节点，两个用于负载均衡的节点，以及一个虚拟 IP 地址。本示例中的虚拟 IP 地址也可称为“浮动 IP 地址”。这意味着在节点故障的情况下，该 IP 地址可在节点之间漂移，从而实现高可用。</p>
+<p><img src="/upload/2023/04/image.png" srcset="/img/loading.gif" lazyload alt="image"></p>
+<p>请注意，在本示例中，Keepalived 和 HAproxy 没有安装在任何主节点上。但您也可以这样做，并同时实现高可用。然而，配置两个用于负载均衡的特定节点（您可以按需增加更多此类节点）会更加安全。这两个节点上只安装 Keepalived 和 HAproxy，以避免与任何 Kubernetes 组件和服务的潜在冲突。</p>
+<h2 id="准备主机"><a href="#准备主机" class="headerlink" title="准备主机"></a>准备主机</h2><table>
+<thead>
+<tr>
+<th>IP 地址</th>
+<th>主机名</th>
+<th>角色</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>172.16.0.2</td>
+<td>lb1</td>
+<td>Keepalived &amp; HAproxy</td>
+</tr>
+<tr>
+<td>172.16.0.3</td>
+<td>lb2</td>
+<td>Keepalived &amp; HAproxy</td>
+</tr>
+<tr>
+<td>172.16.0.4</td>
+<td>master1</td>
+<td>master, etcd</td>
+</tr>
+<tr>
+<td>172.16.0.5</td>
+<td>master2</td>
+<td>master, etcd</td>
+</tr>
+<tr>
+<td>172.16.0.6</td>
+<td>master3</td>
+<td>master, etcd</td>
+</tr>
+<tr>
+<td>172.16.0.7</td>
+<td>worker1</td>
+<td>worker</td>
+</tr>
+<tr>
+<td>172.16.0.8</td>
+<td>worker2</td>
+<td>worker</td>
+</tr>
+<tr>
+<td>172.16.0.9</td>
+<td>worker3</td>
+<td>worker</td>
+</tr>
+<tr>
+<td>172.16.0.10</td>
+<td></td>
+<td>虚拟 IP 地址</td>
+</tr>
+</tbody></table>
+<p>有关更多节点、网络、依赖项等要求的信息，请参见<a target="_blank" rel="noopener" href="https://kubesphere.com.cn/docs/installing-on-linux/introduction/multioverview/#step-1-prepare-linux-hosts">多节点安装</a>。</p>
+<h2 id="配置负载均衡"><a href="#配置负载均衡" class="headerlink" title="配置负载均衡"></a>配置负载均衡</h2><p><a target="_blank" rel="noopener" href="https://www.keepalived.org/">Keepalived</a> 提供 VRRP 实现，并允许您配置 Linux 机器使负载均衡，预防单点故障。<a target="_blank" rel="noopener" href="http://www.haproxy.org/">HAProxy</a> 提供可靠、高性能的负载均衡，能与 Keepalived 完美配合。</p>
+<p>由于 <code>lb1</code> 和 <code>lb2</code> 上安装了 Keepalived 和 HAproxy，如果其中一个节点故障，虚拟 IP 地址（即浮动 IP 地址）将自动与另一个节点关联，使集群仍然可以正常运行，从而实现高可用。若有需要，也可以此为目的，添加更多安装 Keepalived 和 HAproxy 的节点。</p>
+<p>先运行以下命令安装 Keepalived 和 HAproxy。</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs cmake">yum <span class="hljs-keyword">install</span> keepalived haproxy psmisc -y<br></code></pre></td></tr></table></figure>
+
+<h3 id="HAproxy"><a href="#HAproxy" class="headerlink" title="HAproxy"></a>HAproxy</h3><p>1. </p>
+<p>在两台用于负载均衡的机器上运行以下命令以配置 Proxy（两台机器的 Proxy 配置相同）：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs awk">vi <span class="hljs-regexp">/etc/</span>haproxy/haproxy.cfg<br></code></pre></td></tr></table></figure>
+
+<p>2. </p>
+<p>以下是示例配置，供您参考（请注意 <code>server</code> 字段。请记住 <code>6443</code> 是 <code>apiserver</code> 端口）：</p>
+<figure class="highlight smali"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><code class="hljs smali">global<br>    log /dev/log  local0 warning<br>    chroot      /var/lib/haproxy<br>    pidfile     /var/run/haproxy.pid<br>    maxconn     4000<br>    user        haproxy<br>    group       haproxy<br>    daemon<br>   <br>   stats socket /var/lib/haproxy/stats<br>   <br>defaults<br>  log global<br>  option  httplog<br>  option  dontlognull<br>        timeout connect 5000<br>        timeout client 50000<br>        timeout server 50000<br>   <br>frontend kube-apiserver<br>  bind *:6443<br>  mode tcp<br>  option tcplog<br>  default_backend kube-apiserver<br>   <br>backend kube-apiserver<br>    mode tcp<br>    option tcplog<br>    option tcp-check<br>    balance roundrobin<br>    default-server inter 10s downinter 5s rise 2 fall 2 slowstart 60s maxconn 250 maxqueue 256 weight 100<br>    server kube-apiserver-1 172.16.0.4:6443<span class="hljs-built_in"> check </span><span class="hljs-comment"># Replace the IP address with your own.</span><br>    server kube-apiserver-2 172.16.0.5:6443<span class="hljs-built_in"> check </span><span class="hljs-comment"># Replace the IP address with your own.</span><br>    server kube-apiserver-3 172.16.0.6:6443<span class="hljs-built_in"> check </span><span class="hljs-comment"># Replace the IP address with your own.</span><br></code></pre></td></tr></table></figure>
+
+<p>3. </p>
+<p>保存文件并运行以下命令以重启 HAproxy。</p>
+<figure class="highlight ebnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ebnf"><span class="hljs-attribute">systemctl restart haproxy</span><br></code></pre></td></tr></table></figure>
+
+<p>4. </p>
+<p>使 HAproxy 在开机后自动运行：</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs routeros">systemctl <span class="hljs-built_in">enable</span> haproxy<br></code></pre></td></tr></table></figure>
+
+<p>5. </p>
+<p>确保您在另一台机器 (<code>lb2</code>) 上也配置了 HAproxy。</p>
+<h3 id="Keepalived"><a href="#Keepalived" class="headerlink" title="Keepalived"></a>Keepalived</h3><p>两台机器上必须都安装 Keepalived，但在配置上略有不同。</p>
+<p>1. </p>
+<p>运行以下命令以配置 Keepalived。</p>
+<figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs vim"><span class="hljs-keyword">vi</span> /etc/keepalived/keepalived.<span class="hljs-keyword">conf</span><br></code></pre></td></tr></table></figure>
+
+<p>2. </p>
+<p>以下是示例配置 (<code>lb1</code>)，供您参考：</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">global_defs &#123;<br>  notification_email &#123;<br>  &#125;<br>  router_id LVS_DEVEL<br>  vrrp_skip_check_adv_addr<br>  vrrp_garp_interval <span class="hljs-number">0</span><br>  vrrp_gna_interval <span class="hljs-number">0</span><br>&#125;<br>   <br>vrrp_script chk_haproxy &#123;<br>  script <span class="hljs-string">&quot;killall -0 haproxy&quot;</span><br>  <span class="hljs-built_in">int</span>erval <span class="hljs-number">2</span><br>  weight <span class="hljs-number">2</span><br>&#125;<br>   <br>vrrp_instance haproxy-vip &#123;<br>  state BACKUP<br>  priority <span class="hljs-number">100</span><br>  <span class="hljs-keyword">interface</span> <span class="hljs-symbol">eth0</span>                       # <span class="hljs-symbol">Network</span> <span class="hljs-symbol">card</span><br>  <span class="hljs-symbol">virtual_router_id</span> <span class="hljs-symbol">60</span><br>  <span class="hljs-symbol">advert_int</span> <span class="hljs-symbol">1</span><br>  <span class="hljs-symbol">authentication</span> &#123;<br>    auth_type PASS<br>    auth_pass <span class="hljs-number">1111</span><br>  &#125;<br>  unicast_src_ip <span class="hljs-number">172.16</span><span class="hljs-number">.0</span><span class="hljs-number">.2</span>      # The IP address of <span class="hljs-keyword">this</span> machine<br>  unicast_peer &#123;<br>    <span class="hljs-number">172.16</span><span class="hljs-number">.0</span><span class="hljs-number">.3</span>                         # The IP address of peer machines<br>  &#125;<br>   <br>  virtual_ipaddress &#123;<br>    <span class="hljs-number">172.16</span><span class="hljs-number">.0</span><span class="hljs-number">.10</span>/<span class="hljs-number">24</span>                  # The VIP address<br>  &#125;<br>   <br>  track_script &#123;<br>    chk_haproxy<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>备注</p>
+<ul>
+<li>对于 <code>interface</code> 字段，您必须提供自己的网卡信息。您可以在机器上运行 <code>ifconfig</code> 以获取该值。</li>
+<li>为 <code>unicast_src_ip</code> 提供的 IP 地址是您当前机器的 IP 地址。对于也安装了 HAproxy 和 Keepalived 进行负载均衡的其他机器，必须在字段 <code>unicast_peer</code> 中输入其 IP 地址。</li>
+</ul>
+<p>3. </p>
+<p>保存文件并运行以下命令以重启 Keepalived。</p>
+<figure class="highlight ebnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ebnf"><span class="hljs-attribute">systemctl restart keepalived</span><br></code></pre></td></tr></table></figure>
+
+<p>4. </p>
+<p>使 Keepalived 在开机后自动运行：</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs routeros">systemctl <span class="hljs-built_in">enable</span> keepalived<br></code></pre></td></tr></table></figure>
+
+<p>5. </p>
+<p>确保您在另一台机器 (<code>lb2</code>) 上也配置了 Keepalived。</p>
+<h2 id="验证高可用"><a href="#验证高可用" class="headerlink" title="验证高可用"></a>验证高可用</h2><p>在开始创建 Kubernetes 集群之前，请确保已经测试了高可用。</p>
+<p>1. </p>
+<p>在机器 <code>lb1</code> 上，运行以下命令：</p>
+<figure class="highlight pf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs pf">[root@lb1 ~]<span class="hljs-comment"># ip a s</span><br><span class="hljs-number">1</span>: lo: <span class="hljs-variable">&lt;LOOPBACK,UP,LOWER_UP&gt;</span> mtu <span class="hljs-number">65536</span> qdisc noqueue <span class="hljs-keyword">state</span> UNKNOWN <span class="hljs-keyword">group</span> <span class="hljs-keyword">default</span> qlen <span class="hljs-number">1000</span><br>    link/loopback <span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span> brd <span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span><br>    <span class="hljs-keyword">inet</span> <span class="hljs-number">127.0</span>.<span class="hljs-number">0.1</span>/<span class="hljs-number">8</span> scope host lo<br>       valid_lft forever preferred_lft forever<br>    <span class="hljs-keyword">inet6</span> ::<span class="hljs-number">1</span>/<span class="hljs-number">128</span> scope host<br>       valid_lft forever preferred_lft forever<br><span class="hljs-number">2</span>: eth0: <span class="hljs-variable">&lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt;</span> mtu <span class="hljs-number">1500</span> qdisc mq <span class="hljs-keyword">state</span> UP <span class="hljs-keyword">group</span> <span class="hljs-keyword">default</span> qlen <span class="hljs-number">1000</span><br>    link/ether <span class="hljs-number">52</span>:<span class="hljs-number">54</span>:<span class="hljs-number">9</span>e:<span class="hljs-number">27</span>:<span class="hljs-number">38</span>:c8 brd ff:ff:ff:ff:ff:ff<br>    <span class="hljs-keyword">inet</span> <span class="hljs-number">172.16</span>.<span class="hljs-number">0.2</span>/<span class="hljs-number">24</span> brd <span class="hljs-number">172.16</span>.<span class="hljs-number">0.255</span> scope <span class="hljs-keyword">global</span> noprefixroute dynamic eth0<br>       valid_lft <span class="hljs-number">73334</span>sec preferred_lft <span class="hljs-number">73334</span>sec<br>    <span class="hljs-keyword">inet</span> <span class="hljs-number">172.16</span>.<span class="hljs-number">0.10</span>/<span class="hljs-number">24</span> scope <span class="hljs-keyword">global</span> secondary eth0 <span class="hljs-comment"># The VIP address</span><br>       valid_lft forever preferred_lft forever<br>    <span class="hljs-keyword">inet6</span> fe80::<span class="hljs-number">510</span>e:f96:<span class="hljs-number">98</span>b2:af40/<span class="hljs-number">64</span> scope link noprefixroute<br>       valid_lft forever preferred_lft forever<br></code></pre></td></tr></table></figure>
+
+<p>2. </p>
+<p>如上图所示，虚拟 IP 地址已经成功添加。模拟此节点上的故障：</p>
+<figure class="highlight arduino"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs arduino">systemctl stop haproxy<br></code></pre></td></tr></table></figure>
+
+<p>3. </p>
+<p>再次检查浮动 IP 地址，您可以看到该地址在 <code>lb1</code> 上消失了。</p>
+<figure class="highlight pf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs pf">[root@lb1 ~]<span class="hljs-comment"># ip a s</span><br><span class="hljs-number">1</span>: lo: <span class="hljs-variable">&lt;LOOPBACK,UP,LOWER_UP&gt;</span> mtu <span class="hljs-number">65536</span> qdisc noqueue <span class="hljs-keyword">state</span> UNKNOWN <span class="hljs-keyword">group</span> <span class="hljs-keyword">default</span> qlen <span class="hljs-number">1000</span><br>    link/loopback <span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span> brd <span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span><br>    <span class="hljs-keyword">inet</span> <span class="hljs-number">127.0</span>.<span class="hljs-number">0.1</span>/<span class="hljs-number">8</span> scope host lo<br>       valid_lft forever preferred_lft forever<br>    <span class="hljs-keyword">inet6</span> ::<span class="hljs-number">1</span>/<span class="hljs-number">128</span> scope host<br>       valid_lft forever preferred_lft forever<br><span class="hljs-number">2</span>: eth0: <span class="hljs-variable">&lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt;</span> mtu <span class="hljs-number">1500</span> qdisc mq <span class="hljs-keyword">state</span> UP <span class="hljs-keyword">group</span> <span class="hljs-keyword">default</span> qlen <span class="hljs-number">1000</span><br>    link/ether <span class="hljs-number">52</span>:<span class="hljs-number">54</span>:<span class="hljs-number">9</span>e:<span class="hljs-number">27</span>:<span class="hljs-number">38</span>:c8 brd ff:ff:ff:ff:ff:ff<br>    <span class="hljs-keyword">inet</span> <span class="hljs-number">172.16</span>.<span class="hljs-number">0.2</span>/<span class="hljs-number">24</span> brd <span class="hljs-number">172.16</span>.<span class="hljs-number">0.255</span> scope <span class="hljs-keyword">global</span> noprefixroute dynamic eth0<br>       valid_lft <span class="hljs-number">72802</span>sec preferred_lft <span class="hljs-number">72802</span>sec<br>    <span class="hljs-keyword">inet6</span> fe80::<span class="hljs-number">510</span>e:f96:<span class="hljs-number">98</span>b2:af40/<span class="hljs-number">64</span> scope link noprefixroute<br>       valid_lft forever preferred_lft forever<br></code></pre></td></tr></table></figure>
+
+<p>4. </p>
+<p>理论上讲，若配置成功，该虚拟 IP 会漂移到另一台机器 (<code>lb2</code>) 上。在 <code>lb2</code> 上运行以下命令，这是预期的输出：</p>
+<figure class="highlight pf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs pf">[root@lb2 ~]<span class="hljs-comment"># ip a s</span><br><span class="hljs-number">1</span>: lo: <span class="hljs-variable">&lt;LOOPBACK,UP,LOWER_UP&gt;</span> mtu <span class="hljs-number">65536</span> qdisc noqueue <span class="hljs-keyword">state</span> UNKNOWN <span class="hljs-keyword">group</span> <span class="hljs-keyword">default</span> qlen <span class="hljs-number">1000</span><br>    link/loopback <span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span> brd <span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span><br>    <span class="hljs-keyword">inet</span> <span class="hljs-number">127.0</span>.<span class="hljs-number">0.1</span>/<span class="hljs-number">8</span> scope host lo<br>       valid_lft forever preferred_lft forever<br>    <span class="hljs-keyword">inet6</span> ::<span class="hljs-number">1</span>/<span class="hljs-number">128</span> scope host<br>       valid_lft forever preferred_lft forever<br><span class="hljs-number">2</span>: eth0: <span class="hljs-variable">&lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt;</span> mtu <span class="hljs-number">1500</span> qdisc mq <span class="hljs-keyword">state</span> UP <span class="hljs-keyword">group</span> <span class="hljs-keyword">default</span> qlen <span class="hljs-number">1000</span><br>    link/ether <span class="hljs-number">52</span>:<span class="hljs-number">54</span>:<span class="hljs-number">9</span>e:<span class="hljs-number">3</span>f:<span class="hljs-number">51</span>:ba brd ff:ff:ff:ff:ff:ff<br>    <span class="hljs-keyword">inet</span> <span class="hljs-number">172.16</span>.<span class="hljs-number">0.3</span>/<span class="hljs-number">24</span> brd <span class="hljs-number">172.16</span>.<span class="hljs-number">0.255</span> scope <span class="hljs-keyword">global</span> noprefixroute dynamic eth0<br>       valid_lft <span class="hljs-number">72690</span>sec preferred_lft <span class="hljs-number">72690</span>sec<br>    <span class="hljs-keyword">inet</span> <span class="hljs-number">172.16</span>.<span class="hljs-number">0.10</span>/<span class="hljs-number">24</span> scope <span class="hljs-keyword">global</span> secondary eth0   <span class="hljs-comment"># The VIP address</span><br>       valid_lft forever preferred_lft forever<br>    <span class="hljs-keyword">inet6</span> fe80::f67c:bd4f:d6d5:<span class="hljs-number">1</span>d9b/<span class="hljs-number">64</span> scope link noprefixroute<br>       valid_lft forever preferred_lft forever<br></code></pre></td></tr></table></figure>
+
+<p>5. </p>
+<p>如上所示，高可用已经配置成功。</p>
+<h2 id="使用-KubeKey-创建-Kubernetes-集群"><a href="#使用-KubeKey-创建-Kubernetes-集群" class="headerlink" title="使用 KubeKey 创建 Kubernetes 集群"></a>使用 KubeKey 创建 Kubernetes 集群</h2><p><a target="_blank" rel="noopener" href="https://github.com/kubesphere/kubekey">KubeKey</a> 是一款用来创建 Kubernetes 集群的工具，高效而便捷。请按照以下步骤下载 KubeKey。</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://kubesphere.com.cn/docs/installing-on-linux/high-availability-configurations/set-up-ha-cluster-using-keepalived-haproxy/#">如果您能正常访问 GitHub&#x2F;Googleapis</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubesphere.com.cn/docs/installing-on-linux/high-availability-configurations/set-up-ha-cluster-using-keepalived-haproxy/#">如果您访问 GitHub&#x2F;Googleapis 受限</a></li>
+</ul>
+<p>从 <a target="_blank" rel="noopener" href="https://github.com/kubesphere/kubekey/releases">GitHub Release Page</a> 下载 KubeKey 或者直接使用以下命令。</p>
+<figure class="highlight dsconfig"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs dsconfig"><span class="hljs-string">curl</span> -<span class="hljs-string">sfL</span> <span class="hljs-string">https</span>://<span class="hljs-built_in">get-kk.kubesphere.io</span> | <span class="hljs-string">VERSION</span>=<span class="hljs-string">v2</span>.<span class="hljs-string">0</span>.<span class="hljs-string">0</span> <span class="hljs-string">sh</span> -<br></code></pre></td></tr></table></figure>
+
+<p>备注</p>
+<p>通过以上命令，可以下载 KubeKey 的最新版本 (v2.0.0)。您可以更改命令中的版本号来下载特定的版本。</p>
+<p>使 <code>kk</code> 成为可执行文件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">chmod</span> +x kk<br></code></pre></td></tr></table></figure>
+
+<p>使用默认配置创建一个示例配置文件。此处以 Kubernetes v1.21.5 作为示例。</p>
+<figure class="highlight jboss-cli"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs jboss-cli"><span class="hljs-string">./kk</span> create config <span class="hljs-params">--with-kubesphere</span> v3.2.1 <span class="hljs-params">--with-kubernetes</span> v1.21.5<br></code></pre></td></tr></table></figure>
+
+<p>备注</p>
+<ul>
+<li>安装 KubeSphere 3.2.1 的建议 Kubernetes 版本：v1.19.x、v1.20.x、v1.21.x 或 v1.22.x（实验性支持）。如果不指定 Kubernetes 版本，KubeKey 将默认安装 Kubernetes v1.21.5。有关受支持的 Kubernetes 版本的更多信息，请参见<a target="_blank" rel="noopener" href="https://kubesphere.com.cn/docs/installing-on-linux/introduction/kubekey/#%E6%94%AF%E6%8C%81%E7%9F%A9%E9%98%B5">支持矩阵</a>。</li>
+<li>如果您没有在本步骤的命令中添加标志 <code>--with-kubesphere</code>，那么除非您使用配置文件中的 <code>addons</code> 字段进行安装，或者稍后使用 <code>./kk create cluster</code> 时再添加该标志，否则 KubeSphere 将不会被部署。</li>
+<li>如果您添加标志 <code>--with-kubesphere</code> 时未指定 KubeSphere 版本，则会安装最新版本的 KubeSphere。</li>
+</ul>
+<h2 id="部署-KubeSphere-和-Kubernetes"><a href="#部署-KubeSphere-和-Kubernetes" class="headerlink" title="部署 KubeSphere 和 Kubernetes"></a>部署 KubeSphere 和 Kubernetes</h2><p>运行上述命令后，将创建配置文件 <code>config-sample.yaml</code>。编辑文件以添加机器信息、配置负载均衡器等。</p>
+<p>备注</p>
+<p>如果自定义文件名，那么文件名可能会有所不同。</p>
+<h3 id="config-sample-yaml-示例"><a href="#config-sample-yaml-示例" class="headerlink" title="config-sample.yaml 示例"></a>config-sample.yaml 示例</h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-string">...</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">hosts:</span><br>  <span class="hljs-bullet">-</span> &#123;<span class="hljs-attr">name:</span> <span class="hljs-string">master1</span>, <span class="hljs-attr">address:</span> <span class="hljs-number">172.16</span><span class="hljs-number">.0</span><span class="hljs-number">.4</span>, <span class="hljs-attr">internalAddress:</span> <span class="hljs-number">172.16</span><span class="hljs-number">.0</span><span class="hljs-number">.4</span>, <span class="hljs-attr">user:</span> <span class="hljs-string">root</span>, <span class="hljs-attr">password:</span> <span class="hljs-string">Testing123</span>&#125;<br>  <span class="hljs-bullet">-</span> &#123;<span class="hljs-attr">name:</span> <span class="hljs-string">master2</span>, <span class="hljs-attr">address:</span> <span class="hljs-number">172.16</span><span class="hljs-number">.0</span><span class="hljs-number">.5</span>, <span class="hljs-attr">internalAddress:</span> <span class="hljs-number">172.16</span><span class="hljs-number">.0</span><span class="hljs-number">.5</span>, <span class="hljs-attr">user:</span> <span class="hljs-string">root</span>, <span class="hljs-attr">password:</span> <span class="hljs-string">Testing123</span>&#125;<br>  <span class="hljs-bullet">-</span> &#123;<span class="hljs-attr">name:</span> <span class="hljs-string">master3</span>, <span class="hljs-attr">address:</span> <span class="hljs-number">172.16</span><span class="hljs-number">.0</span><span class="hljs-number">.6</span>, <span class="hljs-attr">internalAddress:</span> <span class="hljs-number">172.16</span><span class="hljs-number">.0</span><span class="hljs-number">.6</span>, <span class="hljs-attr">user:</span> <span class="hljs-string">root</span>, <span class="hljs-attr">password:</span> <span class="hljs-string">Testing123</span>&#125;<br>  <span class="hljs-bullet">-</span> &#123;<span class="hljs-attr">name:</span> <span class="hljs-string">worker1</span>, <span class="hljs-attr">address:</span> <span class="hljs-number">172.16</span><span class="hljs-number">.0</span><span class="hljs-number">.7</span>, <span class="hljs-attr">internalAddress:</span> <span class="hljs-number">172.16</span><span class="hljs-number">.0</span><span class="hljs-number">.7</span>, <span class="hljs-attr">user:</span> <span class="hljs-string">root</span>, <span class="hljs-attr">password:</span> <span class="hljs-string">Testing123</span>&#125;<br>  <span class="hljs-bullet">-</span> &#123;<span class="hljs-attr">name:</span> <span class="hljs-string">worker2</span>, <span class="hljs-attr">address:</span> <span class="hljs-number">172.16</span><span class="hljs-number">.0</span><span class="hljs-number">.8</span>, <span class="hljs-attr">internalAddress:</span> <span class="hljs-number">172.16</span><span class="hljs-number">.0</span><span class="hljs-number">.8</span>, <span class="hljs-attr">user:</span> <span class="hljs-string">root</span>, <span class="hljs-attr">password:</span> <span class="hljs-string">Testing123</span>&#125;<br>  <span class="hljs-bullet">-</span> &#123;<span class="hljs-attr">name:</span> <span class="hljs-string">worker3</span>, <span class="hljs-attr">address:</span> <span class="hljs-number">172.16</span><span class="hljs-number">.0</span><span class="hljs-number">.9</span>, <span class="hljs-attr">internalAddress:</span> <span class="hljs-number">172.16</span><span class="hljs-number">.0</span><span class="hljs-number">.9</span>, <span class="hljs-attr">user:</span> <span class="hljs-string">root</span>, <span class="hljs-attr">password:</span> <span class="hljs-string">Testing123</span>&#125;<br>  <span class="hljs-attr">roleGroups:</span><br>    <span class="hljs-attr">etcd:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">master1</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">master2</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">master3</span><br>    <span class="hljs-attr">master:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">master1</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">master2</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">master3</span><br>    <span class="hljs-attr">worker:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">worker1</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">worker2</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">worker3</span><br>  <span class="hljs-attr">controlPlaneEndpoint:</span><br>    <span class="hljs-attr">domain:</span> <span class="hljs-string">lb.kubesphere.local</span><br>    <span class="hljs-attr">address:</span> <span class="hljs-number">172.16</span><span class="hljs-number">.0</span><span class="hljs-number">.10</span>   <span class="hljs-comment"># The VIP address</span><br>    <span class="hljs-attr">port:</span> <span class="hljs-number">6443</span><br><span class="hljs-string">...</span><br></code></pre></td></tr></table></figure>
+
+<p>备注</p>
+<ul>
+<li>请使用您自己的 VIP 地址来替换 <code>controlPlaneEndpoint.address</code> 的值。</li>
+<li>有关更多本配置文件中不同参数的信息，请参见<a target="_blank" rel="noopener" href="https://kubesphere.com.cn/docs/installing-on-linux/introduction/multioverview/#2-edit-the-configuration-file">多节点安装</a>。</li>
+</ul>
+<h3 id="开始安装"><a href="#开始安装" class="headerlink" title="开始安装"></a>开始安装</h3><p>完成配置之后，可以执行以下命令开始安装：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs lua">./kk <span class="hljs-built_in">create</span> cluster -f <span class="hljs-built_in">config</span>-sample.yaml<br></code></pre></td></tr></table></figure>
+
+<h3 id="验证安装"><a href="#验证安装" class="headerlink" title="验证安装"></a>验证安装</h3><p>1. </p>
+<p>运行以下命令以检查安装日志。</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs routeros">kubectl logs -n kubesphere-system $(kubectl <span class="hljs-built_in">get</span> pod -n kubesphere-system -l <span class="hljs-attribute">app</span>=ks-install -o <span class="hljs-attribute">jsonpath</span>=<span class="hljs-string">&#x27;&#123;.items[0].metadata.name&#125;&#x27;</span>) -f<br></code></pre></td></tr></table></figure>
+
+<p>2. </p>
+<p>看到以下信息时，表明高可用集群已成功创建。</p>
+<figure class="highlight clean"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs clean">#####################################################<br>###              Welcome to KubeSphere!           ###<br>#####################################################<br>   <br>Console: http:<span class="hljs-comment">//172.16.0.4:30880</span><br>Account: admin<br>Password: P@<span class="hljs-number">88</span>w0rd<br>   <br>NOTES：<br>  <span class="hljs-number">1.</span> After you log into the console, please check the<br>     monitoring status <span class="hljs-keyword">of</span> service components <span class="hljs-keyword">in</span><br>     the <span class="hljs-string">&quot;Cluster Management&quot;</span>. If any service is not<br>     ready, please wait patiently until all components<br>     are up and running.<br>  <span class="hljs-number">2.</span> Please change the default password after login.<br>   <br>#####################################################<br>https:<span class="hljs-comment">//kubesphere.io             2020-xx-xx xx:xx:xx</span><br>#####################################################<br></code></pre></td></tr></table></figure>
+
+<h1 id="Keepalive-Haproxy部署"><a href="#Keepalive-Haproxy部署" class="headerlink" title="Keepalive+Haproxy部署"></a>Keepalive+Haproxy部署</h1><p>实验环境：</p>
+<figure class="highlight accesslog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs accesslog">IP	备注<br><span class="hljs-number">172.16.3.225</span>/<span class="hljs-number">21</span>	Keepalive-Master+Haproxy+Nginx<br><span class="hljs-number">172.16.3.226</span>/<span class="hljs-number">21</span>	Keepalive-Backup+Haproxy+Nginx<br><span class="hljs-number">172.16.3.200</span>/<span class="hljs-number">24</span>	VIP<br></code></pre></td></tr></table></figure>
+
+<p>注：这里因为自己的环境有限为了更好地测试，所以就用两台机器。</p>
+<p>实验效果</p>
+<figure class="highlight armasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs armasm">最终的实验效果是通过一个虚拟<span class="hljs-built_in">IP</span>反向代理两台Nginx，当我们Keepalive-Master宕机VIP会转到Keepalive-Backup并且还可以正常对外访问<br></code></pre></td></tr></table></figure>
+
+<p>实验步骤</p>
+<p>1、部署Keepalive</p>
+<p>1）关闭两台Firewalls、Selinux</p>
+<figure class="highlight autoit"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs autoit">[root<span class="hljs-symbol">@bogon</span> ~]<span class="hljs-meta"># setenforce 0 &amp;&amp; sed -i  <span class="hljs-string">&#x27;s/^SELINUX=.*/SELINUX=disabled/&#x27;</span> /etc/selinux/config</span><br>[root<span class="hljs-symbol">@bogon</span> ~]<span class="hljs-meta"># systemctl  stop firewalld  &amp;&amp;  systemctl  disable firewalld</span><br></code></pre></td></tr></table></figure>
+
+<p>2）两台主机安装环境所需的软件</p>
+<figure class="highlight coffeescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs coffeescript">[root@bogon ~]<span class="hljs-comment"># yum install epel-release keepalived haproxy  bzip2-devel  popt-devel kernel-devel openssl-devel -y</span><br>[root@bogon ~]<span class="hljs-comment"># yum install nginx -y</span><br></code></pre></td></tr></table></figure>
+
+<p>3）配置一下Master配置文件</p>
+<figure class="highlight graphql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><code class="hljs graphql">vim /etc/keepalived/keepalived.conf<br><span class="hljs-punctuation">[</span>root<span class="hljs-meta">@bogon</span> ~<span class="hljs-punctuation">]</span><span class="hljs-comment"># cat &gt; /etc/keepalived/keepalived.conf &lt;&lt; EOF</span><br><span class="hljs-punctuation">!</span> Configuration File for keepalived<br><br>global_defs <span class="hljs-punctuation">&#123;</span><br>   notification_email <span class="hljs-punctuation">&#123;</span><br>     acassen<span class="hljs-meta">@firewall</span>.loc<br>     failover<span class="hljs-meta">@firewall</span>.loc<br>     sysadmin<span class="hljs-meta">@firewall</span>.loc<br>   <span class="hljs-punctuation">&#125;</span><br>   notification_email_from Alexandre.Cassen<span class="hljs-meta">@firewall</span>.loc<br>   smtp_server <span class="hljs-number">192.168</span>.<span class="hljs-number">200.1</span><br>   smtp_connect_timeout <span class="hljs-number">30</span><br>   router_id LVS_DEVEL_MASTER           <span class="hljs-comment"># 两台ID不能一致</span><br>   vrrp_skip_check_adv_addr<br>   vrrp_strict<br>   vrrp_garp_interval <span class="hljs-number">0</span><br>   vrrp_gna_interval <span class="hljs-number">0</span><br><span class="hljs-punctuation">&#125;</span><br><br>vrrp_instance VI_1 <span class="hljs-punctuation">&#123;</span><br>    state MASTER                        <span class="hljs-comment"># 指定A节点为主节点 备用节点上设置为BACKUP即可</span><br>    <span class="hljs-keyword">interface</span> ens160                    <span class="hljs-comment"># 绑定虚拟IP的网络接口</span><br>    virtual_router_id <span class="hljs-number">51</span>                <span class="hljs-comment"># VRRP组名，两个节点的设置必须一样，以指明各个节点属于同一VRRP组</span><br>    priority <span class="hljs-number">100</span>                        <span class="hljs-comment"># 主节点的优先级（1-254之间），备用节点必须比主节点优先级低</span><br>    advert_int <span class="hljs-number">1</span>                        <span class="hljs-comment"># 组播信息发送间隔，两个节点设置必须一样</span><br>    authentication <span class="hljs-punctuation">&#123;</span>                    <span class="hljs-comment"># 设置验证信息，两个节点必须一致</span><br>        auth_type PASS					 <br>        auth_pass <span class="hljs-number">1111</span>					 <br>    <span class="hljs-punctuation">&#125;</span><br>    virtual_ipaddress <span class="hljs-punctuation">&#123;</span>                 <span class="hljs-comment"># 指定虚拟IP, 两个节点设置必须一样</span><br>            <span class="hljs-number">172.16</span>.<span class="hljs-number">3.200</span>/<span class="hljs-number">24</span>				<br><span class="hljs-punctuation">&#125;</span> <br><span class="hljs-punctuation">&#125;</span><br>EOF<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">cat &gt; /etc/keepalived/keepalived.conf &lt;&lt; EOF<br>! Configuration File <span class="hljs-keyword">for</span> keepalived<br><br>global_defs &#123;<br>   notification_email &#123;<br>     <span class="hljs-symbol">acassen@</span>firewall.loc<br>     <span class="hljs-symbol">failover@</span>firewall.loc<br>     <span class="hljs-symbol">sysadmin@</span>firewall.loc<br>   &#125;<br>   notification_email_from Alexandre.<span class="hljs-symbol">Cassen@</span>firewall.loc<br>   smtp_server <span class="hljs-number">192.168</span><span class="hljs-number">.200</span><span class="hljs-number">.1</span><br>   smtp_connect_timeout <span class="hljs-number">30</span><br>   router_id LVS_DEVEL1<br>   vrrp_skip_check_adv_addr<br>   #vrrp_strict<br>   #ping不通 注释掉上面这行<br>   vrrp_garp_interval <span class="hljs-number">0</span><br>   vrrp_gna_interval <span class="hljs-number">0</span><br>&#125;<br><br>vrrp_instance VI_1 &#123;<br>    state MASTER<br>    <span class="hljs-keyword">interface</span> <span class="hljs-symbol">eth192</span><br>    <span class="hljs-symbol">virtual_router_id</span> <span class="hljs-symbol">51</span><br>    <span class="hljs-symbol">priority</span> <span class="hljs-symbol">100</span><br>    <span class="hljs-symbol">advert_int</span> <span class="hljs-symbol">1</span><br>    <span class="hljs-symbol">authentication</span> &#123;<br>        auth_type PASS<br>        auth_pass <span class="hljs-number">1111</span><br>    &#125;<br>    virtual_ipaddress &#123;<br>        <span class="hljs-number">192.168</span><span class="hljs-number">.1</span><span class="hljs-number">.104</span>/<span class="hljs-number">24</span><br>    &#125;<br>&#125;<br>EOF<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight accesslog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs accesslog"><span class="hljs-number">192.168.1.105</span> <br><span class="hljs-number">192.168.1.106</span><br><br><span class="hljs-number">192.168.1.104</span><br><br>ens192<br></code></pre></td></tr></table></figure>
+
+<p>4）配置一下Backup的配置文件</p>
+<figure class="highlight graphql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><code class="hljs graphql"><span class="hljs-punctuation">[</span>root<span class="hljs-meta">@bogon</span> ~<span class="hljs-punctuation">]</span><span class="hljs-comment"># cat &gt; /etc/keepalived/keepalived.conf &lt;&lt; EOF</span><br><span class="hljs-punctuation">!</span> Configuration File for keepalived<br><br>global_defs <span class="hljs-punctuation">&#123;</span><br>   notification_email <span class="hljs-punctuation">&#123;</span><br>     acassen<span class="hljs-meta">@firewall</span>.loc<br>     failover<span class="hljs-meta">@firewall</span>.loc<br>     sysadmin<span class="hljs-meta">@firewall</span>.loc<br>   <span class="hljs-punctuation">&#125;</span><br>   notification_email_from Alexandre.Cassen<span class="hljs-meta">@firewall</span>.loc<br>   smtp_server <span class="hljs-number">192.168</span>.<span class="hljs-number">200.1</span><br>   smtp_connect_timeout <span class="hljs-number">30</span><br>   router_id LVS_DEVEL_NODE           <span class="hljs-comment"># 两台ID不能一致</span><br>   vrrp_skip_check_adv_addr<br>   <span class="hljs-comment">#vrrp_strict</span><br>   <span class="hljs-comment">#注释掉，不注释ping不通</span><br>   vrrp_garp_interval <span class="hljs-number">0</span><br>   vrrp_gna_interval <span class="hljs-number">0</span><br><span class="hljs-punctuation">&#125;</span><br><br>vrrp_instance VI_1 <span class="hljs-punctuation">&#123;</span><br>    state BACKUP                        <span class="hljs-comment"># 指定A节点为主节点 备用节点上设置为BACKUP即可</span><br>    <span class="hljs-keyword">interface</span> ens160                    <span class="hljs-comment"># 绑定虚拟IP的网络接口</span><br>    virtual_router_id <span class="hljs-number">51</span>                <span class="hljs-comment"># VRRP组名，两个节点的设置必须一样，以指明各个节点属于同一VRRP组</span><br>    priority <span class="hljs-number">90</span>                         <span class="hljs-comment"># 主节点的优先级（1-254之间），备用节点必须比主节点优先级低</span><br>    advert_int <span class="hljs-number">1</span>                        <span class="hljs-comment"># 组播信息发送间隔，两个节点设置必须一样</span><br>    authentication <span class="hljs-punctuation">&#123;</span>                    <span class="hljs-comment"># 设置验证信息，两个节点必须一致</span><br>        auth_type PASS					 <br>        auth_pass <span class="hljs-number">1111</span>					 <br>    <span class="hljs-punctuation">&#125;</span><br>    virtual_ipaddress <span class="hljs-punctuation">&#123;</span>                 <span class="hljs-comment"># 指定虚拟IP, 两个节点设置必须一样</span><br>            <span class="hljs-number">172.16</span>.<span class="hljs-number">3.200</span>/<span class="hljs-number">24</span>				<br><span class="hljs-punctuation">&#125;</span> <br><span class="hljs-punctuation">&#125;</span><br>EOF<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">cat &gt; /etc/keepalived/keepalived.conf &lt;&lt; EOF<br>! Configuration File <span class="hljs-keyword">for</span> keepalived<br><br>global_defs &#123;<br>   notification_email &#123;<br>     <span class="hljs-symbol">acassen@</span>firewall.loc<br>     <span class="hljs-symbol">failover@</span>firewall.loc<br>     <span class="hljs-symbol">sysadmin@</span>firewall.loc<br>   &#125;<br>   notification_email_from Alexandre.<span class="hljs-symbol">Cassen@</span>firewall.loc<br>   smtp_server <span class="hljs-number">192.168</span><span class="hljs-number">.200</span><span class="hljs-number">.1</span><br>   smtp_connect_timeout <span class="hljs-number">30</span><br>   router_id LVS_DEVEL2<br>   vrrp_skip_check_adv_addr<br>   vrrp_strict<br>   vrrp_garp_interval <span class="hljs-number">0</span><br>   vrrp_gna_interval <span class="hljs-number">0</span><br>&#125;<br><br>vrrp_instance VI_1 &#123;<br>    state buckup<br>    <span class="hljs-keyword">interface</span> <span class="hljs-symbol">eth192</span><br>    <span class="hljs-symbol">virtual_router_id</span> <span class="hljs-symbol">51</span><br>    <span class="hljs-symbol">priority</span> <span class="hljs-symbol">90</span><br>    <span class="hljs-symbol">advert_int</span> <span class="hljs-symbol">1</span><br>    <span class="hljs-symbol">authentication</span> &#123;<br>        auth_type PASS<br>        auth_pass <span class="hljs-number">1111</span><br>    &#125;<br>    virtual_ipaddress &#123;<br>        <span class="hljs-number">192.168</span><span class="hljs-number">.1</span><span class="hljs-number">.118</span>/<span class="hljs-number">24</span><br>    &#125;<br>&#125;<br>EOF<br></code></pre></td></tr></table></figure>
+
+<p>4）验证一下VIP是否已经映射出</p>
+<figure class="highlight autoit"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs autoit">[root<span class="hljs-symbol">@bogon</span> ~]<span class="hljs-meta"># ip a | grep <span class="hljs-string">&#x27;172.16.3.200&#x27;</span></span><br>inet <span class="hljs-number">172.16</span><span class="hljs-number">.3</span><span class="hljs-number">.200</span>/<span class="hljs-number">24</span> scope <span class="hljs-keyword">global</span> ens160<br><br>ip a | grep <span class="hljs-string">&#x27;192.168.1.104&#x27;</span><br></code></pre></td></tr></table></figure>
+
+<p>2、修改一下Nginx网页方便验证</p>
+<figure class="highlight swift"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs swift">[root<span class="hljs-meta">@bogon</span> <span class="hljs-operator">~</span>]# echo <span class="hljs-string">&quot;172.16.3.225&quot;</span> <span class="hljs-operator">&gt;</span> <span class="hljs-regexp">/usr/</span>share<span class="hljs-regexp">/nginx/</span>html<span class="hljs-operator">/</span>index.html <br>[root<span class="hljs-meta">@bogon</span> <span class="hljs-operator">~</span>]# echo <span class="hljs-string">&quot;172.16.3.226&quot;</span> <span class="hljs-operator">&gt;</span> <span class="hljs-regexp">/usr/</span>share<span class="hljs-regexp">/nginx/</span>html<span class="hljs-operator">/</span>index.html<br><br>echo <span class="hljs-string">&quot;192.168.1.105&quot;</span> <span class="hljs-operator">&gt;</span> <span class="hljs-regexp">/usr/</span>share<span class="hljs-regexp">/nginx/</span>html<span class="hljs-operator">/</span>index.html <br>echo <span class="hljs-string">&quot;192.168.1.106&quot;</span> <span class="hljs-operator">&gt;</span> <span class="hljs-regexp">/usr/</span>share<span class="hljs-regexp">/nginx/</span>html<span class="hljs-operator">/</span>index.html<br></code></pre></td></tr></table></figure>
+
+<p>3、配置Haproxy</p>
+<p>1）创建日志目录</p>
+<figure class="highlight maxima"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs maxima"><span class="hljs-built_in">mkdir</span> /<span class="hljs-built_in">var</span>/<span class="hljs-built_in">log</span>/haproxy<br>chmod a+w /<span class="hljs-built_in">var</span>/<span class="hljs-built_in">log</span>/haproxy<br></code></pre></td></tr></table></figure>
+
+<p>2）开启rsyslog记录haproxy日志</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs awk">vim <span class="hljs-regexp">/etc/</span>rsyslog.conf <br><br><span class="hljs-comment"># Provides UDP syslog reception</span><br><br><span class="hljs-variable">$ModLoad</span> imudp    <span class="hljs-comment"># </span><br><span class="hljs-variable">$UDPServerRun</span> <span class="hljs-number">514</span><br><br><span class="hljs-comment"># haproxy log</span><br><br>local0.*    <span class="hljs-regexp">/var/</span>log<span class="hljs-regexp">/haproxy/</span>haproxy.log  <span class="hljs-comment"># 添加</span><br></code></pre></td></tr></table></figure>
+
+<p>3）修改&#x2F;etc&#x2F;sysconfig&#x2F;rsyslog文件</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs nginx"><span class="hljs-attribute">vim</span> /etc/sysconfig/rsyslog<br><br><span class="hljs-comment"># Options for rsyslogd</span><br><br><span class="hljs-comment"># Syslogd options are deprecated since rsyslog v3.</span><br><br><span class="hljs-comment"># If you want to use them, switch to compatibility mode 2 by &quot;-c 2&quot;</span><br><br><span class="hljs-comment"># See rsyslogd(8) for more details</span><br><br>SYSLOGD_OPTIONS=<span class="hljs-string">&quot;-r -m 0 -c 2&quot;</span><br>[root<span class="hljs-variable">@bogon</span> ~]<span class="hljs-comment"># systemctl restart rsyslog</span><br></code></pre></td></tr></table></figure>
+
+<p>4）在Master配置Haproxy配置</p>
+<figure class="highlight clean"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><code class="hljs clean">[root@bogon ~]# cat &gt; /etc/haproxy/haproxy.cfg &lt;&lt; EOF<br>###########全局配置#########<br>global<br>    log <span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span> local0 info  # 日志类型，为不影响性能使用err<br>    daemon<br>    #nbproc <span class="hljs-number">1</span>     #进程数量 <br>    maxconn <span class="hljs-number">4096</span>  #最大连接数 <br>    #user haproxy  #运行用户  <br>    #group haproxy #运行组 <br>    chroot      /var/lib/haproxy<br>    pidfile     /var/run/haproxy.pid<br><br>########默认配置############<br>    defaults<br>        log global<br>        mode http          #默认模式&#123; tcp|http|health &#125;<br>        option httplog       #日志类别,采用httplog<br>        option dontlognull   #不记录健康检查日志信息  <br>        retries <span class="hljs-number">2</span>            #<span class="hljs-number">3</span>次连接失败就认为服务器不可用<br>        option forwardfor    except <span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.0</span>/<span class="hljs-number">8</span>  #后端服务获得真实ip,在HTTP请求中添加<span class="hljs-string">&quot;HTTP_X_FORWARDED_FOR&quot;</span>字段<br>        option httpclose     #请求完毕后主动关闭http通道<br>        option abortonclose  #服务器负载很高，自动结束比较久的链接  <br>        maxconn <span class="hljs-number">10000</span>        #最大连接数  <br>        timeout connect <span class="hljs-number">5</span>m   #连接超时   m(分钟)<br>        timeout client <span class="hljs-number">1</span>m    #客户端超时  <br>        timeout server <span class="hljs-number">1</span>m    #服务器超时  <br>        timeout check <span class="hljs-number">10</span>s    #心跳检测超时  s(秒)<br>        balance leastconn    #负载均衡方式，最少连接 <br><br>########后端配置############<br>     listen test<br>         bind *:<span class="hljs-number">8080</span><br>         mode http<br>         #balance roundrobin<br>         timeout server <span class="hljs-number">15</span>s<br>         timeout connect <span class="hljs-number">15</span>s<br>         server web01 <span class="hljs-number">172.16</span><span class="hljs-number">.3</span><span class="hljs-number">.225</span>:<span class="hljs-number">80</span> check port <span class="hljs-number">80</span> inter <span class="hljs-number">5000</span> fall <span class="hljs-number">5</span><br>         server web02 <span class="hljs-number">172.16</span><span class="hljs-number">.3</span><span class="hljs-number">.226</span>:<span class="hljs-number">80</span> check port <span class="hljs-number">80</span> inter <span class="hljs-number">5000</span> fall <span class="hljs-number">5</span><br>EOF<br>[root@bogon ~]# systemctl start haproxy<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight clean"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><code class="hljs clean">cat &gt; /etc/haproxy/haproxy.cfg &lt;&lt; EOF<br>###########全局配置#########<br>global<br>    log <span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span> local0 info  # 日志类型，为不影响性能使用err<br>    daemon<br>    #nbproc <span class="hljs-number">1</span>     #进程数量 <br>    maxconn <span class="hljs-number">4096</span>  #最大连接数 <br>    #user haproxy  #运行用户  <br>    #group haproxy #运行组 <br>    chroot      /var/lib/haproxy<br>    pidfile     /var/run/haproxy.pid<br><br>########默认配置############<br>    defaults<br>        log global<br>        mode http          #默认模式&#123; tcp|http|health &#125;<br>        option httplog       #日志类别,采用httplog<br>        option dontlognull   #不记录健康检查日志信息  <br>        retries <span class="hljs-number">2</span>            #<span class="hljs-number">3</span>次连接失败就认为服务器不可用<br>        option forwardfor    except <span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.0</span>/<span class="hljs-number">8</span>  #后端服务获得真实ip,在HTTP请求中添加<span class="hljs-string">&quot;HTTP_X_FORWARDED_FOR&quot;</span>字段<br>        option httpclose     #请求完毕后主动关闭http通道<br>        option abortonclose  #服务器负载很高，自动结束比较久的链接  <br>        maxconn <span class="hljs-number">10000</span>        #最大连接数  <br>        timeout connect <span class="hljs-number">5</span>m   #连接超时   m(分钟)<br>        timeout client <span class="hljs-number">1</span>m    #客户端超时  <br>        timeout server <span class="hljs-number">1</span>m    #服务器超时  <br>        timeout check <span class="hljs-number">10</span>s    #心跳检测超时  s(秒)<br>        balance leastconn    #负载均衡方式，最少连接 <br><br>########后端配置############<br>     listen test<br>         bind *:<span class="hljs-number">8068</span><br>         mode http<br>         #balance roundrobin<br>         timeout server <span class="hljs-number">15</span>s<br>         timeout connect <span class="hljs-number">15</span>s<br>         server web01 <span class="hljs-number">192.168</span><span class="hljs-number">.1</span><span class="hljs-number">.105</span>:<span class="hljs-number">80</span> check port <span class="hljs-number">80</span> inter <span class="hljs-number">5000</span> fall <span class="hljs-number">5</span><br>         server web02 <span class="hljs-number">192.168</span><span class="hljs-number">.1</span><span class="hljs-number">.106</span>:<span class="hljs-number">80</span> check port <span class="hljs-number">80</span> inter <span class="hljs-number">5000</span> fall <span class="hljs-number">5</span><br>EOF<br></code></pre></td></tr></table></figure>
+
+<p>重启haproxy</p>
+<figure class="highlight crmsh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs crmsh">systemctl <span class="hljs-literal">start</span> haproxy<br></code></pre></td></tr></table></figure>
+
+<p>5）Backup上配置Haproxy</p>
+<figure class="highlight clean"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><code class="hljs clean">vim /etc/haproxy/haproxy.cfg<br>[root@bogon ~]# cat &gt; /etc/haproxy/haproxy.cfg &lt;&lt; EOF<br>###########全局配置#########<br>global<br>    log <span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span> local0 info  # 日志类型，为不影响性能使用err<br>    daemon<br>    #nbproc <span class="hljs-number">1</span>     #进程数量 <br>    maxconn <span class="hljs-number">4096</span>  #最大连接数 <br>    #user haproxy  #运行用户  <br>    #group haproxy #运行组 <br>    chroot      /var/lib/haproxy<br>    pidfile     /var/run/haproxy.pid<br><br>########默认配置############<br>    defaults<br>        log global<br>        mode http          #默认模式&#123; tcp|http|health &#125;<br>        option httplog       #日志类别,采用httplog<br>        option dontlognull   #不记录健康检查日志信息  <br>        retries <span class="hljs-number">2</span>            #<span class="hljs-number">3</span>次连接失败就认为服务器不可用<br>        option forwardfor    except <span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.0</span>/<span class="hljs-number">8</span>  #后端服务获得真实ip,在HTTP请求中添加<span class="hljs-string">&quot;HTTP_X_FORWARDED_FOR&quot;</span>字段<br>        option httpclose     #请求完毕后主动关闭http通道<br>        option abortonclose  #服务器负载很高，自动结束比较久的链接  <br>        maxconn <span class="hljs-number">10000</span>        #最大连接数  <br>        timeout connect <span class="hljs-number">5</span>m   #连接超时   m(分钟)<br>        timeout client <span class="hljs-number">1</span>m    #客户端超时  <br>        timeout server <span class="hljs-number">1</span>m    #服务器超时  <br>        timeout check <span class="hljs-number">10</span>s    #心跳检测超时  s(秒)<br>        balance leastconn    #负载均衡方式，最少连接 <br><br>########后端配置############<br>     listen test<br>         bind *:<span class="hljs-number">8080</span><br>         mode http<br>         #balance roundrobin<br>         timeout server <span class="hljs-number">15</span>s<br>         timeout connect <span class="hljs-number">15</span>s<br>         server web01 <span class="hljs-number">172.16</span><span class="hljs-number">.3</span><span class="hljs-number">.225</span>:<span class="hljs-number">80</span> check port <span class="hljs-number">80</span> inter <span class="hljs-number">5000</span> fall <span class="hljs-number">5</span><br>         server web02 <span class="hljs-number">172.16</span><span class="hljs-number">.3</span><span class="hljs-number">.226</span>:<span class="hljs-number">80</span> check port <span class="hljs-number">80</span> inter <span class="hljs-number">5000</span> fall <span class="hljs-number">5</span><br>EOF<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight clean"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><code class="hljs clean">cat &gt; /etc/haproxy/haproxy.cfg &lt;&lt; EOF<br>###########全局配置#########<br>global<br>    log <span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span> local0 info  # 日志类型，为不影响性能使用err<br>    daemon<br>    #nbproc <span class="hljs-number">1</span>     #进程数量 <br>    maxconn <span class="hljs-number">4096</span>  #最大连接数 <br>    #user haproxy  #运行用户  <br>    #group haproxy #运行组 <br>    chroot      /var/lib/haproxy<br>    pidfile     /var/run/haproxy.pid<br><br>########默认配置############<br>    defaults<br>        log global<br>        mode http          #默认模式&#123; tcp|http|health &#125;<br>        option httplog       #日志类别,采用httplog<br>        option dontlognull   #不记录健康检查日志信息  <br>        retries <span class="hljs-number">2</span>            #<span class="hljs-number">3</span>次连接失败就认为服务器不可用<br>        option forwardfor    except <span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.0</span>/<span class="hljs-number">8</span>  #后端服务获得真实ip,在HTTP请求中添加<span class="hljs-string">&quot;HTTP_X_FORWARDED_FOR&quot;</span>字段<br>        option httpclose     #请求完毕后主动关闭http通道<br>        option abortonclose  #服务器负载很高，自动结束比较久的链接  <br>        maxconn <span class="hljs-number">10000</span>        #最大连接数  <br>        timeout connect <span class="hljs-number">5</span>m   #连接超时   m(分钟)<br>        timeout client <span class="hljs-number">1</span>m    #客户端超时  <br>        timeout server <span class="hljs-number">1</span>m    #服务器超时  <br>        timeout check <span class="hljs-number">10</span>s    #心跳检测超时  s(秒)<br>        balance leastconn    #负载均衡方式，最少连接 <br><br>########后端配置############<br>     listen test<br>         bind *:<span class="hljs-number">8068</span><br>         mode http<br>         #balance roundrobin<br>         timeout server <span class="hljs-number">15</span>s<br>         timeout connect <span class="hljs-number">15</span>s<br>         server web01 <span class="hljs-number">192.168</span><span class="hljs-number">.1</span><span class="hljs-number">.105</span>:<span class="hljs-number">80</span> check port <span class="hljs-number">80</span> inter <span class="hljs-number">5000</span> fall <span class="hljs-number">5</span><br>         server web02 <span class="hljs-number">192.168</span><span class="hljs-number">.1</span><span class="hljs-number">.106</span>:<span class="hljs-number">80</span> check port <span class="hljs-number">80</span> inter <span class="hljs-number">5000</span> fall <span class="hljs-number">5</span><br>EOF<br></code></pre></td></tr></table></figure>
+
+<p>重启haproxy</p>
+<figure class="highlight crmsh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs crmsh">systemctl <span class="hljs-literal">start</span> haproxy<br></code></pre></td></tr></table></figure>
+
+<p>6）测试一下haproxy代理是否配置成功，虚拟ip访问</p>
+<figure class="highlight accesslog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs accesslog"><span class="hljs-string">[root@bogon ~]</span># curl http://<span class="hljs-number">172</span>.<span class="hljs-number">16</span>.<span class="hljs-number">3</span>.<span class="hljs-number">200</span>:<span class="hljs-number">8080</span><br><span class="hljs-number">172.16.3.225</span><br><span class="hljs-string">[root@bogon ~]</span># curl http://<span class="hljs-number">172</span>.<span class="hljs-number">16</span>.<span class="hljs-number">3</span>.<span class="hljs-number">200</span>:<span class="hljs-number">8080</span><br><span class="hljs-number">172.16.3.226</span><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight 1c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs 1c">curl http<span class="hljs-punctuation">:</span><span class="hljs-comment">//192.168.1.118:8068</span><br></code></pre></td></tr></table></figure>
+
+<p>注：出现这种负载说明没有问题</p>
+<p>现在开始测试keepalive</p>
+<p>注：将Master宕机看一下vip是否会转移到Backup</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs csharp">[<span class="hljs-meta">root@bogon ~</span>]<span class="hljs-meta"># systemctl stop keepalived</span><br>[<span class="hljs-meta">root@bogon ~</span>]<span class="hljs-meta"># ip a | grep 200			# 如果Backup上可以查看到说明没有问题，再次访问一下VIP看一下是否可以正常访问</span><br>inet <span class="hljs-number">172.16</span><span class="hljs-number">.3</span><span class="hljs-number">.200</span>/<span class="hljs-number">24</span> scope <span class="hljs-keyword">global</span> ens160<br><br><span class="hljs-meta"># 如果还可以访问说明实验成功</span><br><br>[<span class="hljs-meta">root@bogon ~</span>]<span class="hljs-meta"># curl http://172.16.3.200:8080</span><br><span class="hljs-number">172.16</span><span class="hljs-number">.3</span><span class="hljs-number">.225</span><br>[<span class="hljs-meta">root@bogon ~</span>]<span class="hljs-meta"># curl http://172.16.3.200:8080</span><br><span class="hljs-number">172.16</span><span class="hljs-number">.3</span><span class="hljs-number">.226</span><br><br><br>curl http:<span class="hljs-comment">//192.168.1.104:8068</span><br></code></pre></td></tr></table></figure>
+
+<p>在down掉主节点后 vip自动漂移到了192.168.0.106备节点上</p>
+<p>在down掉主节点后 访问 192.168.0.188:8068 还是可以访问到192.168.0.105和192.168.0.106</p>
+<p><img src="http://devopsz.top:30090/picture/2022/6/23/image-20220623010743086.png#id=AymyD&originHeight=384&originWidth=893&originalType=binary&ratio=1&rotation=0&showTitle=false&status=done&style=none&title=" srcset="/img/loading.gif" lazyload></p>
+<h3 id="在down掉主节点后-访问-192-168-0-188-8068-还是可以访问到192-168-0-105和192-168-0-106"><a href="#在down掉主节点后-访问-192-168-0-188-8068-还是可以访问到192-168-0-105和192-168-0-106" class="headerlink" title="在down掉主节点后 访问 192.168.0.188:8068 还是可以访问到192.168.0.105和192.168.0.106"></a>在down掉主节点后 访问 192.168.0.188:8068 还是可以访问到192.168.0.105和192.168.0.106</h3><p><img src="http://devopsz.top:30090/picture/2022/6/23/image-20220623011423415.png#id=CqdXU&originHeight=265&originWidth=956&originalType=binary&ratio=1&rotation=0&showTitle=false&status=done&style=none&title=" srcset="/img/loading.gif" lazyload></p>
+<h3 id="在down掉主节点后vip自动漂移到192-168-0-106备节点"><a href="#在down掉主节点后vip自动漂移到192-168-0-106备节点" class="headerlink" title="在down掉主节点后vip自动漂移到192.168.0.106备节点"></a>在down掉主节点后vip自动漂移到192.168.0.106备节点</h3><p><img src="http://devopsz.top:30090/picture/2022/6/23/image-20220623011512649.png#id=cCV5n&originHeight=107&originWidth=889&originalType=binary&ratio=1&rotation=0&showTitle=false&status=done&style=none&title=" srcset="/img/loading.gif" lazyload></p>
+<p><strong>1，手动添加vip</strong></p>
+<p>1,ifconfig查看当前活动网卡。如：eth0</p>
+<p>2,执行</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">ifconfig</span> eth0:<span class="hljs-number">0</span> <span class="hljs-number">166.111.69.100</span> netmask <span class="hljs-number">255.255.255.0</span> up<br><br><span class="hljs-attribute">ifconfig</span> ens192:<span class="hljs-number">0</span> <span class="hljs-number">166.111.69.100</span> netmask <span class="hljs-number">255.255.255.0</span> up<br></code></pre></td></tr></table></figure>
+
+<p>进行vip添加</p>
+<p>3，执行ifconfig查看是否生效</p>
+<p>4，测试 ping 166.111.69.100</p>
+<p>5,写在&#x2F;etc&#x2F;rc.local里进行开机自动设置</p>
+<p><strong>2，第三方工具keepalived增加vip</strong></p>
+<p>1，下载与安装</p>
+<p>安装：</p>
+<figure class="highlight swift"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs swift">tar xf keepalived<span class="hljs-operator">-</span><span class="hljs-number">1.2</span>.<span class="hljs-number">12</span>.tar.gz      <br>cd keepalived<span class="hljs-operator">-</span><span class="hljs-number">1.2</span>.<span class="hljs-number">12</span><br><span class="hljs-operator">./</span>configure <span class="hljs-operator">--</span><span class="hljs-keyword">prefix</span><span class="hljs-operator">=/</span>usr<span class="hljs-regexp">/local/</span>keepalived<br>make <span class="hljs-operator">&amp;&amp;</span>  make install<br>cp <span class="hljs-regexp">/usr/</span>local<span class="hljs-regexp">/keepalived/</span>etc<span class="hljs-regexp">/rc.d/</span><span class="hljs-keyword">init</span>.d<span class="hljs-regexp">/keepalived /</span>etc<span class="hljs-regexp">/init.d/</span><br>cp <span class="hljs-regexp">/usr/</span>local<span class="hljs-regexp">/keepalived/</span>etc<span class="hljs-regexp">/sysconfig/</span>keepalived <span class="hljs-regexp">/etc/</span>sysconfig<span class="hljs-operator">/</span><br>mkdir <span class="hljs-regexp">/etc/</span>keepalived<br>cp <span class="hljs-regexp">/usr/</span>local<span class="hljs-regexp">/keepalived/</span>etc<span class="hljs-regexp">/keepalived/</span>keepalived.conf <span class="hljs-regexp">/etc/</span>keepalived<span class="hljs-operator">/</span><br>cp <span class="hljs-regexp">/usr/</span>local<span class="hljs-regexp">/keepalived/</span>sbin<span class="hljs-regexp">/keepalived /</span>usr<span class="hljs-regexp">/sbin/</span><br></code></pre></td></tr></table></figure>
+
+<p>2，配置：</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">vim <br><br>/etc/keepalived/keepalived.conf 如下：<br>! Configuration File <span class="hljs-keyword">for</span> keepalived<br><br>global_defs &#123;<br>   notification_email &#123;<br>   <span class="hljs-symbol">saltstack@</span><span class="hljs-number">163.</span>com<br>  &#125;<br>  notification_email_from <span class="hljs-symbol">dba@</span>dbserver.com<br>  smtp_server <span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span><br>  smtp_connect_timeout <span class="hljs-number">30</span><br>  router_id MySQL-HA<br>&#125;<br><br><br>vrrp_instance VI_1 &#123;<br>  state BACKUP<br>  <span class="hljs-keyword">interface</span> <span class="hljs-symbol">eth1</span><br>  <span class="hljs-symbol">virtual_router_id</span> <span class="hljs-symbol">51</span><br>  <span class="hljs-symbol">priority</span> <span class="hljs-symbol">150</span><br>  <span class="hljs-symbol">advert_int</span> <span class="hljs-symbol">1</span><br>  <span class="hljs-symbol">nopreempt</span><br><br>  <span class="hljs-symbol">authentication</span> &#123;<br>  auth_type PASS<br>  auth_pass <span class="hljs-number">1111</span><br>  &#125;<br><br>  virtual_ipaddress &#123;<br>    <span class="hljs-number">192.168</span><span class="hljs-number">.1</span><span class="hljs-number">.88</span><br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>红色区域为需要修改的地方：</p>
+<p>notification_email :变更后通知的email</p>
+<p>notification_email_from :发送email</p>
+<p>router_id MySQL-HA :路由器组id，局域网中需要共享该vip的服务器，该配置要一致。</p>
+<p>state BACKUP：在keepalived中2种模式，</p>
+<p><strong>分别是master-&gt;backup模式和backup-&gt;backup模式</strong>。</p>
+<h1 id="配置keepalived-ping不通-解决办法"><a href="#配置keepalived-ping不通-解决办法" class="headerlink" title="配置keepalived ping不通 解决办法"></a>配置keepalived ping不通 解决办法</h1><figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs vim"><span class="hljs-keyword">vim</span> /etc/keepalived/keepalived.<span class="hljs-keyword">conf</span><br><br>把这个注释就可以了<br><br>vrrp_strict<br></code></pre></td></tr></table></figure>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群 2023-04-12 04:04:09.458</div>
+      <div>http://example.com/2025/01/16/使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群-shi-yong-keepalived-he-haproxy-chuang-jian-gao-ke-yong-kubernetes-ji-qun/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E9%9D%A2%E8%AF%950308-mian-shi-0308/" title="面试0308 2024-04-03 14:57:53.576">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">面试0308 2024-04-03 14:57:53.576</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E4%BD%BF%E7%94%A8%20OpenFunction%20%E5%9C%A8%E4%BB%BB%E4%BD%95%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E4%B8%8A%E8%BF%90%E8%A1%8C%E6%97%A0%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%B7%A5%E4%BD%9C%E8%B4%9F%E8%BD%BD-shi-yong-openfunction-zai-ren-he-ji-chu-she-shi-shang-yun-xing-wu-fu-wu-qi-gong-zuo-fu-zai/" title="使用 OpenFunction 在任何基础设施上运行无服务器工作负载 2024-01-21 04:02:44.459">
+                        <span class="hidden-mobile">使用 OpenFunction 在任何基础设施上运行无服务器工作负载 2024-01-21 04:02:44.459</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

@@ -1,0 +1,686 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="前置知识 linux 网络处理的基本方法：bind listen accept epoll 的基本方法：epoll_create epoll_ctl epoll_wait  什么是惊群效应？第一次听到的这个名词的时候觉得很是有趣，不知道是个什么意思，总觉得又是奇怪的中文翻译导致的。 复杂的说（来源于网络）TLDR;  惊群效应（thundering herd）是指多进程（多线程）在同时阻塞等待同一">
+<meta property="og:type" content="article">
+<meta property="og:title" content="nginx如何解决惊群效应 2024-08-02 17:45:54.531">
+<meta property="og:url" content="http://example.com/2025/01/16/nginx%E5%A6%82%E4%BD%95%E8%A7%A3%E5%86%B3%E6%83%8A%E7%BE%A4%E6%95%88%E5%BA%94-nginx-ru-he-jie-jue-jing-qun-xiao-ying/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="前置知识 linux 网络处理的基本方法：bind listen accept epoll 的基本方法：epoll_create epoll_ctl epoll_wait  什么是惊群效应？第一次听到的这个名词的时候觉得很是有趣，不知道是个什么意思，总觉得又是奇怪的中文翻译导致的。 复杂的说（来源于网络）TLDR;  惊群效应（thundering herd）是指多进程（多线程）在同时阻塞等待同一">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011508824.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011510645.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011511388.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.079Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:19.031Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011508824.png">
+  
+  
+  
+  <title>nginx如何解决惊群效应 2024-08-02 17:45:54.531 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="nginx如何解决惊群效应 2024-08-02 17:45:54.531"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.9k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          17 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">nginx如何解决惊群效应 2024-08-02 17:45:54.531</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="前置知识"><a href="#前置知识" class="headerlink" title="前置知识"></a><strong>前置知识</strong></h2><ul>
+<li><strong>linux 网络处理的基本方法：bind listen accept</strong></li>
+<li><strong>epoll 的基本方法：epoll_create epoll_ctl epoll_wait</strong></li>
+</ul>
+<h2 id="什么是惊群效应？"><a href="#什么是惊群效应？" class="headerlink" title="什么是惊群效应？"></a><strong>什么是惊群效应？</strong></h2><p><strong>第一次听到的这个名词的时候觉得很是有趣，不知道是个什么意思，总觉得又是奇怪的中文翻译导致的。</strong></p>
+<p><strong>复杂的说（来源于网络）TLDR;</strong></p>
+<blockquote>
+<p><strong>惊群效应（thundering herd）是指多进程（多线程）在同时阻塞等待同一个事件的时候（休眠状态），如果等待的这个事件发生，那么他就会唤醒等待的所有进程（或者线程），但是最终却只能有一个进程（线程）获得这个时间的“控制权”，对该事件进行处理，而其他进程（线程）获取“控制权”失败，只能重新进入休眠状态，这种现象和性能浪费就叫做惊群效应。</strong></p>
+</blockquote>
+<p><strong>简单的讲（我的大白话）</strong></p>
+<blockquote>
+<p><strong>有一道雷打下来，把很多人都吵醒了，但只有其中一个人去收衣服了。也就是：有一个请求过来了，把很多进程都唤醒了，但只有其中一个能最终处理。</strong></p>
+</blockquote>
+<h3 id="原因-问题"><a href="#原因-问题" class="headerlink" title="原因&amp;问题"></a><strong>原因&amp;问题</strong></h3><p><strong>说起来其实也简单，多数时候为了提高应用的请求处理能力，会使用多进程（多线程）去监听请求，当请求来时，因为都有能力处理，所以就都被唤醒了。</strong></p>
+<p><strong>而问题就是，最终还是只能有一个进程能来处理。当请求多了，不停地唤醒、休眠、唤醒、休眠，做了很多的无用功，上下文切换又累，对吧。那怎么解决这个问题呢？下面就是今天要看的重点，我们看看 nginx 是如何解决这个问题的。</strong></p>
+<h2 id="Nginx-架构"><a href="#Nginx-架构" class="headerlink" title="Nginx 架构"></a><strong>Nginx 架构</strong></h2><p><strong>第一点我们需要了解 nginx 大致的架构是怎么样的。nginx 将进程分为 master 和 worker 两类，非常常见的一种 M-S 策略，也就是 master 负责统筹管理 worker，当然它也负责如：启动、读取配置文件，监听处理各种信号等工作。</strong></p>
+<p><strong><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011508824.png" srcset="/img/loading.gif" lazyload alt="image-20240801150852757"></strong></p>
+<p><strong>但是，第一个要注意的问题就出现了，master 的工作有且只有这些，对于请求来说它是不管的，就如同图中所示，请求是直接被 worker 处理的。如此一来，请求应该被哪个 worker 处理呢？worker 内部又是如何处理请求的呢？</strong></p>
+<h2 id="Nginx-使用-epoll"><a href="#Nginx-使用-epoll" class="headerlink" title="Nginx 使用 epoll"></a><strong>Nginx 使用 epoll</strong></h2><p><strong>接下来我们就要知道 nginx 是如何使用 epoll 来处理请求的。下面可能会涉及到一些源码的内容，但不用担心，你不需要全部理解，只需要知道它们的作用就可以了。顺便我会简单描述一下我是如何去找到这些源码的位置的。</strong></p>
+<h3 id="Master-的工作"><a href="#Master-的工作" class="headerlink" title="Master 的工作"></a><strong>Master 的工作</strong></h3><p><strong>其实 Master 并不是毫无作为，至少端口是它来占的。<a target="_blank" rel="noopener" href="https://github.com/nginx/nginx/blob/b489ba83e9be446923facfe1a2fe392be3095d1f/src/core/ngx_connection.c#L407C13-L407C13">https://github.com/nginx/nginx/blob/b489ba83e9be446923facfe1a2fe392be3095d1f/src/core/ngx_connection.c#L407C13-L407C13</a></strong></p>
+<figure class="highlight prolog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs prolog">ngx_open_listening_sockets(ngx_cycle_t *cycle)<br>&#123;<br>    .....<br>    for (i = <span class="hljs-number">0</span>; i &lt; cycle-&gt;listening.nelts; i++) &#123;<br>        .....<br>        if (bind(s, ls[i].sockaddr, ls[i].socklen) == <span class="hljs-number">-1</span>) &#123;<br><br>        if (listen(s, ls[i].backlog) == <span class="hljs-number">-1</span>) &#123;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>那么，根据我们 nginx.conf 的配置文件，看需要监听哪个端口，于是就去 bind 的了，这里没问题。</strong></p>
+<p><strong>【发现源码】这里我是直接在代码里面搜 bind 方法去找的，因为我知道，不管你怎么样，你总是要绑定端口的</strong></p>
+<p><strong>然后是创建 worker 的，虽不起眼，但很关键。<a target="_blank" rel="noopener" href="https://github.com/nginx/nginx/blob/b489ba83e9be446923facfe1a2fe392be3095d1f/src/os/unix/ngx_process.c#L186">https://github.com/nginx/nginx/blob/b489ba83e9be446923facfe1a2fe392be3095d1f/src/os/unix/ngx_process.c#L186</a></strong></p>
+<figure class="highlight tcl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs tcl">ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt <span class="hljs-keyword">proc</span>,<span class="hljs-title"> void</span> *data,<span class="hljs-title"></span><br><span class="hljs-title">    char</span> *name,<span class="hljs-title"> ngx_int_t</span> respawn)<br>&#123;<br>    ....<br>    <span class="hljs-keyword">pid</span> = fork();<br></code></pre></td></tr></table></figure>
+
+<p><strong>【发现源码】这里我直接搜 fork，整个项目里面需要 fork 的情况只有两个地方，很快就找到了 worker</strong></p>
+<p><strong>由于是 fork 创建的，也就是复制了一份 task_struct 结构。所以 master 的几乎全部它都有。</strong></p>
+<h3 id="Worker-的工作"><a href="#Worker-的工作" class="headerlink" title="Worker 的工作"></a><strong>Worker 的工作</strong></h3><p><strong>Nginx 有一个分模块的思想，它将不同功能分成了不同的模块，而 epoll 自然就是在 ngx_epoll_module.c 中了</strong></p>
+<p><strong><a target="_blank" rel="noopener" href="https://github.com/nginx/nginx/blob/b489ba83e9be446923facfe1a2fe392be3095d1f/src/event/modules/ngx_epoll_module.c#L330C23-L330C23">https://github.com/nginx/nginx/blob/b489ba83e9be446923facfe1a2fe392be3095d1f/src/event/modules/ngx_epoll_module.c#L330C23-L330C23</a></strong></p>
+<figure class="highlight coq"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs coq">ngx_epoll_init(ngx_cycle_t *<span class="hljs-built_in">cycle</span>, ngx_msec_t timer)<br>&#123;<br>    ngx_epoll_conf_t  *epcf;<br><br>    epcf = ngx_event_get_conf(<span class="hljs-built_in">cycle</span>-&gt;conf_ctx, ngx_epoll_module);<br>    <br>    <span class="hljs-keyword">if</span> (ep == <span class="hljs-number">-1</span>) &#123;<br>        ep = epoll_create(<span class="hljs-built_in">cycle</span>-&gt;connection_n / <span class="hljs-number">2</span>);<br></code></pre></td></tr></table></figure>
+
+<p><strong>其他不重要，就连 epoll_ctl 和 epoll_wait 也不重要了，这里你需要知道的就是，从调用链路来看，是 worker 创建的 epoll 对象，也就是每个 worker 都有自己的 epoll 对象，而监听的sokcet 是一样的！</strong></p>
+<blockquote>
+<p><strong>【发现源码】这里更加直接，搜索 epoll_create 肯定就能找到</strong></p>
+</blockquote>
+<h3 id="问题的关键"><a href="#问题的关键" class="headerlink" title="问题的关键"></a><strong>问题的关键</strong></h3><p><strong>此时问题的关键基本就能了解了，每个 worker 都有处理能力，请求来了此时应该唤醒谁呢？讲道理那不是所有 epoll 都会有事件，所有 worker 都 accept 请求？显然这样是不行的。那么 nginx 是如何解决的呢？</strong></p>
+<h2 id="如何解决"><a href="#如何解决" class="headerlink" title="如何解决"></a><strong>如何解决</strong></h2><p><strong>解决方式一共有三种，下面我们一个个来看：</strong></p>
+<ol>
+<li><strong>accept_mutex（应用层的解决方案）</strong></li>
+<li><strong>EPOLLEXCLUSIVE（内核层的解决方案）</strong></li>
+<li><strong>SO_REUSEPORT（内核层的解决方案）</strong></li>
+</ol>
+<h3 id="accept-mutex"><a href="#accept-mutex" class="headerlink" title="accept_mutex"></a><strong>accept_mutex</strong></h3><p><strong>看到 mutex 可能你就知道了，锁嘛！这也是对于高并发处理的 ”基操“ 遇事不决加锁，没错，加锁肯定能解决问题。<a target="_blank" rel="noopener" href="https://github.com/nginx/nginx/blob/b489ba83e9be446923facfe1a2fe392be3095d1f/src/event/ngx_event_accept.c#L328">https://github.com/nginx/nginx/blob/b489ba83e9be446923facfe1a2fe392be3095d1f/src/event/ngx_event_accept.c#L328</a></strong></p>
+<p><strong>具体代码就不展示了，其中细节很多，但本质很容易理解，就是当请求来了，谁拿到了这个锁，谁就去处理。没拿到的就不管了。锁的问题很直接，除了慢没啥不好的，但至少很公平。</strong></p>
+<h3 id="EPOLLEXCLUSIVE"><a href="#EPOLLEXCLUSIVE" class="headerlink" title="EPOLLEXCLUSIVE"></a><strong>EPOLLEXCLUSIVE</strong></h3><blockquote>
+<p><strong>EPOLLEXCLUSIVE 是 2016 年 4.5+ 内核新添加的一个 epoll 的标识。它降低了多个进程&#x2F;线程通过 epoll_ctl 添加共享 fd 引发的惊群概率，使得一个事件发生时，只唤醒一个正在 epoll_wait 阻塞等待唤醒的进程（而不是全部唤醒）。</strong></p>
+</blockquote>
+<p><strong>关键是：每次内核只唤醒一个睡眠的进程处理资源</strong></p>
+<p><strong>但，这个方案不是完美的解决了，它仅是降低了概率哦。为什么这样说呢？相比于原来全部唤醒，那肯定是好了不少，降低了冲突。但由于本质来说 socket 是共享的，当前进程处理完成的时间不确定，在后面被唤醒的进程可能会发现当前的 socket 已经被之前唤醒的进程处理掉了。</strong></p>
+<h3 id="SO-REUSEPORT"><a href="#SO-REUSEPORT" class="headerlink" title="SO_REUSEPORT"></a><strong>SO_REUSEPORT</strong></h3><p><strong>Nginx 在 1.9.1 版本加入了这个功能 <a target="_blank" rel="noopener" href="https://www.nginx.com/blog/socket-sharding-nginx-release-1-9-1/">https://www.nginx.com/blog/socket-sharding-nginx-release-1-9-1/</a></strong></p>
+<p><strong>其本质是利用了 Linux 的 reuseport 的特性，使用 reuseport 内核允许多个进程 listening socket 到同一个端口上，而从内核层面做了负载均衡，每次唤醒其中一个进程。</strong></p>
+<p><strong>反应到 Nginx 上就是，每个 Worker 进程都创建独立的 listening socket，监听相同的端口，accept 时只有一个进程会获得连接。效果就和下图所示一样。</strong></p>
+<p><strong><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011510645.png" srcset="/img/loading.gif" lazyload alt="image-20240801151048554"></strong></p>
+<p><strong>而使用方式则是：</strong></p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs nginx"><span class="hljs-section">http</span> &#123;<br>     <span class="hljs-section">server</span> &#123;<br>          <span class="hljs-attribute">listen</span> <span class="hljs-number">80</span> reuseport;<br>          <span class="hljs-attribute">server_name</span>  localhost;<br>          <span class="hljs-comment"># ...</span><br>     &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>从官方的测试情况来看确实是厉害</strong></p>
+<p><strong><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011511388.png" srcset="/img/loading.gif" lazyload alt="image-20240801151109314"></strong></p>
+<p><strong>当然，正所谓：完事无绝对，技术无银弹。这个方案的问题在于内核是不知道你忙还是不忙的。只会无脑的丢给你。与之前的抢锁对比，抢锁的进程一定是不忙的，现在手上的工作都已经忙不过来了，没机会去抢锁了；而这个方案可能导致，如果当前进程忙不过来了，还是会只要根据 reuseport 的负载规则轮到你了就会发送给你，所以会导致有的请求被前面慢的请求卡住了。</strong></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a><strong>总结</strong></h2><p><strong>本文，从了解什么 ”惊群效应“ 到 nginx 架构和 epoll 处理的原理，最终分析三种不同的处理 “惊群效应” 的方案。分析到这里，我想你应该明白其实 nginx 这个多队列服务模型是所存在的一些问题，只不过绝大多数场景已经完完全全够用了。</strong></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>nginx如何解决惊群效应 2024-08-02 17:45:54.531</div>
+      <div>http://example.com/2025/01/16/nginx如何解决惊群效应-nginx-ru-he-jie-jue-jing-qun-xiao-ying/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/prometheus%E4%BC%81%E4%B8%9A%E7%BA%A7%E7%9B%91%E6%8E%A7%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93-prometheus-qi-ye-ji-jian-kong-shi-yong-zong-jie/" title="prometheus企业级监控使用总结 2024-04-03 15:13:11.185">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">prometheus企业级监控使用总结 2024-04-03 15:13:11.185</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/pixie-pixie/" title="pixie 2024-08-02 17:52:17.843">
+                        <span class="hidden-mobile">pixie 2024-08-02 17:52:17.843</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

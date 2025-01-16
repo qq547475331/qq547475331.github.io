@@ -1,0 +1,649 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="一、coreDNS背景部署在kubernetes集群中的容器业务通过coreDNS服务解析域名，Coredns基于caddy框架，将整个CoreDNS服务都建立在一个使用Go编写的HTTP&#x2F;2 Web 服务器Caddy上。通过插件化（链）架构，以预配置的方式（configmap卷挂载内容配置）选择需要的插件编译，按序执行插件链上的逻辑，通过四种方式（TCP、UDP、gRPC和HTTPS）">
+<meta property="og:type" content="article">
+<meta property="og:title" content="容器中域名解析以及不同dnspolicy对域名解析的影响 2024-04-03 15:04:09.254">
+<meta property="og:url" content="http://example.com/2025/01/16/%E5%AE%B9%E5%99%A8%E4%B8%AD%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E4%BB%A5%E5%8F%8A%E4%B8%8D%E5%90%8Cdnspolicy%E5%AF%B9%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E7%9A%84%E5%BD%B1%E5%93%8D-rong-qi-zhong-yu-ming-jie-xi-yi-ji-bu-tong-dnspolicy-dui-yu-ming-jie-xi-de-ying-xiang/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="一、coreDNS背景部署在kubernetes集群中的容器业务通过coreDNS服务解析域名，Coredns基于caddy框架，将整个CoreDNS服务都建立在一个使用Go编写的HTTP&#x2F;2 Web 服务器Caddy上。通过插件化（链）架构，以预配置的方式（configmap卷挂载内容配置）选择需要的插件编译，按序执行插件链上的逻辑，通过四种方式（TCP、UDP、gRPC和HTTPS）">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403041103699.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403041103954.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.104Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:19.384Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403041103699.png">
+  
+  
+  
+  <title>容器中域名解析以及不同dnspolicy对域名解析的影响 2024-04-03 15:04:09.254 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="容器中域名解析以及不同dnspolicy对域名解析的影响 2024-04-03 15:04:09.254"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          9 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">容器中域名解析以及不同dnspolicy对域名解析的影响 2024-04-03 15:04:09.254</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="一、coreDNS背景"><a href="#一、coreDNS背景" class="headerlink" title="一、coreDNS背景"></a>一、coreDNS背景</h1><h5 id="部署在kubernetes集群中的容器业务通过coreDNS服务解析域名，Coredns基于caddy框架，将整个CoreDNS服务都建立在一个使用Go编写的HTTP-2-Web-服务器Caddy上。通过插件化（链）架构，以预配置的方式（configmap卷挂载内容配置）选择需要的插件编译，按序执行插件链上的逻辑，通过四种方式（TCP、UDP、gRPC和HTTPS）对外直接提供DNS服务。"><a href="#部署在kubernetes集群中的容器业务通过coreDNS服务解析域名，Coredns基于caddy框架，将整个CoreDNS服务都建立在一个使用Go编写的HTTP-2-Web-服务器Caddy上。通过插件化（链）架构，以预配置的方式（configmap卷挂载内容配置）选择需要的插件编译，按序执行插件链上的逻辑，通过四种方式（TCP、UDP、gRPC和HTTPS）对外直接提供DNS服务。" class="headerlink" title="部署在kubernetes集群中的容器业务通过coreDNS服务解析域名，Coredns基于caddy框架，将整个CoreDNS服务都建立在一个使用Go编写的HTTP&#x2F;2 Web 服务器Caddy上。通过插件化（链）架构，以预配置的方式（configmap卷挂载内容配置）选择需要的插件编译，按序执行插件链上的逻辑，通过四种方式（TCP、UDP、gRPC和HTTPS）对外直接提供DNS服务。"></a>部署在kubernetes集群中的容器业务通过coreDNS服务解析域名，Coredns基于caddy框架，将整个CoreDNS服务都建立在一个使用Go编写的HTTP&#x2F;2 Web 服务器Caddy上。通过插件化（链）架构，以预配置的方式（configmap卷挂载内容配置）选择需要的插件编译，按序执行插件链上的逻辑，通过四种方式（TCP、UDP、gRPC和HTTPS）对外直接提供DNS服务。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403041103699.png" srcset="/img/loading.gif" lazyload alt="image-20240304110320602"></p>
+<h1 id="二、kubelet通过修改容器-etc-resolv-conf文件使得容器中可解析域名"><a href="#二、kubelet通过修改容器-etc-resolv-conf文件使得容器中可解析域名" class="headerlink" title="二、kubelet通过修改容器&#x2F;etc&#x2F;resolv.conf文件使得容器中可解析域名"></a>二、kubelet通过修改容器&#x2F;etc&#x2F;resolv.conf文件使得容器中可解析域名</h1><h5 id="在kubernetes集群中，coreDNS服务和kube-apiserver通信获取clusterip和serviceName的映射关系，并且coreDNS本身通过clusterip（默认-xx-xx-3-10，比如集群clusterip网段为10-247-x-x，则coreDNS对外暴露服务的clusterip为10-247-3-10），我们知道操作系统域名服务器关键配置文件-etc-resolv-conf中的nameserver字段指定，所以只需要使得容器-etc-resolv-conf中-nameserver字段配置为coreDNS的clusterip地址即可。"><a href="#在kubernetes集群中，coreDNS服务和kube-apiserver通信获取clusterip和serviceName的映射关系，并且coreDNS本身通过clusterip（默认-xx-xx-3-10，比如集群clusterip网段为10-247-x-x，则coreDNS对外暴露服务的clusterip为10-247-3-10），我们知道操作系统域名服务器关键配置文件-etc-resolv-conf中的nameserver字段指定，所以只需要使得容器-etc-resolv-conf中-nameserver字段配置为coreDNS的clusterip地址即可。" class="headerlink" title="在kubernetes集群中，coreDNS服务和kube-apiserver通信获取clusterip和serviceName的映射关系，并且coreDNS本身通过clusterip（默认 xx.xx.3.10，比如集群clusterip网段为10.247.x.x，则coreDNS对外暴露服务的clusterip为10.247.3.10），我们知道操作系统域名服务器关键配置文件&#x2F;etc&#x2F;resolv.conf中的nameserver字段指定，所以只需要使得容器&#x2F;etc&#x2F;resolv.conf中 nameserver字段配置为coreDNS的clusterip地址即可。"></a>在kubernetes集群中，coreDNS服务和kube-apiserver通信获取clusterip和serviceName的映射关系，并且coreDNS本身通过clusterip（默认 xx.xx.3.10，比如集群clusterip网段为10.247.x.x，则coreDNS对外暴露服务的clusterip为10.247.3.10），我们知道操作系统域名服务器关键配置文件&#x2F;etc&#x2F;resolv.conf中的nameserver字段指定，所以只需要使得容器&#x2F;etc&#x2F;resolv.conf中 nameserver字段配置为coreDNS的clusterip地址即可。</h5><h5 id="那么谁来完成容器-etc-resolv-conf的修改和如何修改？kubelet负责拉起容器，启动参数中–cluster-dns字段对应值就是该集群coreDNS的clusterip地址，kubelet在拉起容器中，根据Pod的dnsPolicy选项，把该值修改注入到容器中。"><a href="#那么谁来完成容器-etc-resolv-conf的修改和如何修改？kubelet负责拉起容器，启动参数中–cluster-dns字段对应值就是该集群coreDNS的clusterip地址，kubelet在拉起容器中，根据Pod的dnsPolicy选项，把该值修改注入到容器中。" class="headerlink" title="那么谁来完成容器&#x2F;etc&#x2F;resolv.conf的修改和如何修改？kubelet负责拉起容器，启动参数中–cluster-dns字段对应值就是该集群coreDNS的clusterip地址，kubelet在拉起容器中，根据Pod的dnsPolicy选项，把该值修改注入到容器中。"></a>那么谁来完成容器&#x2F;etc&#x2F;resolv.conf的修改和如何修改？kubelet负责拉起容器，启动参数中–cluster-dns字段对应值就是该集群coreDNS的clusterip地址，kubelet在拉起容器中，根据Pod的dnsPolicy选项，把该值修改注入到容器中。</h5><h1 id="三、Pod不同dnsPolicy对容器-etc-resolv-conf的影响"><a href="#三、Pod不同dnsPolicy对容器-etc-resolv-conf的影响" class="headerlink" title="三、Pod不同dnsPolicy对容器&#x2F;etc&#x2F;resolv.conf的影响"></a>三、Pod不同dnsPolicy对容器&#x2F;etc&#x2F;resolv.conf的影响</h1><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403041103954.png" srcset="/img/loading.gif" lazyload alt="image-20240304110337886"></p>
+<ul>
+<li>Default：如果dnsPolicy被设置为“Default”，则名称解析nameserver配置将从pod运行的节点&#x2F;etc&#x2F;resolv.conf继承。</li>
+</ul>
+<figure class="highlight tp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs tp"># 节点/etc/resolv.conf配置<br>nameserver <span class="hljs-keyword">X</span>.<span class="hljs-keyword">X</span>.<span class="hljs-keyword">X</span>.<span class="hljs-keyword">X</span><br>nameserver <span class="hljs-keyword">X</span>.<span class="hljs-keyword">X</span>.<span class="hljs-keyword">X</span>.<span class="hljs-keyword">Y</span><br>options ndots:<span class="hljs-number">5</span> timeout:<span class="hljs-number">2</span> single-request-reopen<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>ClusterFirst：如果dnsPolicy被设置为“ClusterFirst”，则使用集群coredns的service 地址作为Pod内&#x2F;etc&#x2F;resolv.conf中nameserver配置。</li>
+</ul>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">nameserver <span class="hljs-number">10.247</span><span class="hljs-number">.3</span><span class="hljs-number">.10</span> <br><span class="hljs-keyword">search</span> <span class="hljs-keyword">default</span>.svc.<span class="hljs-keyword">cluster</span>.<span class="hljs-keyword">local</span> svc.<span class="hljs-keyword">cluster</span>.<span class="hljs-keyword">local</span> <span class="hljs-keyword">cluster</span>.<span class="hljs-keyword">local</span> <br><span class="hljs-keyword">options</span> ndots:<span class="hljs-number">5</span> timeout:<span class="hljs-number">2</span> single-request-reopen<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>ClusterFirstWithHostNet：对于使用hostNetwork网络模式运行的Pod，需明确设置其DNS策略“ClusterFirstWithHostNet”，否则 hostNetwork + ClusterFirst实际效果 &#x3D; Default</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs routeros">ClusterFirstWithHostNet 是 Kubernetes 中的一个<span class="hljs-built_in"> DNS </span>策略。当 Pod 使用 hostNetwork 模式运行时（即 hostNetwork: <span class="hljs-literal">true</span>），这个策略指示 Pod 优先使用 Kubernetes 环境的<span class="hljs-built_in"> DNS </span>服务（如 CoreDNS 提供的域名解析服务）进行域名解析。如果 Kubernetes 环境的<span class="hljs-built_in"> DNS </span>服务无法解析某个域名，那么该请求会被转发到从宿主机继承的<span class="hljs-built_in"> DNS </span>服务器上进行解析。<br><br>这个策略确保了 Pod 在使用宿主机的网络命名空间时，仍然能够利用 Kubernetes 提供的<span class="hljs-built_in"> DNS </span>服务进行域名解析，从而保持了与 Kubernetes 集群中其他服务的连通性。这对于需要在 Pod 内访问集群内部服务或跨命名空间通信的场景非常有用。<br><br>请注意，为了使用 ClusterFirstWithHostNet 策略，您需要在 Pod 的规格中显式设置 dnsPolicy 字段为 ClusterFirstWithHostNet，并且还需要将 hostNetwork 设置为 <span class="hljs-literal">true</span> 以启用 hostNetwork 模式。如果不设置 dnsPolicy: ClusterFirstWithHostNet，Pod 默认会使用所在宿主主机使用的 DNS，这可能会导致容器内无法通过<span class="hljs-built_in"> service </span>name 访问 Kubernetes 集群中的其他 Pod。<br></code></pre></td></tr></table></figure></li>
+</ul>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">nameserver <span class="hljs-number">10.247</span><span class="hljs-number">.3</span><span class="hljs-number">.10</span> <br><span class="hljs-keyword">search</span> <span class="hljs-keyword">default</span>.svc.<span class="hljs-keyword">cluster</span>.<span class="hljs-keyword">local</span> svc.<span class="hljs-keyword">cluster</span>.<span class="hljs-keyword">local</span> <span class="hljs-keyword">cluster</span>.<span class="hljs-keyword">local</span> <span class="hljs-keyword">options</span> ndots:<span class="hljs-number">5</span> timeout:<span class="hljs-number">2</span> single-request-reopen<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>None：它允许用户自定义Pod内&#x2F;etc&#x2F;resolv.conf配置，忽略Kubernetes环境中默认的DNS设置。应使用dnsConfigPod规范中的字段提供所有DNS设置 。</li>
+</ul>
+<p>&#x2F;etc&#x2F;resolv.conf相关配置说明</p>
+<figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs stata">nameserver：表示指定的DNS服务地址IP，用于解析域名的服务器。<br><br><span class="hljs-keyword">search</span>：表示域名解析时指定的域名搜索域。解析域名的时候，会依搜索域顺序构建域名解析地址。进行域名解析，直到解析即可。如：svcname.default.svc.<span class="hljs-keyword">cluster</span>.<span class="hljs-keyword">local</span> --&gt; svcname.svc.<span class="hljs-keyword">cluster</span>.<span class="hljs-keyword">local</span> --&gt; svcname.<span class="hljs-keyword">cluster</span>.<span class="hljs-keyword">local</span><br><br>options：其他选项。最常见的选项配置有：<br>-   ndots值：判断域名解析地址中包含的“.”是否大于或等于ndots设定值，如果是，则以请求解析域名地址作为全限定域名发起解析请求，不再进行<span class="hljs-keyword">search</span>域构建域名地址；如果小于ndots，则按照<span class="hljs-keyword">search</span>域构建域名地址，再逐序发起解析请求。<br>-   timeout：等待DNS服务器返回的超时时间。单位秒（s）。<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs"><br></code></pre></td></tr></table></figure>
+
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>容器中域名解析以及不同dnspolicy对域名解析的影响 2024-04-03 15:04:09.254</div>
+      <div>http://example.com/2025/01/16/容器中域名解析以及不同dnspolicy对域名解析的影响-rong-qi-zhong-yu-ming-jie-xi-yi-ji-bu-tong-dnspolicy-dui-yu-ming-jie-xi-de-ying-xiang/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E6%98%AF%E6%8A%80%E6%9C%AF%E5%A4%A7%E7%A5%9E%E8%BF%98%E6%98%AF%E5%9F%BA%E7%A1%80%E6%9E%B6%E6%9E%84%E9%83%A8%E7%9A%84%E7%A5%B8%E5%AE%B3-shi-ji-shu-da-shen-hai-shi-ji-chu-jia-gou-bu-de-huo-hai/" title="是技术大神还是基础架构部的祸害 2024-08-02 17:50:26.139">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">是技术大神还是基础架构部的祸害 2024-08-02 17:50:26.139</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E5%A4%A7%E8%A7%84%E6%A8%A1%E5%B9%B6%E5%8F%91%E4%B8%8B%E5%A6%82%E4%BD%95%E5%8A%A0%E5%BF%AB%20Pod%20%E5%90%AF%E5%8A%A8%E9%80%9F%E5%BA%A6-da-gui-mo-bing-fa-xia-ru-he-jia-kuai-pod-qi-dong-su-du/" title="大规模并发下如何加快 Pod 启动速度 2024-04-03">
+                        <span class="hidden-mobile">大规模并发下如何加快 Pod 启动速度 2024-04-03</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

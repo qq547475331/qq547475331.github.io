@@ -1,0 +1,649 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="K8S 技术债当下云原生浪潮算是推到了巅峰，Kubernetes 是云原生技术中最为🐂X 的了。Kubernetes 是一个较为复杂的项目，学习成本也比较高，到底要掌握到什么程度，我认为可以根据个人工作职责来定位，如果个人有兴趣可以参考以下，一直递进学习~业务开发 • 了解 Kubernetes、Docker 的作用 • 掌握 Dockerfile&#x2F;Yaml&#x2F;Chart 以及">
+<meta property="og:type" content="article">
+<meta property="og:title" content="K8S 开发可不止 CRUD 2024-04-03 14:50:11.765">
+<meta property="og:url" content="http://example.com/2025/01/16/K8S%20%E5%BC%80%E5%8F%91%E5%8F%AF%E4%B8%8D%E6%AD%A2%20CRUD-k8s-kai-fa-ke-bu-zhi-crud/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="K8S 技术债当下云原生浪潮算是推到了巅峰，Kubernetes 是云原生技术中最为🐂X 的了。Kubernetes 是一个较为复杂的项目，学习成本也比较高，到底要掌握到什么程度，我认为可以根据个人工作职责来定位，如果个人有兴趣可以参考以下，一直递进学习~业务开发 • 了解 Kubernetes、Docker 的作用 • 掌握 Dockerfile&#x2F;Yaml&#x2F;Chart 以及">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191459336.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.047Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:18.635Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191459336.png">
+  
+  
+  
+  <title>K8S 开发可不止 CRUD 2024-04-03 14:50:11.765 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="K8S 开发可不止 CRUD 2024-04-03 14:50:11.765"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          476 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          4 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">K8S 开发可不止 CRUD 2024-04-03 14:50:11.765</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="K8S-技术债"><a href="#K8S-技术债" class="headerlink" title="K8S 技术债"></a>K8S 技术债</h2><h5 id="当下云原生浪潮算是推到了巅峰，Kubernetes-是云原生技术中最为🐂X-的了。Kubernetes-是一个较为复杂的项目，学习成本也比较高，到底要掌握到什么程度，我认为可以根据个人工作职责来定位，如果个人有兴趣可以参考以下，一直递进学习"><a href="#当下云原生浪潮算是推到了巅峰，Kubernetes-是云原生技术中最为🐂X-的了。Kubernetes-是一个较为复杂的项目，学习成本也比较高，到底要掌握到什么程度，我认为可以根据个人工作职责来定位，如果个人有兴趣可以参考以下，一直递进学习" class="headerlink" title="当下云原生浪潮算是推到了巅峰，Kubernetes 是云原生技术中最为🐂X 的了。Kubernetes 是一个较为复杂的项目，学习成本也比较高，到底要掌握到什么程度，我认为可以根据个人工作职责来定位，如果个人有兴趣可以参考以下，一直递进学习~"></a>当下云原生浪潮算是推到了巅峰，Kubernetes 是云原生技术中最为🐂X 的了。Kubernetes 是一个较为复杂的项目，学习成本也比较高，到底要掌握到什么程度，我认为可以根据个人工作职责来定位，如果个人有兴趣可以参考以下，一直递进学习~</h5><h3 id="业务开发"><a href="#业务开发" class="headerlink" title="业务开发"></a>业务开发</h3><ul>
+<li><h5 id="•-了解-Kubernetes、Docker-的作用"><a href="#•-了解-Kubernetes、Docker-的作用" class="headerlink" title="• 了解 Kubernetes、Docker 的作用"></a>• 了解 Kubernetes、Docker 的作用</h5></li>
+<li><h5 id="•-掌握-Dockerfile-Yaml-Chart-以及常用的-Kubectl-命令"><a href="#•-掌握-Dockerfile-Yaml-Chart-以及常用的-Kubectl-命令" class="headerlink" title="• 掌握 Dockerfile&#x2F;Yaml&#x2F;Chart 以及常用的 Kubectl 命令"></a>• 掌握 Dockerfile&#x2F;Yaml&#x2F;Chart 以及常用的 Kubectl 命令</h5></li>
+<li><h5 id="•-掌握-Kubernetes-一些常用资源对象的作用和使用场景，例如：Deployment、Service、Configmap-等"><a href="#•-掌握-Kubernetes-一些常用资源对象的作用和使用场景，例如：Deployment、Service、Configmap-等" class="headerlink" title="• 掌握 Kubernetes 一些常用资源对象的作用和使用场景，例如：Deployment、Service、Configmap 等"></a>• 掌握 Kubernetes 一些常用资源对象的作用和使用场景，例如：Deployment、Service、Configmap 等</h5></li>
+<li><h5 id="•-知道一个服务怎样才能部署到-Kubernetes-中"><a href="#•-知道一个服务怎样才能部署到-Kubernetes-中" class="headerlink" title="• 知道一个服务怎样才能部署到 Kubernetes 中"></a>• 知道一个服务怎样才能部署到 Kubernetes 中</h5></li>
+</ul>
+<h3 id="K8S-运维"><a href="#K8S-运维" class="headerlink" title="K8S 运维"></a>K8S 运维</h3><ul>
+<li><h5 id="•-如何快速部署一个高可用-Kubernetes-集群"><a href="#•-如何快速部署一个高可用-Kubernetes-集群" class="headerlink" title="• 如何快速部署一个高可用 Kubernetes 集群"></a>• 如何快速部署一个高可用 Kubernetes 集群</h5></li>
+<li><h5 id="•-能够从全局的角度掌握-Kubernetes-每个组件的作用和工作原理，包括一些常用的-CRI、CSI、CRI"><a href="#•-能够从全局的角度掌握-Kubernetes-每个组件的作用和工作原理，包括一些常用的-CRI、CSI、CRI" class="headerlink" title="• 能够从全局的角度掌握 Kubernetes 每个组件的作用和工作原理，包括一些常用的 CRI、CSI、CRI"></a>• 能够从全局的角度掌握 Kubernetes 每个组件的作用和工作原理，包括一些常用的 CRI、CSI、CRI</h5></li>
+<li><h5 id="•-具备定位、解决-Kubernetes-的疑难杂症的能力"><a href="#•-具备定位、解决-Kubernetes-的疑难杂症的能力" class="headerlink" title="• 具备定位、解决 Kubernetes 的疑难杂症的能力"></a>• 具备定位、解决 Kubernetes 的疑难杂症的能力</h5></li>
+<li><h5 id="•-掌握-Golang-语言，可以看懂-Kubernetes-源码，这个对以后定位问题非常有帮助-可选"><a href="#•-掌握-Golang-语言，可以看懂-Kubernetes-源码，这个对以后定位问题非常有帮助-可选" class="headerlink" title="• 掌握 Golang 语言，可以看懂 Kubernetes 源码，这个对以后定位问题非常有帮助 (可选)"></a>• 掌握 Golang 语言，可以看懂 Kubernetes 源码，这个对以后定位问题非常有帮助 (可选)</h5></li>
+</ul>
+<h3 id="K8S-开发"><a href="#K8S-开发" class="headerlink" title="K8S 开发"></a>K8S 开发</h3><ul>
+<li><h5 id="•-掌握-Golang-语言，具备阅读-Kubernetes-源码的能力"><a href="#•-掌握-Golang-语言，具备阅读-Kubernetes-源码的能力" class="headerlink" title="• 掌握 Golang 语言，具备阅读 Kubernetes 源码的能力"></a>• 掌握 Golang 语言，具备阅读 Kubernetes 源码的能力</h5></li>
+<li><h5 id="•-掌握-Kubernetes-常用-SDK-使用，例如：Client-go，Controller-runtime-等"><a href="#•-掌握-Kubernetes-常用-SDK-使用，例如：Client-go，Controller-runtime-等" class="headerlink" title="• 掌握 Kubernetes 常用 SDK 使用，例如：Client-go，Controller-runtime 等"></a>• 掌握 Kubernetes 常用 SDK 使用，例如：Client-go，Controller-runtime 等</h5></li>
+<li><h5 id="•-掌握-Kubernetes-管理平台开发"><a href="#•-掌握-Kubernetes-管理平台开发" class="headerlink" title="• 掌握 Kubernetes 管理平台开发"></a>• 掌握 Kubernetes 管理平台开发</h5></li>
+<li><h5 id="•-掌握-Operator-开发，能够根据场景设计-CRD-以及-Kube-apiserver-聚合-API-开发"><a href="#•-掌握-Operator-开发，能够根据场景设计-CRD-以及-Kube-apiserver-聚合-API-开发" class="headerlink" title="• 掌握 Operator 开发，能够根据场景设计 CRD 以及 Kube-apiserver 聚合 API 开发"></a>• 掌握 Operator 开发，能够根据场景设计 CRD 以及 Kube-apiserver 聚合 API 开发</h5></li>
+<li><h5 id="•-掌握-admission-Webhook-开发"><a href="#•-掌握-admission-Webhook-开发" class="headerlink" title="• 掌握 admission Webhook 开发"></a>• 掌握 admission Webhook 开发</h5></li>
+<li><h5 id="•-能够自定义-CNI、CSI、CRI、Scheduler-framework、Device-plugin-等"><a href="#•-能够自定义-CNI、CSI、CRI、Scheduler-framework、Device-plugin-等" class="headerlink" title="• 能够自定义 CNI、CSI、CRI、Scheduler-framework、Device-plugin 等"></a>• 能够自定义 CNI、CSI、CRI、Scheduler-framework、Device-plugin 等</h5></li>
+<li><h5 id="•-持续关注-Kubernetes-社区与-CNCF-社区等"><a href="#•-持续关注-Kubernetes-社区与-CNCF-社区等" class="headerlink" title="• 持续关注 Kubernetes 社区与 CNCF 社区等"></a>• 持续关注 Kubernetes 社区与 CNCF 社区等</h5></li>
+</ul>
+<h5 id="上面三种工作分类基本能够包含-Kubernetes-开发技术所有内容，内容由浅入深，比如云原生开发肯定需要掌握业务开发、K8S-运维那些技能。"><a href="#上面三种工作分类基本能够包含-Kubernetes-开发技术所有内容，内容由浅入深，比如云原生开发肯定需要掌握业务开发、K8S-运维那些技能。" class="headerlink" title="上面三种工作分类基本能够包含 Kubernetes 开发技术所有内容，内容由浅入深，比如云原生开发肯定需要掌握业务开发、K8S 运维那些技能。"></a>上面三种工作分类基本能够包含 Kubernetes 开发技术所有内容，内容由浅入深，比如云原生开发肯定需要掌握业务开发、K8S 运维那些技能。</h5><hr>
+<h2 id="K8S-开发技术栈"><a href="#K8S-开发技术栈" class="headerlink" title="K8S 开发技术栈"></a>K8S 开发技术栈</h2><p>下面列出了关于 Kubernetes 开发的技术栈路线图，仅供参考。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191459336.png" srcset="/img/loading.gif" lazyload alt="image-20240319145953269"></p>
+<hr>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>上面只是简单列出了学习技术栈路线图，具体细节内容我会不定期更新，自己也是在创作的同时不断学习，希望自己能坚持下来~</p>
+<hr>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>K8S 开发可不止 CRUD 2024-04-03 14:50:11.765</div>
+      <div>http://example.com/2025/01/16/K8S 开发可不止 CRUD-k8s-kai-fa-ke-bu-zhi-crud/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/K8S%E7%9A%84POD%E7%B1%BB%E5%9E%8B-k8s-de-pod-lei-xing/" title="K8S的POD类型 2024-04-03 14:57:11.072">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">K8S的POD类型 2024-04-03 14:57:11.072</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/K8S%20%E6%B5%81%E9%87%8F%E9%93%BE%E8%B7%AF%E5%89%96%E6%9E%90-k8s-liu-liang-lian-lu-pou-xi/" title="K8S 流量链路剖析 2024-03-04 10:50:22.991">
+                        <span class="hidden-mobile">K8S 流量链路剖析 2024-03-04 10:50:22.991</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

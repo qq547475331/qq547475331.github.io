@@ -1,0 +1,670 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="简介当在任何一个能够运行 CRI (Docker、Containered 等) 的机器上，使用 docker run &lt;image-id&gt; 启动一个容器后。从使用者的角度来看，容器和一台独立的机器或者虚拟机几乎没有什么区别。使得我们在容器里就像操作虚拟机一样将服务运行在容器中，这样你的机器上能够非常多的容器，且容器之间都有独立的运行资源，网络、文件系统等相互隔离。但是容器和虚拟机相比，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="容器原理 2024-04-03 14:45:58.422">
+<meta property="og:url" content="http://example.com/2025/01/16/%E5%AE%B9%E5%99%A8%E5%8E%9F%E7%90%86-rong-qi-yuan-li/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="简介当在任何一个能够运行 CRI (Docker、Containered 等) 的机器上，使用 docker run &lt;image-id&gt; 启动一个容器后。从使用者的角度来看，容器和一台独立的机器或者虚拟机几乎没有什么区别。使得我们在容器里就像操作虚拟机一样将服务运行在容器中，这样你的机器上能够非常多的容器，且容器之间都有独立的运行资源，网络、文件系统等相互隔离。但是容器和虚拟机相比，">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191530553.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.091Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:19.183Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191530553.png">
+  
+  
+  
+  <title>容器原理 2024-04-03 14:45:58.422 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="容器原理 2024-04-03 14:45:58.422"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.9k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          25 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">容器原理 2024-04-03 14:45:58.422</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><h5 id="当在任何一个能够运行-CRI-Docker、Containered-等-的机器上，使用-docker-run-启动一个容器后。从使用者的角度来看，容器和一台独立的机器或者虚拟机几乎没有什么区别。使得我们在容器里就像操作虚拟机一样将服务运行在容器中，这样你的机器上能够非常多的容器，且容器之间都有独立的运行资源，网络、文件系统等相互隔离。"><a href="#当在任何一个能够运行-CRI-Docker、Containered-等-的机器上，使用-docker-run-启动一个容器后。从使用者的角度来看，容器和一台独立的机器或者虚拟机几乎没有什么区别。使得我们在容器里就像操作虚拟机一样将服务运行在容器中，这样你的机器上能够非常多的容器，且容器之间都有独立的运行资源，网络、文件系统等相互隔离。" class="headerlink" title="当在任何一个能够运行 CRI (Docker、Containered 等) 的机器上，使用 docker run &lt;image-id&gt; 启动一个容器后。从使用者的角度来看，容器和一台独立的机器或者虚拟机几乎没有什么区别。使得我们在容器里就像操作虚拟机一样将服务运行在容器中，这样你的机器上能够非常多的容器，且容器之间都有独立的运行资源，网络、文件系统等相互隔离。"></a>当在任何一个能够运行 CRI (Docker、Containered 等) 的机器上，使用 <code>docker run &lt;image-id&gt;</code> 启动一个容器后。从使用者的角度来看，容器和一台独立的机器或者虚拟机几乎没有什么区别。使得我们在容器里就像操作虚拟机一样将服务运行在容器中，这样你的机器上能够非常多的容器，且容器之间都有独立的运行资源，网络、文件系统等相互隔离。</h5><h5 id="但是容器和虚拟机相比，却没有各种复杂的硬件虚拟层，没有独立的-Linux-内核。容器所有的进程调度，内存访问，文件的读写都直接跑在宿主机的内核之上，这是怎么做到的呢？"><a href="#但是容器和虚拟机相比，却没有各种复杂的硬件虚拟层，没有独立的-Linux-内核。容器所有的进程调度，内存访问，文件的读写都直接跑在宿主机的内核之上，这是怎么做到的呢？" class="headerlink" title="但是容器和虚拟机相比，却没有各种复杂的硬件虚拟层，没有独立的 Linux 内核。容器所有的进程调度，内存访问，文件的读写都直接跑在宿主机的内核之上，这是怎么做到的呢？"></a>但是容器和虚拟机相比，却没有各种复杂的硬件虚拟层，没有独立的 Linux 内核。容器所有的进程调度，内存访问，文件的读写都直接跑在宿主机的内核之上，这是怎么做到的呢？</h5><h5 id="Linux-内核的-Namespace-和-Cgroups-功能可以让程序在一个资源可控的独立（隔离）环境中运行，这个就是容器了。"><a href="#Linux-内核的-Namespace-和-Cgroups-功能可以让程序在一个资源可控的独立（隔离）环境中运行，这个就是容器了。" class="headerlink" title="Linux 内核的 Namespace 和 Cgroups 功能可以让程序在一个资源可控的独立（隔离）环境中运行，这个就是容器了。"></a>Linux 内核的 <strong>Namespace</strong> 和 <strong>Cgroups</strong> 功能可以让程序在一个资源可控的独立（隔离）环境中运行，这个就是容器了。</h5><h2 id="用户视角的容器"><a href="#用户视角的容器" class="headerlink" title="用户视角的容器"></a><strong>用户视角的容器</strong></h2><h5 id="上面说到用户使用容器就跟使用虚拟机几乎5没什么区别，也就是说："><a href="#上面说到用户使用容器就跟使用虚拟机几乎5没什么区别，也就是说：" class="headerlink" title="上面说到用户使用容器就跟使用虚拟机几乎5没什么区别，也就是说："></a>上面说到用户使用容器就跟使用虚拟机几乎5没什么区别，也就是说：</h5><ul>
+<li><h5 id="•-容器的文件系统是独立的，也就是容器之间文件系统是隔离的"><a href="#•-容器的文件系统是独立的，也就是容器之间文件系统是隔离的" class="headerlink" title="• 容器的文件系统是独立的，也就是容器之间文件系统是隔离的"></a>• 容器的文件系统是独立的，也就是容器之间文件系统是隔离的</h5></li>
+<li><h5 id="•-容器网络是独立的，默认容器网络有单独网络协议栈"><a href="#•-容器网络是独立的，默认容器网络有单独网络协议栈" class="headerlink" title="• 容器网络是独立的，默认容器网络有单独网络协议栈"></a>• 容器网络是独立的，默认容器网络有单独网络协议栈</h5></li>
+<li><h5 id="•-容器进程间的通信是隔离的"><a href="#•-容器进程间的通信是隔离的" class="headerlink" title="• 容器进程间的通信是隔离的"></a>• 容器进程间的通信是隔离的</h5></li>
+<li><h5 id="•-容器的用户、用户组也是隔离的"><a href="#•-容器的用户、用户组也是隔离的" class="headerlink" title="• 容器的用户、用户组也是隔离的"></a>• 容器的用户、用户组也是隔离的</h5></li>
+<li><h5 id="•-容器内进程-PID-独立"><a href="#•-容器内进程-PID-独立" class="headerlink" title="• 容器内进程 PID 独立"></a>• 容器内进程 PID 独立</h5></li>
+<li><h5 id="•-容器的主机名独立"><a href="#•-容器的主机名独立" class="headerlink" title="• 容器的主机名独立"></a>• 容器的主机名独立</h5></li>
+<li><h5 id="•-资源-CPU、Memory-等-隔离，容器之间资源隔离"><a href="#•-资源-CPU、Memory-等-隔离，容器之间资源隔离" class="headerlink" title="• 资源( CPU、Memory 等 ) 隔离，容器之间资源隔离"></a>• 资源( CPU、Memory 等 ) 隔离，容器之间资源隔离</h5></li>
+</ul>
+<h5 id="对于一个操作系统，如果以上这些条件都实现，那么该操作系统在用户视角下就完完全全是一个全新、独立的。容器就是利用-Linux-Namespace、Cgroup-技术来实现的。"><a href="#对于一个操作系统，如果以上这些条件都实现，那么该操作系统在用户视角下就完完全全是一个全新、独立的。容器就是利用-Linux-Namespace、Cgroup-技术来实现的。" class="headerlink" title="对于一个操作系统，如果以上这些条件都实现，那么该操作系统在用户视角下就完完全全是一个全新、独立的。容器就是利用 Linux Namespace、Cgroup 技术来实现的。"></a>对于一个操作系统，如果以上这些条件都实现，那么该操作系统在用户视角下就完完全全是一个全新、独立的。容器就是利用 <strong>Linux Namespace、Cgroup</strong> 技术来实现的。</h5><h5 id="当使用-docker-run-d-centos-httpd-24-centos7-latest-启动一个-httpd-服务的容器，使用-ls-l-proc-ns-在宿主机查看该进程的-Namespace-信息。"><a href="#当使用-docker-run-d-centos-httpd-24-centos7-latest-启动一个-httpd-服务的容器，使用-ls-l-proc-ns-在宿主机查看该进程的-Namespace-信息。" class="headerlink" title="当使用 docker run -d centos/httpd-24-centos7:latest 启动一个 httpd 服务的容器，使用 ls -l /proc/&lt;pid&gt;/ns/ 在宿主机查看该进程的 Namespace 信息。"></a>当使用 <code>docker run -d centos/httpd-24-centos7:latest</code> 启动一个 httpd 服务的容器，使用 <code>ls -l /proc/&lt;pid&gt;/ns/</code> 在宿主机查看该进程的 <strong>Namespace</strong> 信息。</h5><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">ls</span> -l /proc/<span class="hljs-number">126013</span>/ns/<br><span class="hljs-attribute">lrwxrwxrwx</span>. <span class="hljs-number">1</span> <span class="hljs-number">1001</span> root <span class="hljs-number">0</span> <span class="hljs-number">10</span>月 <span class="hljs-number">30</span> <span class="hljs-number">11</span>:<span class="hljs-number">33</span> ipc -&gt; ipc:[<span class="hljs-number">4026535315</span>]<br><span class="hljs-attribute">lrwxrwxrwx</span>. <span class="hljs-number">1</span> <span class="hljs-number">1001</span> root <span class="hljs-number">0</span> <span class="hljs-number">10</span>月 <span class="hljs-number">30</span> <span class="hljs-number">11</span>:<span class="hljs-number">33</span> mnt -&gt; mnt:[<span class="hljs-number">4026535313</span>]<br><span class="hljs-attribute">lrwxrwxrwx</span>. <span class="hljs-number">1</span> <span class="hljs-number">1001</span> root <span class="hljs-number">0</span> <span class="hljs-number">10</span>月 <span class="hljs-number">30</span> <span class="hljs-number">11</span>:<span class="hljs-number">33</span> net -&gt; net:[<span class="hljs-number">4026535319</span>]<br><span class="hljs-attribute">lrwxrwxrwx</span>. <span class="hljs-number">1</span> <span class="hljs-number">1001</span> root <span class="hljs-number">0</span> <span class="hljs-number">10</span>月 <span class="hljs-number">30</span> <span class="hljs-number">11</span>:<span class="hljs-number">33</span> pid -&gt; pid:[<span class="hljs-number">4026535316</span>]<br><span class="hljs-attribute">lrwxrwxrwx</span>. <span class="hljs-number">1</span> <span class="hljs-number">1001</span> root <span class="hljs-number">0</span> <span class="hljs-number">10</span>月 <span class="hljs-number">30</span> <span class="hljs-number">15</span>:<span class="hljs-number">27</span> user -&gt; user:[<span class="hljs-number">4026531837</span>]<br><span class="hljs-attribute">lrwxrwxrwx</span>. <span class="hljs-number">1</span> <span class="hljs-number">1001</span> root <span class="hljs-number">0</span> <span class="hljs-number">10</span>月 <span class="hljs-number">30</span> <span class="hljs-number">11</span>:<span class="hljs-number">33</span> uts -&gt; uts:[<span class="hljs-number">4026535314</span>]<br></code></pre></td></tr></table></figure>
+
+<h5 id="发现该进程对应的-ipc、mnt、net、pid、user、uts-都指向了单独的-namespace。"><a href="#发现该进程对应的-ipc、mnt、net、pid、user、uts-都指向了单独的-namespace。" class="headerlink" title="发现该进程对应的 ipc、mnt、net、pid、user、uts 都指向了单独的 namespace。"></a>发现该进程对应的 ipc、mnt、net、pid、user、uts 都指向了单独的 namespace。</h5><hr>
+<h2 id="Namespace"><a href="#Namespace" class="headerlink" title="Namespace"></a>Namespace</h2><h5 id="Linux-内核-Namespace-类型有很多，支持-cgroup-ipc-network-mount-pid-time-user-uts，下面看看是如何使用这些-Namespace-隔离技术运行一个容器。"><a href="#Linux-内核-Namespace-类型有很多，支持-cgroup-ipc-network-mount-pid-time-user-uts，下面看看是如何使用这些-Namespace-隔离技术运行一个容器。" class="headerlink" title="Linux 内核 Namespace 类型有很多，支持 cgroup&#x2F;ipc&#x2F;network&#x2F;mount&#x2F;pid&#x2F;time&#x2F;user&#x2F;uts，下面看看是如何使用这些 Namespace 隔离技术运行一个容器。"></a>Linux 内核 <strong>Namespace</strong> 类型有很多，支持 <strong>cgroup&#x2F;ipc&#x2F;network&#x2F;mount&#x2F;pid&#x2F;time&#x2F;user&#x2F;uts，</strong>下面看看是如何使用这些 Namespace 隔离技术运行一个容器。</h5><h3 id="PID-Namespace"><a href="#PID-Namespace" class="headerlink" title="PID Namespace"></a>PID Namespace</h3><h5 id="当使用-docker-exec-624d08ddaf99-ps-ef-获取一个容器的所有进程，看到了该容器只运行了五个-httpd-进程。"><a href="#当使用-docker-exec-624d08ddaf99-ps-ef-获取一个容器的所有进程，看到了该容器只运行了五个-httpd-进程。" class="headerlink" title="当使用 docker exec 624d08ddaf99 ps -ef 获取一个容器的所有进程，看到了该容器只运行了五个 httpd 进程。"></a>当使用 <code>docker exec 624d08ddaf99 ps -ef</code> 获取一个容器的所有进程，看到了该容器只运行了五个 httpd 进程。</h5><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-comment"># docker exec c5a9ff78d9c1 ps -ef</span><br><br><span class="hljs-attribute">UID</span>        PID  PPID  C STIME TTY          TIME CMD<br><span class="hljs-attribute">root</span>         <span class="hljs-number">1</span>     <span class="hljs-number">0</span>  <span class="hljs-number">0</span> <span class="hljs-number">01</span>:<span class="hljs-number">59</span> ?        <span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span> /sbin/httpd -D FOREGROUND<br><span class="hljs-attribute">apache</span>       <span class="hljs-number">6</span>     <span class="hljs-number">1</span>  <span class="hljs-number">0</span> <span class="hljs-number">01</span>:<span class="hljs-number">59</span> ?        <span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span> /sbin/httpd -D FOREGROUND<br><span class="hljs-attribute">apache</span>       <span class="hljs-number">7</span>     <span class="hljs-number">1</span>  <span class="hljs-number">0</span> <span class="hljs-number">01</span>:<span class="hljs-number">59</span> ?        <span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span> /sbin/httpd -D FOREGROUND<br><span class="hljs-attribute">apache</span>       <span class="hljs-number">8</span>     <span class="hljs-number">1</span>  <span class="hljs-number">0</span> <span class="hljs-number">01</span>:<span class="hljs-number">59</span> ?        <span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span> /sbin/httpd -D FOREGROUND<br><span class="hljs-attribute">apache</span>       <span class="hljs-number">9</span>     <span class="hljs-number">1</span>  <span class="hljs-number">0</span> <span class="hljs-number">01</span>:<span class="hljs-number">59</span> ?        <span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span> /sbin/httpd -D FOREGROUND<br></code></pre></td></tr></table></figure>
+
+<h5 id="直接获取该容器所在的宿主机上的-httpd-进程，同样可以看到这-5-个进程。"><a href="#直接获取该容器所在的宿主机上的-httpd-进程，同样可以看到这-5-个进程。" class="headerlink" title="直接获取该容器所在的宿主机上的 httpd 进程，同样可以看到这 5 个进程。"></a>直接获取该容器所在的宿主机上的 httpd 进程，同样可以看到这 5 个进程。</h5><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-comment"># ps -ef | grep httpd</span><br><br><span class="hljs-attribute">UID</span>        PID  PPID  C STIME TTY          TIME CMD<br><span class="hljs-attribute">1001</span>     <span class="hljs-number">126013</span> <span class="hljs-number">125976</span>  <span class="hljs-number">0</span> <span class="hljs-number">11</span>:<span class="hljs-number">33</span> ?        <span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span> httpd -D FOREGROUND<br><span class="hljs-attribute">1001</span>     <span class="hljs-number">126100</span> <span class="hljs-number">126013</span>  <span class="hljs-number">0</span> <span class="hljs-number">11</span>:<span class="hljs-number">33</span> ?        <span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">01</span> httpd -D FOREGROUND<br><span class="hljs-attribute">1001</span>     <span class="hljs-number">126105</span> <span class="hljs-number">126013</span>  <span class="hljs-number">0</span> <span class="hljs-number">11</span>:<span class="hljs-number">33</span> ?        <span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">01</span> httpd -D FOREGROUND<br><span class="hljs-attribute">1001</span>     <span class="hljs-number">126119</span> <span class="hljs-number">126013</span>  <span class="hljs-number">0</span> <span class="hljs-number">11</span>:<span class="hljs-number">33</span> ?        <span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">01</span> httpd -D FOREGROUND<br><span class="hljs-attribute">1001</span>     <span class="hljs-number">126134</span> <span class="hljs-number">126013</span>  <span class="hljs-number">0</span> <span class="hljs-number">11</span>:<span class="hljs-number">33</span> ?        <span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">01</span> httpd -D FOREGROUND<br><span class="hljs-attribute">1001</span>     <span class="hljs-number">126140</span> <span class="hljs-number">126013</span>  <span class="hljs-number">0</span> <span class="hljs-number">11</span>:<span class="hljs-number">33</span> ?        <span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">01</span> httpd -D FOREGROUND<br></code></pre></td></tr></table></figure>
+
+<h5 id="对比两组结果，发现两组数据的-PID-不一样。Linux-在创建容器的时候，就会建出一个-PID-Namespace，该-PID-Namespace-下所有所有进程编号都从1-开始。其实和-Linux-宿主机一样，"><a href="#对比两组结果，发现两组数据的-PID-不一样。Linux-在创建容器的时候，就会建出一个-PID-Namespace，该-PID-Namespace-下所有所有进程编号都从1-开始。其实和-Linux-宿主机一样，" class="headerlink" title="对比两组结果，发现两组数据的 PID 不一样。Linux 在创建容器的时候，就会建出一个 PID Namespace，该 PID Namespace 下所有所有进程编号都从1 开始。其实和 Linux 宿主机一样，"></a>对比两组结果，发现两组数据的 <strong>PID</strong> 不一样。Linux 在创建容器的时候，就会建出一个 <strong>PID Namespace</strong>，该 <strong>PID Namespace</strong> 下所有所有进程编号都从1 开始。其实和 Linux 宿主机一样，</h5><h5 id="Linux-开机时就会启动一个-1-号进程，该进程是所有进程的父进程。同时在这个-PID-Namesapce-中只能看到该-Namespace-下的进程，看不到其他-Namespace-下的进程。"><a href="#Linux-开机时就会启动一个-1-号进程，该进程是所有进程的父进程。同时在这个-PID-Namesapce-中只能看到该-Namespace-下的进程，看不到其他-Namespace-下的进程。" class="headerlink" title="Linux 开机时就会启动一个 1 号进程，该进程是所有进程的父进程。同时在这个 PID Namesapce 中只能看到该 Namespace 下的进程，看不到其他 Namespace 下的进程。"></a>Linux 开机时就会启动一个 1 号进程，该进程是所有进程的父进程。同时在这个 <strong>PID Namesapce</strong> 中只能看到该 Namespace 下的进程，看不到其他 Namespace 下的进程。</h5><h5 id="那么这个-httpd-服务对应的宿主机-PID-和容器-PID-的关系是什么样的，这两个-PID-对应着都是同一个-httpd-服务的某个进程。"><a href="#那么这个-httpd-服务对应的宿主机-PID-和容器-PID-的关系是什么样的，这两个-PID-对应着都是同一个-httpd-服务的某个进程。" class="headerlink" title="那么这个 httpd 服务对应的宿主机 PID 和容器 PID 的关系是什么样的，这两个 PID 对应着都是同一个 httpd 服务的某个进程。"></a>那么这个 httpd 服务对应的<strong>宿主机 PID</strong> 和<strong>容器 PID</strong> 的关系是什么样的，这两个 PID 对应着都是同一个 httpd 服务的某个进程。</h5><h5 id="可以通过-docker-inspect-grep-Pid-查看这个容器对应宿主机上的-PID。会发现这个-Pid-126013-就是在宿主机上使用-ps-ef-grep-httpd-查到的-httpd-进程一样，只不过这个-httpd-服务有多个进程，126013-是所有子进程的父进程。"><a href="#可以通过-docker-inspect-grep-Pid-查看这个容器对应宿主机上的-PID。会发现这个-Pid-126013-就是在宿主机上使用-ps-ef-grep-httpd-查到的-httpd-进程一样，只不过这个-httpd-服务有多个进程，126013-是所有子进程的父进程。" class="headerlink" title="可以通过 docker inspect &lt;container id&gt; | grep Pid 查看这个容器对应宿主机上的 PID。会发现这个 &quot;Pid&quot;: 126013 就是在宿主机上使用 ps -ef |grep httpd 查到的 httpd 进程一样，只不过这个 httpd 服务有多个进程，126013 是所有子进程的父进程。"></a>可以通过 <code>docker inspect &lt;container id&gt; | grep Pid</code> 查看这个容器对应<code>宿主机上的 PID</code>。会发现这个 <code>&quot;Pid&quot;: 126013</code> 就是在宿主机上使用 <code>ps -ef |grep httpd</code> 查到的 httpd 进程一样，只不过这个 httpd 服务有多个进程，126013 是所有子进程的父进程。</h5><figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs objectivec"><span class="hljs-meta"># docker inspect 5d22ea980dc8|grep Pid</span><br>            <span class="hljs-string">&quot;Pid&quot;</span>: <span class="hljs-number">126013</span>,<br><br><span class="hljs-meta"># ps -ef | grep httpd</span><br><span class="hljs-built_in">UID</span>        PID  PPID  C STIME TTY          TIME <span class="hljs-built_in">CMD</span><br><span class="hljs-number">1001</span>     <span class="hljs-number">126013</span> <span class="hljs-number">125976</span>  <span class="hljs-number">0</span> <span class="hljs-number">11</span>:<span class="hljs-number">33</span> ?        <span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span> httpd -D FOREGROUND<br></code></pre></td></tr></table></figure>
+
+<h5 id="这也就是说，如果有另外一个容器，那么它也有自己的一个-PID-Namespace，而这两个-PID-Namespace-之间是不能看到对方的进程的，这里就体现出了-Namespace-的作用：相互隔离。"><a href="#这也就是说，如果有另外一个容器，那么它也有自己的一个-PID-Namespace，而这两个-PID-Namespace-之间是不能看到对方的进程的，这里就体现出了-Namespace-的作用：相互隔离。" class="headerlink" title="这也就是说，如果有另外一个容器，那么它也有自己的一个 PID Namespace，而这两个 PID Namespace 之间是不能看到对方的进程的，这里就体现出了 Namespace 的作用：相互隔离。"></a>这也就是说，如果有另外一个容器，那么它也有自己的一个 <strong>PID Namespace</strong>，而这两个 <strong>PID Namespace</strong> 之间是不能看到对方的进程的，这里就体现出了 Namespace 的作用：<strong>相互隔离</strong>。</h5><h5 id="当然这只是隔离了服务的进程，下面看看-Network-Namespace。"><a href="#当然这只是隔离了服务的进程，下面看看-Network-Namespace。" class="headerlink" title="当然这只是隔离了服务的进程，下面看看 Network Namespace。"></a>当然这只是隔离了服务的进程，下面看看 <strong>Network Namespace</strong>。</h5><h3 id="Network-Namespace"><a href="#Network-Namespace" class="headerlink" title="Network Namespace"></a>Network Namespace</h3><h5 id="如果启动容器时不使用-—net-host-，即容器使用宿主机的网络，那么-Linux-就会给这个容器创建单独的-Network-Namespace。在这个-Network-Namespace-中都有一套独立的网络接口。"><a href="#如果启动容器时不使用-—net-host-，即容器使用宿主机的网络，那么-Linux-就会给这个容器创建单独的-Network-Namespace。在这个-Network-Namespace-中都有一套独立的网络接口。" class="headerlink" title="如果启动容器时不使用 —net=host ，即容器使用宿主机的网络，那么 Linux 就会给这个容器创建单独的 Network Namespace。在这个 Network Namespace 中都有一套独立的网络接口。"></a>如果启动容器时不使用 <code>—net=host</code> ，即容器使用宿主机的网络，那么 Linux 就会给这个容器创建单独的 <strong>Network Namespace</strong>。在这个 <strong>Network Namespace</strong> 中都有一套独立的网络接口。</h5><p>比如查看容器的网络接口，这里的 lo，eth0，还有独立的 TCP&#x2F;IP 的协议栈配置。</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-comment"># docker exec 5d22ea980dc8 ip addr</span><br><span class="hljs-attribute">1</span>: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu <span class="hljs-number">65536</span> qdisc noqueue state UNKNOWN group default qlen <span class="hljs-number">1000</span><br>    <span class="hljs-attribute">link</span>/loopback <span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span> brd <span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span><br>    <span class="hljs-attribute">inet</span> <span class="hljs-number">127.0.0.1</span>/<span class="hljs-number">8</span> scope host lo<br>       <span class="hljs-attribute">valid_lft</span> forever preferred_lft forever<br><br><span class="hljs-attribute">168</span>: eth0@if169: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu <span class="hljs-number">1500</span> qdisc noqueue state UP group default<br>    <span class="hljs-attribute">link</span>/ether <span class="hljs-number">02</span>:<span class="hljs-number">42</span>:ac:<span class="hljs-number">11</span>:<span class="hljs-number">00</span>:<span class="hljs-number">02</span> brd ff:ff:ff:ff:ff:ff link-netnsid <span class="hljs-number">0</span><br>    <span class="hljs-attribute">inet</span> <span class="hljs-number">172.17.0.2</span>/<span class="hljs-number">16</span> brd <span class="hljs-number">172.17.255.255</span> scope global eth0<br>       <span class="hljs-attribute">valid_lft</span> forever preferred_lft forever<br></code></pre></td></tr></table></figure>
+
+<h5 id="至于这个容器的网络通信原理会在后面讲解。"><a href="#至于这个容器的网络通信原理会在后面讲解。" class="headerlink" title="至于这个容器的网络通信原理会在后面讲解。"></a>至于这个容器的网络通信原理会在后面讲解。</h5><h3 id="Mount-Namespace"><a href="#Mount-Namespace" class="headerlink" title="Mount Namespace"></a>Mount Namespace</h3><h5 id="同样的进入容器内会发现容器的文件系统也是独立的。容器的文件系统，其实就是我们做的镜像。"><a href="#同样的进入容器内会发现容器的文件系统也是独立的。容器的文件系统，其实就是我们做的镜像。" class="headerlink" title="同样的进入容器内会发现容器的文件系统也是独立的。容器的文件系统，其实就是我们做的镜像。"></a>同样的进入容器内会发现容器的文件系统也是独立的。容器的文件系统，其实就是我们做的<strong>镜像。</strong></h5><h5 id="运行-docker-exec-5d22ea980dc8-ls-查看容器中的根文件系统（rootfs）。这里依靠的是-Mount-Namespace，Mount-Namespace-保证了每个容器都有自己独立的文件目录结构。"><a href="#运行-docker-exec-5d22ea980dc8-ls-查看容器中的根文件系统（rootfs）。这里依靠的是-Mount-Namespace，Mount-Namespace-保证了每个容器都有自己独立的文件目录结构。" class="headerlink" title="运行 docker exec 5d22ea980dc8 ls/ 查看容器中的根文件系统（rootfs）。这里依靠的是 Mount Namespace，Mount Namespace 保证了每个容器都有自己独立的文件目录结构。"></a>运行 <code>docker exec 5d22ea980dc8 ls/</code> 查看容器中的根文件系统（rootfs）。这里依靠的是 <code>Mount Namespace</code>，<code>Mount Namespace</code> 保证了每个容器都有自己独立的文件目录结构。</h5><h3 id="IPC-Namespace"><a href="#IPC-Namespace" class="headerlink" title="IPC Namespace"></a>IPC Namespace</h3><h5 id="IPC-Namespace-主要是用来隔离进程间通信的。例如-PID-Namespace-和-IPC-Namespace-一起使用可以实现同一-IPC-Namespace-内的进程彼此可以通信，不同-IPC-Namespace-的进程却不能通信。"><a href="#IPC-Namespace-主要是用来隔离进程间通信的。例如-PID-Namespace-和-IPC-Namespace-一起使用可以实现同一-IPC-Namespace-内的进程彼此可以通信，不同-IPC-Namespace-的进程却不能通信。" class="headerlink" title="IPC Namespace 主要是用来隔离进程间通信的。例如 PID Namespace 和 IPC Namespace 一起使用可以实现同一 IPC Namespace 内的进程彼此可以通信，不同 IPC Namespace 的进程却不能通信。"></a><strong>IPC Namespace</strong> 主要是用来隔离进程间通信的。例如 <strong>PID Namespace</strong> 和 <strong>IPC Namespace</strong> 一起使用可以实现同一 <strong>IPC Namespace</strong> 内的进程彼此可以通信，不同 <strong>IPC Namespace</strong> 的进程却不能通信。</h5><h3 id="User-Namespace"><a href="#User-Namespace" class="headerlink" title="User Namespace"></a>User Namespace</h3><h5 id="User-Namespace-主要是用来隔离用户和用户组的。一个比较典型的应用场景就是在主机上以非-root-用户运行的进程可以在一个单独的-User-Namespace-中映射成-root-用户。"><a href="#User-Namespace-主要是用来隔离用户和用户组的。一个比较典型的应用场景就是在主机上以非-root-用户运行的进程可以在一个单独的-User-Namespace-中映射成-root-用户。" class="headerlink" title="User Namespace 主要是用来隔离用户和用户组的。一个比较典型的应用场景就是在主机上以非 root 用户运行的进程可以在一个单独的 User Namespace 中映射成 root 用户。"></a><strong>User Namespace</strong> 主要是用来隔离用户和用户组的。一个比较典型的应用场景就是在主机上以非 root 用户运行的进程可以在一个单独的 <strong>User Namespace</strong> 中映射成 root 用户。</h5><h5 id="使用User-Namespace-可以实现进程在容器内拥有-root-权限，而在主机上却只是普通用户。"><a href="#使用User-Namespace-可以实现进程在容器内拥有-root-权限，而在主机上却只是普通用户。" class="headerlink" title="使用User Namespace 可以实现进程在容器内拥有 root 权限，而在主机上却只是普通用户。"></a>使用<strong>User Namespace</strong> 可以实现进程在容器内拥有 root 权限，而在主机上却只是普通用户。</h5><h3 id="UTS-Namespace"><a href="#UTS-Namespace" class="headerlink" title="UTS Namespace"></a>UTS Namespace</h3><h5 id="UTS-Namespace-用于隔离容器的主机名和域名，意思是每个容器内的主机名都可以独立。"><a href="#UTS-Namespace-用于隔离容器的主机名和域名，意思是每个容器内的主机名都可以独立。" class="headerlink" title="UTS Namespace 用于隔离容器的主机名和域名，意思是每个容器内的主机名都可以独立。"></a>UTS Namespace 用于隔离容器的主机名和域名，意思是每个容器内的主机名都可以独立。</h5><h3 id="Time-Namespace"><a href="#Time-Namespace" class="headerlink" title="Time Namespace"></a>Time Namespace</h3><h5 id="Time-Namespace-用于隔离容器的时间，但是容器并没有隔离时间，也就是说所有容器的时间是和宿主机一致的。"><a href="#Time-Namespace-用于隔离容器的时间，但是容器并没有隔离时间，也就是说所有容器的时间是和宿主机一致的。" class="headerlink" title="Time Namespace 用于隔离容器的时间，但是容器并没有隔离时间，也就是说所有容器的时间是和宿主机一致的。"></a>Time Namespace 用于隔离容器的时间，但是容器并没有隔离时间，也就是说所有容器的时间是和宿主机一致的。</h5><hr>
+<h2 id="Cgroups"><a href="#Cgroups" class="headerlink" title="Cgroups"></a>Cgroups</h2><h5 id="上面介绍了一系列-Linux-隔离技术，那么容器内的资源使用是如何限制的。"><a href="#上面介绍了一系列-Linux-隔离技术，那么容器内的资源使用是如何限制的。" class="headerlink" title="上面介绍了一系列 Linux 隔离技术，那么容器内的资源使用是如何限制的。"></a>上面介绍了一系列 Linux 隔离技术，那么容器内的资源使用是如何限制的。</h5><h5 id="Linux-Cgroups-Control-Groups-技术可以对执行的进程做各种计算机资源的限制，比如限制-CPU-的使用率，内存使用量，IO流量等。"><a href="#Linux-Cgroups-Control-Groups-技术可以对执行的进程做各种计算机资源的限制，比如限制-CPU-的使用率，内存使用量，IO流量等。" class="headerlink" title="Linux Cgroups( Control Groups) 技术可以对执行的进程做各种计算机资源的限制，比如限制 CPU 的使用率，内存使用量，IO流量等。"></a>Linux <strong>Cgroups( Control Groups)</strong> 技术可以对执行的进程做各种计算机资源的限制，比如限制 CPU 的使用率，内存使用量，IO流量等。</h5><h5 id="Cgroups-通过对不同的子系统限制了不同的资源，每个子系统限制一种资源。每个子系统限制资源的方式都是类似的，就是把相关的一组进程分配到一个控制组里，然后通过树结构进行管理，每个控制组设有自己的控制参数。完整的-Cgroups-子系统的介绍，你可以查看-Linux-Programmer’s-Manual-1-中-Cgroups-的定义。"><a href="#Cgroups-通过对不同的子系统限制了不同的资源，每个子系统限制一种资源。每个子系统限制资源的方式都是类似的，就是把相关的一组进程分配到一个控制组里，然后通过树结构进行管理，每个控制组设有自己的控制参数。完整的-Cgroups-子系统的介绍，你可以查看-Linux-Programmer’s-Manual-1-中-Cgroups-的定义。" class="headerlink" title="Cgroups 通过对不同的子系统限制了不同的资源，每个子系统限制一种资源。每个子系统限制资源的方式都是类似的，就是把相关的一组进程分配到一个控制组里，然后通过树结构进行管理，每个控制组设有自己的控制参数。完整的 Cgroups 子系统的介绍，你可以查看 Linux Programmer’s Manual[1] 中 Cgroups 的定义。"></a><strong>Cgroups</strong> 通过对不同的<strong>子系统</strong>限制了不同的资源，每个子系统限制一种资源。每个子系统限制资源的方式都是类似的，就是把相关的一组进程分配到一个<strong>控制组</strong>里，然后通过树结构进行管理，每个控制组设有自己的控制参数。完整的 <strong>Cgroups</strong> 子系统的介绍，你可以查看 Linux Programmer’s Manual[1] 中 <strong>Cgroups</strong> 的定义。</h5><h3 id="Subsystem-子系统"><a href="#Subsystem-子系统" class="headerlink" title="(Subsystem)子系统"></a>(Subsystem)子系统</h3><h5 id="可通过执行-ls-sys-fs-cgroup-查看-Linux-支持的-Cgroups-子系统："><a href="#可通过执行-ls-sys-fs-cgroup-查看-Linux-支持的-Cgroups-子系统：" class="headerlink" title="可通过执行 ls &#x2F;sys&#x2F;fs&#x2F;cgroup&#x2F; 查看 Linux 支持的 Cgroups 子系统："></a>可通过执行 ls &#x2F;sys&#x2F;fs&#x2F;cgroup&#x2F; 查看 Linux 支持的 <strong>Cgroups 子系统：</strong></h5><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_"># </span><span class="language-bash"><span class="hljs-built_in">ls</span> /sys/fs/cgroup/</span><br>blkio  cpu  cpuacct  cpu,cpuacct  cpuset  devices  freezer  hugetlb  memory  net_cls  net_cls,net_prio  net_prio  perf_event  pids  systemd<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><h5 id="•-blkio-子系统，是-cgroup-v1-中的一个子系统，使用-cgroup-v1-blkio-子系统主要是为了减少进程之间共同读写同一块磁盘时相互干扰的问题。cgroup-v1-blkio-控制子系统可以限制进程读-写的-IOPS-和吞吐量，但它只能对-Direct-I-O-的文件读写进行限速，对-Buffered-I-O-的文件读写无法限制。"><a href="#•-blkio-子系统，是-cgroup-v1-中的一个子系统，使用-cgroup-v1-blkio-子系统主要是为了减少进程之间共同读写同一块磁盘时相互干扰的问题。cgroup-v1-blkio-控制子系统可以限制进程读-写的-IOPS-和吞吐量，但它只能对-Direct-I-O-的文件读写进行限速，对-Buffered-I-O-的文件读写无法限制。" class="headerlink" title="• blkio 子系统，是 cgroup v1 中的一个子系统，使用 cgroup v1 blkio 子系统主要是为了减少进程之间共同读写同一块磁盘时相互干扰的问题。cgroup v1 blkio 控制子系统可以限制进程读 写的 IOPS 和吞吐量，但它只能对 Direct I&#x2F;O 的文件读写进行限速，对 Buffered I&#x2F;O 的文件读写无法限制。"></a>• <strong>blkio 子系统</strong>，是 cgroup v1 中的一个子系统，使用 cgroup v1 blkio 子系统主要是为了减少进程之间共同读写同一块磁盘时相互干扰的问题。cgroup v1 blkio 控制子系统可以限制进程读 写的 IOPS 和吞吐量，但它只能对 Direct I&#x2F;O 的文件读写进行限速，对 Buffered I&#x2F;O 的文件读写无法限制。</h5></li>
+<li><h5 id="•-cpu-cpuacct-子系统，用来限制一个控制组（一组进程，你可以理解为一个容器里所有的进程）可使用的最大-CPU。"><a href="#•-cpu-cpuacct-子系统，用来限制一个控制组（一组进程，你可以理解为一个容器里所有的进程）可使用的最大-CPU。" class="headerlink" title="• cpu, cpuacct 子系统，用来限制一个控制组（一组进程，你可以理解为一个容器里所有的进程）可使用的最大 CPU。"></a>• <strong>cpu, cpuacct 子系统</strong>，用来限制一个控制组（一组进程，你可以理解为一个容器里所有的进程）可使用的最大 CPU。</h5></li>
+<li><h5 id="•-cpuset-子系统，-这个子系统来限制一个控制组里的进程可以在哪几个物理-CPU-上运行。"><a href="#•-cpuset-子系统，-这个子系统来限制一个控制组里的进程可以在哪几个物理-CPU-上运行。" class="headerlink" title="• cpuset 子系统， 这个子系统来限制一个控制组里的进程可以在哪几个物理 CPU 上运行。"></a>• <strong>cpuset 子系统</strong>， 这个子系统来限制一个控制组里的进程可以在哪几个物理 CPU 上运行。</h5></li>
+<li><h5 id="•-devices-子系统，维护一个设备访问权限管理，控制进程对设备文件读写访问权限以及设备文件创建。"><a href="#•-devices-子系统，维护一个设备访问权限管理，控制进程对设备文件读写访问权限以及设备文件创建。" class="headerlink" title="• devices 子系统，维护一个设备访问权限管理，控制进程对设备文件读写访问权限以及设备文件创建。"></a>• <strong>devices 子系统</strong>，维护一个设备访问权限管理，控制进程对设备文件读写访问权限以及设备文件创建。</h5></li>
+<li><h5 id="•-freezer-子系统，用于挂起和恢复-cgroup-中的进程。"><a href="#•-freezer-子系统，用于挂起和恢复-cgroup-中的进程。" class="headerlink" title="• freezer 子系统，用于挂起和恢复 cgroup 中的进程。"></a>• <strong>freezer 子系统</strong>，用于挂起和恢复 cgroup 中的进程。</h5></li>
+<li><h5 id="•-hugetlb-子系统，用来限制控制组里进程使用的大页。"><a href="#•-hugetlb-子系统，用来限制控制组里进程使用的大页。" class="headerlink" title="• hugetlb 子系统，用来限制控制组里进程使用的大页。"></a>• <strong>hugetlb 子系统</strong>，用来限制控制组里进程使用的大页。</h5></li>
+<li><h5 id="•-memory-子系统，用来限制一个控制组最大的内存使用量。"><a href="#•-memory-子系统，用来限制一个控制组最大的内存使用量。" class="headerlink" title="• memory 子系统，用来限制一个控制组最大的内存使用量。"></a>• <strong>memory 子系统</strong>，用来限制一个控制组最大的内存使用量。</h5></li>
+<li><h5 id="•-net-cls-net-prio-子系统，用来限制进程的网络资源"><a href="#•-net-cls-net-prio-子系统，用来限制进程的网络资源" class="headerlink" title="• net_cls,net_prio 子系统，用来限制进程的网络资源"></a>• <strong>net_cls,net_prio 子系统</strong>，用来限制进程的网络资源</h5></li>
+<li><h5 id="•-perf-event-子系统，Cgroups-中的进程监控"><a href="#•-perf-event-子系统，Cgroups-中的进程监控" class="headerlink" title="• perf_event 子系统，Cgroups 中的进程监控"></a>• <strong>perf_event 子系统</strong>，Cgroups 中的进程监控</h5></li>
+<li><h5 id="•-pids-子系统，用来限制一个控制组里最多可以运行多少个进程。"><a href="#•-pids-子系统，用来限制一个控制组里最多可以运行多少个进程。" class="headerlink" title="• pids 子系统，用来限制一个控制组里最多可以运行多少个进程。"></a>• <strong>pids 子系统</strong>，用来限制一个控制组里最多可以运行多少个进程。</h5></li>
+<li><h5 id="•-systemd-不属于-cgroups-子系统"><a href="#•-systemd-不属于-cgroups-子系统" class="headerlink" title="• systemd 不属于 cgroups 子系统"></a>• <strong>systemd</strong> 不属于 cgroups 子系统</h5></li>
+</ul>
+<blockquote>
+<h5 id="每个版本-linux-内核的子系统不是都一样。"><a href="#每个版本-linux-内核的子系统不是都一样。" class="headerlink" title="每个版本 linux 内核的子系统不是都一样。"></a>每个版本 linux 内核的子系统不是都一样。</h5></blockquote>
+<h3 id="cgroup-组"><a href="#cgroup-组" class="headerlink" title="cgroup 组"></a>cgroup 组</h3><h5 id="除了子系统之外，还需要了解-group-的概念，在-Cgroups-中，资源都是以组为单位控制的，每个组包含一个或多个的子系统。你可以按照任何自定义的标准进行组的划分。划分组之后，你可以将任意的进程加入、迁移到任意组中并且实时生效（但是对于进程的子进程不影响）。"><a href="#除了子系统之外，还需要了解-group-的概念，在-Cgroups-中，资源都是以组为单位控制的，每个组包含一个或多个的子系统。你可以按照任何自定义的标准进行组的划分。划分组之后，你可以将任意的进程加入、迁移到任意组中并且实时生效（但是对于进程的子进程不影响）。" class="headerlink" title="除了子系统之外，还需要了解 group 的概念，在 Cgroups 中，资源都是以组为单位控制的，每个组包含一个或多个的子系统。你可以按照任何自定义的标准进行组的划分。划分组之后，你可以将任意的进程加入、迁移到任意组中并且实时生效（但是对于进程的子进程不影响）。"></a>除了<strong>子系统</strong>之外，还需要了解 group 的概念，在 <strong>Cgroups</strong> 中，资源都是以组为单位控制的，每个组包含一个或多个的子系统。你可以按照任何自定义的标准进行组的划分。划分组之后，你可以将任意的进程加入、迁移到任意组中并且实时生效（但是对于进程的子进程不影响）。</h5><h3 id="hierarchy-层级树"><a href="#hierarchy-层级树" class="headerlink" title="(hierarchy)层级树"></a>(hierarchy)层级树</h3><h5 id="一组以树状结构排列的-cgroup-就是-hierarchy-层级树-，结合虚拟文件系统来理解，通过创建、删除、重命名子目录来定义层次结构。子目录能够继承父目录的全部资源（当然了，不能超过），也可以基于父目录的资源限制进行进一步的资源大小限制。父目录如果调整了资源大小，子目录同样会马上受到影响。"><a href="#一组以树状结构排列的-cgroup-就是-hierarchy-层级树-，结合虚拟文件系统来理解，通过创建、删除、重命名子目录来定义层次结构。子目录能够继承父目录的全部资源（当然了，不能超过），也可以基于父目录的资源限制进行进一步的资源大小限制。父目录如果调整了资源大小，子目录同样会马上受到影响。" class="headerlink" title="一组以树状结构排列的 cgroup 就是 hierarchy(层级树)，结合虚拟文件系统来理解，通过创建、删除、重命名子目录来定义层次结构。子目录能够继承父目录的全部资源（当然了，不能超过），也可以基于父目录的资源限制进行进一步的资源大小限制。父目录如果调整了资源大小，子目录同样会马上受到影响。"></a>一组以树状结构排列的 cgroup 就是 hierarchy(层级树)，结合虚拟文件系统来理解，通过创建、删除、重命名子目录来定义层次结构。子目录能够继承父目录的全部资源（当然了，不能超过），也可以基于父目录的资源限制进行进一步的资源大小限制。父目录如果调整了资源大小，子目录同样会马上受到影响。</h5><h5 id="每个层级树可以关联任意个数的-subsystem，但是每个-subsystem-最多只能被挂在一颗树上。"><a href="#每个层级树可以关联任意个数的-subsystem，但是每个-subsystem-最多只能被挂在一颗树上。" class="headerlink" title="每个层级树可以关联任意个数的 subsystem，但是每个 subsystem 最多只能被挂在一颗树上。"></a>每个层级树可以关联任意个数的 subsystem，但是每个 subsystem 最多只能被挂在一颗树上。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191530553.png" srcset="/img/loading.gif" lazyload alt="image-20240319153010472"></p>
+<h3 id="通过-cgroups-限制容器的-memory"><a href="#通过-cgroups-限制容器的-memory" class="headerlink" title="通过 cgroups 限制容器的 memory"></a>通过 cgroups 限制容器的 memory</h3><h5 id="对于启动的每个容器，都会在-Cgroups-子系统下建立一个目录，在-Cgroups-中这个目录也被称作控制组。然后我们设置这个控制组的参数，通过这个方式，来限制这个容器的内存资源。"><a href="#对于启动的每个容器，都会在-Cgroups-子系统下建立一个目录，在-Cgroups-中这个目录也被称作控制组。然后我们设置这个控制组的参数，通过这个方式，来限制这个容器的内存资源。" class="headerlink" title="对于启动的每个容器，都会在 Cgroups 子系统下建立一个目录，在 Cgroups 中这个目录也被称作控制组。然后我们设置这个控制组的参数，通过这个方式，来限制这个容器的内存资源。"></a>对于启动的每个容器，都会在 Cgroups <strong>子系统</strong>下建立一个目录，在 Cgroups 中这个目录也被称作<strong>控制组</strong>。然后我们设置这个控制组的参数，通过这个方式，来限制这个容器的内存资源。</h5><h5 id="还记得，我们之前用-Docker-创建的那个容器吗？在每个-Cgroups-子系统下，对应这个容器就会有一个目录-docker-5d22ea980dc8……-这个容器的-ID-号，这个-ID-号前面我们用-ps-看到的进程号。容器中所有的进程都会储存在这个控制组中-cgroup-procs-这个文件里。"><a href="#还记得，我们之前用-Docker-创建的那个容器吗？在每个-Cgroups-子系统下，对应这个容器就会有一个目录-docker-5d22ea980dc8……-这个容器的-ID-号，这个-ID-号前面我们用-ps-看到的进程号。容器中所有的进程都会储存在这个控制组中-cgroup-procs-这个文件里。" class="headerlink" title="还记得，我们之前用 Docker 创建的那个容器吗？在每个 Cgroups 子系统下，对应这个容器就会有一个目录 docker-5d22ea980dc8…… 这个容器的 ID 号，这个 ID 号前面我们用 ps 看到的进程号。容器中所有的进程都会储存在这个控制组中 cgroup.procs 这个文件里。"></a>还记得，我们之前用 Docker 创建的那个容器吗？在每个 Cgroups 子系统下，对应这个容器就会有一个目录 <strong>docker-5d22ea980dc8……</strong> 这个容器的 ID 号，这个 ID 号前面我们用 ps 看到的进程号。容器中所有的进程都会储存在这个控制组中 cgroup.procs 这个文件里。</h5><h5 id="把（2-1024-1024-1024-2147483648）这个值，写入-memory-Cgroup-控制组中的-memory-limit-in-bytes-里，这样设置后，cgroup-procs-里面所有进程-Memory-使用量之和，最大也不会超过-2GB。"><a href="#把（2-1024-1024-1024-2147483648）这个值，写入-memory-Cgroup-控制组中的-memory-limit-in-bytes-里，这样设置后，cgroup-procs-里面所有进程-Memory-使用量之和，最大也不会超过-2GB。" class="headerlink" title="把（2* 1024 * 1024 * 1024 = 2147483648）这个值，写入 memory Cgroup 控制组中的 memory.limit_in_bytes 里，这样设置后，cgroup.procs 里面所有进程 Memory 使用量之和，最大也不会超过 2GB。"></a>把<code>（2* 1024 * 1024 * 1024 = 2147483648）</code>这个值，写入 memory Cgroup 控制组中的 <code>memory.limit_in_bytes</code> 里，这样设置后，cgroup.procs 里面所有进程 Memory 使用量之和，最大也不会超过 2GB。</h5><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_"># </span><span class="language-bash"><span class="hljs-built_in">cd</span> /sys/fs/cgroup/memory/system.slice/docker-**5d22ea980dc8**fedd52511e18fdbd26357250719fa0d128349547a50fad7c5de9.scope</span><br><span class="hljs-meta prompt_"></span><br><span class="hljs-meta prompt_"># </span><span class="language-bash"><span class="hljs-built_in">cat</span> cgroup.procs</span><br>20731<br>20787<br>20788<br>20789<br>20791<br><span class="hljs-meta prompt_"></span><br><span class="hljs-meta prompt_"># </span><span class="language-bash"><span class="hljs-built_in">echo</span> 2147483648 &gt; memory.limit_in_bytes</span><br><span class="hljs-meta prompt_"># </span><span class="language-bash"><span class="hljs-built_in">cat</span> memory.limit_in_bytes</span><br>2147483648<br></code></pre></td></tr></table></figure>
+
+<h3 id="Docker-对-Cgroups-的使用"><a href="#Docker-对-Cgroups-的使用" class="headerlink" title="Docker 对 Cgroups 的使用"></a>Docker 对 Cgroups 的使用</h3><h5 id="默认情况下，Docker-启动一个容器后，会在-sys-fs-cgroup-目录下的各个资源目录下生成以容器-ID-为名字的目录（group），比如："><a href="#默认情况下，Docker-启动一个容器后，会在-sys-fs-cgroup-目录下的各个资源目录下生成以容器-ID-为名字的目录（group），比如：" class="headerlink" title="默认情况下，Docker 启动一个容器后，会在 /sys/fs/cgroup 目录下的各个资源目录下生成以容器 ID 为名字的目录（group），比如："></a>默认情况下，Docker 启动一个容器后，会在 <code>/sys/fs/cgroup</code> 目录下的各个资源目录下生成以容器 ID 为名字的目录（group），比如：</h5><h5 id="sys-fs-cgroup-cpu-docker-03dd196f415276375f754d51ce29b418b170bd92d88c5e420d6901c32f93dc14-此时-cpu-cfs-quota-us-的内容为-1，表示默认情况下并没有限制容器的-CPU-使用。在容器被-stopped-后，该目录被删除。"><a href="#sys-fs-cgroup-cpu-docker-03dd196f415276375f754d51ce29b418b170bd92d88c5e420d6901c32f93dc14-此时-cpu-cfs-quota-us-的内容为-1，表示默认情况下并没有限制容器的-CPU-使用。在容器被-stopped-后，该目录被删除。" class="headerlink" title="/sys/fs/cgroup/cpu/docker/03dd196f415276375f754d51ce29b418b170bd92d88c5e420d6901c32f93dc14 此时 cpu.cfs_quota_us 的内容为 -1，表示默认情况下并没有限制容器的 CPU 使用。在容器被 stopped 后，该目录被删除。"></a><code>/sys/fs/cgroup/cpu/docker/03dd196f415276375f754d51ce29b418b170bd92d88c5e420d6901c32f93dc14</code> 此时 <code>cpu.cfs_quota_us</code> 的内容为 -1，表示默认情况下并没有限制容器的 CPU 使用。在容器被 stopped 后，该目录被删除。</h5><h5 id="docker-启动容器时可以指定参数对容器的-cgroup-进行设置，基本支持了上面说的-cgroup-所有子系统。"><a href="#docker-启动容器时可以指定参数对容器的-cgroup-进行设置，基本支持了上面说的-cgroup-所有子系统。" class="headerlink" title="docker 启动容器时可以指定参数对容器的 cgroup 进行设置，基本支持了上面说的 cgroup 所有子系统。"></a>docker 启动容器时可以指定参数对容器的 cgroup 进行设置，基本支持了上面说的 cgroup 所有<strong>子系统。</strong></h5><figure class="highlight vhdl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs vhdl"># docker run <span class="hljs-comment">--help</span><br><br><span class="hljs-keyword">block</span> IO:<br>      <span class="hljs-comment">--blkio-weight value          Block IO (relative weight), between 10 and 1000</span><br>      <span class="hljs-comment">--blkio-weight-device value   Block IO weight (relative device weight) (default [])</span><br>      <span class="hljs-comment">--cgroup-parent string        Optional parent cgroup for the container</span><br>CPU:<br>      <span class="hljs-comment">--cpu-percent int             CPU percent (Windows only)</span><br>      <span class="hljs-comment">--cpu-period int              Limit CPU CFS (Completely Fair Scheduler) period</span><br>      <span class="hljs-comment">--cpu-quota int               Limit CPU CFS (Completely Fair Scheduler) quota</span><br>  -c, <span class="hljs-comment">--cpu-shares int              CPU shares (relative weight)</span><br>      <span class="hljs-comment">--cpuset-cpus string          CPUs in which to allow execution (0-3, 0,1)</span><br>      <span class="hljs-comment">--cpuset-mems string          MEMs in which to allow execution (0-3, 0,1)</span><br>Device:    <br>      <span class="hljs-comment">--device value                Add a host device to the container (default [])</span><br>      <span class="hljs-comment">--device-read-bps value       Limit read rate (bytes per second) from a device (default [])</span><br>      <span class="hljs-comment">--device-read-iops value      Limit read rate (IO per second) from a device (default [])</span><br>      <span class="hljs-comment">--device-write-bps value      Limit write rate (bytes per second) to a device (default [])</span><br>      <span class="hljs-comment">--device-write-iops value     Limit write rate (IO per second) to a device (default [])</span><br>Memory:      <br>      <span class="hljs-comment">--kernel-memory string        Kernel memory limit</span><br>  -m, <span class="hljs-comment">--memory string               Memory limit</span><br>      <span class="hljs-comment">--memory-reservation string   Memory soft limit</span><br>      <span class="hljs-comment">--memory-swap string          Swap limit equal to memory plus swap: &#x27;-1&#x27; to enable unlimited swap</span><br>      <span class="hljs-comment">--memory-swappiness int       Tune container memory swappiness (0 to 100) (default -1)</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="运行命令-docker-run-d-memory-4MB-httpd-latest-启动一个容器，且限制该容器内存最大使用为-4MB-Linux-限制最小为-4MB）。在宿主机查看该容器对应进程的-cgroup-。"><a href="#运行命令-docker-run-d-memory-4MB-httpd-latest-启动一个容器，且限制该容器内存最大使用为-4MB-Linux-限制最小为-4MB）。在宿主机查看该容器对应进程的-cgroup-。" class="headerlink" title="运行命令 docker run -d --memory 4MB httpd:latest 启动一个容器，且限制该容器内存最大使用为 4MB( Linux 限制最小为 4MB）。在宿主机查看该容器对应进程的 cgroup 。"></a>运行命令 <code>docker run -d --memory 4MB httpd:latest</code> 启动一个容器，且限制该容器内存最大使用为 4MB( Linux 限制最小为 4MB）。在宿主机查看该容器对应进程的 cgroup 。</h5><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_"># </span><span class="language-bash"><span class="hljs-built_in">cat</span> /sys/fs/cgroup/memory/system.slice/docker-06bd180cd34ffedd52511e18fdbd26357250719fa0d128349547a50fad7c5de9.scope/memory.limit_in_bytes</span><br>4194304<br></code></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><h5 id="一句话概括，容器-Namespace-Cgroups，要想学好容器技术，掌握容器原理，首先就得熟练掌握-Linux-的-Namespace、Cgroups-技术。"><a href="#一句话概括，容器-Namespace-Cgroups，要想学好容器技术，掌握容器原理，首先就得熟练掌握-Linux-的-Namespace、Cgroups-技术。" class="headerlink" title="一句话概括，容器 &#x3D; Namespace + Cgroups，要想学好容器技术，掌握容器原理，首先就得熟练掌握 Linux 的 Namespace、Cgroups 技术。"></a>一句话概括，<strong>容器 &#x3D; Namespace + Cgroups，</strong>要想学好容器技术，掌握容器原理，首先就得熟练掌握 Linux 的 Namespace、Cgroups 技术。</h5><h5 id="在容器层面还有”镜像技术”，镜像是容器的基础。进入容器看到的文件系统就是镜像，镜像也依赖于一系列的底层技术，比如文件系统-filesystems-、写时复制-copy-on-write-、联合挂载等。"><a href="#在容器层面还有”镜像技术”，镜像是容器的基础。进入容器看到的文件系统就是镜像，镜像也依赖于一系列的底层技术，比如文件系统-filesystems-、写时复制-copy-on-write-、联合挂载等。" class="headerlink" title="在容器层面还有”镜像技术”，镜像是容器的基础。进入容器看到的文件系统就是镜像，镜像也依赖于一系列的底层技术，比如文件系统(filesystems)、写时复制(copy-on-write)、联合挂载等。"></a>在容器层面还有”<strong>镜像技术”，</strong>镜像是容器的基础。进入容器看到的文件系统就是镜像，镜像也依赖于一系列的底层技术，比如<strong>文件系统(filesystems)、写时复制(copy-on-write)、联合挂载</strong>等。</h5><h4 id="引用链接"><a href="#引用链接" class="headerlink" title="引用链接"></a>引用链接</h4><p><code>[1]</code> Linux Programmer’s Manual: <em><a target="_blank" rel="noopener" href="https://man7.org/linux/man-pages/man7/cgroups.7.html">https://man7.org/linux/man-pages/man7/cgroups.7.html</a></em></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>容器原理 2024-04-03 14:45:58.422</div>
+      <div>http://example.com/2025/01/16/容器原理-rong-qi-yuan-li/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E8%87%AA%E5%8A%A8%E5%B1%8F%E8%94%BDIP%E6%94%BB%E5%87%BB-zi-dong-ping-bi-ip-gong-ji/" title="自动屏蔽IP攻击 2024-04-03 14:54:11.783">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">自动屏蔽IP攻击 2024-04-03 14:54:11.783</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E5%A6%82%E4%BD%95%E8%B0%83%E8%AF%95%20crash%20%E5%AE%B9%E5%99%A8%E7%9A%84%E7%BD%91%E7%BB%9C-ru-he-diao-shi-crash-rong-qi-de-wang-luo/" title="如何调试 crash 容器的网络 2024-04-03 14:50:51.378">
+                        <span class="hidden-mobile">如何调试 crash 容器的网络 2024-04-03 14:50:51.378</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

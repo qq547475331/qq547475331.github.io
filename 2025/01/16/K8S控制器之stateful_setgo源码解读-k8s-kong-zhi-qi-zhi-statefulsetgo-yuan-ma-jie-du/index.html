@@ -1,0 +1,620 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152535455565758596061626364656667686970717273747576777879808182838485868788899091929394959697989910010110210">
+<meta property="og:type" content="article">
+<meta property="og:title" content="K8S控制器之stateful_set.go源码解读 2024-04-10">
+<meta property="og:url" content="http://example.com/2025/01/16/K8S%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_setgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetgo-yuan-ma-jie-du/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152535455565758596061626364656667686970717273747576777879808182838485868788899091929394959697989910010110210">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-01-16T02:08:28.060Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:18.799Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>K8S控制器之stateful_set.go源码解读 2024-04-10 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="K8S控制器之stateful_set.go源码解读 2024-04-10"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          6.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          51 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">K8S控制器之stateful_set.go源码解读 2024-04-10</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br><span class="line">251</span><br><span class="line">252</span><br><span class="line">253</span><br><span class="line">254</span><br><span class="line">255</span><br><span class="line">256</span><br><span class="line">257</span><br><span class="line">258</span><br><span class="line">259</span><br><span class="line">260</span><br><span class="line">261</span><br><span class="line">262</span><br><span class="line">263</span><br><span class="line">264</span><br><span class="line">265</span><br><span class="line">266</span><br><span class="line">267</span><br><span class="line">268</span><br><span class="line">269</span><br><span class="line">270</span><br><span class="line">271</span><br><span class="line">272</span><br><span class="line">273</span><br><span class="line">274</span><br><span class="line">275</span><br><span class="line">276</span><br><span class="line">277</span><br><span class="line">278</span><br><span class="line">279</span><br><span class="line">280</span><br><span class="line">281</span><br><span class="line">282</span><br><span class="line">283</span><br><span class="line">284</span><br><span class="line">285</span><br><span class="line">286</span><br><span class="line">287</span><br><span class="line">288</span><br><span class="line">289</span><br><span class="line">290</span><br><span class="line">291</span><br><span class="line">292</span><br><span class="line">293</span><br><span class="line">294</span><br><span class="line">295</span><br><span class="line">296</span><br><span class="line">297</span><br><span class="line">298</span><br><span class="line">299</span><br><span class="line">300</span><br><span class="line">301</span><br><span class="line">302</span><br><span class="line">303</span><br><span class="line">304</span><br><span class="line">305</span><br><span class="line">306</span><br><span class="line">307</span><br><span class="line">308</span><br><span class="line">309</span><br><span class="line">310</span><br><span class="line">311</span><br><span class="line">312</span><br><span class="line">313</span><br><span class="line">314</span><br><span class="line">315</span><br><span class="line">316</span><br><span class="line">317</span><br><span class="line">318</span><br><span class="line">319</span><br><span class="line">320</span><br><span class="line">321</span><br><span class="line">322</span><br><span class="line">323</span><br><span class="line">324</span><br><span class="line">325</span><br><span class="line">326</span><br><span class="line">327</span><br><span class="line">328</span><br><span class="line">329</span><br><span class="line">330</span><br><span class="line">331</span><br><span class="line">332</span><br><span class="line">333</span><br><span class="line">334</span><br><span class="line">335</span><br><span class="line">336</span><br><span class="line">337</span><br><span class="line">338</span><br><span class="line">339</span><br><span class="line">340</span><br><span class="line">341</span><br><span class="line">342</span><br><span class="line">343</span><br><span class="line">344</span><br><span class="line">345</span><br><span class="line">346</span><br><span class="line">347</span><br><span class="line">348</span><br><span class="line">349</span><br><span class="line">350</span><br><span class="line">351</span><br><span class="line">352</span><br><span class="line">353</span><br><span class="line">354</span><br><span class="line">355</span><br><span class="line">356</span><br><span class="line">357</span><br><span class="line">358</span><br><span class="line">359</span><br><span class="line">360</span><br><span class="line">361</span><br><span class="line">362</span><br><span class="line">363</span><br><span class="line">364</span><br><span class="line">365</span><br><span class="line">366</span><br><span class="line">367</span><br><span class="line">368</span><br><span class="line">369</span><br><span class="line">370</span><br><span class="line">371</span><br><span class="line">372</span><br><span class="line">373</span><br><span class="line">374</span><br><span class="line">375</span><br><span class="line">376</span><br><span class="line">377</span><br><span class="line">378</span><br><span class="line">379</span><br><span class="line">380</span><br><span class="line">381</span><br><span class="line">382</span><br><span class="line">383</span><br><span class="line">384</span><br><span class="line">385</span><br><span class="line">386</span><br><span class="line">387</span><br><span class="line">388</span><br><span class="line">389</span><br><span class="line">390</span><br><span class="line">391</span><br><span class="line">392</span><br><span class="line">393</span><br><span class="line">394</span><br><span class="line">395</span><br><span class="line">396</span><br><span class="line">397</span><br><span class="line">398</span><br><span class="line">399</span><br><span class="line">400</span><br><span class="line">401</span><br><span class="line">402</span><br><span class="line">403</span><br><span class="line">404</span><br><span class="line">405</span><br><span class="line">406</span><br><span class="line">407</span><br><span class="line">408</span><br><span class="line">409</span><br><span class="line">410</span><br><span class="line">411</span><br><span class="line">412</span><br><span class="line">413</span><br><span class="line">414</span><br><span class="line">415</span><br><span class="line">416</span><br><span class="line">417</span><br><span class="line">418</span><br><span class="line">419</span><br><span class="line">420</span><br><span class="line">421</span><br><span class="line">422</span><br><span class="line">423</span><br><span class="line">424</span><br><span class="line">425</span><br><span class="line">426</span><br><span class="line">427</span><br><span class="line">428</span><br><span class="line">429</span><br><span class="line">430</span><br><span class="line">431</span><br><span class="line">432</span><br><span class="line">433</span><br><span class="line">434</span><br><span class="line">435</span><br><span class="line">436</span><br><span class="line">437</span><br><span class="line">438</span><br><span class="line">439</span><br><span class="line">440</span><br><span class="line">441</span><br><span class="line">442</span><br><span class="line">443</span><br><span class="line">444</span><br><span class="line">445</span><br><span class="line">446</span><br><span class="line">447</span><br><span class="line">448</span><br><span class="line">449</span><br><span class="line">450</span><br><span class="line">451</span><br><span class="line">452</span><br><span class="line">453</span><br><span class="line">454</span><br><span class="line">455</span><br><span class="line">456</span><br><span class="line">457</span><br><span class="line">458</span><br><span class="line">459</span><br><span class="line">460</span><br><span class="line">461</span><br><span class="line">462</span><br><span class="line">463</span><br><span class="line">464</span><br><span class="line">465</span><br><span class="line">466</span><br><span class="line">467</span><br><span class="line">468</span><br><span class="line">469</span><br><span class="line">470</span><br><span class="line">471</span><br><span class="line">472</span><br><span class="line">473</span><br><span class="line">474</span><br><span class="line">475</span><br><span class="line">476</span><br><span class="line">477</span><br><span class="line">478</span><br><span class="line">479</span><br><span class="line">480</span><br><span class="line">481</span><br><span class="line">482</span><br><span class="line">483</span><br><span class="line">484</span><br><span class="line">485</span><br><span class="line">486</span><br><span class="line">487</span><br><span class="line">488</span><br><span class="line">489</span><br><span class="line">490</span><br><span class="line">491</span><br><span class="line">492</span><br><span class="line">493</span><br><span class="line">494</span><br><span class="line">495</span><br><span class="line">496</span><br><span class="line">497</span><br><span class="line">498</span><br><span class="line">499</span><br><span class="line">500</span><br><span class="line">501</span><br><span class="line">502</span><br><span class="line">503</span><br><span class="line">504</span><br><span class="line">505</span><br><span class="line">506</span><br><span class="line">507</span><br><span class="line">508</span><br><span class="line">509</span><br><span class="line">510</span><br><span class="line">511</span><br><span class="line">512</span><br><span class="line">513</span><br><span class="line">514</span><br><span class="line">515</span><br><span class="line">516</span><br><span class="line">517</span><br><span class="line">518</span><br><span class="line">519</span><br><span class="line">520</span><br><span class="line">521</span><br><span class="line">522</span><br><span class="line">523</span><br><span class="line">524</span><br><span class="line">525</span><br><span class="line">526</span><br><span class="line">527</span><br><span class="line">528</span><br><span class="line">529</span><br><span class="line">530</span><br><span class="line">531</span><br><span class="line">532</span><br><span class="line">533</span><br><span class="line">534</span><br><span class="line">535</span><br><span class="line">536</span><br><span class="line">537</span><br><span class="line">538</span><br><span class="line">539</span><br><span class="line">540</span><br><span class="line">541</span><br><span class="line">542</span><br><span class="line">543</span><br><span class="line">544</span><br><span class="line">545</span><br><span class="line">546</span><br><span class="line">547</span><br><span class="line">548</span><br><span class="line">549</span><br><span class="line">550</span><br><span class="line">551</span><br><span class="line">552</span><br><span class="line">553</span><br><span class="line">554</span><br><span class="line">555</span><br><span class="line">556</span><br><span class="line">557</span><br><span class="line">558</span><br><span class="line">559</span><br><span class="line">560</span><br><span class="line">561</span><br><span class="line">562</span><br><span class="line">563</span><br><span class="line">564</span><br><span class="line">565</span><br><span class="line">566</span><br><span class="line">567</span><br><span class="line">568</span><br><span class="line">569</span><br><span class="line">570</span><br><span class="line">571</span><br><span class="line">572</span><br><span class="line">573</span><br><span class="line">574</span><br><span class="line">575</span><br><span class="line">576</span><br><span class="line">577</span><br><span class="line">578</span><br><span class="line">579</span><br><span class="line">580</span><br><span class="line">581</span><br><span class="line">582</span><br><span class="line">583</span><br><span class="line">584</span><br><span class="line">585</span><br><span class="line">586</span><br><span class="line">587</span><br><span class="line">588</span><br><span class="line">589</span><br><span class="line">590</span><br><span class="line">591</span><br><span class="line">592</span><br><span class="line">593</span><br><span class="line">594</span><br><span class="line">595</span><br><span class="line">596</span><br><span class="line">597</span><br><span class="line">598</span><br><span class="line">599</span><br><span class="line">600</span><br><span class="line">601</span><br><span class="line">602</span><br><span class="line">603</span><br><span class="line">604</span><br><span class="line">605</span><br><span class="line">606</span><br><span class="line">607</span><br><span class="line">608</span><br><span class="line">609</span><br><span class="line">610</span><br><span class="line">611</span><br><span class="line">612</span><br><span class="line">613</span><br><span class="line">614</span><br><span class="line">615</span><br><span class="line">616</span><br><span class="line">617</span><br><span class="line">618</span><br><span class="line">619</span><br><span class="line">620</span><br><span class="line">621</span><br><span class="line">622</span><br><span class="line">623</span><br><span class="line">624</span><br><span class="line">625</span><br><span class="line">626</span><br><span class="line">627</span><br><span class="line">628</span><br><span class="line">629</span><br><span class="line">630</span><br><span class="line">631</span><br><span class="line">632</span><br><span class="line">633</span><br><span class="line">634</span><br><span class="line">635</span><br><span class="line">636</span><br><span class="line">637</span><br><span class="line">638</span><br><span class="line">639</span><br><span class="line">640</span><br><span class="line">641</span><br><span class="line">642</span><br><span class="line">643</span><br><span class="line">644</span><br><span class="line">645</span><br><span class="line">646</span><br><span class="line">647</span><br><span class="line">648</span><br><span class="line">649</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">/*</span><br><span class="hljs-comment">Copyright 2016 The Kubernetes Authors.</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span><br><span class="hljs-comment">you may not use this file except in compliance with the License.</span><br><span class="hljs-comment">You may obtain a copy of the License at</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">    http://www.apache.org/licenses/LICENSE-2.0</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">Unless required by applicable law or agreed to in writing, software</span><br><span class="hljs-comment">distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span><br><span class="hljs-comment">WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span><br><span class="hljs-comment">See the License for the specific language governing permissions and</span><br><span class="hljs-comment">limitations under the License.</span><br><span class="hljs-comment">*/</span><br><br><span class="hljs-keyword">package</span> statefulset<br><br><span class="hljs-keyword">import</span> (<br>	<span class="hljs-string">&quot;context&quot;</span><br>	<span class="hljs-string">&quot;fmt&quot;</span><br>	<span class="hljs-string">&quot;reflect&quot;</span><br>	<span class="hljs-string">&quot;time&quot;</span><br><br>	apps <span class="hljs-string">&quot;k8s.io/api/apps/v1&quot;</span><br>	v1 <span class="hljs-string">&quot;k8s.io/api/core/v1&quot;</span><br>	<span class="hljs-string">&quot;k8s.io/apimachinery/pkg/api/errors&quot;</span><br>	metav1 <span class="hljs-string">&quot;k8s.io/apimachinery/pkg/apis/meta/v1&quot;</span><br>	<span class="hljs-string">&quot;k8s.io/apimachinery/pkg/labels&quot;</span><br>	utilruntime <span class="hljs-string">&quot;k8s.io/apimachinery/pkg/util/runtime&quot;</span><br>	<span class="hljs-string">&quot;k8s.io/apimachinery/pkg/util/wait&quot;</span><br>	appsinformers <span class="hljs-string">&quot;k8s.io/client-go/informers/apps/v1&quot;</span><br>	coreinformers <span class="hljs-string">&quot;k8s.io/client-go/informers/core/v1&quot;</span><br>	clientset <span class="hljs-string">&quot;k8s.io/client-go/kubernetes&quot;</span><br>	<span class="hljs-string">&quot;k8s.io/client-go/kubernetes/scheme&quot;</span><br>	v1core <span class="hljs-string">&quot;k8s.io/client-go/kubernetes/typed/core/v1&quot;</span><br>	appslisters <span class="hljs-string">&quot;k8s.io/client-go/listers/apps/v1&quot;</span><br>	corelisters <span class="hljs-string">&quot;k8s.io/client-go/listers/core/v1&quot;</span><br>	<span class="hljs-string">&quot;k8s.io/client-go/tools/cache&quot;</span><br>	<span class="hljs-string">&quot;k8s.io/client-go/tools/record&quot;</span><br>	<span class="hljs-string">&quot;k8s.io/client-go/util/workqueue&quot;</span><br>	podutil <span class="hljs-string">&quot;k8s.io/kubernetes/pkg/api/v1/pod&quot;</span><br>	<span class="hljs-string">&quot;k8s.io/kubernetes/pkg/controller&quot;</span><br>	<span class="hljs-string">&quot;k8s.io/kubernetes/pkg/controller/history&quot;</span><br>)<br><br><span class="hljs-comment">// controllerKind contains the schema.GroupVersionKind for this controller type.</span><br><span class="hljs-keyword">var</span> controllerKind = apps.SchemeGroupVersion.WithKind(<span class="hljs-string">&quot;StatefulSet&quot;</span>)<br><br><span class="hljs-comment">// StatefulSetController controls statefulsets.</span><br><span class="hljs-keyword">type</span> StatefulSetController <span class="hljs-keyword">struct</span> &#123;<br>	<span class="hljs-comment">// client interface</span><br>	kubeClient clientset.Interface<br>	<span class="hljs-comment">// control returns an interface capable of syncing a stateful set.</span><br>	<span class="hljs-comment">// Abstracted out for testing.</span><br>	control StatefulSetControlInterface<br>	<span class="hljs-comment">// podControl is used for patching pods.</span><br>	podControl controller.PodControlInterface<br>	<span class="hljs-comment">// podLister is able to list/get pods from a shared informer&#x27;s store</span><br>	podLister corelisters.PodLister<br>	<span class="hljs-comment">// podListerSynced returns true if the pod shared informer has synced at least once</span><br>	podListerSynced cache.InformerSynced<br>	<span class="hljs-comment">// setLister is able to list/get stateful sets from a shared informer&#x27;s store</span><br>	setLister appslisters.StatefulSetLister<br>	<span class="hljs-comment">// setListerSynced returns true if the stateful set shared informer has synced at least once</span><br>	setListerSynced cache.InformerSynced<br>	<span class="hljs-comment">// pvcListerSynced returns true if the pvc shared informer has synced at least once</span><br>	pvcListerSynced cache.InformerSynced<br>	<span class="hljs-comment">// revListerSynced returns true if the rev shared informer has synced at least once</span><br>	revListerSynced cache.InformerSynced<br>	<span class="hljs-comment">// StatefulSets that need to be synced.</span><br>	queue workqueue.RateLimitingInterface<br>	<span class="hljs-comment">// eventBroadcaster is the core of event processing pipeline.</span><br>	eventBroadcaster record.EventBroadcaster<br>&#125;<br><br><span class="hljs-comment">// 这段Go代码定义了一个名为StatefulSetController的结构体，用于控制StatefulSets。</span><br><span class="hljs-comment">// 它包含了一系列的成员变量，包括client接口、控制StatefulSet同步的接口、用于patching pods的接口、以及一系列的Lister和Synced函数，</span><br><span class="hljs-comment">// 用于从共享informer的存储中获取Pods、StatefulSets、PVCs等信息。</span><br><span class="hljs-comment">// 此外，它还定义了一个工作队列和一个事件广播器。这个结构体主要用于管理和同步Kubernetes中的StatefulSets。</span><br><span class="hljs-comment">// NewStatefulSetController creates a new statefulset controller.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">NewStatefulSetController</span><span class="hljs-params">(</span></span><br><span class="hljs-params"><span class="hljs-function">	ctx context.Context,</span></span><br><span class="hljs-params"><span class="hljs-function">	podInformer coreinformers.PodInformer,</span></span><br><span class="hljs-params"><span class="hljs-function">	setInformer appsinformers.StatefulSetInformer,</span></span><br><span class="hljs-params"><span class="hljs-function">	pvcInformer coreinformers.PersistentVolumeClaimInformer,</span></span><br><span class="hljs-params"><span class="hljs-function">	revInformer appsinformers.ControllerRevisionInformer,</span></span><br><span class="hljs-params"><span class="hljs-function">	kubeClient clientset.Interface,</span></span><br><span class="hljs-params"><span class="hljs-function">)</span></span> *StatefulSetController &#123;<br>	logger := klog.FromContext(ctx)<br>	eventBroadcaster := record.NewBroadcaster(record.WithContext(ctx))<br>	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, v1.EventSource&#123;Component: <span class="hljs-string">&quot;statefulset-controller&quot;</span>&#125;)<br>	ssc := &amp;StatefulSetController&#123;<br>		kubeClient: kubeClient,<br>		control: NewDefaultStatefulSetControl(<br>			NewStatefulPodControl(<br>				kubeClient,<br>				podInformer.Lister(),<br>				pvcInformer.Lister(),<br>				recorder),<br>			NewRealStatefulSetStatusUpdater(kubeClient, setInformer.Lister()),<br>			history.NewHistory(kubeClient, revInformer.Lister()),<br>			recorder,<br>		),<br>		pvcListerSynced: pvcInformer.Informer().HasSynced,<br>		revListerSynced: revInformer.Informer().HasSynced,<br>		queue:           workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), <span class="hljs-string">&quot;statefulset&quot;</span>),<br>		podControl:      controller.RealPodControl&#123;KubeClient: kubeClient, Recorder: recorder&#125;,<br><br>		eventBroadcaster: eventBroadcaster,<br>	&#125;<br>	<span class="hljs-comment">//该函数用于创建一个新的StatefulSet控制器。它接收多个参数，包括上下文、各种Informer、客户端接口等。</span><br>	<span class="hljs-comment">//函数内部通过调用NewDefaultStatefulSetControl函数和其他函数，初始化了StatefulSetController结构体的各个字段，</span><br>	<span class="hljs-comment">//并返回一个指向StatefulSetController结构体的指针。</span><br>	podInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs&#123;<br>		<span class="hljs-comment">// lookup the statefulset and enqueue</span><br>		AddFunc: <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(obj <span class="hljs-keyword">interface</span>&#123;&#125;)</span></span> &#123;<br>			ssc.addPod(logger, obj)<br>		&#125;,<br>		<span class="hljs-comment">// lookup current and old statefulset if labels changed</span><br>		UpdateFunc: <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(oldObj, newObj <span class="hljs-keyword">interface</span>&#123;&#125;)</span></span> &#123;<br>			ssc.updatePod(logger, oldObj, newObj)<br>		&#125;,<br>		<span class="hljs-comment">// lookup statefulset accounting for deletion tombstones</span><br>		DeleteFunc: <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(obj <span class="hljs-keyword">interface</span>&#123;&#125;)</span></span> &#123;<br>			ssc.deletePod(logger, obj)<br>		&#125;,<br>	&#125;)<br>	<span class="hljs-comment">//这段代码定义了一个Go函数，它为podInformer的Informer添加了一个事件处理程序。</span><br>	<span class="hljs-comment">//该事件处理程序使用cache.ResourceEventHandlerFuncs结构体中的AddFunc、UpdateFunc和DeleteFunc来处理资源的添加、更新和删除事件。</span><br>	<span class="hljs-comment">//- AddFunc函数在资源添加时调用ssc.addPod(logger, obj)来添加Pod。</span><br>	<span class="hljs-comment">//- UpdateFunc函数在资源更新时调用ssc.updatePod(logger, oldObj, newObj)来更新Pod。</span><br>	<span class="hljs-comment">//- DeleteFunc函数在资源删除时调用ssc.deletePod(logger, obj)来删除Pod。</span><br>	<span class="hljs-comment">//这些函数通过传入的logger和相应的资源对象来执行具体的操作。</span><br>	ssc.podLister = podInformer.Lister()<br>	ssc.podListerSynced = podInformer.Informer().HasSynced<br><br>	setInformer.Informer().AddEventHandler(<br>		cache.ResourceEventHandlerFuncs&#123;<br>			AddFunc: ssc.enqueueStatefulSet,<br>			UpdateFunc: <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(old, cur <span class="hljs-keyword">interface</span>&#123;&#125;)</span></span> &#123;<br>				oldPS := old.(*apps.StatefulSet)<br>				curPS := cur.(*apps.StatefulSet)<br>				<span class="hljs-keyword">if</span> oldPS.Status.Replicas != curPS.Status.Replicas &#123;<br>					logger.V(<span class="hljs-number">4</span>).Info(<span class="hljs-string">&quot;Observed updated replica count for StatefulSet&quot;</span>, <span class="hljs-string">&quot;statefulSet&quot;</span>, klog.KObj(curPS), <span class="hljs-string">&quot;oldReplicas&quot;</span>, oldPS.Status.Replicas, <span class="hljs-string">&quot;newReplicas&quot;</span>, curPS.Status.Replicas)<br>				&#125;<br>				ssc.enqueueStatefulSet(cur)<br>			&#125;,<br>			DeleteFunc: ssc.enqueueStatefulSet,<br>		&#125;,<br>	)<br>	<span class="hljs-comment">//这段代码主要涉及到了Kubernetes Informer机制的使用，用于监听StatefulSet资源的变化，并对变化事件进行处理。</span><br>	<span class="hljs-comment">//1. 首先，ssc.podLister = podInformer.Lister()和ssc.podListerSynced = podInformer.Informer().HasSynced</span><br>	<span class="hljs-comment">//两行代码是将pod的Lister和是否同步完成的函数赋值给ssc对象的对应字段。Lister是用来从Informer的cache中获取资源列表和单个资源的，</span><br>	<span class="hljs-comment">//HasSynced则是用来判断Informer是否已经完成初始的资源同步。</span><br>	<span class="hljs-comment">//2. 接下来，setInformer.Informer().AddEventHandler(...)这行代码是给setInformer添加了一个事件处理函数。</span><br>	<span class="hljs-comment">//其中，cache.ResourceEventHandlerFuncs是一个包含了资源添加、更新和删除事件处理函数的结构体。</span><br>	<span class="hljs-comment">//- AddFunc: ssc.enqueueStatefulSet表示当有StatefulSet资源被添加时，调用ssc.enqueueStatefulSet函数来处理该事件。</span><br>	<span class="hljs-comment">//- UpdateFunc表示当有StatefulSet资源被更新时，会先判断其副本数是否发生了变化，如果有变化则打印日志并调用ssc.enqueueStatefulSet函数来处理该事件。</span><br>	<span class="hljs-comment">//- DeleteFunc: ssc.enqueueStatefulSet表示当有StatefulSet资源被删除时，调用ssc.enqueueStatefulSet函数来处理该事件。</span><br>	<span class="hljs-comment">//综上所述，这段代码通过使用Kubernetes Informer机制监听StatefulSet资源的变化，并调用ssc.enqueueStatefulSet函数来处理这些变化事件。</span><br>	ssc.setLister = setInformer.Lister()<br>	ssc.setListerSynced = setInformer.Informer().HasSynced<br><br>	<span class="hljs-comment">// <span class="hljs-doctag">TODO:</span> Watch volumes</span><br>	<span class="hljs-keyword">return</span> ssc<br>&#125;<br><br><span class="hljs-comment">// 这个Go函数主要设置了ssc对象的setLister和setListerSynced属性。</span><br><span class="hljs-comment">// setLister是通过setInformer.Lister()方法设置的，它用于从存储中获取设置列表。setListerSynced是通过setInformer.Informer().HasSynced方法设置的，</span><br><span class="hljs-comment">// 它用于检查设置的同步状态。最后，该函数返回ssc对象。</span><br><span class="hljs-comment">// Run runs the statefulset controller.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(ssc *StatefulSetController)</span></span> Run(ctx context.Context, workers <span class="hljs-type">int</span>) &#123;<br>	<span class="hljs-keyword">defer</span> utilruntime.HandleCrash()<br><br>	<span class="hljs-comment">// Start events processing pipeline.</span><br>	ssc.eventBroadcaster.StartStructuredLogging(<span class="hljs-number">3</span>)<br>	ssc.eventBroadcaster.StartRecordingToSink(&amp;v1core.EventSinkImpl&#123;Interface: ssc.kubeClient.CoreV1().Events(<span class="hljs-string">&quot;&quot;</span>)&#125;)<br>	<span class="hljs-keyword">defer</span> ssc.eventBroadcaster.Shutdown()<br><br>	<span class="hljs-keyword">defer</span> ssc.queue.ShutDown()<br><br>	logger := klog.FromContext(ctx)<br>	logger.Info(<span class="hljs-string">&quot;Starting stateful set controller&quot;</span>)<br>	<span class="hljs-keyword">defer</span> logger.Info(<span class="hljs-string">&quot;Shutting down statefulset controller&quot;</span>)<br>	<span class="hljs-comment">//该函数是StatefulSetController类型的Run方法，用于启动statefulset控制器。</span><br>	<span class="hljs-comment">//函数首先处理崩溃情况，然后开启事件处理管道，记录事件并将其发送到事件接收器。</span><br>	<span class="hljs-comment">//之后，函数通过调用queue的ShutDown方法来关闭队列。函数在启动和关闭控制器时分别记录日志信息。</span><br>	<span class="hljs-keyword">if</span> !cache.WaitForNamedCacheSync(<span class="hljs-string">&quot;stateful set&quot;</span>, ctx.Done(), ssc.podListerSynced, ssc.setListerSynced, ssc.pvcListerSynced, ssc.revListerSynced) &#123;<br>		<span class="hljs-keyword">return</span><br>	&#125;<br><br>	<span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; workers; i++ &#123;<br>		<span class="hljs-keyword">go</span> wait.UntilWithContext(ctx, ssc.worker, time.Second)<br>	&#125;<br><br>	&lt;-ctx.Done()<br>&#125;<br><br><span class="hljs-comment">// 这段Go代码主要实现了以下功能：</span><br><span class="hljs-comment">// - 等待多个缓存同步完成：通过调用cache.WaitForNamedCacheSync方法，</span><br><span class="hljs-comment">// 等待podListerSynced、setListerSynced、pvcListerSynced和revListerSynced四个缓存同步完成。</span><br><span class="hljs-comment">// 如果在指定的上下文ctx被取消或超时之前，所有缓存都已同步，则继续执行后续代码；否则直接返回。</span><br><span class="hljs-comment">// - 启动多个工作协程：使用for循环和go关键字，启动workers个工作协程，并在每个协程中定期执行ssc.worker函数，其间隔时间为1秒。</span><br><span class="hljs-comment">// 这些工作协程会一直运行，直到上下文ctx被取消或超时。</span><br><span class="hljs-comment">// - 等待上下文取消或超时：通过读取ctx.Done()通道，阻塞当前协程，等待上下文ctx被取消或超时。</span><br><span class="hljs-comment">// 一旦上下文被取消或超时，整个函数执行结束。  这段代码通常用于在启动时等待多个缓存同步完成，并启动多个工作协程来处理后续任务。</span><br><span class="hljs-comment">// 通过上下文ctx来控制整个函数的运行时长，并能够在缓存同步或工作协程运行过程中随时取消操作。</span><br><span class="hljs-comment">// addPod adds the statefulset for the pod to the sync queue</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(ssc *StatefulSetController)</span></span> addPod(logger klog.Logger, obj <span class="hljs-keyword">interface</span>&#123;&#125;) &#123;<br>	pod := obj.(*v1.Pod)<br><br>	<span class="hljs-keyword">if</span> pod.DeletionTimestamp != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-comment">// on a restart of the controller manager, it&#x27;s possible a new pod shows up in a state that</span><br>		<span class="hljs-comment">// is already pending deletion. Prevent the pod from being a creation observation.</span><br>		ssc.deletePod(logger, pod)<br>		<span class="hljs-keyword">return</span><br>	&#125;<br><br>	<span class="hljs-comment">// If it has a ControllerRef, that&#x27;s all that matters.</span><br>	<span class="hljs-keyword">if</span> controllerRef := metav1.GetControllerOf(pod); controllerRef != <span class="hljs-literal">nil</span> &#123;<br>		set := ssc.resolveControllerRef(pod.Namespace, controllerRef)<br>		<span class="hljs-keyword">if</span> set == <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">return</span><br>		&#125;<br>		logger.V(<span class="hljs-number">4</span>).Info(<span class="hljs-string">&quot;Pod created with labels&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod), <span class="hljs-string">&quot;labels&quot;</span>, pod.Labels)<br>		ssc.enqueueStatefulSet(set)<br>		<span class="hljs-keyword">return</span><br>	&#125;<br>	<span class="hljs-comment">//该函数是StatefulSetController类型的一个方法，用于将Pod的状态添加到同步队列中。</span><br>	<span class="hljs-comment">//首先，它检查Pod是否已被标记为删除，如果是，则调用deletePod方法删除Pod，并返回。</span><br>	<span class="hljs-comment">//然后，它检查Pod是否有ControllerRef，如果有，则通过resolveControllerRef方法解析ControllerRef，</span><br>	<span class="hljs-comment">//并将解析结果传递给enqueueStatefulSet方法，以将StatefulSet添加到同步队列中。</span><br>	<span class="hljs-comment">// Otherwise, it&#x27;s an orphan. Get a list of all matching controllers and sync</span><br>	<span class="hljs-comment">// them to see if anyone wants to adopt it.</span><br>	sets := ssc.getStatefulSetsForPod(pod)<br>	<span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(sets) == <span class="hljs-number">0</span> &#123;<br>		<span class="hljs-keyword">return</span><br>	&#125;<br>	logger.V(<span class="hljs-number">4</span>).Info(<span class="hljs-string">&quot;Orphan Pod created with labels&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod), <span class="hljs-string">&quot;labels&quot;</span>, pod.Labels)<br>	<span class="hljs-keyword">for</span> _, set := <span class="hljs-keyword">range</span> sets &#123;<br>		ssc.enqueueStatefulSet(set)<br>	&#125;<br>&#125;<br><br><span class="hljs-comment">// 该函数用于处理一个无归属的Pod（孤儿Pod），通过获取与该Pod匹配的所有StatefulSet控制器，并将它们同步，以查看是否有控制器愿意“收养”这个Pod。</span><br><span class="hljs-comment">// 首先，函数会调用ssc.getStatefulSetsForPod(pod)方法来获取与Pod匹配的所有StatefulSet集合。</span><br><span class="hljs-comment">// 如果这个集合的长度为0，说明没有找到匹配的控制器，那么函数直接返回。</span><br><span class="hljs-comment">// 否则，函数会使用logger记录一条日志信息，以4级日志级别记录“创建了一个孤儿Pod，并列出了Pod的标签”。</span><br><span class="hljs-comment">// 然后，函数会遍历这个匹配的StatefulSet集合，对每个集合调用ssc.enqueueStatefulSet(set)方法，将其加入到同步队列中，以便后续进行同步处理。</span><br><span class="hljs-comment">// updatePod adds the statefulset for the current and old pods to the sync queue.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(ssc *StatefulSetController)</span></span> updatePod(logger klog.Logger, old, cur <span class="hljs-keyword">interface</span>&#123;&#125;) &#123;<br>	curPod := cur.(*v1.Pod)<br>	oldPod := old.(*v1.Pod)<br>	<span class="hljs-keyword">if</span> curPod.ResourceVersion == oldPod.ResourceVersion &#123;<br>		<span class="hljs-comment">// In the event of a re-list we may receive update events for all known pods.</span><br>		<span class="hljs-comment">// Two different versions of the same pod will always have different RVs.</span><br>		<span class="hljs-keyword">return</span><br>	&#125;<br><br>	labelChanged := !reflect.DeepEqual(curPod.Labels, oldPod.Labels)<br><br>	curControllerRef := metav1.GetControllerOf(curPod)<br>	oldControllerRef := metav1.GetControllerOf(oldPod)<br>	controllerRefChanged := !reflect.DeepEqual(curControllerRef, oldControllerRef)<br>	<span class="hljs-keyword">if</span> controllerRefChanged &amp;&amp; oldControllerRef != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-comment">// The ControllerRef was changed. Sync the old controller, if any.</span><br>		<span class="hljs-keyword">if</span> set := ssc.resolveControllerRef(oldPod.Namespace, oldControllerRef); set != <span class="hljs-literal">nil</span> &#123;<br>			ssc.enqueueStatefulSet(set)<br>		&#125;<br>	&#125;<br>	<span class="hljs-comment">//该函数用于将当前和旧的Pod的状态fulset添加到同步队列中。</span><br>	<span class="hljs-comment">//函数首先将传入的old和cur参数转换为v1.Pod类型，并检查它们的ResourceVersion是否相同。</span><br>	<span class="hljs-comment">//如果相同，则表示这是由于重新列表而导致的更新事件，函数将直接返回。</span><br>	<span class="hljs-comment">//然后，函数会检查Pod的标签是否发生变化，并检查ControllerRef是否发生变化。</span><br>	<span class="hljs-comment">//如果ControllerRef发生变化且旧的ControllerRef不为空，则函数将解析旧的ControllerRef，并将对应的StatefulSet添加到同步队列中。</span><br>	<span class="hljs-comment">// If it has a ControllerRef, that&#x27;s all that matters.</span><br>	<span class="hljs-keyword">if</span> curControllerRef != <span class="hljs-literal">nil</span> &#123;<br>		set := ssc.resolveControllerRef(curPod.Namespace, curControllerRef)<br>		<span class="hljs-keyword">if</span> set == <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">return</span><br>		&#125;<br>		logger.V(<span class="hljs-number">4</span>).Info(<span class="hljs-string">&quot;Pod objectMeta updated&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(curPod), <span class="hljs-string">&quot;oldObjectMeta&quot;</span>, oldPod.ObjectMeta, <span class="hljs-string">&quot;newObjectMeta&quot;</span>, curPod.ObjectMeta)<br>		ssc.enqueueStatefulSet(set)<br>		<span class="hljs-comment">// <span class="hljs-doctag">TODO:</span> MinReadySeconds in the Pod will generate an Available condition to be added in</span><br>		<span class="hljs-comment">// the Pod status which in turn will trigger a requeue of the owning replica set thus</span><br>		<span class="hljs-comment">// having its status updated with the newly available replica.</span><br>		<span class="hljs-keyword">if</span> !podutil.IsPodReady(oldPod) &amp;&amp; podutil.IsPodReady(curPod) &amp;&amp; set.Spec.MinReadySeconds &gt; <span class="hljs-number">0</span> &#123;<br>			logger.V(<span class="hljs-number">2</span>).Info(<span class="hljs-string">&quot;StatefulSet will be enqueued after minReadySeconds for availability check&quot;</span>, <span class="hljs-string">&quot;statefulSet&quot;</span>, klog.KObj(set), <span class="hljs-string">&quot;minReadySeconds&quot;</span>, set.Spec.MinReadySeconds)<br>			<span class="hljs-comment">// Add a second to avoid milliseconds skew in AddAfter.</span><br>			<span class="hljs-comment">// See https://github.com/kubernetes/kubernetes/issues/39785#issuecomment-279959133 for more info.</span><br>			ssc.enqueueSSAfter(set, (time.Duration(set.Spec.MinReadySeconds)*time.Second)+time.Second)<br>		&#125;<br>		<span class="hljs-keyword">return</span><br>	&#125;<br>	<span class="hljs-comment">//该Go函数是一个处理Pod对象元数据更新的函数。</span><br>	<span class="hljs-comment">//它首先检查当前Pod是否有ControllerRef，如果有，则通过resolveControllerRef方法解析其引用的Controller，并将其加入到队列中以进行后续处理。</span><br>	<span class="hljs-comment">//如果Pod满足特定条件（例如，从不可用状态变为可用状态，并且其所属的StatefulSet的MinReadySeconds大于0），</span><br>	<span class="hljs-comment">//则会将StatefulSet加入到队列中， 以便在MinReadySeconds秒后进行可用性检查。</span><br>	<span class="hljs-comment">// Otherwise, it&#x27;s an orphan. If anything changed, sync matching controllers</span><br>	<span class="hljs-comment">// to see if anyone wants to adopt it now.</span><br>	<span class="hljs-keyword">if</span> labelChanged || controllerRefChanged &#123;<br>		sets := ssc.getStatefulSetsForPod(curPod)<br>		<span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(sets) == <span class="hljs-number">0</span> &#123;<br>			<span class="hljs-keyword">return</span><br>		&#125;<br>		logger.V(<span class="hljs-number">4</span>).Info(<span class="hljs-string">&quot;Orphan Pod objectMeta updated&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(curPod), <span class="hljs-string">&quot;oldObjectMeta&quot;</span>, oldPod.ObjectMeta, <span class="hljs-string">&quot;newObjectMeta&quot;</span>, curPod.ObjectMeta)<br>		<span class="hljs-keyword">for</span> _, set := <span class="hljs-keyword">range</span> sets &#123;<br>			ssc.enqueueStatefulSet(set)<br>		&#125;<br>	&#125;<br>&#125;<br><br><span class="hljs-comment">// 这段Go代码是处理Pod对象的元数据更新的逻辑。</span><br><span class="hljs-comment">// 如果Pod的标签或控制器引用发生了变化，它会检查是否有StatefulSet控制器可以“收养”这个Pod。</span><br><span class="hljs-comment">// 如果有，则将这个StatefulSet控制器加入到队列中，以便进一步处理。</span><br><span class="hljs-comment">// deletePod enqueues the statefulset for the pod accounting for deletion tombstones.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(ssc *StatefulSetController)</span></span> deletePod(logger klog.Logger, obj <span class="hljs-keyword">interface</span>&#123;&#125;) &#123;<br>	pod, ok := obj.(*v1.Pod)<br><br>	<span class="hljs-comment">// When a delete is dropped, the relist will notice a pod in the store not</span><br>	<span class="hljs-comment">// in the list, leading to the insertion of a tombstone object which contains</span><br>	<span class="hljs-comment">// the deleted key/value. Note that this value might be stale.</span><br>	<span class="hljs-keyword">if</span> !ok &#123;<br>		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)<br>		<span class="hljs-keyword">if</span> !ok &#123;<br>			utilruntime.HandleError(fmt.Errorf(<span class="hljs-string">&quot;couldn&#x27;t get object from tombstone %+v&quot;</span>, obj))<br>			<span class="hljs-keyword">return</span><br>		&#125;<br>		pod, ok = tombstone.Obj.(*v1.Pod)<br>		<span class="hljs-keyword">if</span> !ok &#123;<br>			utilruntime.HandleError(fmt.Errorf(<span class="hljs-string">&quot;tombstone contained object that is not a pod %+v&quot;</span>, obj))<br>			<span class="hljs-keyword">return</span><br>		&#125;<br>	&#125;<br>	<span class="hljs-comment">//该函数是一个Go语言函数，名为deletePod，它属于StatefulSetController类型。</span><br>	<span class="hljs-comment">//该函数的功能是将删除操作对应的状态fulset加入到队列中，并考虑到删除标记（tombstones）。</span><br>	<span class="hljs-comment">//函数参数： - logger：klog.Logger类型，用于记录日志。</span><br>	<span class="hljs-comment">//- obj：interface&#123;&#125;类型，表示要删除的Pod对象。</span><br>	<span class="hljs-comment">//函数流程： 1. 尝试将obj对象转换为*v1.Pod类型。</span><br>	<span class="hljs-comment">//2. 如果转换失败，则尝试将obj对象转换为cache.DeletedFinalStateUnknown类型。</span><br>	<span class="hljs-comment">//3. 如果转换成功，则从tombstone对象中获取被删除的Pod对象。</span><br>	<span class="hljs-comment">//4. 如果获取失败，则记录错误信息并返回。</span><br>	<span class="hljs-comment">//5. 如果成功获取到Pod对象，则将其加入到队列中，以供后续处理。</span><br>	<span class="hljs-comment">//该函数主要处理了两种情况：直接删除Pod对象和通过tombstone对象删除Pod。</span><br>	<span class="hljs-comment">//在处理过程中，函数会进行类型断言来确保对象类型正确，并在出现异常时记录错误信息。</span><br>	controllerRef := metav1.GetControllerOf(pod)<br>	<span class="hljs-keyword">if</span> controllerRef == <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-comment">// No controller should care about orphans being deleted.</span><br>		<span class="hljs-keyword">return</span><br>	&#125;<br>	set := ssc.resolveControllerRef(pod.Namespace, controllerRef)<br>	<span class="hljs-keyword">if</span> set == <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span><br>	&#125;<br>	logger.V(<span class="hljs-number">4</span>).Info(<span class="hljs-string">&quot;Pod deleted.&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod), <span class="hljs-string">&quot;caller&quot;</span>, utilruntime.GetCaller())<br>	ssc.enqueueStatefulSet(set)<br>&#125;<br><br><span class="hljs-comment">// 该函数是一个Go语言函数，名为deletePod，它属于StatefulSetController类型。</span><br><span class="hljs-comment">// 该函数的功能是在删除Pod时，检查是否有对应的控制器（StatefulSet）对该Pod有管理关系，</span><br><span class="hljs-comment">// 如果有，则将该StatefulSet加入到队列中，以触发相应的更新操作。</span><br><span class="hljs-comment">// 函数流程：</span><br><span class="hljs-comment">// 1. 通过metav1.GetControllerOf函数获取Pod的控制器引用（controllerRef）。</span><br><span class="hljs-comment">// 2. 如果controllerRef为nil，表示该Pod没有对应的控制器，则直接返回。</span><br><span class="hljs-comment">// 3. 调用ssc.resolveControllerRef函数解析controllerRef，获取对应的StatefulSet对象（set）。</span><br><span class="hljs-comment">// 4. 如果set为nil，表示无法解析到对应的StatefulSet，则直接返回。</span><br><span class="hljs-comment">// 5. 记录日志信息，表示Pod已被删除。</span><br><span class="hljs-comment">// 6. 将set加入到队列中，以触发StatefulSet的更新操作。</span><br><span class="hljs-comment">// 该函数主要通过controllerRef来确定Pod所属的StatefulSet，并在删除Pod时，通知对应的StatefulSet进行相应的更新操作。</span><br><span class="hljs-comment">// 如果无法确定Pod的控制器或者无法解析到对应的StatefulSet，则函数直接返回，不做任何处理。</span><br><span class="hljs-comment">// getPodsForStatefulSet returns the Pods that a given StatefulSet should manage.</span><br><span class="hljs-comment">// It also reconciles ControllerRef by adopting/orphaning.</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">// <span class="hljs-doctag">NOTE:</span> Returned Pods are pointers to objects from the cache.</span><br><span class="hljs-comment">// If you need to modify one, you need to copy it first.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(ssc *StatefulSetController)</span></span> getPodsForStatefulSet(ctx context.Context, set *apps.StatefulSet, selector labels.Selector) ([]*v1.Pod, <span class="hljs-type">error</span>) &#123;<br>	<span class="hljs-comment">// List all pods to include the pods that don&#x27;t match the selector anymore but</span><br>	<span class="hljs-comment">// has a ControllerRef pointing to this StatefulSet.</span><br>	pods, err := ssc.podLister.Pods(set.Namespace).List(labels.Everything())<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>	&#125;<br><br>	filter := <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(pod *v1.Pod)</span></span> <span class="hljs-type">bool</span> &#123;<br>		<span class="hljs-comment">// Only claim if it matches our StatefulSet name. Otherwise release/ignore.</span><br>		<span class="hljs-keyword">return</span> isMemberOf(set, pod)<br>	&#125;<br><br>	cm := controller.NewPodControllerRefManager(ssc.podControl, set, selector, controllerKind, ssc.canAdoptFunc(ctx, set))<br>	<span class="hljs-keyword">return</span> cm.ClaimPods(ctx, pods, filter)<br>&#125;<br><br><span class="hljs-comment">// 该函数用于获取指定StatefulSet应该管理的Pods，并通过adopting/orphaning来协调ControllerRef。</span><br><span class="hljs-comment">// 函数首先从缓存中列出所有Pods，包括不再匹配选择器但具有指向该StatefulSet的ControllerRef的Pods。</span><br><span class="hljs-comment">// 然后通过isMemberOf函数筛选出属于该StatefulSet的Pods。</span><br><span class="hljs-comment">// 最后，使用PodControllerRefManager的ClaimPods方法来处理ControllerRef的采用/孤儿化，并返回属于该StatefulSet的Pods的指针。</span><br><span class="hljs-comment">// 注意：返回的Pods是来自缓存的对象指针，如果需要修改，则需要先复制。</span><br><span class="hljs-comment">// If any adoptions are attempted, we should first recheck for deletion with</span><br><span class="hljs-comment">// an uncached quorum read sometime after listing Pods/ControllerRevisions (see #42639).</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(ssc *StatefulSetController)</span></span> canAdoptFunc(ctx context.Context, set *apps.StatefulSet) <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(ctx2 context.Context)</span></span> <span class="hljs-type">error</span> &#123;<br>	<span class="hljs-keyword">return</span> controller.RecheckDeletionTimestamp(<span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(ctx context.Context)</span></span> (metav1.Object, <span class="hljs-type">error</span>) &#123;<br>		fresh, err := ssc.kubeClient.AppsV1().StatefulSets(set.Namespace).Get(ctx, set.Name, metav1.GetOptions&#123;&#125;)<br>		<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>		&#125;<br>		<span class="hljs-keyword">if</span> fresh.UID != set.UID &#123;<br>			<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, fmt.Errorf(<span class="hljs-string">&quot;original StatefulSet %v/%v is gone: got uid %v, wanted %v&quot;</span>, set.Namespace, set.Name, fresh.UID, set.UID)<br>		&#125;<br>		<span class="hljs-keyword">return</span> fresh, <span class="hljs-literal">nil</span><br>	&#125;)<br>&#125;<br><br><span class="hljs-comment">// 该函数是一个生成函数，返回一个函数，用于检查是否有资格收养（adopt）某个StatefulSet。</span><br><span class="hljs-comment">// 收养的条件是：在尝试收养之后，需要再次使用未缓存的多数读取（uncached quorum read）检查该StatefulSet是否已被删除。</span><br><span class="hljs-comment">// 函数内部通过调用ssc.kubeClient.AppsV1().StatefulSets(set.Namespace).Get()来获取最新的StatefulSet信息，并与原有信息进行对比，</span><br><span class="hljs-comment">// 如果UID一致，则返回最新的StatefulSet对象；否则返回错误信息。</span><br><span class="hljs-comment">// adoptOrphanRevisions adopts any orphaned ControllerRevisions matched by set&#x27;s Selector.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(ssc *StatefulSetController)</span></span> adoptOrphanRevisions(ctx context.Context, set *apps.StatefulSet) <span class="hljs-type">error</span> &#123;<br>	revisions, err := ssc.control.ListRevisions(set)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br>	orphanRevisions := <span class="hljs-built_in">make</span>([]*apps.ControllerRevision, <span class="hljs-number">0</span>)<br>	<span class="hljs-keyword">for</span> i := <span class="hljs-keyword">range</span> revisions &#123;<br>		<span class="hljs-keyword">if</span> metav1.GetControllerOf(revisions[i]) == <span class="hljs-literal">nil</span> &#123;<br>			orphanRevisions = <span class="hljs-built_in">append</span>(orphanRevisions, revisions[i])<br>		&#125;<br>	&#125;<br>	<span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(orphanRevisions) &gt; <span class="hljs-number">0</span> &#123;<br>		canAdoptErr := ssc.canAdoptFunc(ctx, set)(ctx)<br>		<span class="hljs-keyword">if</span> canAdoptErr != <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">return</span> fmt.Errorf(<span class="hljs-string">&quot;can&#x27;t adopt ControllerRevisions: %v&quot;</span>, canAdoptErr)<br>		&#125;<br>		<span class="hljs-keyword">return</span> ssc.control.AdoptOrphanRevisions(set, orphanRevisions)<br>	&#125;<br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-comment">// 该函数用于收养被控制器创建但没有被任何StatefulSet认领的ControllerRevision对象。具体流程如下：</span><br><span class="hljs-comment">// 1. 调用ssc.control.ListRevisions(set)获取与给定StatefulSet相关联的所有ControllerRevision对象。</span><br><span class="hljs-comment">// 2. 遍历所有ControllerRevision对象，如果其metav1.GetControllerOf字段为空，则将其加入orphanRevisions列表。</span><br><span class="hljs-comment">// 3. 如果orphanRevisions列表非空，则调用ssc.canAdoptFunc(ctx, set)(ctx)判断是否可以收养这些孤儿Revision。</span><br><span class="hljs-comment">// 4. 如果可以收养，则调用ssc.control.AdoptOrphanRevisions(set, orphanRevisions)进行收养操作。</span><br><span class="hljs-comment">// 5. 如果收养过程中出现错误，则返回错误信息；否则返回nil表示成功。</span><br><span class="hljs-comment">// getStatefulSetsForPod returns a list of StatefulSets that potentially match</span><br><span class="hljs-comment">// a given pod.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(ssc *StatefulSetController)</span></span> getStatefulSetsForPod(pod *v1.Pod) []*apps.StatefulSet &#123;<br>	sets, err := ssc.setLister.GetPodStatefulSets(pod)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>	&#125;<br>	<span class="hljs-comment">// More than one set is selecting the same Pod</span><br>	<span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(sets) &gt; <span class="hljs-number">1</span> &#123;<br>		<span class="hljs-comment">// ControllerRef will ensure we don&#x27;t do anything crazy, but more than one</span><br>		<span class="hljs-comment">// item in this list nevertheless constitutes user error.</span><br>		setNames := []<span class="hljs-type">string</span>&#123;&#125;<br>		<span class="hljs-keyword">for</span> _, s := <span class="hljs-keyword">range</span> sets &#123;<br>			setNames = <span class="hljs-built_in">append</span>(setNames, s.Name)<br>		&#125;<br>		utilruntime.HandleError(<br>			fmt.Errorf(<br>				<span class="hljs-string">&quot;user error: more than one StatefulSet is selecting pods with labels: %+v. Sets: %v&quot;</span>,<br>				pod.Labels, setNames))<br>	&#125;<br>	<span class="hljs-keyword">return</span> sets<br>&#125;<br><br><span class="hljs-comment">// 该函数用于获取与给定Pod相匹配的所有StatefulSet列表。</span><br><span class="hljs-comment">// - 首先，函数通过调用ssc.setLister.GetPodStatefulSets(pod)方法获取选择该Pod的所有StatefulSet。</span><br><span class="hljs-comment">// - 如果获取过程中出现错误，则直接返回nil。</span><br><span class="hljs-comment">// - 如果存在多个StatefulSet选择同一个Pod（即sets长度大于1），则将其视为用户错误。</span><br><span class="hljs-comment">// 函数会记录错误信息，并返回所有匹配的StatefulSet列表。</span><br><span class="hljs-comment">// 注意：在存在多个StatefulSet选择同一个Pod时，通过ControllerRef可以确保不会发生疯狂的行为。</span><br><span class="hljs-comment">// 但是多个StatefulSet出现在列表中仍然被认为是用户错误。</span><br><span class="hljs-comment">// resolveControllerRef returns the controller referenced by a ControllerRef,</span><br><span class="hljs-comment">// or nil if the ControllerRef could not be resolved to a matching controller</span><br><span class="hljs-comment">// of the correct Kind.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(ssc *StatefulSetController)</span></span> resolveControllerRef(namespace <span class="hljs-type">string</span>, controllerRef *metav1.OwnerReference) *apps.StatefulSet &#123;<br>	<span class="hljs-comment">// We can&#x27;t look up by UID, so look up by Name and then verify UID.</span><br>	<span class="hljs-comment">// Don&#x27;t even try to look up by Name if it&#x27;s the wrong Kind.</span><br>	<span class="hljs-keyword">if</span> controllerRef.Kind != controllerKind.Kind &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>	&#125;<br>	set, err := ssc.setLister.StatefulSets(namespace).Get(controllerRef.Name)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>	&#125;<br>	<span class="hljs-keyword">if</span> set.UID != controllerRef.UID &#123;<br>		<span class="hljs-comment">// The controller we found with this Name is not the same one that the</span><br>		<span class="hljs-comment">// ControllerRef points to.</span><br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>	&#125;<br>	<span class="hljs-keyword">return</span> set<br>&#125;<br><br><span class="hljs-comment">// 该函数用于解析ControllerRef引用的控制器，如果引用无法解析为正确的类型，则返回nil。</span><br><span class="hljs-comment">// 具体步骤如下： 1. 检查controllerRef的类型是否与期望的类型相匹配，如果不匹配则直接返回nil。</span><br><span class="hljs-comment">// 2. 通过名称查找StatefulSet控制器，如果查找失败则返回nil。</span><br><span class="hljs-comment">// 3. 验证找到的StatefulSet控制器的UID是否与controllerRef的UID相同，如果不同则返回nil。</span><br><span class="hljs-comment">// 4. 如果以上验证都通过，则返回找到的StatefulSet控制器。</span><br><span class="hljs-comment">// enqueueStatefulSet enqueues the given statefulset in the work queue.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(ssc *StatefulSetController)</span></span> enqueueStatefulSet(obj <span class="hljs-keyword">interface</span>&#123;&#125;) &#123;<br>	key, err := controller.KeyFunc(obj)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		utilruntime.HandleError(fmt.Errorf(<span class="hljs-string">&quot;couldn&#x27;t get key for object %+v: %v&quot;</span>, obj, err))<br>		<span class="hljs-keyword">return</span><br>	&#125;<br>	ssc.queue.Add(key)<br>&#125;<br><br><span class="hljs-comment">// 该函数用于将给定的状态fulset对象加入工作队列中。</span><br><span class="hljs-comment">// 函数首先通过controller.KeyFunc方法获取对象的键值，如果获取失败，则通过utilruntime.HandleError方法记录错误信息并返回。</span><br><span class="hljs-comment">// 最后，将获取到的键值加入到ssc.queue队列中。</span><br><span class="hljs-comment">// enqueueStatefulSet enqueues the given statefulset in the work queue after given time</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(ssc *StatefulSetController)</span></span> enqueueSSAfter(ss *apps.StatefulSet, duration time.Duration) &#123;<br>	key, err := controller.KeyFunc(ss)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		utilruntime.HandleError(fmt.Errorf(<span class="hljs-string">&quot;couldn&#x27;t get key for object %#v: %v&quot;</span>, ss, err))<br>		<span class="hljs-keyword">return</span><br>	&#125;<br>	ssc.queue.AddAfter(key, duration)<br>&#125;<br><br><span class="hljs-comment">// 该函数将给定的状态集（StatefulSet）在指定时间后加入到工作队列中。</span><br><span class="hljs-comment">// 首先，函数通过调用controller.KeyFunc(ss)方法获取状态集的键值。</span><br><span class="hljs-comment">// 如果获取键值时出现错误，则使用utilruntime.HandleError()方法处理错误并返回。</span><br><span class="hljs-comment">// 最后，将键值和指定时间间隔添加到ssc.queue队列中，以便后续处理。</span><br><span class="hljs-comment">// processNextWorkItem dequeues items, processes them, and marks them done. It enforces that the syncHandler is never</span><br><span class="hljs-comment">// invoked concurrently with the same key.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(ssc *StatefulSetController)</span></span> processNextWorkItem(ctx context.Context) <span class="hljs-type">bool</span> &#123;<br>	key, quit := ssc.queue.Get()<br>	<span class="hljs-keyword">if</span> quit &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span><br>	&#125;<br>	<span class="hljs-keyword">defer</span> ssc.queue.Done(key)<br>	<span class="hljs-keyword">if</span> err := ssc.sync(ctx, key.(<span class="hljs-type">string</span>)); err != <span class="hljs-literal">nil</span> &#123;<br>		utilruntime.HandleError(fmt.Errorf(<span class="hljs-string">&quot;error syncing StatefulSet %v, requeuing: %v&quot;</span>, key.(<span class="hljs-type">string</span>), err))<br>		ssc.queue.AddRateLimited(key)<br>	&#125; <span class="hljs-keyword">else</span> &#123;<br>		ssc.queue.Forget(key)<br>	&#125;<br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">true</span><br>&#125;<br><br><span class="hljs-comment">// 该函数是一个处理工作项的函数，它从队列中获取工作项，处理它，并将其标记为完成。</span><br><span class="hljs-comment">// 它确保同步处理程序永远不会使用相同的键并发执行。</span><br><span class="hljs-comment">// 函数返回一个布尔值，表示是否继续处理下一个工作项。</span><br><span class="hljs-comment">// worker runs a worker goroutine that invokes processNextWorkItem until the controller&#x27;s queue is closed</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(ssc *StatefulSetController)</span></span> worker(ctx context.Context) &#123;<br>	<span class="hljs-keyword">for</span> ssc.processNextWorkItem(ctx) &#123;<br>	&#125;<br>&#125;<br><br><span class="hljs-comment">// 该函数是一个goroutine，用于不断调用processNextWorkItem处理工作项，直到控制器的队列关闭。</span><br><span class="hljs-comment">// sync syncs the given statefulset.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(ssc *StatefulSetController)</span></span> sync(ctx context.Context, key <span class="hljs-type">string</span>) <span class="hljs-type">error</span> &#123;<br>	startTime := time.Now()<br>	logger := klog.FromContext(ctx)<br>	<span class="hljs-keyword">defer</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;<br>		logger.V(<span class="hljs-number">4</span>).Info(<span class="hljs-string">&quot;Finished syncing statefulset&quot;</span>, <span class="hljs-string">&quot;key&quot;</span>, key, <span class="hljs-string">&quot;time&quot;</span>, time.Since(startTime))<br>	&#125;()<br><br>	namespace, name, err := cache.SplitMetaNamespaceKey(key)<br>	<span class="hljs-comment">//该函数是一个Go语言函数，它定义在名为StatefulSetController的结构体中，使用sync作为函数名。</span><br>	<span class="hljs-comment">//该函数接收两个参数：ctx context.Context和key string，并返回一个error类型的值。</span><br>	<span class="hljs-comment">//函数主要功能如下：</span><br>	<span class="hljs-comment">//1. 记录开始时间：在函数开始处，通过调用time.Now()记录当前时间，用于后续计算函数执行时间。</span><br>	<span class="hljs-comment">//2. 获取日志记录器：通过从传入的ctx参数中获取日志记录器，用于记录函数执行的日志信息。</span><br>	<span class="hljs-comment">//3. 延迟执行日志记录：使用defer关键字定义延迟执行的函数，该函数会在函数返回前执行。</span><br>	<span class="hljs-comment">//延迟函数主要记录函数执行结束时间，并通过日志记录器记录函数执行时间及关键参数信息。</span><br>	<span class="hljs-comment">//4. 分解键值：通过调用cache.SplitMetaNamespaceKey(key)函数，将传入的键值key分解为命名空间namespace和名称name两个部分。</span><br>	<span class="hljs-comment">//整体而言，该函数的主要作用是同步处理某个键值对应的StatefulSet对象，具体处理逻辑在该函数的后续代码中实现。</span><br>	<span class="hljs-comment">//该函数通过记录函数执行时间、获取日志记录器以及分解键值等操作，为后续处理提供了必要信息。</span><br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br>	set, err := ssc.setLister.StatefulSets(namespace).Get(name)<br>	<span class="hljs-comment">//该函数主要执行以下操作：</span><br>	<span class="hljs-comment">//1. 检查err是否为nil，如果不为nil，则直接返回错误。</span><br>	<span class="hljs-comment">//2. 调用ssc.setLister.StatefulSets(namespace).Get(name)获取指定命名空间中的状态集，并将其赋值给set变量。</span><br>	<span class="hljs-comment">//3. 返回set和err，其中set为获取的状态集，err为执行过程中可能出现的错误。</span><br>	<span class="hljs-keyword">if</span> errors.IsNotFound(err) &#123;<br>		logger.Info(<span class="hljs-string">&quot;StatefulSet has been deleted&quot;</span>, <span class="hljs-string">&quot;key&quot;</span>, key)<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>	&#125;<br>	<span class="hljs-comment">//这段Go代码主要进行错误判断和日志记录。具体功能如下：</span><br>	<span class="hljs-comment">//- 首先，它检查错误变量err是否为NotFound错误（即该错误表示某个资源未找到）。</span><br>	<span class="hljs-comment">//- 如果是NotFound错误，它会通过logger.Info方法记录一条日志信息，指示某个StatefulSet已被删除，同时在日志中包含key参数的值。</span><br>	<span class="hljs-comment">//- 最后，函数返回nil，表示处理完成且无需进一步处理。</span><br>	<span class="hljs-comment">//这段代码的作用是在遇到特定类型的错误时，记录一条相关日志信息，并终止进一步的错误处理流程。</span><br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		utilruntime.HandleError(fmt.Errorf(<span class="hljs-string">&quot;unable to retrieve StatefulSet %v from store: %v&quot;</span>, key, err))<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br>	<span class="hljs-comment">//这段Go代码是一个错误处理的示例。</span><br>	<span class="hljs-comment">//如果变量err不为nil，则会使用utilruntime.HandleError()函数处理错误，</span><br>	<span class="hljs-comment">//该函数会将一个格式化后的错误信息打印出来。然后函数会返回err。这段代码的作用是在发生错误时记录错误信息并返回错误。</span><br>	selector, err := metav1.LabelSelectorAsSelector(set.Spec.Selector)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		utilruntime.HandleError(fmt.Errorf(<span class="hljs-string">&quot;error converting StatefulSet %v selector: %v&quot;</span>, key, err))<br>		<span class="hljs-comment">// This is a non-transient error, so don&#x27;t retry.</span><br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>	&#125;<br>	<span class="hljs-comment">//这段Go代码主要实现了将StatefulSet的标签选择器转换为Selector的功能。</span><br>	<span class="hljs-comment">//具体来说，它首先通过metav1.LabelSelectorAsSelector函数将set.Spec.Selector转换为Selector类型，</span><br>	<span class="hljs-comment">//如果转换过程中出现错误，则通过utilruntime.HandleError函数记录错误信息，并返回nil。</span><br>	<span class="hljs-comment">//需要注意的是，这里的错误被认为是非瞬时错误，因此不会进行重试。</span><br>	<span class="hljs-keyword">if</span> err := ssc.adoptOrphanRevisions(ctx, set); err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br>	<span class="hljs-comment">//这个函数调用了ssc.adoptOrphanRevisions方法，该方法的作用是在给定的上下文ctx中采用孤儿修订版本。如果方法执行出错，则会返回错误信息err。</span><br>	pods, err := ssc.getPodsForStatefulSet(ctx, set, selector)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br>	<span class="hljs-comment">//该函数尝试通过调用ssc.getPodsForStatefulSet方法获取与指定StatefulSet和选择器相关联的Pods。如果获取过程中出现错误，则将错误返回。</span><br>	<span class="hljs-keyword">return</span> ssc.syncStatefulSet(ctx, set, pods)<br>	<span class="hljs-comment">//该函数是Go语言编写的，用于同步更新StatefulSet（有状态副本集）的状态。</span><br>	<span class="hljs-comment">//- ctx是一个上下文对象，用于控制函数执行的生命周期。</span><br>	<span class="hljs-comment">//- set是一个StatefulSet对象，表示要更新的有状态副本集。</span><br>	<span class="hljs-comment">//- pods是一个Pod对象的列表，表示有状态副本集中的Pods。</span><br>	<span class="hljs-comment">//函数内部会根据传入的有状态副本集和Pods对象，进行一系列操作来更新副本集的状态，使其与实际的Pods状态保持一致。具体操作细节可以根据函数实现来确定。</span><br>&#125;<br><br><span class="hljs-comment">// syncStatefulSet syncs a tuple of (statefulset, []*v1.Pod).</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(ssc *StatefulSetController)</span></span> syncStatefulSet(ctx context.Context, set *apps.StatefulSet, pods []*v1.Pod) <span class="hljs-type">error</span> &#123;<br>	logger := klog.FromContext(ctx)<br>	logger.V(<span class="hljs-number">4</span>).Info(<span class="hljs-string">&quot;Syncing StatefulSet with pods&quot;</span>, <span class="hljs-string">&quot;statefulSet&quot;</span>, klog.KObj(set), <span class="hljs-string">&quot;pods&quot;</span>, <span class="hljs-built_in">len</span>(pods))<br>	<span class="hljs-keyword">var</span> status *apps.StatefulSetStatus<br>	<span class="hljs-keyword">var</span> err <span class="hljs-type">error</span><br>	status, err = ssc.control.UpdateStatefulSet(ctx, set, pods)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br>	logger.V(<span class="hljs-number">4</span>).Info(<span class="hljs-string">&quot;Successfully synced StatefulSet&quot;</span>, <span class="hljs-string">&quot;statefulSet&quot;</span>, klog.KObj(set))<br>	<span class="hljs-comment">// One more sync to handle the clock skew. This is also helping in requeuing right after status update</span><br>	<span class="hljs-keyword">if</span> set.Spec.MinReadySeconds &gt; <span class="hljs-number">0</span> &amp;&amp; status != <span class="hljs-literal">nil</span> &amp;&amp; status.AvailableReplicas != *set.Spec.Replicas &#123;<br>		ssc.enqueueSSAfter(set, time.Duration(set.Spec.MinReadySeconds)*time.Second)<br>	&#125;<br><br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-comment">//该函数是一个用于同步StatefulSet和其关联Pods的函数。</span><br><span class="hljs-comment">//它通过调用ssc.control.UpdateStatefulSet方法来更新StatefulSet的状态，</span><br><span class="hljs-comment">//并在更新完成后进行额外的同步操作来处理时钟偏移。</span><br><span class="hljs-comment">//如果StatefulSet的MinReadySeconds大于0，并且更新后的状态的AvailableReplicas与Spec.Replicas不相等，则会重新排队等待处理。</span><br><br></code></pre></td></tr></table></figure>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>K8S控制器之stateful_set.go源码解读 2024-04-10</div>
+      <div>http://example.com/2025/01/16/K8S控制器之stateful_setgo源码解读-k8s-kong-zhi-qi-zhi-statefulsetgo-yuan-ma-jie-du/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/K8S%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_set_status_updatego%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetstatusupdatego-yuan-ma-jie-du/" title="K8S控制器之stateful_set_status_update.go源码解读 2024-04-10">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">K8S控制器之stateful_set_status_update.go源码解读 2024-04-10</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/K8S%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_pod_controlgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulpodcontrolgo-yuan-ma-jie-du/" title="K8S控制器之stateful_pod_control.go源码解读 2024-04-10 09:42:50.078">
+                        <span class="hidden-mobile">K8S控制器之stateful_pod_control.go源码解读 2024-04-10 09:42:50.078</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

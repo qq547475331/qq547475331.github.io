@@ -1,0 +1,677 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="简介Client-Go 共提供了 4 种与 Kubernetes APIServer 交互的客户端。分别是 RESTClient、DiscoveryClient、ClientSet、DynamicClient。 • RESTClient：最基础的客户端，主要是对 HTTP 请求进行了封装，支持 Json 和 Protobuf 格式的数据。 • DiscoveryClient：发现客户端，负责发现">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Client-go 四种客户端 2024-04-03 14:49:34.32">
+<meta property="og:url" content="http://example.com/2025/01/16/Client-go%20%E5%9B%9B%E7%A7%8D%E5%AE%A2%E6%88%B7%E7%AB%AF-client-go-si-zhong-ke-hu-duan/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="简介Client-Go 共提供了 4 种与 Kubernetes APIServer 交互的客户端。分别是 RESTClient、DiscoveryClient、ClientSet、DynamicClient。 • RESTClient：最基础的客户端，主要是对 HTTP 请求进行了封装，支持 Json 和 Protobuf 格式的数据。 • DiscoveryClient：发现客户端，负责发现">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191503211.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.040Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:18.552Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191503211.png">
+  
+  
+  
+  <title>Client-go 四种客户端 2024-04-03 14:49:34.32 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Client-go 四种客户端 2024-04-03 14:49:34.32"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          26 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Client-go 四种客户端 2024-04-03 14:49:34.32</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><h5 id="Client-Go-共提供了-4-种与-Kubernetes-APIServer-交互的客户端。分别是-RESTClient、DiscoveryClient、ClientSet、DynamicClient。"><a href="#Client-Go-共提供了-4-种与-Kubernetes-APIServer-交互的客户端。分别是-RESTClient、DiscoveryClient、ClientSet、DynamicClient。" class="headerlink" title="Client-Go 共提供了 4 种与 Kubernetes APIServer 交互的客户端。分别是 RESTClient、DiscoveryClient、ClientSet、DynamicClient。"></a>Client-Go 共提供了 4 种与 Kubernetes APIServer 交互的客户端。分别是 <strong>RESTClient、DiscoveryClient、ClientSet、DynamicClient</strong>。</h5><ul>
+<li><h5 id="•-RESTClient：最基础的客户端，主要是对-HTTP-请求进行了封装，支持-Json-和-Protobuf-格式的数据。"><a href="#•-RESTClient：最基础的客户端，主要是对-HTTP-请求进行了封装，支持-Json-和-Protobuf-格式的数据。" class="headerlink" title="• RESTClient：最基础的客户端，主要是对 HTTP 请求进行了封装，支持 Json 和 Protobuf 格式的数据。"></a>• <strong>RESTClient：</strong>最基础的客户端，主要是对 HTTP 请求进行了封装，支持 Json 和 Protobuf 格式的数据。</h5></li>
+<li><h5 id="•-DiscoveryClient：发现客户端，负责发现-APIServer-支持的资源组、资源版本和资源信息的。"><a href="#•-DiscoveryClient：发现客户端，负责发现-APIServer-支持的资源组、资源版本和资源信息的。" class="headerlink" title="• DiscoveryClient：发现客户端，负责发现 APIServer 支持的资源组、资源版本和资源信息的。"></a>• <strong>DiscoveryClient：</strong>发现客户端，负责发现 APIServer 支持的资源组、资源版本和资源信息的。</h5></li>
+<li><h5 id="•-ClientSet：负责操作-Kubernetes-内置的资源对象，例如：Pod、Service等。"><a href="#•-ClientSet：负责操作-Kubernetes-内置的资源对象，例如：Pod、Service等。" class="headerlink" title="• ClientSet：负责操作 Kubernetes 内置的资源对象，例如：Pod、Service等。"></a>• <strong>ClientSet：</strong>负责操作 Kubernetes 内置的资源对象，例如：Pod、Service等。</h5></li>
+<li><h5 id="•-DynamicClient：动态客户端，可以对任意的-Kubernetes-资源对象进行通用操作，包括-CRD。"><a href="#•-DynamicClient：动态客户端，可以对任意的-Kubernetes-资源对象进行通用操作，包括-CRD。" class="headerlink" title="• DynamicClient：动态客户端，可以对任意的 Kubernetes 资源对象进行通用操作，包括 CRD。"></a>• <strong>DynamicClient：</strong>动态客户端，可以对任意的 Kubernetes 资源对象进行通用操作，包括 CRD。</h5></li>
+</ul>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191503211.png" srcset="/img/loading.gif" lazyload alt="image-20240319150324140"></p>
+<hr>
+<h2 id="RESTClient"><a href="#RESTClient" class="headerlink" title="RESTClient"></a>RESTClient</h2><h5 id="上图可以看出-RESTClient-是所有-Client-的父类"><a href="#上图可以看出-RESTClient-是所有-Client-的父类" class="headerlink" title="上图可以看出 RESTClient 是所有 Client 的父类"></a>上图可以看出 <strong>RESTClient</strong> 是所有 Client 的父类</h5><h5 id="它就是对-HTTP-Request-进行了封装，实现了-RESTFul-风格的-API，可以直接通过-RESTClient-提供的-RESTful-方法-GET-，PUT-，POST-，DELETE-操作数据"><a href="#它就是对-HTTP-Request-进行了封装，实现了-RESTFul-风格的-API，可以直接通过-RESTClient-提供的-RESTful-方法-GET-，PUT-，POST-，DELETE-操作数据" class="headerlink" title="它就是对 HTTP Request 进行了封装，实现了 RESTFul 风格的 API，可以直接通过 RESTClient 提供的 RESTful 方法 GET()，PUT()，POST()，DELETE() 操作数据"></a>它就是对 HTTP Request 进行了封装，实现了 RESTFul 风格的 API，可以直接通过 RESTClient 提供的 RESTful 方法 <code>GET()，PUT()，POST()，DELETE()</code> 操作数据</h5><ul>
+<li><h5 id="•-同时支持-json-和-protobuf"><a href="#•-同时支持-json-和-protobuf" class="headerlink" title="• 同时支持 json 和 protobuf"></a>• 同时支持 json 和 protobuf</h5></li>
+<li><h5 id="•-支持所有原生资源和-CRD"><a href="#•-支持所有原生资源和-CRD" class="headerlink" title="• 支持所有原生资源和 CRD"></a>• 支持所有原生资源和 CRD</h5></li>
+</ul>
+<h3 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h3><h5 id="使用-RESTClient-获取-K8S-集群-pod-资源"><a href="#使用-RESTClient-获取-K8S-集群-pod-资源" class="headerlink" title="使用 RESTClient 获取 K8S 集群 pod 资源"></a>使用 <strong>RESTClient</strong> 获取 K8S 集群 pod 资源</h5><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br><br><span class="hljs-keyword">import</span> (<br>    <span class="hljs-string">&quot;context&quot;</span><br>    <span class="hljs-string">&quot;flag&quot;</span><br>    <span class="hljs-string">&quot;fmt&quot;</span><br>    <span class="hljs-string">&quot;os&quot;</span><br>    <span class="hljs-string">&quot;path/filepath&quot;</span><br><br>    corev1 <span class="hljs-string">&quot;k8s.io/api/core/v1&quot;</span><br>    <span class="hljs-string">&quot;k8s.io/client-go/kubernetes/scheme&quot;</span><br>    <span class="hljs-string">&quot;k8s.io/client-go/rest&quot;</span><br>    <span class="hljs-string">&quot;k8s.io/client-go/tools/clientcmd&quot;</span><br>)<br><br><span class="hljs-comment">// 获取系统家目录</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">homeDir</span><span class="hljs-params">()</span></span> <span class="hljs-type">string</span> &#123;<br>    <span class="hljs-keyword">if</span> h := os.Getenv(<span class="hljs-string">&quot;HOME&quot;</span>); h != <span class="hljs-string">&quot;&quot;</span> &#123;<br>        <span class="hljs-keyword">return</span> h<br>    &#125;<br><br>    <span class="hljs-comment">// for windows</span><br>    <span class="hljs-keyword">return</span> os.Getenv(<span class="hljs-string">&quot;USERPROFILE&quot;</span>)<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>    <span class="hljs-keyword">var</span> kubeConfig *<span class="hljs-type">string</span><br>    <span class="hljs-keyword">var</span> err <span class="hljs-type">error</span><br>    <span class="hljs-keyword">var</span> config *rest.Config<br><br>    <span class="hljs-comment">// 获取 kubeconfig 文件路径</span><br>    <span class="hljs-keyword">if</span> h := homeDir(); h != <span class="hljs-string">&quot;&quot;</span> &#123;<br>        kubeConfig = flag.String(<span class="hljs-string">&quot;kubeConfig&quot;</span>, filepath.Join(h, <span class="hljs-string">&quot;.kube&quot;</span>, <span class="hljs-string">&quot;config&quot;</span>), <span class="hljs-string">&quot;use kubeconfig to access kube-apiserver&quot;</span>)<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        kubeConfig = flag.String(<span class="hljs-string">&quot;kubeConfig&quot;</span>, <span class="hljs-string">&quot;&quot;</span>, <span class="hljs-string">&quot;use kubeconfig to access kube-apiserver&quot;</span>)<br>    &#125;<br>    flag.Parse()<br><br>    <span class="hljs-comment">// 获取 kubeconfig</span><br>    config, err = clientcmd.BuildConfigFromFlags(<span class="hljs-string">&quot;&quot;</span>, *kubeConfig)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-built_in">panic</span>(err.Error())<br>    &#125;<br><br>    <span class="hljs-comment">// 使用 RESTClient 需要开发者自行设置资源 URL</span><br>    <span class="hljs-comment">// pod 资源没有 group，在核心组，所以前缀是 api</span><br>    config.APIPath = <span class="hljs-string">&quot;api&quot;</span><br>    <span class="hljs-comment">// 设置 corev1 groupVersion</span><br>    config.GroupVersion = &amp;corev1.SchemeGroupVersion<br>    <span class="hljs-comment">// 设置解析器，用于用于解析 scheme</span><br>    config.NegotiatedSerializer = scheme.Codecs.WithoutConversion()<br>    <span class="hljs-comment">// 初始化 RESTClient</span><br>    restClient, err := rest.RESTClientFor(config)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-built_in">panic</span>(err.Error())<br>    &#125;<br>    <span class="hljs-comment">// 调用结果用 podList 解析</span><br>    result := &amp;corev1.PodList&#123;&#125;<br>    <span class="hljs-comment">// 获取 kube-system 命名空间的 pod</span><br>    namespace := <span class="hljs-string">&quot;kube-system&quot;</span><br>    <span class="hljs-comment">// 链式调用 RESTClient 方法获取，并将结果解析到 corev1.PodList&#123;&#125;</span><br>    err = restClient.Get().Namespace(namespace).Resource(<span class="hljs-string">&quot;pods&quot;</span>).Do(context.TODO()).Into(result)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-built_in">panic</span>(err.Error())<br>    &#125;<br><br>    <span class="hljs-comment">// 打印结果</span><br>    <span class="hljs-keyword">for</span> _, pod := <span class="hljs-keyword">range</span> result.Items &#123;<br>        fmt.Printf(<span class="hljs-string">&quot;namespace: %s, pod: %s\n&quot;</span>, pod.Namespace, pod.Name)<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h5 id="程序结果如下："><a href="#程序结果如下：" class="headerlink" title="程序结果如下："></a>程序结果如下：</h5><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">namespace</span>: kube-system, pod: coredns-<span class="hljs-number">697</span>ddfb55c-<span class="hljs-number">5</span>lk74<br><span class="hljs-attribute">namespace</span>: kube-system, pod: coredns-<span class="hljs-number">697</span>ddfb55c-nnkhp<br><span class="hljs-attribute">namespace</span>: kube-system, pod: etcd-master-<span class="hljs-number">172</span>-<span class="hljs-number">31</span>-<span class="hljs-number">97</span>-<span class="hljs-number">104</span><br><span class="hljs-attribute">namespace</span>: kube-system, pod: kube-apiserver-master-<span class="hljs-number">172</span>-<span class="hljs-number">31</span>-<span class="hljs-number">97</span>-<span class="hljs-number">104</span><br><span class="hljs-attribute">namespace</span>: kube-system, pod: kube-controller-manager-master-<span class="hljs-number">172</span>-<span class="hljs-number">31</span>-<span class="hljs-number">97</span>-<span class="hljs-number">104</span><br><span class="hljs-attribute">namespace</span>: kube-system, pod: kube-lvscare-node-<span class="hljs-number">172</span>-<span class="hljs-number">31</span>-<span class="hljs-number">97</span>-<span class="hljs-number">105</span><br><span class="hljs-attribute">namespace</span>: kube-system, pod: kube-proxy-<span class="hljs-number">49</span>k8k<br><span class="hljs-attribute">namespace</span>: kube-system, pod: kube-proxy-fvf57<br><span class="hljs-attribute">namespace</span>: kube-system, pod: kube-scheduler-master-<span class="hljs-number">172</span>-<span class="hljs-number">31</span>-<span class="hljs-number">97</span>-<span class="hljs-number">104</span><br><span class="hljs-attribute">namespace</span>: kube-system, pod: metrics-server-<span class="hljs-number">7</span>f6f9649f9-qvvj8<br></code></pre></td></tr></table></figure>
+
+<h3 id="RESTClient-原理"><a href="#RESTClient-原理" class="headerlink" title="RESTClient 原理"></a>RESTClient 原理</h3><h5 id="初始化-RESTClient，可以发现对原生-HTTP-库进行了封装了"><a href="#初始化-RESTClient，可以发现对原生-HTTP-库进行了封装了" class="headerlink" title="初始化 RESTClient，可以发现对原生 HTTP 库进行了封装了"></a>初始化 <strong>RESTClient</strong>，可以发现对原生 HTTP 库进行了封装了</h5><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">RESTClientFor</span><span class="hljs-params">(config *Config)</span></span> (*RESTClient, <span class="hljs-type">error</span>) &#123;<br>    <span class="hljs-keyword">if</span> config.GroupVersion == <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, fmt.Errorf(<span class="hljs-string">&quot;GroupVersion is required when initializing a RESTClient&quot;</span>)<br>    &#125;<br>    <span class="hljs-keyword">if</span> config.NegotiatedSerializer == <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, fmt.Errorf(<span class="hljs-string">&quot;NegotiatedSerializer is required when initializing a RESTClient&quot;</span>)<br>    &#125;<br><br>    <span class="hljs-comment">// Validate config.Host before constructing the transport/client so we can fail fast.</span><br>    <span class="hljs-comment">// ServerURL will be obtained later in RESTClientForConfigAndClient()</span><br>    _, _, err := defaultServerUrlFor(config)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>    &#125;<br><br>    <span class="hljs-comment">// 获取原生 http client</span><br>    httpClient, err := HTTPClientFor(config)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>    &#125;<br>    <br>    <span class="hljs-comment">// 初始化 RESTClient</span><br>    <span class="hljs-keyword">return</span> RESTClientForConfigAndClient(config, httpClient)<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h5 id="RESTClient-实现了-Interface-接口"><a href="#RESTClient-实现了-Interface-接口" class="headerlink" title="RESTClient 实现了 Interface 接口"></a><strong>RESTClient</strong> 实现了 <code>Interface</code> 接口</h5><figure class="highlight elm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs elm"><span class="hljs-keyword">type</span> <span class="hljs-type">Interface</span> interface &#123;<br>    <span class="hljs-type">GetRateLimiter</span>() flowcontrol.<span class="hljs-type">RateLimiter</span><br>    <span class="hljs-type">Verb</span>(verb string) *<span class="hljs-type">Request</span><br>    <span class="hljs-type">Post</span>() *<span class="hljs-type">Request</span><br>    <span class="hljs-type">Put</span>() *<span class="hljs-type">Request</span><br>    <span class="hljs-type">Patch</span>(pt types.<span class="hljs-type">PatchType</span>) *<span class="hljs-type">Request</span><br>    <span class="hljs-type">Get</span>() *<span class="hljs-type">Request</span><br>    <span class="hljs-type">Delete</span>() *<span class="hljs-type">Request</span><br>    <span class="hljs-type">APIVersion</span>() schema.<span class="hljs-type">GroupVersion</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h5 id="RESTClient-的链式调用主要是设置-namespace，资源-name，一些选择器等，最终调用-Do-方法网络调用"><a href="#RESTClient-的链式调用主要是设置-namespace，资源-name，一些选择器等，最终调用-Do-方法网络调用" class="headerlink" title="RESTClient 的链式调用主要是设置 namespace，资源 name，一些选择器等，最终调用 Do() 方法网络调用"></a><strong>RESTClient</strong> 的链式调用主要是设置 namespace，资源 name，一些选择器等，最终调用 <code>Do()</code> 方法网络调用</h5><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(r *Request)</span></span> Do(ctx context.Context) Result &#123;<br>    <span class="hljs-keyword">var</span> result Result<br>    err := r.request(ctx, <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(req *http.Request, resp *http.Response)</span></span> &#123;<br>        result = r.transformResponse(resp, req)<br>    &#125;)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> Result&#123;err: err&#125;<br>    &#125;<br>    <span class="hljs-keyword">return</span> result<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(r *Request)</span></span> request(ctx context.Context, fn <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(*http.Request, *http.Response)</span></span>) <span class="hljs-type">error</span> &#123;<br>    <span class="hljs-comment">//Metrics for total request latency</span><br>    start := time.Now()<br>    <span class="hljs-keyword">defer</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;<br>        metrics.RequestLatency.Observe(ctx, r.verb, r.finalURLTemplate(), time.Since(start))<br>    &#125;()<br><br>    <span class="hljs-keyword">if</span> r.err != <span class="hljs-literal">nil</span> &#123;<br>        klog.V(<span class="hljs-number">4</span>).Infof(<span class="hljs-string">&quot;Error in request: %v&quot;</span>, r.err)<br>        <span class="hljs-keyword">return</span> r.err<br>    &#125;<br><br>    <span class="hljs-keyword">if</span> err := r.requestPreflightCheck(); err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> err<br>    &#125;<br><br>    client := r.c.Client<br>    <span class="hljs-keyword">if</span> client == <span class="hljs-literal">nil</span> &#123;<br>        client = http.DefaultClient<br>    &#125;<br><br>    <span class="hljs-comment">// Throttle the first try before setting up the timeout configured on the</span><br>    <span class="hljs-comment">// client. We don&#x27;t want a throttled client to return timeouts to callers</span><br>    <span class="hljs-comment">// before it makes a single request.</span><br>    <span class="hljs-keyword">if</span> err := r.tryThrottle(ctx); err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> err<br>    &#125;<br><br>    <span class="hljs-keyword">if</span> r.timeout &gt; <span class="hljs-number">0</span> &#123;<br>        <span class="hljs-keyword">var</span> cancel context.CancelFunc<br>        ctx, cancel = context.WithTimeout(ctx, r.timeout)<br>        <span class="hljs-keyword">defer</span> cancel()<br>    &#125;<br><br>    <span class="hljs-comment">// Right now we make about ten retry attempts if we get a Retry-After response.</span><br>    <span class="hljs-keyword">var</span> retryAfter *RetryAfter<br>    <span class="hljs-keyword">for</span> &#123;<br>        <span class="hljs-comment">// 初始化网络请求</span><br>        req, err := r.newHTTPRequest(ctx)<br>        <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>            <span class="hljs-keyword">return</span> err<br>        &#125;<br><br>        r.backoff.Sleep(r.backoff.CalculateBackoff(r.URL()))<br>        <span class="hljs-keyword">if</span> retryAfter != <span class="hljs-literal">nil</span> &#123;<br>            <span class="hljs-comment">// We are retrying the request that we already send to apiserver</span><br>            <span class="hljs-comment">// at least once before.</span><br>            <span class="hljs-comment">// This request should also be throttled with the client-internal rate limiter.</span><br>            <span class="hljs-keyword">if</span> err := r.tryThrottleWithInfo(ctx, retryAfter.Reason); err != <span class="hljs-literal">nil</span> &#123;<br>                <span class="hljs-keyword">return</span> err<br>            &#125;<br>            retryAfter = <span class="hljs-literal">nil</span><br>        &#125;<br>        <span class="hljs-comment">// 发起网络调用</span><br>        resp, err := client.Do(req)<br>        updateURLMetrics(ctx, r, resp, err)<br>        <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>            r.backoff.UpdateBackoff(r.URL(), err, <span class="hljs-number">0</span>)<br>        &#125; <span class="hljs-keyword">else</span> &#123;<br>            r.backoff.UpdateBackoff(r.URL(), err, resp.StatusCode)<br>        &#125;<br><br>        done := <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> <span class="hljs-type">bool</span> &#123;<br>            <span class="hljs-keyword">defer</span> readAndCloseResponseBody(resp)<br><br>            <span class="hljs-comment">// if the the server returns an error in err, the response will be nil.</span><br>            f := <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(req *http.Request, resp *http.Response)</span></span> &#123;<br>                <span class="hljs-keyword">if</span> resp == <span class="hljs-literal">nil</span> &#123;<br>                    <span class="hljs-keyword">return</span><br>                &#125;<br>                fn(req, resp)<br>            &#125;<br><br>            <span class="hljs-keyword">var</span> retry <span class="hljs-type">bool</span><br>            retryAfter, retry = r.retry.NextRetry(req, resp, err, <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(req *http.Request, err <span class="hljs-type">error</span>)</span></span> <span class="hljs-type">bool</span> &#123;<br>                <span class="hljs-comment">// &quot;Connection reset by peer&quot; or &quot;apiserver is shutting down&quot; are usually a transient errors.</span><br>                <span class="hljs-comment">// Thus in case of &quot;GET&quot; operations, we simply retry it.</span><br>                <span class="hljs-comment">// We are not automatically retrying &quot;write&quot; operations, as they are not idempotent.</span><br>                <span class="hljs-keyword">if</span> r.verb != <span class="hljs-string">&quot;GET&quot;</span> &#123;<br>                    <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span><br>                &#125;<br>                <span class="hljs-comment">// For connection errors and apiserver shutdown errors retry.</span><br>                <span class="hljs-keyword">if</span> net.IsConnectionReset(err) || net.IsProbableEOF(err) &#123;<br>                    <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span><br>                &#125;<br>                <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span><br>            &#125;)<br>            <span class="hljs-keyword">if</span> retry &#123;<br>                err := r.retry.BeforeNextRetry(ctx, r.backoff, retryAfter, req.URL.String(), r.body)<br>                <span class="hljs-keyword">if</span> err == <span class="hljs-literal">nil</span> &#123;<br>                    <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span><br>                &#125;<br>                klog.V(<span class="hljs-number">4</span>).Infof(<span class="hljs-string">&quot;Could not retry request - %v&quot;</span>, err)<br>            &#125;<br><br>            f(req, resp)<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span><br>        &#125;()<br>        <span class="hljs-keyword">if</span> done &#123;<br>            <span class="hljs-keyword">return</span> err<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="ClientSet"><a href="#ClientSet" class="headerlink" title="ClientSet"></a>ClientSet</h2><h5 id="ClientSet-在调用-Kubernetes-内置资源非常常用，但是无法操作自定义资源，需要实现自定义资源的-ClientSet-才能操作。"><a href="#ClientSet-在调用-Kubernetes-内置资源非常常用，但是无法操作自定义资源，需要实现自定义资源的-ClientSet-才能操作。" class="headerlink" title="ClientSet 在调用 Kubernetes 内置资源非常常用，但是无法操作自定义资源，需要实现自定义资源的 ClientSet 才能操作。"></a><strong>ClientSet</strong> 在调用 Kubernetes 内置资源非常常用，但是无法操作自定义资源，需要实现自定义资源的 <strong>ClientSet</strong> 才能操作。</h5><h5 id="ClientSet-是在-RESTClient-的基础上封装了对-Resource-和-Version-的管理方法，Client-go-对-Kubernetes-每一个内置资源都封装了-Client，而-ClientSet-就是多个-Client-的集合。"><a href="#ClientSet-是在-RESTClient-的基础上封装了对-Resource-和-Version-的管理方法，Client-go-对-Kubernetes-每一个内置资源都封装了-Client，而-ClientSet-就是多个-Client-的集合。" class="headerlink" title="ClientSet 是在 RESTClient 的基础上封装了对 Resource 和 Version 的管理方法，Client-go 对 Kubernetes 每一个内置资源都封装了 Client，而 ClientSet 就是多个 Client 的集合。"></a><strong>ClientSet</strong> 是在 <strong>RESTClient</strong> 的基础上封装了对 Resource 和 Version 的管理方法，Client-go 对 Kubernetes 每一个<strong>内置资源</strong>都封装了 Client，而 <strong>ClientSet</strong> 就是多个 Client 的集合。</h5><h3 id="示例-1"><a href="#示例-1" class="headerlink" title="示例"></a>示例</h3><h5 id="使用-ClientSet-获取-K8S-集群-pod-资源"><a href="#使用-ClientSet-获取-K8S-集群-pod-资源" class="headerlink" title="使用 ClientSet 获取 K8S 集群 pod 资源"></a>使用 <strong>ClientSet</strong> 获取 K8S 集群 pod 资源</h5><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br><br><span class="hljs-keyword">import</span> (<br>    <span class="hljs-string">&quot;context&quot;</span><br>    <span class="hljs-string">&quot;flag&quot;</span><br>    <span class="hljs-string">&quot;fmt&quot;</span><br>    <span class="hljs-string">&quot;os&quot;</span><br>    <span class="hljs-string">&quot;path/filepath&quot;</span><br><br>    metav1 <span class="hljs-string">&quot;k8s.io/apimachinery/pkg/apis/meta/v1&quot;</span><br>    <span class="hljs-string">&quot;k8s.io/client-go/kubernetes&quot;</span><br>    <span class="hljs-string">&quot;k8s.io/client-go/tools/clientcmd&quot;</span><br>)<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">homeDir</span><span class="hljs-params">()</span></span> <span class="hljs-type">string</span> &#123;<br>    <span class="hljs-keyword">if</span> h := os.Getenv(<span class="hljs-string">&quot;HOME&quot;</span>); h != <span class="hljs-string">&quot;&quot;</span> &#123;<br>        <span class="hljs-keyword">return</span> h<br>    &#125;<br><br>    <span class="hljs-keyword">return</span> os.Getenv(<span class="hljs-string">&quot;USERROFILE&quot;</span>)<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>    <span class="hljs-keyword">var</span> kubeConfig *<span class="hljs-type">string</span><br><br>    <span class="hljs-keyword">if</span> h := homeDir(); h != <span class="hljs-string">&quot;&quot;</span> &#123;<br>        kubeConfig = flag.String(<span class="hljs-string">&quot;kubeConfig&quot;</span>, filepath.Join(h, <span class="hljs-string">&quot;.kube&quot;</span>, <span class="hljs-string">&quot;config&quot;</span>), <span class="hljs-string">&quot;use kubeconfig to access kube-apiserver&quot;</span>)<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        kubeConfig = flag.String(<span class="hljs-string">&quot;kubeConfig&quot;</span>, <span class="hljs-string">&quot;&quot;</span>, <span class="hljs-string">&quot;use kubeconfig to access kube-apiserver&quot;</span>)<br>    &#125;<br>    flag.Parse()<br><br>    config, err := clientcmd.BuildConfigFromFlags(<span class="hljs-string">&quot;&quot;</span>, *kubeConfig)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-built_in">panic</span>(err.Error())<br>    &#125;<br><br>    <span class="hljs-comment">// 获取 clientSet</span><br>    clientSet, err := kubernetes.NewForConfig(config)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-built_in">panic</span>(err.Error())<br>    &#125;<br><br>    namespace := <span class="hljs-string">&quot;kube-system&quot;</span><br>    <span class="hljs-comment">// 链式调用 ClientSet 获取 pod 列表</span><br>    podList, err := clientSet.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions&#123;&#125;)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-built_in">panic</span>(err.Error())<br>    &#125;<br><br>    <span class="hljs-keyword">for</span> _, pod := <span class="hljs-keyword">range</span> podList.Items &#123;<br>        fmt.Printf(<span class="hljs-string">&quot;namespace: %s, pod: %s\n&quot;</span>, pod.Namespace, pod.Name)<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="ClientSet-原理"><a href="#ClientSet-原理" class="headerlink" title="ClientSet 原理"></a>ClientSet 原理</h3><h5 id="NewForConfig-获取-ClientSet"><a href="#NewForConfig-获取-ClientSet" class="headerlink" title="NewForConfig 获取 ClientSet"></a><code>NewForConfig</code> 获取 <strong>ClientSet</strong></h5><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// k8s.io/client-go/kubernetes/clientset.go:413</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">NewForConfig</span><span class="hljs-params">(c *rest.Config)</span></span> (*Clientset, <span class="hljs-type">error</span>) &#123;<br>    configShallowCopy := *c<br><br>    <span class="hljs-comment">// share the transport between all clients</span><br>    httpClient, err := rest.HTTPClientFor(&amp;configShallowCopy)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>    &#125;<br><br>    <span class="hljs-keyword">return</span> NewForConfigAndClient(&amp;configShallowCopy, httpClient)<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h5 id="NewForConfigAndClient-获取每个-groupVersion-下的资源-Client"><a href="#NewForConfigAndClient-获取每个-groupVersion-下的资源-Client" class="headerlink" title="NewForConfigAndClient 获取每个 groupVersion 下的资源 Client"></a><code>NewForConfigAndClient</code> 获取每个 <code>groupVersion</code> 下的资源 Client</h5><figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs stata">func NewForConfigAndClient(c *rest.Config, httpClient *http.Client) (*Clientset, <span class="hljs-keyword">error</span>) &#123;<br>    configShallowCopy := *c<br>    <span class="hljs-keyword">if</span> configShallowCopy.RateLimiter == nil &amp;&amp; configShallowCopy.QPS &gt; 0 &#123;<br>        <span class="hljs-keyword">if</span> configShallowCopy.Burst &lt;= 0 &#123;<br>            <span class="hljs-keyword">return</span> nil, fmt.Errorf(<span class="hljs-string">&quot;burst is required to be greater than 0 when RateLimiter is not set and QPS is set to greater than 0&quot;</span>)<br>        &#125;<br>        configShallowCopy.RateLimiter = flowcontrol.NewTokenBucketRateLimiter(configShallowCopy.QPS, configShallowCopy.Burst)<br>    &#125;<br><br>    <span class="hljs-keyword">var</span> <span class="hljs-keyword">cs</span> Clientset<br>    <span class="hljs-keyword">var</span> <span class="hljs-keyword">err</span> <span class="hljs-keyword">error</span><br>    <span class="hljs-keyword">cs</span>.admissionregistrationV1, <span class="hljs-keyword">err</span> = admissionregistrationv1.NewForConfigAndClient(&amp;configShallowCopy, httpClient)<br>    <span class="hljs-keyword">if</span> <span class="hljs-keyword">err</span> != nil &#123;<br>        <span class="hljs-keyword">return</span> nil, <span class="hljs-keyword">err</span><br>    &#125;<br>    <span class="hljs-keyword">cs</span>.admissionregistrationV1beta1, <span class="hljs-keyword">err</span> = admissionregistrationv1beta1.NewForConfigAndClient(&amp;configShallowCopy, httpClient)<br>    <span class="hljs-keyword">if</span> <span class="hljs-keyword">err</span> != nil &#123;<br>        <span class="hljs-keyword">return</span> nil, <span class="hljs-keyword">err</span><br>    &#125;<br>    ...<br>    <span class="hljs-keyword">return</span> &amp;<span class="hljs-keyword">cs</span>, nil<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h5 id="拿-admissionregistrationv1-NewForConfigAndClient-介绍"><a href="#拿-admissionregistrationv1-NewForConfigAndClient-介绍" class="headerlink" title="拿 admissionregistrationv1.NewForConfigAndClient 介绍"></a>拿 <code>admissionregistrationv1.NewForConfigAndClient</code> 介绍</h5><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">NewForConfigAndClient</span><span class="hljs-params">(c *rest.Config, h *http.Client)</span></span> (*AdmissionregistrationV1Client, <span class="hljs-type">error</span>) &#123;<br>    config := *c<br>    <span class="hljs-comment">// 设置 client 参数</span><br>    <span class="hljs-keyword">if</span> err := setConfigDefaults(&amp;config); err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>    &#125;<br>    <span class="hljs-comment">// 最终调用 RESTClientForConfigAndClient 生成 RESTClient</span><br>    client, err := rest.RESTClientForConfigAndClient(&amp;config, h)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>    &#125;<br>    <span class="hljs-keyword">return</span> &amp;AdmissionregistrationV1Client&#123;client&#125;, <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-comment">// 可以发现，这些参数跟上面 RESTClient 差不多</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">setConfigDefaults</span><span class="hljs-params">(config *rest.Config)</span></span> <span class="hljs-type">error</span> &#123;<br>    gv := v1.SchemeGroupVersion<br>    config.GroupVersion = &amp;gv<br>    config.APIPath = <span class="hljs-string">&quot;/apis&quot;</span><br>    config.NegotiatedSerializer = scheme.Codecs.WithoutConversion()<br><br>    <span class="hljs-keyword">if</span> config.UserAgent == <span class="hljs-string">&quot;&quot;</span> &#123;<br>        config.UserAgent = rest.DefaultKubernetesUserAgent()<br>    &#125;<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h5 id="pod-资源实现了一系列方法，比如-List-，可以发现最终调用-RESTClient-的方法"><a href="#pod-资源实现了一系列方法，比如-List-，可以发现最终调用-RESTClient-的方法" class="headerlink" title="pod 资源实现了一系列方法，比如 List()，可以发现最终调用 RESTClient 的方法"></a>pod 资源实现了一系列方法，比如 <code>List()</code>，可以发现最终调用 <strong>RESTClient</strong> 的方法</h5><figure class="highlight erlang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs erlang"><span class="hljs-function"><span class="hljs-title">func</span> <span class="hljs-params">(c *pods)</span> L<span class="hljs-title">ist</span><span class="hljs-params">(ctx context.Context, opts metav1.ListOptions)</span> <span class="hljs-params">(result *v1.PodList, err error)</span> &#123;</span><br><span class="hljs-function">    <span class="hljs-title">var</span> <span class="hljs-title">timeout</span> <span class="hljs-title">time</span>.D<span class="hljs-title">uration</span></span><br><span class="hljs-function">    <span class="hljs-title">if</span> <span class="hljs-title">opts</span>.T<span class="hljs-title">imeoutSeconds</span> != <span class="hljs-title">nil</span> &#123;</span><br><span class="hljs-function">        <span class="hljs-title">timeout</span> = <span class="hljs-title">time</span>.D<span class="hljs-title">uration</span><span class="hljs-params">(*opts.TimeoutSeconds)</span> * <span class="hljs-title">time</span>.S<span class="hljs-title">econd</span></span><br><span class="hljs-function">    &#125;</span><br><span class="hljs-function">    <span class="hljs-title">result</span> = &amp;<span class="hljs-title">v1</span>.P<span class="hljs-title">odList</span>&#123;&#125;</span><br><span class="hljs-function">    <span class="hljs-title">err</span> = <span class="hljs-title">c</span>.<span class="hljs-title">client</span>.G<span class="hljs-title">et</span><span class="hljs-params">()</span>.</span><br><span class="hljs-function">        N<span class="hljs-title">amespace</span><span class="hljs-params">(c.ns)</span>.</span><br><span class="hljs-function">        R<span class="hljs-title">esource</span><span class="hljs-params">(<span class="hljs-string">&quot;pods&quot;</span>)</span>.</span><br><span class="hljs-function">        V<span class="hljs-title">ersionedParams</span><span class="hljs-params">(&amp;opts, scheme.ParameterCodec)</span>.</span><br><span class="hljs-function">        T<span class="hljs-title">imeout</span><span class="hljs-params">(timeout)</span>.</span><br><span class="hljs-function">        D<span class="hljs-title">o</span><span class="hljs-params">(ctx)</span>.</span><br><span class="hljs-function">        I<span class="hljs-title">nto</span><span class="hljs-params">(result)</span></span><br><span class="hljs-function">    <span class="hljs-title">return</span></span><br><span class="hljs-function">&#125;</span><br></code></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="DynamicClient"><a href="#DynamicClient" class="headerlink" title="DynamicClient"></a>DynamicClient</h2><h5 id="DynamicClient-见名知意，一种动态客户端，通过动态指定资源组，资源版本和资源信息，来操作任意的-Kubernetes-资源对象。DynamicClient-不仅能操作-Kubernetes-内置资源，还能操作-CRD-。"><a href="#DynamicClient-见名知意，一种动态客户端，通过动态指定资源组，资源版本和资源信息，来操作任意的-Kubernetes-资源对象。DynamicClient-不仅能操作-Kubernetes-内置资源，还能操作-CRD-。" class="headerlink" title="DynamicClient 见名知意，一种动态客户端，通过动态指定资源组，资源版本和资源信息，来操作任意的 Kubernetes 资源对象。DynamicClient 不仅能操作 Kubernetes 内置资源，还能操作 CRD 。"></a><strong>DynamicClient</strong> 见名知意，一种动态客户端，通过动态指定资源组，资源版本和资源信息，来操作任意的 Kubernetes 资源对象。<strong>DynamicClient</strong> 不仅能操作 Kubernetes 内置资源，还能操作 CRD 。</h5><p><strong>DynamicClient</strong> 与 <strong>ClientSet</strong> 都是对 <strong>RESTClient</strong> 进行了封装</p>
+<h3 id="示例-2"><a href="#示例-2" class="headerlink" title="示例"></a>示例</h3><h5 id="DynamicClient-返回的结果不像-ClientSet-那样返回具体资源类型，它返回的是一个动态数据即-map-结构，所以需要将结果进行解析到具体资源类型"><a href="#DynamicClient-返回的结果不像-ClientSet-那样返回具体资源类型，它返回的是一个动态数据即-map-结构，所以需要将结果进行解析到具体资源类型" class="headerlink" title="DynamicClient 返回的结果不像 ClientSet 那样返回具体资源类型，它返回的是一个动态数据即 map 结构，所以需要将结果进行解析到具体资源类型"></a><strong>DynamicClient</strong> 返回的结果不像 <strong>ClientSet</strong> 那样返回具体资源类型，它返回的是一个动态数据即 map 结构，所以需要将结果进行解析到具体资源类型</h5><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br><br><span class="hljs-keyword">import</span> (<br>    <span class="hljs-string">&quot;context&quot;</span><br>    <span class="hljs-string">&quot;flag&quot;</span><br>    <span class="hljs-string">&quot;fmt&quot;</span><br>    <span class="hljs-string">&quot;os&quot;</span><br>    <span class="hljs-string">&quot;path/filepath&quot;</span><br><br>    corev1 <span class="hljs-string">&quot;k8s.io/api/core/v1&quot;</span><br>    metav1 <span class="hljs-string">&quot;k8s.io/apimachinery/pkg/apis/meta/v1&quot;</span><br>    <span class="hljs-string">&quot;k8s.io/apimachinery/pkg/runtime&quot;</span><br>    <span class="hljs-string">&quot;k8s.io/apimachinery/pkg/runtime/schema&quot;</span><br>    <span class="hljs-string">&quot;k8s.io/client-go/dynamic&quot;</span><br>    <span class="hljs-string">&quot;k8s.io/client-go/tools/clientcmd&quot;</span><br>)<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">homeDir</span><span class="hljs-params">()</span></span> <span class="hljs-type">string</span> &#123;<br>    <span class="hljs-keyword">if</span> h := os.Getenv(<span class="hljs-string">&quot;HOME&quot;</span>); h != <span class="hljs-string">&quot;&quot;</span> &#123;<br>        <span class="hljs-keyword">return</span> h<br>    &#125;<br><br>    <span class="hljs-keyword">return</span> os.Getenv(<span class="hljs-string">&quot;USERROFILE&quot;</span>)<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>    <span class="hljs-keyword">var</span> kubeConfig *<span class="hljs-type">string</span><br><br>    <span class="hljs-keyword">if</span> h := homeDir(); h != <span class="hljs-string">&quot;&quot;</span> &#123;<br>        kubeConfig = flag.String(<span class="hljs-string">&quot;kubeConfig&quot;</span>, filepath.Join(h, <span class="hljs-string">&quot;.kube&quot;</span>, <span class="hljs-string">&quot;config&quot;</span>), <span class="hljs-string">&quot;use kubeconfig to access kube-apiserver&quot;</span>)<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        kubeConfig = flag.String(<span class="hljs-string">&quot;kubeConfig&quot;</span>, <span class="hljs-string">&quot;&quot;</span>, <span class="hljs-string">&quot;use kubeconfig to access kube-apiserver&quot;</span>)<br>    &#125;<br>    flag.Parse()<br><br>    config, err := clientcmd.BuildConfigFromFlags(<span class="hljs-string">&quot;&quot;</span>, *kubeConfig)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-built_in">panic</span>(err.Error())<br>    &#125;<br><br>    <span class="hljs-comment">// 初始化 DynamicClient</span><br>    dynamicClient, err := dynamic.NewForConfig(config)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-built_in">panic</span>(err.Error())<br>    &#125;<br><br>    <span class="hljs-comment">// 提供 pod 的 gvr，因为是动态调用，dynamicClient 不知道需要操作哪个资源，所以需要自己提供</span><br>    gvr := schema.GroupVersionResource&#123;<br>        Group:    <span class="hljs-string">&quot;&quot;</span>,<br>        Version:  <span class="hljs-string">&quot;v1&quot;</span>,<br>        Resource: <span class="hljs-string">&quot;pods&quot;</span>,<br>    &#125;<br>    <span class="hljs-comment">//链式调用 dynamicClient 获取数据</span><br>    result, err := dynamicClient.Resource(gvr).Namespace(<span class="hljs-string">&quot;kube-system&quot;</span>).List(context.TODO(), metav1.ListOptions&#123;&#125;)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-built_in">panic</span>(err.Error())<br>    &#125;<br>    podList := &amp;corev1.PodList&#123;&#125;<br>    <span class="hljs-comment">// 将结果解析到 podList scheme 中</span><br>    err = runtime.DefaultUnstructuredConverter.FromUnstructured(<br>        result.UnstructuredContent(), podList)<br><br>    <span class="hljs-keyword">for</span> _, pod := <span class="hljs-keyword">range</span> podList.Items &#123;<br>        fmt.Printf(<span class="hljs-string">&quot;namespace: %s, pod: %s\n&quot;</span>, pod.Namespace, pod.Name)<br>    &#125;<br><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="DynamicClient-原理"><a href="#DynamicClient-原理" class="headerlink" title="DynamicClient 原理"></a>DynamicClient 原理</h3><h5 id="dynamic-NewForConfig-config-初始化-dynamicClient"><a href="#dynamic-NewForConfig-config-初始化-dynamicClient" class="headerlink" title="dynamic.NewForConfig(config) 初始化 dynamicClient"></a><code>dynamic.NewForConfig(config)</code> 初始化 <strong>dynamicClient</strong></h5><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">NewForConfig</span><span class="hljs-params">(inConfig *rest.Config)</span></span> (Interface, <span class="hljs-type">error</span>) &#123;<br>    config := ConfigFor(inConfig)<br><br>    httpClient, err := rest.HTTPClientFor(config)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>    &#125;<br>    <span class="hljs-keyword">return</span> NewForConfigAndClient(config, httpClient)<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">NewForConfigAndClient</span><span class="hljs-params">(inConfig *rest.Config, h *http.Client)</span></span> (Interface, <span class="hljs-type">error</span>) &#123;<br>    config := ConfigFor(inConfig)<br>    <span class="hljs-comment">// for serializing the options</span><br>    config.GroupVersion = &amp;schema.GroupVersion&#123;&#125;<br>    config.APIPath = <span class="hljs-string">&quot;/if-you-see-this-search-for-the-break&quot;</span><br>    <span class="hljs-comment">// 初始化 RESTClient</span><br>    restClient, err := rest.RESTClientForConfigAndClient(config, h)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>    &#125;<br>    <span class="hljs-keyword">return</span> &amp;dynamicClient&#123;client: restClient&#125;, <span class="hljs-literal">nil</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>可以看出 <strong>dynamicClient</strong> 与 <strong>ClientSet</strong> 一样都是封装了 <strong>RESTClient</strong></p>
+<figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs stylus">dynamicClient<span class="hljs-selector-class">.Resource</span>(gvr)<span class="hljs-selector-class">.Namespace</span>(<span class="hljs-string">&quot;kube-system&quot;</span>)<span class="hljs-selector-class">.List</span>(context<span class="hljs-selector-class">.TODO</span>(), metav1.ListOptions&#123;&#125;)<br></code></pre></td></tr></table></figure>
+
+<h5 id="dynamicClient-链式调用中，Resource-需要传入需要操作对象的-gvr"><a href="#dynamicClient-链式调用中，Resource-需要传入需要操作对象的-gvr" class="headerlink" title="dynamicClient 链式调用中，Resource() 需要传入需要操作对象的 gvr"></a><strong>dynamicClient</strong> 链式调用中，<code>Resource()</code> 需要传入需要操作对象的 <code>gvr</code></h5><h5 id="最终也是调用-RESTClient-来获取数据"><a href="#最终也是调用-RESTClient-来获取数据" class="headerlink" title="最终也是调用 RESTClient 来获取数据"></a>最终也是调用 <strong>RESTClient</strong> 来获取数据</h5><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(c *dynamicResourceClient)</span></span> List(ctx context.Context, opts metav1.ListOptions) (*unstructured.UnstructuredList, <span class="hljs-type">error</span>) &#123;<br>    result := c.client.client.Get().AbsPath(c.makeURLSegments(<span class="hljs-string">&quot;&quot;</span>)...).SpecificallyVersionedParams(&amp;opts, dynamicParameterCodec, versionV1).Do(ctx)<br>    <span class="hljs-keyword">if</span> err := result.Error(); err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>    &#125;<br>    retBytes, err := result.Raw()<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>    &#125;<br>    uncastObj, err := runtime.Decode(unstructured.UnstructuredJSONScheme, retBytes)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>    &#125;<br>    <span class="hljs-keyword">if</span> list, ok := uncastObj.(*unstructured.UnstructuredList); ok &#123;<br>        <span class="hljs-keyword">return</span> list, <span class="hljs-literal">nil</span><br>    &#125;<br><br>    list, err := uncastObj.(*unstructured.Unstructured).ToList()<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>    &#125;<br>    <span class="hljs-keyword">return</span> list, <span class="hljs-literal">nil</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h5 id="DynamicClient-返回的结果是-unstructured-UnstructuredList"><a href="#DynamicClient-返回的结果是-unstructured-UnstructuredList" class="headerlink" title="DynamicClient 返回的结果是 *unstructured.UnstructuredList"></a><strong>DynamicClient</strong> 返回的结果是 <code>*unstructured.UnstructuredList</code></h5><h5 id="Unstructured-是非结构化数据，用-map-string-interface-存储。"><a href="#Unstructured-是非结构化数据，用-map-string-interface-存储。" class="headerlink" title="Unstructured 是非结构化数据，用 map[string]interface{} 存储。"></a>Unstructured 是非结构化数据，用 <code>map[string]interface&#123;&#125;</code> 存储。</h5><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> UnstructuredList <span class="hljs-keyword">struct</span> &#123;<br>    Object <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]<span class="hljs-keyword">interface</span>&#123;&#125;<br><br>    <span class="hljs-comment">// Items is a list of unstructured objects.</span><br>    Items []Unstructured <span class="hljs-string">`json:&quot;items&quot;`</span><br>&#125;<br><br><span class="hljs-keyword">type</span> Unstructured <span class="hljs-keyword">struct</span> &#123;<br>    <span class="hljs-comment">// Object is a JSON compatible map with string, float, int, bool, []interface&#123;&#125;, or</span><br>    <span class="hljs-comment">// map[string]interface&#123;&#125;</span><br>    <span class="hljs-comment">// children.</span><br>    Object <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]<span class="hljs-keyword">interface</span>&#123;&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h5 id="所以拿到结果需要-decode-成结构化数据类型"><a href="#所以拿到结果需要-decode-成结构化数据类型" class="headerlink" title="所以拿到结果需要 decode 成结构化数据类型"></a>所以拿到结果需要 decode 成结构化数据类型</h5><figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs stylus"><span class="hljs-comment">// 将 result decode 到 podList </span><br>podList := &amp;corev1.PodList&#123;&#125;<br>    err = runtime<span class="hljs-selector-class">.DefaultUnstructuredConverter</span><span class="hljs-selector-class">.FromUnstructured</span>(<br>        result<span class="hljs-selector-class">.UnstructuredContent</span>(), podList)<br></code></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="DiscoveryClient"><a href="#DiscoveryClient" class="headerlink" title="DiscoveryClient"></a>DiscoveryClient</h2><h5 id="DiscoveryClient-是发现客户端，用于发现-Kube-apiserver-支持的资源组、资源版本、资源类型等。"><a href="#DiscoveryClient-是发现客户端，用于发现-Kube-apiserver-支持的资源组、资源版本、资源类型等。" class="headerlink" title="DiscoveryClient 是发现客户端，用于发现 Kube-apiserver 支持的资源组、资源版本、资源类型等。"></a><strong>DiscoveryClient</strong> 是发现客户端，用于发现 Kube-apiserver 支持的资源组、资源版本、资源类型等。</h5><h5 id="kubectl-api-resources-和-kubectl-api-versions-命令就是通过-DiscoveryClient-实现的。"><a href="#kubectl-api-resources-和-kubectl-api-versions-命令就是通过-DiscoveryClient-实现的。" class="headerlink" title="kubectl api-resources 和 kubectl api-versions 命令就是通过 DiscoveryClient 实现的。"></a><code>kubectl api-resources</code> 和 <code>kubectl api-versions</code> 命令就是通过 <strong>DiscoveryClient</strong> 实现的。</h5><h5 id="DiscoveryClient-支持本地目录缓存，一般在-kube-cache-会存储集群所有-gvr-信息，避免每次访问-Kube-apiserver"><a href="#DiscoveryClient-支持本地目录缓存，一般在-kube-cache-会存储集群所有-gvr-信息，避免每次访问-Kube-apiserver" class="headerlink" title="DiscoveryClient 支持本地目录缓存，一般在 ~/.kube/cache 会存储集群所有 gvr 信息，避免每次访问 Kube-apiserver"></a><strong>DiscoveryClient</strong> 支持本地目录缓存，一般在 <code>~/.kube/cache</code> 会存储集群所有 <code>gvr</code> 信息，避免每次访问 Kube-apiserver</h5><h3 id="示例-3"><a href="#示例-3" class="headerlink" title="示例"></a>示例</h3><h5 id="通过-DiscoveryClient-查询集群所有的-gvr"><a href="#通过-DiscoveryClient-查询集群所有的-gvr" class="headerlink" title="通过 DiscoveryClient 查询集群所有的 gvr"></a>通过 <strong>DiscoveryClient</strong> 查询集群所有的 <code>gvr</code></h5><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br><br><span class="hljs-keyword">import</span> (<br>    <span class="hljs-string">&quot;flag&quot;</span><br>    <span class="hljs-string">&quot;fmt&quot;</span><br>    <span class="hljs-string">&quot;os&quot;</span><br>    <span class="hljs-string">&quot;path/filepath&quot;</span><br><br>    <span class="hljs-string">&quot;k8s.io/apimachinery/pkg/runtime/schema&quot;</span><br>    <span class="hljs-string">&quot;k8s.io/client-go/discovery&quot;</span><br>    <span class="hljs-string">&quot;k8s.io/client-go/tools/clientcmd&quot;</span><br>)<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">homeDir</span><span class="hljs-params">()</span></span> <span class="hljs-type">string</span> &#123;<br>    <span class="hljs-keyword">if</span> h := os.Getenv(<span class="hljs-string">&quot;HOME&quot;</span>); h != <span class="hljs-string">&quot;&quot;</span> &#123;<br>        <span class="hljs-keyword">return</span> h<br>    &#125;<br><br>    <span class="hljs-keyword">return</span> os.Getenv(<span class="hljs-string">&quot;USERROFILE&quot;</span>)<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>    <span class="hljs-keyword">var</span> kubeConfig *<span class="hljs-type">string</span><br><br>    <span class="hljs-keyword">if</span> h := homeDir(); h != <span class="hljs-string">&quot;&quot;</span> &#123;<br>        kubeConfig = flag.String(<span class="hljs-string">&quot;kubeConfig&quot;</span>, filepath.Join(h, <span class="hljs-string">&quot;.kube&quot;</span>, <span class="hljs-string">&quot;config&quot;</span>), <span class="hljs-string">&quot;use kubeconfig to access kube-apiserver&quot;</span>)<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        kubeConfig = flag.String(<span class="hljs-string">&quot;kubeConfig&quot;</span>, <span class="hljs-string">&quot;&quot;</span>, <span class="hljs-string">&quot;use kubeconfig to access kube-apiserver&quot;</span>)<br>    &#125;<br>    flag.Parse()<br><br>    config, err := clientcmd.BuildConfigFromFlags(<span class="hljs-string">&quot;&quot;</span>, *kubeConfig)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-built_in">panic</span>(err.Error())<br>    &#125;<br><br>    <span class="hljs-comment">// 初始化 DiscoveryClient</span><br>    discoveryClient, err := discovery.NewDiscoveryClientForConfig(config)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-built_in">panic</span>(err.Error())<br>    &#125;<br>    <span class="hljs-comment">// 获取集群所有资源</span><br>    _, apiResourceList, err := discoveryClient.ServerGroupsAndResources()<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-built_in">panic</span>(err.Error())<br>    &#125;<br><br>    <span class="hljs-keyword">for</span> _, resources := <span class="hljs-keyword">range</span> apiResourceList &#123;<br>        gv, err := schema.ParseGroupVersion(resources.GroupVersion)<br>        <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>            <span class="hljs-built_in">panic</span>(err.Error())<br>        &#125;<br>        <span class="hljs-keyword">for</span> _, resource := <span class="hljs-keyword">range</span> resources.APIResources &#123;<br>            fmt.Printf(<span class="hljs-string">&quot;group: %s, version: %s, resource: %s\n&quot;</span>, gv.Group, gv.Version, resource.Name)<br>        &#125;<br><br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h5 id="结果如下："><a href="#结果如下：" class="headerlink" title="结果如下："></a>结果如下：</h5><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">bindings</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">componentstatuses</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">configmaps</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">endpoints</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">events</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">limitranges</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">namespaces</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">namespaces/finalize</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">namespaces/status</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">nodes</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">nodes/proxy</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">nodes/status</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">persistentvolumeclaims</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">persistentvolumeclaims/status</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">persistentvolumes</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">persistentvolumes/status</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">pods</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">pods/attach</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">pods/binding</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">pods/ephemeralcontainers</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">pods/eviction</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">pods/exec</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">pods/log</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">pods/portforward</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">pods/proxy</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">pods/status</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">podtemplates</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">replicationcontrollers</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">replicationcontrollers/scale</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">replicationcontrollers/status</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">resourcequotas</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">resourcequotas/status</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">secrets</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">serviceaccounts</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">services</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">services/proxy</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">services/status</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">apiregistration.k8s.io,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">apiservices</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">apiregistration.k8s.io,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">apiservices/status</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">apiregistration.k8s.io,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1beta1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">apiservices</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">apiregistration.k8s.io,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1beta1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">apiservices/status</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">extensions,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1beta1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">ingresses</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">extensions,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1beta1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">ingresses/status</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">apps,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">controllerrevisions</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">apps,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">daemonsets</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">apps,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">daemonsets/status</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">apps,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">deployments</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">apps,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">deployments/scale</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">apps,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">deployments/status</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">apps,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">replicasets</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">apps,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">replicasets/scale</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">apps,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">replicasets/status</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">apps,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">statefulsets</span><br><span class="hljs-attr">group:</span> <span class="hljs-string">apps,</span> <span class="hljs-attr">version:</span> <span class="hljs-string">v1,</span> <span class="hljs-attr">resource:</span> <span class="hljs-string">statefulsets/scale</span><br><span class="hljs-string">...</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="DiscoveryClient-原理"><a href="#DiscoveryClient-原理" class="headerlink" title="DiscoveryClient 原理"></a>DiscoveryClient 原理</h3><h5 id="discovery-NewDiscoveryClientForConfig-config-初始化-DsicoveryClient，与-ClientSet-和-DynamicClient-原理类似，都是封装了-RESTClient，这里不再赘述。"><a href="#discovery-NewDiscoveryClientForConfig-config-初始化-DsicoveryClient，与-ClientSet-和-DynamicClient-原理类似，都是封装了-RESTClient，这里不再赘述。" class="headerlink" title="discovery.NewDiscoveryClientForConfig(config) 初始化 DsicoveryClient，与 ClientSet 和 DynamicClient 原理类似，都是封装了 RESTClient，这里不再赘述。"></a><code>discovery.NewDiscoveryClientForConfig(config)</code> 初始化 <strong>DsicoveryClient</strong>，与 <strong>ClientSet</strong> 和 <strong>DynamicClient</strong> 原理类似，都是封装了 <strong>RESTClient</strong>，这里不再赘述。</h5><h5 id="discoveryClient-ServerGroupsAndResources-返回集群所有的资源对象，这里可能会有疑问，这些资源是什么时候存储到-etcd-中的，猜想是-Kube-apiserver-启动时将这些资源类型存储到-etcd-中。需要看-Kube-apiserver-源码来佐证。"><a href="#discoveryClient-ServerGroupsAndResources-返回集群所有的资源对象，这里可能会有疑问，这些资源是什么时候存储到-etcd-中的，猜想是-Kube-apiserver-启动时将这些资源类型存储到-etcd-中。需要看-Kube-apiserver-源码来佐证。" class="headerlink" title="discoveryClient.ServerGroupsAndResources() 返回集群所有的资源对象，这里可能会有疑问，这些资源是什么时候存储到 etcd 中的，猜想是 Kube-apiserver 启动时将这些资源类型存储到 etcd 中。需要看 Kube-apiserver 源码来佐证。"></a><code>discoveryClient.ServerGroupsAndResources()</code> 返回集群所有的资源对象，这里可能会有疑问，这些资源是什么时候存储到 etcd 中的，猜想是 Kube-apiserver 启动时将这些资源类型存储到 etcd 中。需要看 Kube-apiserver 源码来佐证。</h5><hr>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><h5 id="Client-go-四种客户端，在平时开发中-ClientSet-使用频率最高，其他三种了解原理一般就行。"><a href="#Client-go-四种客户端，在平时开发中-ClientSet-使用频率最高，其他三种了解原理一般就行。" class="headerlink" title="Client-go 四种客户端，在平时开发中 ClientSet 使用频率最高，其他三种了解原理一般就行。"></a>Client-go 四种客户端，在平时开发中 <strong>ClientSet</strong> 使用频率最高，其他三种了解原理一般就行。</h5><hr>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Client-go 四种客户端 2024-04-03 14:49:34.32</div>
+      <div>http://example.com/2025/01/16/Client-go 四种客户端-client-go-si-zhong-ke-hu-duan/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/Client-go%20%E6%9E%B6%E6%9E%84-client-go-jia-gou/" title="Client-go 架构 2024-04-03 14:48:40.716">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Client-go 架构 2024-04-03 14:48:40.716</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/CICD%E6%80%9D%E8%80%83-cicd-si-kao/" title="CICD思考 2024-04-03 15:11:24.151">
+                        <span class="hidden-mobile">CICD思考 2024-04-03 15:11:24.151</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

@@ -1,0 +1,792 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="12345678910111213141516171819202122232425262728293031323334353637383940备份etcd的数据1、单master单etcd扩展到3master3etcd节点2、涉及的      master节点的证书   - apiserver.crt   - apiserver.csr   - apiserver.key   - client.c">
+<meta property="og:type" content="article">
+<meta property="og:title" content="单master单etcd改造为3master3etcd 2024-08-02 17:57:00.592">
+<meta property="og:url" content="http://example.com/2025/01/16/%E5%8D%95master%E5%8D%95etcd%E6%94%B9%E9%80%A0%E4%B8%BA3master3etcd-dan-master-dan-etcd-gai-zao-wei-3master3etcd/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="12345678910111213141516171819202122232425262728293031323334353637383940备份etcd的数据1、单master单etcd扩展到3master3etcd节点2、涉及的      master节点的证书   - apiserver.crt   - apiserver.csr   - apiserver.key   - client.c">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405141912859.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405141912208.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405141912713.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111443993.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111607860.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111607453.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111606528.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111606521.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111443968.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202406140951381.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111506985.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111507228.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111507707.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111505634.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111506734.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111506731.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111504667.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111502906.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111500469.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111500456.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111500477.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111459088.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202406140953484.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202406191645182.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111459636.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202406191644784.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111459093.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202406191644569.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111458196.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405141939171.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202406121021940.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202406140948511.png">
+<meta property="og:image" content="http://example.com/AppData/Roaming/Typora/typora-user-images/image-20240511155945564.png">
+<meta property="og:image" content="http://example.com/AppData/Roaming/Typora/typora-user-images/image-20240511160030543.png">
+<meta property="og:image" content="http://example.com/AppData/Roaming/Typora/typora-user-images/image-20240511160237368.png">
+<meta property="og:image" content="http://example.com/AppData/Roaming/Typora/typora-user-images/image-20240511160257216.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405141941540.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405141942684.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405142035144.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405151730301.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405151730039.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202406191652984.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.081Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:19.053Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405141912859.png">
+  
+  
+  
+  <title>单master单etcd改造为3master3etcd 2024-08-02 17:57:00.592 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="单master单etcd改造为3master3etcd 2024-08-02 17:57:00.592"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          31 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">单master单etcd改造为3master3etcd 2024-08-02 17:57:00.592</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext">备份etcd的数据<br><br>1、单master单etcd扩展到3master3etcd节点<br>2、涉及的   <br>   master节点的证书<br>   <span class="hljs-bullet">-</span> <span class="hljs-string">apiserver.crt</span><br>   <span class="hljs-bullet">-</span> <span class="hljs-string">apiserver.csr</span><br>   <span class="hljs-bullet">-</span> <span class="hljs-string">apiserver.key</span><br>   <span class="hljs-bullet">-</span> <span class="hljs-string">client.crt</span><br>   <span class="hljs-bullet">-</span> <span class="hljs-string">client.key</span><br>   <span class="hljs-bullet">-</span> <span class="hljs-string">etcd_client.crt</span><br>   <span class="hljs-bullet">-</span> <span class="hljs-string">etcd_client.key</span><br>   <span class="hljs-bullet">-</span> <span class="hljs-string">front-proxy_bak-ca.crt</span><br>   <span class="hljs-bullet">-</span> <span class="hljs-string">front-proxy_bak-ca.key</span><br>   <span class="hljs-bullet">-</span> <span class="hljs-string">front-proxy_bak-ca.srl</span><br>   <span class="hljs-bullet">-</span> <span class="hljs-string">front-proxy_bak-client.crt</span><br>   <span class="hljs-bullet">-</span> <span class="hljs-string">front-proxy_bak-client.key</span><br>   <span class="hljs-bullet">-</span> <span class="hljs-string">front_proxy_ssl.cnf</span><br>   <span class="hljs-bullet">-</span> <span class="hljs-string">sa.key</span><br>   <span class="hljs-bullet">-</span> <span class="hljs-string">sa.pub </span><br>   <br>    <span class="hljs-bullet">-</span> <span class="hljs-string">etcd_server.crt</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">etcd_server.key</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">etcd_client.crt</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">etcd_client.key</span><br>    <br>    work节点的证书<br>    <span class="hljs-bullet">-</span> <span class="hljs-string">ca.crt </span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">client.key </span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">client.crt </span><br>    <br>   需要重新生成，ca.crt和ca.key可以不用重新生成，新的证书需要准备好，老的证书需要备份好。<br>3、根据ca证书和master_ssl.cnf，etcd_ssl.cnf生成新的master节点和etcd节点证书，根据ca证书和master_ssl.cnf生成work节点的client.crt证书，提前准备好。  master_ssl.cnf包含3个master节点的ip和硬负载vip，etcd_ssl.cnf包含3个etcd节点的ip。<br>4、拷贝新生成的etcd证书到etcd节点，替换老的证书，重新etcd节点。<br>5、拷贝新生成的master节点的节点到master节点，替换老的master节点证书，重启master节点的master服务，包括kube-apiserver，kube-scheduler，kube-controller-manager，kubelet，kube-proxy。<br>6、拷贝新生成的work节点的证书到work节点，替换work节点的证书，并重启node节点的kubelet和kube-proxy服务。<br>7、验证master节点的相关服务是否正常，包括kube-apiserver，kube-scheduler，kube-controller-manager，kubelet，kube-proxy，etcd服务。node节点的kubelet和kube-proxy服务。<br><br><br>回退，删除新加的2个master节点，将老的备份的证书替换回去，重启master节点和node节点的相关服务<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight dns"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs dns">模拟单master单etcd节点 扩展到 <span class="hljs-number">3m</span>aster3etcd<br><br>现状：<br>master<span class="hljs-number">1 192.168.0</span>.<span class="hljs-number">61</span><br>node1   <span class="hljs-number">192.168.0.64</span><br><br>改造后<br>master<span class="hljs-number">1：192.168.0</span>.<span class="hljs-number">61</span><br>master<span class="hljs-number">2：192.168.0</span>.<span class="hljs-number">62</span><br>master<span class="hljs-number">3：192.168.0</span>.<span class="hljs-number">63</span><br>node1：  <span class="hljs-number">192.168.0.64</span><br>lb1：    <span class="hljs-number">192.168.0.71</span><br>lb2：    <span class="hljs-number">192.168.0.72</span><br>vip：    <span class="hljs-number">192.168.0.70</span><br><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><code class="hljs vim"><span class="hljs-number">1</span>、备份etcd数据<br><span class="hljs-number">2</span>、停止所有节点的kube-apiserver，kube-scheduler，kube-controller-manager，etcd，kubelet，kube-proxy服务<br><span class="hljs-number">3</span>、修改<span class="hljs-keyword">all</span>.yml里的master节点的vip为真实的vip，hosts文件增加master组和etcd组，node组 <span class="hljs-number">2</span>个新增的master节点的ip<br><span class="hljs-number">4</span>、备份老的证书文件夹下的文件，执行ansible-playbook -i hosts setup.yml，只包含创建证书这一步<br><br>在/<span class="hljs-keyword">opt</span>/kubernetes_ssl下重新生成apiserver.crt<br>apiserver.csr<br>apiserver.key<br><span class="hljs-keyword">ca</span>.crt<br><span class="hljs-keyword">ca</span>.key<br><span class="hljs-keyword">ca</span>.srl<br>client.crt<br>client.csr<br>client.key<br>etcd_client.crt<br>etcd_client.csr<br>etcd_client.key<br>etcd_server.crt<br>etcd_server.csr<br>etcd_server.key<br>etcd_ssl.<span class="hljs-keyword">cnf</span><br>front-proxy-<span class="hljs-keyword">ca</span>.crt<br>front-proxy-<span class="hljs-keyword">ca</span>.key<br>front-proxy-<span class="hljs-keyword">ca</span>.srl<br>front-proxy-client.crt<br>front-proxy-client.csr<br>front-proxy-client.key<br>front_proxy_ssl.<span class="hljs-keyword">cnf</span><br>master_ssl.<span class="hljs-keyword">cnf</span><br><span class="hljs-keyword">sa</span>.key<br><span class="hljs-keyword">sa</span>.pub<br>证书 <br></code></pre></td></tr></table></figure>
+
+
+
+<h3 id="单master-单etcd-pod-pvc-sc，需要扩容后数据任然存在"><a href="#单master-单etcd-pod-pvc-sc，需要扩容后数据任然存在" class="headerlink" title="单master 单etcd pod pvc sc，需要扩容后数据任然存在"></a>单master 单etcd pod pvc sc，需要扩容后数据任然存在</h3><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405141912859.png" srcset="/img/loading.gif" lazyload alt="image-20240514191208781"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405141912208.png" srcset="/img/loading.gif" lazyload alt="image-20240514191213157"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405141912713.png" srcset="/img/loading.gif" lazyload alt="image-20240514191219670"></p>
+<h3 id="备份etcd数据"><a href="#备份etcd数据" class="headerlink" title="备份etcd数据"></a>备份etcd数据</h3><figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><code class="hljs routeros">[root@master1 apps]# cat etcd_backup.sh<br><span class="hljs-comment">#!/bin/bash</span><br><br><span class="hljs-comment">#etcd地址端口，根据环境进行修改</span><br><span class="hljs-comment">#etcd_url_1=&quot;https://10.253.227.180:1183&quot;</span><br><span class="hljs-comment">#etcd_url_2=&quot;https://10.253.227.181:1183&quot;</span><br><span class="hljs-comment">#etcd_url_3=&quot;https://10.253.227.182:1183&quot;</span><br><span class="hljs-comment">#etcd备份数据路径，根据环境进行修改</span><br><span class="hljs-attribute">bakdata_basedir</span>=<span class="hljs-string">&quot;/apps/etcd_backup/&quot;</span><br><span class="hljs-comment">#etcd 开启https的需要，添加ca及etcd证书，根据环境进行修改</span><br><span class="hljs-attribute">cacert_file</span>=<span class="hljs-string">&quot;/etc/kubernetes/ssl/ca.crt&quot;</span><br><span class="hljs-attribute">etcd_cert_file</span>=<span class="hljs-string">&quot;/etc/kubernetes/ssl/etcd_server.crt&quot;</span><br><span class="hljs-attribute">etcd_key_file</span>=<span class="hljs-string">&quot;/etc/kubernetes/ssl/etcd_server.key&quot;</span><br><br><span class="hljs-comment">#获取etcd leader地址</span><br><span class="hljs-attribute">leader_url</span>=`ETCDCTL_API=3 sudo  etcdctl <span class="hljs-attribute">--endpoints</span>=https://192.168.0.61:1159,https://192.168.0.62:1159,https://192.168.0.63:1159 <span class="hljs-attribute">--cacert</span>=<span class="hljs-variable">$cacert_file</span>  <span class="hljs-attribute">--cert</span>=<span class="hljs-variable">$etcd_cert_file</span> <span class="hljs-attribute">--key</span>=<span class="hljs-variable">$etcd_key_file</span> endpoint status -w table | awk -F<span class="hljs-string">&#x27;|&#x27;</span> <span class="hljs-string">&#x27;$6~&quot;true&quot;&#123;print $2&#125;&#x27;</span>`<br><span class="hljs-comment">##echo &quot;leader地址：&quot;$leader_url</span><br><br><span class="hljs-comment">#创建备份数据目录</span><br><span class="hljs-keyword">if</span> [ ! -d <span class="hljs-variable">$bakdata_basedir</span> ]; then<br>    mkdir -p <span class="hljs-variable">$bakdata_basedir</span><br>fi<br><span class="hljs-comment">#开始备份</span><br><br><span class="hljs-attribute">ETCDCTL_API</span>=3 sudo etcdctl  <span class="hljs-attribute">--endpoints</span>=<span class="hljs-string">&quot;<span class="hljs-variable">$leader_url</span>&quot;</span> <span class="hljs-attribute">--cacert</span>=<span class="hljs-variable">$cacert_file</span>  <span class="hljs-attribute">--cert</span>=<span class="hljs-variable">$etcd_cert_file</span> <span class="hljs-attribute">--key</span>=<span class="hljs-variable">$etcd_key_file</span>  snapshot save  <span class="hljs-variable">$bakdata_basedir</span>`date +%Y-%m-%d`-etcd_back.db<br><span class="hljs-keyword">if</span> [ <span class="hljs-string">&quot;$?&quot;</span> == <span class="hljs-string">&quot;0&quot;</span> ]; then<br>    echo <span class="hljs-string">&quot;backup success!&quot;</span><br><span class="hljs-keyword">else</span><br>    echo <span class="hljs-string">&quot;backup failed!&quot;</span><br>fi<br><br><span class="hljs-comment">#删除早期备份数据</span><br><span class="hljs-built_in">find</span> /apps/etcd_backup  -type f -mtime +60 -exec rm -f &#123;&#125; \;<br><br></code></pre></td></tr></table></figure>
+
+<h3 id="执行etcd备份"><a href="#执行etcd备份" class="headerlink" title="执行etcd备份"></a>执行etcd备份</h3><figure class="highlight autoit"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs autoit">[root<span class="hljs-symbol">@master1</span> apps]<span class="hljs-meta"># sh etcd_backup.sh</span><br>&#123;<span class="hljs-string">&quot;level&quot;</span>:<span class="hljs-string">&quot;info&quot;</span>,<span class="hljs-string">&quot;ts&quot;</span>:<span class="hljs-string">&quot;2024-05-11T16:20:13.600+0800&quot;</span>,<span class="hljs-string">&quot;caller&quot;</span>:<span class="hljs-string">&quot;snapshot/v3_snapshot.go:65&quot;</span>,<span class="hljs-string">&quot;msg&quot;</span>:<span class="hljs-string">&quot;created temporary db file&quot;</span>,<span class="hljs-string">&quot;path&quot;</span>:<span class="hljs-string">&quot;/apps/etcd_backup/2024-05-11-etcd_back.db.part&quot;</span>&#125;<br>&#123;<span class="hljs-string">&quot;level&quot;</span>:<span class="hljs-string">&quot;info&quot;</span>,<span class="hljs-string">&quot;ts&quot;</span>:<span class="hljs-string">&quot;2024-05-11T16:20:13.606+0800&quot;</span>,<span class="hljs-string">&quot;logger&quot;</span>:<span class="hljs-string">&quot;client&quot;</span>,<span class="hljs-string">&quot;caller&quot;</span>:<span class="hljs-string">&quot;v3/maintenance.go:211&quot;</span>,<span class="hljs-string">&quot;msg&quot;</span>:<span class="hljs-string">&quot;opened snapshot stream; downloading&quot;</span>&#125;<br>&#123;<span class="hljs-string">&quot;level&quot;</span>:<span class="hljs-string">&quot;info&quot;</span>,<span class="hljs-string">&quot;ts&quot;</span>:<span class="hljs-string">&quot;2024-05-11T16:20:13.606+0800&quot;</span>,<span class="hljs-string">&quot;caller&quot;</span>:<span class="hljs-string">&quot;snapshot/v3_snapshot.go:73&quot;</span>,<span class="hljs-string">&quot;msg&quot;</span>:<span class="hljs-string">&quot;fetching snapshot&quot;</span>,<span class="hljs-string">&quot;endpoint&quot;</span>:<span class="hljs-string">&quot;https://192.168.0.61:1159&quot;</span>&#125;<br>&#123;<span class="hljs-string">&quot;level&quot;</span>:<span class="hljs-string">&quot;info&quot;</span>,<span class="hljs-string">&quot;ts&quot;</span>:<span class="hljs-string">&quot;2024-05-11T16:20:13.705+0800&quot;</span>,<span class="hljs-string">&quot;logger&quot;</span>:<span class="hljs-string">&quot;client&quot;</span>,<span class="hljs-string">&quot;caller&quot;</span>:<span class="hljs-string">&quot;v3/maintenance.go:219&quot;</span>,<span class="hljs-string">&quot;msg&quot;</span>:<span class="hljs-string">&quot;completed snapshot read; closing&quot;</span>&#125;<br>&#123;<span class="hljs-string">&quot;level&quot;</span>:<span class="hljs-string">&quot;info&quot;</span>,<span class="hljs-string">&quot;ts&quot;</span>:<span class="hljs-string">&quot;2024-05-11T16:20:13.711+0800&quot;</span>,<span class="hljs-string">&quot;caller&quot;</span>:<span class="hljs-string">&quot;snapshot/v3_snapshot.go:88&quot;</span>,<span class="hljs-string">&quot;msg&quot;</span>:<span class="hljs-string">&quot;fetched snapshot&quot;</span>,<span class="hljs-string">&quot;endpoint&quot;</span>:<span class="hljs-string">&quot;https://192.168.0.61:1159&quot;</span>,<span class="hljs-string">&quot;size&quot;</span>:<span class="hljs-string">&quot;6.1 MB&quot;</span>,<span class="hljs-string">&quot;took&quot;</span>:<span class="hljs-string">&quot;now&quot;</span>&#125;<br>&#123;<span class="hljs-string">&quot;level&quot;</span>:<span class="hljs-string">&quot;info&quot;</span>,<span class="hljs-string">&quot;ts&quot;</span>:<span class="hljs-string">&quot;2024-05-11T16:20:13.711+0800&quot;</span>,<span class="hljs-string">&quot;caller&quot;</span>:<span class="hljs-string">&quot;snapshot/v3_snapshot.go:97&quot;</span>,<span class="hljs-string">&quot;msg&quot;</span>:<span class="hljs-string">&quot;saved&quot;</span>,<span class="hljs-string">&quot;path&quot;</span>:<span class="hljs-string">&quot;/apps/etcd_backup/2024-05-11-etcd_back.db&quot;</span>&#125;<br>Snapshot saved at /apps/etcd_backup/<span class="hljs-number">2024</span><span class="hljs-number">-05</span><span class="hljs-number">-11</span>-etcd_back.db<br>backup success!<br>[root<span class="hljs-symbol">@master1</span> apps]<span class="hljs-meta"># ls -la /apps/etcd_backup/</span><br>总用量 <span class="hljs-number">5932</span><br>drwxr-xr-x. <span class="hljs-number">2</span> root root      <span class="hljs-number">37</span> <span class="hljs-number">5</span>月  <span class="hljs-number">11</span> <span class="hljs-number">16</span>:<span class="hljs-number">20</span> .<br>drwxr-xr-x. <span class="hljs-number">7</span> root root     <span class="hljs-number">174</span> <span class="hljs-number">5</span>月  <span class="hljs-number">11</span> <span class="hljs-number">09</span>:<span class="hljs-number">35</span> ..<br>-rw-------  <span class="hljs-number">1</span> root root <span class="hljs-number">6070304</span> <span class="hljs-number">5</span>月  <span class="hljs-number">11</span> <span class="hljs-number">16</span>:<span class="hljs-number">20</span> <span class="hljs-number">2024</span><span class="hljs-number">-05</span><span class="hljs-number">-11</span>-etcd_back.db<br>[root<span class="hljs-symbol">@master1</span> apps]<span class="hljs-meta">#</span><br><br></code></pre></td></tr></table></figure>
+
+<h3 id="备份老的证书文件"><a href="#备份老的证书文件" class="headerlink" title="备份老的证书文件"></a>备份老的证书文件</h3><figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs awk">cp -rp <span class="hljs-regexp">/etc/</span>kubernetes<span class="hljs-regexp">/ssl /</span><span class="hljs-regexp">/etc/</span>kubernetes/ssl_bak0514<br></code></pre></td></tr></table></figure>
+
+
+
+<h3 id="停止master和node节点的k8s相关的服务"><a href="#停止master和node节点的k8s相关的服务" class="headerlink" title="停止master和node节点的k8s相关的服务"></a>停止master和node节点的k8s相关的服务</h3><figure class="highlight crmsh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs crmsh">ansible -i hosts <span class="hljs-keyword">node</span> <span class="hljs-title">-m</span> shell -a <span class="hljs-string">&quot;systemctl stop kubelet&quot;</span><br>ansible -i hosts <span class="hljs-keyword">node</span> <span class="hljs-title">-m</span> shell -a <span class="hljs-string">&quot;systemctl stop kube-proxy&quot;</span><br>ansible -i hosts <span class="hljs-keyword">master</span> <span class="hljs-title">-m</span> shell -a <span class="hljs-string">&quot;systemctl stop etcd&quot;</span><br>ansible -i hosts <span class="hljs-keyword">master</span> <span class="hljs-title">-m</span> shell -a <span class="hljs-string">&quot;systemctl stop kube-apiserver&quot;</span><br>ansible -i hosts <span class="hljs-keyword">master</span> <span class="hljs-title">-m</span> shell -a <span class="hljs-string">&quot;systemctl stop kube-controller-manager&quot;</span><br>ansible -i hosts <span class="hljs-keyword">master</span> <span class="hljs-title">-m</span> shell -a <span class="hljs-string">&quot;systemctl stop kube-scheduler&quot;</span><br>ansible -i hosts <span class="hljs-keyword">master</span> <span class="hljs-title">-m</span> shell -a <span class="hljs-string">&quot;systemctl stop kubelet&quot;</span><br>ansible -i hosts <span class="hljs-keyword">master</span> <span class="hljs-title">-m</span> shell -a <span class="hljs-string">&quot;systemctl stop kube-proxy&quot;</span><br><br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111443993.png" srcset="/img/loading.gif" lazyload alt="image-20240511144347934"></p>
+<h3 id="修改-setup-yml-hosts-group-var-里面的信息，包括"><a href="#修改-setup-yml-hosts-group-var-里面的信息，包括" class="headerlink" title="修改 setup.yml,hosts,group_var 里面的信息，包括"></a>修改 setup.yml,hosts,group_var 里面的信息，包括</h3><p><strong>setup.yml只放开创建证书的这一步，</strong></p>
+<p><strong>hosts的master组增加两个新的节点，node组增加两个新的节点，docker组增加两个新的节点，</strong></p>
+<p><strong>group_var下的 vip 改为 新申请的vip地址</strong></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111607860.png" srcset="/img/loading.gif" lazyload alt="image-20240511160740804"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111607453.png" srcset="/img/loading.gif" lazyload alt="image-20240511160700378"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111606528.png" srcset="/img/loading.gif" lazyload alt="image-20240511160644452"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111606521.png" srcset="/img/loading.gif" lazyload alt="image-20240511160617455"></p>
+<h3 id="重新生成证书，包括etcd的相关的证书"><a href="#重新生成证书，包括etcd的相关的证书" class="headerlink" title="重新生成证书，包括etcd的相关的证书"></a>重新生成证书，包括etcd的相关的证书</h3><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111443968.png" srcset="/img/loading.gif" lazyload alt="image-20240511144311888"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202406140951381.png" srcset="/img/loading.gif" lazyload alt="image-20240614095126310"></p>
+<h3 id="拷贝-opt-kubernetes-ssl-下的证书信息到-老的和新的master节点的-etc-kubernetes-ssl-下面"><a href="#拷贝-opt-kubernetes-ssl-下的证书信息到-老的和新的master节点的-etc-kubernetes-ssl-下面" class="headerlink" title="拷贝  &#x2F;opt&#x2F;kubernetes_ssl&#x2F;下的证书信息到 老的和新的master节点的 &#x2F;etc&#x2F;kubernetes&#x2F;ssl&#x2F; 下面"></a>拷贝  &#x2F;opt&#x2F;kubernetes_ssl&#x2F;下的证书信息到 老的和新的master节点的 &#x2F;etc&#x2F;kubernetes&#x2F;ssl&#x2F; 下面</h3><figure class="highlight gradle"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs gradle">备份后删除老的证书文件<br>cp -rp <span class="hljs-regexp">/etc/</span>kubernetes<span class="hljs-regexp">/ssl/</span> <span class="hljs-regexp">/etc/</span>kubernetes<span class="hljs-regexp">/ssl_bak/</span><br>rm -rf <span class="hljs-regexp">/etc/</span>kubernetes<span class="hljs-regexp">/ssl/</span>*<br><br>#把 <span class="hljs-regexp">/opt/</span>kubernetes_ssl<span class="hljs-regexp">/下的证书拷贝到 /</span>etc<span class="hljs-regexp">/kubernetes/</span>ssl/下  <br>#  cp -rp <span class="hljs-regexp">/opt/</span>kubernetes_ssl<span class="hljs-regexp">/etcd* /</span>etc<span class="hljs-regexp">/kubernetes/</span>ssl/<br>#  cp -rp <span class="hljs-regexp">/opt/</span>kubernetes_ssl<span class="hljs-regexp">/ca.crt /</span>etc<span class="hljs-regexp">/kubernetes/</span>ssl/<br>#  cp -rp <span class="hljs-regexp">/opt/</span>kubernetes_ssl<span class="hljs-regexp">/ca.key /</span>etc<span class="hljs-regexp">/kubernetes/</span>ssl/<br><br>包括<br>    - ca.crt<br>    - ca.key<br>    - etcd_server.crt<br>    - etcd_server.key<br>    - etcd_client.crt<br>    - etcd_client.key<br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111506985.png" srcset="/img/loading.gif" lazyload alt="image-20240511150646896"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111507228.png" srcset="/img/loading.gif" lazyload alt="image-20240511150729139"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111507707.png" srcset="/img/loading.gif" lazyload alt="image-20240511150717652"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111505634.png" srcset="/img/loading.gif" lazyload alt="image-20240511150547534"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111506734.png" srcset="/img/loading.gif" lazyload alt="image-20240511150603647"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111506731.png" srcset="/img/loading.gif" lazyload alt="image-20240511150616665"></p>
+<h3 id="拷贝etcd服务相关文件和证书到master2，master3节点上"><a href="#拷贝etcd服务相关文件和证书到master2，master3节点上" class="headerlink" title="拷贝etcd服务相关文件和证书到master2，master3节点上"></a>拷贝etcd服务相关文件和证书到master2，master3节点上</h3><figure class="highlight elixir"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs elixir">scp -rp /usr/bin/etcd root<span class="hljs-variable">@192</span>.<span class="hljs-number">168.0</span>.<span class="hljs-number">62</span><span class="hljs-symbol">:/usr/bin/etcd</span><br>scp -rp /usr/bin/etcdctl root<span class="hljs-variable">@192</span>.<span class="hljs-number">168.0</span>.<span class="hljs-number">62</span><span class="hljs-symbol">:/usr/bin/etcdctl</span><br><br>scp -rp /etc/etcd/etcd.conf root<span class="hljs-variable">@192</span>.<span class="hljs-number">168.0</span>.<span class="hljs-number">62</span><span class="hljs-symbol">:/etc/etcd/etcd</span>.conf 后面新加一个改一个的配置<br><br>scp -rp /etc/etcd//usr/lib/systemd/system/etcd.service root<span class="hljs-variable">@192</span>.<span class="hljs-number">168.0</span>.<span class="hljs-number">62</span><span class="hljs-symbol">:/usr/lib/systemd/system/etcd</span>.service<br><br>scp -rp /etc/kubernetes/ssl/ca.crt  root<span class="hljs-variable">@192</span>.<span class="hljs-number">168.0</span>.<span class="hljs-number">62</span><span class="hljs-symbol">:/etc/kubernetes/ssl/ca</span>.crt<br>scp -rp /etc/kubernetes/ssl/ca.key root<span class="hljs-variable">@192</span>.<span class="hljs-number">168.0</span>.<span class="hljs-number">62</span><span class="hljs-symbol">:/etc/kubernetes/ssl/ca</span>.key<br>scp -rp /etc/kubernetes/ssl/etcd_server.crt root<span class="hljs-variable">@192</span>.<span class="hljs-number">168.0</span>.<span class="hljs-number">62</span><span class="hljs-symbol">:/etc/kubernetes/ssl/etcd_server</span>.crt<br>scp -rp /etc/kubernetes/ssl/etcd_server.key root<span class="hljs-variable">@192</span>.<span class="hljs-number">168.0</span>.<span class="hljs-number">62</span><span class="hljs-symbol">:/etc/kubernetes/ssl/etcd_server</span>.key<br>scp -rp /etc/kubernetes/ssl/etcd_client.crt root<span class="hljs-variable">@192</span>.<span class="hljs-number">168.0</span>.<span class="hljs-number">62</span><span class="hljs-symbol">:/etc/kubernetes/ssl/etcd_client</span>.crt<br>scp -rp /etc/kubernetes/ssl/etcd_client.key root<span class="hljs-variable">@192</span>.<span class="hljs-number">168.0</span>.<span class="hljs-number">62</span><span class="hljs-symbol">:/etc/kubernetes/ssl/etcd_client</span>.key<br><br>systemctl daemon-reload<br></code></pre></td></tr></table></figure>
+
+<h4 id="master2-master3-data-etcd-data-etcd下-需要没有东西-否则要删除master2-master3-的-data-etcd-data-etcd-文件夹下的文件"><a href="#master2-master3-data-etcd-data-etcd下-需要没有东西-否则要删除master2-master3-的-data-etcd-data-etcd-文件夹下的文件" class="headerlink" title="master2,master3 &#x2F;data&#x2F;etcd_data&#x2F;etcd下 需要没有东西 否则要删除master2,master3 的**&#x2F;data&#x2F;etcd_data&#x2F;etcd**文件夹下的文件"></a>master2,master3 &#x2F;data&#x2F;etcd_data&#x2F;etcd下 需要没有东西 否则要删除master2,master3 的**&#x2F;data&#x2F;etcd_data&#x2F;etcd**文件夹下的文件</h4><h3 id="重启老的节点61的etcd服务"><a href="#重启老的节点61的etcd服务" class="headerlink" title="重启老的节点61的etcd服务"></a>重启老的节点61的etcd服务</h3><figure class="highlight nsis"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs nsis"><span class="hljs-params">system</span>ctl restart etcd<br><br><span class="hljs-params">system</span>ctl start etcd<br></code></pre></td></tr></table></figure>
+
+<h3 id="添加新的节点62的etcd"><a href="#添加新的节点62的etcd" class="headerlink" title="添加新的节点62的etcd"></a>添加新的节点62的etcd</h3><figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs routeros"><span class="hljs-attribute">ETCDCTL_API</span>=3 /usr/bin/etcdctl <span class="hljs-attribute">--endpoints</span>=https://192.168.0.61:1159 \<br>                    <span class="hljs-attribute">--cacert</span>=/etc/kubernetes/ssl/ca.crt \<br>                    <span class="hljs-attribute">--cert</span>=/etc/kubernetes/ssl/etcd_server.crt \<br>                    <span class="hljs-attribute">--key</span>=/etc/kubernetes/ssl/etcd_server.key \<br>                    member <span class="hljs-built_in">add</span> etcd_0_62 <span class="hljs-attribute">--peer-urls</span>=https://192.168.0.62:2380<br></code></pre></td></tr></table></figure>
+
+
+
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs routeros">  <span class="hljs-attribute">ETCDCTL_API</span>=3 /usr/bin/etcdctl <span class="hljs-attribute">--endpoints</span>=https://192.168.0.61:1159 \<br>                      <span class="hljs-attribute">--cacert</span>=/etc/kubernetes/ssl/ca.crt \<br>                      <span class="hljs-attribute">--cert</span>=/etc/kubernetes/ssl/etcd_server.crt \<br>                      <span class="hljs-attribute">--key</span>=/etc/kubernetes/ssl/etcd_server.key \<br>                      member <span class="hljs-built_in">add</span> etcd_0_62 <span class="hljs-attribute">--peer-urls</span>=https://192.168.0.62:2380<br> <br>[root@master1 ssl]#   <span class="hljs-attribute">ETCDCTL_API</span>=3 /usr/bin/etcdctl <span class="hljs-attribute">--endpoints</span>=https://192.168.0.61:1159 \<br>&gt;                       <span class="hljs-attribute">--cacert</span>=/etc/kubernetes/ssl/ca.crt \<br>&gt;                       <span class="hljs-attribute">--cert</span>=/etc/kubernetes/ssl/etcd_server.crt \<br>&gt;                       <span class="hljs-attribute">--key</span>=/etc/kubernetes/ssl/etcd_server.key \<br>&gt;                       member <span class="hljs-built_in">add</span> etcd_0_62 <span class="hljs-attribute">--peer-urls</span>=https://192.168.0.62:2380<br>Member bcc22e0a75396cbc added <span class="hljs-keyword">to</span> cluster f6f9624e4f919ae5<br><br><span class="hljs-attribute">ETCD_NAME</span>=<span class="hljs-string">&quot;etcd_0_62&quot;</span><br><span class="hljs-attribute">ETCD_INITIAL_CLUSTER</span>=<span class="hljs-string">&quot;etcd_0_61=https://192.168.0.61:2380,etcd_0_62=https://192.168.0.62:2380&quot;</span><br><span class="hljs-attribute">ETCD_INITIAL_ADVERTISE_PEER_URLS</span>=<span class="hljs-string">&quot;https://192.168.0.62:2380&quot;</span><br><span class="hljs-attribute">ETCD_INITIAL_CLUSTER_STATE</span>=<span class="hljs-string">&quot;existing&quot;</span><br>[root@master1 ssl]#<br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111504667.png" srcset="/img/loading.gif" lazyload alt="image-20240511150415584"></p>
+<h3 id="修改61，62的etcd的配置，包括ETCD-INITIAL-CLUSTER信息要包括61和62，ETCD-INITIAL-CLUSTER-STATE都改为existing，修改完重启61-62两个etcd节点"><a href="#修改61，62的etcd的配置，包括ETCD-INITIAL-CLUSTER信息要包括61和62，ETCD-INITIAL-CLUSTER-STATE都改为existing，修改完重启61-62两个etcd节点" class="headerlink" title="修改61，62的etcd的配置，包括ETCD_INITIAL_CLUSTER信息要包括61和62，ETCD_INITIAL_CLUSTER_STATE都改为existing，修改完重启61,62两个etcd节点"></a>修改61，62的etcd的配置，包括ETCD_INITIAL_CLUSTER信息要包括61和62，ETCD_INITIAL_CLUSTER_STATE都改为existing，修改完重启61,62两个etcd节点</h3><figure class="highlight ebnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ebnf"><span class="hljs-attribute">systemctl restart etcd</span><br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111502906.png" srcset="/img/loading.gif" lazyload alt="image-20240511150245821"></p>
+<h3 id="查看member-list"><a href="#查看member-list" class="headerlink" title="查看member list"></a>查看member list</h3><figure class="highlight jboss-cli"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs jboss-cli">[root@master1 ~]<span class="hljs-comment"># etcdctl  member list -w table</span><br>+<span class="hljs-params">------------------</span>+<span class="hljs-params">---------</span>+<span class="hljs-params">-----------</span>+<span class="hljs-params">---------------------------</span>+<span class="hljs-params">--------------------------------------------------</span>+<span class="hljs-params">------------</span>+<br>|        ID        | STATUS  |   NAME    |        PEER ADDRS         |                   CLIENT ADDRS                   | IS LEARNER |<br>+<span class="hljs-params">------------------</span>+<span class="hljs-params">---------</span>+<span class="hljs-params">-----------</span>+<span class="hljs-params">---------------------------</span>+<span class="hljs-params">--------------------------------------------------</span>+<span class="hljs-params">------------</span>+<br>| 6195ef4a2fc534f8 | started | etcd_0_61 | https:<span class="hljs-string">//192.168.0.61</span><span class="hljs-function">:2380</span> | https:<span class="hljs-string">//127.0.0.1</span><span class="hljs-function">:1159</span>,https:<span class="hljs-string">//192.168.0.61</span><span class="hljs-function">:1159</span> |      <span class="hljs-literal">false</span> |<br>| bcc22e0a75396cbc | started | etcd_0_62 | https:<span class="hljs-string">//192.168.0.62</span><span class="hljs-function">:2380</span> | https:<span class="hljs-string">//127.0.0.1</span><span class="hljs-function">:1159</span>,https:<span class="hljs-string">//192.168.0.62</span><span class="hljs-function">:1159</span> |      <span class="hljs-literal">false</span> |<br>+<span class="hljs-params">------------------</span>+<span class="hljs-params">---------</span>+<span class="hljs-params">-----------</span>+<span class="hljs-params">---------------------------</span>+<span class="hljs-params">--------------------------------------------------</span>+<span class="hljs-params">------------</span>+<br><br><br><br>ETCDCTL_API=3  etcdctl <span class="hljs-params">--endpoints=http</span>:<span class="hljs-string">//192.168.0.61</span><span class="hljs-function">:2382</span>,http:<span class="hljs-string">//192.168.0.62</span><span class="hljs-function">:2382</span>,http:<span class="hljs-string">//192.168.0.63</span><span class="hljs-function">:2382</span>  member list -w table<br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111500469.png" srcset="/img/loading.gif" lazyload alt="image-20240511150054408"></p>
+<h3 id="查看状态，正常都是3-8Mb的大小"><a href="#查看状态，正常都是3-8Mb的大小" class="headerlink" title="查看状态，正常都是3.8Mb的大小"></a>查看状态，正常都是3.8Mb的大小</h3><figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs routeros"><span class="hljs-attribute">ETCDCTL_API</span>=3  /usr/bin/etcdctl <span class="hljs-attribute">--endpoints</span>=https://192.168.0.61:1159,https://192.168.0.62:1159 <span class="hljs-attribute">--cacert</span>=/etc/kubernetes/ssl/ca.crt <span class="hljs-attribute">--cert</span>=/etc/kubernetes/ssl/etcd_server.crt <span class="hljs-attribute">--key</span>=/etc/kubernetes/ssl/etcd_server.key endpoint status -w table<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs routeros"><span class="hljs-attribute">ETCDCTL_API</span>=3  /usr/bin/etcdctl <span class="hljs-attribute">--endpoints</span>=https://2:1159 <span class="hljs-attribute">--cacert</span>=/etc/kubernetes/ssl/ca.crt <span class="hljs-attribute">--cert</span>=/etc/kubernetes/ssl/etcd_server.crt <span class="hljs-attribute">--key</span>=/etc/kubernetes/ssl/etcd_server.key endpoint status -w table<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">ETCDCTL_API</span>=<span class="hljs-number">3</span>  etcdctl --endpoints=http://<span class="hljs-number">192.168.0.61:2382</span>,http://<span class="hljs-number">192.168.0.62:2382</span>,http://<span class="hljs-number">192.168.0.63:2382</span>  endpoint status -w table<br></code></pre></td></tr></table></figure>
+
+
+
+<figure class="highlight gherkin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs gherkin">[root<span class="hljs-meta">@master1</span> ~]<span class="hljs-comment"># ETCDCTL_API=3  /usr/bin/etcdctl \</span><br>&gt;                 --endpoints=https://192.168.0.61:1159,https://192.168.0.62:1159 \<br>&gt;                 --cacert=/etc/kubernetes/ssl/ca.crt \<br>&gt;                 --cert=/etc/kubernetes/ssl/etcd_server.crt \<br>&gt;                 --key=/etc/kubernetes/ssl/etcd_server.key \<br>&gt;                 endpoint status -w table<br>+---------------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+--------+<br>|<span class="hljs-string">         ENDPOINT          </span>|<span class="hljs-string">        ID        </span>|<span class="hljs-string"> VERSION </span>|<span class="hljs-string"> DB SIZE </span>|<span class="hljs-string"> IS LEADER </span>|<span class="hljs-string"> IS LEARNER </span>|<span class="hljs-string"> RAFT TERM </span>|<span class="hljs-string"> RAFT INDEX </span>|<span class="hljs-string"> RAFT APPLIED INDEX </span>|<span class="hljs-string"> ERRORS </span>|<br>+---------------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+--------+<br>|<span class="hljs-string"> https://192.168.0.61:1159 </span>|<span class="hljs-string"> 6195ef4a2fc534f8 </span>|<span class="hljs-string">   3.5.4 </span>|<span class="hljs-string">  3.8 MB </span>|<span class="hljs-string">     false </span>|<span class="hljs-string">      false </span>|<span class="hljs-string">         6 </span>|<span class="hljs-string">       2481 </span>|<span class="hljs-string">               2481 </span>|<span class="hljs-string">        </span>|<br>|<span class="hljs-string"> https://192.168.0.62:1159 </span>|<span class="hljs-string"> bcc22e0a75396cbc </span>|<span class="hljs-string">   3.5.4 </span>|<span class="hljs-string">  3.8 MB </span>|<span class="hljs-string">      true </span>|<span class="hljs-string">      false </span>|<span class="hljs-string">         6 </span>|<span class="hljs-string">       2481 </span>|<span class="hljs-string">               2481 </span>|<span class="hljs-string">        </span>|<br>+<br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111500456.png" srcset="/img/loading.gif" lazyload alt="image-20240511150036399"></p>
+<h3 id="在61节点上添加第三个etcd节点"><a href="#在61节点上添加第三个etcd节点" class="headerlink" title="在61节点上添加第三个etcd节点"></a>在61节点上添加第三个etcd节点</h3><figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs routeros"><span class="hljs-attribute">ETCDCTL_API</span>=3 /usr/bin/etcdctl <span class="hljs-attribute">--endpoints</span>=https://192.168.0.61:1159 \<br>                    <span class="hljs-attribute">--cacert</span>=/etc/kubernetes/ssl/ca.crt \<br>                    <span class="hljs-attribute">--cert</span>=/etc/kubernetes/ssl/etcd_server.crt \<br>                    <span class="hljs-attribute">--key</span>=/etc/kubernetes/ssl/etcd_server.key \<br>                    member <span class="hljs-built_in">add</span> etcd_0_63 <span class="hljs-attribute">--peer-urls</span>=https://192.168.0.63:2380<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs routeros">[root@master1 ~]#   <span class="hljs-attribute">ETCDCTL_API</span>=3 /usr/bin/etcdctl <span class="hljs-attribute">--endpoints</span>=https://192.168.0.61:1159 \<br>&gt;                       <span class="hljs-attribute">--cacert</span>=/etc/kubernetes/ssl/ca.crt \<br>&gt;                       <span class="hljs-attribute">--cert</span>=/etc/kubernetes/ssl/etcd_server.crt \<br>&gt;                       <span class="hljs-attribute">--key</span>=/etc/kubernetes/ssl/etcd_server.key \<br>&gt;                       member <span class="hljs-built_in">add</span> etcd_0_63 <span class="hljs-attribute">--peer-urls</span>=https://192.168.0.63:2380<br>Member 3dcc0344ff804247 added <span class="hljs-keyword">to</span> cluster f6f9624e4f919ae5<br><br><span class="hljs-attribute">ETCD_NAME</span>=<span class="hljs-string">&quot;etcd_0_63&quot;</span><br><span class="hljs-attribute">ETCD_INITIAL_CLUSTER</span>=<span class="hljs-string">&quot;etcd_0_63=https://192.168.0.63:2380,etcd_0_61=https://192.168.0.61:2380,etcd_0_62=https://192.168.0.62:2380&quot;</span><br><span class="hljs-attribute">ETCD_INITIAL_ADVERTISE_PEER_URLS</span>=<span class="hljs-string">&quot;https://192.168.0.63:2380&quot;</span><br><span class="hljs-attribute">ETCD_INITIAL_CLUSTER_STATE</span>=<span class="hljs-string">&quot;existing&quot;</span><br><br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111500477.png" srcset="/img/loading.gif" lazyload alt="image-20240511150019417"></p>
+<h3 id="修改61和62和63的etcd的配置，包括ETCD-INITIAL-CLUSTER信息要包括61和62和63，ETCD-INITIAL-CLUSTER-STATE都改为existing，修改完重启61-62-63-3个etcd节点，"><a href="#修改61和62和63的etcd的配置，包括ETCD-INITIAL-CLUSTER信息要包括61和62和63，ETCD-INITIAL-CLUSTER-STATE都改为existing，修改完重启61-62-63-3个etcd节点，" class="headerlink" title="修改61和62和63的etcd的配置，包括ETCD_INITIAL_CLUSTER信息要包括61和62和63，ETCD_INITIAL_CLUSTER_STATE都改为existing，修改完重启61,62,63 3个etcd节点，"></a>修改61和62和63的etcd的配置，包括ETCD_INITIAL_CLUSTER信息要包括61和62和63，ETCD_INITIAL_CLUSTER_STATE都改为existing，修改完重启61,62,63 3个etcd节点，</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">cd</span> /etc/etcd/<br>vim /etd.conf<br>systemctl restart etcd<br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111459088.png" srcset="/img/loading.gif" lazyload alt="image-20240511145955015"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202406140953484.png" srcset="/img/loading.gif" lazyload alt="image-20240614095324415"></p>
+<h3 id="查看member-list-1"><a href="#查看member-list-1" class="headerlink" title="查看member list"></a>查看member list</h3><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">ETCDCTL_API</span>=<span class="hljs-number">3</span>  etcdctl                 --endpoints=http://<span class="hljs-number">192.168.0.61:2382</span>,http://<span class="hljs-number">192.168.0.62:2382</span>,http://<span class="hljs-number">192.168.0.63:2382</span>            member list -w table<br></code></pre></td></tr></table></figure>
+
+
+
+<figure class="highlight jboss-cli"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs jboss-cli">[root@master1 etcd]<span class="hljs-comment"># ETCDCTL_API=3  /usr/bin/etcdctl                 --endpoints=https://192.168.0.61:1159,https://192.168.0.62:1159,https://192.168.0.63:1159                 --cacert=/etc/kubernetes/ssl/ca.crt                 --cert=/etc/kubernetes/ssl/etcd_server.crt                 --key=/etc/kubernetes/ssl/etcd_server.key  member list -w table</span><br>+<span class="hljs-params">------------------</span>+<span class="hljs-params">---------</span>+<span class="hljs-params">-----------</span>+<span class="hljs-params">---------------------------</span>+<span class="hljs-params">--------------------------------------------------</span>+<span class="hljs-params">------------</span>+<br>|        ID        | STATUS  |   NAME    |        PEER ADDRS         |                   CLIENT ADDRS                   | IS LEARNER |<br>+<span class="hljs-params">------------------</span>+<span class="hljs-params">---------</span>+<span class="hljs-params">-----------</span>+<span class="hljs-params">---------------------------</span>+<span class="hljs-params">--------------------------------------------------</span>+<span class="hljs-params">------------</span>+<br>| 3dcc0344ff804247 | started | etcd_0_63 | https:<span class="hljs-string">//192.168.0.63</span><span class="hljs-function">:2380</span> | https:<span class="hljs-string">//127.0.0.1</span><span class="hljs-function">:1159</span>,https:<span class="hljs-string">//192.168.0.63</span><span class="hljs-function">:1159</span> |      <span class="hljs-literal">false</span> |<br>| 6195ef4a2fc534f8 | started | etcd_0_61 | https:<span class="hljs-string">//192.168.0.61</span><span class="hljs-function">:2380</span> | https:<span class="hljs-string">//127.0.0.1</span><span class="hljs-function">:1159</span>,https:<span class="hljs-string">//192.168.0.61</span><span class="hljs-function">:1159</span> |      <span class="hljs-literal">false</span> |<br>| bcc22e0a75396cbc | started | etcd_0_62 | https:<span class="hljs-string">//192.168.0.62</span><span class="hljs-function">:2380</span> | https:<span class="hljs-string">//127.0.0.1</span><span class="hljs-function">:1159</span>,https:<span class="hljs-string">//192.168.0.62</span><span class="hljs-function">:1159</span> |      <span class="hljs-literal">false</span> |<br>+<span class="hljs-params">------------------</span>+<span class="hljs-params">---------</span>+<span class="hljs-params">-----------</span>+<span class="hljs-params">---------------------------</span>+<span class="hljs-params">--------------------------------------------------</span>+<span class="hljs-params">------------</span>+<br>[root@master1 etcd]<span class="hljs-comment">#</span><br><br><br>ETCDCTL_API=3  <span class="hljs-string">/usr/bin/etcdctl</span>                 <span class="hljs-params">--endpoints=https</span>:<span class="hljs-string">//192.168.0.186</span><span class="hljs-function">:1159</span>,https:<span class="hljs-string">//192.168.0.187</span><span class="hljs-function">:1159</span>,https:<span class="hljs-string">//192.168.0.188</span><span class="hljs-function">:1159</span>                 <span class="hljs-params">--cacert=/etc/kubernetes/ssl/ca</span>.crt                 <span class="hljs-params">--cert=/etc/kubernetes/ssl/etcd_server</span>.crt                 <span class="hljs-params">--key=/etc/kubernetes/ssl/etcd_server</span>.key  member list -w table<br><br><br><br><br><br>ETCDCTL_API=3  <span class="hljs-string">/usr/bin/etcdctl</span>                 <span class="hljs-params">--endpoints=https</span>:<span class="hljs-string">//192.168.0.61</span><span class="hljs-function">:1159</span>,https:<span class="hljs-string">//192.168.0.62</span><span class="hljs-function">:1159</span>,https:<span class="hljs-string">//192.168.0.63</span><span class="hljs-function">:1159</span>                 <span class="hljs-params">--cacert=/etc/kubernetes/ssl/ca</span>.crt                 <span class="hljs-params">--cert=/etc/kubernetes/ssl/etcd_server</span>.crt                 <span class="hljs-params">--key=/etc/kubernetes/ssl/etcd_server</span>.key  member list -w table<br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202406191645182.png" srcset="/img/loading.gif" lazyload alt="image-20240619164558103"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111459636.png" srcset="/img/loading.gif" lazyload alt="image-20240511145915565"></p>
+<h3 id="查看etcd健康状态"><a href="#查看etcd健康状态" class="headerlink" title="查看etcd健康状态"></a>查看etcd健康状态</h3><figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs routeros"><span class="hljs-attribute">ETCDCTL_API</span>=3  etcdctl                 <span class="hljs-attribute">--endpoints</span>=http://192.168.0.61:2382,http://192.168.0.62:2382,http://192.168.0.63:2382            endpoint<span class="hljs-built_in"> health </span>-w table<br></code></pre></td></tr></table></figure>
+
+
+
+<figure class="highlight jboss-cli"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs jboss-cli">[root@master1 etcd]<span class="hljs-comment"># ETCDCTL_API=3  /usr/bin/etcdctl                 --endpoints=https://192.168.0.61:1159,https://192.168.0.62:1159,https://192.168.0.63:1159                 --cacert=/etc/kubernetes/ssl/ca.crt                 --cert=/etc/kubernetes/ssl/etcd_server.crt                 --key=/etc/kubernetes/ssl/etcd_server.key                 endpoint health -w table</span><br>+<span class="hljs-params">---------------------------</span>+<span class="hljs-params">--------</span>+<span class="hljs-params">-------------</span>+<span class="hljs-params">-------</span>+<br>|         ENDPOINT          | HEALTH |    TOOK     | ERROR |<br>+<span class="hljs-params">---------------------------</span>+<span class="hljs-params">--------</span>+<span class="hljs-params">-------------</span>+<span class="hljs-params">-------</span>+<br>| https:<span class="hljs-string">//192.168.0.62</span><span class="hljs-function">:1159</span> |   <span class="hljs-literal">true</span> | 12.985932ms |       |<br>| https:<span class="hljs-string">//192.168.0.61</span><span class="hljs-function">:1159</span> |   <span class="hljs-literal">true</span> | 12.078238ms |       |<br>| https:<span class="hljs-string">//192.168.0.63</span><span class="hljs-function">:1159</span> |   <span class="hljs-literal">true</span> | 14.896674ms |       |<br>+<span class="hljs-params">---------------------------</span>+<span class="hljs-params">--------</span>+<span class="hljs-params">-------------</span>+<span class="hljs-params">-------</span>+<br><br><br>ETCDCTL_API=3  <span class="hljs-string">/usr/bin/etcdctl</span>                 <span class="hljs-params">--endpoints=https</span>:<span class="hljs-string">//192.168.0.186</span><span class="hljs-function">:1159</span>,https:<span class="hljs-string">//192.168.0.187</span><span class="hljs-function">:1159</span>,https:<span class="hljs-string">//192.168.0.188</span><span class="hljs-function">:1159</span>                 <span class="hljs-params">--cacert=/etc/kubernetes/ssl/ca</span>.crt                 <span class="hljs-params">--cert=/etc/kubernetes/ssl/etcd_server</span>.crt                 <span class="hljs-params">--key=/etc/kubernetes/ssl/etcd_server</span>.key                 endpoint health -w table<br><br>ETCDCTL_API=3  <span class="hljs-string">/usr/bin/etcdctl</span>                 <span class="hljs-params">--endpoints=https</span>:<span class="hljs-string">//192.168.0.61</span><span class="hljs-function">:1159</span>,https:<span class="hljs-string">//192.168.0.62</span><span class="hljs-function">:1159</span>,https:<span class="hljs-string">//192.168.0.63</span><span class="hljs-function">:1159</span>                 <span class="hljs-params">--cacert=/etc/kubernetes/ssl/ca</span>.crt                 <span class="hljs-params">--cert=/etc/kubernetes/ssl/etcd_server</span>.crt                 <span class="hljs-params">--key=/etc/kubernetes/ssl/etcd_server</span>.key                 endpoint health -w table<br><br><br><br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202406191644784.png" srcset="/img/loading.gif" lazyload alt="image-20240619164452722"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111459093.png" srcset="/img/loading.gif" lazyload alt="image-20240511145904036"></p>
+<h3 id="查看etcd的状态，3个节点的数据大小一直，状态正常"><a href="#查看etcd的状态，3个节点的数据大小一直，状态正常" class="headerlink" title="查看etcd的状态，3个节点的数据大小一直，状态正常"></a>查看etcd的状态，3个节点的数据大小一直，状态正常</h3><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">ETCDCTL_API</span>=<span class="hljs-number">3</span>  etcdctl                 --endpoints=http://<span class="hljs-number">192.168.0.61:2382</span>,http://<span class="hljs-number">192.168.0.62:2382</span>,http://<span class="hljs-number">192.168.0.63:2382</span>       endpoint status -w table<br></code></pre></td></tr></table></figure>
+
+
+
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs routeros"><span class="hljs-attribute">ETCDCTL_API</span>=3  /usr/bin/etcdctl                 <span class="hljs-attribute">--endpoints</span>=https://20.26.215.183:1159                 <span class="hljs-attribute">--cacert</span>=/etc/kubernetes/ssl/ca.crt                 <span class="hljs-attribute">--cert</span>=/etc/kubernetes/ssl/etcd_server.crt                 <span class="hljs-attribute">--key</span>=/etc/kubernetes/ssl/etcd_server.key                 endpoint status -w table<br><br><br><span class="hljs-attribute">ETCDCTL_API</span>=3  /usr/bin/etcdctl                 <span class="hljs-attribute">--endpoints</span>=https://192.168.0.186:1159,https://192.168.0.187:1159,https://192.168.0.188:1159                 <span class="hljs-attribute">--cacert</span>=/etc/kubernetes/ssl/ca.crt                 <span class="hljs-attribute">--cert</span>=/etc/kubernetes/ssl/etcd_server.crt                 <span class="hljs-attribute">--key</span>=/etc/kubernetes/ssl/etcd_server.key                 endpoint status -w table<br><br><span class="hljs-attribute">ETCDCTL_API</span>=3  /usr/bin/etcdctl                 <span class="hljs-attribute">--endpoints</span>=https://192.168.0.61:1159,https://192.168.0.62:1159,https://192.168.0.63:1159                 <span class="hljs-attribute">--cacert</span>=/etc/kubernetes/ssl/ca.crt                 <span class="hljs-attribute">--cert</span>=/etc/kubernetes/ssl/etcd_server.crt                 <span class="hljs-attribute">--key</span>=/etc/kubernetes/ssl/etcd_server.key                 endpoint status -w table<br><br><br><br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202406191644569.png" srcset="/img/loading.gif" lazyload alt="image-20240619164413485"></p>
+<figure class="highlight gherkin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs gherkin">[root<span class="hljs-meta">@master1</span> etcd]<span class="hljs-comment"># ETCDCTL_API=3  /usr/bin/etcdctl                 --endpoints=https://192.168.0.61:1159,https://192.168.0.62:1159,https://192.168.0.63:1159                 --cacert=/etc/kubernetes/ssl/ca.crt                 --cert=/etc/kubernetes/ssl/etcd_server.crt                 --key=/etc/kubernetes/ssl/etcd_server.key                 endpoint status -w table</span><br>+---------------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+--------+<br>|<span class="hljs-string">         ENDPOINT          </span>|<span class="hljs-string">        ID        </span>|<span class="hljs-string"> VERSION </span>|<span class="hljs-string"> DB SIZE </span>|<span class="hljs-string"> IS LEADER </span>|<span class="hljs-string"> IS LEARNER </span>|<span class="hljs-string"> RAFT TERM </span>|<span class="hljs-string"> RAFT INDEX </span>|<span class="hljs-string"> RAFT APPLIED INDEX </span>|<span class="hljs-string"> ERRORS </span>|<br>+---------------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+--------+<br>|<span class="hljs-string"> https://192.168.0.61:1159 </span>|<span class="hljs-string"> 6195ef4a2fc534f8 </span>|<span class="hljs-string">   3.5.4 </span>|<span class="hljs-string">  3.8 MB </span>|<span class="hljs-string">     false </span>|<span class="hljs-string">      false </span>|<span class="hljs-string">         8 </span>|<span class="hljs-string">       2487 </span>|<span class="hljs-string">               2487 </span>|<span class="hljs-string">        </span>|<br>|<span class="hljs-string"> https://192.168.0.62:1159 </span>|<span class="hljs-string"> bcc22e0a75396cbc </span>|<span class="hljs-string">   3.5.4 </span>|<span class="hljs-string">  3.8 MB </span>|<span class="hljs-string">      true </span>|<span class="hljs-string">      false </span>|<span class="hljs-string">         8 </span>|<span class="hljs-string">       2487 </span>|<span class="hljs-string">               2487 </span>|<span class="hljs-string">        </span>|<br>|<span class="hljs-string"> https://192.168.0.63:1159 </span>|<span class="hljs-string"> 3dcc0344ff804247 </span>|<span class="hljs-string">   3.5.4 </span>|<span class="hljs-string">  3.9 MB </span>|<span class="hljs-string">     false </span>|<span class="hljs-string">      false </span>|<span class="hljs-string">         8 </span>|<span class="hljs-string">       2487 </span>|<span class="hljs-string">               2487 </span>|<span class="hljs-string">        </span>|<br>+---------------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+--------+<br>[<br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405111458196.png" srcset="/img/loading.gif" lazyload alt="image-20240511145849129"></p>
+<h4 id="拷贝证书相关文件到各个主机-master和node节点"><a href="#拷贝证书相关文件到各个主机-master和node节点" class="headerlink" title="拷贝证书相关文件到各个主机 master和node节点"></a>拷贝证书相关文件到各个主机 master和node节点</h4><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405141939171.png" srcset="/img/loading.gif" lazyload alt="image-20240514193938114"></p>
+<h4 id="拷贝相关文件到master1和master2节点"><a href="#拷贝相关文件到master1和master2节点" class="headerlink" title="拷贝相关文件到master1和master2节点"></a>拷贝相关文件到master1和master2节点</h4><figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><code class="hljs ruby">master1和master2节点都要拷贝<br><br>scp -rp /usr/bin/kube-apiserver root<span class="hljs-variable">@192</span>.<span class="hljs-number">168.0</span>.<span class="hljs-number">62</span><span class="hljs-symbol">:/usr/bin/kube-apiserver</span><br>scp -rp /usr/bin/kube-controller-manager root<span class="hljs-variable">@192</span>.<span class="hljs-number">168.0</span>.<span class="hljs-number">62</span><span class="hljs-symbol">:/usr/bin/kube-controller-manager</span><br>scp -rp /usr/bin/kube-scheduler root<span class="hljs-variable">@192</span>.<span class="hljs-number">168.0</span>.<span class="hljs-number">62</span><span class="hljs-symbol">:/usr/bin/kube-scheduler</span><br>scp -rp /usr/bin/kubectl root<span class="hljs-variable">@192</span>.<span class="hljs-number">168.0</span>.<span class="hljs-number">62</span><span class="hljs-symbol">:/usr/bin/kubectl</span><br><br>scp -rp /etc/kubernetes/ssl root<span class="hljs-variable">@192</span>.<span class="hljs-number">168.0</span>.<span class="hljs-number">62</span><span class="hljs-symbol">:/etc/kubernetes/ssl</span><br><br>scp -rp /etc/kubernetes/ssl/* root<span class="hljs-variable">@192</span>.<span class="hljs-number">168.0</span>.<span class="hljs-number">62</span><span class="hljs-symbol">:/etc/kubernetes/ssl/*</span><br><br>mkdir -p /var/log/kubernetes<br><br>scp -rp  /etc/kubernetes/apiserver root<span class="hljs-variable">@192</span>.<span class="hljs-number">168.0</span>.<span class="hljs-number">62</span><span class="hljs-symbol">:/etc/kubernetes/apiserver</span><br>scp -rp  /etc/kubernetes/controller-manager root<span class="hljs-variable">@192</span>.<span class="hljs-number">168.0</span>.<span class="hljs-number">62</span><span class="hljs-symbol">:/etc/kubernetes/controller-manager</span><br>scp -rp  /etc/kubernetes/scheduler root<span class="hljs-variable">@192</span>.<span class="hljs-number">168.0</span>.<span class="hljs-number">62</span><span class="hljs-symbol">:/etc/kubernetes/scheduler</span><br>scp -rp  /etc/kubernetes/kubeconfig_bak root<span class="hljs-variable">@192</span>.<span class="hljs-number">168.0</span>.<span class="hljs-number">62</span><span class="hljs-symbol">:/etc/kubernetes/kubeconfig_bak</span><br><br><br>scp -rp  /usr/lib/systemd/system/kube-apiserver.service root<span class="hljs-variable">@192</span>.<span class="hljs-number">168.0</span>.<span class="hljs-number">62</span><span class="hljs-symbol">:/usr/lib/systemd/system/kube-apiserver</span>.service<br>scp -rp  /usr/lib/systemd/system/kube-controller-manager.service root<span class="hljs-variable">@192</span>.<span class="hljs-number">168.0</span>.<span class="hljs-number">62</span><span class="hljs-symbol">:/usr/lib/systemd/system/kube-controller-manager</span>.service <br>scp -rp  /usr/lib/systemd/system/kube-scheduler.service root<span class="hljs-variable">@192</span>.<span class="hljs-number">168.0</span>.<span class="hljs-number">62</span><span class="hljs-symbol">:/usr/lib/systemd/system/kube-scheduler</span>.service<br><br>mkdir -p /etc/kubernetes/pki/ca_ssl<br><br>scp -rp  /etc/kubernetes/pki/ca_ssl root<span class="hljs-variable">@192</span>.<span class="hljs-number">168.0</span>.<span class="hljs-number">62</span><span class="hljs-symbol">:/etc/kubernetes/pki/ca_ssl</span><br><br>systemctl daemon-reload<br><br>systemctl start kube-apiserver<br>systemctl start kube-controller-manager<br>systemctl start kube-scheduler<br><br><br>systemctl status kube-apiserver<br>systemctl status kube-controller-manager<br>systemctl status kube-scheduler<br><br>kubectl create clusterrolebinding root-cluster-admin-binding --clusterrole=cluster-admin --user=admin <span class="hljs-number">2</span>&gt;<span class="hljs-regexp">/dev/null</span><br><br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202406121021940.png" srcset="/img/loading.gif" lazyload alt="image-20240612102149822"></p>
+<h3 id="后面直接执行-master-node-colico-coredns即可"><a href="#后面直接执行-master-node-colico-coredns即可" class="headerlink" title="后面直接执行 master node colico coredns即可"></a>后面直接执行 master node colico coredns即可</h3><h5 id="拷贝master节点证书到-etc-kubernetes-ssl下面后，执行-重启master和node节点的各个服务"><a href="#拷贝master节点证书到-etc-kubernetes-ssl下面后，执行-重启master和node节点的各个服务" class="headerlink" title="拷贝master节点证书到&#x2F;etc&#x2F;kubernetes&#x2F;ssl下面后，执行 重启master和node节点的各个服务"></a>拷贝master节点证书到&#x2F;etc&#x2F;kubernetes&#x2F;ssl下面后，执行 重启master和node节点的各个服务</h5><h5 id="apiserver要修改为下面的内容"><a href="#apiserver要修改为下面的内容" class="headerlink" title="apiserver要修改为下面的内容"></a>apiserver要修改为下面的内容</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202406140948511.png" srcset="/img/loading.gif" lazyload alt="image-20240614094850399"></p>
+<figure class="highlight crmsh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs crmsh">ansible -i hosts <span class="hljs-keyword">master</span> <span class="hljs-title">-m</span> shell -a <span class="hljs-string">&quot;systemctl restart etcd&quot;</span><br>ansible -i hosts <span class="hljs-keyword">master</span> <span class="hljs-title">-m</span> shell -a <span class="hljs-string">&quot;systemctl restart kube-apiserver&quot;</span><br>ansible -i hosts <span class="hljs-keyword">master</span> <span class="hljs-title">-m</span> shell -a <span class="hljs-string">&quot;systemctl restart kube-controller-manager&quot;</span><br>ansible -i hosts <span class="hljs-keyword">master</span> <span class="hljs-title">-m</span> shell -a <span class="hljs-string">&quot;systemctl restart kube-scheduler&quot;</span><br><br>ansible -i hosts <span class="hljs-keyword">master</span> <span class="hljs-title">-m</span> shell -a <span class="hljs-string">&quot;systemctl restart kubelet&quot;</span><br>ansible -i hosts <span class="hljs-keyword">master</span> <span class="hljs-title">-m</span> shell -a <span class="hljs-string">&quot;systemctl restart kube-proxy&quot;</span><br>ansible -i hosts <span class="hljs-keyword">node</span> <span class="hljs-title">-m</span> shell -a <span class="hljs-string">&quot;systemctl restart kubelet&quot;</span><br>ansible -i hosts <span class="hljs-keyword">node</span> <span class="hljs-title">-m</span> shell -a <span class="hljs-string">&quot;systemctl restart kube-proxy&quot;</span><br><br></code></pre></td></tr></table></figure>
+
+<p><img src="/../../AppData/Roaming/Typora/typora-user-images/image-20240511155945564.png" srcset="/img/loading.gif" lazyload alt="image-20240511155945564"></p>
+<h3 id="cailco理论会自动安装，也可以执行下calico和coredns的安装步骤，注意新加节点和老的节点的udp-14789要能互相通信，否者新加的master节点和集群的其他节点的网络不通"><a href="#cailco理论会自动安装，也可以执行下calico和coredns的安装步骤，注意新加节点和老的节点的udp-14789要能互相通信，否者新加的master节点和集群的其他节点的网络不通" class="headerlink" title="cailco理论会自动安装，也可以执行下calico和coredns的安装步骤，注意新加节点和老的节点的udp 14789要能互相通信，否者新加的master节点和集群的其他节点的网络不通"></a>cailco理论会自动安装，也可以执行下calico和coredns的安装步骤，注意新加节点和老的节点的udp 14789要能互相通信，否者新加的master节点和集群的其他节点的网络不通</h3><p><img src="/../../AppData/Roaming/Typora/typora-user-images/image-20240511160030543.png" srcset="/img/loading.gif" lazyload alt="image-20240511160030543"></p>
+<h3 id="查看集群的pod，正常"><a href="#查看集群的pod，正常" class="headerlink" title="查看集群的pod，正常"></a>查看集群的pod，正常</h3><figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs routeros">k <span class="hljs-built_in">get</span> pod -A<br></code></pre></td></tr></table></figure>
+
+<p><img src="/../../AppData/Roaming/Typora/typora-user-images/image-20240511160237368.png" srcset="/img/loading.gif" lazyload alt="image-20240511160237368"></p>
+<h3 id="查看集群的状态，正常"><a href="#查看集群的状态，正常" class="headerlink" title="查看集群的状态，正常"></a>查看集群的状态，正常</h3><figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs routeros">k <span class="hljs-built_in">get</span> cs<br></code></pre></td></tr></table></figure>
+
+<p><img src="/../../AppData/Roaming/Typora/typora-user-images/image-20240511160257216.png" srcset="/img/loading.gif" lazyload alt="image-20240511160257216"></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405141941540.png" srcset="/img/loading.gif" lazyload alt="image-20240514194131481"></p>
+<h4 id="数据都还在-包括之前单节点创建的redis服务-redis的pvc-nfs-client-provisioner服务，至此扩容为3master3etcd完成，且原数据未丢失"><a href="#数据都还在-包括之前单节点创建的redis服务-redis的pvc-nfs-client-provisioner服务，至此扩容为3master3etcd完成，且原数据未丢失" class="headerlink" title="数据都还在 包括之前单节点创建的redis服务 redis的pvc nfs-client-provisioner服务，至此扩容为3master3etcd完成，且原数据未丢失"></a>数据都还在 包括之前单节点创建的redis服务 redis的pvc nfs-client-provisioner服务，至此扩容为3master3etcd完成，且原数据未丢失</h4><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405141942684.png" srcset="/img/loading.gif" lazyload alt="image-20240514194207606"></p>
+<h4 id="POD状态正常"><a href="#POD状态正常" class="headerlink" title="POD状态正常"></a>POD状态正常</h4><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405142035144.png" srcset="/img/loading.gif" lazyload alt="image-20240514203540065"></p>
+<h3 id="注意coredns的cm-要重新生成-不然etcd会报错coredns有连接因为证书错误导致连接被拒绝"><a href="#注意coredns的cm-要重新生成-不然etcd会报错coredns有连接因为证书错误导致连接被拒绝" class="headerlink" title="注意coredns的cm 要重新生成 不然etcd会报错coredns有连接因为证书错误导致连接被拒绝"></a>注意coredns的cm 要重新生成 不然etcd会报错coredns有连接因为证书错误导致连接被拒绝</h3><figure class="highlight gradle"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs gradle">k <span class="hljs-keyword">delete</span> cm -n kube-system etcd-cert<br><br>kubectl create configmap  etcd-cert -n kube-system --<span class="hljs-keyword">from</span>-<span class="hljs-keyword">file</span>=ca.crt=<span class="hljs-regexp">/etc/</span>kubernetes<span class="hljs-regexp">/ssl/</span>ca.crt --<span class="hljs-keyword">from</span>-<span class="hljs-keyword">file</span>=etcd_client.crt=<span class="hljs-regexp">/etc/</span>kubernetes<span class="hljs-regexp">/ssl/</span>etcd_client.crt  --<span class="hljs-keyword">from</span>-<span class="hljs-keyword">file</span>=etcd_client.key=<span class="hljs-regexp">/etc/</span>kubernetes<span class="hljs-regexp">/ssl/</span>etcd_client.key<br><br>kubectl apply -f  <span class="hljs-regexp">/apps/</span>cluster_modules_setup<span class="hljs-regexp">/coredns-1.7.1/</span>coredns-v1.<span class="hljs-number">7.0</span>-with-etcd.yaml<br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405151730301.png" srcset="/img/loading.gif" lazyload alt="image-20240515173024188"></p>
+<figure class="highlight maxima"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs maxima">systemctl <span class="hljs-built_in">restart</span> etcd<br>systemctl <span class="hljs-built_in">status</span> etcd<br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405151730039.png" srcset="/img/loading.gif" lazyload alt="image-20240515173051943"></p>
+<figure class="highlight crmsh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs crmsh"><span class="hljs-number">1</span>.上一次变更已经进行etcd3节点改造，<span class="hljs-number">3m</span>aster节点的相关系统文件已经拷贝过去了，这次要改<span class="hljs-literal">master</span>节点的apiserver配置和/etc/kubernetes/ssl下的证书更新，<span class="hljs-keyword">node</span><span class="hljs-title">节点的/etc</span>/kubernetes/ssl下的证书更新。<br><span class="hljs-number">2</span>.停止所有<span class="hljs-keyword">node</span><span class="hljs-title">和master</span>节点的集群组件，包括kubelet，kube-proxy，kube-apiserver，etcd，kube-controller-manager，kube-scheduler。<br><span class="hljs-number">3</span>.重新生成ca，etcd，apiserver等证书在/opt/kubernetes_ssl下<br><span class="hljs-number">4</span>.拷贝/opt/kubernetes_ssl下相关证书到每一个<span class="hljs-literal">master</span>和<span class="hljs-keyword">node</span><span class="hljs-title">节点的/etc</span>/kubernetes/ssl下进行替换证书操作。<span class="hljs-literal">master</span>拷贝/opt/kubernetes_ssl下的所有文件，<span class="hljs-keyword">node</span><span class="hljs-title">节点拷贝ca</span>.crt,calient.crt,client.key,kubeconfig文件<br><span class="hljs-number">5</span>.重新启动所有<span class="hljs-keyword">node</span><span class="hljs-title">和master</span>节点的集群组件，包括kubelet，kube-proxy，kube-apiserver，etcd，kube-controller-manager，kube-scheduler。<br><span class="hljs-number">6</span>.观察集群状态和pod状态是否正常。<br><br>重点需要重启docker，否则云IDE打不开工作空间<br><br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202406191652984.png" srcset="/img/loading.gif" lazyload alt="image-20240619165226911"></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>单master单etcd改造为3master3etcd 2024-08-02 17:57:00.592</div>
+      <div>http://example.com/2025/01/16/单master单etcd改造为3master3etcd-dan-master-dan-etcd-gai-zao-wei-3master3etcd/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/ssl%E8%AF%81%E4%B9%A6%E8%87%AA%E7%AD%BE%E5%8F%91-ssl-zheng-shu-zi-qian-fa/" title="ssl证书自签发 2024-04-03">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">ssl证书自签发 2024-04-03</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/prometheus-stack-prometheus-stack/" title="prometheus-stack 2024-08-02 17:55:22.326">
+                        <span class="hidden-mobile">prometheus-stack 2024-08-02 17:55:22.326</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

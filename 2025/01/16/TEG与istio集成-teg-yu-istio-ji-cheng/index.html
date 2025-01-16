@@ -1,0 +1,823 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="介绍 Tetrate Enterprise Gateway 及与 Istio 集成：云原生应用的全面网关解决方案 深入了解 Tetrate Enterprise Gateway (TEG) 及其如何与 Istio 服务网格集成 —— 一种基于 Envoy 的企业级网关解决方案，包括它的架构、基本功能以及如何在 Kubernetes 中使用 TEG 来暴露和管理应用。 TEG 简介Tetrate E">
+<meta property="og:type" content="article">
+<meta property="og:title" content="TEG与istio集成 2024-08-02 17:51:20.389">
+<meta property="og:url" content="http://example.com/2025/01/16/TEG%E4%B8%8Eistio%E9%9B%86%E6%88%90-teg-yu-istio-ji-cheng/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="介绍 Tetrate Enterprise Gateway 及与 Istio 集成：云原生应用的全面网关解决方案 深入了解 Tetrate Enterprise Gateway (TEG) 及其如何与 Istio 服务网格集成 —— 一种基于 Envoy 的企业级网关解决方案，包括它的架构、基本功能以及如何在 Kubernetes 中使用 TEG 来暴露和管理应用。 TEG 简介Tetrate E">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011011152.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011014653.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011015092.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.066Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:18.868Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011011152.png">
+  
+  
+  
+  <title>TEG与istio集成 2024-08-02 17:51:20.389 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="TEG与istio集成 2024-08-02 17:51:20.389"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.6k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          31 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">TEG与istio集成 2024-08-02 17:51:20.389</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>介绍 Tetrate Enterprise Gateway 及与 Istio 集成：云原生应用的全面网关解决方案</p>
+<p>深入了解 Tetrate Enterprise Gateway (TEG) 及其如何与 Istio 服务网格集成 —— 一种基于 Envoy 的企业级网关解决方案，包括它的架构、基本功能以及如何在 Kubernetes 中使用 TEG 来暴露和管理应用。</p>
+<h2 id="TEG-简介"><a href="#TEG-简介" class="headerlink" title="TEG 简介"></a>TEG 简介</h2><p>Tetrate Enterprise Gateway（TEG）是基于 <a target="_blank" rel="noopener" href="https://gateway.envoyproxy.io/">Envoy Gateway</a> (EG) 的企业级解决方案，专门针对 Envoy Proxy 设计，通过 <a target="_blank" rel="noopener" href="https://gateway-api.sigs.k8s.io/">Kubernetes Gateway API</a> 提供更易于消费的 Envoy 代理配置和管理包。TEG 结合了 Kubernetes Gateway API 的特性，支持在 Kubernetes 中轻松暴露服务和应用程序。</p>
+<p>TEG 相对于 Envoy Gateway 的主要新增特性包括：</p>
+<ol>
+<li><strong>全局速率限制（Rate Limiting）</strong>：TEG 支持基于 IP 5-tuple、请求头等进行流量控制，需要通过 Redis 实例管理。</li>
+<li><strong>WAF 功能（Web Application Firewall）</strong>：TEG 提供了与 <code>mod_security</code> 兼容的 WAF 功能，增强了安全防护能力。</li>
+<li><strong>OIDC&#x2F;OAuth2认证</strong>：支持在网关级别进行 OIDC&#x2F;OAuth2 认证，应用程序可以按路由配置认证方式。</li>
+<li><strong>使用 Kubernetes Gateway API</strong>：相较于其他 API，Kubernetes Gateway API 的设计更加现代，结合了众多 Ingress 实现的经验，将网关的配置与流量的路由分离，使平台所有者可以管理网关，而应用团队可以掌控流量路由。</li>
+</ol>
+<p>TEG 将 Envoy 的高级网络流量处理能力带入 Kubernetes 环境，提供了一种简化的方法来部署和管理负载平衡、API 网关功能、安全控制等，同时支持现代的、开放的应用程序暴露 API，如 Kubernetes Gateway API。这些特性使 TEG 成为一个功能丰富、易于管理的企业级网关解决方案。</p>
+<h2 id="TEG-的能力"><a href="#TEG-的能力" class="headerlink" title="TEG 的能力"></a>TEG 的能力</h2><p>Tetrate Enterprise Gateway for Envoy (TEG) 构建于 Envoy Gateway 项目之上，提供了一种易于使用和操作的入口，具有先进的按请求流量控制功能、与现有环境的轻松集成，以及一流的可观测性，以理解应用流量和入口健康状况。</p>
+<h3 id="易于安装、操作和升级"><a href="#易于安装、操作和升级" class="headerlink" title="易于安装、操作和升级"></a>易于安装、操作和升级</h3><p>TEG 从头到尾注重易用性：从首次安装到启用应用团队，从故障排查到执行升级。TEG 的初始安装只需几分钟，你就可以开始使用高级功能，如速率限制、单点登录和金丝雀流量路由。TEG 还简化了运维流程，与你现有的指标、跟踪和日志记录管道相适应，我们还提供了一个完整的、预配置的可观测性堆栈，以评估 EG 产生的数据，并帮助你计划如何将 TEG 集成到你的现有指标堆栈中。</p>
+<h3 id="操作性：一流的功能"><a href="#操作性：一流的功能" class="headerlink" title="操作性：一流的功能"></a>操作性：一流的功能</h3><p>TEG 由在生产环境中运行大型、关键系统的经验丰富团队构建。TEG 简化了漏洞检查和持续升级过程，与你现有的指标和跟踪提供商轻松集成，并为你现有的 Grafana 部署提供了一套强大的入口可观测性仪表板。</p>
+<h3 id="与现有的环境集成"><a href="#与现有的环境集成" class="headerlink" title="与现有的环境集成"></a>与现有的环境集成</h3><p>TEG 不仅适用于绿地部署的启动，还可以直接与传统环境以及现代云原生环境集成。它可以帮助你在现有的应用生态系统和你正在构建的云原生目标之间架起桥梁。</p>
+<h3 id="引入现有的可观测性堆栈"><a href="#引入现有的可观测性堆栈" class="headerlink" title="引入现有的可观测性堆栈"></a>引入现有的可观测性堆栈</h3><p>你的组织可能已经有一个可观测性系统，你的应用和运营团队已经训练有素地使用它。TEG 可以轻松地嵌入到现有的基础设施中，并在你的组织中运行。TEG 将使 Envoy 的丰富指标集导出，让你的应用团队对其应用流量的行为有最佳的洞察，并看到他们所做配置更改的效果。TEG 还为运行它的平台团队提供了仪表板和警报功能，使你能够自信地操作并快速解决发现的问题。</p>
+<h3 id="简单的负载平衡"><a href="#简单的负载平衡" class="headerlink" title="简单的负载平衡"></a>简单的负载平衡</h3><p>Envoy 非常强大，但要使其启动并运行简单用例可能很难——像 Istio 这样的系统提供 Envoy 入口管理作为更广泛功能套件的一部分，也附带了许多与简单、流畅的操作体验相冲突的额外功能。这就是 Envoy Gateway 存在的原因：使 Envoy 的强大功能易于用于入口用例。</p>
+<h3 id="简单的-API-网关"><a href="#简单的-API-网关" class="headerlink" title="简单的 API 网关"></a>简单的 API 网关</h3><p>组织中绝大多数 API 网关的使用归结为三件事：认证发起请求的用户；限制用户对服务的访问；在此 API 端点的服务实例之间进行负载平衡。TEG 简化了在传统和云原生环境中完成这三项任务的过程。</p>
+<h2 id="TEG-的架构"><a href="#TEG-的架构" class="headerlink" title="TEG 的架构"></a>TEG 的架构</h2><p>下图展示的是 TEG 的架构图。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011011152.png" srcset="/img/loading.gif" lazyload alt="image-20240801101123036"></p>
+<p>从架构图中可以看出，Tetrate Enterprise Gateway for Envoy (TEG) 的架构设计包括以下主要组件和流程：</p>
+<h3 id="主要组件"><a href="#主要组件" class="headerlink" title="主要组件"></a>主要组件</h3><ol>
+<li><strong>Kubernetes Cluster</strong><ul>
+<li><strong>Envoy Gateway</strong>：作为控制平面，配置和管理 Envoy 代理，消费 Kubernetes Gateway API 的配置。</li>
+<li><strong>Metrics Collection</strong>：使用 Prometheus 或 OpenTelemetry (OTEL) 作为指标收集点，用于监控 Envoy Proxy 的性能和健康状态。</li>
+</ul>
+</li>
+<li><strong>Envoy Proxy</strong><ul>
+<li>作为数据平面，直接处理所有进入的流量，支持基于 Kubernetes Gateway API 的配置。</li>
+</ul>
+</li>
+<li><strong>Coraza WAF</strong><ul>
+<li>作为 TEG 的一部分部署，执行 WAF 规则以保护应用免受恶意请求攻击。</li>
+</ul>
+</li>
+<li><strong>Redis Rate Limit Store</strong><ul>
+<li>作为全局速率限制的存储解决方案，用于跨所有 Envoy 实例维护统一的速率限制计数。</li>
+</ul>
+</li>
+<li><strong>Your OIDC Server</strong><ul>
+<li>处理 OAuth2.0 和 OIDC 认证流程，确保只有经过认证的用户可以访问特定的路由和服务。</li>
+</ul>
+</li>
+</ol>
+<h3 id="工作流程"><a href="#工作流程" class="headerlink" title="工作流程"></a>工作流程</h3><ol>
+<li><strong>流量入口</strong><ul>
+<li>所有外部流量首先通过上游的负载均衡器，然后被路由到 Envoy Proxy。</li>
+</ul>
+</li>
+<li><strong>Envoy Proxy 处理</strong><ul>
+<li>Envoy Proxy 根据 Kubernetes Cluster 中的 Envoy Gateway 的配置处理流量。</li>
+<li>配置信息包括路由规则、安全策略（如 WAF 和速率限制）等。</li>
+</ul>
+</li>
+<li><strong>安全和认证</strong><ul>
+<li><strong>Coraza WAF</strong>：在流量到达应用前，根据配置的 WAF 规则进行检查和过滤，提高安全性。</li>
+<li><strong>OIDC 认证</strong>：OIDC Server 处理认证，Envoy Proxy 根据 OIDC Server 的验证结果决定是否允许访问。</li>
+</ul>
+</li>
+<li><strong>速率限制</strong><ul>
+<li>使用 Redis 存储进行速率限制，Envoy Proxy 将根据从 Redis 获取的数据执行速率限制策略。</li>
+</ul>
+</li>
+<li><strong>性能监控</strong><ul>
+<li>Envoy Proxy 的性能和健康状态通过集成的指标收集系统（Prometheus 或 OTEL）进行监控。</li>
+</ul>
+</li>
+</ol>
+<h3 id="配置和管理"><a href="#配置和管理" class="headerlink" title="配置和管理"></a>配置和管理</h3><ul>
+<li>用户可以通过 Kubernetes Gateway API 定义和应用 Envoy Proxy 的配置。</li>
+<li>这包括定义专用网关的具体配置，如安全规则、路由策略等。</li>
+</ul>
+<p>这种架构设计利用了 Kubernetes 的灵活性和扩展性，并通过 Envoy 提供了强大的流量管理和安全功能。</p>
+<h2 id="部署-TEG"><a href="#部署-TEG" class="headerlink" title="部署 TEG"></a>部署 TEG</h2><p>执行下面的命令部署 TEG V0.0.0：</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs routeros"><span class="hljs-built_in">export</span> <span class="hljs-attribute">REGISTRY</span>=<span class="hljs-string">&quot;oci://docker.io/tetrate&quot;</span><br><span class="hljs-built_in">export</span> <span class="hljs-attribute">CHART_VERSION</span>=<span class="hljs-string">&quot;v0.0.0-latest&quot;</span><br>helm install teg <span class="hljs-variable">$&#123;REGISTRY&#125;</span>/teg-envoy-gateway-helm \<br> --version <span class="hljs-variable">$&#123;CHART_VERSION&#125;</span> \<br> -n envoy-gateway-system --create-namespace<br></code></pre></td></tr></table></figure>
+
+<p>检查部署：</p>
+<figure class="highlight livecodeserver"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs livecodeserver">kubectl <span class="hljs-built_in">get</span> pod -n envoy-gateway-<span class="hljs-keyword">system</span><br></code></pre></td></tr></table></figure>
+
+<p>你将看到下面的结果：</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">NAMESPACE</span>              NAME                                                       READY   STATUS    RESTARTS        AGE<br><span class="hljs-attribute">envoy</span>-gateway-system   envoy-gateway-<span class="hljs-number">596</span>dfbcb88-tx7xb                             <span class="hljs-number">1</span>/<span class="hljs-number">1</span>     Running   <span class="hljs-number">0</span>               <span class="hljs-number">3</span>m55s<br><span class="hljs-attribute">envoy</span>-gateway-system   envoy-ratelimit-<span class="hljs-number">674</span>b8c955c-jhlfn                           <span class="hljs-number">2</span>/<span class="hljs-number">2</span>     Running   <span class="hljs-number">2</span> (<span class="hljs-number">3</span>m48s ago)   <span class="hljs-number">3</span>m54s<br><span class="hljs-attribute">envoy</span>-gateway-system   teg-envoy-gateway-<span class="hljs-number">64</span>fd8c8fbb-<span class="hljs-number">59</span>b4l                         <span class="hljs-number">1</span>/<span class="hljs-number">1</span>     Running   <span class="hljs-number">0</span>               <span class="hljs-number">3</span>m55s<br><span class="hljs-attribute">envoy</span>-gateway-system   teg-redis-<span class="hljs-number">86</span>bb7d9b9d-<span class="hljs-number">27</span>n44                                 <span class="hljs-number">1</span>/<span class="hljs-number">1</span>     Running   <span class="hljs-number">0</span>               <span class="hljs-number">3</span>m55s<br></code></pre></td></tr></table></figure>
+
+<p>部署示例应用：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs awk">kubectl create namespace httpbin<br>kubectl apply -n httpbin -f https:<span class="hljs-regexp">//</span>raw.githubusercontent.com<span class="hljs-regexp">/istio/i</span>stio<span class="hljs-regexp">/master/</span>samples<span class="hljs-regexp">/httpbin/</span>httpbin.yaml<br></code></pre></td></tr></table></figure>
+
+<p>部署 Envoy Proxy：</p>
+<figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-attribute">cat &lt;&lt;EOF | kubectl apply -f -</span><br><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">gateway.networking.k8s.io/v1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Gateway</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">dedicated-gateway</span><br>  <span class="hljs-attribute">namespace</span><span class="hljs-punctuation">:</span> <span class="hljs-string">httpbin</span><br><span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">gatewayClassName</span><span class="hljs-punctuation">:</span> <span class="hljs-string">teg</span><br>  <span class="hljs-attribute">listeners</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">name: http</span><br>      <span class="hljs-attribute">protocol</span><span class="hljs-punctuation">:</span> <span class="hljs-string">HTTP</span><br>      <span class="hljs-attribute">port</span><span class="hljs-punctuation">:</span> <span class="hljs-string">80</span><br>EOF<br></code></pre></td></tr></table></figure>
+
+<p>然后你会在 <code>envoy-gateway-system</code> 命名空间下看到一个新的 Envoy 代理。</p>
+<p>部署 HTTPRoute，给网关配置路由：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-string">cat</span> <span class="hljs-string">&lt;&lt;EOF</span> <span class="hljs-string">|</span> <span class="hljs-string">kubectl</span> <span class="hljs-string">apply</span> <span class="hljs-string">-f</span> <span class="hljs-bullet">-</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">gateway.networking.k8s.io/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">HTTPRoute</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">httpbin</span><br>  <span class="hljs-attr">namespace:</span> <span class="hljs-string">httpbin</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">parentRefs:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-attr">group:</span> <span class="hljs-string">gateway.networking.k8s.io</span><br>      <span class="hljs-attr">kind:</span> <span class="hljs-string">Gateway</span><br>      <span class="hljs-attr">name:</span> <span class="hljs-string">dedicated-gateway</span><br>  <span class="hljs-attr">rules:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-attr">matches:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">path:</span><br>            <span class="hljs-attr">type:</span> <span class="hljs-string">PathPrefix</span><br>            <span class="hljs-attr">value:</span> <span class="hljs-string">/httpbin/</span><br>      <span class="hljs-attr">filters:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">type:</span> <span class="hljs-string">URLRewrite</span><br>          <span class="hljs-attr">urlRewrite:</span><br>            <span class="hljs-attr">path:</span><br>              <span class="hljs-attr">type:</span> <span class="hljs-string">ReplacePrefixMatch</span><br>              <span class="hljs-attr">replacePrefixMatch:</span> <span class="hljs-string">/</span><br>      <span class="hljs-attr">backendRefs:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">group:</span> <span class="hljs-string">&quot;&quot;</span><br>          <span class="hljs-attr">kind:</span> <span class="hljs-string">Service</span><br>          <span class="hljs-attr">name:</span> <span class="hljs-string">httpbin</span><br>          <span class="hljs-attr">port:</span> <span class="hljs-number">8000</span><br><span class="hljs-string">EOF</span><br></code></pre></td></tr></table></figure>
+
+<p>这个路由配置中有一个 URLRewrite filter，重写 URL 前缀，去掉了 <code>/httpbin/</code> 部分。</p>
+<p>发送流量测试：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">export</span> DEDICATED_GATEWAY_IP=$(kubectl get gateway/dedicated-gateway -n httpbin -o jsonpath=<span class="hljs-string">&#x27;&#123;.status.addresses[0].value&#125;&#x27;</span>)<br>curl -i http://<span class="hljs-variable">$&#123;DEDICATED_GATEWAY_IP&#125;</span>/httpbin/get<br></code></pre></td></tr></table></figure>
+
+<p> 为什么使用 <code>/httpbin/get</code>?</p>
+<p>在通过 Tetrate Enterprise Gateway for Envoy (TEG) 暴露 <code>httpbin</code> 应用时，选择 <code>/httpbin/get</code> 作为访问路径的原因主要是为了在同一个 Envoy 网关下能够同时支持多个应用或服务，并能根据不同的路径将流量正确地路由到指定的服务。</p>
+<p>这种路径前缀的设置方法允许系统管理员或开发人员为每个服务配置独立的路径前缀，从而通过单一的入口点（即 Envoy 网关）来管理对多个后端服务的访问。这样的配置增加了路由的灵活性，使得在不更改现有服务配置的情况下，轻松地扩展或修改服务的暴露方式。</p>
+<h2 id="作为-Istio-的入口网关"><a href="#作为-Istio-的入口网关" class="headerlink" title="作为 Istio 的入口网关"></a>作为 Istio 的入口网关</h2><p>Istio 提供了成熟且灵活的入口网关支持，基于与 Tetrate Enterprise Gateway（TEG）相同的 Envoy 代理。Istio 主要专注于处理集群内服务之间的通信。相较之下，TEG 设计用于向外界暴露应用，处理人类用户的请求，并支持如 OIDC 单点登录等高级功能。通过结合 Istio 网格和 TEG 的高级网关功能，两者可以共同使用，以提升整体应用的可访问性和安全性。</p>
+<p>以下图示展示了 Istio 网格中入口网关的流量路径。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011014653.png" srcset="/img/loading.gif" lazyload alt="image-20240801101449547"></p>
+<p>下图展示了在引入 TEG 之后，流量如何从 Istio 网格边缘进入到内部。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011015092.png" srcset="/img/loading.gif" lazyload alt="image-20240801101506006"></p>
+<p>将 TEG 集成到 Istio 网格中，通过在 TEG 上配置 sidecar 来颁发证书，同时避免 sidecar 拦截 TEG 中的流量。然后通过 Envoy Gateway 控制入口网关的流量路径。</p>
+<h3 id="为-TEG-与-Istio-的互操作做准备"><a href="#为-TEG-与-Istio-的互操作做准备" class="headerlink" title="为 TEG 与 Istio 的互操作做准备"></a>为 TEG 与 Istio 的互操作做准备</h3><p>为了使 TEG 作为 Istio 的入口网关，应注意以下关键点：</p>
+<ul>
+<li>在安装 Istio 时，避免启用 Ingress Gateway。我们将手动安装并配置 TEG 作为 Istio 的入口网关。</li>
+<li>由于 Istio 和 TEG 都使用 Envoy 作为代理，我们需要让 Istio 为 TEG 的网关 Pod 注入 Envoy sidecar，以便 TEG 可以安全地与 Istio 数据平面通信。</li>
+<li>配置 Envoy Gateway 创建的 Envoy 代理的<a target="_blank" rel="noopener" href="https://gateway.envoyproxy.io/latest/api/extension_types/#routingtype">路由类型</a>为 <code>Service</code> 而非 <code>Endpoint</code>，确保 Envoy 代理能正确找到路由。</li>
+</ul>
+<p>为 TEG 的命名空间添加标签，以确保数据平面获得 Istio sidecar 的注入。</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs routeros">kubectl label namespace envoy-gateway-system <span class="hljs-attribute">--overwrite</span>=<span class="hljs-literal">true</span> <span class="hljs-attribute">istio-injection</span>=enabled<br></code></pre></td></tr></table></figure>
+
+<p>我们还需要配置 TEG 的 sidecar，使其不处理进入网关的 Envoy 流量。注入 sidecar 的目的是使 Envoy Gateway 的组件及其创建的代理能够被纳入 Istio 网格，并挂载正确的证书进行安全通信。</p>
+<figure class="highlight mel"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs mel"><span class="hljs-keyword">control</span>-<span class="hljs-keyword">plane</span>-tls.yaml<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">ports</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">port: 18000</span><br>    <span class="hljs-attribute">appProtocol</span><span class="hljs-punctuation">:</span> <span class="hljs-string">tls</span><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight mel"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs mel">kubectl patch service -n envoy-gateway-<span class="hljs-keyword">system</span> envoy-gateway \<br>     --type strategic --patch-<span class="hljs-keyword">file</span> <span class="hljs-keyword">control</span>-<span class="hljs-keyword">plane</span>-tls.yaml<br></code></pre></td></tr></table></figure>
+
+<p>配置 Envoy Gateway 中的 sidecar 不拦截流量：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-string">teg-sidecars-no-inbound.yaml</span><br><span class="hljs-meta">---</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">gateway.envoyproxy.io/v1alpha1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">EnvoyProxy</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">data-plane-sidecars</span><br>  <span class="hljs-attr">namespace:</span> <span class="hljs-string">envoy-gateway-system</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">provider:</span><br>    <span class="hljs-attr">type:</span> <span class="hljs-string">Kubernetes</span><br>    <span class="hljs-attr">kubernetes:</span><br>      <span class="hljs-attr">envoyDeployment:</span><br>        <span class="hljs-attr">pod:</span><br>          <span class="hljs-attr">annotations:</span><br>            <span class="hljs-attr">traffic.sidecar.istio.io/includeInboundPorts:</span> <span class="hljs-string">&quot;&quot;</span><br>  <span class="hljs-attr">routingType:</span> <span class="hljs-string">Service</span><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs nginx"><span class="hljs-attribute">kubectl</span> apply -f teg-sidecars-<span class="hljs-literal">no</span>-inbound.yaml<br></code></pre></td></tr></table></figure>
+
+<p>修改 GatewayClass 的配置，将上述 sidecar 配置应用到 Envoy Gateway 数据平面的所有 <code>EnvoyProxy</code> 上：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-string">gtwcls-use-envoyproxy.yaml</span><br><span class="hljs-meta">---</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">parametersRef:</span><br>    <span class="hljs-attr">group:</span> <span class="hljs-string">gateway.envoyproxy.io</span><br>    <span class="hljs-attr">kind:</span> <span class="hljs-string">EnvoyProxy</span><br>    <span class="hljs-attr">namespace:</span> <span class="hljs-string">envoy-gateway-system</span><br>    <span class="hljs-attr">name:</span> <span class="hljs-string">data-plane-sidecars</span><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight fortran"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs fortran">kubectl patch gatewayclass teg --patch-<span class="hljs-keyword">file</span> gtwcls-<span class="hljs-keyword">use</span>-envoyproxy.yaml --<span class="hljs-keyword">type</span> <span class="hljs-built_in">merge</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="安装-Istio"><a href="#安装-Istio" class="headerlink" title="安装 Istio"></a>安装 Istio</h3><p>使用 minimal profile 部署 Istio，从而不部署 Ingress Gateway：</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs routeros">istioctl install --<span class="hljs-built_in">set</span> <span class="hljs-attribute">profile</span>=minimal -y<br></code></pre></td></tr></table></figure>
+
+<h3 id="重启-TEG-控制平面"><a href="#重启-TEG-控制平面" class="headerlink" title="重启 TEG 控制平面"></a>重启 TEG 控制平面</h3><p>现在 Istio 的 sidecar 注入已准备就绪，我们将重启所有 TEG 控制平面 Pod，它们将带有 sidecar 重新启动。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-keyword">for</span> d <span class="hljs-keyword">in</span> envoy-gateway envoy-ratelimit teg-envoy-gateway teg-redis; \<br>    <span class="hljs-keyword">do</span> kubectl rollout restart deployment -n envoy-gateway-system <span class="hljs-variable">$d</span>; \<br>    <span class="hljs-keyword">done</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="部署测试应用"><a href="#部署测试应用" class="headerlink" title="部署测试应用"></a>部署测试应用</h3><p>此步应在安装 Istio 之后进行，以确保它们也获得 sidecar 的注入。</p>
+<figure class="highlight n1ql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs n1ql">kubectl <span class="hljs-keyword">create</span> <span class="hljs-keyword">namespace</span> httpbin<br>kubectl label <span class="hljs-keyword">namespace</span> httpbin --overwrite=<span class="hljs-literal">true</span> istio-injection=enabled<br>kubectl apply -n httpbin -f https://<span class="hljs-keyword">raw</span>.githubusercontent.com/istio/istio/master/samples/httpbin/httpbin.yaml<br></code></pre></td></tr></table></figure>
+
+<h3 id="配置-TEG"><a href="#配置-TEG" class="headerlink" title="配置 TEG"></a>配置 TEG</h3><p>现在我们配置 TEG 处理边缘流量。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-string">apps-gateway.yaml</span><br><span class="hljs-meta">---</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">gateway.networking.k8s.io/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Gateway</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">apps</span><br>  <span class="hljs-attr">namespace:</span> <span class="hljs-string">httpbin</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">gatewayClassName:</span> <span class="hljs-string">teg</span><br>  <span class="hljs-attr">listeners:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">http</span><br>    <span class="hljs-attr">protocol:</span> <span class="hljs-string">HTTP</span><br>    <span class="hljs-attr">port:</span> <span class="hljs-number">80</span><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight coq"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs coq">kubectl <span class="hljs-built_in">apply</span> -f apps-gateway.yaml<br></code></pre></td></tr></table></figure>
+
+<p>部署应用网关，包含以下容器：</p>
+<ul>
+<li><code>istio-init</code>：由 Istio 注入，负责修改 pod 中的 iptables</li>
+<li><code>envoy</code>：由 TEG 控制，作为入口网关</li>
+<li><code>istio-proxy</code>：由 Istio 注入，负责与集群内部 pod 联系</li>
+<li><code>shutdown-manager</code>：由 TEG 控制，负责 Pod 启停</li>
+</ul>
+<p>创建 HTTP 路由：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-string">httpbin-route.yaml</span><br><span class="hljs-meta">---</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">gateway.networking.k8s.io/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">HTTPRoute</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">httpbin</span><br>  <span class="hljs-attr">namespace:</span> <span class="hljs-string">httpbin</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">parentRefs:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">group:</span> <span class="hljs-string">gateway.networking.k8s.io</span><br>    <span class="hljs-attr">kind:</span> <span class="hljs-string">Gateway</span><br>    <span class="hljs-attr">name:</span> <span class="hljs-string">apps</span><br>  <span class="hljs-attr">hostnames:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">&quot;www.example.com&quot;</span><br>  <span class="hljs-attr">rules:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">matches:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-attr">path:</span><br>        <span class="hljs-attr">type:</span> <span class="hljs-string">PathPrefix</span><br>        <span class="hljs-attr">value:</span> <span class="hljs-string">/httpbin/</span><br>    <span class="hljs-attr">filters:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-attr">type:</span> <span class="hljs-string">URLRewrite</span><br>      <span class="hljs-attr">urlRewrite:</span><br>        <span class="hljs-attr">path:</span><br>          <span class="hljs-attr">type:</span> <span class="hljs-string">ReplacePrefixMatch</span><br>          <span class="hljs-attr">replacePrefixMatch:</span> <span class="hljs-string">/</span><br>    <span class="hljs-attr">backendRefs:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-attr">kind:</span> <span class="hljs-string">Service</span><br>      <span class="hljs-attr">name:</span> <span class="hljs-string">httpbin</span><br>      <span class="hljs-attr">port:</span> <span class="hljs-number">8000</span><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight coq"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs coq">kubectl <span class="hljs-built_in">apply</span> -f httpbin-route.yaml<br></code></pre></td></tr></table></figure>
+
+<h3 id="发送测试请求"><a href="#发送测试请求" class="headerlink" title="发送测试请求"></a>发送测试请求</h3><p>获取网关的负载均衡器 IP 地址，并发送测试请求：</p>
+<figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs vim">export GATEWAY_URL=$(kubectl <span class="hljs-built_in">get</span> svc -n envoy-gateway-<span class="hljs-built_in">system</span> -<span class="hljs-keyword">l</span> gateway.envoyproxy.io/owning-gateway-name=apps -<span class="hljs-keyword">o</span> jsonpath=<span class="hljs-string">&#x27;&#123;.items[0].status.loadBalancer.ingress[0].ip&#125;&#x27;</span>)<br>curl -v -H Hos<span class="hljs-variable">t:www</span>.example.<span class="hljs-keyword">com</span> http://$GATEWAY_URL/httpbin/<span class="hljs-built_in">get</span><br></code></pre></td></tr></table></figure>
+
+<p>你将看到来自 <code>httpbin</code> 服务的正确响应，如下所示：</p>
+<figure class="highlight applescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs applescript">*   Trying <span class="hljs-number">34.41</span><span class="hljs-number">.0</span><span class="hljs-number">.90</span>:<span class="hljs-number">80.</span>..<br>* Connected <span class="hljs-keyword">to</span> <span class="hljs-number">34.41</span><span class="hljs-number">.0</span><span class="hljs-number">.90</span> (<span class="hljs-number">34.41</span><span class="hljs-number">.0</span><span class="hljs-number">.90</span>) port <span class="hljs-number">80</span><br>&gt; GET /httpbin/<span class="hljs-keyword">get</span> HTTP/<span class="hljs-number">1.1</span><br>&gt; Host:www.example.com<br>&gt; User-Agent: curl/<span class="hljs-number">8.7</span><span class="hljs-number">.1</span><br>&gt; Accept: */*<br>&gt;<br>* Request completely sent off<br>&lt; HTTP/<span class="hljs-number">1.1</span> <span class="hljs-number">200</span> OK<br>&lt; server: envoy<br>&lt; <span class="hljs-built_in">date</span>: Wed, <span class="hljs-number">31</span> Jul <span class="hljs-number">2024</span> <span class="hljs-number">08</span>:<span class="hljs-number">21</span>:<span class="hljs-number">58</span> GMT<br>&lt; content-type: <span class="hljs-built_in">application</span>/json<br>&lt; content-<span class="hljs-built_in">length</span>: <span class="hljs-number">282</span><br>&lt; access-control-allow-origin: *<br>&lt; access-control-allow-credentials: <span class="hljs-literal">true</span><br>&lt; x-envoy-upstream-service-<span class="hljs-built_in">time</span>: <span class="hljs-number">11</span><br>&lt;<br>&#123;<br>  <span class="hljs-string">&quot;args&quot;</span>: &#123;&#125;,<br>  <span class="hljs-string">&quot;headers&quot;</span>: &#123;<br>    <span class="hljs-string">&quot;Accept&quot;</span>: <span class="hljs-string">&quot;*/*&quot;</span>,<br>    <span class="hljs-string">&quot;Host&quot;</span>: <span class="hljs-string">&quot;www.example.com&quot;</span>,<br>    <span class="hljs-string">&quot;User-Agent&quot;</span>: <span class="hljs-string">&quot;curl/8.7.1&quot;</span>,<br>    <span class="hljs-string">&quot;X-Envoy-Attempt-Count&quot;</span>: <span class="hljs-string">&quot;1&quot;</span>,<br>    <span class="hljs-string">&quot;X-Envoy-External-Address&quot;</span>: <span class="hljs-string">&quot;123.120.227.173&quot;</span><br>  &#125;,<br>  <span class="hljs-string">&quot;origin&quot;</span>: <span class="hljs-string">&quot;123.120.227.173&quot;</span>,<br>  <span class="hljs-string">&quot;url&quot;</span>: <span class="hljs-string">&quot;http://www.example.com/get&quot;</span><br>&#125;<br>* Connection <span class="hljs-comment">#0 to host 34.41.0.90 left intact</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="启用严格的-mTLS"><a href="#启用严格的-mTLS" class="headerlink" title="启用严格的 mTLS"></a>启用严格的 mTLS</h3><p>运行下面的命令启用严格的 mTLS：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-string">strict-mtls.yaml</span><br><span class="hljs-meta">---</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">security.istio.io/v1beta1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">PeerAuthentication</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">&quot;default&quot;</span><br>  <span class="hljs-attr">namespace:</span> <span class="hljs-string">&quot;istio-system&quot;</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">mtls:</span><br>    <span class="hljs-attr">mode:</span> <span class="hljs-string">STRICT</span><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight coq"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs coq">kubectl <span class="hljs-built_in">apply</span> -f strict-mtls.yaml<br></code></pre></td></tr></table></figure>
+
+<p>修改我们之前创建的 HTTPRoute：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-string">httpbin-route-mtls.yaml</span><br><span class="hljs-meta">---</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">gateway.networking.k8s.io/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">HTTPRoute</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">httpbin</span><br>  <span class="hljs-attr">namespace:</span> <span class="hljs-string">httpbin</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">parentRefs:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">group:</span> <span class="hljs-string">gateway.networking.k8s.io</span><br>    <span class="hljs-attr">kind:</span> <span class="hljs-string">Gateway</span><br>    <span class="hljs-attr">name:</span> <span class="hljs-string">apps</span><br>  <span class="hljs-attr">hostnames:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">&quot;httpbin.httpbin.svc.cluster.local&quot;</span><br>  <span class="hljs-attr">rules:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">matches:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-attr">path:</span><br>        <span class="hljs-attr">type:</span> <span class="hljs-string">PathPrefix</span><br>        <span class="hljs-attr">value:</span> <span class="hljs-string">/httpbin/</span><br>    <span class="hljs-attr">filters:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-attr">type:</span> <span class="hljs-string">URLRewrite</span><br>      <span class="hljs-attr">urlRewrite:</span><br>        <span class="hljs-attr">path:</span><br>          <span class="hljs-attr">type:</span> <span class="hljs-string">ReplacePrefixMatch</span><br>          <span class="hljs-attr">replacePrefixMatch:</span> <span class="hljs-string">/</span><br>    <span class="hljs-attr">backendRefs:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-attr">kind:</span> <span class="hljs-string">Service</span><br>      <span class="hljs-attr">name:</span> <span class="hljs-string">httpbin</span><br>      <span class="hljs-attr">port:</span> <span class="hljs-number">8000</span><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight coq"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs coq">kubectl <span class="hljs-built_in">apply</span> -f httpbin-route-mtls.yaml<br></code></pre></td></tr></table></figure>
+
+<p>注意：这次我们使用 Host 是 httpbin 在集群内部的主机名。如果使用 <code>www.example.com</code> 作为请求的主机名访问将返回 404 错误。</p>
+<figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs stylus">curl -v -H Host:httpbin<span class="hljs-selector-class">.httpbin</span><span class="hljs-selector-class">.svc</span><span class="hljs-selector-class">.cluster</span><span class="hljs-selector-class">.local</span> http:<span class="hljs-comment">//$GATEWAY_URL/httpbin/get</span><br></code></pre></td></tr></table></figure>
+
+<p>现在 httpbin 服务能够正常访问了。</p>
+<h3 id="为网关启用-TLS"><a href="#为网关启用-TLS" class="headerlink" title="为网关启用 TLS"></a>为网关启用 TLS</h3><p>创建用于服务签名的根证书和私钥：</p>
+<figure class="highlight maxima"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs maxima"><span class="hljs-built_in">mkdir</span> example_certs<br>openssl req -x509 -sha256 -nodes -days <span class="hljs-number">365</span> -newkey rsa:<span class="hljs-number">2048</span> -subj &#x27;/O=<span class="hljs-built_in">example</span> Inc./CN=<span class="hljs-built_in">example</span>.com&#x27; -keyout example_certs/<span class="hljs-built_in">example</span>.com.<span class="hljs-built_in">key</span> -out example_certs/<span class="hljs-built_in">example</span>.com.crt<br></code></pre></td></tr></table></figure>
+
+<p>为 <code>www.example.com</code> 创建证书和私钥：</p>
+<figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs stylus">openssl req -out example_certs/www<span class="hljs-selector-class">.example</span><span class="hljs-selector-class">.com</span><span class="hljs-selector-class">.csr</span> -newkey rsa:<span class="hljs-number">2048</span> -nodes -keyout example_certs/www<span class="hljs-selector-class">.example</span><span class="hljs-selector-class">.com</span><span class="hljs-selector-class">.key</span> -subj <span class="hljs-string">&quot;/CN=www.example.com/O=www organization&quot;</span><br>openssl x509 -req -sha256 -days <span class="hljs-number">365</span> -CA example_certs/example<span class="hljs-selector-class">.com</span><span class="hljs-selector-class">.crt</span> -CAkey example_certs/example<span class="hljs-selector-class">.com</span><span class="hljs-selector-class">.key</span> -set_serial <span class="hljs-number">0</span> -<span class="hljs-keyword">in</span> example_certs/www<span class="hljs-selector-class">.example</span><span class="hljs-selector-class">.com</span><span class="hljs-selector-class">.csr</span> -out example_certs/www<span class="hljs-selector-class">.example</span><span class="hljs-selector-class">.com</span>.crt<br></code></pre></td></tr></table></figure>
+
+<p>为入口网关创建 secret：</p>
+<figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs stylus">kubectl create -n httpbin secret tls httpbin-credential \<br>  <span class="hljs-attr">--key</span>=example_certs/www<span class="hljs-selector-class">.example</span><span class="hljs-selector-class">.com</span><span class="hljs-selector-class">.key</span> \<br>  <span class="hljs-attr">--cert</span>=example_certs/www<span class="hljs-selector-class">.example</span><span class="hljs-selector-class">.com</span>.crt<br></code></pre></td></tr></table></figure>
+
+<p>配置入口网关：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-string">tls-apps-gateway.yaml</span><br><span class="hljs-meta">---</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">gateway.networking.k8s.io/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Gateway</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">apps</span><br>  <span class="hljs-attr">namespace:</span> <span class="hljs-string">httpbin</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">gatewayClassName:</span> <span class="hljs-string">teg</span><br>  <span class="hljs-attr">listeners:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">https</span><br>    <span class="hljs-attr">protocol:</span> <span class="hljs-string">HTTPS</span><br>    <span class="hljs-attr">port:</span> <span class="hljs-number">443</span><br>    <span class="hljs-attr">tls:</span><br>      <span class="hljs-attr">mode:</span> <span class="hljs-string">Terminate</span><br>      <span class="hljs-attr">certificateRefs:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">httpbin-credential</span><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight coq"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs coq">kubectl <span class="hljs-built_in">apply</span> -f tls-apps-gateway.yaml<br></code></pre></td></tr></table></figure>
+
+<p>发送测试请求：</p>
+<figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs stylus">curl -v -H Host:httpbin<span class="hljs-selector-class">.httpbin</span><span class="hljs-selector-class">.svc</span><span class="hljs-selector-class">.cluster</span><span class="hljs-selector-class">.local</span> <span class="hljs-attr">--resolve</span> <span class="hljs-string">&quot;www.example.com:443:$GATEWAY_URL&quot;</span> \<br>  <span class="hljs-attr">--cacert</span> example_certs/example<span class="hljs-selector-class">.com</span><span class="hljs-selector-class">.crt</span> <span class="hljs-string">&quot;https://www.example.com:443/httpbin/get&quot;</span><br></code></pre></td></tr></table></figure>
+
+<p>你将可以通过 HTTPS 访问网格内的 <code>httpbin</code> 服务。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>Tetrate Enterprise Gateway 为企业提供了一种强大的网关解决方案，能够在云原生环境中高效地暴露和管理应用服务。通过其基于 Envoy 的架构和对 Kubernetes Gateway API 的支持，TEG 不仅确保了高性能的流量管理，还大幅简化了网关的部署和维护。无论是面对复杂的安全需求还是高流量的业务场景，TEG 都能提供可靠的支持，帮助企业实现其业务连续性和技术创新。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://docs.tetrate.io/envoy-gateway/v0.0.0-latest/howto/eg-and-istio">Using TEG in Conjunction with an Istio Service Mesh - docs.tetrate.io</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>TEG与istio集成 2024-08-02 17:51:20.389</div>
+      <div>http://example.com/2025/01/16/TEG与istio集成-teg-yu-istio-ji-cheng/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/calico%20%E9%85%8D%E7%BD%AE%20BGP%20Route%20Reflectors-calico-pei-zhi-bgproutereflectors/" title="calico 配置 BGP Route Reflectors 2023-09-28 15:34:01.007">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">calico 配置 BGP Route Reflectors 2023-09-28 15:34:01.007</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/OpenKruise%E8%AF%A6%E7%BB%86%E8%A7%A3%E9%87%8A%E4%BB%A5%E5%8F%8A%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7%E5%8F%8A%E5%85%A8%E9%93%BE%E8%B7%AF%E7%81%B0%E5%BA%A6%E5%8F%91%E5%B8%83%E6%96%B9%E6%A1%88-openkruise-xiang-xi-jie-shi-yi-ji-yuan-de-sheng-ji-ji-quan-lian-lu-hui-du-fa-bu-fang-an/" title="OpenKruise详细解释以及原地升级及全链路灰度发布方案 2024-07-22 11:44:46.892">
+                        <span class="hidden-mobile">OpenKruise详细解释以及原地升级及全链路灰度发布方案 2024-07-22 11:44:46.892</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

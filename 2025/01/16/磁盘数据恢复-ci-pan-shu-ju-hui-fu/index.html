@@ -1,0 +1,692 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="1.背景如果使用rm -rf 误删除数据，我们怎么恢复误删除的数据呢？ 2.场景分析删除数据主要有两种场景：  场景一 在执行rm -rf 删除文件时，该文件正在被进程使用。 场景二 这个文件没有被进程占用，从而被误删除  在场景一，对于进程正在使用的场景，数据可以恢复是因为Linux里每个文件都有2个link计数器：i_count和i_nlinki_count: 当一个文件被一个进程引用时，它的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="磁盘数据恢复 2024-04-03 14:59:27.839">
+<meta property="og:url" content="http://example.com/2025/01/16/%E7%A3%81%E7%9B%98%E6%95%B0%E6%8D%AE%E6%81%A2%E5%A4%8D-ci-pan-shu-ju-hui-fu/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="1.背景如果使用rm -rf 误删除数据，我们怎么恢复误删除的数据呢？ 2.场景分析删除数据主要有两种场景：  场景一 在执行rm -rf 删除文件时，该文件正在被进程使用。 场景二 这个文件没有被进程占用，从而被误删除  在场景一，对于进程正在使用的场景，数据可以恢复是因为Linux里每个文件都有2个link计数器：i_count和i_nlinki_count: 当一个文件被一个进程引用时，它的">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402281046554.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402281047652.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402281047423.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402281048131.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402281048438.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402281048319.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402281048496.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402281048432.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402281049919.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402281049102.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402281049774.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402281046750.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402281049503.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402281050306.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.098Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:19.285Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402281046554.png">
+  
+  
+  
+  <title>磁盘数据恢复 2024-04-03 14:59:27.839 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="磁盘数据恢复 2024-04-03 14:59:27.839"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          11 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">磁盘数据恢复 2024-04-03 14:59:27.839</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="1-背景"><a href="#1-背景" class="headerlink" title="1.背景"></a>1.背景</h2><p>如果使用rm -rf 误删除数据，我们怎么恢复误删除的数据呢？</p>
+<h2 id="2-场景分析"><a href="#2-场景分析" class="headerlink" title="2.场景分析"></a>2.场景分析</h2><p>删除数据主要有两种场景：</p>
+<ul>
+<li>场景一 在执行rm -rf 删除文件时，该文件正在被进程使用。</li>
+<li>场景二 这个文件没有被进程占用，从而被误删除</li>
+</ul>
+<h5 id="在场景一，对于进程正在使用的场景，数据可以恢复是因为Linux里每个文件都有2个link计数器：i-count和i-nlink"><a href="#在场景一，对于进程正在使用的场景，数据可以恢复是因为Linux里每个文件都有2个link计数器：i-count和i-nlink" class="headerlink" title="在场景一，对于进程正在使用的场景，数据可以恢复是因为Linux里每个文件都有2个link计数器：i_count和i_nlink"></a>在<strong>场景一</strong>，对于进程正在使用的场景，数据可以恢复是因为Linux里每个文件都有2个link计数器：i_count和i_nlink</h5><h5 id="i-count-当一个文件被一个进程引用时，它的数值会加1，也就是说它记录的是文件被进程引用的次数。"><a href="#i-count-当一个文件被一个进程引用时，它的数值会加1，也就是说它记录的是文件被进程引用的次数。" class="headerlink" title="i_count: 当一个文件被一个进程引用时，它的数值会加1，也就是说它记录的是文件被进程引用的次数。"></a>i_count: 当一个文件被一个进程引用时，它的数值会加1，也就是说它记录的是文件被进程引用的次数。</h5><h5 id="i-nlink-记录文件产生硬链接的个数。"><a href="#i-nlink-记录文件产生硬链接的个数。" class="headerlink" title="i_nlink: 记录文件产生硬链接的个数。"></a>i_nlink: 记录文件产生硬链接的个数。</h5><h5 id="Linux系统只有在两个数值都清零的时候，文件才被系统认为是删除的，假设此时删除文件有进程在使用，那么i-conunt数值不为0。"><a href="#Linux系统只有在两个数值都清零的时候，文件才被系统认为是删除的，假设此时删除文件有进程在使用，那么i-conunt数值不为0。" class="headerlink" title="Linux系统只有在两个数值都清零的时候，文件才被系统认为是删除的，假设此时删除文件有进程在使用，那么i_conunt数值不为0。"></a>Linux系统只有在两个数值都清零的时候，文件才被系统认为是删除的，假设此时删除文件有进程在使用，那么i_conunt数值不为0。</h5><h5 id="在场景二，此时i-count和i-nlink都为0，inode连接信息已经被删除了，我们就需要通过存放文件的block单元，做数据块的数据找回。"><a href="#在场景二，此时i-count和i-nlink都为0，inode连接信息已经被删除了，我们就需要通过存放文件的block单元，做数据块的数据找回。" class="headerlink" title="在场景二，此时i_count和i_nlink都为0，inode连接信息已经被删除了，我们就需要通过存放文件的block单元，做数据块的数据找回。"></a>在<strong>场景二</strong>，此时i_count和i_nlink都为0，inode连接信息已经被删除了，我们就需要通过存放文件的block单元，做数据块的数据找回。</h5><h5 id="找回数据需要依赖两个关键的参数："><a href="#找回数据需要依赖两个关键的参数：" class="headerlink" title="找回数据需要依赖两个关键的参数："></a>找回数据需要依赖两个关键的参数：</h5><h5 id="inode-用于存放文件的相关元数据，它的元数据里会有一个类似于索引的值，能够索引到后面具体存放数据的block单元"><a href="#inode-用于存放文件的相关元数据，它的元数据里会有一个类似于索引的值，能够索引到后面具体存放数据的block单元" class="headerlink" title="inode: 用于存放文件的相关元数据，它的元数据里会有一个类似于索引的值，能够索引到后面具体存放数据的block单元"></a>inode: 用于存放文件的相关元数据，它的元数据里会有一个类似于索引的值，能够索引到后面具体存放数据的block单元</h5><h5 id="block-是一个数据块，用来实际存放数据"><a href="#block-是一个数据块，用来实际存放数据" class="headerlink" title="block: 是一个数据块，用来实际存放数据"></a>block: 是一个数据块，用来实际存放数据</h5><h5 id="所以理论上可以通过block块找回数据，因为上面保存着真实的数据。"><a href="#所以理论上可以通过block块找回数据，因为上面保存着真实的数据。" class="headerlink" title="所以理论上可以通过block块找回数据，因为上面保存着真实的数据。"></a>所以理论上可以通过block块找回数据，因为上面保存着真实的数据。</h5><h5 id="风险：如果有进程在在不断地往磁盘写数据时，需要申请新的block块，如果操作系统分配已删除的block块时，新写入的数据就会覆盖原来的数据，此时就会造成数据真正丢失。"><a href="#风险：如果有进程在在不断地往磁盘写数据时，需要申请新的block块，如果操作系统分配已删除的block块时，新写入的数据就会覆盖原来的数据，此时就会造成数据真正丢失。" class="headerlink" title="风险：如果有进程在在不断地往磁盘写数据时，需要申请新的block块，如果操作系统分配已删除的block块时，新写入的数据就会覆盖原来的数据，此时就会造成数据真正丢失。"></a><strong>风险</strong>：如果有进程在在不断地往磁盘写数据时，需要申请新的block块，如果操作系统分配已删除的block块时，新写入的数据就会覆盖原来的数据，此时就会造成数据真正丢失。</h5><h5 id="在这种情况下，应该第一时间umount目录所在的磁盘，或者不对磁盘进行任何写入，以保证理论数据还存在磁盘上，那么还可以通过相关分析找回数据。"><a href="#在这种情况下，应该第一时间umount目录所在的磁盘，或者不对磁盘进行任何写入，以保证理论数据还存在磁盘上，那么还可以通过相关分析找回数据。" class="headerlink" title="在这种情况下，应该第一时间umount目录所在的磁盘，或者不对磁盘进行任何写入，以保证理论数据还存在磁盘上，那么还可以通过相关分析找回数据。"></a>在这种情况下，应该第一时间umount目录所在的磁盘，或者不对磁盘进行任何写入，以保证理论数据还存在磁盘上，那么还可以通过相关分析找回数据。</h5><h2 id="3-场景一演示"><a href="#3-场景一演示" class="headerlink" title="3.场景一演示"></a>3.场景一演示</h2><p><strong>场景一搭建：</strong></p>
+<p>首先准备测试的文件aaa.txt，内容为运维贼船公众号的域名，在终端一中执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 创建测试文件夹</span><br><span class="hljs-built_in">mkdir</span> /tmp/test<br><span class="hljs-comment"># 创建测试文件</span><br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;aaa.al&quot;</span> &gt; /tmp/test/aaa.txt<br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402281046554.png" srcset="/img/loading.gif" lazyload alt="image-20240228104651503"></p>
+<p>创建完文件后，使用进程打开它并保持占用，这里用tail -f来模拟：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">tail</span> -f /tmp/test/aaa.txt<br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402281047652.png" srcset="/img/loading.gif" lazyload alt="image-20240228104705606"></p>
+<p>此时，新开一个终端二，删除aaa.txt文件。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">rm</span> -rf /tmp/test/aaa.txt<br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402281047423.png" srcset="/img/loading.gif" lazyload alt="image-20240228104718375"></p>
+<p>此时的状态为终端一仍在占用进程，终端二中把文件删除掉了。</p>
+<p><strong>场景一恢复：</strong></p>
+<p>下面执行恢复操作，使用lsof命令：</p>
+<figure class="highlight 1c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs 1c"><span class="hljs-meta"># lsof | grep 删除的文件名，如：</span><br>lsof <span class="hljs-string">| grep aaa.txt</span><br></code></pre></td></tr></table></figure>
+
+<p>可以看到查询出来的结果处于“deleted”的状态，我需要找到此进程的pid，比如我这里的结果pid为1364000。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402281048131.png" srcset="/img/loading.gif" lazyload alt="image-20240228104803072"></p>
+<p>根据pid号查找文件句柄：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># cd /proc/记录的pid号/fd，如：</span><br><span class="hljs-built_in">cd</span> /proc/1364000/fd<br>ll<br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402281048438.png" srcset="/img/loading.gif" lazyload alt="image-20240228104816363"></p>
+<p>恢复文件，执行以下命令，可以看到数据已经恢复回来了。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">cp</span> 3 /tmp/test/aaa.txt.bak<br><span class="hljs-built_in">cat</span> /tmp/test/aaa.txt.bak<br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402281048319.png" srcset="/img/loading.gif" lazyload alt="image-20240228104829265"></p>
+<h2 id="4-场景二演示"><a href="#4-场景二演示" class="headerlink" title="4.场景二演示"></a>4.场景二演示</h2><p><strong>场景二搭建：</strong></p>
+<h5 id="我们这里使用单独的一块硬盘来做演示，我这里的硬盘是-sdb1，格式为ext3"><a href="#我们这里使用单独的一块硬盘来做演示，我这里的硬盘是-sdb1，格式为ext3" class="headerlink" title="我们这里使用单独的一块硬盘来做演示，我这里的硬盘是&#x2F;sdb1，格式为ext3."></a>我们这里使用单独的一块硬盘来做演示，我这里的硬盘是&#x2F;sdb1，格式为ext3.</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402281048496.png" srcset="/img/loading.gif" lazyload alt="image-20240228104840445"></p>
+<h5 id="挂载的目录为-test"><a href="#挂载的目录为-test" class="headerlink" title="挂载的目录为&#x2F;test"></a>挂载的目录为&#x2F;test</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402281048432.png" srcset="/img/loading.gif" lazyload alt="image-20240228104852375"></p>
+<h5 id="我这里在挂载的目录创建aaa-txt，写入内容和aaa的文件夹。"><a href="#我这里在挂载的目录创建aaa-txt，写入内容和aaa的文件夹。" class="headerlink" title="我这里在挂载的目录创建aaa.txt，写入内容和aaa的文件夹。"></a>我这里在挂载的目录创建aaa.txt，写入内容和aaa的文件夹。</h5><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;aaa.al&quot;</span> &gt; /test/aaa.txt<br><span class="hljs-built_in">mkdir</span> -p  /test/aaa<br><span class="hljs-built_in">cd</span> /test<br><span class="hljs-built_in">ls</span><br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402281049919.png" srcset="/img/loading.gif" lazyload alt="image-20240228104906859"></p>
+<h5 id="然后对硬盘内容删除："><a href="#然后对硬盘内容删除：" class="headerlink" title="然后对硬盘内容删除："></a>然后对硬盘内容删除：</h5><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">cd</span> /test<br><span class="hljs-built_in">rm</span> -rf *<br><span class="hljs-built_in">ls</span><br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402281049102.png" srcset="/img/loading.gif" lazyload alt="image-20240228104918049"></p>
+<p><strong>场景二恢复：</strong></p>
+<h5 id="恢复前需要对硬盘进行取消挂载："><a href="#恢复前需要对硬盘进行取消挂载：" class="headerlink" title="恢复前需要对硬盘进行取消挂载："></a>恢复前需要对硬盘进行取消挂载：</h5><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash">umount /test -l<br><span class="hljs-comment"># 创建一个用于恢复数据的目录</span><br><span class="hljs-built_in">mkdir</span> /tmp/test<br><span class="hljs-built_in">cd</span> /tmp/test<br></code></pre></td></tr></table></figure>
+
+<h5 id="执行extundelete命令，如果没有此命令，可以直接安装："><a href="#执行extundelete命令，如果没有此命令，可以直接安装：" class="headerlink" title="执行extundelete命令，如果没有此命令，可以直接安装："></a>执行extundelete命令，如果没有此命令，可以直接安装：</h5><figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs cmake">yum -y <span class="hljs-keyword">install</span> epel-release<br>yum -y <span class="hljs-keyword">install</span> extundelete<br></code></pre></td></tr></table></figure>
+
+<h5 id="完成后，执行命令，可以看到最后显示出误删除的文件，状态为Deleted。"><a href="#完成后，执行命令，可以看到最后显示出误删除的文件，状态为Deleted。" class="headerlink" title="完成后，执行命令，可以看到最后显示出误删除的文件，状态为Deleted。"></a>完成后，执行命令，可以看到最后显示出误删除的文件，状态为Deleted。</h5><figure class="highlight jboss-cli"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs jboss-cli">extundelete <span class="hljs-string">/dev/sdb1</span> <span class="hljs-params">--inode</span> 2<br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402281049774.png" srcset="/img/loading.gif" lazyload alt="image-20240228104932708"></p>
+<p>开始恢复文件，找到我们需要恢复文件的Inode number，比如我这里图示为12，则执行以下命令。</p>
+<figure class="highlight jboss-cli"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs jboss-cli">extundelete <span class="hljs-string">/dev/sdb1</span> <span class="hljs-params">--restore-inode</span> 12<br></code></pre></td></tr></table></figure>
+
+<h5 id="执行后，会在当前目录下生成RECOVERED-FILES目录，里面包含我们恢复的文件："><a href="#执行后，会在当前目录下生成RECOVERED-FILES目录，里面包含我们恢复的文件：" class="headerlink" title="执行后，会在当前目录下生成RECOVERED_FILES目录，里面包含我们恢复的文件："></a>执行后，会在当前目录下生成RECOVERED_FILES目录，里面包含我们恢复的文件：</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402281046750.png" srcset="/img/loading.gif" lazyload alt="图片"><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402281049503.png" srcset="/img/loading.gif" lazyload alt="image-20240228104944407"></p>
+<h5 id="通过查看文件内容，发现和我们需要恢复的文件一致，只是文件名不一样，手动修改即可。"><a href="#通过查看文件内容，发现和我们需要恢复的文件一致，只是文件名不一样，手动修改即可。" class="headerlink" title="通过查看文件内容，发现和我们需要恢复的文件一致，只是文件名不一样，手动修改即可。"></a>通过查看文件内容，发现和我们需要恢复的文件一致，只是文件名不一样，手动修改即可。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402281050306.png" srcset="/img/loading.gif" lazyload alt="image-20240228105005261"></p>
+<p>同样的方式，我们还可以恢复文件夹和所有文件，命令格式如下：</p>
+<h5 id="1-通过inode号-extundelete-dev-sdb1-–restore-inode-InodeNum"><a href="#1-通过inode号-extundelete-dev-sdb1-–restore-inode-InodeNum" class="headerlink" title="1)通过inode号(extundelete &#x2F;dev&#x2F;sdb1 –restore-inode InodeNum)"></a>1)通过inode号(extundelete &#x2F;dev&#x2F;sdb1 –restore-inode InodeNum)</h5><h5 id="2-通过file文件名-extundelete-dev-sdb1-–restore-file-FileName"><a href="#2-通过file文件名-extundelete-dev-sdb1-–restore-file-FileName" class="headerlink" title="2)通过file文件名(extundelete &#x2F;dev&#x2F;sdb1 –restore-file FileName)"></a>2)通过file文件名(extundelete &#x2F;dev&#x2F;sdb1 –restore-file FileName)</h5><h5 id="3-通过directory目录名-extundelete-dev-sdb1-–restore-directory-DirectoryName"><a href="#3-通过directory目录名-extundelete-dev-sdb1-–restore-directory-DirectoryName" class="headerlink" title="3)通过directory目录名(extundelete &#x2F;dev&#x2F;sdb1 –restore-directory DirectoryName)"></a>3)通过directory目录名(extundelete &#x2F;dev&#x2F;sdb1 –restore-directory DirectoryName)</h5><h5 id="4-all全部恢复-extundelete-dev-sdb1-–restore-all"><a href="#4-all全部恢复-extundelete-dev-sdb1-–restore-all" class="headerlink" title="4)all全部恢复(extundelete &#x2F;dev&#x2F;sdb1 –restore-all)"></a>4)all全部恢复(extundelete &#x2F;dev&#x2F;sdb1 –restore-all)</h5><h2 id="5-总结"><a href="#5-总结" class="headerlink" title="5.总结"></a>5.总结</h2><h5 id="通过上面演示的场景一，文件进程在使用中被删除；场景二未有进程占用时文件被删除两种情况做了演示恢复的操作。需要注意的是，extundelete仅支持ext系列格式分区，不支持xfs文件系统，如果需要恢复xfs文件，可以关注我后续的文章，谢谢！"><a href="#通过上面演示的场景一，文件进程在使用中被删除；场景二未有进程占用时文件被删除两种情况做了演示恢复的操作。需要注意的是，extundelete仅支持ext系列格式分区，不支持xfs文件系统，如果需要恢复xfs文件，可以关注我后续的文章，谢谢！" class="headerlink" title="通过上面演示的场景一，文件进程在使用中被删除；场景二未有进程占用时文件被删除两种情况做了演示恢复的操作。需要注意的是，extundelete仅支持ext系列格式分区，不支持xfs文件系统，如果需要恢复xfs文件，可以关注我后续的文章，谢谢！"></a>通过上面演示的场景一，文件进程在使用中被删除；场景二未有进程占用时文件被删除两种情况做了演示恢复的操作。需要注意的是，extundelete仅支持ext系列格式分区，不支持xfs文件系统，如果需要恢复xfs文件，可以关注我后续的文章，谢谢！</h5>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>磁盘数据恢复 2024-04-03 14:59:27.839</div>
+      <div>http://example.com/2025/01/16/磁盘数据恢复-ci-pan-shu-ju-hui-fu/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E5%BD%BB%E6%82%9F%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C-che-wu-rong-qi-wang-luo/" title="彻悟容器网络 2024-04-07 10:30:11.55">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">彻悟容器网络 2024-04-07 10:30:11.55</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E6%88%91%E5%8F%AA%E6%83%B3%E5%81%9A%E6%8A%80%E6%9C%AF%20%E8%B5%B0%E6%8A%80%E6%9C%AF%E8%B7%AF%E7%BA%BF-wo-zhi-xiang-zuo-ji-shu-zou-ji-shu-lu-xian/" title="我只想做技术 走技术路线 2024-08-02 17:43:31.897">
+                        <span class="hidden-mobile">我只想做技术 走技术路线 2024-08-02 17:43:31.897</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

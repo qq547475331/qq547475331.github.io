@@ -1,0 +1,726 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="本文介绍容器环境常见网络应用场景及对应场景的 Kubernetes CNI 插件功能实现。帮助搭建和使用云原生环境的小伙伴快速选择心仪的网络工具。 常见网络插件我们在学习容器网络的时候，肯定都听说过 Docker 的 bridge 网络，Vethpair，VxLAN 等术语，从 Docker 到 kubernetes 后，学习了 Flannel、Calico 等主流网络插件，分别代表了 Overl">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CNI插件选型 2024-04-03 15:01:51.29">
+<meta property="og:url" content="http://example.com/2025/01/16/CNI%E6%8F%92%E4%BB%B6%E9%80%89%E5%9E%8B-cni-cha-jian-xuan-xing/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="本文介绍容器环境常见网络应用场景及对应场景的 Kubernetes CNI 插件功能实现。帮助搭建和使用云原生环境的小伙伴快速选择心仪的网络工具。 常见网络插件我们在学习容器网络的时候，肯定都听说过 Docker 的 bridge 网络，Vethpair，VxLAN 等术语，从 Docker 到 kubernetes 后，学习了 Flannel、Calico 等主流网络插件，分别代表了 Overl">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061737738.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061738752.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061739643.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061739165.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061739934.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061740029.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061740812.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061740007.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061741354.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.039Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:18.534Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061737738.png">
+  
+  
+  
+  <title>CNI插件选型 2024-04-03 15:01:51.29 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="CNI插件选型 2024-04-03 15:01:51.29"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          32 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">CNI插件选型 2024-04-03 15:01:51.29</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>本文介绍容器环境常见网络应用场景及对应场景的 Kubernetes CNI 插件功能实现。帮助搭建和使用云原生环境的小伙伴<strong>快速选择心仪的网络工具</strong>。</p>
+<h2 id="常见网络插件"><a href="#常见网络插件" class="headerlink" title="常见网络插件"></a>常见网络插件</h2><p>我们在学习容器网络的时候，肯定都听说过 Docker 的 bridge 网络，Vethpair，VxLAN 等术语，从 Docker 到 kubernetes 后，学习了 Flannel、Calico 等主流网络插件，分别代表了 Overlay 和 Underlay 的两种网络传输模式，也是很经典的两款 CNI 网络插件。那么，还有哪些好用的 CNI 插件呢 ? 我们看看 CNCF Landscape:</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061737738.png" srcset="/img/loading.gif" lazyload alt="image-20240306173752677"></p>
+<p>常见网络插件</p>
+<p>抛去商业版 CNI，此次分享来聊聊几款热门开源 CNI 插件，分别为 Kube-OVN、Antrea、Cilium。Kube-OVN 和 Antrea 都是基于 OpenvSwitch 的项目，Cilium 使用 eBPF 这款革命性的技术作为数据路径，亦是这两年很火热的一个开源容器项目。</p>
+<p>行万里路，此处相逢，共话云原生之道。 偶逗趣事，明月清风，与君同坐。</p>
+<p>55篇原创内容</p>
+<p>公众号</p>
+<h5 id="那么，又回到学习新产品的第一步，如何快速部署-K8s-体验不同地-CNI-插件呢？我们可以使用-Kubekey-。"><a href="#那么，又回到学习新产品的第一步，如何快速部署-K8s-体验不同地-CNI-插件呢？我们可以使用-Kubekey-。" class="headerlink" title="那么，又回到学习新产品的第一步，如何快速部署 K8s 体验不同地 CNI 插件呢？我们可以使用 Kubekey 。"></a>那么，又回到学习新产品的第一步，如何快速部署 K8s 体验不同地 CNI 插件呢？我们可以使用 Kubekey 。</h5><h5 id="Kubekey-作为一个开源的-Kubernetes-和-KubeSphere-集群部署工具，可以轻松的部署-Kubernetes-集群，提供节点管理、操作系统安全加固、容器运行时管理、网络存储安装、Etcd-管理等。Kubekey-支持一键部署-Calico-Flannel-Cilium-Kube-OVN-等网络插件，只需在-kk-的配置文件中注明-network-的-plugin-值即可："><a href="#Kubekey-作为一个开源的-Kubernetes-和-KubeSphere-集群部署工具，可以轻松的部署-Kubernetes-集群，提供节点管理、操作系统安全加固、容器运行时管理、网络存储安装、Etcd-管理等。Kubekey-支持一键部署-Calico-Flannel-Cilium-Kube-OVN-等网络插件，只需在-kk-的配置文件中注明-network-的-plugin-值即可：" class="headerlink" title="Kubekey 作为一个开源的 Kubernetes 和 KubeSphere 集群部署工具，可以轻松的部署 Kubernetes 集群，提供节点管理、操作系统安全加固、容器运行时管理、网络存储安装、Etcd 管理等。Kubekey 支持一键部署 Calico &#x2F; Flannel &#x2F; Cilium &#x2F; Kube-OVN 等网络插件，只需在 kk 的配置文件中注明 network 的 plugin 值即可："></a>Kubekey 作为一个开源的 Kubernetes 和 KubeSphere 集群部署工具，可以轻松的部署 Kubernetes 集群，提供节点管理、操作系统安全加固、容器运行时管理、网络存储安装、Etcd 管理等。Kubekey 支持一键部署 Calico &#x2F; Flannel &#x2F; Cilium &#x2F; Kube-OVN 等网络插件，只需在 kk 的配置文件中注明 network 的 plugin 值即可：</h5><figure class="highlight dts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs dts"><span class="hljs-symbol">network:</span><br><span class="hljs-symbol">  plugin:</span> calico<span class="hljs-keyword">/kubeovn/</span>cilium<br><span class="hljs-symbol">  kubePodsCIDR:</span> <span class="hljs-number">10.233</span><span class="hljs-number">.64</span><span class="hljs-number">.0</span>/<span class="hljs-number">18</span><br><span class="hljs-symbol">  kubeServiceCIDR:</span> <span class="hljs-number">10.233</span><span class="hljs-number">.0</span><span class="hljs-number">.0</span>/<span class="hljs-number">18</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="对于-antrea，由于版本较新，目前可通过-addon-的形式添加-helm-文件的形式进行一键安装："><a href="#对于-antrea，由于版本较新，目前可通过-addon-的形式添加-helm-文件的形式进行一键安装：" class="headerlink" title="对于 antrea，由于版本较新，目前可通过 addon 的形式添加 helm 文件的形式进行一键安装："></a>对于 antrea，由于版本较新，目前可通过 addon 的形式添加 helm 文件的形式进行一键安装：</h5><figure class="highlight dts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs dts"><span class="hljs-symbol">addons:</span><br>- name: antrea<br><span class="hljs-symbol">  namespace:</span> kube-system<br><span class="hljs-symbol">  sources:</span> <br><span class="hljs-symbol">    chart:</span> <br><span class="hljs-symbol">      name:</span> antrea<br><span class="hljs-symbol">      repo:</span> https:<span class="hljs-comment">//charts.antrea.io</span><br>      <span class="hljs-meta"># values:</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="在此基础上，可以通过以下一条命令"><a href="#在此基础上，可以通过以下一条命令" class="headerlink" title="在此基础上，可以通过以下一条命令"></a>在此基础上，可以通过以下一条命令</h5><figure class="highlight n1ql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs n1ql">🐳  → kk <span class="hljs-keyword">create</span> <span class="hljs-keyword">cluster</span> --<span class="hljs-keyword">with</span>-kubernetes --<span class="hljs-keyword">with</span>-kubesphere<br></code></pre></td></tr></table></figure>
+
+<h2 id="网络应用场景"><a href="#网络应用场景" class="headerlink" title="网络应用场景"></a>网络应用场景</h2><h5 id="现在我们已经有了一个-Kubernetes-集群，先来思考一下，容器网络除了让集群正常运行，能让安装-Kubernetes-后-Pending-的-CoreDNS-running-起来（抖个鸡灵-）以外还有哪些使用场景？"><a href="#现在我们已经有了一个-Kubernetes-集群，先来思考一下，容器网络除了让集群正常运行，能让安装-Kubernetes-后-Pending-的-CoreDNS-running-起来（抖个鸡灵-）以外还有哪些使用场景？" class="headerlink" title="现在我们已经有了一个 Kubernetes 集群，先来思考一下，容器网络除了让集群正常运行，能让安装 Kubernetes 后 Pending 的 CoreDNS running 起来（抖个鸡灵-_-）以外还有哪些使用场景？"></a>现在我们已经有了一个 Kubernetes 集群，先来思考一下，容器网络除了让集群正常运行，能让安装 Kubernetes 后 Pending 的 CoreDNS running 起来（抖个鸡灵-_-）以外还有哪些使用场景？</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061738752.png" srcset="/img/loading.gif" lazyload alt="image-20240306173850669"></p>
+<p>网络应用场景</p>
+<p>这里我通过一张图总结了<strong>七个主要使用的场景</strong>，应该也<strong>涵盖大部分运维人员网络需求</strong>。</p>
+<ul>
+<li>• <strong>固定 IP</strong>。对于现存虚拟化 &#x2F; 裸机业务 &#x2F; 单体应用迁移到容器环境后，都是通过 IP 而非域名进行服务间调用，此时就需要 CNI 插件有固定 IP 的功能，包括 Pod&#x2F;Deployment&#x2F;Statefulset。</li>
+<li>• <strong>网络隔离</strong>。不同租户或不同应用之间，容器组应该是不能互相调用或通信的。</li>
+<li>• <strong>多集群网络互联</strong>。对于不同的 Kubernetes 集群之间的微服务进行互相调用的场景，需要多集群网络互联。这种场景一般分为 IP 可达和 Service 互通，满足不同的微服务实例互相调用需求。</li>
+<li>• <strong>出向限制</strong>。对于容器集群外的数据库 &#x2F; 中间件，需能控制特定属性的容器应用才可访问，拒绝其他连接请求。</li>
+<li>• <strong>入向限制</strong>。限制集群外应用对特定容器应用的访问。</li>
+<li>• <strong>带宽限制</strong>。容器应用之间的网络访问加以带宽限制。</li>
+<li>• <strong>出口网关访问</strong>。对于访问集群外特定应用的容器，设置出口网关对其进行 SNAT 以达到统一出口访问的审计和安全需求。理完需求和应用场景，我们来看看如何通过不同的 CNI 插件解决以上痛点。</li>
+</ul>
+<h2 id="网络插件功能实现"><a href="#网络插件功能实现" class="headerlink" title="网络插件功能实现"></a>网络插件功能实现</h2><h3 id="固定-IP"><a href="#固定-IP" class="headerlink" title="固定 IP"></a>固定 IP</h3><p>基本上<strong>主流 CNI 插件都有自己的 IPAM 机制，都支持固定 IP 及 IP Pool 的分配，并且各个 CNI 插件殊途同归的都使用了 Annotation 的方式指定固定 IP</strong>。</p>
+<blockquote>
+<ul>
+<li>• 对于 Pod，分配固定 IP；</li>
+<li>• 对于 Deployment，使用 IP Pool 的方式分配；</li>
+<li>• 对于有状态的 Statefulset，使用 IP Pool 分配后，会根据 Pool 的分配顺序记好 Pod 的 IP，以保证在 Pod 重启后仍能拿到同样的 IP。</li>
+</ul>
+</blockquote>
+<h4 id="Calico"><a href="#Calico" class="headerlink" title="Calico"></a>Calico</h4><figure class="highlight swift"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs swift"><span class="hljs-string">&quot;cni.projectcalico.org/ipAddrs&quot;</span>: <span class="hljs-string">&quot;[<span class="hljs-subst">\&quot;</span>192.168.0.1<span class="hljs-subst">\&quot;</span>]&quot;</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="Kube-OVN"><a href="#Kube-OVN" class="headerlink" title="Kube-OVN"></a>Kube-OVN</h4><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">ovn</span>.kubernetes.io/ip_address: <span class="hljs-number">192.168.100.100</span><br><span class="hljs-attribute">ovn</span>.kubernetes.io/ip_pool: <span class="hljs-number">192.168.100.201</span>,<span class="hljs-number">192.168.100.202</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="Antrea"><a href="#Antrea" class="headerlink" title="Antrea"></a>Antrea</h4><p>Antrea IPAM 只能在 Bridge 模式下使用，因此可以在 Multus 的辅佐下，主网卡使用 NodeIPAM 分配，副网卡使用 Antrea IPAM 分配 VLAN 类型网络地址。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">ipam.antrea.io/ippools: <span class="hljs-string">&#x27;pod-ip-pool1&#x27;</span><br>ipam.antrea.io/pod-ips: <span class="hljs-string">&#x27;&lt;ip-in-pod-ip-pool1&gt;&#x27;</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="Cilium"><a href="#Cilium" class="headerlink" title="Cilium"></a>Cilium</h4><figure class="highlight erlang-repl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs erlang-repl">Not Yet!<br></code></pre></td></tr></table></figure>
+
+<h3 id="多集群网络互联"><a href="#多集群网络互联" class="headerlink" title="多集群网络互联"></a>多集群网络互联</h3><h5 id="对于多集群网络互联，假设有现有多个集群，不同的微服务运行在不同的集群中，集群-1-的-App01-需要和集群-2-的-App02-进行通信，由于他们都是通过-IP-注册在集群外的-VM-注册中心的，所以-App01-和-App02-只能通过-IP-通信。在这种场景下，就需要多集群-Pod-互联互通。"><a href="#对于多集群网络互联，假设有现有多个集群，不同的微服务运行在不同的集群中，集群-1-的-App01-需要和集群-2-的-App02-进行通信，由于他们都是通过-IP-注册在集群外的-VM-注册中心的，所以-App01-和-App02-只能通过-IP-通信。在这种场景下，就需要多集群-Pod-互联互通。" class="headerlink" title="对于多集群网络互联，假设有现有多个集群，不同的微服务运行在不同的集群中，集群 1 的 App01 需要和集群 2 的 App02 进行通信，由于他们都是通过 IP 注册在集群外的 VM 注册中心的，所以 App01 和 App02 只能通过 IP 通信。在这种场景下，就需要多集群 Pod 互联互通。"></a>对于多集群网络互联，假设有现有多个集群，不同的微服务运行在不同的集群中，集群 1 的 App01 需要和集群 2 的 App02 进行通信，由于他们都是通过 IP 注册在集群外的 VM 注册中心的，所以 App01 和 App02 只能通过 IP 通信。在这种场景下，就需要<strong>多集群 Pod 互联互通</strong>。</h5><h4 id="Calico-1"><a href="#Calico-1" class="headerlink" title="Calico"></a>Calico</h4><h5 id="对于-Calico-这种原生对-BGP-支持很好的-CNI-插件来说，很容易实现这一点，只要两个集群通过-BGP-建立邻居，将各自的路由宣告给对方即可实现动态路由的建立。若存在多个集群，使用-BGP-RR-的形式也很好解决。但这种解决方式可能不是最理想的，因为需要和物理网络环境进行配合和联调，这就需要网络人员和容器运维人员一同进行多集群网络的建设，在后期运维和管理上都有不大方便和敏捷的感觉。"><a href="#对于-Calico-这种原生对-BGP-支持很好的-CNI-插件来说，很容易实现这一点，只要两个集群通过-BGP-建立邻居，将各自的路由宣告给对方即可实现动态路由的建立。若存在多个集群，使用-BGP-RR-的形式也很好解决。但这种解决方式可能不是最理想的，因为需要和物理网络环境进行配合和联调，这就需要网络人员和容器运维人员一同进行多集群网络的建设，在后期运维和管理上都有不大方便和敏捷的感觉。" class="headerlink" title="对于 Calico 这种原生对 BGP 支持很好的 CNI 插件来说，很容易实现这一点，只要两个集群通过 BGP 建立邻居，将各自的路由宣告给对方即可实现动态路由的建立。若存在多个集群，使用 BGP RR 的形式也很好解决。但这种解决方式可能不是最理想的，因为需要和物理网络环境进行配合和联调，这就需要网络人员和容器运维人员一同进行多集群网络的建设，在后期运维和管理上都有不大方便和敏捷的感觉。"></a>对于 Calico 这种原生对 BGP 支持很好的 CNI 插件来说，很容易实现这一点，只<strong>要两个集群通过 BGP 建立邻居，将各自的路由宣告给对方即可实现动态路由的建立</strong>。若存在多个集群，使用 BGP RR 的形式也很好解决。但这种解决方式可能不是最理想的，因为需要和物理网络环境进行配合和联调，这就需要网络人员和容器运维人员一同进行多集群网络的建设，在后期运维和管理上都有不大方便和敏捷的感觉。</h5><p><strong>那 Calico VxLAN 模式呢？</strong></p>
+<h5 id="既然说到-VxLAN，可以和-Kube-OVN、Antrea、Cilium-放到一起来看，四种-CNI-都支持-Overlay-的网络模型，都支持通过-VxLAN-GENEVE-的形式建立隧道网络打通容器网络通信。这就赋予运维人员较高的灵活性，对于容器网络的调教、IPAM-分配、网络监控和可观察性、网络策略调整都由容器集群运维人员负责，而网络人员则只需要提前划好物理网络大段，保证容器集群-Node-之间网络互通即可。"><a href="#既然说到-VxLAN，可以和-Kube-OVN、Antrea、Cilium-放到一起来看，四种-CNI-都支持-Overlay-的网络模型，都支持通过-VxLAN-GENEVE-的形式建立隧道网络打通容器网络通信。这就赋予运维人员较高的灵活性，对于容器网络的调教、IPAM-分配、网络监控和可观察性、网络策略调整都由容器集群运维人员负责，而网络人员则只需要提前划好物理网络大段，保证容器集群-Node-之间网络互通即可。" class="headerlink" title="既然说到 VxLAN，可以和 Kube-OVN、Antrea、Cilium 放到一起来看，四种 CNI 都支持 Overlay 的网络模型，都支持通过 VxLAN&#x2F;GENEVE 的形式建立隧道网络打通容器网络通信。这就赋予运维人员较高的灵活性，对于容器网络的调教、IPAM 分配、网络监控和可观察性、网络策略调整都由容器集群运维人员负责，而网络人员则只需要提前划好物理网络大段，保证容器集群 Node 之间网络互通即可。"></a>既然说到 VxLAN，可以和 Kube-OVN、Antrea、Cilium 放到一起来看，四种 CNI 都支持 Overlay 的网络模型，都支持通过 VxLAN&#x2F;GENEVE 的形式建立隧道网络打通容器网络通信。这就赋予运维人员较高的灵活性，对于容器网络的调教、IPAM 分配、网络监控和可观察性、网络策略调整都由容器集群运维人员负责，而网络人员则只需要提前划好物理网络大段，保证容器集群 Node 之间网络互通即可。</h5><p><strong>如何实现 overlay 网络的多集群互联呢</strong></p>
+<h4 id="Submariner"><a href="#Submariner" class="headerlink" title="Submariner"></a>Submariner</h4><h5 id="CNCF-有个沙箱项目叫-Submariner，它通过在不同集群建立不同的网关节点并打通隧道的形式实现多集群通信。从官方这张架构图来说明："><a href="#CNCF-有个沙箱项目叫-Submariner，它通过在不同集群建立不同的网关节点并打通隧道的形式实现多集群通信。从官方这张架构图来说明：" class="headerlink" title="CNCF 有个沙箱项目叫 Submariner，它通过在不同集群建立不同的网关节点并打通隧道的形式实现多集群通信。从官方这张架构图来说明："></a>CNCF 有个沙箱项目叫 Submariner，它通过在不同集群建立不同的网关节点并打通隧道的形式实现多集群通信。从官方这张架构图来说明：</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061739643.png" srcset="/img/loading.gif" lazyload alt="image-20240306173918511">Submariner</p>
+<p>简单来说，<strong>Submariner 由一个集群元数据中介服务（broker）掌握不同集群的信息（Pod&#x2F;Service CIDR），通过 Route Agent 将 Pod 流量从 Node 导向网关节点（Gateway Engine），然后由网关节点打通隧道丢到另一个集群中去，这个过程就和不同主机的容器之间使用 VxLAN 网络通信的概念是一致的</strong>。要达成集群连接也很简单，在其中一个集群部署 Broker，然后通过 kubeconfig 或 context 分别进行注册即可。</p>
+<figure class="highlight jboss-cli"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs jboss-cli">🐳  → subctl deploy-broker <span class="hljs-params">--kubeconfig</span> ~<span class="hljs-string">/.kube/config1</span><br>🐳  → subctl join <span class="hljs-params">--kubeconfig</span> ~<span class="hljs-string">/.kube/config1</span> broker-info.subm <span class="hljs-params">--clusterid</span> ks1 <span class="hljs-params">--natt=false</span> <span class="hljs-params">--cable-driver</span> vxlan <span class="hljs-params">--health-check=false</span><br>🐳  → subctl join <span class="hljs-params">--kubeconfig</span> ~<span class="hljs-string">/.kube/config2</span> broker-info.subm <span class="hljs-params">--clusterid</span> ks2 <span class="hljs-params">--natt=false</span> <span class="hljs-params">--cable-driver</span> vxlan <span class="hljs-params">--health-check=false</span><br>🐳  → subctl show all<br>✓ Showing Endpoints<br>CLUSTER ID                    ENDPOINT IP     PUBLIC IP       CABLE DRIVER        TYPE<br>ks1                           192.168.100.10  139.198.21.149  vxlan               local<br>ks2                           192.168.100.20  139.198.21.149  vxlan               remote<br></code></pre></td></tr></table></figure>
+
+<h4 id="Cilium-1"><a href="#Cilium-1" class="headerlink" title="Cilium"></a>Cilium</h4><h5 id="Cilium-Cluster-Mesh-和-Submariner-有异曲同工之妙，可以通过隧道形式或-NativeRoute-形式实现集群互联。"><a href="#Cilium-Cluster-Mesh-和-Submariner-有异曲同工之妙，可以通过隧道形式或-NativeRoute-形式实现集群互联。" class="headerlink" title="Cilium Cluster Mesh 和 Submariner 有异曲同工之妙，可以通过隧道形式或 NativeRoute 形式实现集群互联。"></a>Cilium Cluster Mesh 和 Submariner 有异曲同工之妙，可以通过隧道形式或 NativeRoute 形式实现集群互联。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061739165.png" srcset="/img/loading.gif" lazyload alt="image-20240306173933115"></p>
+<p>Cilium</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061739934.png" srcset="/img/loading.gif" lazyload alt="image-20240306173945885">Cilium</p>
+<p>Cilium 开启多集群网络连接也很简单：</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs routeros">🐳  → cilium clustermesh <span class="hljs-built_in">enable</span> --context <span class="hljs-variable">$CLUSTER1</span><br>🐳  → cilium clustermesh <span class="hljs-built_in">enable</span> --context <span class="hljs-variable">$CLUSTER2</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="KubeOVN"><a href="#KubeOVN" class="headerlink" title="KubeOVN"></a>KubeOVN</h4><p>Kube-OVN 还提供一个 OVNIC 的组件，它运行一个路由中继的 OVN-IC 的 Docker 容器，作为两个集群的网关节点，将不同集群的 Pod 网络进行连通。</p>
+<h3 id="多集群服务互访"><a href="#多集群服务互访" class="headerlink" title="多集群服务互访"></a>多集群服务互访</h3><p><strong>除了 Pod IP 的互联互通，多集群网络还可考虑集群间的 Service 互访</strong>，Submariner、Cilium，Antrea 都能实现。</p>
+<h5 id="Submariner-和-Antrea-都使用了-Kubernetes-社区的-MultiCluster-Service-并在此之上结合自身组件实现多集群的服务访问。MultiCluster-Service-通过-ServiceExport-和-ServiceImport-的-CRD，ServiceExport-将需要公开的服务导出，然后通过-ServiceImport-将此服务导入到另一个集群。"><a href="#Submariner-和-Antrea-都使用了-Kubernetes-社区的-MultiCluster-Service-并在此之上结合自身组件实现多集群的服务访问。MultiCluster-Service-通过-ServiceExport-和-ServiceImport-的-CRD，ServiceExport-将需要公开的服务导出，然后通过-ServiceImport-将此服务导入到另一个集群。" class="headerlink" title="Submariner 和 Antrea 都使用了 Kubernetes 社区的 MultiCluster Service 并在此之上结合自身组件实现多集群的服务访问。MultiCluster Service 通过 ServiceExport 和 ServiceImport 的 CRD，ServiceExport 将需要公开的服务导出，然后通过 ServiceImport 将此服务导入到另一个集群。"></a><strong>Submariner 和 Antrea 都使用了 Kubernetes 社区的 MultiCluster Service 并在此之上结合自身组件实现多集群的服务访问。</strong>MultiCluster Service 通过 ServiceExport 和 ServiceImport 的 CRD，ServiceExport 将需要公开的服务导出，然后通过 ServiceImport 将此服务导入到另一个集群。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061740029.png" srcset="/img/loading.gif" lazyload alt="image-20240306174003952"></p>
+<p>多集群服务互访</p>
+<h4 id="Submariner-1"><a href="#Submariner-1" class="headerlink" title="Submariner"></a>Submariner</h4><h5 id="拿-Submariner-实现举例，有两个集群-ks1-和-ks2，ks1-在-test-命名空间有一个服务-nginx，此时通过-ServiceExport-将-nginx-服务进行导出，Submariner-会把这个-nginx-test-svc-cluster-local-服务发现为-nginx-test-svc-clusterset-local，两个集群的-coredns-都会建立一个新的-clusterset-local-的存根域，将所有匹配-cluster-set-的请求发送给-submariner-的服务发现的组件。同时-ServiceImport-导入到-ks2-集群，ks2-集群的-Pod-就可以通过-nginx-test-svc-clusterset-local-解析到-ks1-集群的-nginx-Service。如果两个集群都有-nginx-的同名服务，此时-submariner-就可以优先本地进行访问，本地服务端点有故障后再访问其他集群的-nginx-服务，是不是可以开始构建双活服务了哈哈。"><a href="#拿-Submariner-实现举例，有两个集群-ks1-和-ks2，ks1-在-test-命名空间有一个服务-nginx，此时通过-ServiceExport-将-nginx-服务进行导出，Submariner-会把这个-nginx-test-svc-cluster-local-服务发现为-nginx-test-svc-clusterset-local，两个集群的-coredns-都会建立一个新的-clusterset-local-的存根域，将所有匹配-cluster-set-的请求发送给-submariner-的服务发现的组件。同时-ServiceImport-导入到-ks2-集群，ks2-集群的-Pod-就可以通过-nginx-test-svc-clusterset-local-解析到-ks1-集群的-nginx-Service。如果两个集群都有-nginx-的同名服务，此时-submariner-就可以优先本地进行访问，本地服务端点有故障后再访问其他集群的-nginx-服务，是不是可以开始构建双活服务了哈哈。" class="headerlink" title="拿 Submariner 实现举例，有两个集群 ks1 和 ks2，ks1 在 test 命名空间有一个服务 nginx，此时通过 ServiceExport 将 nginx 服务进行导出，Submariner 会把这个 nginx.test.svc.cluster.local 服务发现为 nginx.test.svc.clusterset.local，两个集群的 coredns 都会建立一个新的 clusterset.local 的存根域，将所有匹配 cluster.set 的请求发送给 submariner 的服务发现的组件。同时 ServiceImport 导入到 ks2 集群，ks2 集群的 Pod 就可以通过 nginx.test.svc.clusterset.local 解析到 ks1 集群的 nginx Service。如果两个集群都有 nginx 的同名服务，此时 submariner 就可以优先本地进行访问，本地服务端点有故障后再访问其他集群的 nginx 服务，是不是可以开始构建双活服务了哈哈。"></a>拿 Submariner 实现举例，有两个集群 ks1 和 ks2，ks1 在 test 命名空间有一个服务 nginx，此时通过 ServiceExport 将 nginx 服务进行导出，Submariner 会把这个 nginx.test.svc.<strong>cluster.local</strong> 服务发现为 nginx.test.svc.<strong>clusterset.local</strong>，两个集群的 coredns 都会建立一个新的 clusterset.local 的存根域，将所有匹配 cluster.set 的请求发送给 submariner 的服务发现的组件。同时 ServiceImport 导入到 ks2 集群，ks2 集群的 Pod 就可以通过 nginx.test.svc.<strong>clusterset.local</strong> 解析到 ks1 集群的 nginx Service。如果两个集群都有 nginx 的同名服务，此时 submariner 就可以优先本地进行访问，本地服务端点有故障后再访问其他集群的 nginx 服务，是不是可以开始构建双活服务了哈哈。</h5><h4 id="Antrea-1"><a href="#Antrea-1" class="headerlink" title="Antrea"></a>Antrea</h4><h5 id="Antrea-实现方式类似，也是结合-ServiceExport-和-ServiceImport-并进行封装成-ResourceExport-和-ResourceImport-构建多集群服务，在每个集群选择一个节点作为网关，通过网关打通不同集群隧道来实现多集群服务的访问。"><a href="#Antrea-实现方式类似，也是结合-ServiceExport-和-ServiceImport-并进行封装成-ResourceExport-和-ResourceImport-构建多集群服务，在每个集群选择一个节点作为网关，通过网关打通不同集群隧道来实现多集群服务的访问。" class="headerlink" title="Antrea 实现方式类似，也是结合 ServiceExport 和 ServiceImport 并进行封装成 ResourceExport 和 ResourceImport 构建多集群服务，在每个集群选择一个节点作为网关，通过网关打通不同集群隧道来实现多集群服务的访问。"></a>Antrea 实现方式类似，也是结合 ServiceExport 和 ServiceImport 并进行封装成 ResourceExport 和 ResourceImport 构建多集群服务，在每个集群选择一个节点作为网关，通过网关打通不同集群隧道来实现多集群服务的访问。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061740812.png" srcset="/img/loading.gif" lazyload alt="image-20240306174027752"></p>
+<h5 id="Antrea-2"><a href="#Antrea-2" class="headerlink" title="Antrea"></a>Antrea</h5><h4 id="Cilium-2"><a href="#Cilium-2" class="headerlink" title="Cilium"></a>Cilium</h4><h5 id="Cilium-没有用-MultiService-的概念，Cilium-通过-Global-Service-的概念构建多集群访问服务访问。"><a href="#Cilium-没有用-MultiService-的概念，Cilium-通过-Global-Service-的概念构建多集群访问服务访问。" class="headerlink" title="Cilium 没有用 MultiService 的概念，Cilium 通过 Global Service 的概念构建多集群访问服务访问。"></a>Cilium 没有用 MultiService 的概念，<strong>Cilium 通过 Global Service 的概念构建多集群访问服务访问</strong>。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061740007.png" srcset="/img/loading.gif" lazyload alt="image-20240306174040950"></p>
+<p>Cilium</p>
+<p>从这张图可以看出，<strong>Cilium 更适合做多活集群的多集群服务访问需求，通过对相应的服务添加 Annotation 的做法，把不同集群的服务设定为 global-service，并通过 shared-service 和 service-affinity 来控制服务是否能被其他集群访问及服务亲和性</strong>。以下是一个例子：</p>
+<figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">v1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Service</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginx</span><br>  <span class="hljs-attribute">annotations</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">io.cilium/global-service</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&#x27;true&#x27;</span><br>    <span class="hljs-attribute">io.cilium/shared-service</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&#x27;true&#x27;</span><br>    <span class="hljs-attribute">io.cilium/service-affinity</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&#x27;local&#x27;</span><br>    <span class="hljs-comment"># Possible values:</span><br>    <span class="hljs-comment"># - local</span><br>    <span class="hljs-comment">#    preferred endpoints from local cluster if available</span><br>    <span class="hljs-comment"># - remote</span><br>    <span class="hljs-comment">#    preferred endpoints from remote cluster if available</span><br>    <span class="hljs-comment"># none (default)</span><br>    <span class="hljs-comment">#    no preference. Default behavior if this annotation does not exist   </span><br><span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">type</span><span class="hljs-punctuation">:</span> <span class="hljs-string">ClusterIP</span><br>  <span class="hljs-attribute">ports</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">port: 80</span><br>  <span class="hljs-attribute">selector</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginx</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="以上，当有多集群互访需求又不想-CNI-强相关时，可以尝试玩一下-Submariner，作为-CNCF-Landscape-Network-中一个专注于多集群互访的-SandBox-项目，Submariner-提供多集群网络通信，服务发现，以及安全加密，是一个很好的选择。"><a href="#以上，当有多集群互访需求又不想-CNI-强相关时，可以尝试玩一下-Submariner，作为-CNCF-Landscape-Network-中一个专注于多集群互访的-SandBox-项目，Submariner-提供多集群网络通信，服务发现，以及安全加密，是一个很好的选择。" class="headerlink" title="以上，当有多集群互访需求又不想 CNI 强相关时，可以尝试玩一下 Submariner，作为 CNCF Landscape Network 中一个专注于多集群互访的 SandBox 项目，Submariner 提供多集群网络通信，服务发现，以及安全加密，是一个很好的选择。"></a>以上，当有多集群互访需求又不想 CNI 强相关时，可以尝试玩一下 Submariner，作为 CNCF Landscape Network 中一个专注于多集群互访的 SandBox 项目，Submariner 提供多集群网络通信，服务发现，以及安全加密，是一个很好的选择。</h5><p><strong>云原生百宝箱</strong></p>
+<p>行万里路，此处相逢，共话云原生之道。 偶逗趣事，明月清风，与君同坐。</p>
+<p>55篇原创内容</p>
+<p>公众号</p>
+<h3 id="网络策略"><a href="#网络策略" class="headerlink" title="网络策略"></a>网络策略</h3><h5 id="对于-Pod-网络隔离、入向限制、出向限制的网络场景，可以整合成网络策略一同来说。主流开源-CNI-都支持-Kubernetes-NetworkPolicy，通过-Network-Policy，可以在-3-层或-4-层做相应的网络安全限制。Network-Policy-通过-Ingress-和-Egress-两种进行网络限制，默认都是放行的。也就是说，设置-Kubernetes-网络策略，主要以白名单的形式对集群内的流量进行安全限制。"><a href="#对于-Pod-网络隔离、入向限制、出向限制的网络场景，可以整合成网络策略一同来说。主流开源-CNI-都支持-Kubernetes-NetworkPolicy，通过-Network-Policy，可以在-3-层或-4-层做相应的网络安全限制。Network-Policy-通过-Ingress-和-Egress-两种进行网络限制，默认都是放行的。也就是说，设置-Kubernetes-网络策略，主要以白名单的形式对集群内的流量进行安全限制。" class="headerlink" title="对于 Pod 网络隔离、入向限制、出向限制的网络场景，可以整合成网络策略一同来说。主流开源 CNI 都支持 Kubernetes NetworkPolicy，通过 Network Policy，可以在 3 层或 4 层做相应的网络安全限制。Network Policy 通过 Ingress 和 Egress 两种进行网络限制，默认都是放行的。也就是说，设置 Kubernetes 网络策略，主要以白名单的形式对集群内的流量进行安全限制。"></a>对于 <strong>Pod 网络隔离、入向限制、出向限制的网络场景</strong>，可以整合成网络策略一同来说。主流开源 CNI 都支持 Kubernetes NetworkPolicy，通过 Network Policy，可以在 3 层或 4 层做相应的网络安全限制。<strong>Network Policy 通过 Ingress 和 Egress 两种进行网络限制，默认都是放行的</strong>。也就是说，<strong>设置 Kubernetes 网络策略，主要以白名单的形式对集群内的流量进行安全限制</strong>。</h5><h5 id="比如只允许指定-label-的-Pod-访问集群外数据库（通过-CIDR-指定）"><a href="#比如只允许指定-label-的-Pod-访问集群外数据库（通过-CIDR-指定）" class="headerlink" title="比如只允许指定 label 的 Pod 访问集群外数据库（通过 CIDR 指定）"></a>比如只允许指定 label 的 Pod 访问集群外数据库（通过 CIDR 指定）</h5><figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">networking.K8s.io/v1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">NetworkPolicy</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">ingress-allow</span><br>  <span class="hljs-attribute">namespace</span><span class="hljs-punctuation">:</span> <span class="hljs-string">default</span><br><span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">podSelector</span><span class="hljs-punctuation">: </span><br>    <span class="hljs-attribute">matchLabels</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-attribute">role</span><span class="hljs-punctuation">:</span> <span class="hljs-string">db</span><br>  <span class="hljs-attribute">policyTypes</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">Egress</span><br><span class="hljs-attribute">egress</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">to:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-string">ipBlock:</span><br>            <span class="hljs-attribute">cidr</span><span class="hljs-punctuation">:</span> <span class="hljs-string">192.168.100.40/24</span><br>      <span class="hljs-attribute">ports</span><span class="hljs-punctuation">:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-string">protocol: TCP</span><br>          <span class="hljs-attribute">port</span><span class="hljs-punctuation">:</span> <span class="hljs-string">3306</span><br><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">networking.K8s.io/v1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">NetworkPolicy</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">ingress-allow</span><br>  <span class="hljs-attribute">namespace</span><span class="hljs-punctuation">:</span> <span class="hljs-string">default</span><br><span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">podSelector</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">matchLabels</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-attribute">role</span><span class="hljs-punctuation">:</span> <span class="hljs-string">app</span><br>  <span class="hljs-attribute">policyTypes</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">Ingress</span><br>  <span class="hljs-attribute">ingress</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">from:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-string">ipBlock:</span><br>            <span class="hljs-attribute">cidr</span><span class="hljs-punctuation">:</span> <span class="hljs-string">172.17.0.0/16</span><br>            <span class="hljs-attribute">except</span><span class="hljs-punctuation">:</span><br>              <span class="hljs-bullet">-</span> <span class="hljs-string">172.17.1.0/24</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-string">namespaceSelector:</span><br>            <span class="hljs-attribute">matchLabels</span><span class="hljs-punctuation">:</span><br>              <span class="hljs-attribute">project</span><span class="hljs-punctuation">:</span> <span class="hljs-string">web-project</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-string">podSelector:</span><br>            <span class="hljs-attribute">matchLabels</span><span class="hljs-punctuation">:</span><br>              <span class="hljs-attribute">role</span><span class="hljs-punctuation">:</span> <span class="hljs-string">web</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="虽然-Network-Policy-能满足大多场景，但是不是感觉还是少了点东西？比如-7-层策略、基于-NodeSelector、Drop-Reject-类型的策略指定、指定-Egress-节点进行控制等高级能力。这个时候-Cilium-和-Antrea-就大放异彩了。"><a href="#虽然-Network-Policy-能满足大多场景，但是不是感觉还是少了点东西？比如-7-层策略、基于-NodeSelector、Drop-Reject-类型的策略指定、指定-Egress-节点进行控制等高级能力。这个时候-Cilium-和-Antrea-就大放异彩了。" class="headerlink" title="虽然 Network Policy 能满足大多场景，但是不是感觉还是少了点东西？比如 7 层策略、基于 NodeSelector、Drop&#x2F;Reject 类型的策略指定、指定 Egress 节点进行控制等高级能力。这个时候 Cilium 和 Antrea 就大放异彩了。"></a>虽然 Network Policy 能满足大多场景，但是不是感觉<strong>还是少了点东西？比如 7 层策略、基于 NodeSelector、Drop&#x2F;Reject 类型的策略指定、指定 Egress 节点进行控制等高级能力</strong>。这个时候 Cilium 和 Antrea 就大放异彩了。</h5><h4 id="Cilium-3"><a href="#Cilium-3" class="headerlink" title="Cilium"></a>Cilium</h4><h5 id="Cilium-有两个-CRD，CiliumNetworkPolicy-和-CiliumClusterwideNetworkPolicy，来实现单集群和多集群的网络策略能力。Cilium-支持-3、4、7-层网络策略。并增加-EndPoint-Selector-和-Node-Selector。除了普通的基于-PodSelector-和-CIDR-的限制，Cilium-可以支持更多种策略，比如："><a href="#Cilium-有两个-CRD，CiliumNetworkPolicy-和-CiliumClusterwideNetworkPolicy，来实现单集群和多集群的网络策略能力。Cilium-支持-3、4、7-层网络策略。并增加-EndPoint-Selector-和-Node-Selector。除了普通的基于-PodSelector-和-CIDR-的限制，Cilium-可以支持更多种策略，比如：" class="headerlink" title="Cilium 有两个 CRD，CiliumNetworkPolicy 和 CiliumClusterwideNetworkPolicy，来实现单集群和多集群的网络策略能力。Cilium 支持 3、4、7 层网络策略。并增加 EndPoint Selector 和 Node Selector。除了普通的基于 PodSelector 和 CIDR 的限制，Cilium 可以支持更多种策略，比如："></a>Cilium 有两个 CRD，CiliumNetworkPolicy 和 CiliumClusterwideNetworkPolicy，来实现单集群和多集群的网络策略能力。Cilium 支持 3、4、7 层网络策略。并增加 EndPoint Selector 和 Node Selector。除了普通的基于 PodSelector 和 CIDR 的限制，Cilium 可以支持更多种策略，比如：</h5><h5 id="DNS-限制策略，只允许-app-test-app-的端点通过-53-端口去-kube-system-命名空间的-“K8s-K8s-app”-kube-dns-标签的-DNS-服务器访问-my-remote-service-com："><a href="#DNS-限制策略，只允许-app-test-app-的端点通过-53-端口去-kube-system-命名空间的-“K8s-K8s-app”-kube-dns-标签的-DNS-服务器访问-my-remote-service-com：" class="headerlink" title="DNS 限制策略，只允许 app: test-app 的端点通过 53 端口去 kube-system 命名空间的 “K8s:K8s-app”: kube-dns 标签的 DNS 服务器访问 my-remote-service.com："></a><strong>DNS 限制策略</strong>，只允许 app: test-app 的端点通过 53 端口去 kube-system 命名空间的 “K8s:K8s-app”: kube-dns 标签的 DNS 服务器访问 my-remote-service.com：</h5><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">&quot;cilium.io/v2&quot;</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">CiliumNetworkPolicy</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">&quot;to-fqdn&quot;</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">endpointSelector:</span><br>    <span class="hljs-attr">matchLabels:</span><br>      <span class="hljs-attr">app:</span> <span class="hljs-string">test-app</span><br>  <span class="hljs-attr">egress:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-attr">toEndpoints:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">matchLabels:</span><br>          <span class="hljs-attr">&quot;K8s:io.kubernetes.pod.namespace&quot;:</span> <span class="hljs-string">kube-system</span><br>          <span class="hljs-attr">&quot;K8s:K8s-app&quot;:</span> <span class="hljs-string">kube-dns</span><br>      <span class="hljs-attr">toPorts:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">ports:</span><br>           <span class="hljs-bullet">-</span> <span class="hljs-attr">port:</span> <span class="hljs-string">&quot;53&quot;</span><br>             <span class="hljs-attr">protocol:</span> <span class="hljs-string">ANY</span><br>          <span class="hljs-attr">rules:</span><br>            <span class="hljs-attr">dns:</span><br>              <span class="hljs-bullet">-</span> <span class="hljs-attr">matchPattern:</span> <span class="hljs-string">&quot;*&quot;</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-attr">toFQDNs:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">matchName:</span> <span class="hljs-string">&quot;my-remote-service.com&quot;</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="Http-限制策略-只允许-org-empire-标签的端点对-deathstar-的-v1-request-landing-进行-POST-操作："><a href="#Http-限制策略-只允许-org-empire-标签的端点对-deathstar-的-v1-request-landing-进行-POST-操作：" class="headerlink" title="Http 限制策略 , 只允许 org: empire 标签的端点对 deathstar 的 &#x2F;v1&#x2F;request-landing 进行 POST 操作："></a><strong>Http 限制策略</strong> , 只允许 org: empire 标签的端点对 deathstar 的 &#x2F;v1&#x2F;request-landing 进行 POST 操作：</h5><figure class="highlight dts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs dts"><span class="hljs-symbol">apiVersion:</span> <span class="hljs-string">&quot;cilium.io/v2&quot;</span><br><span class="hljs-symbol">kind:</span> CiliumNetworkPolicy<br><span class="hljs-symbol">metadata:</span><br><span class="hljs-symbol">  name:</span> <span class="hljs-string">&quot;rule&quot;</span><br><span class="hljs-symbol">spec:</span><br><span class="hljs-symbol">  description:</span> <span class="hljs-string">&quot;L7 policy to restrict access to specific HTTP call&quot;</span><br><span class="hljs-symbol">  endpointSelector:</span><br><span class="hljs-symbol">    matchLabels:</span><br><span class="hljs-symbol">      org:</span> empire<br><span class="hljs-symbol">      class:</span> deathstar<br><span class="hljs-symbol">  ingress:</span><br>  - fromEndpoints:<br>    - matchLabels:<br><span class="hljs-symbol">        org:</span> empire<br><span class="hljs-symbol">    toPorts:</span><br>    - ports:<br>      - port: <span class="hljs-string">&quot;80&quot;</span><br><span class="hljs-symbol">        protocol:</span> TCP<br><span class="hljs-symbol">      rules:</span><br><span class="hljs-symbol">        http:</span><br>        - method: <span class="hljs-string">&quot;POST&quot;</span><br><span class="hljs-symbol">          path:</span> <span class="hljs-string">&quot;/v1/request-landing&quot;</span><br></code></pre></td></tr></table></figure>
+
+<p><strong>kafka 策略控制</strong>：</p>
+<figure class="highlight dts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs dts"><span class="hljs-symbol">apiVersion:</span> <span class="hljs-string">&quot;cilium.io/v2&quot;</span><br><span class="hljs-symbol">kind:</span> CiliumNetworkPolicy<br><span class="hljs-symbol">metadata:</span><br><span class="hljs-symbol">  name:</span> <span class="hljs-string">&quot;rule1&quot;</span><br><span class="hljs-symbol">spec:</span><br><span class="hljs-symbol">  description:</span> <span class="hljs-string">&quot;enable empire-hq to produce to empire-announce and deathstar-plans&quot;</span><br><span class="hljs-symbol">  endpointSelector:</span><br><span class="hljs-symbol">    matchLabels:</span><br><span class="hljs-symbol">      app:</span> kafka<br><span class="hljs-symbol">  ingress:</span><br>  - fromEndpoints:<br>    - matchLabels:<br><span class="hljs-symbol">        app:</span> empire-hq<br><span class="hljs-symbol">    toPorts:</span><br>    - ports:<br>      - port: <span class="hljs-string">&quot;9092&quot;</span><br><span class="hljs-symbol">        protocol:</span> TCP<br><span class="hljs-symbol">      rules:</span><br><span class="hljs-symbol">        kafka:</span><br>        - role: <span class="hljs-string">&quot;produce&quot;</span><br><span class="hljs-symbol">          topic:</span> <span class="hljs-string">&quot;deathstar-plans&quot;</span><br>        - role: <span class="hljs-string">&quot;produce&quot;</span><br><span class="hljs-symbol">          topic:</span> <span class="hljs-string">&quot;empire-announce&quot;</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="Antrea-3"><a href="#Antrea-3" class="headerlink" title="Antrea"></a>Antrea</h4><h5 id="Antrea-除了增加现有-NetworkPolicy-功能外，抽象了-Antrea-NetworkPolicy-和-Antrea-ClusterNetworkPolicy-两个-CRD-实现命名空间级别和集群级别的安全管理。还提供了-Group，Tier-的概念，用于资源分组和优先级设计，嗯，果真是-NSX-的亲兄弟。因此-Antrea-有零信任的网络策略安全防护手段，可以实现严格的-pod-和命名空间隔离。"><a href="#Antrea-除了增加现有-NetworkPolicy-功能外，抽象了-Antrea-NetworkPolicy-和-Antrea-ClusterNetworkPolicy-两个-CRD-实现命名空间级别和集群级别的安全管理。还提供了-Group，Tier-的概念，用于资源分组和优先级设计，嗯，果真是-NSX-的亲兄弟。因此-Antrea-有零信任的网络策略安全防护手段，可以实现严格的-pod-和命名空间隔离。" class="headerlink" title="Antrea 除了增加现有 NetworkPolicy 功能外，抽象了 Antrea NetworkPolicy 和 Antrea ClusterNetworkPolicy 两个 CRD 实现命名空间级别和集群级别的安全管理。还提供了 Group，Tier 的概念，用于资源分组和优先级设计，嗯，果真是 NSX 的亲兄弟。因此 Antrea 有零信任的网络策略安全防护手段，可以实现严格的 pod 和命名空间隔离。"></a>Antrea 除了增加现有 NetworkPolicy 功能外，抽象了 Antrea NetworkPolicy 和 Antrea ClusterNetworkPolicy 两个 CRD 实现命名空间级别和集群级别的安全管理。<strong>还提供了 Group，Tier 的概念，用于资源分组和优先级设计</strong>，嗯，果真是 NSX 的亲兄弟。因此 Antrea 有零信任的网络策略安全防护手段，可以实现严格的 pod 和命名空间隔离。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061741354.png" srcset="/img/loading.gif" lazyload alt="image-20240306174132312"></p>
+<h5 id="网络层-Antrea-增加了对-ICMP-和-IGMP，Mutlicast-的限制，禁-ping-人员狂喜。"><a href="#网络层-Antrea-增加了对-ICMP-和-IGMP，Mutlicast-的限制，禁-ping-人员狂喜。" class="headerlink" title="网络层 Antrea 增加了对 ICMP 和 IGMP，Mutlicast 的限制，禁 ping 人员狂喜。"></a>网络层 Antrea <strong>增加了对 ICMP 和 IGMP，Mutlicast 的限制</strong>，禁 ping 人员狂喜。</h5><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">crd.antrea.io/v1alpha1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">ClusterNetworkPolicy</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">acnp-reject-ping-request</span><br><span class="hljs-attr">spec:</span><br>    <span class="hljs-attr">priority:</span> <span class="hljs-number">5</span><br>    <span class="hljs-attr">tier:</span> <span class="hljs-string">securityops</span><br>    <span class="hljs-attr">appliedTo:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">podSelector:</span><br>          <span class="hljs-attr">matchLabels:</span><br>            <span class="hljs-attr">role:</span> <span class="hljs-string">server</span><br>        <span class="hljs-attr">namespaceSelector:</span><br>          <span class="hljs-attr">matchLabels:</span><br>            <span class="hljs-attr">env:</span> <span class="hljs-string">prod</span><br>    <span class="hljs-attr">egress:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">action:</span> <span class="hljs-string">Reject</span><br>        <span class="hljs-attr">protocols:</span><br>          <span class="hljs-bullet">-</span> <span class="hljs-attr">icmp:</span><br>              <span class="hljs-attr">icmpType:</span> <span class="hljs-number">8</span><br>              <span class="hljs-attr">icmpCode:</span> <span class="hljs-number">0</span><br>        <span class="hljs-attr">name:</span> <span class="hljs-string">DropPingRequest</span><br>        <span class="hljs-attr">enableLogging:</span> <span class="hljs-literal">true</span><br></code></pre></td></tr></table></figure>
+
+<p><strong>基于 FQDN 的过滤</strong>：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">crd.antrea.io/v1alpha1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">ClusterNetworkPolicy</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">acnp-fqdn-all-foobar</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">priority:</span> <span class="hljs-number">1</span><br>  <span class="hljs-attr">appliedTo:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">podSelector:</span><br>      <span class="hljs-attr">matchLabels:</span><br>        <span class="hljs-attr">app:</span> <span class="hljs-string">client</span><br>  <span class="hljs-attr">egress:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">action:</span> <span class="hljs-string">Allow</span><br>    <span class="hljs-attr">to:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">fqdn:</span> <span class="hljs-string">&quot;*foobar.com&quot;</span><br>    <span class="hljs-attr">ports:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">protocol:</span> <span class="hljs-string">TCP</span><br>        <span class="hljs-attr">port:</span> <span class="hljs-number">8080</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">action:</span> <span class="hljs-string">Drop</span> <br></code></pre></td></tr></table></figure>
+
+<h5 id="设置不同类型的-Group，基于-Group-设置网络策略，就不用对同类业务写一堆-Label-了"><a href="#设置不同类型的-Group，基于-Group-设置网络策略，就不用对同类业务写一堆-Label-了" class="headerlink" title="设置不同类型的 Group，基于 Group 设置网络策略，就不用对同类业务写一堆 Label 了"></a>设置不同类型的 Group，<strong>基于 Group 设置网络策略</strong>，就不用对同类业务写一堆 Label 了</h5><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">crd.antrea.io/v1alpha3</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Group</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">test-grp-with-namespace</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">podSelector:</span><br>    <span class="hljs-attr">matchLabels:</span><br>      <span class="hljs-attr">role:</span> <span class="hljs-string">db</span><br>  <span class="hljs-attr">namespaceSelector:</span><br>    <span class="hljs-attr">matchLabels:</span><br>      <span class="hljs-attr">env:</span> <span class="hljs-string">prod</span><br><span class="hljs-meta">---</span><br><span class="hljs-comment"># Group that selects IP block 10.0.10.0/24.</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">crd.antrea.io/v1alpha3</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Group</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">test-grp-ip-block</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">ipBlocks:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-attr">cidr:</span> <span class="hljs-number">10.0</span><span class="hljs-number">.10</span><span class="hljs-number">.0</span><span class="hljs-string">/24</span><br><span class="hljs-meta">---</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">crd.antrea.io/v1alpha3</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Group</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">test-grp-svc-ref</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">serviceReference:</span><br>    <span class="hljs-attr">name:</span> <span class="hljs-string">test-service</span><br>    <span class="hljs-attr">namespace:</span> <span class="hljs-string">default</span><br><span class="hljs-meta">---</span><br><span class="hljs-comment"># Group that includes the previous Groups as childGroups.</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">crd.antrea.io/v1alpha3</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Group</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">test-grp-nested</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">childGroups:</span> [<span class="hljs-string">test-grp-sel</span>, <span class="hljs-string">test-grp-ip-blocks</span>, <span class="hljs-string">test-grp-svc-ref</span>]<br></code></pre></td></tr></table></figure>
+
+<h3 id="Egress"><a href="#Egress" class="headerlink" title="Egress"></a>Egress</h3><h5 id="对于特定业务出集群需不暴露-IP-或符合安全审计需求的场景，需要-Pod-IP-External-IP-对外部业务进行访问。Cilium，Kube-OVN，Antrea-都有类似-Egress-Gateway-Egress-IP-的功能，特定标签的-Pod-通过-SNAT-为-Egress-IP-访问集群外服务。"><a href="#对于特定业务出集群需不暴露-IP-或符合安全审计需求的场景，需要-Pod-IP-External-IP-对外部业务进行访问。Cilium，Kube-OVN，Antrea-都有类似-Egress-Gateway-Egress-IP-的功能，特定标签的-Pod-通过-SNAT-为-Egress-IP-访问集群外服务。" class="headerlink" title="对于特定业务出集群需不暴露 IP 或符合安全审计需求的场景，需要 Pod IP -&gt; External IP 对外部业务进行访问。Cilium，Kube-OVN，Antrea 都有类似 Egress Gateway&#x2F;Egress IP 的功能，特定标签的 Pod 通过 SNAT 为 Egress IP 访问集群外服务。"></a>对于特定业务出集群需不暴露 IP 或符合安全审计需求的场景，需要 Pod IP -&gt; External IP 对外部业务进行访问。<strong>Cilium，Kube-OVN，Antrea 都有类似 Egress Gateway&#x2F;Egress IP 的功能，特定标签的 Pod 通过 SNAT 为 Egress IP 访问集群外服务。</strong></h5><h4 id="Cilium-4"><a href="#Cilium-4" class="headerlink" title="Cilium"></a>Cilium</h4><figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">cilium.io/v2</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">CiliumEgressGatewayPolicy</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">egress-sample</span><br><span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">selectors</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">podSelector:</span><br>      <span class="hljs-attribute">matchLabels</span><span class="hljs-punctuation">:</span><br>        <span class="hljs-attribute">app</span><span class="hljs-punctuation">:</span> <span class="hljs-string">snat-pod</span><br>        <span class="hljs-attribute">io.kubernetes.pod.namespace</span><span class="hljs-punctuation">:</span> <span class="hljs-string">default</span><br>  <span class="hljs-attribute">destinationCIDRs</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">&quot;0.0.0.0/0&quot;</span><br>  <span class="hljs-attribute">egressGateway</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">nodeSelector</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-attribute">matchLabels</span><span class="hljs-punctuation">:</span><br>        <span class="hljs-attribute">node.kubernetes.io/name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">node1</span><br>    <span class="hljs-attribute">egressIP</span><span class="hljs-punctuation">:</span> <span class="hljs-string">10.168.60.100</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="KubeOVN-1"><a href="#KubeOVN-1" class="headerlink" title="KubeOVN"></a>KubeOVN</h4><figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">v1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Pod</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">pod-gw</span><br>  <span class="hljs-attribute">annotations</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">ovn.kubernetes.io/eip</span><span class="hljs-punctuation">:</span> <span class="hljs-string">172.10.0.1</span><br>    <span class="hljs-comment">#或ovn.kubernetes.io/snat: 172.10.0.1</span><br><span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">containers</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: eip-pod</span><br>    <span class="hljs-attribute">image</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginx:alpine</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="Antrea-4"><a href="#Antrea-4" class="headerlink" title="Antrea:"></a>Antrea:</h4><figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">crd.antrea.io/v1alpha2</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Egress</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">egress-staging-web</span><br><span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">appliedTo</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">namespaceSelector</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-attribute">matchLabels</span><span class="hljs-punctuation">:</span><br>        <span class="hljs-attribute">kubernetes.io/metadata.name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">staging</span><br>    <span class="hljs-attribute">podSelector</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-attribute">matchLabels</span><span class="hljs-punctuation">:</span><br>        <span class="hljs-attribute">app</span><span class="hljs-punctuation">:</span> <span class="hljs-string">web</span><br>  <span class="hljs-attribute">externalIPPool</span><span class="hljs-punctuation">:</span> <span class="hljs-string">external-ip-pool</span><br>  <span class="hljs-comment">#或IP形式 egressIP: 10.10.10.1</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="带宽管理"><a href="#带宽管理" class="headerlink" title="带宽管理"></a>带宽管理</h3><h5 id="kube-ovn-和-Clium-都支持带宽管理，kube-ovn-还支持-QoS-调整，只需要-Annotation-一下即可搞定："><a href="#kube-ovn-和-Clium-都支持带宽管理，kube-ovn-还支持-QoS-调整，只需要-Annotation-一下即可搞定：" class="headerlink" title="kube-ovn 和 Clium 都支持带宽管理，kube-ovn 还支持 QoS 调整，只需要 Annotation 一下即可搞定："></a><strong>kube-ovn 和 Clium 都支持带宽管理，kube-ovn 还支持 QoS 调整</strong>，只需要 Annotation 一下即可搞定：</h5><h4 id="Kube-OVN-1"><a href="#Kube-OVN-1" class="headerlink" title="Kube-OVN"></a>Kube-OVN</h4><figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">v1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Pod</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">qos</span><br>  <span class="hljs-attribute">namespace</span><span class="hljs-punctuation">:</span> <span class="hljs-string">ls1</span><br>  <span class="hljs-attribute">annotations</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">ovn.kubernetes.io/ingress_rate</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;3&quot;</span><br>    <span class="hljs-attribute">ovn.kubernetes.io/egress_rate</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;1&quot;</span><br>    <span class="hljs-attribute">ovn.kubernetes.io/latency</span><span class="hljs-punctuation">:</span> <span class="hljs-string">3</span><br>    <span class="hljs-attribute">ovn.kubernetes.io/loss</span><span class="hljs-punctuation">:</span> <span class="hljs-string">20</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="Cilium-5"><a href="#Cilium-5" class="headerlink" title="Cilium"></a>Cilium</h4><figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">v1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Pod</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">annotations</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">kubernetes.io/egress-bandwidth</span><span class="hljs-punctuation">:</span> <span class="hljs-string">10M</span><br>...<br></code></pre></td></tr></table></figure>
+
+<h5 id="以上。就是此次分享的全部内容了，读到这里你可以也会感慨，从最早学-docker0，Vethpair-熟悉容器网络原理，到搭建-K8s-后节点-NotReady-就-apply-个-Flannel-逐步了解-CNI-插件机制，到今天的-CNCF-Network-Service-Proxy-生态的花团锦簇，云原生网络在日新月异的发展着，容器网络从最初的连通性到现在演变出更多的玩法和适用性，不论是网络功能、安全控制、网络洞察和可观测性，都在更好地为运维人员服务。若要体验更多功能，快到开源社区选择喜欢的容器网络项目-Hands-on-Lab-吧！"><a href="#以上。就是此次分享的全部内容了，读到这里你可以也会感慨，从最早学-docker0，Vethpair-熟悉容器网络原理，到搭建-K8s-后节点-NotReady-就-apply-个-Flannel-逐步了解-CNI-插件机制，到今天的-CNCF-Network-Service-Proxy-生态的花团锦簇，云原生网络在日新月异的发展着，容器网络从最初的连通性到现在演变出更多的玩法和适用性，不论是网络功能、安全控制、网络洞察和可观测性，都在更好地为运维人员服务。若要体验更多功能，快到开源社区选择喜欢的容器网络项目-Hands-on-Lab-吧！" class="headerlink" title="以上。就是此次分享的全部内容了，读到这里你可以也会感慨，从最早学 docker0，Vethpair 熟悉容器网络原理，到搭建 K8s 后节点 NotReady 就 apply 个 Flannel 逐步了解 CNI 插件机制，到今天的 CNCF Network&amp;Service Proxy 生态的花团锦簇，云原生网络在日新月异的发展着，容器网络从最初的连通性到现在演变出更多的玩法和适用性，不论是网络功能、安全控制、网络洞察和可观测性，都在更好地为运维人员服务。若要体验更多功能，快到开源社区选择喜欢的容器网络项目 Hands on Lab 吧！"></a>以上。就是此次分享的全部内容了，读到这里你可以也会感慨，从最早学 docker0，Vethpair 熟悉容器网络原理，到搭建 K8s 后节点 NotReady 就 apply 个 Flannel 逐步了解 CNI 插件机制，到今天的 CNCF Network&amp;Service Proxy 生态的花团锦簇，云原生网络在日新月异的发展着，容器网络从最初的连通性到现在演变出更多的玩法和适用性，不论是网络功能、安全控制、网络洞察和可观测性，都在更好地为运维人员服务。若要体验更多功能，快到开源社区选择喜欢的容器网络项目 Hands on Lab 吧！</h5>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>CNI插件选型 2024-04-03 15:01:51.29</div>
+      <div>http://example.com/2025/01/16/CNI插件选型-cni-cha-jian-xuan-xing/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/CICD%E6%80%9D%E8%80%83-cicd-si-kao/" title="CICD思考 2024-04-03 15:11:24.151">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">CICD思考 2024-04-03 15:11:24.151</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/COREDNS%E4%B9%8B%E5%85%89-coredns-zhi-guang/" title="COREDNS之光 2024-04-03 14:54:52.059">
+                        <span class="hidden-mobile">COREDNS之光 2024-04-03 14:54:52.059</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

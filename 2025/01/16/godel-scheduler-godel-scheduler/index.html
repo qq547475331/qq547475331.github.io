@@ -1,0 +1,1067 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Local Gödel Environment Setup with KIND使用KIND设置本地哥德尔环境 This guide will walk you through how to set up the Gödel Unified Scheduling system. 本指南将指导您如何设置哥德尔统一调度系统。 One-Step Cluster Bootstrap &amp; Instal">
+<meta property="og:type" content="article">
+<meta property="og:title" content="godel-scheduler 2024-08-02 17:41:00.668">
+<meta property="og:url" content="http://example.com/2025/01/16/godel-scheduler-godel-scheduler/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="Local Gödel Environment Setup with KIND使用KIND设置本地哥德尔环境 This guide will walk you through how to set up the Gödel Unified Scheduling system. 本指南将指导您如何设置哥德尔统一调度系统。 One-Step Cluster Bootstrap &amp; Instal">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408021048013.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408021048283.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408021114522.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408021114199.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408021441297.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408021456625.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408021456137.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.070Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:18.916Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408021048013.png">
+  
+  
+  
+  <title>godel-scheduler 2024-08-02 17:41:00.668 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="godel-scheduler 2024-08-02 17:41:00.668"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          5.7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          48 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">godel-scheduler 2024-08-02 17:41:00.668</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="Local-Godel-Environment-Setup-with-KIND"><a href="#Local-Godel-Environment-Setup-with-KIND" class="headerlink" title="Local Gödel Environment Setup with KIND"></a>Local Gödel Environment Setup with KIND</h1><p>使用KIND设置本地哥德尔环境</p>
+<p>This guide will walk you through how to set up the Gödel Unified Scheduling system.</p>
+<p>本指南将指导您如何设置哥德尔统一调度系统。</p>
+<h2 id="One-Step-Cluster-Bootstrap-Installation"><a href="#One-Step-Cluster-Bootstrap-Installation" class="headerlink" title="One-Step Cluster Bootstrap &amp; Installation"></a>One-Step Cluster Bootstrap &amp; Installation</h2><p>一步式集群引导和安装</p>
+<p>We provided a quick way to help you try Gödel on your local machine, which will set up a kind cluster locally and deploy necessary crds, clusterrole and rolebindings</p>
+<p>我们提供了一种快速的方法来帮助您在本地计算机上尝试Gödel，它将在本地设置一个类集群，并部署必要的crd、clusterrole和rolebindings</p>
+<h3 id="Prerequisites"><a href="#Prerequisites" class="headerlink" title="Prerequisites"></a>Prerequisites</h3><p>先决条件</p>
+<p>Please make sure the following dependencies are installed.</p>
+<p>请确保安装了以下依赖项。</p>
+<ul>
+<li>kubectl &gt;&#x3D; v1.19</li>
+<li>docker &gt;&#x3D; 19.03</li>
+<li>kind &gt;&#x3D; v0.17.0</li>
+<li>go &gt;&#x3D; v1.21.4</li>
+<li>kustomize &gt;&#x3D; v4.5.7</li>
+</ul>
+<h3 id="1-Clone-the-Godel-repo-to-your-machine"><a href="#1-Clone-the-Godel-repo-to-your-machine" class="headerlink" title="1. Clone the Gödel repo to your machine"></a>1. Clone the Gödel repo to your machine</h3><p>将哥德尔仓库克隆到您的计算机上</p>
+<figure class="highlight console"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs console"><span class="hljs-meta prompt_">$ </span><span class="language-bash">git <span class="hljs-built_in">clone</span> https://github.com/kubewharf/godel-scheduler</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-Change-to-the-Godel-directory"><a href="#2-Change-to-the-Godel-directory" class="headerlink" title="2. Change to the Gödel directory"></a>2. Change to the Gödel directory</h3><p>切换到哥德尔目录</p>
+<figure class="highlight console"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs console"><span class="hljs-meta prompt_">$ </span><span class="language-bash"><span class="hljs-built_in">cd</span> godel</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="3-Bootstrap-the-cluster-and-install-Godel-components"><a href="#3-Bootstrap-the-cluster-and-install-Godel-components" class="headerlink" title="3. Bootstrap the cluster and install Gödel components"></a>3. Bootstrap the cluster and install Gödel components</h3><p>引导集群并安装哥德尔组件</p>
+<figure class="highlight console"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs console"><span class="hljs-meta prompt_">$ </span><span class="language-bash">make local-up</span><br></code></pre></td></tr></table></figure>
+
+<p>This command will complete the following steps:</p>
+<ol>
+<li><p>Build Gödel image locally;</p>
+</li>
+<li><p>Start a Kubernetes cluster using Kind;</p>
+</li>
+<li><p>Installs the Gödel control-plane components on the cluster.</p>
+<p>此命令将完成以下步骤：</p>
+<p>1.在当地树立哥德尔形象；<br>2.使用Kind启动Kubernetes集群；<br>3.在仪表盘上安装哥德尔控制平面组件。</p>
+</li>
+</ol>
+<h2 id="Manual-Installation"><a href="#Manual-Installation" class="headerlink" title="Manual Installation"></a>Manual Installation</h2><p>手动安装</p>
+<p>If you have an existing Kubernetes cluster, please follow the steps below to install Gödel.</p>
+<p>如果您有一个现有的Kubernetes集群，请按照以下步骤安装Gödel。</p>
+<h3 id="1-Build-Godel-image"><a href="#1-Build-Godel-image" class="headerlink" title="1. Build Gödel image"></a>1. Build Gödel image</h3><p>1.塑造哥德尔形象</p>
+<figure class="highlight console"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs console">make docker-images<br></code></pre></td></tr></table></figure>
+
+<h3 id="2-Load-Godel-image-to-your-cluster"><a href="#2-Load-Godel-image-to-your-cluster" class="headerlink" title="2. Load Gödel image to your cluster"></a>2. Load Gödel image to your cluster</h3><p>2.将哥德尔图像加载到集群</p>
+<p>For example, if you are using Kind</p>
+<p>例如，如果您正在使用Kind</p>
+<figure class="highlight console"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs console">kind load docker-image godel-local:latest --name &lt;cluster-name&gt; --nodes &lt;control-plane-nodes&gt;<br></code></pre></td></tr></table></figure>
+
+<h3 id="3-Create-Godel-components-in-the-cluster"><a href="#3-Create-Godel-components-in-the-cluster" class="headerlink" title="3. Create Gödel components in the cluster"></a>3. Create Gödel components in the cluster</h3><p>3.在集群中创建哥德尔组件</p>
+<figure class="highlight console"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs console">kustomize build manifests/base/ | kubectl apply -f -<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-meta">#!/bin/bash  </span><br>  <br><span class="hljs-comment"># error on exit  </span><br><span class="hljs-built_in">set</span> -e  <br>  <br><span class="hljs-comment"># Main of the script  </span><br>DOCKERFILE_DIR=<span class="hljs-string">&quot;docker/&quot;</span>  <br>LOCAL_DOCKERFILE=<span class="hljs-string">&quot;godel-local.Dockerfile&quot;</span>  <br>  <br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;Building docker image(s)...&quot;</span>  <br>  <br>docker container prune -f || <span class="hljs-literal">true</span>;  <br>docker image prune -f || <span class="hljs-literal">true</span>  <br>  <br><span class="hljs-keyword">function</span> <span class="hljs-function"><span class="hljs-title">cleanup_godel_images</span></span>() &#123;  <br>  <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> $(docker images | grep <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;1&#125;</span>&quot;</span> | awk <span class="hljs-string">&quot;&#123;print \$3&#125;&quot;</span>);  <br>  <span class="hljs-keyword">do</span>  <br>    docker rmi <span class="hljs-string">&quot;<span class="hljs-variable">$i</span>&quot;</span> -f;  <br>  <span class="hljs-keyword">done</span>  <br>&#125;  <br>  <br><span class="hljs-function"><span class="hljs-title">build_image</span></span>() &#123;  <br>  <span class="hljs-built_in">local</span> file=<span class="hljs-variable">$&#123;1&#125;</span>  <br>  REPO=$(<span class="hljs-built_in">basename</span> <span class="hljs-string">&quot;<span class="hljs-variable">$file</span>&quot;</span>);  <br>  REPO=<span class="hljs-variable">$&#123;REPO%.*&#125;</span>;  <br>  <br>  <span class="hljs-comment"># Check if we are in a Git repository  </span><br>  <span class="hljs-keyword">if</span> [ -d <span class="hljs-string">&quot;.git&quot;</span> ]; <span class="hljs-keyword">then</span>  <br>    REV=$(git <span class="hljs-built_in">log</span> --pretty=format:<span class="hljs-string">&#x27;%h&#x27;</span> -n 1)  <br>    TAG=<span class="hljs-string">&quot;<span class="hljs-variable">$&#123;REPO&#125;</span>:<span class="hljs-variable">$&#123;REV&#125;</span>&quot;</span>  <br>  <span class="hljs-keyword">else</span>  <br>    <span class="hljs-comment"># Use a fixed tag if not in a Git repository  </span><br>    REV=<span class="hljs-string">&quot;non-git-commit&quot;</span>  <br>    TAG=<span class="hljs-string">&quot;<span class="hljs-variable">$&#123;REPO&#125;</span>:<span class="hljs-variable">$&#123;REV&#125;</span>&quot;</span>  <br>    <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;Warning: Building image with non-Git tag &#x27;<span class="hljs-variable">$&#123;TAG&#125;</span>&#x27; because this is not a Git repository.&quot;</span>  <br>  <span class="hljs-keyword">fi</span>  <br>  <br>  cleanup_godel_images <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;REPO&#125;</span>&quot;</span>  <br>  docker build -t <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;TAG&#125;</span>&quot;</span> -f <span class="hljs-string">&quot;<span class="hljs-variable">$file</span>&quot;</span> ./;  <br>  docker tag <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;TAG&#125;</span>&quot;</span> <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;REPO&#125;</span>:latest&quot;</span>  <br>&#125;  <br>  <br><span class="hljs-keyword">for</span> file <span class="hljs-keyword">in</span> $(find <span class="hljs-string">&quot;<span class="hljs-variable">$DOCKERFILE_DIR</span>&quot;</span> -name *.Dockerfile);  <br><span class="hljs-keyword">do</span>  <br>  build_image <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;file&#125;</span>&quot;</span>  <br><span class="hljs-keyword">done</span>;<br></code></pre></td></tr></table></figure>
+
+
+
+
+
+
+
+<h1 id="Quickstart-Job-Level-Affinity"><a href="#Quickstart-Job-Level-Affinity" class="headerlink" title="Quickstart - Job Level Affinity"></a>Quickstart - Job Level Affinity</h1><p>快速入门-工作级别亲和力</p>
+<p>This Quickstart guide provides a step-by-step tutorial on how to effectively use the job-level affinity feature for podgroups, with a focus on both preferred and required affinity types. For comprehensive information about this feature, please consult the Job Level Affinity Design Document.<br>&lt;TODO Add the design doc when it’s ready&gt;</p>
+<p>本快速入门指南提供了一个分步教程，介绍如何有效地使用播客组的作业级关联功能，重点介绍首选和必需的关联类型。有关此功能的全面信息，请参阅工作级亲和力设计文档。<br>&lt;TODO准备好后添加设计文档&gt;</p>
+<h2 id="Local-Cluster-Bootstrap-Installation"><a href="#Local-Cluster-Bootstrap-Installation" class="headerlink" title="Local Cluster Bootstrap &amp; Installation"></a>Local Cluster Bootstrap &amp; Installation</h2><p>本地集群引导和安装</p>
+<p>To try out this feature, we would need to set up a few labels for the Kubernetes cluster nodes. We provided a make command for you to boostrap such a cluster locally using KIND.</p>
+<p>要尝试此功能，我们需要为Kubernetes集群节点设置一些标签。我们为您提供了一个make命令，用于使用KIND在本地对这样的集群进行助推。</p>
+<figure class="highlight gauss"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs gauss"><span class="hljs-built_in">make</span> <span class="hljs-keyword">local</span>-up-labels<br></code></pre></td></tr></table></figure>
+
+<h2 id="Affinity-Related-Configurations"><a href="#Affinity-Related-Configurations" class="headerlink" title="Affinity-Related Configurations"></a>Affinity-Related Configurations</h2><p>亲和性相关配置</p>
+<h3 id="Node"><a href="#Node" class="headerlink" title="Node"></a>Node</h3><p>节点</p>
+<p>In our sample YAML for KIND, we defined ‘mainnet’ and ‘micronet’ as custom node labels. These labels are employed to simulate real-world production environments, specifically regarding the network configurations of nodes.</p>
+<p>在我们的KIND示例YAML中，我们将“主网”和“微网”定义为自定义节点标签。这些标签用于模拟现实世界的生产环境，特别是关于节点的网络配置。</p>
+<figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-bullet">-</span> <span class="hljs-string">role: worker</span><br>  <span class="hljs-attribute">image</span><span class="hljs-punctuation">:</span> <span class="hljs-string">kindest/node:v1.21.1</span><br>  <span class="hljs-attribute">labels</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">micronet</span><span class="hljs-punctuation">:</span> <span class="hljs-string">10.76.65.0</span><br>    <span class="hljs-attribute">mainnet</span><span class="hljs-punctuation">:</span> <span class="hljs-string">10.76.0.0</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="PodGroup"><a href="#PodGroup" class="headerlink" title="PodGroup"></a>PodGroup</h3><p>In our sample YAML for podgroup, we specified ‘podGroupAffinity’. This configuration stipulates that pods belonging to this podgroup should be scheduled on nodes within the same ‘mainnet’. Additionally, there’s a preference to schedule them on nodes sharing the same ‘micronet’.</p>
+<p>在我们的podgroup示例YAML中，我们指定了“podGroupAffinity”。此配置规定，属于此Pod组的Pod应安排在同一“主网”内的节点上。此外，人们更倾向于将它们安排在共享相同“微网络”的节点上。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">scheduling.godel.kubewharf.io/v1alpha1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">PodGroup</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">generation:</span> <span class="hljs-number">1</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">nginx</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">affinity:</span><br>    <span class="hljs-attr">podGroupAffinity:</span><br>      <span class="hljs-attr">preferred:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">topologyKey:</span> <span class="hljs-string">micronet</span><br>      <span class="hljs-attr">required:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">topologyKey:</span> <span class="hljs-string">mainnet</span><br>  <span class="hljs-attr">minMember:</span> <span class="hljs-number">10</span><br>  <span class="hljs-attr">scheduleTimeoutSeconds:</span> <span class="hljs-number">3000</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="Deployment"><a href="#Deployment" class="headerlink" title="Deployment"></a>Deployment</h3><p>Specify the podgroup name in pod spec.</p>
+<p>在pod规范中指定pod组名称。</p>
+<figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">apps/v1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Deployment</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginx</span><br><span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">replicas</span><span class="hljs-punctuation">:</span> <span class="hljs-string">10</span><br>  <span class="hljs-attribute">selector</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">matchLabels</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginx</span><br>  <span class="hljs-attribute">template</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginx</span><br>      <span class="hljs-attribute">labels</span><span class="hljs-punctuation">:</span><br>        <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginx</span><br>        <span class="hljs-attribute">godel.bytedance.com/pod-group-name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;nginx&quot;</span><br>      <span class="hljs-attribute">annotations</span><span class="hljs-punctuation">:</span><br>        <span class="hljs-attribute">godel.bytedance.com/pod-group-name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;nginx&quot;</span><br>    <span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-attribute">schedulerName</span><span class="hljs-punctuation">:</span> <span class="hljs-string">godel-scheduler</span><br>      <span class="hljs-attribute">containers</span><span class="hljs-punctuation">:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-string">name: nginx</span><br>          <span class="hljs-attribute">image</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginx</span><br>          <span class="hljs-attribute">imagePullPolicy</span><span class="hljs-punctuation">:</span> <span class="hljs-string">IfNotPresent</span><br>          <span class="hljs-attribute">resources</span><span class="hljs-punctuation">:</span><br>            <span class="hljs-attribute">limits</span><span class="hljs-punctuation">:</span><br>              <span class="hljs-attribute">cpu</span><span class="hljs-punctuation">:</span> <span class="hljs-string">1</span><br>            <span class="hljs-attribute">requests</span><span class="hljs-punctuation">:</span><br>              <span class="hljs-attribute">cpu</span><span class="hljs-punctuation">:</span> <span class="hljs-string">1</span><br></code></pre></td></tr></table></figure>
+
+<h2 id="Use-Job-Level-Affinity-in-Scheduling"><a href="#Use-Job-Level-Affinity-in-Scheduling" class="headerlink" title="Use Job Level Affinity in Scheduling"></a>Use Job Level Affinity in Scheduling</h2><p>在调度中使用作业级别相关性</p>
+<p>First, let’s check out the labels for nodes in the cluster.</p>
+<p>首先，让我们查看集群中节点的标签。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ kubectl get nodes --show-labels<br>NAME                       STATUS   ROLES                  AGE   VERSION   LABELS<br>godel-demo-labels-control-plane   Ready    control-plane,master   37m   v1.21.1   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=godel-demo-labels-control-plane,kubernetes.io/os=linux,node-role.kubernetes.io/control-plane=,node-role.kubernetes.io/master=,node.kubernetes.io/exclude-from-external-load-balancers=<br>godel-demo-labels-worker          Ready    &lt;none&gt;                 36m   v1.21.1   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=godel-demo-labels-worker,kubernetes.io/os=linux,mainnet=10.76.0.0,micronet=10.76.64.0,subCluster=subCluster-a<br>godel-demo-labels-worker2         Ready    &lt;none&gt;                 36m   v1.21.1   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=godel-demo-labels-worker2,kubernetes.io/os=linux,mainnet=10.25.0.0,micronet=10.25.162.0,subCluster=subCluster-b<br>godel-demo-labels-worker3         Ready    &lt;none&gt;                 36m   v1.21.1   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=godel-demo-labels-worker3,kubernetes.io/os=linux,mainnet=10.76.0.0,micronet=10.76.65.0,subCluster=subCluster-a<br>godel-demo-labels-worker4         Ready    &lt;none&gt;                 36m   v1.21.1   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=godel-demo-labels-worker4,kubernetes.io/os=linux,mainnet=10.76.0.0,micronet=10.76.64.0,subCluster=subCluster-a<br>godel-demo-labels-worker5         Ready    &lt;none&gt;                 36m   v1.21.1   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=godel-demo-labels-worker5,kubernetes.io/os=linux,mainnet=10.53.0.0,micronet=10.53.16.0,subCluster=subCluster-a<br>godel-demo-labels-worker6         Ready    &lt;none&gt;                 36m   v1.21.1   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=godel-demo-labels-worker6,kubernetes.io/os=linux,mainnet=10.57.0.0,micronet=10.57.111.0,subCluster=subCluster-b<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>godel-demo-labels-worker</strong> and <strong>godel-demo-labels-worker4</strong> share the same ‘micronet’;</li>
+<li><strong>哥德尔演示标签工人</strong>和哥德尔demo-labels-worker4**共享相同的“微网”；</li>
+<li><strong>godel-demo-labels-worker</strong>, <strong>godel-demo-labels-worker-3</strong>, and <strong>godel-demo-labels-worker4</strong> share the same ‘mainnet’.</li>
+<li><strong>哥德尔演示标签worker</strong>、<strong>godel-demo-labels-worker-3</strong>和<strong>godel-demo-labels-worker4</strong>共享同一个“主网”。</li>
+</ul>
+<p>Second, create the podgroup and deployment.</p>
+<p>其次，创建podgroup和部署。</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs powershell"><span class="hljs-variable">$</span> kubectl apply <span class="hljs-operator">-f</span> manifests/quick<span class="hljs-built_in">start-feature</span><span class="hljs-literal">-examples</span>/job<span class="hljs-literal">-level-affinity</span>/podGroup.yaml<br>podgroup.scheduling.godel.kubewharf.io/nginx created<br><br><span class="hljs-variable">$</span> kubectl apply <span class="hljs-operator">-f</span> manifests/quick<span class="hljs-built_in">start-feature</span><span class="hljs-literal">-examples</span>/job<span class="hljs-literal">-level-affinity</span>/deployment.yaml<br>deployment.apps/nginx created<br></code></pre></td></tr></table></figure>
+
+<p>Third, check the scheduling result.</p>
+<p>第三，检查调度结果。</p>
+<figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs vim">$ kubectl <span class="hljs-built_in">get</span> pods -<span class="hljs-keyword">l</span> name=nginx -<span class="hljs-keyword">o</span> wide<br>NAME                     READY   STATUS    RESTARTS   AGE   IP            NODE                 NOMINATED NODE   READINESS GATES<br>nginx-<span class="hljs-number">68</span>fc9649cc-<span class="hljs-number">5</span>pdb7   <span class="hljs-number">1</span>/<span class="hljs-number">1</span>     Running   <span class="hljs-number">0</span>          <span class="hljs-number">8</span>s    <span class="hljs-number">10.244</span>.<span class="hljs-number">2.21</span>   godel-demo-labels-worker    <span class="hljs-symbol">&lt;none&gt;</span>           <span class="hljs-symbol">&lt;none&gt;</span><br>nginx-<span class="hljs-number">68</span>fc9649cc-b26tk   <span class="hljs-number">1</span>/<span class="hljs-number">1</span>     Running   <span class="hljs-number">0</span>          <span class="hljs-number">8</span>s    <span class="hljs-number">10.244</span>.<span class="hljs-number">2.19</span>   godel-demo-labels-worker    <span class="hljs-symbol">&lt;none&gt;</span>           <span class="hljs-symbol">&lt;none&gt;</span><br>nginx-<span class="hljs-number">68</span>fc9649cc-bvvx6   <span class="hljs-number">1</span>/<span class="hljs-number">1</span>     Running   <span class="hljs-number">0</span>          <span class="hljs-number">8</span>s    <span class="hljs-number">10.244</span>.<span class="hljs-number">2.18</span>   godel-demo-labels-worker    <span class="hljs-symbol">&lt;none&gt;</span>           <span class="hljs-symbol">&lt;none&gt;</span><br>nginx-<span class="hljs-number">68</span>fc9649cc-dtxqn   <span class="hljs-number">1</span>/<span class="hljs-number">1</span>     Running   <span class="hljs-number">0</span>          <span class="hljs-number">8</span>s    <span class="hljs-number">10.244</span>.<span class="hljs-number">2.23</span>   godel-demo-labels-worker    <span class="hljs-symbol">&lt;none&gt;</span>           <span class="hljs-symbol">&lt;none&gt;</span><br>nginx-<span class="hljs-number">68</span>fc9649cc-hh5pr   <span class="hljs-number">1</span>/<span class="hljs-number">1</span>     Running   <span class="hljs-number">0</span>          <span class="hljs-number">8</span>s    <span class="hljs-number">10.244</span>.<span class="hljs-number">3.34</span>   godel-demo-labels-worker4   <span class="hljs-symbol">&lt;none&gt;</span>           <span class="hljs-symbol">&lt;none&gt;</span><br>nginx-<span class="hljs-number">68</span>fc9649cc-jt8q9   <span class="hljs-number">1</span>/<span class="hljs-number">1</span>     Running   <span class="hljs-number">0</span>          <span class="hljs-number">8</span>s    <span class="hljs-number">10.244</span>.<span class="hljs-number">3.35</span>   godel-demo-labels-worker4   <span class="hljs-symbol">&lt;none&gt;</span>           <span class="hljs-symbol">&lt;none&gt;</span><br>nginx-<span class="hljs-number">68</span>fc9649cc-l8j2s   <span class="hljs-number">1</span>/<span class="hljs-number">1</span>     Running   <span class="hljs-number">0</span>          <span class="hljs-number">8</span>s    <span class="hljs-number">10.244</span>.<span class="hljs-number">2.20</span>   godel-demo-labels-worker    <span class="hljs-symbol">&lt;none&gt;</span>           <span class="hljs-symbol">&lt;none&gt;</span><br>nginx-<span class="hljs-number">68</span>fc9649cc-t9fb8   <span class="hljs-number">1</span>/<span class="hljs-number">1</span>     Running   <span class="hljs-number">0</span>          <span class="hljs-number">8</span>s    <span class="hljs-number">10.244</span>.<span class="hljs-number">3.33</span>   godel-demo-labels-worker4   <span class="hljs-symbol">&lt;none&gt;</span>           <span class="hljs-symbol">&lt;none&gt;</span><br>nginx-<span class="hljs-number">68</span>fc9649cc-vcjm7   <span class="hljs-number">1</span>/<span class="hljs-number">1</span>     Running   <span class="hljs-number">0</span>          <span class="hljs-number">8</span>s    <span class="hljs-number">10.244</span>.<span class="hljs-number">2.17</span>   godel-demo-labels-worker    <span class="hljs-symbol">&lt;none&gt;</span>           <span class="hljs-symbol">&lt;none&gt;</span><br>nginx-<span class="hljs-number">68</span>fc9649cc-wplt7   <span class="hljs-number">1</span>/<span class="hljs-number">1</span>     Running   <span class="hljs-number">0</span>          <span class="hljs-number">8</span>s    <span class="hljs-number">10.244</span>.<span class="hljs-number">2.22</span>   godel-demo-labels-worker    <span class="hljs-symbol">&lt;none&gt;</span>           <span class="hljs-symbol">&lt;none&gt;</span><br></code></pre></td></tr></table></figure>
+
+<p>The pods have been scheduled to <strong>godel-demo-labels-worker</strong> and <strong>godel-demo-labels-worker4</strong>, which share the same ‘micronet’. We achieved this result because the resources are sufficient.</p>
+<p>这些吊舱已被安排为<strong>godel演示标签worker</strong>和*<em>godel-demo-labels-worker4</em>，它们共享相同的“微网”。我们之所以取得这一成果，是因为资源充足。</p>
+<p>Next, let’s try with scheduling a podgroup with minMember equal to 15, with the else of the configuration remains the same.</p>
+<p>接下来，让我们尝试调度一个minMember等于15的podgroup，其他配置保持不变。</p>
+<ul>
+<li>In <code>manifests/quickstart-feature-examples/job-level-affinity/podGroup-2.yaml</code>, notice the minMember is 15.</li>
+<li>在“manifests&#x2F;quickstart features examples&#x2F;job-level affinity&#x2F;podGroup-2.yaml”中，注意minMember是15。</li>
+</ul>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">minMember</span>: <span class="hljs-number">15</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>In <code>manifests/quickstart-feature-examples/job-level-affinity/deployment-2.yaml</code>, notice the replicas is 15.</li>
+<li>在“manifests&#x2F;quickstart features examples&#x2F;job-level affinity&#x2F;deployment-2.yaml”中，请注意副本为15。</li>
+</ul>
+<figure class="highlight dts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs dts"><span class="hljs-symbol">spec:</span><br><span class="hljs-symbol">  replicas:</span> <span class="hljs-number">15</span><br></code></pre></td></tr></table></figure>
+
+<p>Apply the two yaml files and check the scheduling result</p>
+<p>应用两个yaml文件并检查调度结果</p>
+<figure class="highlight subunit"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs subunit"># Clean up the env first<br>$ kubectl delete -f manifests/quickstart-feature-examples/job-level-affinity/deployment.yaml &amp;&amp; kubectl delete -f manifests/quickstart-feature-examples/job-level-affinity/podGroup.yaml<br>deployment.apps &quot;nginx&quot; deleted<br>podgroup.scheduling.godel.kubewharf.io &quot;nginx&quot; deleted<br><br>$ kubectl apply -f manifests/quickstart-feature-examples/job-level-affinity/podGroup<span class="hljs-string">-2</span>.yaml<br>podgroup.scheduling.godel.kubewharf.io/nginx<span class="hljs-string">-2</span> created<br><br>$ kubectl apply -f manifests/quickstart-feature-examples/job-level-affinity/deployment<span class="hljs-string">-2</span>.yaml<br>deployment.apps/nginx<span class="hljs-string">-2</span> created<br><br>$ kubectl get pods -l name=nginx<span class="hljs-string">-2</span> -o wide<br>NAME                       READY   STATUS    RESTARTS   AGE   IP            NODE                 NOMINATED NODE   READINESS GATES<br>nginx<span class="hljs-string">-2</span><span class="hljs-string">-68</span>fc9649cc<span class="hljs-string">-2</span>l2v7   1/1     Running   0          6s    10.244.6.11   godel-demo-labels-worker3   &lt;none&gt;           &lt;none&gt;<br>nginx<span class="hljs-string">-2</span><span class="hljs-string">-68</span>fc9649cc<span class="hljs-string">-6</span>mz78   1/1     Running   0          6s    10.244.2.13   godel-demo-labels-worker    &lt;none&gt;           &lt;none&gt;<br>nginx<span class="hljs-string">-2</span><span class="hljs-string">-68</span>fc9649cc<span class="hljs-string">-6</span>nm92   1/1     Running   0          6s    10.244.6.12   godel-demo-labels-worker3   &lt;none&gt;           &lt;none&gt;<br>nginx<span class="hljs-string">-2</span><span class="hljs-string">-68</span>fc9649cc<span class="hljs-string">-6</span>qmmx   1/1     Running   0          6s    10.244.2.14   godel-demo-labels-worker    &lt;none&gt;           &lt;none&gt;<br>nginx<span class="hljs-string">-2</span><span class="hljs-string">-68</span>fc9649cc-cfd75   1/1     Running   0          6s    10.244.2.11   godel-demo-labels-worker    &lt;none&gt;           &lt;none&gt;<br>nginx<span class="hljs-string">-2</span><span class="hljs-string">-68</span>fc9649cc-fg87r   1/1     Running   0          6s    10.244.3.28   godel-demo-labels-worker4   &lt;none&gt;           &lt;none&gt;<br>nginx<span class="hljs-string">-2</span><span class="hljs-string">-68</span>fc9649cc-gss27   1/1     Running   0          6s    10.244.3.26   godel-demo-labels-worker4   &lt;none&gt;           &lt;none&gt;<br>nginx<span class="hljs-string">-2</span><span class="hljs-string">-68</span>fc9649cc-hbpwt   1/1     Running   0          6s    10.244.6.15   godel-demo-labels-worker3   &lt;none&gt;           &lt;none&gt;<br>nginx<span class="hljs-string">-2</span><span class="hljs-string">-68</span>fc9649cc-jkdqx   1/1     Running   0          6s    10.244.3.27   godel-demo-labels-worker4   &lt;none&gt;           &lt;none&gt;<br>nginx<span class="hljs-string">-2</span><span class="hljs-string">-68</span>fc9649cc-n498k   1/1     Running   0          6s    10.244.6.9    godel-demo-labels-worker3   &lt;none&gt;           &lt;none&gt;<br>nginx<span class="hljs-string">-2</span><span class="hljs-string">-68</span>fc9649cc-q5h5r   1/1     Running   0          6s    10.244.2.12   godel-demo-labels-worker    &lt;none&gt;           &lt;none&gt;<br>nginx<span class="hljs-string">-2</span><span class="hljs-string">-68</span>fc9649cc-qjsgk   1/1     Running   0          6s    10.244.6.14   godel-demo-labels-worker3   &lt;none&gt;           &lt;none&gt;<br>nginx<span class="hljs-string">-2</span><span class="hljs-string">-68</span>fc9649cc-vdp2v   1/1     Running   0          6s    10.244.6.13   godel-demo-labels-worker3   &lt;none&gt;           &lt;none&gt;<br>nginx<span class="hljs-string">-2</span><span class="hljs-string">-68</span>fc9649cc-vpzlj   1/1     Running   0          6s    10.244.6.10   godel-demo-labels-worker3   &lt;none&gt;           &lt;none&gt;<br>nginx<span class="hljs-string">-2</span><span class="hljs-string">-68</span>fc9649cc-z2ffg   1/1     Running   0          6s    10.244.3.29   godel-demo-labels-worker4   &lt;none&gt;           &lt;none&gt;<br></code></pre></td></tr></table></figure>
+
+<p>The pods have been scheduled to <strong>godel-demo-labels-worker</strong>, <strong>godel-demo-labels-worker3</strong> and <strong>godel-demo-labels-worker4</strong>. <strong>godel-demo-labels-worker3</strong> was used here because the resources on worker and worker4 were not sufficient. And worker3 met the requirement of the same mainnet.</p>
+<p>这些豆荚已被安排为<strong>哥德尔演示标签工人</strong>、<strong>哥德尔-德莫标签工人</strong>*和<strong>戈德尔-德莫尔标签工人</strong>*<strong>这里使用godel-demo-labels-worker3</strong>是因为worker和worker4上的资源不足。worker3满足同一主网的要求。</p>
+<p>Clean up the environment.</p>
+<p>清理环境。</p>
+<figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs stylus">$ kubectl delete -f manifests/quickstart-feature-examples/job-level-affinity/podGroup-<span class="hljs-number">2</span><span class="hljs-selector-class">.yaml</span> &amp;&amp; kubectl delete -f manifests/quickstart-feature-examples/job-level-affinity/deployment-<span class="hljs-number">2</span><span class="hljs-selector-class">.yaml</span><br>podgroup<span class="hljs-selector-class">.scheduling</span><span class="hljs-selector-class">.godel</span><span class="hljs-selector-class">.kubewharf</span><span class="hljs-selector-class">.io</span> <span class="hljs-string">&quot;nginx-2&quot;</span> deleted<br>deployment<span class="hljs-selector-class">.apps</span> <span class="hljs-string">&quot;nginx-2&quot;</span> deleted<br></code></pre></td></tr></table></figure>
+
+
+
+
+
+
+
+
+
+<h1 id="Quickstart-SubCluster-Concurrent-Scheduling"><a href="#Quickstart-SubCluster-Concurrent-Scheduling" class="headerlink" title="Quickstart - SubCluster Concurrent Scheduling"></a>Quickstart - SubCluster Concurrent Scheduling</h1><p>快速入门-子集群并发调度</p>
+<p>This Quickstart guide demonstrates how to implement concurrent scheduling at the SubCluster level. Each SubCluster, defined by node labels, will possess its own distinct scheduling workflow. These workflows will execute simultaneously, ensuring efficient task management across the system.</p>
+<p>本快速入门指南演示了如何在子集群级别实现并发调度。由节点标签定义的每个子集群都将拥有自己独特的调度工作流。这些工作流将同时执行，确保整个系统的高效任务管理。</p>
+<h2 id="Local-Cluster-Bootstrap-Installation-1"><a href="#Local-Cluster-Bootstrap-Installation-1" class="headerlink" title="Local Cluster Bootstrap &amp; Installation"></a>Local Cluster Bootstrap &amp; Installation</h2><p>本地集群引导和安装</p>
+<p>To try out this feature, we would need to set up a few labels for the Kubernetes cluster nodes. We provided a make command for you to boostrap such a cluster locally using KIND.</p>
+<p>要尝试此功能，我们需要为Kubernetes集群节点设置一些标签。我们为您提供了一个make命令，用于使用KIND在本地对这样的集群进行助推。</p>
+<figure class="highlight gauss"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs gauss"><span class="hljs-built_in">make</span> <span class="hljs-keyword">local</span>-up-labels<br></code></pre></td></tr></table></figure>
+
+<h2 id="Related-Configurations"><a href="#Related-Configurations" class="headerlink" title="Related Configurations"></a>Related Configurations</h2><p>相关配置</p>
+<h3 id="Node-1"><a href="#Node-1" class="headerlink" title="Node"></a>Node</h3><p>In our sample YAML for KIND, we defined ‘subCluster’ as custom node labels. These labels are employed to simulate real-world production environments, where nodes can be classified by different business scenarios.</p>
+<p>在我们的KIND示例YAML中，我们将“subCluster”定义为自定义节点标签。这些标签用于模拟现实世界的生产环境，其中节点可以按不同的业务场景进行分类。</p>
+<figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-bullet">-</span> <span class="hljs-string">role: worker</span><br>  <span class="hljs-attribute">image</span><span class="hljs-punctuation">:</span> <span class="hljs-string">kindest/node:v1.21.1</span><br>  <span class="hljs-attribute">labels</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">subCluster</span><span class="hljs-punctuation">:</span> <span class="hljs-string">subCluster-a</span><br><span class="hljs-bullet">-</span> <span class="hljs-string">role: worker</span><br>  <span class="hljs-attribute">image</span><span class="hljs-punctuation">:</span> <span class="hljs-string">kindest/node:v1.21.1</span><br>  <span class="hljs-attribute">labels</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">subCluster</span><span class="hljs-punctuation">:</span> <span class="hljs-string">subCluster-b</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="Godel-Scheduler-Configuration"><a href="#Godel-Scheduler-Configuration" class="headerlink" title="Godel Scheduler Configuration"></a>Godel Scheduler Configuration</h3><p>Godel调度程序配置</p>
+<p>We defined ‘subCluster’ as the subClusterKey in the Godel Scheduler Configuration. This is corresponding to the node label key above.</p>
+<p>我们在Godel调度程序配置中将“subCluster”定义为subClusterKey。这对应于上面的节点标签键。</p>
+<figure class="highlight avrasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs avrasm"><span class="hljs-symbol">apiVersion:</span> godelscheduler.config.kubewharf.io/v1beta1<br><span class="hljs-symbol">kind:</span> GodelSchedulerConfiguration<br><span class="hljs-symbol">subClusterKey:</span> subCluster<br></code></pre></td></tr></table></figure>
+
+<h3 id="Deployment-1"><a href="#Deployment-1" class="headerlink" title="Deployment"></a>Deployment</h3><p>In the sample deployment file, one deployment specifies ‘subCluster: subCluster-a’ in its nodeSelector, while the other deployment specifies ‘subCluster: subCluster-b’.</p>
+<p>在示例部署文件中，一个部署在其nodeSelector中指定“subCluster:subCluster-a”，而另一个部署指定“subCluster:subCluster-b”。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">nginx-a</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-string">...</span><br>    <span class="hljs-attr">spec:</span><br>      <span class="hljs-attr">schedulerName:</span> <span class="hljs-string">godel-scheduler</span><br>      <span class="hljs-attr">nodeSelector:</span><br>        <span class="hljs-attr">subCluster:</span> <span class="hljs-string">subCluster-a</span><br>      <span class="hljs-string">...</span><br><span class="hljs-meta">---</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">nginx-b</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-string">...</span><br>    <span class="hljs-attr">spec:</span><br>      <span class="hljs-attr">schedulerName:</span> <span class="hljs-string">godel-scheduler</span><br>      <span class="hljs-attr">nodeSelector:</span><br>        <span class="hljs-attr">subCluster:</span> <span class="hljs-string">subCluster-b</span><br>      <span class="hljs-string">...</span><br></code></pre></td></tr></table></figure>
+
+<h2 id="Concurrent-Scheduling-Quick-Demo"><a href="#Concurrent-Scheduling-Quick-Demo" class="headerlink" title="Concurrent Scheduling Quick Demo"></a>Concurrent Scheduling Quick Demo</h2><p>并发调度快速演示</p>
+<p>Apply the deployment YAML files. </p>
+<p>应用部署YAML文件。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ kubectl apply -f manifests/quickstart-feature-examples/concurrent-scheduling/deployment.yaml<br>deployment.apps/nginx-a created<br>deployment.apps/nginx-b created<br></code></pre></td></tr></table></figure>
+
+<p>Check the scheduler logs.</p>
+<p>检查调度程序日志。</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs routeros">$ kubectl <span class="hljs-built_in">get</span> pods -n godel-system<br>NAME                          READY   STATUS    RESTARTS   AGE<br>binder-858c974d4c-bhbtv       1/1     Running   0          123m<br>dispatcher-5b8f5cf5c6-fcm8d   1/1     Running   0          123m<br>scheduler-85f4556799-6ltv5    1/1     Running   0          123m<br><br>$ kubectl logs scheduler-85f4556799-6ltv5 -n godel-system<br><span class="hljs-built_in">..</span>.<br>I0108 22:38:36.183175       1 util.go:90] <span class="hljs-string">&quot;Ready to try and schedule the next unit&quot;</span> <span class="hljs-attribute">numberOfPods</span>=1 <span class="hljs-attribute">unitKey</span>=<span class="hljs-string">&quot;SinglePodUnit/default/nginx-b-69ccdbff54-fvpg6&quot;</span><br>I0108 22:38:36.183190       1 unit_scheduler.go:280] <span class="hljs-string">&quot;Attempting to schedule unit&quot;</span> <span class="hljs-attribute">switchType</span>=<span class="hljs-string">&quot;GTSchedule&quot;</span> <span class="hljs-attribute">subCluster</span>=<span class="hljs-string">&quot;subCluster-b&quot;</span> <span class="hljs-attribute">unitKey</span>=<span class="hljs-string">&quot;SinglePodUnit/default/nginx-b-69ccdbff54-fvpg6&quot;</span><br>I0108 22:38:36.183229       1 util.go:90] <span class="hljs-string">&quot;Ready to try and schedule the next unit&quot;</span> <span class="hljs-attribute">numberOfPods</span>=1 <span class="hljs-attribute">unitKey</span>=<span class="hljs-string">&quot;SinglePodUnit/default/nginx-a-649b85664f-2tjvp&quot;</span><br>I0108 22:38:36.183246       1 unit_scheduler.go:280] <span class="hljs-string">&quot;Attempting to schedule unit&quot;</span> <span class="hljs-attribute">switchType</span>=<span class="hljs-string">&quot;GTSchedule&quot;</span> <span class="hljs-attribute">subCluster</span>=<span class="hljs-string">&quot;subCluster-a&quot;</span> <span class="hljs-attribute">unitKey</span>=<span class="hljs-string">&quot;SinglePodUnit/default/nginx-a-649b85664f-2tjvp&quot;</span><br>I0108 22:38:36.183390       1 unit_scheduler.go:327] <span class="hljs-string">&quot;Attempting to schedule unit in this node group&quot;</span> <span class="hljs-attribute">switchType</span>=<span class="hljs-string">&quot;GTSchedule&quot;</span> <span class="hljs-attribute">subCluster</span>=<span class="hljs-string">&quot;subCluster-b&quot;</span> <span class="hljs-attribute">unitKey</span>=<span class="hljs-string">&quot;SinglePodUnit/default/nginx-b-69ccdbff54-fvpg6&quot;</span> <span class="hljs-attribute">nodeGroup</span>=<span class="hljs-string">&quot;[]&quot;</span><br><span class="hljs-built_in">..</span>.<br></code></pre></td></tr></table></figure>
+
+<p>From the log snippet above, it’s clear that both pods, nginx-a (subCluster: subCluster-a) and nginx-b (subCluster: subCluster-b), are overlapping.</p>
+<p>从上面的日志片段中可以清楚地看出，两个Pod nginx-a（subCluster:subCluster-a）和nginx-b（subCluster&#x2F;subCluster-b）是重叠的。</p>
+<p>Clean up the environment</p>
+<p>清理环境</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs powershell"><span class="hljs-variable">$</span> kubectl delete <span class="hljs-operator">-f</span> manifests/quick<span class="hljs-built_in">start-feature</span><span class="hljs-literal">-examples</span>/concurrent<span class="hljs-literal">-scheduling</span>/deployment.yaml<br>deployment.apps <span class="hljs-string">&quot;nginx-a&quot;</span> deleted<br>deployment.apps <span class="hljs-string">&quot;nginx-b&quot;</span> deleted<br></code></pre></td></tr></table></figure>
+
+
+
+
+
+
+
+
+
+<h1 id="Quickstart-Gang-Scheduling"><a href="#Quickstart-Gang-Scheduling" class="headerlink" title="Quickstart - Gang Scheduling"></a>Quickstart - Gang Scheduling</h1><p>快速入门-帮派调度</p>
+<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>介绍</p>
+<p>In this quickstart guide, we’ll explore Gang Scheduling, a feature that ensures an “all or nothing” approach to scheduling pods.<br>Gödel scheduler treats all pods under a job (PodGroup) as a unified entity during scheduling attempts.<br>This approach eliminates scenarios where a job has “partially reserved resources”, effectively mitigating resource deadlocks between multiple jobs and making it a valuable tool for managing complex scheduling scenarios in your cluster.<br>This guide will walk you through setting up and using Gang Scheduling.</p>
+<p>在本快速入门指南中，我们将探讨Gang调度，这是一个确保采用“全有或全无”方法调度Pod的功能。<br>在调度尝试期间，哥德尔调度器将作业（PodGroup）下的所有Pod视为一个统一的实体。<br>这种方法消除了作业具有“部分保留资源”的情况，有效地缓解了多个作业之间的资源死锁，使其成为管理集群中复杂调度场景的有价值的工具。<br>本指南将引导您完成Gang调度的设置和使用。</p>
+<h2 id="Local-Cluster-Bootstrap-Installation-2"><a href="#Local-Cluster-Bootstrap-Installation-2" class="headerlink" title="Local Cluster Bootstrap &amp; Installation"></a>Local Cluster Bootstrap &amp; Installation</h2><p>本地集群引导和安装</p>
+<p>If you do not have a local Kubernetes cluster installed with Godel yet, please refer to the <a href="kind-cluster-setup.md">Cluster Setup Guide</a>.</p>
+<p>如果您还没有使用Godel安装本地Kubernetes集群，请参阅[cluster Setup Guide]（kind-cluster-Setup.md）。</p>
+<h2 id="Related-Configurations-1"><a href="#Related-Configurations-1" class="headerlink" title="Related Configurations"></a>Related Configurations</h2><p>相关配置</p>
+<p>Below are the YAML contents and descriptions for the related configuration used in this guide:</p>
+<p>以下是本指南中使用的相关配置的YAML内容和描述：</p>
+<h3 id="Pod-Group-Configuration"><a href="#Pod-Group-Configuration" class="headerlink" title="Pod Group Configuration"></a>Pod Group Configuration</h3><p>Pod组配置</p>
+<p>The Pod Group configuration specifies the minimum number of members (<code>minMember</code>) required and the scheduling timeout in seconds (<code>scheduleTimeoutSeconds</code>).</p>
+<p>Pod Group配置指定了所需的最小成员数（“minMember”）和以秒为单位的调度超时（“scheduleTimeoutSeconds”）。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">scheduling.godel.kubewharf.io/v1alpha1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">PodGroup</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">generation:</span> <span class="hljs-number">1</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">test-podgroup</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">minMember:</span> <span class="hljs-number">2</span><br>  <span class="hljs-attr">scheduleTimeoutSeconds:</span> <span class="hljs-number">300</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="Pod-Configuration"><a href="#Pod-Configuration" class="headerlink" title="Pod Configuration"></a>Pod Configuration</h3><p>Pod配置</p>
+<p>This YAML configuration defines the first child pod (pod-1) within the Pod Group. It includes labels and annotations required for Gang Scheduling.</p>
+<p>此YAML配置定义pod组中的第一个子pod（pod-1）。它包括Gang调度所需的标签和注释。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Pod</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">pod-1</span><br>  <span class="hljs-attr">labels:</span><br>    <span class="hljs-attr">name:</span> <span class="hljs-string">nginx</span><br>    <span class="hljs-comment"># Pods must have this label set</span><br>    <span class="hljs-attr">godel.bytedance.com/pod-group-name:</span> <span class="hljs-string">&quot;test-podgroup&quot;</span><br>  <span class="hljs-attr">annotations:</span><br>    <span class="hljs-comment"># Pods must have this annotation set</span><br>    <span class="hljs-attr">godel.bytedance.com/pod-group-name:</span> <span class="hljs-string">&quot;test-podgroup&quot;</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">schedulerName:</span> <span class="hljs-string">godel-scheduler</span><br>  <span class="hljs-attr">containers:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">test</span><br>    <span class="hljs-attr">image:</span> <span class="hljs-string">nginx</span><br>    <span class="hljs-attr">imagePullPolicy:</span> <span class="hljs-string">IfNotPresent</span><br></code></pre></td></tr></table></figure>
+
+<p>The second child pod only varies in name.</p>
+<p>第二个子吊舱只是名称不同。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Pod</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">pod-2</span><br>  <span class="hljs-attr">labels:</span><br>    <span class="hljs-attr">name:</span> <span class="hljs-string">nginx</span><br>    <span class="hljs-comment"># Pods must have this label set</span><br>    <span class="hljs-attr">godel.bytedance.com/pod-group-name:</span> <span class="hljs-string">&quot;test-podgroup&quot;</span><br>  <span class="hljs-attr">annotations:</span><br>    <span class="hljs-comment"># Pods must have this annotation set</span><br>    <span class="hljs-attr">godel.bytedance.com/pod-group-name:</span> <span class="hljs-string">&quot;test-podgroup&quot;</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">schedulerName:</span> <span class="hljs-string">godel-scheduler</span><br>  <span class="hljs-attr">containers:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">test</span><br>    <span class="hljs-attr">image:</span> <span class="hljs-string">nginx</span><br>    <span class="hljs-attr">imagePullPolicy:</span> <span class="hljs-string">IfNotPresent</span><br></code></pre></td></tr></table></figure>
+
+<h2 id="Using-Gang-Scheduling"><a href="#Using-Gang-Scheduling" class="headerlink" title="Using Gang Scheduling"></a>Using Gang Scheduling</h2><p>使用帮派调度</p>
+<ol>
+<li><strong>Create a Pod Group:</strong></li>
+<li><strong>创建Pod组：</strong></li>
+</ol>
+<p>To start using Gang Scheduling, create a Pod Group using the following command:</p>
+<p>要开始使用Gang调度，请使用以下命令创建Pod组：</p>
+<figure class="highlight console"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs console"><span class="hljs-meta prompt_">$ </span><span class="language-bash">kubectl apply -f manifests/quickstart-feature-examples/gang-scheduling/podgroup.yaml</span><br>podgroup.scheduling.godel.kubewharf.io/test-podgroup created<br><span class="hljs-meta prompt_"></span><br><span class="hljs-meta prompt_">$ </span><span class="language-bash">kubectl get podgroups</span><br>NAME            AGE<br>test-podgroup   11s<br></code></pre></td></tr></table></figure>
+
+<ol start="2">
+<li><strong>Create Child Pod 1 of the Pod Group:</strong></li>
+<li><strong>创建Pod组的子Pod 1：</strong></li>
+</ol>
+<p>Now, let’s create the first child pod within the Pod Group.<br>Keep in mind that due to Gang Scheduling, this pod will initially be in a “Pending” state until the <code>minMember</code> requirement of the Pod Group is satisfied.<br>Gang Scheduling ensures that pods are not scheduled until the specified number of pods (in this case, 2) is ready to be scheduled together.</p>
+<p>现在，让我们在pod组中创建第一个子pod。<br>请记住，由于Gang调度，此pod最初将处于“待定”状态，直到pod组的“minMember”要求得到满足。<br>Gang调度确保在指定数量的Pod（在本例中为2个）准备好一起调度之前，不会对Pod进行调度。</p>
+<p>Use the following command to create the first child pod:</p>
+<p>使用以下命令创建第一个子pod：</p>
+<figure class="highlight console"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs console"><span class="hljs-meta prompt_">$ </span><span class="language-bash">kubectl apply -f manifests/quickstart-feature-examples/gang-scheduling/pod-1.yaml</span><br>pod/pod-1 created<br><span class="hljs-meta prompt_"></span><br><span class="hljs-meta prompt_">$ </span><span class="language-bash">kubectl get pods</span><br>NAME    READY   STATUS    RESTARTS   AGE<br>pod-1   0/1     Pending   0          18s<br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408021048013.png" srcset="/img/loading.gif" lazyload alt="image-20240802104837883"></p>
+<ol start="3">
+<li><strong>Create Child Pod 2 of the Pod Group:</strong></li>
+<li>创建Pod组的子Pod 2：</li>
+</ol>
+<p> Now that we have created the first child pod and it’s in a “Pending” state, let’s proceed to create the second child pod.<br> Both pods will become “Running” simultaneously once the <code>minMember</code> requirement of the Pod Group is fulfilled.</p>
+<p>现在我们已经创建了第一个子pod，并且它处于“待定”状态，让我们继续创建第二个子pod。<br>一旦Pod组的“minMember”要求得到满足，两个Pod将同时“运行”。</p>
+<p>Similarly, create the second child pod within the same Pod Group:</p>
+<p>同样，在同一pod组中创建第二个子pod：</p>
+<figure class="highlight console"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs console"><span class="hljs-meta prompt_">$ </span><span class="language-bash">kubectl apply -f manifests/quickstart-feature-examples/gang-scheduling/pod-2.yaml</span><br>pod/pod-2 created<br><span class="hljs-meta prompt_"></span><br><span class="hljs-meta prompt_">$ </span><span class="language-bash">kubectl get pods</span><br>NAME    READY   STATUS    RESTARTS   AGE<br>pod-1   1/1     Running   0          24s<br>pod-2   1/1     Running   0          2s<br></code></pre></td></tr></table></figure>
+
+<ol start="4">
+<li><strong>View Pod Group Status:</strong></li>
+<li>查看Pod组状态：</li>
+</ol>
+<p>You can check the status of the Pod Group using the following command:</p>
+<p>您可以使用以下命令检查Pod组的状态：</p>
+<figure class="highlight console"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs console"><span class="hljs-meta prompt_">$ </span><span class="language-bash">kubectl get podgroup test-podgroup -o yaml</span><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">scheduling.godel.kubewharf.io/v1alpha1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">PodGroup</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">annotations:</span><br>    <span class="hljs-attr">godel.bytedance.com/podgroup-final-op-lock:</span> <span class="hljs-string">binder</span><br>    <span class="hljs-attr">kubectl.kubernetes.io/last-applied-configuration:</span> <span class="hljs-string">|</span><br><span class="hljs-string">      &#123;&quot;apiVersion&quot;:&quot;scheduling.godel.kubewharf.io/v1alpha1&quot;,&quot;kind&quot;:&quot;PodGroup&quot;,&quot;metadata&quot;:&#123;&quot;annotations&quot;:&#123;&#125;,&quot;generation&quot;:1,&quot;name&quot;:&quot;test-podgroup&quot;,&quot;namespace&quot;:&quot;default&quot;&#125;,&quot;spec&quot;:&#123;&quot;minMember&quot;:2,&quot;scheduleTimeoutSeconds&quot;:300&#125;&#125;</span><br><span class="hljs-string"></span>  <span class="hljs-attr">creationTimestamp:</span> <span class="hljs-string">&quot;2024-01-11T00:28:17Z&quot;</span><br>  <span class="hljs-attr">generation:</span> <span class="hljs-number">1</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">test-podgroup</span><br>  <span class="hljs-attr">namespace:</span> <span class="hljs-string">default</span><br>  <span class="hljs-attr">resourceVersion:</span> <span class="hljs-string">&quot;722&quot;</span><br>  <span class="hljs-attr">selfLink:</span> <span class="hljs-string">/apis/scheduling.godel.kubewharf.io/v1alpha1/namespaces/default/podgroups/test-podgroup</span><br>  <span class="hljs-attr">uid:</span> <span class="hljs-string">fe2931c4-fa6b-4770-8ef2-589966fce3f7</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">minMember:</span> <span class="hljs-number">2</span><br>  <span class="hljs-attr">scheduleTimeoutSeconds:</span> <span class="hljs-number">300</span><br><span class="hljs-attr">status:</span><br>  <span class="hljs-attr">conditions:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">lastTransitionTime:</span> <span class="hljs-string">&quot;2024-01-11T00:28:22Z&quot;</span><br>    <span class="hljs-attr">phase:</span> <span class="hljs-string">Pending</span><br>    <span class="hljs-attr">reason:</span> <span class="hljs-string">Pending</span><br>    <span class="hljs-attr">status:</span> <span class="hljs-string">&quot;True&quot;</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">lastTransitionTime:</span> <span class="hljs-string">&quot;2024-01-11T00:28:36Z&quot;</span><br>    <span class="hljs-attr">message:</span> <span class="hljs-string">More</span> <span class="hljs-string">than</span> <span class="hljs-number">2</span> <span class="hljs-string">pods</span> <span class="hljs-string">has</span> <span class="hljs-string">been</span> <span class="hljs-string">created</span> <span class="hljs-string">but</span> <span class="hljs-string">not</span> <span class="hljs-string">fully</span> <span class="hljs-string">scheduled</span><br>    <span class="hljs-attr">phase:</span> <span class="hljs-string">PreScheduling</span><br>    <span class="hljs-attr">reason:</span> <span class="hljs-string">PreScheduling</span><br>    <span class="hljs-attr">status:</span> <span class="hljs-string">&quot;True&quot;</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">lastTransitionTime:</span> <span class="hljs-string">&quot;2024-01-11T00:28:36Z&quot;</span><br>    <span class="hljs-attr">message:</span> <span class="hljs-string">More</span> <span class="hljs-string">than</span> <span class="hljs-number">2</span> <span class="hljs-string">pods</span> <span class="hljs-string">has</span> <span class="hljs-string">been</span> <span class="hljs-string">scheduled</span><br>    <span class="hljs-attr">phase:</span> <span class="hljs-string">Scheduled</span><br>    <span class="hljs-attr">reason:</span> <span class="hljs-string">Scheduled</span><br>    <span class="hljs-attr">status:</span> <span class="hljs-string">&quot;True&quot;</span><br>  <span class="hljs-attr">phase:</span> <span class="hljs-string">Scheduled</span><br>  <span class="hljs-attr">scheduleStartTime:</span> <span class="hljs-string">&quot;2024-01-11T00:28:37Z&quot;</span><br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408021048283.png" srcset="/img/loading.gif" lazyload alt="image-20240802104858162"></p>
+<h1 id="Local-Godel-Environment-Setup-with-KIND-1"><a href="#Local-Godel-Environment-Setup-with-KIND-1" class="headerlink" title="Local Gödel Environment Setup with KIND"></a>Local Gödel Environment Setup with KIND</h1><p>使用KIND设置本地哥德尔环境</p>
+<p>This guide will walk you through how to set up the Gödel Unified Scheduling system.</p>
+<p>本指南将指导您如何设置哥德尔统一调度系统。</p>
+<h2 id="One-Step-Cluster-Bootstrap-Installation-1"><a href="#One-Step-Cluster-Bootstrap-Installation-1" class="headerlink" title="One-Step Cluster Bootstrap &amp; Installation"></a>One-Step Cluster Bootstrap &amp; Installation</h2><p>一步式集群引导和安装</p>
+<p>We provided a quick way to help you try Gödel on your local machine, which will set up a kind cluster locally and deploy necessary crds, clusterrole and rolebindings</p>
+<p>我们提供了一种快速的方法来帮助您在本地计算机上尝试Gödel，它将在本地设置一个类集群，并部署必要的crd、clusterrole和rolebindings</p>
+<h3 id="Prerequisites-1"><a href="#Prerequisites-1" class="headerlink" title="Prerequisites"></a>Prerequisites</h3><p>Please make sure the following dependencies are installed.</p>
+<ul>
+<li>kubectl &gt;&#x3D; v1.19</li>
+<li>docker &gt;&#x3D; 19.03</li>
+<li>kind &gt;&#x3D; v0.17.0</li>
+<li>go &gt;&#x3D; v1.21.4</li>
+<li>kustomize &gt;&#x3D; v4.5.7</li>
+</ul>
+<h3 id="1-Clone-the-Godel-repo-to-your-machine-1"><a href="#1-Clone-the-Godel-repo-to-your-machine-1" class="headerlink" title="1. Clone the Gödel repo to your machine"></a>1. Clone the Gödel repo to your machine</h3><figure class="highlight console"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs console"><span class="hljs-meta prompt_">$ </span><span class="language-bash">git <span class="hljs-built_in">clone</span> https://github.com/kubewharf/godel-scheduler</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-Change-to-the-Godel-directory-1"><a href="#2-Change-to-the-Godel-directory-1" class="headerlink" title="2. Change to the Gödel directory"></a>2. Change to the Gödel directory</h3><figure class="highlight console"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs console"><span class="hljs-meta prompt_">$ </span><span class="language-bash"><span class="hljs-built_in">cd</span> godel</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="3-Bootstrap-the-cluster-and-install-Godel-components-1"><a href="#3-Bootstrap-the-cluster-and-install-Godel-components-1" class="headerlink" title="3. Bootstrap the cluster and install Gödel components"></a>3. Bootstrap the cluster and install Gödel components</h3><p>引导集群并安装哥德尔组件</p>
+<figure class="highlight console"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs console"><span class="hljs-meta prompt_">$ </span><span class="language-bash">make local-up</span><br></code></pre></td></tr></table></figure>
+
+<p>This command will complete the following steps:</p>
+<ol>
+<li>Build Gödel image locally;</li>
+<li>Start a Kubernetes cluster using Kind;</li>
+<li>Installs the Gödel control-plane components on the cluster.</li>
+</ol>
+<p>此命令将完成以下步骤：</p>
+<p>1.在当地树立哥德尔形象；<br>2.使用Kind启动Kubernetes集群；<br>3.在仪表盘上安装哥德尔控制平面组件。</p>
+<h2 id="Manual-Installation-1"><a href="#Manual-Installation-1" class="headerlink" title="Manual Installation"></a>Manual Installation</h2><p>If you have an existing Kubernetes cluster, please follow the steps below to install Gödel.</p>
+<p>如果您有一个现有的Kubernetes集群，请按照以下步骤安装Gödel。</p>
+<h3 id="1-Build-Godel-image-1"><a href="#1-Build-Godel-image-1" class="headerlink" title="1. Build Gödel image"></a>1. Build Gödel image</h3><p>塑造哥德尔形象</p>
+<figure class="highlight console"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs console">make docker-images<br></code></pre></td></tr></table></figure>
+
+<h3 id="2-Load-Godel-image-to-your-cluster-1"><a href="#2-Load-Godel-image-to-your-cluster-1" class="headerlink" title="2. Load Gödel image to your cluster"></a>2. Load Gödel image to your cluster</h3><p>将哥德尔图像加载到集群</p>
+<p>For example, if you are using Kind</p>
+<figure class="highlight console"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs console">kind load docker-image godel-local:latest --name &lt;cluster-name&gt; --nodes &lt;control-plane-nodes&gt;<br></code></pre></td></tr></table></figure>
+
+<h3 id="3-Create-Godel-components-in-the-cluster-1"><a href="#3-Create-Godel-components-in-the-cluster-1" class="headerlink" title="3. Create Gödel components in the cluster"></a>3. Create Gödel components in the cluster</h3><p>在集群中创建哥德尔组件</p>
+<figure class="highlight console"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs console">kustomize build manifests/base/ | kubectl apply -f -<br></code></pre></td></tr></table></figure>
+
+
+
+
+
+
+
+
+
+<h1 id="Quickstart-Preemption"><a href="#Quickstart-Preemption" class="headerlink" title="Quickstart - Preemption"></a>Quickstart - Preemption</h1><p>快速入门-优先购买</p>
+<p>Within the Gödel Scheduling System, Pod preemption emerges as a key feature designed to uphold optimal resource utilization.<br>If a Pod cannot be scheduled, the Gödel scheduler tries to preempt (evict) lower priority Pods to make scheduling of the pending Pod possible.</p>
+<p>This is a Quickstart guide that will walk you through how preemption works in the Gödel Scheduling System.</p>
+<p>在哥德尔调度系统中，吊舱抢占成为一个关键特征，旨在保持最佳的资源利用率。<br>如果无法调度Pod，哥德尔调度器会尝试抢占（驱逐）优先级较低的Pod，以使未决Pod的调度成为可能。</p>
+<p>这是一个快速入门指南，将引导您了解抢占在哥德尔调度系统中的工作原理。</p>
+<h2 id="Local-Cluster-Bootstrap-Installation-3"><a href="#Local-Cluster-Bootstrap-Installation-3" class="headerlink" title="Local Cluster Bootstrap &amp; Installation"></a>Local Cluster Bootstrap &amp; Installation</h2><p>本地集群引导和安装</p>
+<p>If you do not have a local Kubernetes cluster installed with Godel yet, please refer to the <a href="kind-cluster-setup.md">Cluster Setup Guide</a> for creating a local KIND cluster installed with Gödel.</p>
+<p>如果您还没有使用Godel安装本地Kubernetes集群，请参阅[cluster Setup Guide]（kind-cluster-Setup.md）以创建使用Gödel安装的本地kind集群。</p>
+<h2 id="How-Preemption-Works"><a href="#How-Preemption-Works" class="headerlink" title="How Preemption Works"></a>How Preemption Works</h2><p>优先购买权如何运作</p>
+<p>When there is no more resource for scheduling a pending Pod, preemption comes into picture.<br>Gödel scheduler tries to preempt (evict) lower priority Pods to make scheduling of the pending Pod possible, with a few of protection strategies being respected.</p>
+<p>当没有更多资源来调度挂起的Pod时，抢占就会出现。<br>哥德尔调度器试图抢占（驱逐）优先级较低的Pod，以使未决Pod的调度成为可能，并遵守一些保护策略。</p>
+<h3 id="Quickstart-Scenario"><a href="#Quickstart-Scenario" class="headerlink" title="Quickstart Scenario"></a>Quickstart Scenario</h3><p>快速入门场景</p>
+<p>To better illustrate the preemption features, let’s assume there is one node with less than 8 CPU cores available for scheduling.</p>
+<p>为了更好地说明抢占功能，让我们假设有一个节点的CPU核数少于8个，可用于调度。</p>
+<p><strong>Note:</strong> The <code>Capacity</code> and <code>Allocatable</code> of worker node <strong>depend on your own Docker resources configuration</strong>. Thus they are not guaranteed to be exactly the same with this guide. To try out this feature locally, you should tune the resources configuration in the example yaml files based on your own setup. For example, the author configured 8 CPU for Docker resources preference, so the worker node has 8 CPU in the guide.</p>
+<p><strong>注意：</strong>工作节点的“容量”和“可分配”<strong>取决于您自己的Docker资源配置</strong>。因此，不能保证它们与本指南完全相同。要在本地尝试此功能，您应该根据自己的设置调整示例yaml文件中的资源配置。例如，作者为Docker资源偏好配置了8个CPU，因此工作节点在指南中有8个CPU。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ kubectl describe node godel-demo-default-worker   <br>  Name:               godel-demo-default-worker<br>  ...<br>  Capacity:<br>    cpu:                8<br>    ...<br>  Allocatable:<br>    cpu:                8<br>    ...<br>  ...<br>  Non-terminated Pods:          (2 <span class="hljs-keyword">in</span> total)<br>    Namespace                   Name                CPU Requests  CPU Limits  Memory Requests  Memory Limits  Age<br>    ---------                   ----                ------------  ----------  ---------------  -------------  ---<br>    kube-system                 kindnet-cnvtd       100m (2%)     100m (2%)   50Mi (0%)        50Mi (0%)      3d23h<br>    kube-system                 kube-proxy-6fh4g    0 (0%)        0 (0%)      0 (0%)           0 (0%)         3d23h<br>  Allocated resources:<br>    (Total limits may be over 100 percent, i.e., overcommitted.)<br>    Resource           Requests   Limits<br>    --------           --------   ------<br>    cpu                100m (2%)  100m (2%)<br>    ...<br>  Events:              &lt;none&gt;<br></code></pre></td></tr></table></figure>
+
+<h3 id="Basic-Preemption"><a href="#Basic-Preemption" class="headerlink" title="Basic Preemption"></a>Basic Preemption</h3><p>基本优先购买权</p>
+<p>Gödel Scheduling System provides basic preemption features that are comparable with the offering of the Kubernetes scheduler.</p>
+<p>Gödel调度系统提供了与Kubernetes调度器相当的基本抢占功能。</p>
+<h4 id="Priority-based-Preemption"><a href="#Priority-based-Preemption" class="headerlink" title="Priority-based Preemption"></a>Priority-based Preemption</h4><p>基于优先级的优先购买权</p>
+<ol>
+<li><p>Create a pod with a lower priority, which requests 6 CPU cores.</p>
+</li>
+<li><p>创建一个优先级较低的pod，它需要6个CPU核心。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-meta">---</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">scheduling.k8s.io/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">PriorityClass</span><br><span class="hljs-attr">metadata:</span><br>   <span class="hljs-attr">name:</span> <span class="hljs-string">low-priority</span><br>   <span class="hljs-attr">annotations:</span><br>      <span class="hljs-attr">&quot;godel.bytedance.com/can-be-preempted&quot;:</span> <span class="hljs-string">&quot;true&quot;</span><br><span class="hljs-attr">value:</span> <span class="hljs-number">80</span><br><span class="hljs-attr">description:</span> <span class="hljs-string">&quot;a priority class with low priority that can be preempted&quot;</span><br><span class="hljs-meta">---</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Pod</span><br><span class="hljs-attr">metadata:</span><br>   <span class="hljs-attr">name:</span> <span class="hljs-string">nginx-victim</span><br>   <span class="hljs-attr">annotations:</span><br>      <span class="hljs-attr">&quot;godel.bytedance.com/can-be-preempted&quot;:</span> <span class="hljs-string">&quot;true&quot;</span><br><span class="hljs-attr">spec:</span><br>   <span class="hljs-attr">schedulerName:</span> <span class="hljs-string">godel-scheduler</span><br>   <span class="hljs-attr">priorityClassName:</span> <span class="hljs-string">low-priority</span><br>   <span class="hljs-attr">containers:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">nginx-victim</span><br>        <span class="hljs-attr">image:</span> <span class="hljs-string">nginx</span><br>        <span class="hljs-attr">imagePullPolicy:</span> <span class="hljs-string">IfNotPresent</span><br>        <span class="hljs-attr">resources:</span><br>           <span class="hljs-attr">limits:</span><br>              <span class="hljs-attr">cpu:</span> <span class="hljs-number">6</span><br>           <span class="hljs-attr">requests:</span><br>              <span class="hljs-attr">cpu:</span> <span class="hljs-number">6</span><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ kubectl get pod<br>  NAME           READY   STATUS    RESTARTS   AGE<br>  nginx-victim   1/1     Running   0          2s<br></code></pre></td></tr></table></figure>
+
+<ol start="2">
+<li><p>Create a pod with a higher priority, which requests 3 CPU core. </p>
+</li>
+<li><p>创建一个优先级更高的pod，它需要3个CPU核心。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-meta">---</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">scheduling.k8s.io/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">PriorityClass</span><br><span class="hljs-attr">metadata:</span><br>   <span class="hljs-attr">name:</span> <span class="hljs-string">high-priority</span><br><span class="hljs-attr">value:</span> <span class="hljs-number">100</span><br><span class="hljs-attr">description:</span> <span class="hljs-string">&quot;a priority class with a high priority&quot;</span><br><span class="hljs-meta">---</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Pod</span><br><span class="hljs-attr">metadata:</span><br>   <span class="hljs-attr">name:</span> <span class="hljs-string">nginx-preemptor</span><br><span class="hljs-attr">spec:</span><br>   <span class="hljs-attr">schedulerName:</span> <span class="hljs-string">godel-scheduler</span><br>   <span class="hljs-attr">priorityClassName:</span> <span class="hljs-string">high-priority</span><br>   <span class="hljs-attr">containers:</span><br>     <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">nginx-preemptor</span><br>       <span class="hljs-attr">image:</span> <span class="hljs-string">nginx</span><br>       <span class="hljs-attr">imagePullPolicy:</span> <span class="hljs-string">IfNotPresent</span><br>       <span class="hljs-attr">resources:</span><br>         <span class="hljs-attr">limits:</span><br>           <span class="hljs-attr">cpu:</span> <span class="hljs-number">3</span><br>         <span class="hljs-attr">requests:</span><br>           <span class="hljs-attr">cpu:</span> <span class="hljs-number">3</span><br></code></pre></td></tr></table></figure>
+
+<p> Remember, there is only 8 CPU cores available. So, preemption will be triggered when the high-priority Pod gets scheduled.</p>
+<p>记住，只有8个CPU核可用。因此，当高优先级Pod被调度时，将触发抢占。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408021114522.png" srcset="/img/loading.gif" lazyload alt="image-20240802111436419"></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ kubectl get pod<br>  NAME              READY   STATUS    RESTARTS   AGE<br>  nginx-preemptor   1/1     Running   0          18s<br><br>$ kubectl get event<br>  ...<br>  0s          Normal    PreemptForPodSuccessfully   pod/nginx-preemptor   Pod can be placed by evicting some other pods, nominated node: godel-demo-default-worker, victims: [&#123;Name:nginx-victim Namespace:default UID:b685ef99-20b8-43bb-9576-10d2ca09e2d6&#125;], <span class="hljs-keyword">in</span> node group: []<br>  ...<br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408021114199.png" srcset="/img/loading.gif" lazyload alt="image-20240802111412122"></p>
+<p> As we can see, the pod with a lower priority was preempted to accommodate the pod with a higher priority.</p>
+<p>正如我们所看到的，优先级较低的pod被抢占，以容纳优先级较高的pod。</p>
+</li>
+<li><p>Clean up the environment</p>
+</li>
+<li><p>清理环境</p>
+</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">kubectl delete pod nginx-preemptor<br></code></pre></td></tr></table></figure></li>
+</ol>
+<h4 id="Protection-with-PodDisruptionBudget"><a href="#Protection-with-PodDisruptionBudget" class="headerlink" title="Protection with PodDisruptionBudget"></a>Protection with PodDisruptionBudget</h4><p>使用PodDisruption预算进行保护</p>
+<ol>
+<li><p>Create a 3-replica deployment with a lower priority, which requests 6 CPU cores in total. Meanwhile, a PodDisruptionBudget object with minAvailable being set to 3 is also created.</p>
+</li>
+<li><p>创建一个优先级较低的3副本部署，总共需要6个CPU核心。同时，还创建了一个minAvailable设置为3的PodDisruptionBudget对象。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-meta">---</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">scheduling.k8s.io/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">PriorityClass</span><br><span class="hljs-attr">metadata:</span><br>   <span class="hljs-attr">name:</span> <span class="hljs-string">low-priority</span><br>   <span class="hljs-attr">annotations:</span><br>      <span class="hljs-attr">&quot;godel.bytedance.com/can-be-preempted&quot;:</span> <span class="hljs-string">&quot;true&quot;</span><br><span class="hljs-attr">value:</span> <span class="hljs-number">80</span><br><span class="hljs-attr">description:</span> <span class="hljs-string">&quot;a priority class with low priority that can be preempted&quot;</span><br><span class="hljs-meta">---</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">policy/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">PodDisruptionBudget</span><br><span class="hljs-attr">metadata:</span><br>   <span class="hljs-attr">name:</span> <span class="hljs-string">nginx-pdb</span><br><span class="hljs-attr">spec:</span><br>   <span class="hljs-attr">minAvailable:</span> <span class="hljs-number">3</span><br>   <span class="hljs-attr">selector:</span><br>      <span class="hljs-attr">matchLabels:</span><br>         <span class="hljs-attr">name:</span> <span class="hljs-string">nginx</span><br><span class="hljs-meta">---</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span><br><span class="hljs-attr">metadata:</span><br>   <span class="hljs-attr">name:</span> <span class="hljs-string">nginx-victim</span><br><span class="hljs-attr">spec:</span><br>   <span class="hljs-attr">replicas:</span> <span class="hljs-number">3</span><br>   <span class="hljs-attr">selector:</span><br>      <span class="hljs-attr">matchLabels:</span><br>         <span class="hljs-attr">name:</span> <span class="hljs-string">nginx</span><br>   <span class="hljs-attr">template:</span><br>      <span class="hljs-attr">metadata:</span><br>         <span class="hljs-attr">name:</span> <span class="hljs-string">nginx-victim</span><br>         <span class="hljs-attr">labels:</span><br>            <span class="hljs-attr">name:</span> <span class="hljs-string">nginx</span><br>         <span class="hljs-attr">annotations:</span><br>            <span class="hljs-attr">&quot;godel.bytedance.com/can-be-preempted&quot;:</span> <span class="hljs-string">&quot;true&quot;</span><br>      <span class="hljs-attr">spec:</span><br>         <span class="hljs-attr">schedulerName:</span> <span class="hljs-string">godel-scheduler</span><br>         <span class="hljs-attr">priorityClassName:</span> <span class="hljs-string">low-priority</span><br>         <span class="hljs-attr">containers:</span><br>            <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">test</span><br>              <span class="hljs-attr">image:</span> <span class="hljs-string">nginx</span><br>              <span class="hljs-attr">imagePullPolicy:</span> <span class="hljs-string">IfNotPresent</span><br>              <span class="hljs-attr">resources:</span><br>                 <span class="hljs-attr">limits:</span><br>                    <span class="hljs-attr">cpu:</span> <span class="hljs-number">2</span><br>                 <span class="hljs-attr">requests:</span><br>                    <span class="hljs-attr">cpu:</span> <span class="hljs-number">2</span> <br></code></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ kubectl get pod,deploy<br>  NAME                                READY   STATUS    RESTARTS   AGE<br>  pod/nginx-victim-588f6db4bd-r99bq   1/1     Running   0          6s<br>  pod/nginx-victim-588f6db4bd-vv24v   1/1     Running   0          6s<br>  pod/nginx-victim-588f6db4bd-xdsht   1/1     Running   0          6s<br>  <br>  NAME                           READY   UP-TO-DATE   AVAILABLE   AGE<br>  deployment.apps/nginx-victim   3/3     3            3           6s<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>Create a pod with a higher priority, which requests 3 CPU core.</p>
+</li>
+<li><p>创建一个优先级更高的pod，它需要3个CPU核心。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-meta">---</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">scheduling.k8s.io/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">PriorityClass</span><br><span class="hljs-attr">metadata:</span><br>   <span class="hljs-attr">name:</span> <span class="hljs-string">high-priority</span><br><span class="hljs-attr">value:</span> <span class="hljs-number">100</span><br><span class="hljs-attr">description:</span> <span class="hljs-string">&quot;a priority class with a high priority&quot;</span><br><span class="hljs-meta">---</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Pod</span><br><span class="hljs-attr">metadata:</span><br>   <span class="hljs-attr">name:</span> <span class="hljs-string">nginx-preemptor</span><br><span class="hljs-attr">spec:</span><br>   <span class="hljs-attr">schedulerName:</span> <span class="hljs-string">godel-scheduler</span><br>   <span class="hljs-attr">priorityClassName:</span> <span class="hljs-string">high-priority</span><br>   <span class="hljs-attr">containers:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">nginx-preemptor</span><br>        <span class="hljs-attr">image:</span> <span class="hljs-string">nginx</span><br>        <span class="hljs-attr">imagePullPolicy:</span> <span class="hljs-string">IfNotPresent</span><br>        <span class="hljs-attr">resources:</span><br>           <span class="hljs-attr">limits:</span><br>              <span class="hljs-attr">cpu:</span> <span class="hljs-number">3</span><br>           <span class="hljs-attr">requests:</span><br>              <span class="hljs-attr">cpu:</span> <span class="hljs-number">3</span><br></code></pre></td></tr></table></figure>
+
+<p>In this case, preemption will not be triggered for scheduling the high-priority Pod above, due to the protection provided by the PodDisruptionBudget object.</p>
+<p>在这种情况下，由于PodDisruptionBudget对象提供的保护，在调度上述高优先级Pod时不会触发抢占。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ kubectl get pod,deploy<br>  NAME                                READY   STATUS    RESTARTS   AGE<br>  pod/nginx-preemptor                 0/1     Pending   0          34s<br>  pod/nginx-victim-588f6db4bd-r99bq   1/1     Running   0          109s<br>  pod/nginx-victim-588f6db4bd-vv24v   1/1     Running   0          109s<br>  pod/nginx-victim-588f6db4bd-xdsht   1/1     Running   0          109s<br>   <br>  NAME                           READY   UP-TO-DATE   AVAILABLE   AGE<br>  deployment.apps/nginx-victim   3/3     3            3           109s<br></code></pre></td></tr></table></figure>
+
+<p> But, if we update the PodDisruptionBudget object by setting the minAvailable field to 2. The preemption will be triggered in the next scheduling cycle for the Pod with high priority.</p>
+<p>但是，如果我们通过将minAvailable字段设置为2来更新PodDisruptionBudget对象。对于具有高优先级的Pod，抢占将在下一个调度周期中触发。</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ kubectl get pdb     <br>  NAME        MIN AVAILABLE   MAX UNAVAILABLE   ALLOWED DISRUPTIONS   AGE<br>  nginx-pdb   2               N/A               0                     5m22s<br><br>$ kubectl get pod,deploy    <br>  NAME                                READY   STATUS    RESTARTS   AGE<br>  pod/nginx-preemptor                 1/1     Running   0          6m25s<br>  pod/nginx-victim-588f6db4bd-p49vg   0/1     Pending   0          3m19s<br>  pod/nginx-victim-588f6db4bd-r99bq   1/1     Running   0          7m40s<br>  pod/nginx-victim-588f6db4bd-xdsht   1/1     Running   0          7m40s<br>  <br>  NAME                           READY   UP-TO-DATE   AVAILABLE   AGE<br>  deployment.apps/nginx-victim   2/3     3            2           7m40s<br></code></pre></td></tr></table></figure>
+
+<p> Based on the observation above, one replica of the low-priority deployment was preempted.</p>
+<p>基于上述观察，低优先级部署的一个副本被抢占。</p>
+</li>
+<li><p>Clean up the environment</p>
+</li>
+<li><p>清理环境</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">kubectl delete pod nginx-preemptor &amp;&amp; kubectl delete deploy nginx-victim &amp;&amp; kubectl delete pdb nginx-pdb<br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="Godel-specific-Preemption"><a href="#Godel-specific-Preemption" class="headerlink" title="Gödel-specific Preemption"></a>Gödel-specific Preemption</h3><p>哥德尔特定优先购买权</p>
+<p>Apart from the basic preemption functionalities shown above, extra protection behaviors are also honored in Gödel Scheduling System.</p>
+<p>除了上面显示的基本抢占功能外，哥德尔调度系统还支持额外的保护行为。</p>
+<h4 id="Preemptibility-Annotation"><a href="#Preemptibility-Annotation" class="headerlink" title="Preemptibility Annotation"></a>Preemptibility Annotation</h4><p>优先购买性注释</p>
+<p>Gödel Scheduling System introduces a customized annotation, <code>&quot;godel.bytedance.com/can-be-preempted&quot;: &quot;true&quot;</code>,<br>to enable the preemptibility of Pods. The preemptibility annotation specified either in the Pod object or the PriorityClass object will be honored.<br>Specifically, only Pods with the preemptibility being enabled can preempted in any cases. Otherwise, no preemption will happen.</p>
+<p>哥德尔调度系统引入了一个定制的注释，<code>“godel.bytedance.com/can be preceded”：“true”</code>，<br>以实现Pod的可抢占性。Pod对象或PriorityClass对象中指定的抢占性注释将被遵守。<br>具体来说，在任何情况下，只有启用了可抢占性的Pod才能被抢占。否则，不会发生先发制人。</p>
+<ol>
+<li><p>Create a Pod without the preemptibility being enabled.</p>
+</li>
+<li><p>在不启用抢占功能的情况下创建Pod。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-meta">---</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">scheduling.k8s.io/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">PriorityClass</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">low-priority</span><br><span class="hljs-attr">value:</span> <span class="hljs-number">80</span><br><span class="hljs-attr">description:</span> <span class="hljs-string">&quot;a priority class with low priority&quot;</span><br><span class="hljs-meta">---</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Pod</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">nginx-victim</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">schedulerName:</span> <span class="hljs-string">godel-scheduler</span><br>  <span class="hljs-attr">priorityClassName:</span> <span class="hljs-string">low-priority</span><br>  <span class="hljs-attr">containers:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">nginx-victim</span><br>      <span class="hljs-attr">image:</span> <span class="hljs-string">nginx</span><br>      <span class="hljs-attr">imagePullPolicy:</span> <span class="hljs-string">IfNotPresent</span><br>      <span class="hljs-attr">resources:</span><br>        <span class="hljs-attr">limits:</span><br>          <span class="hljs-attr">cpu:</span> <span class="hljs-number">6</span><br>        <span class="hljs-attr">requests:</span><br>          <span class="hljs-attr">cpu:</span> <span class="hljs-number">6</span><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ kubectl get pod<br>  NAME           READY   STATUS    RESTARTS   AGE<br>  nginx-victim   1/1     Running   0          2s<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>Create a Pod with a higher priority.</p>
+</li>
+<li><p>创建具有更高优先级的Pod。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-meta">---</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">scheduling.k8s.io/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">PriorityClass</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">high-priority</span><br><span class="hljs-attr">value:</span> <span class="hljs-number">100</span><br><span class="hljs-attr">description:</span> <span class="hljs-string">&quot;a priority class with a high priority&quot;</span><br><span class="hljs-meta">---</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Pod</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">nginx-preemptor</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">schedulerName:</span> <span class="hljs-string">godel-scheduler</span><br>  <span class="hljs-attr">priorityClassName:</span> <span class="hljs-string">high-priority</span><br>  <span class="hljs-attr">containers:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">nginx-preemptor</span><br>      <span class="hljs-attr">image:</span> <span class="hljs-string">nginx</span><br>      <span class="hljs-attr">imagePullPolicy:</span> <span class="hljs-string">IfNotPresent</span><br>      <span class="hljs-attr">resources:</span><br>        <span class="hljs-attr">limits:</span><br>          <span class="hljs-attr">cpu:</span> <span class="hljs-number">3</span><br>        <span class="hljs-attr">requests:</span><br>          <span class="hljs-attr">cpu:</span> <span class="hljs-number">3</span><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ kubectl get pod<br>  NAME              READY   STATUS    RESTARTS   AGE<br>  nginx-preemptor   0/1     Pending   0          11s<br>  nginx-victim      1/1     Running   0          2m32s<br></code></pre></td></tr></table></figure>
+
+<p>In this case, preemption will not happen because the preemptibility is not enabled.   </p>
+<p>在这种情况下，由于未启用抢占功能，因此不会发生抢占。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408021441297.png" srcset="/img/loading.gif" lazyload alt="image-20240802144142130"></p>
+</li>
+<li><p>Clean up the environment</p>
+</li>
+<li><p>清理环境</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">kubectl delete pod nginx-preemptor nginx-victim<br></code></pre></td></tr></table></figure></li>
+</ol>
+<h4 id="Protection-Duration"><a href="#Protection-Duration" class="headerlink" title="Protection Duration"></a>Protection Duration</h4><p>保护期限</p>
+<p>Gödel Scheduling System also supports protecting preemptible Pods from preemption for at least a specified amount of time after it’s started up.<br>By leveraging the Pod annotation <code>godel.bytedance.com/protection-duration-from-preemption</code>,<br>users will be able to specify the protection duration in seconds.</p>
+<p>哥德尔调度系统还支持在可抢占的Pod启动后至少在指定时间内保护其免受抢占。<br>通过利用Pod注释“godel.bytedance.com&#x2F;protection duration from prevention”，<br>用户将能够以秒为单位指定保护持续时间。</p>
+<ol>
+<li><p>Create a Pod with a 30-second protection duration. </p>
+</li>
+<li><p>创建一个保护时间为30秒的Pod。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-meta">---</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">scheduling.k8s.io/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">PriorityClass</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">low-priority</span><br>  <span class="hljs-attr">annotations:</span><br>    <span class="hljs-attr">&quot;godel.bytedance.com/can-be-preempted&quot;:</span> <span class="hljs-string">&quot;true&quot;</span><br><span class="hljs-attr">value:</span> <span class="hljs-number">80</span><br><span class="hljs-attr">description:</span> <span class="hljs-string">&quot;a priority class with low priority that can be preempted&quot;</span><br><span class="hljs-meta">---</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Pod</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">nginx-victim</span><br>  <span class="hljs-attr">annotations:</span><br>    <span class="hljs-attr">&quot;godel.bytedance.com/protection-duration-from-preemption&quot;:</span> <span class="hljs-string">&quot;30&quot;</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">schedulerName:</span> <span class="hljs-string">godel-scheduler</span><br>  <span class="hljs-attr">priorityClassName:</span> <span class="hljs-string">low-priority</span><br>  <span class="hljs-attr">containers:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">nginx-victim</span><br>      <span class="hljs-attr">image:</span> <span class="hljs-string">nginx</span><br>      <span class="hljs-attr">imagePullPolicy:</span> <span class="hljs-string">IfNotPresent</span><br>      <span class="hljs-attr">resources:</span><br>        <span class="hljs-attr">limits:</span><br>          <span class="hljs-attr">cpu:</span> <span class="hljs-number">6</span><br>        <span class="hljs-attr">requests:</span><br>          <span class="hljs-attr">cpu:</span> <span class="hljs-number">6</span><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ kubectl get pod<br>  NAME           READY   STATUS    RESTARTS   AGE<br>  nginx-victim   1/1     Running   0          3s<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>Create a Pod with a higher priority.</p>
+</li>
+<li><p>创建具有更高优先级的Pod。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-meta">---</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">scheduling.k8s.io/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">PriorityClass</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">high-priority</span><br><span class="hljs-attr">value:</span> <span class="hljs-number">100</span><br><span class="hljs-attr">description:</span> <span class="hljs-string">&quot;a priority class with a high priority&quot;</span><br><span class="hljs-meta">---</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Pod</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">nginx-preemptor</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">schedulerName:</span> <span class="hljs-string">godel-scheduler</span><br>  <span class="hljs-attr">priorityClassName:</span> <span class="hljs-string">high-priority</span><br>  <span class="hljs-attr">containers:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">nginx-preemptor</span><br>      <span class="hljs-attr">image:</span> <span class="hljs-string">nginx</span><br>      <span class="hljs-attr">imagePullPolicy:</span> <span class="hljs-string">IfNotPresent</span><br>      <span class="hljs-attr">resources:</span><br>        <span class="hljs-attr">limits:</span><br>          <span class="hljs-attr">cpu:</span> <span class="hljs-number">3</span><br>        <span class="hljs-attr">requests:</span><br>          <span class="hljs-attr">cpu:</span> <span class="hljs-number">3</span><br></code></pre></td></tr></table></figure>
+
+<p>Within the protection duration, preemption will not be triggered. </p>
+<p>在保护期内，不会触发抢占。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ kubectl get pod<br>  NAME              READY   STATUS    RESTARTS   AGE<br>  nginx-preemptor   0/1     Pending   0          14s<br>  nginx-victim      1/1     Running   0          26s<br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408021456625.png" srcset="/img/loading.gif" lazyload alt="image-20240802145609549"></p>
+<p>Beyond that, preemption takes place eventually.</p>
+<p>除此之外，先发制人最终会发生。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ kubectl get pod<br>  NAME           READY   STATUS    RESTARTS   AGE<br>  nginx-preemptor   1/1     Running   0          78s<br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408021456137.png" srcset="/img/loading.gif" lazyload alt="image-20240802145602048"></p>
+</li>
+<li><p>Clean up the environment</p>
+</li>
+<li><p>清理环境</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">kubectl delete pod nginx-preemptor<br></code></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="Wrap-up"><a href="#Wrap-up" class="headerlink" title="Wrap-up"></a>Wrap-up</h2><p>总结</p>
+<p>In this doc, we share a Quickstart guide about selected functionalities of preemption in Gödel Scheduling System.<br>More advanced preemption features&#x2F;strategies as well as the corresponding technical deep-dives can be expected.  </p>
+<p>在本文档中，我们将分享一份关于哥德尔调度系统中优先购买功能的快速入门指南。<br>可以期待更高级的抢占功能&#x2F;策略以及相应的技术深度探索。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>godel-scheduler 2024-08-02 17:41:00.668</div>
+      <div>http://example.com/2025/01/16/godel-scheduler-godel-scheduler/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/helm%20chart%E5%92%8Crepo-helmchart-he-repo/" title="helm chart和repo 2024-04-03 15:00:43.125">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">helm chart和repo 2024-04-03 15:00:43.125</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/ezctl%20%E5%91%BD%E4%BB%A4%E8%A1%8C%E4%BB%8B%E7%BB%8D-ezctl-ming-ling-xing-jie-shao/" title="ezctl 命令行介绍 2023-09-28 15:28:00.619">
+                        <span class="hidden-mobile">ezctl 命令行介绍 2023-09-28 15:28:00.619</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

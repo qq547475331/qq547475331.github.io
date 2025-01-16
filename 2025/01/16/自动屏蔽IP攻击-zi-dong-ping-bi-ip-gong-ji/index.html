@@ -1,0 +1,639 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="在当今的数字世界中，服务器安全性成为了每个企业或个人都必须面对的重要议题。特别是当面对如DoS（拒绝服务）攻击等网络威胁时，一个有效的防范措施显得尤为关键。本文将探讨如何通过自动屏蔽攻击IP来增强您的服务器抵御DoS攻击的能力，并提供一个实用的Bash脚本作为参考。理解DoS攻击 DoS攻击是一种恶意行为，通过向目标服务器发送大量无用的请求，耗尽其资源，使合法用户无法访问服务。这种攻击不仅影响服务">
+<meta property="og:type" content="article">
+<meta property="og:title" content="自动屏蔽IP攻击 2024-04-03 14:54:11.783">
+<meta property="og:url" content="http://example.com/2025/01/16/%E8%87%AA%E5%8A%A8%E5%B1%8F%E8%94%BDIP%E6%94%BB%E5%87%BB-zi-dong-ping-bi-ip-gong-ji/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="在当今的数字世界中，服务器安全性成为了每个企业或个人都必须面对的重要议题。特别是当面对如DoS（拒绝服务）攻击等网络威胁时，一个有效的防范措施显得尤为关键。本文将探讨如何通过自动屏蔽攻击IP来增强您的服务器抵御DoS攻击的能力，并提供一个实用的Bash脚本作为参考。理解DoS攻击 DoS攻击是一种恶意行为，通过向目标服务器发送大量无用的请求，耗尽其资源，使合法用户无法访问服务。这种攻击不仅影响服务">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-01-16T02:08:28.092Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:19.185Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>自动屏蔽IP攻击 2024-04-03 14:54:11.783 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="自动屏蔽IP攻击 2024-04-03 14:54:11.783"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          940 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          8 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">自动屏蔽IP攻击 2024-04-03 14:54:11.783</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h5 id="在当今的数字世界中，服务器安全性成为了每个企业或个人都必须面对的重要议题。特别是当面对如DoS（拒绝服务）攻击等网络威胁时，一个有效的防范措施显得尤为关键。本文将探讨如何通过自动屏蔽攻击IP来增强您的服务器抵御DoS攻击的能力，并提供一个实用的Bash脚本作为参考。"><a href="#在当今的数字世界中，服务器安全性成为了每个企业或个人都必须面对的重要议题。特别是当面对如DoS（拒绝服务）攻击等网络威胁时，一个有效的防范措施显得尤为关键。本文将探讨如何通过自动屏蔽攻击IP来增强您的服务器抵御DoS攻击的能力，并提供一个实用的Bash脚本作为参考。" class="headerlink" title="在当今的数字世界中，服务器安全性成为了每个企业或个人都必须面对的重要议题。特别是当面对如DoS（拒绝服务）攻击等网络威胁时，一个有效的防范措施显得尤为关键。本文将探讨如何通过自动屏蔽攻击IP来增强您的服务器抵御DoS攻击的能力，并提供一个实用的Bash脚本作为参考。"></a>在当今的数字世界中，服务器安全性成为了每个企业或个人都必须面对的重要议题。特别是当面对如DoS（拒绝服务）攻击等网络威胁时，一个有效的防范措施显得尤为关键。本文将探讨如何通过自动屏蔽攻击IP来增强您的服务器抵御DoS攻击的能力，并提供一个实用的Bash脚本作为参考。</h5><p><strong>理解DoS攻击</strong></p>
+<h5 id="DoS攻击是一种恶意行为，通过向目标服务器发送大量无用的请求，耗尽其资源，使合法用户无法访问服务。这种攻击不仅影响服务器的正常运行，还可能导致数据丢失、系统崩溃等严重后果。"><a href="#DoS攻击是一种恶意行为，通过向目标服务器发送大量无用的请求，耗尽其资源，使合法用户无法访问服务。这种攻击不仅影响服务器的正常运行，还可能导致数据丢失、系统崩溃等严重后果。" class="headerlink" title="DoS攻击是一种恶意行为，通过向目标服务器发送大量无用的请求，耗尽其资源，使合法用户无法访问服务。这种攻击不仅影响服务器的正常运行，还可能导致数据丢失、系统崩溃等严重后果。"></a>DoS攻击是一种恶意行为，通过向目标服务器发送大量无用的请求，耗尽其资源，使合法用户无法访问服务。这种攻击不仅影响服务器的正常运行，还可能导致数据丢失、系统崩溃等严重后果。</h5><p><strong>自动屏蔽攻击IP的策略</strong></p>
+<h5 id="为了有效应对DoS攻击，我们需要一个能够实时监控服务器流量，并自动识别和屏蔽攻击IP的系统。以下是实现这一目标的基本步骤："><a href="#为了有效应对DoS攻击，我们需要一个能够实时监控服务器流量，并自动识别和屏蔽攻击IP的系统。以下是实现这一目标的基本步骤：" class="headerlink" title="为了有效应对DoS攻击，我们需要一个能够实时监控服务器流量，并自动识别和屏蔽攻击IP的系统。以下是实现这一目标的基本步骤："></a>为了有效应对DoS攻击，我们需要一个能够实时监控服务器流量，并自动识别和屏蔽攻击IP的系统。以下是实现这一目标的基本步骤：</h5><ol>
+<li><h5 id="监控服务器日志：通过分析Nginx等服务器的访问日志，我们可以识别出异常流量模式，如短时间内来自同一IP的大量请求。"><a href="#监控服务器日志：通过分析Nginx等服务器的访问日志，我们可以识别出异常流量模式，如短时间内来自同一IP的大量请求。" class="headerlink" title="监控服务器日志：通过分析Nginx等服务器的访问日志，我们可以识别出异常流量模式，如短时间内来自同一IP的大量请求。"></a><strong>监控服务器日志</strong>：通过分析Nginx等服务器的访问日志，我们可以识别出异常流量模式，如短时间内来自同一IP的大量请求。</h5></li>
+<li><h5 id="识别攻击IP：使用脚本或工具对日志数据进行处理，提取出那些行为异常的IP地址。"><a href="#识别攻击IP：使用脚本或工具对日志数据进行处理，提取出那些行为异常的IP地址。" class="headerlink" title="识别攻击IP：使用脚本或工具对日志数据进行处理，提取出那些行为异常的IP地址。"></a><strong>识别攻击IP</strong>：使用脚本或工具对日志数据进行处理，提取出那些行为异常的IP地址。</h5></li>
+<li><h5 id="自动屏蔽：一旦发现攻击IP，立即使用iptables等防火墙工具将其加入黑名单，阻止其进一步的访问。"><a href="#自动屏蔽：一旦发现攻击IP，立即使用iptables等防火墙工具将其加入黑名单，阻止其进一步的访问。" class="headerlink" title="自动屏蔽：一旦发现攻击IP，立即使用iptables等防火墙工具将其加入黑名单，阻止其进一步的访问。"></a><strong>自动屏蔽</strong>：一旦发现攻击IP，立即使用iptables等防火墙工具将其加入黑名单，阻止其进一步的访问。</h5></li>
+<li><h5 id="记录和报告：将屏蔽的IP地址和时间记录在日志文件中，以便后续分析和报告。"><a href="#记录和报告：将屏蔽的IP地址和时间记录在日志文件中，以便后续分析和报告。" class="headerlink" title="记录和报告：将屏蔽的IP地址和时间记录在日志文件中，以便后续分析和报告。"></a><strong>记录和报告</strong>：将屏蔽的IP地址和时间记录在日志文件中，以便后续分析和报告。</h5></li>
+</ol>
+<p><strong>实用Bash脚本</strong></p>
+<h5 id="下面是一个基于上述策略的Bash脚本示例。请注意，此脚本应在具有相应权限的服务器上运行，并且可能需要根据您的实际环境进行调整。"><a href="#下面是一个基于上述策略的Bash脚本示例。请注意，此脚本应在具有相应权限的服务器上运行，并且可能需要根据您的实际环境进行调整。" class="headerlink" title="下面是一个基于上述策略的Bash脚本示例。请注意，此脚本应在具有相应权限的服务器上运行，并且可能需要根据您的实际环境进行调整。"></a>下面是一个基于上述策略的Bash脚本示例。请注意，此脚本应在具有相应权限的服务器上运行，并且可能需要根据您的实际环境进行调整。</h5><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-meta">#!/bin/bash  </span><br><br><span class="hljs-comment"># 定义日志文件路径和临时黑名单文件路径  </span><br>LOG_FILE=/usr/local/nginx/logs/demo2.access.log  <br>BLACKLIST_FILE=/tmp/blacklist.txt  <br>DROP_LOG=/tmp/drop_ip.log  <br>  <br><span class="hljs-comment"># 获取当前时间并格式化为日期  </span><br>DATE=$(<span class="hljs-built_in">date</span> +<span class="hljs-string">&quot;%d/%b/%Y:%H:%M&quot;</span>)  <br>  <br><span class="hljs-comment"># 从日志文件中提取异常IP地址（这里假设每分钟超过10个请求的IP为异常）  </span><br><span class="hljs-built_in">tail</span> -n 5000 <span class="hljs-variable">$LOG_FILE</span> | grep <span class="hljs-string">&quot;<span class="hljs-variable">$DATE</span>&quot;</span> | awk <span class="hljs-string">&#x27;&#123;print $1, $4&#125;&#x27;</span> | <span class="hljs-built_in">sort</span> -n | <span class="hljs-built_in">uniq</span> -c | awk <span class="hljs-string">&#x27;$1 &gt; 10 &#123;print $2&#125;&#x27;</span> &gt; <span class="hljs-variable">$BLACKLIST_FILE</span>  <br>  <br><span class="hljs-comment"># 读取黑名单文件，并屏蔽这些IP地址  </span><br><span class="hljs-keyword">while</span> IFS= <span class="hljs-built_in">read</span> -r IP; <span class="hljs-keyword">do</span>  <br>    <span class="hljs-keyword">if</span> ! iptables -vnL INPUT | grep -q <span class="hljs-string">&quot;<span class="hljs-variable">$IP</span>&quot;</span>; <span class="hljs-keyword">then</span>  <br>        iptables -I INPUT -s <span class="hljs-string">&quot;<span class="hljs-variable">$IP</span>&quot;</span> -j DROP  <br>        <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;<span class="hljs-subst">$(date +&#x27;%F_%T&#x27;)</span> <span class="hljs-variable">$IP</span>&quot;</span> &gt;&gt; <span class="hljs-variable">$DROP_LOG</span>  <br>        <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;Blocked IP: <span class="hljs-variable">$IP</span>&quot;</span>  <br>    <span class="hljs-keyword">fi</span>  <br><span class="hljs-keyword">done</span> &lt; <span class="hljs-variable">$BLACKLIST_FILE</span>  <br>  <br><span class="hljs-comment"># （可选）清理过时的iptables规则，避免规则过多导致性能下降  </span><br><span class="hljs-comment"># 这里可以根据需要添加逻辑来定期清理旧的屏蔽规则</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>脚本首先定义了所需的文件路径和日期格式。</li>
+<li>使用<code>tail</code>和<code>grep</code>命令结合当前时间从Nginx访问日志中提取最近的访问记录。</li>
+<li>通过<code>awk</code>和<code>sort</code>命令处理这些记录，识别出每分钟请求次数超过10次的IP地址，并将它们写入临时黑名单文件。</li>
+<li>脚本接着读取黑名单文件中的每个IP地址，并使用<code>iptables</code>命令将它们加入INPUT链的DROP目标中，从而屏蔽这些IP的访问。同时，将屏蔽操作记录在日志文件中。</li>
+<li>最后，您可以根据需要添加额外的逻辑来定期清理iptables中的旧规则，以保持防火墙的性能。</li>
+</ul>
+<p>请注意，此脚本是一个基本示例，可能需要根据您的服务器配置、日志格式和安全策略进行定制。在实际使用中，还应考虑脚本的性能影响、错误处理和日志管理等方面的问题。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>自动屏蔽IP攻击 2024-04-03 14:54:11.783</div>
+      <div>http://example.com/2025/01/16/自动屏蔽IP攻击-zi-dong-ping-bi-ip-gong-ji/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E5%8F%B2%E4%B8%8A%E6%9C%80%E7%89%9Bjenkins%20pipeline%E6%B5%81%E6%B0%B4%E7%BA%BF%E8%AF%A6%E8%A7%A3-shi-shang-zui-niu-jenkinspipeline-liu-shui-xian-xiang-jie/" title="史上最牛jenkins pipeline流水线详解 2024-08-02">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">史上最牛jenkins pipeline流水线详解 2024-08-02</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E5%AE%B9%E5%99%A8%E5%8E%9F%E7%90%86-rong-qi-yuan-li/" title="容器原理 2024-04-03 14:45:58.422">
+                        <span class="hidden-mobile">容器原理 2024-04-03 14:45:58.422</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

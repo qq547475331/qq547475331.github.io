@@ -1,0 +1,662 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Kubernetes 简介Kubernetes 源于希腊语，意为“舵手”。k8s 缩写是因为 k 和 s 之间有八个字符的原因。它是 Google 在 2015 开源的容器调度编排的平台。 Kubernetes 作为一款优秀的容器编排工具，拥有非常精妙的架构设计。 Kubernetes 架构Kubernetes 是一个 Master + Worker 的架构，Master 可理解为 Kuberne">
+<meta property="og:type" content="article">
+<meta property="og:title" content="两张图全面理解K8S原理 2024-04-03 14:51:27.431">
+<meta property="og:url" content="http://example.com/2025/01/16/%E4%B8%A4%E5%BC%A0%E5%9B%BE%E5%85%A8%E9%9D%A2%E7%90%86%E8%A7%A3K8S%E5%8E%9F%E7%90%86-liang-zhang-tu-quan-mian-li-jie-k8s-yuan-li/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="Kubernetes 简介Kubernetes 源于希腊语，意为“舵手”。k8s 缩写是因为 k 和 s 之间有八个字符的原因。它是 Google 在 2015 开源的容器调度编排的平台。 Kubernetes 作为一款优秀的容器编排工具，拥有非常精妙的架构设计。 Kubernetes 架构Kubernetes 是一个 Master + Worker 的架构，Master 可理解为 Kuberne">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191453702.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191455657.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.100Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:19.319Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191453702.png">
+  
+  
+  
+  <title>两张图全面理解K8S原理 2024-04-03 14:51:27.431 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="两张图全面理解K8S原理 2024-04-03 14:51:27.431"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          10 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">两张图全面理解K8S原理 2024-04-03 14:51:27.431</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="Kubernetes-简介"><a href="#Kubernetes-简介" class="headerlink" title="Kubernetes 简介"></a>Kubernetes 简介</h1><p><strong>Kubernetes</strong> 源于希腊语，意为“舵手”。k8s 缩写是因为 k 和 s 之间有八个字符的原因。它是 Google 在 2015 开源的容器调度编排的平台。</p>
+<p><strong>Kubernetes</strong> 作为一款优秀的容器编排工具，拥有非常精妙的架构设计。</p>
+<h1 id="Kubernetes-架构"><a href="#Kubernetes-架构" class="headerlink" title="Kubernetes 架构"></a>Kubernetes 架构</h1><h5 id="Kubernetes-是一个-Master-Worker-的架构，Master-可理解为-Kubernetes-的控制面，Worker-理解为-Kubernetes-的数据面。"><a href="#Kubernetes-是一个-Master-Worker-的架构，Master-可理解为-Kubernetes-的控制面，Worker-理解为-Kubernetes-的数据面。" class="headerlink" title="Kubernetes 是一个 Master + Worker 的架构，Master 可理解为 Kubernetes 的控制面，Worker 理解为 Kubernetes 的数据面。"></a><strong>Kubernetes</strong> 是一个 <strong>Master + Worker</strong> 的架构，<strong>Master</strong> 可理解为 Kubernetes 的控制面，<strong>Worker</strong> 理解为 Kubernetes 的数据面。</h5><h5 id="Master-节点一般只运行-Kubernetes-控制组件，是整个集群的大脑，一般不运行业务容器。"><a href="#Master-节点一般只运行-Kubernetes-控制组件，是整个集群的大脑，一般不运行业务容器。" class="headerlink" title="Master 节点一般只运行 Kubernetes 控制组件，是整个集群的大脑，一般不运行业务容器。"></a>Master 节点一般只运行 Kubernetes 控制组件，是整个集群的大脑，一般不运行业务容器。</h5><h5 id="Worker-节点是运行业务容器的节点。"><a href="#Worker-节点是运行业务容器的节点。" class="headerlink" title="Worker 节点是运行业务容器的节点。"></a>Worker 节点是运行业务容器的节点。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191453702.png" srcset="/img/loading.gif" lazyload alt="image-20240319145332645"></p>
+<h3 id="Master"><a href="#Master" class="headerlink" title="Master"></a>Master</h3><h5 id="Kubernetes-Master-节点需要运行以下组件："><a href="#Kubernetes-Master-节点需要运行以下组件：" class="headerlink" title="Kubernetes Master 节点需要运行以下组件："></a>Kubernetes <strong>Master</strong> 节点需要运行以下组件：</h5><ul>
+<li><h5 id="•-Kube-apiserver：Kube-apiserver-是-Kubernetes-的-API-入口，是集群流量入口；"><a href="#•-Kube-apiserver：Kube-apiserver-是-Kubernetes-的-API-入口，是集群流量入口；" class="headerlink" title="• Kube-apiserver：Kube-apiserver 是 Kubernetes 的 API 入口，是集群流量入口；"></a>• <strong>Kube-apiserver：</strong>Kube-apiserver 是 Kubernetes 的 API 入口，是集群流量入口；</h5></li>
+<li><h5 id="•-Kube-controller-manager：Kube-controller-manager-包含很多个-Controller，用于调谐集群中的资源；"><a href="#•-Kube-controller-manager：Kube-controller-manager-包含很多个-Controller，用于调谐集群中的资源；" class="headerlink" title="• Kube-controller-manager：Kube-controller-manager 包含很多个 Controller，用于调谐集群中的资源；"></a>• <strong>Kube-controller-manager：</strong>Kube-controller-manager 包含很多个 <strong>Controller</strong>，用于调谐集群中的资源；</h5></li>
+<li><h5 id="•-Kube-scheduler：Kube-scheduler-是集群中默认调度器，给-Pod-选择最优节点调度；"><a href="#•-Kube-scheduler：Kube-scheduler-是集群中默认调度器，给-Pod-选择最优节点调度；" class="headerlink" title="• Kube-scheduler：Kube-scheduler 是集群中默认调度器，给 Pod 选择最优节点调度；"></a>• <strong>Kube-scheduler：</strong>Kube-scheduler 是集群中默认调度器，给 Pod 选择最优节点调度；</h5></li>
+<li><h5 id="•-Etcd：Kuebernetes-的后端存储，集群中所有可持久化数据都存储在-Etcd-中。"><a href="#•-Etcd：Kuebernetes-的后端存储，集群中所有可持久化数据都存储在-Etcd-中。" class="headerlink" title="• Etcd：Kuebernetes 的后端存储，集群中所有可持久化数据都存储在 Etcd 中。"></a>• <strong>Etcd：</strong>Kuebernetes 的后端存储，集群中所有可持久化数据都存储在 Etcd 中。</h5></li>
+</ul>
+<blockquote>
+<h5 id="Kubernetes-中采用声明式-API，即-API-不需要关心具体功能实现，只需关心最终状态。一个-API-对应一个-Controller，具体功能由-Controller-实现同时调谐至预期状态。"><a href="#Kubernetes-中采用声明式-API，即-API-不需要关心具体功能实现，只需关心最终状态。一个-API-对应一个-Controller，具体功能由-Controller-实现同时调谐至预期状态。" class="headerlink" title="Kubernetes 中采用声明式 API，即 API 不需要关心具体功能实现，只需关心最终状态。一个 API 对应一个 Controller，具体功能由 Controller 实现同时调谐至预期状态。"></a>Kubernetes 中采用<strong>声明式 API</strong>，即 API 不需要关心具体功能实现，只需关心最终状态。一个 API 对应一个 Controller，具体功能由 Controller 实现同时调谐至预期状态。</h5></blockquote>
+<h5 id="Master-节点的高可用一般取决于-Etcd，Etcd-高可用推荐三节点或者五节点，所以-Master-节点通常为三个或者五个，如果接入外部-Etcd-集群，那么-Master-节点可以是偶数个。"><a href="#Master-节点的高可用一般取决于-Etcd，Etcd-高可用推荐三节点或者五节点，所以-Master-节点通常为三个或者五个，如果接入外部-Etcd-集群，那么-Master-节点可以是偶数个。" class="headerlink" title="Master 节点的高可用一般取决于 Etcd，Etcd 高可用推荐三节点或者五节点，所以 Master 节点通常为三个或者五个，如果接入外部 Etcd 集群，那么 Master 节点可以是偶数个。"></a>Master 节点的<strong>高可用</strong>一般取决于 Etcd，Etcd 高可用推荐<strong>三节点或者五节点</strong>，所以 Master 节点通常为三个或者五个，如果接入<strong>外部 Etcd 集群</strong>，那么 Master 节点可以是偶数个。</h5><h5 id="上图-Kubernetes-使用内部-Etcd，即-Etcd-与-Master-节点个数一致，部署在-Kubernetes-集群中。"><a href="#上图-Kubernetes-使用内部-Etcd，即-Etcd-与-Master-节点个数一致，部署在-Kubernetes-集群中。" class="headerlink" title="上图 Kubernetes 使用内部 Etcd，即 Etcd 与 Master 节点个数一致，部署在 Kubernetes 集群中。"></a>上图 Kubernetes 使用内部 Etcd，即 Etcd 与 Master 节点个数一致，部署在 Kubernetes 集群中。</h5><blockquote>
+<h5 id="Etcd-集群一般要求三个、五个类似奇数个实例，Etcd-集群选举机制要求集群中半数以上的实例投票选举，如果集群是两个实例，那么一个实例宕机，剩下一个实例没有办法选举。同样四个实例和三个实例实际上效果是一样的。"><a href="#Etcd-集群一般要求三个、五个类似奇数个实例，Etcd-集群选举机制要求集群中半数以上的实例投票选举，如果集群是两个实例，那么一个实例宕机，剩下一个实例没有办法选举。同样四个实例和三个实例实际上效果是一样的。" class="headerlink" title="Etcd 集群一般要求三个、五个类似奇数个实例，Etcd 集群选举机制要求集群中半数以上的实例投票选举，如果集群是两个实例，那么一个实例宕机，剩下一个实例没有办法选举。同样四个实例和三个实例实际上效果是一样的。"></a>Etcd 集群一般要求三个、五个类似奇数个实例，Etcd 集群选举机制要求集群中<strong>半数以上</strong>的实例投票选举，如果集群是两个实例，那么一个实例宕机，剩下一个实例没有办法选举。同样四个实例和三个实例实际上效果是一样的。</h5></blockquote>
+<h3 id="Worker"><a href="#Worker" class="headerlink" title="Worker"></a>Worker</h3><h5 id="Kubernetes-Worker-节点作为容器运行节点，需要部署以下组件："><a href="#Kubernetes-Worker-节点作为容器运行节点，需要部署以下组件：" class="headerlink" title="Kubernetes Worker 节点作为容器运行节点，需要部署以下组件："></a>Kubernetes <strong>Worker</strong> 节点作为容器运行节点，需要部署以下组件：</h5><ul>
+<li><h5 id="•-CRI：容器运行时，管理容器生命周期；"><a href="#•-CRI：容器运行时，管理容器生命周期；" class="headerlink" title="• CRI：容器运行时，管理容器生命周期；"></a>• <strong>CRI：</strong>容器运行时，管理容器生命周期；</h5></li>
+<li><h5 id="•-Kubelet：管理-Pod-生命周期，Pod-是-Kubernetes-中最小调度单元；"><a href="#•-Kubelet：管理-Pod-生命周期，Pod-是-Kubernetes-中最小调度单元；" class="headerlink" title="• Kubelet：管理 Pod 生命周期，Pod 是 Kubernetes 中最小调度单元；"></a>• <strong>Kubelet：</strong>管理 <strong>Pod</strong> 生命周期，Pod 是 Kubernetes 中最小调度单元；</h5></li>
+<li><h5 id="•-CNI：容器网络接口，实现-Kubernetes-中-Pod-间网络联通；"><a href="#•-CNI：容器网络接口，实现-Kubernetes-中-Pod-间网络联通；" class="headerlink" title="• CNI：容器网络接口，实现 Kubernetes 中 Pod 间网络联通；"></a>• <strong>CNI：</strong>容器网络接口，实现 Kubernetes 中 Pod 间网络联通；</h5></li>
+<li><h5 id="•-CSI：容器存储接口，屏蔽底层存储实现，方便用户使用第三方存储；"><a href="#•-CSI：容器存储接口，屏蔽底层存储实现，方便用户使用第三方存储；" class="headerlink" title="• CSI：容器存储接口，屏蔽底层存储实现，方便用户使用第三方存储；"></a>• <strong>CSI：</strong>容器存储接口，屏蔽底层存储实现，方便用户使用第三方存储；</h5></li>
+<li><h5 id="•-Kube-proxy：该组件主要实现多组-Pod-的负载均衡；"><a href="#•-Kube-proxy：该组件主要实现多组-Pod-的负载均衡；" class="headerlink" title="• Kube-proxy：该组件主要实现多组 Pod 的负载均衡；"></a>• <strong>Kube-proxy：</strong>该组件主要实现多组 Pod 的负载均衡；</h5></li>
+</ul>
+<blockquote>
+<h5 id="为什么-Kubernetes-需要在容器上之上抽象一个-Pod-资源呢？大部分情况是一个-Pod-对应一个容器，有的场景就需要一个-Pod-对应多个容器，例如日志收集场景，每个-Pod-都会包含一个业务容器和一个日志收集容器，将这两个容器放在一个-Pod-里可用共享日志-Volume。"><a href="#为什么-Kubernetes-需要在容器上之上抽象一个-Pod-资源呢？大部分情况是一个-Pod-对应一个容器，有的场景就需要一个-Pod-对应多个容器，例如日志收集场景，每个-Pod-都会包含一个业务容器和一个日志收集容器，将这两个容器放在一个-Pod-里可用共享日志-Volume。" class="headerlink" title="为什么 Kubernetes 需要在容器上之上抽象一个 Pod 资源呢？大部分情况是一个 Pod 对应一个容器，有的场景就需要一个 Pod 对应多个容器，例如日志收集场景，每个 Pod 都会包含一个业务容器和一个日志收集容器，将这两个容器放在一个 Pod 里可用共享日志 Volume。"></a>为什么 Kubernetes 需要在容器上之上抽象一个 Pod 资源呢？大部分情况是一个 Pod 对应一个容器，有的场景就需要一个 Pod 对应多个容器，例如日志收集场景，每个 Pod 都会包含一个业务容器和一个日志收集容器，将这两个容器放在一个 Pod 里可用共享日志 Volume。</h5></blockquote>
+<h5 id="Worker-节点的-Kubelet-需要注册到集群中，就需要每个-Worker-节点的-Kubelet-能够连接-Master-节点的-Kube-apiserver。如果集群中-Master-采用高可用部署，就会存在多个-Master，那么-Worker-节点的-Kubelet-就需要同时连接所有的-Kube-apiserver-保证高可用。实现这种高可用的方式有很多种，例如-Haproxy-Keepalived-、Nginx、Envoy-等。上图就是-LB-组件就代表这些实现负载-Kube-apsierver-的组件。"><a href="#Worker-节点的-Kubelet-需要注册到集群中，就需要每个-Worker-节点的-Kubelet-能够连接-Master-节点的-Kube-apiserver。如果集群中-Master-采用高可用部署，就会存在多个-Master，那么-Worker-节点的-Kubelet-就需要同时连接所有的-Kube-apiserver-保证高可用。实现这种高可用的方式有很多种，例如-Haproxy-Keepalived-、Nginx、Envoy-等。上图就是-LB-组件就代表这些实现负载-Kube-apsierver-的组件。" class="headerlink" title="Worker 节点的 Kubelet 需要注册到集群中，就需要每个 Worker 节点的 Kubelet 能够连接 Master 节点的 Kube-apiserver。如果集群中 Master 采用高可用部署，就会存在多个 Master，那么 Worker 节点的 Kubelet 就需要同时连接所有的 Kube-apiserver 保证高可用。实现这种高可用的方式有很多种，例如 Haproxy + Keepalived 、Nginx、Envoy 等。上图就是 LB 组件就代表这些实现负载 Kube-apsierver 的组件。"></a>Worker 节点的 Kubelet 需要<strong>注册</strong>到集群中，就需要每个 Worker 节点的 Kubelet 能够连接 Master 节点的 Kube-apiserver。如果集群中 Master 采用高可用部署，就会存在多个 Master，那么 Worker 节点的 Kubelet 就需要同时连接<strong>所有的 Kube-apiserver</strong> 保证高可用。实现这种高可用的方式有很多种，例如 <code>Haproxy + Keepalived 、Nginx、Envoy</code> 等。上图就是 <strong>LB 组件</strong>就代表这些实现负载 Kube-apsierver 的组件。</h5><h1 id="创建一个-Pod-需要经历哪些流程"><a href="#创建一个-Pod-需要经历哪些流程" class="headerlink" title="创建一个 Pod 需要经历哪些流程"></a>创建一个 Pod 需要经历哪些流程</h1><h5 id="当用户创建一个-Deployment-的时候，Kubernetes-中各组件的工作流程是如何的？"><a href="#当用户创建一个-Deployment-的时候，Kubernetes-中各组件的工作流程是如何的？" class="headerlink" title="当用户创建一个 Deployment 的时候，Kubernetes 中各组件的工作流程是如何的？"></a>当用户创建一个 <strong>Deployment</strong> 的时候，Kubernetes 中各组件的<strong>工作流程</strong>是如何的？</h5><ul>
+<li><h5 id="•-用户通过-kubectl-创建一个-Deployment，请求会发给-Kube-apiserver；"><a href="#•-用户通过-kubectl-创建一个-Deployment，请求会发给-Kube-apiserver；" class="headerlink" title="• 用户通过 kubectl 创建一个 Deployment，请求会发给 Kube-apiserver；"></a>• 用户通过 <code>kubectl</code> 创建一个 <strong>Deployment</strong>，请求会发给 <strong>Kube-apiserver</strong>；</h5></li>
+<li><h5 id="•-Kube-apiserver-会将-Deployment-的描述信息写入-Etcd-中，Kube-apiserver-将请求结果返回给用户；"><a href="#•-Kube-apiserver-会将-Deployment-的描述信息写入-Etcd-中，Kube-apiserver-将请求结果返回给用户；" class="headerlink" title="• Kube-apiserver 会将 Deployment 的描述信息写入 Etcd 中，Kube-apiserver 将请求结果返回给用户；"></a>• <strong>Kube-apiserver</strong> 会将 <strong>Deployment</strong> 的描述信息写入 <strong>Etcd</strong> 中，<strong>Kube-apiserver</strong> 将请求结果返回给用户；</h5></li>
+<li><p>• <strong>Kube-controller-manager</strong> 的 <strong>Deployment Controller</strong> 从 <strong>Kube-apiserver</strong> <code>Watch</code> 到 <strong>Deployment</strong> 的创建事件，并创建一个 <strong>ReplicaSet</strong>；</p>
+</li>
+<li><h5 id="•-Kube-apiserver-会将-ReplicaSet-的描述信息写入-Etcd-中；"><a href="#•-Kube-apiserver-会将-ReplicaSet-的描述信息写入-Etcd-中；" class="headerlink" title="• Kube-apiserver 会将 ReplicaSet 的描述信息写入 Etcd 中；"></a>• <strong>Kube-apiserver</strong> 会将 <strong>ReplicaSet</strong> 的描述信息写入 <strong>Etcd</strong> 中；</h5></li>
+<li><p>• <strong>Kube-controller-manager</strong> 的 <strong>ReplicaSet Controller</strong> 从 <strong>Kube-apiserver</strong> <code>Watch</code> 到 <strong>ReplicaSet</strong> 的创建事件，并创建一个 <strong>Pod</strong>；</p>
+</li>
+<li><h5 id="•-Kube-apiserver-会将-Pod-的描述信息写入-Etcd-中；"><a href="#•-Kube-apiserver-会将-Pod-的描述信息写入-Etcd-中；" class="headerlink" title="• Kube-apiserver 会将 Pod 的描述信息写入 Etcd 中；"></a>• <strong>Kube-apiserver</strong> 会将 <strong>Pod</strong> 的描述信息写入 <strong>Etcd</strong> 中；</h5></li>
+<li><h5 id="•-Kube-scheduler-从-Kube-apiserver-Watch-到-Pod-的创建事件，并根据调度算法从集群中选择一个最优的节点，并更新-Pod-的-nodeName-字段；"><a href="#•-Kube-scheduler-从-Kube-apiserver-Watch-到-Pod-的创建事件，并根据调度算法从集群中选择一个最优的节点，并更新-Pod-的-nodeName-字段；" class="headerlink" title="• Kube-scheduler 从 Kube-apiserver Watch 到 Pod 的创建事件，并根据调度算法从集群中选择一个最优的节点，并更新 Pod 的 nodeName 字段；"></a>• <strong>Kube-scheduler</strong> 从 <strong>Kube-apiserver</strong> <code>Watch</code> 到 <strong>Pod</strong> 的创建事件，并根据<strong>调度算法</strong>从集群中选择一个<strong>最优</strong>的节点，并更新 Pod 的 <code>nodeName</code> 字段；</h5></li>
+<li><h5 id="•-Kube-apiserver-会将-Pod-的更新信息写入-Etcd-中；"><a href="#•-Kube-apiserver-会将-Pod-的更新信息写入-Etcd-中；" class="headerlink" title="• Kube-apiserver 会将 Pod 的更新信息写入 Etcd 中；"></a>• <strong>Kube-apiserver</strong> 会将 <strong>Pod</strong> 的更新信息写入 <strong>Etcd</strong> 中；</h5></li>
+<li><h5 id="•-上述绑定的节点-Kubelet-从-Kube-apiserver-Watch-到-Pod-绑定节点是自身，直接调用-CRI-创建容器；"><a href="#•-上述绑定的节点-Kubelet-从-Kube-apiserver-Watch-到-Pod-绑定节点是自身，直接调用-CRI-创建容器；" class="headerlink" title="• 上述绑定的节点 Kubelet 从 Kube-apiserver Watch 到 Pod 绑定节点是自身，直接调用 CRI 创建容器；"></a>• 上述<strong>绑定的节点 Kubelet</strong> 从 <strong>Kube-apiserver</strong> <code>Watch</code> 到 Pod 绑定节点是自身，直接调用 <strong>CRI</strong> 创建容器；</h5></li>
+<li><h5 id="•-结果返回，并写入-Etcd。"><a href="#•-结果返回，并写入-Etcd。" class="headerlink" title="• 结果返回，并写入 Etcd。"></a>• 结果返回，并写入 <strong>Etcd</strong>。</h5></li>
+<li><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191455657.png" srcset="/img/loading.gif" lazyload alt="image-20240319145504578"></p>
+</li>
+</ul>
+<p>可以发现，Kubernetes 中各组件基本都是与 <strong>Kube-apiserver</strong> 进行数据流发送，整体流程非常清晰。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><h5 id="Kubernetes-中组件较多，且初学较难理解，需要结合实践才能更深刻地掌握。"><a href="#Kubernetes-中组件较多，且初学较难理解，需要结合实践才能更深刻地掌握。" class="headerlink" title="Kubernetes 中组件较多，且初学较难理解，需要结合实践才能更深刻地掌握。"></a>Kubernetes 中组件较多，且初学较难理解，需要结合实践才能更深刻地掌握。</h5><h5 id="Kubernetes-不管是架构设计还是软件开发设计思想都值得我们去深度思考和学习，都可以应用到平常项目开发中，例如声明式-API-思想、Master-Worker-架构设计等。"><a href="#Kubernetes-不管是架构设计还是软件开发设计思想都值得我们去深度思考和学习，都可以应用到平常项目开发中，例如声明式-API-思想、Master-Worker-架构设计等。" class="headerlink" title="Kubernetes 不管是架构设计还是软件开发设计思想都值得我们去深度思考和学习，都可以应用到平常项目开发中，例如声明式 API 思想、Master + Worker 架构设计等。"></a>Kubernetes 不管是架构设计还是软件开发设计思想都值得我们去深度思考和学习，都可以应用到平常项目开发中，例如<strong>声明式 API 思想、Master + Worker 架构设计</strong>等。</h5>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>两张图全面理解K8S原理 2024-04-03 14:51:27.431</div>
+      <div>http://example.com/2025/01/16/两张图全面理解K8S原理-liang-zhang-tu-quan-mian-li-jie-k8s-yuan-li/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E6%B5%81%E9%87%8F%E4%BD%95%E5%A4%84%E6%9D%A5%E4%BD%95%E5%A4%84%E5%8E%BB-liu-liang-he-chu-lai-he-chu-qu/" title="流量何处来何处去 2024-04-03 14:56:20.089">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">流量何处来何处去 2024-04-03 14:56:20.089</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E5%AE%B9%E5%99%A8%E7%9A%84%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F(%E4%B8%80)%20OverlayFS%20%E5%8E%9F%E7%90%86-rong-qi-de-wen-jian-xi-tong--yi-overlayfs-yuan-li/" title="容器的文件系统 OverlayFS 原理 2024-04-03 14:45:26.893">
+                        <span class="hidden-mobile">容器的文件系统 OverlayFS 原理 2024-04-03 14:45:26.893</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

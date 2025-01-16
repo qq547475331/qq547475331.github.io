@@ -1,0 +1,707 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="在 Kubernetes 中，containers被部署和管理在 Pod 中。Pod 是 Kubernetes 对象模型中最小和最简单的单元，可以被创建、部署和管理。在这里，您可以在单个 pod 中使用不同的容器类型来实现特定的功能。以下是在 Kubernetes 中常用的一些容器类型：  Init Container: 初始化容器 Sidecar Container: 边车容器 Ephemera">
+<meta property="og:type" content="article">
+<meta property="og:title" content="K8S的POD类型 2024-04-03 14:57:11.072">
+<meta property="og:url" content="http://example.com/2025/01/16/K8S%E7%9A%84POD%E7%B1%BB%E5%9E%8B-k8s-de-pod-lei-xing/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="在 Kubernetes 中，containers被部署和管理在 Pod 中。Pod 是 Kubernetes 对象模型中最小和最简单的单元，可以被创建、部署和管理。在这里，您可以在单个 pod 中使用不同的容器类型来实现特定的功能。以下是在 Kubernetes 中常用的一些容器类型：  Init Container: 初始化容器 Sidecar Container: 边车容器 Ephemera">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403141110426.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403141111985.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.048Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:18.651Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403141110426.png">
+  
+  
+  
+  <title>K8S的POD类型 2024-04-03 14:57:11.072 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="K8S的POD类型 2024-04-03 14:57:11.072"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.9k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          16 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">K8S的POD类型 2024-04-03 14:57:11.072</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>在 Kubernetes 中，containers被部署和管理在 Pod 中。Pod 是 Kubernetes 对象模型中最小和最简单的单元，可以被创建、部署和管理。在这里，您可以在单个 pod 中使用不同的容器类型来实现特定的功能。以下是在 Kubernetes 中常用的一些容器类型：</p>
+<ul>
+<li>Init Container: 初始化容器</li>
+<li>Sidecar Container: 边车容器</li>
+<li>Ephemeral Container: 临时容器</li>
+<li>Multi Container: 多容器</li>
+</ul>
+<h2 id="Init-Container"><a href="#Init-Container" class="headerlink" title="Init Container"></a>Init Container</h2><p>一个Pod 可以在其中运行多个容器来运行应用程序，但它也可以有一个或多个 init 容器，在应用程序容器启动之前运行。Init 容器旨在在主应用程序容器启动之前运行初始化任务。它们可用于设置配置文件、初始化数据库或等待外部服务准备就绪等任务。Init 容器与常规容器完全相同，只是：</p>
+<ul>
+<li>初始化容器始终运行至完成。</li>
+<li>每个初始化容器必须在下一个初始化容器开始之前成功完成。</li>
+</ul>
+<h3 id="案例"><a href="#案例" class="headerlink" title="案例"></a>案例</h3><figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">v1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Pod</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginx-init</span><br>  <span class="hljs-attribute">labels</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">app</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginx</span><br><span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">initContainers</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-comment">#Initializing container </span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">name: init-container</span><br>      <span class="hljs-attribute">image</span><span class="hljs-punctuation">:</span> <span class="hljs-string">alpine</span><br>      <span class="hljs-attribute">command</span><span class="hljs-punctuation">:</span> <span class="hljs-string">[&#x27;sh&#x27;, &#x27;-c&#x27;, &#x27;echo &quot;&lt;h1&gt;This is from INIT container&lt;/h1&gt;&quot; &gt;&gt; /usr/share/nginx/html/index.html&#x27;]</span><br>      <span class="hljs-attribute">volumeMounts</span><span class="hljs-punctuation">:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-string">name: data</span><br>          <span class="hljs-attribute">mountPath</span><span class="hljs-punctuation">:</span> <span class="hljs-string">/usr/share/nginx/html</span><br>  <span class="hljs-attribute">containers</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-comment"># application container i.e., main container</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">name: app</span><br>      <span class="hljs-attribute">image</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginx</span><br>      <span class="hljs-attribute">volumeMounts</span><span class="hljs-punctuation">:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-string">name: data</span><br>          <span class="hljs-attribute">mountPath</span><span class="hljs-punctuation">:</span> <span class="hljs-string">/usr/share/nginx/html</span><br>  <span class="hljs-attribute">volumes</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">name: data</span><br>      <span class="hljs-attribute">emptyDir</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&#123;&#125;</span><br></code></pre></td></tr></table></figure>
+
+<p>这里的 init-container 将使用数据卷的data 覆盖 nginx 主页的 index.html。</p>
+<h3 id="Service编排文件"><a href="#Service编排文件" class="headerlink" title="Service编排文件"></a>Service编排文件</h3><figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">v1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Service</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginx-svc</span><br>  <span class="hljs-attribute">labels</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">app</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginx</span><br><span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">type</span><span class="hljs-punctuation">:</span> <span class="hljs-string">NodePort</span><br>  <span class="hljs-attribute">selector</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">app</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginx</span><br>  <span class="hljs-attribute">ports</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">port: 80</span><br>      <span class="hljs-attribute">targetPort</span><span class="hljs-punctuation">:</span> <span class="hljs-string">80</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="创建Pod和Service"><a href="#创建Pod和Service" class="headerlink" title="创建Pod和Service"></a>创建Pod和Service</h3><figure class="highlight coq"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs coq">kubectl <span class="hljs-built_in">apply</span> -f nginx-init.yaml<br>kubectl <span class="hljs-built_in">apply</span> -f nginx-service.yaml<br></code></pre></td></tr></table></figure>
+
+<p>现在，如果您尝试通过浏览器访问nginx端点，您将会得到以下输出。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403141110426.png" srcset="/img/loading.gif" lazyload alt="image-20240314111039383"></p>
+<h2 id="Sidecar-Container"><a href="#Sidecar-Container" class="headerlink" title="Sidecar Container"></a>Sidecar Container</h2><p>边车容器是与主应用容器在同一个 Pod 中运行的次要容器。这些容器用于通过提供额外的服务或功能，如日志记录、监控、安全性或数据同步，来增强或扩展主应用容器的功能，而无需直接修改主应用程序代码。</p>
+<h3 id="使用边车容器的示例："><a href="#使用边车容器的示例：" class="headerlink" title="使用边车容器的示例："></a>使用边车容器的示例：</h3><p>创建nginx-sidecar.yaml：</p>
+<figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">v1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Pod</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginx-pod</span><br>  <span class="hljs-attribute">labels</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">app</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginx</span><br><span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">containers</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-comment">#App container</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: nginx-container</span><br>    <span class="hljs-attribute">image</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginx:latest</span><br>    <span class="hljs-attribute">ports</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-string">containerPort: 80</span><br>    <span class="hljs-attribute">volumeMounts</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-string">name: logs</span><br>        <span class="hljs-attribute">mountPath</span><span class="hljs-punctuation">:</span> <span class="hljs-string">/var/log/nginx</span><br>  <span class="hljs-comment">#This is side container</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">name: sidecar-container</span><br>    <span class="hljs-attribute">image</span><span class="hljs-punctuation">:</span> <span class="hljs-string">busybox</span><br>    <span class="hljs-attribute">command</span><span class="hljs-punctuation">:</span> <span class="hljs-string">[&quot;/bin/sh&quot;]</span><br>    <span class="hljs-attribute">args</span><span class="hljs-punctuation">:</span> <span class="hljs-string">[&quot;-c&quot;, &quot;tail -f /var/log/nginx/access.log&quot;]</span><br>    <span class="hljs-attribute">volumeMounts</span><span class="hljs-punctuation">:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-string">name: logs</span><br>        <span class="hljs-attribute">mountPath</span><span class="hljs-punctuation">:</span> <span class="hljs-string">/var/log/nginx</span><br>  <span class="hljs-attribute">volumes</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">name: logs</span><br>      <span class="hljs-attribute">emptyDir</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&#123;&#125;</span><br></code></pre></td></tr></table></figure>
+
+<p>上述 Pod 包含两个容器，一个是应用容器（nginx），另一个是 sidecar 容器，我们使用它来收集主应用程序的 nginx 访问日志。</p>
+<p>创建 nginx-svc.yaml：</p>
+<figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">v1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Service</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginx-svc</span><br>  <span class="hljs-attribute">labels</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">app</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginx</span><br><span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">type</span><span class="hljs-punctuation">:</span> <span class="hljs-string">NodePort</span><br>  <span class="hljs-attribute">selector</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">app</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginx</span><br>  <span class="hljs-attribute">ports</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">port: 80</span><br>      <span class="hljs-attribute">targetPort</span><span class="hljs-punctuation">:</span> <span class="hljs-string">80</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="创建Pod和Service-1"><a href="#创建Pod和Service-1" class="headerlink" title="创建Pod和Service"></a>创建Pod和Service</h3><figure class="highlight coq"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs coq">kubectl <span class="hljs-built_in">apply</span> -f nginx-sidecar.yaml<br>kubectl <span class="hljs-built_in">apply</span> -f nginx-svc.yaml<br></code></pre></td></tr></table></figure>
+
+<p>现在，如果您尝试通过浏览器访问nginx端点，您将看到nginx的欢迎页面。然后，如果您尝试使用下面的命令访问边车日志，您将获得我们最近访问的访问日志。</p>
+<figure class="highlight accesslog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs accesslog">kubectl logs nginx-pod -c sidecar-container <br><br>k logs nginx-pod  -c sidecar-container<br><span class="hljs-number">10.244.0.1</span> - - <span class="hljs-string">[17/Jan/2024:18:25:02 +0000]</span> <span class="hljs-string">&quot;<span class="hljs-keyword">GET</span> / HTTP/1.1&quot;</span> <span class="hljs-number">200</span> <span class="hljs-number">615</span> <span class="hljs-string">&quot;-&quot;</span> <span class="hljs-string">&quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36&quot;</span> <span class="hljs-string">&quot;-&quot;</span><br><span class="hljs-number">10.244.0.1</span> - - <span class="hljs-string">[17/Jan/2024:18:25:02 +0000]</span> <span class="hljs-string">&quot;<span class="hljs-keyword">GET</span> /favicon.ico HTTP/1.1&quot;</span> <span class="hljs-number">404</span> <span class="hljs-number">555</span> <span class="hljs-string">&quot;http://127.0.0.1:53471/&quot;</span> <span class="hljs-string">&quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36&quot;</span> <span class="hljs-string">&quot;-&quot;</span><br><span class="hljs-number">10.244.0.1</span> - - <span class="hljs-string">[17/Jan/2024:18:25:24 +0000]</span> <span class="hljs-string">&quot;<span class="hljs-keyword">GET</span> / HTTP/1.1&quot;</span> <span class="hljs-number">304</span> <span class="hljs-number">0</span> <span class="hljs-string">&quot;-&quot;</span> <span class="hljs-string">&quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36&quot;</span> <span class="hljs-string">&quot;-&quot;</span><br><span class="hljs-number">10.244.0.1</span> - - <span class="hljs-string">[17/Jan/2024:18:25:25 +0000]</span> <span class="hljs-string">&quot;<span class="hljs-keyword">GET</span> / HTTP/1.1&quot;</span> <span class="hljs-number">304</span> <span class="hljs-number">0</span> <span class="hljs-string">&quot;-&quot;</span> <span class="hljs-string">&quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36&quot;</span> <span class="hljs-string">&quot;-&quot;</span><br></code></pre></td></tr></table></figure>
+
+<h2 id="Ephemeral-Container"><a href="#Ephemeral-Container" class="headerlink" title="Ephemeral Container"></a>Ephemeral Container</h2><p>Ephemeral containers 与其他容器不同之处在于它们缺乏资源或执行的保证，并且永远不会自动重新启动，因此不适合用于构建应用程序。Ephemeral containers 使用与常规容器相同的 ContainerSpec 进行描述，但许多字段对于临时容器是不兼容且被禁止的。</p>
+<p>临时容器可能没有端口，因此禁止使用端口、存活探针、就绪探针等字段。Pod资源分配是不可变的，因此禁止设置资源。</p>
+<p>临时容器对于交互式故障排除非常有用，当使用 kubectl exec 不足以解决问题时，比如容器崩溃或容器镜像不包含调试工具。</p>
+<p>我们可以通过两种方式调试一个 Pod。</p>
+<p>a. 使用临时容器进行调试</p>
+<p>如果您的 Pod 正在运行但无法执行到它，那么您可以使用这种方法。您可以使用 kubectl debug 命令向正在运行的 Pod 添加临时容器。这种方法将在同一 Pod 中创建一个新容器。</p>
+<figure class="highlight elixir"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs elixir">kubectl debug -it &lt;<span class="hljs-title class_">RUNNING</span>-<span class="hljs-title class_">POD</span>&gt; --image=&lt;<span class="hljs-title class_">DEBUG</span>-<span class="hljs-title class_">IMAGE</span>&gt;<span class="hljs-symbol">:&lt;DEBUG-IMAGE-TAG&gt;</span> --target=&lt;<span class="hljs-title class_">RUNNING</span>-<span class="hljs-title class_">CONTAINER</span>&gt;<br></code></pre></td></tr></table></figure>
+
+<p>请将替换为您现有的 Pod 名称，将替换为您想要调试的现有容器。此命令将添加一个新的 busybox 容器并附加到它上。</p>
+<p>b. 使用该 pod 的副本进行调试</p>
+<p>如果您的 Pod 崩溃并且无法执行到它，那么您可以使用这种方法。这种方法将创建一个新的 Pod，其中包含新的调试容器以及原始 Pod 中的容器。</p>
+<figure class="highlight elixir"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs elixir">kubectl debug &lt;<span class="hljs-title class_">ORIGINAL</span>-<span class="hljs-title class_">POD</span>&gt; -it --image=&lt;<span class="hljs-title class_">DEBUG</span>-<span class="hljs-title class_">IMAGE</span>&gt;<span class="hljs-symbol">:&lt;DEBUG-IMAGE-TAG&gt;</span> --share-processes --copy-to=&lt;<span class="hljs-title class_">NEW</span>-<span class="hljs-title class_">DEBUG</span>-<span class="hljs-title class_">POD</span>&gt;<br></code></pre></td></tr></table></figure>
+
+<p>请将原始 Pod 名称替换为 ORIGINAL-POD，将新的调试 Pod 名称替换为 NEW-DEBUG-POD，新的调试 Pod 是原始 Pod 的副本。</p>
+<h3 id="案例-1"><a href="#案例-1" class="headerlink" title="案例"></a>案例</h3><p>创建ephemeral-pod.yaml：</p>
+<figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">v1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Pod</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">ephemeral-pod</span><br><span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">containers</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">image: registry.k8s.io/pause:3.1</span><br>    <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">ephemeral-container</span><br>  <span class="hljs-attribute">restartPolicy</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Never</span><br></code></pre></td></tr></table></figure>
+
+<p>这个 YAML 文件将创建一个暂停容器镜像，不包含调试工具。</p>
+<figure class="highlight coq"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs coq">kubectl <span class="hljs-built_in">apply</span> -f ephermeral-pod.yaml<br></code></pre></td></tr></table></figure>
+
+<p>以上命令将在默认命名空间中创建一个临时 Pod。</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">k</span> get po <br><span class="hljs-attribute">NAME</span>            READY   STATUS    RESTARTS   AGE<br><span class="hljs-attribute">ephemeral</span>-pod   <span class="hljs-number">1</span>/<span class="hljs-number">1</span>     Running   <span class="hljs-number">0</span>          <span class="hljs-number">3</span>m41s<br></code></pre></td></tr></table></figure>
+
+<p>让我们尝试使用下面的命令来执行它。</p>
+<figure class="highlight applescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs applescript">kubectl exec -<span class="hljs-keyword">it</span> ephemeral-pod <span class="hljs-comment">-- sh</span><br></code></pre></td></tr></table></figure>
+
+<p>但是会出现下面的错误，因为这个容器镜像中没有 shell。</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs awk">kubectl exec -it ephemeral-pod -- sh<br>OCI runtime exec failed: exec failed: unable to start container process: exec: <span class="hljs-string">&quot;sh&quot;</span>: executable file not found <span class="hljs-keyword">in</span> <span class="hljs-variable">$PATH</span>: unknown<br>command terminated with <span class="hljs-keyword">exit</span> code <span class="hljs-number">126</span><br></code></pre></td></tr></table></figure>
+
+<p>现在让我们尝试使用调试容器，即临时容器，进入到该 Pod 中。</p>
+<p>使用以下命令创建一个临时容器，并将其附加到上述 Pod，即 ephemeral-pod。</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs routeros">kubectl <span class="hljs-built_in">debug</span> -it ephemeral-pod <span class="hljs-attribute">--image</span>=busybox <span class="hljs-attribute">--target</span>=ephemeral-container<br></code></pre></td></tr></table></figure>
+
+<p>这个命令会添加一个新的 busybox 容器并将其附加到临时 pod 上。–target 参数指定我们要执行的容器。此外，该命令将自动连接到临时容器的控制台。</p>
+<p>输出：</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs routeros">kubectl <span class="hljs-built_in">debug</span> -it ephemeral-pod <span class="hljs-attribute">--image</span>=busybox <span class="hljs-attribute">--target</span>=ephemeral-container<br>Targeting container <span class="hljs-string">&quot;ephemeral-container&quot;</span>. <span class="hljs-keyword">If</span> you don<span class="hljs-string">&#x27;t see processes from this container it may be because the container runtime doesn&#x27;</span>t support this feature.<br>Defaulting <span class="hljs-built_in">debug</span> container name <span class="hljs-keyword">to</span> debugger-q6svq.<br><span class="hljs-keyword">If</span> you don<span class="hljs-string">&#x27;t see a command prompt, try pressing enter.</span><br><span class="hljs-string">/ # </span><br><span class="hljs-string">/ # </span><br></code></pre></td></tr></table></figure>
+
+<p>现在您可以访问实际的容器，即临时容器，并进行调试</p>
+<h2 id="Multi-Container"><a href="#Multi-Container" class="headerlink" title="Multi Container"></a>Multi Container</h2><p>Kubernetes允许您定义具有多个并行运行的容器的Pod。这些容器共享相同的网络命名空间，并可以通过localhost相互通信。这些多容器Pod旨在用于需要紧密耦合的进程一起运行、共享资源和数据的场景。</p>
+<h3 id="案例-2"><a href="#案例-2" class="headerlink" title="案例"></a>案例</h3><p>创建nginx-multi-container-pod.yaml：</p>
+<figure class="highlight dts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><code class="hljs dts"><span class="hljs-symbol">apiVersion:</span> v1<br><span class="hljs-symbol">kind:</span> Pod<br><span class="hljs-symbol">metadata:</span><br><span class="hljs-symbol">  name:</span> nginx-pod<br><span class="hljs-symbol">  labels:</span><br><span class="hljs-symbol">    app:</span> nginx<br><span class="hljs-symbol">spec:</span><br><span class="hljs-symbol">  containers:</span><br>  <span class="hljs-meta">#App container</span><br>  - name: nginx-container<br><span class="hljs-symbol">    image:</span> nginx:latest<br><span class="hljs-symbol">    ports:</span><br>      - containerPort: <span class="hljs-number">80</span><br><span class="hljs-symbol">    volumeMounts:</span><br>      - name: data<br><span class="hljs-symbol">        mountPath:</span> <span class="hljs-keyword">/usr/</span>share<span class="hljs-keyword">/nginx/</span>html<br>  <span class="hljs-meta">#This is extra container</span><br>  - name: extra-container<br><span class="hljs-symbol">    image:</span> debian<br><span class="hljs-symbol">    command:</span> [<span class="hljs-string">&quot;/bin/sh&quot;</span>, <span class="hljs-string">&quot;-c&quot;</span>]<br><span class="hljs-symbol">    args:</span><br>      - while <span class="hljs-attr">true</span><span class="hljs-punctuation">;</span> do<br>          date &gt; <span class="hljs-keyword">/usr/</span>share<span class="hljs-keyword">/nginx/</span>html/index.<span class="hljs-attr">html</span><span class="hljs-punctuation">;</span><br>          sleep <span class="hljs-number">1</span><span class="hljs-punctuation">;</span><br>        done<br><span class="hljs-symbol">    volumeMounts:</span><br>      - name: data<br><span class="hljs-symbol">        mountPath:</span> <span class="hljs-keyword">/usr/</span>share<span class="hljs-keyword">/nginx/</span>html<br><span class="hljs-symbol">  volumes:</span><br>    - name: data<br><span class="hljs-symbol">      emptyDir:</span> <span class="hljs-punctuation">&#123;</span><span class="hljs-punctuation">&#125;</span><br></code></pre></td></tr></table></figure>
+
+<p>以上清单文件中有两个容器，一个是主应用程序，即 nginx，另一个是额外的容器，将帮助我们持续更新 nginx 网页应用的主页。</p>
+<p>创建 nginx-svc.yaml：</p>
+<figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-attribute">apiVersion</span><span class="hljs-punctuation">:</span> <span class="hljs-string">v1</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Service</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginx-svc</span><br>  <span class="hljs-attribute">labels</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">app</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginx</span><br><span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">type</span><span class="hljs-punctuation">:</span> <span class="hljs-string">NodePort</span><br>  <span class="hljs-attribute">selector</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-attribute">app</span><span class="hljs-punctuation">:</span> <span class="hljs-string">nginx</span><br>  <span class="hljs-attribute">ports</span><span class="hljs-punctuation">:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">port: 80</span><br>      <span class="hljs-attribute">targetPort</span><span class="hljs-punctuation">:</span> <span class="hljs-string">80</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="创建-Pod-和-Service"><a href="#创建-Pod-和-Service" class="headerlink" title="创建 Pod 和 Service"></a>创建 Pod 和 Service</h3><figure class="highlight coq"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs coq">kubectl <span class="hljs-built_in">apply</span> -f nginx-multi-container-pod.yaml<br>kubectl <span class="hljs-built_in">apply</span> -f nginx-svc.yaml<br></code></pre></td></tr></table></figure>
+
+<p>现在，如果您尝试通过浏览器访问nginx端点，您将看到由上面的额外容器更新的日期。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403141111985.png" srcset="/img/loading.gif" lazyload alt="image-20240314111100945"></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>K8S的POD类型 2024-04-03 14:57:11.072</div>
+      <div>http://example.com/2025/01/16/K8S的POD类型-k8s-de-pod-lei-xing/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/K8S%E8%B0%83%E8%AF%95POD-k8s-diao-shi-pod/" title="K8S调试POD 2024-04-03 14:58:15.293">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">K8S调试POD 2024-04-03 14:58:15.293</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/K8S%20%E5%BC%80%E5%8F%91%E5%8F%AF%E4%B8%8D%E6%AD%A2%20CRUD-k8s-kai-fa-ke-bu-zhi-crud/" title="K8S 开发可不止 CRUD 2024-04-03 14:50:11.765">
+                        <span class="hidden-mobile">K8S 开发可不止 CRUD 2024-04-03 14:50:11.765</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

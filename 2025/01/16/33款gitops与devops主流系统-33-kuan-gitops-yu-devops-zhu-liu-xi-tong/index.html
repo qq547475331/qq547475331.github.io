@@ -1,0 +1,749 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="为了帮助大家开启 GitOps 之旅，文介绍了 30 多种工具，如果你要想应用 GitOps，建议你使用这些工具。 GitOps 借鉴了 DevOps 方法论的自动化方面，是一种旨在通过软件开发和部署来简化基础设施管理和云操作的方法。虽然许多人认为 GitOps 可以替代 DevOps，但事实并非如此，该方法仅专注于实现 DevOps 方法论中的自动化这一个方面。 具体来说，GitOps 使用 G">
+<meta property="og:type" content="article">
+<meta property="og:title" content="33款gitops与devops主流系统 2024-08-02 17:45:15.709">
+<meta property="og:url" content="http://example.com/2025/01/16/33%E6%AC%BEgitops%E4%B8%8Edevops%E4%B8%BB%E6%B5%81%E7%B3%BB%E7%BB%9F-33-kuan-gitops-yu-devops-zhu-liu-xi-tong/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="为了帮助大家开启 GitOps 之旅，文介绍了 30 多种工具，如果你要想应用 GitOps，建议你使用这些工具。 GitOps 借鉴了 DevOps 方法论的自动化方面，是一种旨在通过软件开发和部署来简化基础设施管理和云操作的方法。虽然许多人认为 GitOps 可以替代 DevOps，但事实并非如此，该方法仅专注于实现 DevOps 方法论中的自动化这一个方面。 具体来说，GitOps 使用 G">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011513585.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011514697.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011514699.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011514884.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011514428.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011515195.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011515179.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011515144.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011515281.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011516458.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011516361.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011516374.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011518783.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011513755.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011521970.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011521872.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011521210.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011521391.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011520761.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011520724.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011520900.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011520015.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.038Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:18.516Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011513585.png">
+  
+  
+  
+  <title>33款gitops与devops主流系统 2024-08-02 17:45:15.709 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="33款gitops与devops主流系统 2024-08-02 17:45:15.709"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          27 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">33款gitops与devops主流系统 2024-08-02 17:45:15.709</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>为了帮助大家开启 GitOps 之旅，文介绍了 30 多种工具，如果你要想应用 GitOps，建议你使用这些工具。</p>
+<p>GitOps 借鉴了 DevOps 方法论的自动化方面，是一种旨在通过软件开发和部署来简化基础设施管理和云操作的方法。虽然许多人认为 GitOps 可以替代 DevOps，但事实并非如此，该方法仅专注于实现 DevOps 方法论中的自动化这一个方面。</p>
+<p>具体来说，GitOps 使用 Git 拉取（pull）请求来自动化基础设施配置和软件部署，所有这些都是为了使 CI&#x2F;CD 变得更加高效。</p>
+<p>GitOps 将 Git 作为应用程序开发和云基础设施的唯一事实源；采用声明式语句来简化配置和部署。</p>
+<p>GitOps 统一了许多关键任务，比如云集群（特别是运行在云中的容器）的部署、管理和监控，并允许开发人员对他们的应用程序部署管道有更多的控制。由于 Git 可用于基础设施即代码（IaC）和应用程序开发，因此它是该方法的理想事实存储库。</p>
+<p>1GitOps 的好处</p>
+<p>对于那些使用该方法的人来说，GitOps 提供了一些关键的优势，首先是更精细的 CI&#x2F;CD 管道本身。该方法充分利用了云原生应用程序和可伸缩云基础设施的优势，而没有引入常见的复杂性。</p>
+<p>其他好处还包括：</p>
+<ul>
+<li>更高的可靠性，这是由 Git 的原生特性决定的。如果新代码导致了错误，你可以回滚部署并使用 Git 的跟踪机制恢复到该应用程序的任何版本。这也会使云基础设施更加健壮。</li>
+<li>提高了稳定性，尤其是在管理 Kubernetes 集群时。一切都是可跟踪的，并且集群配置中的变更也可以在需要时恢复。将以 Git 作为事实源，自动创建审计日志。</li>
+<li>更高的生产效率，使得开发人员能够更加关注代码的质量，而不是管道本身。一旦将新的代码提交给 Git，一切都将完全自动化，此外还可以利用其他自动化工具。</li>
+<li>最大程度的一致性，特别是在整个流程中使用相同的方法来进行端到端的管理时。GitOps 简化了应用程序、Kubernetes 附属组件以及 Kubernetes 基础设施的所有工作。</li>
+</ul>
+<p>许多观点认为，GitOps 将持续交付与云原生优势和 IaC 结合起来，提供了这两个领域的最佳服务。GitOps 最佳实践还标准化了端到端的管道，你可以将该方法与任何现有管道进行集成，而无需进行大的更改。只要使用合适的工具即可完成这项工作。</p>
+<p>2GitOps 工具</p>
+<p>说到适合这项工作的工具，有无数工具可以帮助你将 GitOps 方法与现有工作流进行集成。一些支持 GitOps 的工具是非常流行的，甚至可以在现有的管道中使用它们。如果你想加入 GitOps，这里有一些我们推荐的工具可以帮助你进行入门学习。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011513585.png" srcset="/img/loading.gif" lazyload alt="image-20240801151359516"></p>
+<p> 1、 Kubernetes</p>
+<p>当然，Kubernetes 是 GitOps 的核心。毕竟，该方法是基于使用 Kubernetes 来管理容器并构建可靠的基础设施的。Kubernetes 现在提供了许多自动化工具，可以简化云基础设施的部署和扩展。我们将在本文的后面部分介绍其中的某些工具。</p>
+<p> 2、Git</p>
+<p>作为一个开源的版本控制平台，Git 非常强大。在 GitOps 中，Git 存储库将成为唯一的事实源。提交给 Git 的每个代码都将被处理和部署。你还可以使用 Git 存储库来进行开发和部署。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011514697.png" srcset="/img/loading.gif" lazyload alt="image-20240801151413625"></p>
+<p> \3. Helm</p>
+<p>Helm 是用于配置 Kubernetes 资源的最强大的工具之一。是的，你可以使用 Homebrew 或 Yum，但是 Helm 提供的自动化功能是其他同类工具所不具备的。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011514699.png" srcset="/img/loading.gif" lazyload alt="image-20240801151428627"></p>
+<p>\4. Flagger</p>
+<p>如果你想进一步管理发布，来自 Weaveworks 的 Flagger 是必备的工具。它是一个管理渐进式交付的工具，允许有选择地部署新代码以识别错误。它可以很好地与本列表中的下一个工具配合使用。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011514884.png" srcset="/img/loading.gif" lazyload alt="image-20240801151440821"></p>
+<p> 5、Prometheus</p>
+<p>Prometheus 可以充当 GitOps 的监控工具。如果变更没有通过 Flagger 设置的测试，它将触发报警。除此之外，Prometheus 还弥补了 GitOps 与其他自动化工具之间的差距。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011514428.png" srcset="/img/loading.gif" lazyload alt="image-20240801151457340"></p>
+<p> 6、Flux</p>
+<p>Flux 或 FluxCD 只是 Kubernetes 的 GitOps 操作符。它会使用 Git 库中的配置自动调整 Kubernetes 的集群配置。Flux 是为什么可以轻松地恢复对 Kubernetes 集群所做更改的原因。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011515195.png" srcset="/img/loading.gif" lazyload alt="image-20240801151510135"></p>
+<p> 7、Quay</p>
+<p>对于镜像管理，可以使用 Quay。可以使用该工具对容器镜像进行细致的管理，而所有这些都不会牺牲安全性和可靠性。Quay 使 GitOps 可以使用本地镜像注册表，而不是像 GitHub 那样要使用基于云的镜像注册表。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011515179.png" srcset="/img/loading.gif" lazyload alt="image-20240801151524120"></p>
+<p> 8、Auto-Assign</p>
+<p>为了使你的 Git 拉取请求和更新井井有条，可以使用一些工具。Auto-Assign 就是其中之一。顾名思义，每当发现新的拉取请求时，它都会分配审查者，因此可以密切监控变更。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011515144.png" srcset="/img/loading.gif" lazyload alt="image-20240801151536077"></p>
+<p> 9、CodeFactor</p>
+<p>为了持续维护代码的质量，CodeFactor 是另一个可以集成到 GitOps 管道中的工具。它是一个自动的代码审查工具，当发现新的 Git 提交时，它会根据预定义的标准自动检查代码。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011515281.png" srcset="/img/loading.gif" lazyload alt="image-20240801151550208"></p>
+<p> 10、DEP</p>
+<p>管理依赖关系是关键，特别是当你的应用程序是基于 Go 之类的语言构建的时候。为了应对这种实例，你可以使用 DEP。它是专门为管理 Go 应用程序和服务的依赖关系而创建的，并且它不会减慢 GitOps 管道的速度。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011516458.png" srcset="/img/loading.gif" lazyload alt="image-20240801151601400"></p>
+<p> 11、Kodiakhq</p>
+<p>另一个用于管理代码的 Git 应用程序是 Kodiakhq。但该工具主要专注于自动更新和管理拉取请求，同时减少 CI 的负载。随着 Kodiakhq 的启动和运行，不再需要手动合并请求，这可以节省时间和宝贵的资源来执行其他任务。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011516361.png" srcset="/img/loading.gif" lazyload alt="image-20240801151617304"></p>
+<p> 12、Atlantis</p>
+<p>如果你使用 Terraform 来简化资源配置，那么可以使用 Atlantis 为管道添加其他自动化功能。Atlantis 自动执行对 Terraform 的拉取请求，并在发现新请求时触发进一步的操作。</p>
+<p> 13、Helm Operator</p>
+<p>Helm Operator 还通过将自动化引入到 Helm Charts 发布中，进一步将 Helm 推向了新的高度。它被设计为在 GitOps 管道中从头开始工作，因此集成 Helm Operator 非常简单。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011516374.png" srcset="/img/loading.gif" lazyload alt="image-20240801151630298"></p>
+<p> 14、Gitkube</p>
+<p>Gitkube 更加专注于使用 Git push 构建和部署 Docker 镜像。该工具使用起来非常简单，不需要对单个容器进行复杂的配置。这也是一个可以在部署阶段节省大量时间和精力的工具。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011518783.png" srcset="/img/loading.gif" lazyload alt="image-20240801151803706"></p>
+<p> 15、Jenkins X</p>
+<p>当谈论 GitOps 工具时，我们真的不能不谈 Jenkins X。Jenkins 最初是作为 Kubernetes 的 CI&#x2F;CD 平台的，但是该平台可以用来无缝地管理你的 GitOps 管道。它甚至具有一个内置的预览环境来最大程度地减少代码和部署错误。</p>
+<p> 16、Restyled</p>
+<p>为了实现更好的标准化，Restyled 会强制执行某种编码样式。由于 GitOps 被设计为一种标准化端到端流程的方法，因此具有自动执行代码审查和重新合并请求的能力是一个巨大的优势。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011513755.png" srcset="/img/loading.gif" lazyload alt="图片"></p>
+<p> 17、Argo CD</p>
+<p>Argo CD 采用了一种更直观的方式来处理 GitOps。它可视化了应用程序和环境的配置，并使用图表和可视化的提示来模拟 GitOps 管道。你也可以将 Argo CD 与 Helm 和其他 GitOps 工具结合使用。</p>
+<p> 18、Kapp</p>
+<p>Kapp 是 Kubernetes 应用程序的衍生名称，专注于管道的部署方面。它将由其他自动化工具创建的软件包集成到 GitOps 工作流中，并基于它们生成 Kubernetes 配置。</p>
+<p> 19、Kpt</p>
+<p>Kpt 或“kept”是用于简化 Kubernetes 资源部署和配置的另一种工具。它使用声明来处理资源配置，从而使开发人员可以更好地控制他们的基础设施。使用 Kpt 完全不需要手动配置。</p>
+<p> 20、Stale</p>
+<p>Stale 能处理一些令许多开发人员都很恼火的事情：悬而未决或被放弃的问题以及拉取请求。使用 Stale，你可以配置何时将拉取请求和问题视为放弃，然后自动管理这些请求和问题。</p>
+<p> 21、 Kube Backup</p>
+<p>Kube Backup 是维护 Kubernetes 集群配置的重要工具。它将集群备份到 Git，特别是集群的资源状态。如果环境发生灾难性故障，可以使用 Kube Backup 来更快地启动和运行应用程序。</p>
+<p> 22、Untrak</p>
+<p>Untrak 是一个用于管理 Kubernetes 集群资源的便捷工具。该工具会自动在集群中查找未跟踪的资源。它还可以处理垃圾回收，并能帮助你保持 Kubernetes 集群的精益。</p>
+<p> 23、Fluxcloud</p>
+<p>Fluxcloud 整合了 Slack 与 GitOps。如果你使用 Flux（FluxCD），那么也一定会喜欢 Fluxcloud。它消除了对 Weave Cloud 的需求，并允许为每个 FluxCD 活动生成 Slack 通知。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011521970.png" srcset="/img/loading.gif" lazyload alt="image-20240801152144904"></p>
+<p> 24、Stickler CI</p>
+<p>代码风格的指南和标准！Sticker CI 在不影响管道本身的情况下简化了编码风格的实现。只要在工作流程中实现 Stickler CI，就可以快速且一致地进行代码检查和标准化。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011521872.png" srcset="/img/loading.gif" lazyload alt="image-20240801152134808"></p>
+<p> 25、Task List Completed</p>
+<p>下一个工具非常简单。Task List Completed 将停止合并具有未完成任务的拉取请求。无需手动检查每个拉取请求的任务，就可以使用该工具来保护部署环境。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011521210.png" srcset="/img/loading.gif" lazyload alt="image-20240801152124128"></p>
+<p> 26、Slack</p>
+<p>我们已经提过了如何使用 Fluxcloud 进行通知，但是如果你决定不使用 FluxCD，那怎么办呢？你仍然可以通过激活本地的 Slack 插件来获取 Git 的变更通知。Slack 支持关闭和打开拉取请求和问题等的任务，以及直接从 Slack 应用程序中与之交互的任务。</p>
+<p> 27、CI Reporter</p>
+<p>即使已经有了最好的 QA，仍可能会发现代码中的错误。这就是 CI Reporter 能派上用场的地方。该工具会收集构建失败的错误报告，然后再将其添加到相关的拉取请求中。</p>
+<p> 28、PR Label Enforce</p>
+<p>想要更精细化地控制拉取请求的合并，可以使用 PR Label Enforce。在合并拉取请求之前，该工具会强制执行某些标签。可以将“ready”或“ checked”之类的标签设置为参数，然后使用其他工具来自动分配这些标签。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011521391.png" srcset="/img/loading.gif" lazyload alt="image-20240801152109321"></p>
+<p> 29、Git-Secret</p>
+<p>想要在 Git 中存储私有数据，可以使用 Git-Secret。当你需要存储敏感的配置文件或密钥时，这非常方便。安全性在 GitOps 中非常重要，因此 Git-Secret 作为一种确保安全性的方法非常宝贵。说到安全性，你还可以使用……。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011520761.png" srcset="/img/loading.gif" lazyload alt="image-20240801152056694"></p>
+<p> 30、Kamus</p>
+<p>Kamus 能自动将零信任加密和解密合并到你的 GitOps 工作流中。与 Git-Secret 结合使用，你可以在不减慢 CI&#x2F;CD 周期的情况下增强整个管道的安全性。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011520724.png" srcset="/img/loading.gif" lazyload alt="image-20240801152046671"></p>
+<p> 31、Sealed Secrets</p>
+<p>如果你需要采取进一步措施，还可以使用 Sealed Secrets 通过单向加密过程来对密钥进行加密。Sealed Secrets 为 GitOps 管道提供了最大的安全性。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011520900.png" srcset="/img/loading.gif" lazyload alt="image-20240801152035824"></p>
+<p> 32、Pull Panda</p>
+<p>虽然 GitOps 是一种非常敏捷的方法，但是保持生产效率仍然是必须要做的事情。Pull Panda 可以帮忙你实现这一目标，它可以使协作工作变得更轻松、更高效。它向 Slack 发送拉取提醒和分析，甚至可以自动执行拉取请求的分配。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011520015.png" srcset="/img/loading.gif" lazyload alt="image-20240801152021945"></p>
+<p> 33、Sleeek</p>
+<p>Sleek 也是一个管理生产效率和简化流程的机器人，但是它对这个问题的处理方式略有不同。Sleek 基本上是一个机器人，是一个虚拟助手，可以帮助项目经理和开发团队通过一系列问题来保持同步。</p>
+<p>老实说，这样的例子不胜枚举；有很多很棒的工具可以帮助我们集成 GitOps 并显著地简化部署管道。作为一种方法，GitOps 确实为开发人员提供了很大的灵活性，并使他们在管理 Kubernetes 集群和云资源配置时能够更加精细。在使用 Kubernetes 时，这确实可以满足云原生的需求，可以实现持续部署。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>33款gitops与devops主流系统 2024-08-02 17:45:15.709</div>
+      <div>http://example.com/2025/01/16/33款gitops与devops主流系统-33-kuan-gitops-yu-devops-zhu-liu-xi-tong/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/600%E6%9D%A1%E6%9C%80%E5%BC%BAlinux%E5%91%BD%E4%BB%A4%E6%80%BB%E7%BB%93-600-tiao-zui-qiang-linux-ming-ling-zong-jie/" title="600条最强linux命令总结 2024-04-03 15:12:31.282">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">600条最强linux命令总结 2024-04-03 15:12:31.282</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/06-%E5%AE%89%E8%A3%85%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-wang-luo-zu-jian/" title="06-安装网络组件 2023-09-28 15:25:14.997">
+                        <span class="hidden-mobile">06-安装网络组件 2023-09-28 15:25:14.997</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

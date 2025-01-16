@@ -1,0 +1,646 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="假如你正在创建一个数据复制服务，该服务只需要一个实例来处理数据以保持正确的顺序。或者考虑开发一个多人在线游戏，在这种游戏中，同步所有参与者之间的游戏状态至关重要。这些类型的服务通常需要单个实例专门处理特定任务，并且还需要备用副本在当前实例失败时能够迅速接管工作负载。 解决此类挑战常用的技术之一是 leader election。它通过使组&#x2F;集群中的节点参与投票或共识过程来选择单个 Lea">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用kubernees leases 轻松实现leader election 2024-04-03 15:09:46.129">
+<meta property="og:url" content="http://example.com/2025/01/16/%E4%BD%BF%E7%94%A8kubernees%20leases%20%E8%BD%BB%E6%9D%BE%E5%AE%9E%E7%8E%B0leader%20election-shi-yong-kuberneesleases-qing-song-shi-xian-leaderelection/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="假如你正在创建一个数据复制服务，该服务只需要一个实例来处理数据以保持正确的顺序。或者考虑开发一个多人在线游戏，在这种游戏中，同步所有参与者之间的游戏状态至关重要。这些类型的服务通常需要单个实例专门处理特定任务，并且还需要备用副本在当前实例失败时能够迅速接管工作负载。 解决此类挑战常用的技术之一是 leader election。它通过使组&#x2F;集群中的节点参与投票或共识过程来选择单个 Lea">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402261502546.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402261503413.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402261503620.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402261503732.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402261504213.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.086Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:19.120Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402261502546.png">
+  
+  
+  
+  <title>使用kubernees leases 轻松实现leader election 2024-04-03 15:09:46.129 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="使用kubernees leases 轻松实现leader election 2024-04-03 15:09:46.129"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          19 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">使用kubernees leases 轻松实现leader election 2024-04-03 15:09:46.129</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h5 id="假如你正在创建一个数据复制服务，该服务只需要一个实例来处理数据以保持正确的顺序。或者考虑开发一个多人在线游戏，在这种游戏中，同步所有参与者之间的游戏状态至关重要。这些类型的服务通常需要单个实例专门处理特定任务，并且还需要备用副本在当前实例失败时能够迅速接管工作负载。"><a href="#假如你正在创建一个数据复制服务，该服务只需要一个实例来处理数据以保持正确的顺序。或者考虑开发一个多人在线游戏，在这种游戏中，同步所有参与者之间的游戏状态至关重要。这些类型的服务通常需要单个实例专门处理特定任务，并且还需要备用副本在当前实例失败时能够迅速接管工作负载。" class="headerlink" title="假如你正在创建一个数据复制服务，该服务只需要一个实例来处理数据以保持正确的顺序。或者考虑开发一个多人在线游戏，在这种游戏中，同步所有参与者之间的游戏状态至关重要。这些类型的服务通常需要单个实例专门处理特定任务，并且还需要备用副本在当前实例失败时能够迅速接管工作负载。"></a>假如你正在创建一个数据复制服务，该服务只需要一个实例来处理数据以保持正确的顺序。或者考虑开发一个多人在线游戏，在这种游戏中，同步所有参与者之间的游戏状态至关重要。这些类型的服务通常需要单个实例专门处理特定任务，并且还需要备用副本在当前实例失败时能够迅速接管工作负载。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402261502546.png" srcset="/img/loading.gif" lazyload alt="image-20240226150259482"></p>
+<h5 id="解决此类挑战常用的技术之一是-leader-election。它通过使组-集群中的节点参与投票或共识过程来选择单个-Leader-实例。然后该Leader-承担需要集中协调的责任。如果选举失败，则其余节点会自动重新运行选举过程以选择新的-Leader，确保系统连续性和容错性。"><a href="#解决此类挑战常用的技术之一是-leader-election。它通过使组-集群中的节点参与投票或共识过程来选择单个-Leader-实例。然后该Leader-承担需要集中协调的责任。如果选举失败，则其余节点会自动重新运行选举过程以选择新的-Leader，确保系统连续性和容错性。" class="headerlink" title="解决此类挑战常用的技术之一是 leader election。它通过使组&#x2F;集群中的节点参与投票或共识过程来选择单个 Leader 实例。然后该Leader 承担需要集中协调的责任。如果选举失败，则其余节点会自动重新运行选举过程以选择新的 Leader，确保系统连续性和容错性。"></a>解决此类挑战常用的技术之一是 <code>leader election</code>。它通过使组&#x2F;集群中的节点参与投票或共识过程来选择单个 Leader 实例。然后该Leader 承担需要集中协调的责任。如果选举失败，则其余节点会自动重新运行选举过程以选择新的 Leader，确保系统连续性和容错性。</h5><h2 id="实现的复杂性"><a href="#实现的复杂性" class="headerlink" title="实现的复杂性"></a><strong>实现的复杂性</strong></h2><h5 id="在一个组中达成所有节点对-Leader-的共识，对于实现-Leader-选举至关重要。"><a href="#在一个组中达成所有节点对-Leader-的共识，对于实现-Leader-选举至关重要。" class="headerlink" title="在一个组中达成所有节点对 Leader 的共识，对于实现 Leader 选举至关重要。"></a>在一个组中达成所有节点对 Leader 的共识，对于实现 Leader 选举至关重要。</h5><h5 id="基本的实现可以利用锁服务来确定领导权。"><a href="#基本的实现可以利用锁服务来确定领导权。" class="headerlink" title="基本的实现可以利用锁服务来确定领导权。"></a>基本的实现可以利用<strong>锁</strong>服务来确定领导权。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402261503413.png" srcset="/img/loading.gif" lazyload alt="image-20240226150312356"></p>
+<h5 id="在这种情况下，每个实例都尝试获取一个共享锁。锁服务确保只有一个实例在任何给定时间持有该锁，有效地使该实例成为-Leader。其他副本不断尝试获取锁，从而准备好进行无缝故障转移，以防当前的-Leader-变得不可用。"><a href="#在这种情况下，每个实例都尝试获取一个共享锁。锁服务确保只有一个实例在任何给定时间持有该锁，有效地使该实例成为-Leader。其他副本不断尝试获取锁，从而准备好进行无缝故障转移，以防当前的-Leader-变得不可用。" class="headerlink" title="在这种情况下，每个实例都尝试获取一个共享锁。锁服务确保只有一个实例在任何给定时间持有该锁，有效地使该实例成为 Leader。其他副本不断尝试获取锁，从而准备好进行无缝故障转移，以防当前的 Leader 变得不可用。"></a>在这种情况下，每个实例都尝试获取一个共享锁。锁服务确保只有一个实例在任何给定时间持有该锁，有效地使该实例成为 Leader。其他副本不断尝试获取锁，从而准备好进行无缝故障转移，以防当前的 Leader 变得不可用。</h5><h5 id="然而，在某些情况下会出现挑战，例如当领导节点失效和无响应时，并且持有锁一段时间直到该实例被回收。这种情况可能会导致传入请求因超时而失败，并且由于备用副本无法承担领导职责而增加正在进行任务的延迟。为了缓解这个问题，通常建议锁服务在锁上实施过期机制，通常称为基于-TTL-的租约。"><a href="#然而，在某些情况下会出现挑战，例如当领导节点失效和无响应时，并且持有锁一段时间直到该实例被回收。这种情况可能会导致传入请求因超时而失败，并且由于备用副本无法承担领导职责而增加正在进行任务的延迟。为了缓解这个问题，通常建议锁服务在锁上实施过期机制，通常称为基于-TTL-的租约。" class="headerlink" title="然而，在某些情况下会出现挑战，例如当领导节点失效和无响应时，并且持有锁一段时间直到该实例被回收。这种情况可能会导致传入请求因超时而失败，并且由于备用副本无法承担领导职责而增加正在进行任务的延迟。为了缓解这个问题，通常建议锁服务在锁上实施过期机制，通常称为基于 TTL 的租约。"></a>然而，在某些情况下会出现挑战，例如当领导节点失效和无响应时，并且持有锁一段时间直到该实例被回收。这种情况可能会导致传入请求因超时而失败，并且由于备用副本无法承担领导职责而增加正在进行任务的延迟。为了缓解这个问题，通常建议锁服务在锁上实施过期机制，通常称为基于 TTL 的租约。</h5><h3 id="问题1：失效的-Leader-实例"><a href="#问题1：失效的-Leader-实例" class="headerlink" title="问题1：失效的 Leader 实例"></a><strong>问题1：失效的 Leader 实例</strong></h3><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402261503620.png" srcset="/img/loading.gif" lazyload alt="image-20240226150333561"></p>
+<h5 id="此外，锁服务必须符合一定的健壮性标准。一方面，它不能作为单个实例运行，因为这将使其成为单点故障。另一方面，如果它使用多个实例以提供高可用性，则必须设计能够抵御网络分区问题。否则可能导致一个棘手的情况发生：在不同网络分区中的两个副本都认为自己已经获得了锁，并因此承担领导者角色。"><a href="#此外，锁服务必须符合一定的健壮性标准。一方面，它不能作为单个实例运行，因为这将使其成为单点故障。另一方面，如果它使用多个实例以提供高可用性，则必须设计能够抵御网络分区问题。否则可能导致一个棘手的情况发生：在不同网络分区中的两个副本都认为自己已经获得了锁，并因此承担领导者角色。" class="headerlink" title="此外，锁服务必须符合一定的健壮性标准。一方面，它不能作为单个实例运行，因为这将使其成为单点故障。另一方面，如果它使用多个实例以提供高可用性，则必须设计能够抵御网络分区问题。否则可能导致一个棘手的情况发生：在不同网络分区中的两个副本都认为自己已经获得了锁，并因此承担领导者角色。"></a>此外，锁服务必须符合一定的健壮性标准。一方面，它不能作为单个实例运行，因为这将使其成为单点故障。另一方面，如果它使用多个实例以提供高可用性，则必须设计能够抵御网络分区问题。否则可能导致一个棘手的情况发生：在不同网络分区中的两个副本都认为自己已经获得了锁，并因此承担领导者角色。</h5><h3 id="问题2：脑裂"><a href="#问题2：脑裂" class="headerlink" title="问题2：脑裂"></a><strong>问题2：脑裂</strong></h3><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402261503732.png" srcset="/img/loading.gif" lazyload alt="image-20240226150349667"></p>
+<h2 id="基于仲裁的系统成为首选解决方案"><a href="#基于仲裁的系统成为首选解决方案" class="headerlink" title="基于仲裁的系统成为首选解决方案"></a><strong>基于仲裁的系统成为首选解决方案</strong></h2><h5 id="为了解决网络分区的核心问题，像-ZooKeeper（被-Kafka-使用）和-etcd（被-Kubernetes-利用）这样的基于仲裁的系统通过内置的-TTL-功能应运而生，将自己确立为领导者选举的最佳解决方案。ZooKeeper-原子广播（ZAB）协议和-etcd-采用的-RAFT-协议都确保只有在大多数节点认可时才会考虑任何操作是有效的。在发生网络分区时，只有一个分区可以包含大多数节点，有效地防止了出现多个领导者的可能性。"><a href="#为了解决网络分区的核心问题，像-ZooKeeper（被-Kafka-使用）和-etcd（被-Kubernetes-利用）这样的基于仲裁的系统通过内置的-TTL-功能应运而生，将自己确立为领导者选举的最佳解决方案。ZooKeeper-原子广播（ZAB）协议和-etcd-采用的-RAFT-协议都确保只有在大多数节点认可时才会考虑任何操作是有效的。在发生网络分区时，只有一个分区可以包含大多数节点，有效地防止了出现多个领导者的可能性。" class="headerlink" title="为了解决网络分区的核心问题，像 ZooKeeper（被 Kafka 使用）和 etcd（被 Kubernetes 利用）这样的基于仲裁的系统通过内置的 TTL 功能应运而生，将自己确立为领导者选举的最佳解决方案。ZooKeeper 原子广播（ZAB）协议和 etcd 采用的 RAFT 协议都确保只有在大多数节点认可时才会考虑任何操作是有效的。在发生网络分区时，只有一个分区可以包含大多数节点，有效地防止了出现多个领导者的可能性。"></a>为了解决网络分区的核心问题，像 ZooKeeper（被 Kafka 使用）和 etcd（被 Kubernetes 利用）这样的基于仲裁的系统通过内置的 TTL 功能应运而生，将自己确立为领导者选举的最佳解决方案。ZooKeeper 原子广播（ZAB）协议和 etcd 采用的 RAFT 协议都确保只有在大多数节点认可时才会考虑任何操作是有效的。在发生网络分区时，只有一个分区可以包含大多数节点，有效地防止了出现多个领导者的可能性。</h5><h5 id="然而，无论是-ZooKeeper-还是-etcd-都不具备成本效益。分布式系统固有复杂性带来了运维挑战。为小规模服务部署这样的集群可能太重，并且额外开销可能超过应用程序本身的运维成本。"><a href="#然而，无论是-ZooKeeper-还是-etcd-都不具备成本效益。分布式系统固有复杂性带来了运维挑战。为小规模服务部署这样的集群可能太重，并且额外开销可能超过应用程序本身的运维成本。" class="headerlink" title="然而，无论是 ZooKeeper 还是 etcd 都不具备成本效益。分布式系统固有复杂性带来了运维挑战。为小规模服务部署这样的集群可能太重，并且额外开销可能超过应用程序本身的运维成本。"></a>然而，无论是 ZooKeeper 还是 etcd 都不具备成本效益。分布式系统固有复杂性带来了运维挑战。为小规模服务部署这样的集群可能太重，并且额外开销可能超过应用程序本身的运维成本。</h5><h2 id="K8s-Leases"><a href="#K8s-Leases" class="headerlink" title="K8s Leases"></a><strong>K8s Leases</strong></h2><h5 id="由于成本问题，可靠的领导者选举只适用于大规模系统吗？未必，如果你正在使用-Kubernetes-基础设施，则可以通过使用-Kubernetes-Leases-来简单地实现-etcd-级别的领导者选举-——-无需直接与-Etcd-API-交互。"><a href="#由于成本问题，可靠的领导者选举只适用于大规模系统吗？未必，如果你正在使用-Kubernetes-基础设施，则可以通过使用-Kubernetes-Leases-来简单地实现-etcd-级别的领导者选举-——-无需直接与-Etcd-API-交互。" class="headerlink" title="由于成本问题，可靠的领导者选举只适用于大规模系统吗？未必，如果你正在使用 Kubernetes 基础设施，则可以通过使用 Kubernetes Leases 来简单地实现 etcd 级别的领导者选举 —— 无需直接与 Etcd API 交互。"></a>由于成本问题，可靠的领导者选举只适用于大规模系统吗？未必，如果你正在使用 Kubernetes 基础设施，则可以通过使用 Kubernetes Leases 来简单地实现 etcd 级别的领导者选举 —— 无需直接与 Etcd API 交互。</h5><h3 id="为什么很强大"><a href="#为什么很强大" class="headerlink" title="为什么很强大"></a><strong>为什么很强大</strong></h3><h5 id="Kubernetes-Leases-之所以强大，部分原因在于-Kubernetes-本身通常将-etcd-作为其所有-API对象（包括租约）的存储。这意味着-etcd-的高可用性、一致性和容错特性自然地可用于-Kubernetes-Leases。但是，Kubernetes-API-添加了额外的功能层，比如通过资源版本控制实现乐观并发控制，这也有助于使租约成为在-Kubernetes-环境中进行领导者选举时一个强大的选择。"><a href="#Kubernetes-Leases-之所以强大，部分原因在于-Kubernetes-本身通常将-etcd-作为其所有-API对象（包括租约）的存储。这意味着-etcd-的高可用性、一致性和容错特性自然地可用于-Kubernetes-Leases。但是，Kubernetes-API-添加了额外的功能层，比如通过资源版本控制实现乐观并发控制，这也有助于使租约成为在-Kubernetes-环境中进行领导者选举时一个强大的选择。" class="headerlink" title="Kubernetes Leases 之所以强大，部分原因在于 Kubernetes 本身通常将 etcd 作为其所有 API对象（包括租约）的存储。这意味着 etcd 的高可用性、一致性和容错特性自然地可用于 Kubernetes Leases。但是，Kubernetes API 添加了额外的功能层，比如通过资源版本控制实现乐观并发控制，这也有助于使租约成为在 Kubernetes 环境中进行领导者选举时一个强大的选择。"></a>Kubernetes Leases 之所以强大，部分原因在于 Kubernetes 本身通常将 etcd 作为其所有 API对象（包括租约）的存储。这意味着 etcd 的高可用性、一致性和容错特性自然地可用于 Kubernetes Leases。但是，Kubernetes API 添加了额外的功能层，比如通过资源版本控制实现乐观并发控制，这也有助于使租约成为在 Kubernetes 环境中进行领导者选举时一个强大的选择。</h5><h3 id="工作原理"><a href="#工作原理" class="headerlink" title="工作原理"></a><strong>工作原理</strong></h3><h5 id="在-Kubernetes-中，可以使用-Lease-对象来促进领导者选举。竞争领导权的候选人要么创建要么更新-Lease-对象，并将其标识符设置在-holderIdentity-字段中。领导者持续“续订”该-Lease-以保持其角色。如果领导者未能在-Lease-到期前续订，则其他候选人会尝试获取它。首个成功更新-Lease-的候选人将成为新领导者，确保平稳故障转移。所有候选人都会监视-Lease-对象以跟踪领导变更。"><a href="#在-Kubernetes-中，可以使用-Lease-对象来促进领导者选举。竞争领导权的候选人要么创建要么更新-Lease-对象，并将其标识符设置在-holderIdentity-字段中。领导者持续“续订”该-Lease-以保持其角色。如果领导者未能在-Lease-到期前续订，则其他候选人会尝试获取它。首个成功更新-Lease-的候选人将成为新领导者，确保平稳故障转移。所有候选人都会监视-Lease-对象以跟踪领导变更。" class="headerlink" title="在 Kubernetes 中，可以使用 Lease 对象来促进领导者选举。竞争领导权的候选人要么创建要么更新 Lease 对象，并将其标识符设置在 holderIdentity 字段中。领导者持续“续订”该 Lease 以保持其角色。如果领导者未能在 Lease 到期前续订，则其他候选人会尝试获取它。首个成功更新 Lease 的候选人将成为新领导者，确保平稳故障转移。所有候选人都会监视 Lease 对象以跟踪领导变更。"></a>在 Kubernetes 中，可以使用 Lease 对象来促进领导者选举。竞争领导权的候选人要么创建要么更新 Lease 对象，并将其标识符设置在 <code>holderIdentity</code> 字段中。领导者持续“续订”该 Lease 以保持其角色。如果领导者未能在 Lease 到期前续订，则其他候选人会尝试获取它。首个成功更新 Lease 的候选人将成为新领导者，确保平稳故障转移。所有候选人都会监视 Lease 对象以跟踪领导变更。</h5><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402261504213.png" srcset="/img/loading.gif" lazyload alt="image-20240226150408146"></p>
+<h2 id="示例"><a href="#示例" class="headerlink" title="示例"></a><strong>示例</strong></h2><h5 id="让我们通过一个全面的示例来了解下这是如何工作的。这里我们通过直接对-K8s-API-进行-HTTP-调用，该演示与语言无关。"><a href="#让我们通过一个全面的示例来了解下这是如何工作的。这里我们通过直接对-K8s-API-进行-HTTP-调用，该演示与语言无关。" class="headerlink" title="让我们通过一个全面的示例来了解下这是如何工作的。这里我们通过直接对 K8s API 进行 HTTP 调用，该演示与语言无关。"></a>让我们通过一个全面的示例来了解下这是如何工作的。这里我们通过直接对 K8s API 进行 HTTP 调用，该演示与语言无关。</h5><blockquote>
+<p>需要一个版本大于等于 1.14 的 Kubernetes 集群。需要安装一些基本的工具：<code>kubectl</code>、<code>curl</code>、<code>jq</code> 等等。</p>
+</blockquote>
+<h5 id="首先我们创建一个如下锁是的-JSON-文件-lease-json，用来代表-Lease-对象："><a href="#首先我们创建一个如下锁是的-JSON-文件-lease-json，用来代表-Lease-对象：" class="headerlink" title="首先我们创建一个如下锁是的 JSON 文件 lease.json，用来代表 Lease 对象："></a>首先我们创建一个如下锁是的 JSON 文件 <code>lease.json</code>，用来代表 Lease 对象：</h5><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-punctuation">&#123;</span><br>  <span class="hljs-attr">&quot;apiVersion&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;coordination.k8s.io/v1&quot;</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;kind&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Lease&quot;</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;metadata&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>    <span class="hljs-attr">&quot;name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;example-lease&quot;</span><span class="hljs-punctuation">,</span><br>    <span class="hljs-attr">&quot;namespace&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;example-lease&quot;</span><br>  <span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;spec&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>    <span class="hljs-attr">&quot;holderIdentity&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;replica-1&quot;</span><span class="hljs-punctuation">,</span><br>    <span class="hljs-attr">&quot;leaseDurationSeconds&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">15</span><br>  <span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="然后我们可以使用下面的-curl-命令来创建该对象："><a href="#然后我们可以使用下面的-curl-命令来创建该对象：" class="headerlink" title="然后我们可以使用下面的 curl 命令来创建该对象："></a>然后我们可以使用下面的 <code>curl</code> 命令来创建该对象：</h5><figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs awk">curl -k -X POST -H <span class="hljs-string">&quot;Content-Type: application/json&quot;</span> --data @lease.json https:<span class="hljs-regexp">//</span><span class="hljs-variable">$KUBE_PROXY_URL</span><span class="hljs-regexp">/apis/</span>coordination.k8s.io<span class="hljs-regexp">/v1/</span>namespaces<span class="hljs-regexp">/example-lease/</span>leases<br></code></pre></td></tr></table></figure>
+
+<h5 id="检查-Lease-对象是否创建成功："><a href="#检查-Lease-对象是否创建成功：" class="headerlink" title="检查 Lease 对象是否创建成功："></a>检查 Lease 对象是否创建成功：</h5><figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs routeros">kubectl <span class="hljs-built_in">get</span><span class="hljs-built_in"> lease </span>example-lease -n example-lease -o json<br><br><span class="hljs-comment">#output:</span><br>&#123;<br>  <span class="hljs-string">&quot;apiVersion&quot;</span>: <span class="hljs-string">&quot;coordination.k8s.io/v1&quot;</span>,<br>  <span class="hljs-string">&quot;kind&quot;</span>: <span class="hljs-string">&quot;Lease&quot;</span>,<br>  <span class="hljs-string">&quot;metadata&quot;</span>: &#123;<br>    <span class="hljs-string">&quot;name&quot;</span>: <span class="hljs-string">&quot;example-lease&quot;</span>,<br>    <span class="hljs-string">&quot;namespace&quot;</span>: <span class="hljs-string">&quot;example-lease&quot;</span>,<br>    <span class="hljs-string">&quot;resourceVersion&quot;</span>: <span class="hljs-string">&quot;123&quot;</span><br>  &#125;,<br>  <span class="hljs-string">&quot;spec&quot;</span>: &#123;<br>    <span class="hljs-string">&quot;holderIdentity&quot;</span>: <span class="hljs-string">&quot;replica-1&quot;</span>,<br>    <span class="hljs-string">&quot;leaseDurationSeconds&quot;</span>: 15,<br>    <span class="hljs-string">&quot;acquireTime&quot;</span>: <span class="hljs-string">&quot;2023-09-11T20:30:00Z&quot;</span>,<br>    <span class="hljs-string">&quot;renewTime&quot;</span>: <span class="hljs-string">&quot;2023-09-11T20:35:00Z&quot;</span>,<br>    <span class="hljs-string">&quot;leaseTransitions&quot;</span>: 2<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h5 id="现在-replica-1-已成功获取租约，并将在15秒后到期。"><a href="#现在-replica-1-已成功获取租约，并将在15秒后到期。" class="headerlink" title="现在 replica-1 已成功获取租约，并将在15秒后到期。"></a>现在 <code>replica-1</code> 已成功获取租约，并将在15秒后到期。</h5><h5 id="接下来创建创建一个名为-standby-replica-的脚本。此任务在每次更新-Lease-对象时检查-renewTime-字段，以确定当前-leader-是否仍处于活动状态。如果-renewTime-比当前时间落后了定义的阈值，则假定-leader-处于非活动状态。然后，该任务尝试通过使用当前-resourceVersion-更新来获取租约。如果成功，运行该任务的-pod-将成为新的-leader，并应继续更新-renewTime-以保持其状态。"><a href="#接下来创建创建一个名为-standby-replica-的脚本。此任务在每次更新-Lease-对象时检查-renewTime-字段，以确定当前-leader-是否仍处于活动状态。如果-renewTime-比当前时间落后了定义的阈值，则假定-leader-处于非活动状态。然后，该任务尝试通过使用当前-resourceVersion-更新来获取租约。如果成功，运行该任务的-pod-将成为新的-leader，并应继续更新-renewTime-以保持其状态。" class="headerlink" title="接下来创建创建一个名为 standby_replica 的脚本。此任务在每次更新 Lease 对象时检查 renewTime 字段，以确定当前 leader 是否仍处于活动状态。如果 renewTime 比当前时间落后了定义的阈值，则假定 leader 处于非活动状态。然后，该任务尝试通过使用当前 resourceVersion 更新来获取租约。如果成功，运行该任务的 pod 将成为新的 leader，并应继续更新 renewTime 以保持其状态。"></a>接下来创建创建一个名为 <code>standby_replica</code> 的脚本。此任务在每次更新 Lease 对象时检查 <code>renewTime</code> 字段，以确定当前 leader 是否仍处于活动状态。如果 <code>renewTime</code> 比当前时间落后了定义的阈值，则假定 leader 处于非活动状态。然后，该任务尝试通过使用当前 <code>resourceVersion</code> 更新来获取租约。如果成功，运行该任务的 pod 将成为新的 leader，并应继续更新 <code>renewTime</code> 以保持其状态。</h5><figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><code class="hljs routeros"><span class="hljs-comment"># standby_replica.sh</span><br><span class="hljs-comment">#!/bin/bash</span><br><br><span class="hljs-attribute">LEASE_ENDPOINT</span>=<span class="hljs-string">&quot;http://<span class="hljs-variable">$KUBE_PROXY_URL</span>/apis/coordination.k8s.io/v1/namespaces/NAMESPACE/example-lease/LEASE_NAME&quot;</span><br><span class="hljs-attribute">REPLICA_NAME</span>=<span class="hljs-string">&quot;replica-2&quot;</span><br><span class="hljs-comment"># implement watch. Please note that there is a watch endpoint, which is more efficeint when writing production code</span><br><span class="hljs-keyword">while</span> <span class="hljs-literal">true</span>; <span class="hljs-keyword">do</span><br>  # Fetch the<span class="hljs-built_in"> lease </span>object<br>  <span class="hljs-attribute">lease</span>=$(curl -s <span class="hljs-variable">$LEASE_ENDPOINT</span>)<br><br>  # Extract renewTime <span class="hljs-keyword">and</span> resourceVersion<br>  <span class="hljs-attribute">renew_time</span>=$(echo <span class="hljs-variable">$lease</span> | jq -r <span class="hljs-string">&#x27;.spec.renewTime&#x27;</span>)<br>  <span class="hljs-attribute">resource_version</span>=$(echo <span class="hljs-variable">$lease</span> | jq -r <span class="hljs-string">&#x27;.metadata.resourceVersion&#x27;</span>)<br>  <span class="hljs-attribute">current_time</span>=$(date -u +<span class="hljs-string">&quot;%Y-%m-%dT%H:%M:%SZ&quot;</span>)<br><br>  <span class="hljs-keyword">if</span> [[ <span class="hljs-string">&quot;<span class="hljs-variable">$renew_time</span>&quot;</span> &lt; <span class="hljs-string">&quot;<span class="hljs-variable">$current_time</span>&quot;</span> ]]; then<br>    <span class="hljs-attribute">updated_lease</span>=$(echo <span class="hljs-variable">$lease</span> | jq <span class="hljs-string">&quot;.metadata.resourceVersion = \&quot;<span class="hljs-variable">$resource_version</span>\&quot; | .spec.renewTime = \&quot;<span class="hljs-variable">$current_time</span>\&quot; | .spec.holderIdentity = \&quot;<span class="hljs-variable">$REPLICA_NAME</span>\&quot;&quot;</span>)<br><br>    # Attempt <span class="hljs-keyword">to</span> update the<span class="hljs-built_in"> lease</span><br><span class="hljs-built_in"></span>    <span class="hljs-attribute">update_response</span>=$(curl -s -X PUT --header <span class="hljs-string">&quot;Content-Type: application/json&quot;</span> -d <span class="hljs-string">&quot;<span class="hljs-variable">$updated_lease</span>&quot;</span> <span class="hljs-variable">$LEASE_ENDPOINT</span>)<br><br>    <span class="hljs-keyword">if</span> [[ $(echo <span class="hljs-variable">$update_response</span> | jq -r <span class="hljs-string">&#x27;.metadata.resourceVersion&#x27;</span>) == <span class="hljs-string">&quot;<span class="hljs-variable">$resource_version</span>&quot;</span> ]]; then<br>      echo <span class="hljs-string">&quot;Successfully acquired the lease.&quot;</span><br>    <span class="hljs-keyword">else</span><br>      echo <span class="hljs-string">&quot;Failed to acquire the lease.&quot;</span><br>    fi<br>  <span class="hljs-keyword">else</span><br>    echo <span class="hljs-string">&quot;Lease is still valid.&quot;</span><br>  fi<br><br>  # Wait <span class="hljs-keyword">for</span> 5 seconds before the next iteration<br>  sleep 5<br>done<br></code></pre></td></tr></table></figure>
+
+<h5 id="如果我们一直去查看对象，有对象输出，renewTime-会不断更新。因此，没有发生领导者故障转移。应该能够看到输出为："><a href="#如果我们一直去查看对象，有对象输出，renewTime-会不断更新。因此，没有发生领导者故障转移。应该能够看到输出为：" class="headerlink" title="如果我们一直去查看对象，有对象输出，renewTime 会不断更新。因此，没有发生领导者故障转移。应该能够看到输出为："></a>如果我们一直去查看对象，有对象输出，<code>renewTime</code> 会不断更新。因此，没有发生领导者故障转移。应该能够看到输出为：</h5><figure class="highlight mercury"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs mercury">Lease <span class="hljs-keyword">is</span> still valid.<br>Lease <span class="hljs-keyword">is</span> still valid.<br>Lease <span class="hljs-keyword">is</span> still valid.<br>Lease <span class="hljs-keyword">is</span> still valid.<br>Lease <span class="hljs-keyword">is</span> still valid.<br></code></pre></td></tr></table></figure>
+
+<h5 id="当停止更新来自-replica-1-的租约时，到期时间将在15秒内到期，以便-replica-2-能够接管领导权。您应该能够看到输出为："><a href="#当停止更新来自-replica-1-的租约时，到期时间将在15秒内到期，以便-replica-2-能够接管领导权。您应该能够看到输出为：" class="headerlink" title="当停止更新来自 replica-1 的租约时，到期时间将在15秒内到期，以便 replica-2 能够接管领导权。您应该能够看到输出为："></a>当停止更新来自 <code>replica-1</code> 的租约时，到期时间将在15秒内到期，以便 <code>replica-2</code> 能够接管领导权。您应该能够看到输出为：</h5><figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs routeros">Lease is still valid.<span class="hljs-built_in"></span><br><span class="hljs-built_in">Lease </span>is still valid.<br>Successfully acquired the lease.<br><br><span class="hljs-comment"># And then fetch the example lease again:</span><br>kubectl <span class="hljs-built_in">get</span><span class="hljs-built_in"> lease </span>example-lease -n example-lease -o json<br><br><span class="hljs-comment">#output:</span><br>&#123;<br>  <span class="hljs-string">&quot;apiVersion&quot;</span>: <span class="hljs-string">&quot;coordination.k8s.io/v1&quot;</span>,<br>  <span class="hljs-string">&quot;kind&quot;</span>: <span class="hljs-string">&quot;Lease&quot;</span>,<br>  <span class="hljs-string">&quot;metadata&quot;</span>: &#123;<br>    <span class="hljs-string">&quot;name&quot;</span>: <span class="hljs-string">&quot;example-lease&quot;</span>,<br>    <span class="hljs-string">&quot;namespace&quot;</span>: <span class="hljs-string">&quot;example-lease&quot;</span>,<br>    <span class="hljs-string">&quot;resourceVersion&quot;</span>: <span class="hljs-string">&quot;124&quot;</span><br>  &#125;,<br>  <span class="hljs-string">&quot;spec&quot;</span>: &#123;<br>    <span class="hljs-string">&quot;holderIdentity&quot;</span>: <span class="hljs-string">&quot;replica-2&quot;</span>,<br>    <span class="hljs-string">&quot;leaseDurationSeconds&quot;</span>: 15,<br>    <span class="hljs-string">&quot;acquireTime&quot;</span>: <span class="hljs-string">&quot;2023-09-11T20:36:00Z&quot;</span>,<br>    <span class="hljs-string">&quot;renewTime&quot;</span>: <span class="hljs-string">&quot;2023-09-11T20:51:00Z&quot;</span>,<br>    <span class="hljs-string">&quot;leaseTransitions&quot;</span>: 3<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a><strong>总结</strong></h2><h5 id="在-Kubernetes-中利用-Lease-对象进行领导者选举提供了一种轻量级但强大的替代方案，而不是运行像-ZooKeeper-或-etcd-这样的重型协调服务。通过依赖原生-Kubernetes-API-对象，您可以获得相同级别的容错能力，而无需处理维护单独分布式协调服务所带来的运维复杂性和资源开销。"><a href="#在-Kubernetes-中利用-Lease-对象进行领导者选举提供了一种轻量级但强大的替代方案，而不是运行像-ZooKeeper-或-etcd-这样的重型协调服务。通过依赖原生-Kubernetes-API-对象，您可以获得相同级别的容错能力，而无需处理维护单独分布式协调服务所带来的运维复杂性和资源开销。" class="headerlink" title="在 Kubernetes 中利用 Lease 对象进行领导者选举提供了一种轻量级但强大的替代方案，而不是运行像 ZooKeeper 或 etcd 这样的重型协调服务。通过依赖原生 Kubernetes API 对象，您可以获得相同级别的容错能力，而无需处理维护单独分布式协调服务所带来的运维复杂性和资源开销。"></a>在 Kubernetes 中利用 Lease 对象进行领导者选举提供了一种轻量级但强大的替代方案，而不是运行像 ZooKeeper 或 etcd 这样的重型协调服务。通过依赖原生 Kubernetes API 对象，您可以获得相同级别的容错能力，而无需处理维护单独分布式协调服务所带来的运维复杂性和资源开销。</h5><h5 id="在实现方面，每个-Pod-都运行一个后台任务来观察-Lease-对象的变化。通过检查-renewTime-字段，该任务可以确定当前领导者是否仍然可操作。如果此时间已过期，则表明领导权已经开放重新选举。然后-Pod-尝试通过使用自己的-holderIdentity-和当前-resourceVersion-更新-Lease-对象来获取或更新租约。成功更新-Lease-的-Pod-承担新领导者角色。这种方法为在-Kubernetes-环境中实现领导者选举提供了一种简单而有效的方式。"><a href="#在实现方面，每个-Pod-都运行一个后台任务来观察-Lease-对象的变化。通过检查-renewTime-字段，该任务可以确定当前领导者是否仍然可操作。如果此时间已过期，则表明领导权已经开放重新选举。然后-Pod-尝试通过使用自己的-holderIdentity-和当前-resourceVersion-更新-Lease-对象来获取或更新租约。成功更新-Lease-的-Pod-承担新领导者角色。这种方法为在-Kubernetes-环境中实现领导者选举提供了一种简单而有效的方式。" class="headerlink" title="在实现方面，每个 Pod 都运行一个后台任务来观察 Lease 对象的变化。通过检查 renewTime 字段，该任务可以确定当前领导者是否仍然可操作。如果此时间已过期，则表明领导权已经开放重新选举。然后 Pod 尝试通过使用自己的 holderIdentity 和当前 resourceVersion 更新 Lease 对象来获取或更新租约。成功更新 Lease 的 Pod 承担新领导者角色。这种方法为在 Kubernetes 环境中实现领导者选举提供了一种简单而有效的方式。"></a>在实现方面，每个 Pod 都运行一个后台任务来观察 Lease 对象的变化。通过检查 <code>renewTime</code> 字段，该任务可以确定当前领导者是否仍然可操作。如果此时间已过期，则表明领导权已经开放重新选举。然后 Pod 尝试通过使用自己的 <code>holderIdentity</code> 和当前 <code>resourceVersion</code> 更新 Lease 对象来获取或更新租约。成功更新 Lease 的 Pod 承担新领导者角色。这种方法为在 Kubernetes 环境中实现领导者选举提供了一种简单而有效的方式。</h5><h5 id="这使其成为对于在-Kubernetes-环境中运行的应用程序更易访问和高效选择。"><a href="#这使其成为对于在-Kubernetes-环境中运行的应用程序更易访问和高效选择。" class="headerlink" title="这使其成为对于在 Kubernetes 环境中运行的应用程序更易访问和高效选择。"></a>这使其成为对于在 Kubernetes 环境中运行的应用程序更易访问和高效选择。</h5>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>使用kubernees leases 轻松实现leader election 2024-04-03 15:09:46.129</div>
+      <div>http://example.com/2025/01/16/使用kubernees leases 轻松实现leader election-shi-yong-kuberneesleases-qing-song-shi-xian-leaderelection/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E5%B8%B8%E8%A7%81linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98-chang-jian-linux-yun-wei-mian-shi-ti/" title="常见linux运维面试题 2024-08-02 17:42:33.873">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">常见linux运维面试题 2024-08-02 17:42:33.873</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E6%B8%85%E7%90%86docker%E9%95%9C%E5%83%8F-qing-li-docker-jing-xiang/" title="清理docker镜像 2024-08-02 17:54:48.594">
+                        <span class="hidden-mobile">清理docker镜像 2024-08-02 17:54:48.594</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

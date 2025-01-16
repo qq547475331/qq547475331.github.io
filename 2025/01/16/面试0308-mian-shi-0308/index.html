@@ -1,0 +1,665 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="根据nginx日志  过滤nginx前十访问量的ip要根据Nginx日志过滤出前十访问量的IP，你可以使用awk、sort和head命令组合来完成这个任务。假设你的Nginx访问日志格式如下（这是Nginx的默认格式）：123bash复制代码127.0.0.1 - - [10&#x2F;Oct&#x2F;2023:14:05:01 +0000] &quot;GET &#x2F; HTTP&#x2F;1.1&quot; 200 612 &amp;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="面试0308 2024-04-03 14:57:53.576">
+<meta property="og:url" content="http://example.com/2025/01/16/%E9%9D%A2%E8%AF%950308-mian-shi-0308/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="根据nginx日志  过滤nginx前十访问量的ip要根据Nginx日志过滤出前十访问量的IP，你可以使用awk、sort和head命令组合来完成这个任务。假设你的Nginx访问日志格式如下（这是Nginx的默认格式）：123bash复制代码127.0.0.1 - - [10&#x2F;Oct&#x2F;2023:14:05:01 +0000] &quot;GET &#x2F; HTTP&#x2F;1.1&quot; 200 612 &amp;">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-01-16T02:08:28.083Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:19.082Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>面试0308 2024-04-03 14:57:53.576 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="面试0308 2024-04-03 14:57:53.576"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.9k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          24 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">面试0308 2024-04-03 14:57:53.576</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h3 id="根据nginx日志-过滤nginx前十访问量的ip"><a href="#根据nginx日志-过滤nginx前十访问量的ip" class="headerlink" title="根据nginx日志  过滤nginx前十访问量的ip"></a>根据nginx日志  过滤nginx前十访问量的ip</h3><h5 id="要根据Nginx日志过滤出前十访问量的IP，你可以使用awk、sort和head命令组合来完成这个任务。假设你的Nginx访问日志格式如下（这是Nginx的默认格式）："><a href="#要根据Nginx日志过滤出前十访问量的IP，你可以使用awk、sort和head命令组合来完成这个任务。假设你的Nginx访问日志格式如下（这是Nginx的默认格式）：" class="headerlink" title="要根据Nginx日志过滤出前十访问量的IP，你可以使用awk、sort和head命令组合来完成这个任务。假设你的Nginx访问日志格式如下（这是Nginx的默认格式）："></a>要根据Nginx日志过滤出前十访问量的IP，你可以使用<code>awk</code>、<code>sort</code>和<code>head</code>命令组合来完成这个任务。假设你的Nginx访问日志格式如下（这是Nginx的默认格式）：</h5><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">bash复制代码<br><br>127.0.0.1 - - [10/Oct/2023:14:05:01 +0000] <span class="hljs-string">&quot;GET / HTTP/1.1&quot;</span> 200 612 <span class="hljs-string">&quot;-&quot;</span> <span class="hljs-string">&quot;curl/7.68.0&quot;</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="在这个日志中，第一个字段是客户端的IP地址。"><a href="#在这个日志中，第一个字段是客户端的IP地址。" class="headerlink" title="在这个日志中，第一个字段是客户端的IP地址。"></a>在这个日志中，第一个字段是客户端的IP地址。</h5><h5 id="你可以使用以下命令来过滤出前十访问量的IP："><a href="#你可以使用以下命令来过滤出前十访问量的IP：" class="headerlink" title="你可以使用以下命令来过滤出前十访问量的IP："></a>你可以使用以下命令来过滤出前十访问量的IP：</h5><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs bash">bash复制代码<br><br>awk <span class="hljs-string">&#x27;&#123;print $1&#125;&#x27;</span> access.log | <span class="hljs-built_in">sort</span> | <span class="hljs-built_in">uniq</span> -c | <span class="hljs-built_in">sort</span> -nr | <span class="hljs-built_in">head</span> -n 10<br><br><span class="hljs-built_in">cat</span> /var/log/nginx/access.log |awk <span class="hljs-string">&#x27;&#123;print $1&#125;&#x27;</span>|<span class="hljs-built_in">sort</span>|<span class="hljs-built_in">uniq</span> -c |<span class="hljs-built_in">sort</span> -nr|<span class="hljs-built_in">head</span> -n 10<br></code></pre></td></tr></table></figure>
+
+<h5 id="这个命令的解释如下："><a href="#这个命令的解释如下：" class="headerlink" title="这个命令的解释如下："></a>这个命令的解释如下：</h5><ol>
+<li><h5 id="awk-print-1-access-log：使用awk命令从access-log文件中提取每行的第一个字段（即IP地址）。"><a href="#awk-print-1-access-log：使用awk命令从access-log文件中提取每行的第一个字段（即IP地址）。" class="headerlink" title="awk &#39;{print $1}&#39; access.log：使用awk命令从access.log文件中提取每行的第一个字段（即IP地址）。"></a><code>awk &#39;&#123;print $1&#125;&#39; access.log</code>：使用<code>awk</code>命令从<code>access.log</code>文件中提取每行的第一个字段（即IP地址）。</h5></li>
+<li><h5 id="sort：对提取出的IP地址进行排序。"><a href="#sort：对提取出的IP地址进行排序。" class="headerlink" title="sort：对提取出的IP地址进行排序。"></a><code>sort</code>：对提取出的IP地址进行排序。</h5></li>
+<li><h5 id="uniq-c：统计每个唯一IP地址的出现次数。"><a href="#uniq-c：统计每个唯一IP地址的出现次数。" class="headerlink" title="uniq -c：统计每个唯一IP地址的出现次数。"></a><code>uniq -c</code>：统计每个唯一IP地址的出现次数。</h5></li>
+<li><h5 id="sort-nr：按数字进行逆序排序，这样访问量最多的IP会排在最前面。"><a href="#sort-nr：按数字进行逆序排序，这样访问量最多的IP会排在最前面。" class="headerlink" title="sort -nr：按数字进行逆序排序，这样访问量最多的IP会排在最前面。"></a><code>sort -nr</code>：按数字进行逆序排序，这样访问量最多的IP会排在最前面。</h5></li>
+<li><h5 id="head-n-10：只显示前10行，即访问量最多的前10个IP。"><a href="#head-n-10：只显示前10行，即访问量最多的前10个IP。" class="headerlink" title="head -n 10：只显示前10行，即访问量最多的前10个IP。"></a><code>head -n 10</code>：只显示前10行，即访问量最多的前10个IP。</h5></li>
+</ol>
+<h5 id="请注意，这个命令假设你的Nginx日志文件名是access-log。如果你的日志文件名不同，请相应地替换文件名。此外，这个命令也假设你的日志格式与上面所示的默认格式相匹配。如果你的日志格式不同，你可能需要调整awk命令中的字段选择器。"><a href="#请注意，这个命令假设你的Nginx日志文件名是access-log。如果你的日志文件名不同，请相应地替换文件名。此外，这个命令也假设你的日志格式与上面所示的默认格式相匹配。如果你的日志格式不同，你可能需要调整awk命令中的字段选择器。" class="headerlink" title="请注意，这个命令假设你的Nginx日志文件名是access.log。如果你的日志文件名不同，请相应地替换文件名。此外，这个命令也假设你的日志格式与上面所示的默认格式相匹配。如果你的日志格式不同，你可能需要调整awk命令中的字段选择器。"></a>请注意，这个命令假设你的Nginx日志文件名是<code>access.log</code>。如果你的日志文件名不同，请相应地替换文件名。此外，这个命令也假设你的日志格式与上面所示的默认格式相匹配。如果你的日志格式不同，你可能需要调整<code>awk</code>命令中的字段选择器。</h5><h3 id="awk的-nf啥意思"><a href="#awk的-nf啥意思" class="headerlink" title="awk的 $nf啥意思"></a>awk的 $nf啥意思</h3><h5 id="在awk命令中，-n是一个字段引用，其中n是一个数字，表示当前行的第n个字段。awk默认使用空白字符（通常是空格或制表符）作为字段分隔符，因此-1、-2、-3等分别代表每行的第一个、第二个、第三个字段，依此类推。"><a href="#在awk命令中，-n是一个字段引用，其中n是一个数字，表示当前行的第n个字段。awk默认使用空白字符（通常是空格或制表符）作为字段分隔符，因此-1、-2、-3等分别代表每行的第一个、第二个、第三个字段，依此类推。" class="headerlink" title="在awk命令中，$n是一个字段引用，其中n是一个数字，表示当前行的第n个字段。awk默认使用空白字符（通常是空格或制表符）作为字段分隔符，因此$1、$2、$3等分别代表每行的第一个、第二个、第三个字段，依此类推。"></a>在<code>awk</code>命令中，<code>$n</code>是一个字段引用，其中<code>n</code>是一个数字，表示当前行的第<code>n</code>个字段。<code>awk</code>默认使用空白字符（通常是空格或制表符）作为字段分隔符，因此<code>$1</code>、<code>$2</code>、<code>$3</code>等分别代表每行的第一个、第二个、第三个字段，依此类推。</h5><h5 id="在处理Nginx的访问日志时，通常每个字段都是由特定的分隔符（如空格或特殊字符）分隔的。例如，在Nginx的默认日志格式中："><a href="#在处理Nginx的访问日志时，通常每个字段都是由特定的分隔符（如空格或特殊字符）分隔的。例如，在Nginx的默认日志格式中：" class="headerlink" title="在处理Nginx的访问日志时，通常每个字段都是由特定的分隔符（如空格或特殊字符）分隔的。例如，在Nginx的默认日志格式中："></a>在处理Nginx的访问日志时，通常每个字段都是由特定的分隔符（如空格或特殊字符）分隔的。例如，在Nginx的默认日志格式中：</h5><figure class="highlight accesslog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs accesslog">复制代码<br><br><span class="hljs-number">127.0.0.1</span> - - <span class="hljs-string">[10/Oct/2023:14:05:01 +0000]</span> <span class="hljs-string">&quot;<span class="hljs-keyword">GET</span> / HTTP/1.1&quot;</span> <span class="hljs-number">200</span> <span class="hljs-number">612</span> <span class="hljs-string">&quot;-&quot;</span> <span class="hljs-string">&quot;curl/7.68.0&quot;</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><h5 id="1-通常是客户端的IP地址。"><a href="#1-通常是客户端的IP地址。" class="headerlink" title="$1 通常是客户端的IP地址。"></a><code>$1</code> 通常是客户端的IP地址。</h5></li>
+<li><h5 id="2-通常是身份验证的用户名（在这个例子中是-，表示没有用户名）。"><a href="#2-通常是身份验证的用户名（在这个例子中是-，表示没有用户名）。" class="headerlink" title="$2 通常是身份验证的用户名（在这个例子中是 -，表示没有用户名）。"></a><code>$2</code> 通常是身份验证的用户名（在这个例子中是 <code>-</code>，表示没有用户名）。</h5></li>
+<li><h5 id="3-通常是用户的身份（通常也是-）。"><a href="#3-通常是用户的身份（通常也是-）。" class="headerlink" title="$3 通常是用户的身份（通常也是 -）。"></a><code>$3</code> 通常是用户的身份（通常也是 <code>-</code>）。</h5></li>
+<li><h5 id="4-是请求时间。"><a href="#4-是请求时间。" class="headerlink" title="$4 是请求时间。"></a><code>$4</code> 是请求时间。</h5></li>
+<li><h5 id="5-是请求行（例如-GET-HTTP-1-1-）。"><a href="#5-是请求行（例如-GET-HTTP-1-1-）。" class="headerlink" title="$5 是请求行（例如 &quot;GET / HTTP/1.1&quot;）。"></a><code>$5</code> 是请求行（例如 <code>&quot;GET / HTTP/1.1&quot;</code>）。</h5></li>
+<li><h5 id="6-是响应状态码（例如-200）。"><a href="#6-是响应状态码（例如-200）。" class="headerlink" title="$6 是响应状态码（例如 200）。"></a><code>$6</code> 是响应状态码（例如 <code>200</code>）。</h5></li>
+<li><h5 id="7-是响应体的大小（例如-612）。"><a href="#7-是响应体的大小（例如-612）。" class="headerlink" title="$7 是响应体的大小（例如 612）。"></a><code>$7</code> 是响应体的大小（例如 <code>612</code>）。</h5></li>
+<li><h5 id="后续的字段可能包括引用页、用户代理等。"><a href="#后续的字段可能包括引用页、用户代理等。" class="headerlink" title="后续的字段可能包括引用页、用户代理等。"></a>后续的字段可能包括引用页、用户代理等。</h5></li>
+</ul>
+<h5 id="当你使用awk-print-1-access-log时，你正在告诉awk打印出每一行的第一个字段，即客户端的IP地址。"><a href="#当你使用awk-print-1-access-log时，你正在告诉awk打印出每一行的第一个字段，即客户端的IP地址。" class="headerlink" title="当你使用awk &#39;{print $1}&#39; access.log时，你正在告诉awk打印出每一行的第一个字段，即客户端的IP地址。"></a>当你使用<code>awk &#39;&#123;print $1&#125;&#39; access.log</code>时，你正在告诉<code>awk</code>打印出每一行的第一个字段，即客户端的IP地址。</h5><h5 id="awk也允许你通过-F选项来指定一个不同的字段分隔符。例如，如果Nginx日志使用不同的分隔符，你可以这样指定："><a href="#awk也允许你通过-F选项来指定一个不同的字段分隔符。例如，如果Nginx日志使用不同的分隔符，你可以这样指定：" class="headerlink" title="awk也允许你通过-F选项来指定一个不同的字段分隔符。例如，如果Nginx日志使用不同的分隔符，你可以这样指定："></a><code>awk</code>也允许你通过<code>-F</code>选项来指定一个不同的字段分隔符。例如，如果Nginx日志使用不同的分隔符，你可以这样指定：</h5><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">bash复制代码<br><br>awk -F<span class="hljs-string">&#x27; &#x27;</span> <span class="hljs-string">&#x27;&#123;print $1&#125;&#x27;</span> access.log<br></code></pre></td></tr></table></figure>
+
+<p>这里的<code>-F&#39; &#39;</code>告诉<code>awk</code>使用空格作为字段分隔符。但是，请注意，Nginx日志中的时间戳通常包含在方括号内，这可能会影响字段的计数。如果时间戳是一个字段，并且你想跳过它，你可能需要使用更复杂的<code>awk</code>脚本或者不同的方法来处理日志。</p>
+<p>如果你需要处理更复杂的日志格式，你可能需要调整<code>awk</code>脚本，以正确解析和提取所需的字段。例如，你可以使用正则表达式来匹配和提取特定的字段，或者调整字段分隔符以匹配日志中的实际格式。</p>
+<h3 id="bash-正常返回啥"><a href="#bash-正常返回啥" class="headerlink" title="bash 正常返回啥"></a>bash 正常返回啥</h3><h5 id="在-Bash-脚本或命令行中，一个命令“正常返回”通常意味着该命令执行成功并且没有错误。当命令成功执行时，它会返回一个退出状态码（exit-status-code），这个状态码通常是一个介于-0-到-255-之间的整数。在-Unix-和-Linux-系统中，约定俗成的是："><a href="#在-Bash-脚本或命令行中，一个命令“正常返回”通常意味着该命令执行成功并且没有错误。当命令成功执行时，它会返回一个退出状态码（exit-status-code），这个状态码通常是一个介于-0-到-255-之间的整数。在-Unix-和-Linux-系统中，约定俗成的是：" class="headerlink" title="在 Bash 脚本或命令行中，一个命令“正常返回”通常意味着该命令执行成功并且没有错误。当命令成功执行时，它会返回一个退出状态码（exit status code），这个状态码通常是一个介于 0 到 255 之间的整数。在 Unix 和 Linux 系统中，约定俗成的是："></a>在 Bash 脚本或命令行中，一个命令“正常返回”通常意味着该命令执行成功并且没有错误。当命令成功执行时，它会返回一个退出状态码（exit status code），这个状态码通常是一个介于 0 到 255 之间的整数。在 Unix 和 Linux 系统中，约定俗成的是：</h5><ul>
+<li><h5 id="退出状态码-0-表示命令执行成功。"><a href="#退出状态码-0-表示命令执行成功。" class="headerlink" title="退出状态码 0 表示命令执行成功。"></a><strong>退出状态码 0</strong> 表示命令执行成功。</h5></li>
+<li><h5 id="非零的退出状态码表示命令执行出错或遇到了某种问题。不同的非零状态码通常用于指示不同类型的错误。"><a href="#非零的退出状态码表示命令执行出错或遇到了某种问题。不同的非零状态码通常用于指示不同类型的错误。" class="headerlink" title="非零的退出状态码表示命令执行出错或遇到了某种问题。不同的非零状态码通常用于指示不同类型的错误。"></a>非零的退出状态码表示命令执行出错或遇到了某种问题。不同的非零状态码通常用于指示不同类型的错误。</h5></li>
+</ul>
+<h5 id="你可以使用-这个特殊变量来获取上一个命令的退出状态码。例如："><a href="#你可以使用-这个特殊变量来获取上一个命令的退出状态码。例如：" class="headerlink" title="你可以使用 $? 这个特殊变量来获取上一个命令的退出状态码。例如："></a>你可以使用 <code>$?</code> 这个特殊变量来获取上一个命令的退出状态码。例如：</h5><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-meta">#!/bin/bash  </span><br>  <br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;Running a command...&quot;</span>  <br><span class="hljs-built_in">ls</span> /nonexistentdirectory  <br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;Exit status: $?&quot;</span><br></code></pre></td></tr></table></figure>
+
+<h5 id="在这个脚本中，ls-nonexistentdirectory-命令会尝试列出一个不存在的目录的内容，这将导致一个错误，并返回一个非零的退出状态码。然后，echo-Exit-status-会打印出这个状态码。"><a href="#在这个脚本中，ls-nonexistentdirectory-命令会尝试列出一个不存在的目录的内容，这将导致一个错误，并返回一个非零的退出状态码。然后，echo-Exit-status-会打印出这个状态码。" class="headerlink" title="在这个脚本中，ls /nonexistentdirectory 命令会尝试列出一个不存在的目录的内容，这将导致一个错误，并返回一个非零的退出状态码。然后，echo &quot;Exit status: $?&quot; 会打印出这个状态码。"></a>在这个脚本中，<code>ls /nonexistentdirectory</code> 命令会尝试列出一个不存在的目录的内容，这将导致一个错误，并返回一个非零的退出状态码。然后，<code>echo &quot;Exit status: $?&quot;</code> 会打印出这个状态码。</h5><h5 id="通常，你不需要手动检查每个命令的退出状态码，因为-Bash-脚本会在遇到非零退出状态码时停止执行（除非你在脚本中使用了错误处理机制，如-set-e）。但是，在编写需要处理错误或根据不同退出状态码采取不同动作的复杂脚本时，了解和使用退出状态码是非常重要的。"><a href="#通常，你不需要手动检查每个命令的退出状态码，因为-Bash-脚本会在遇到非零退出状态码时停止执行（除非你在脚本中使用了错误处理机制，如-set-e）。但是，在编写需要处理错误或根据不同退出状态码采取不同动作的复杂脚本时，了解和使用退出状态码是非常重要的。" class="headerlink" title="通常，你不需要手动检查每个命令的退出状态码，因为 Bash 脚本会在遇到非零退出状态码时停止执行（除非你在脚本中使用了错误处理机制，如 set -e）。但是，在编写需要处理错误或根据不同退出状态码采取不同动作的复杂脚本时，了解和使用退出状态码是非常重要的。"></a>通常，你不需要手动检查每个命令的退出状态码，因为 Bash 脚本会在遇到非零退出状态码时停止执行（除非你在脚本中使用了错误处理机制，如 <code>set -e</code>）。但是，在编写需要处理错误或根据不同退出状态码采取不同动作的复杂脚本时，了解和使用退出状态码是非常重要的。</h5><h5 id="此外，有些命令可能会返回特定的非零状态码来表示不同类型的错误。例如，grep-命令在找不到匹配项时会返回-1，而在遇到其他错误时会返回不同的值。因此，理解你正在使用的命令的文档，以了解它们返回的不同状态码的含义，也是非常重要的。"><a href="#此外，有些命令可能会返回特定的非零状态码来表示不同类型的错误。例如，grep-命令在找不到匹配项时会返回-1，而在遇到其他错误时会返回不同的值。因此，理解你正在使用的命令的文档，以了解它们返回的不同状态码的含义，也是非常重要的。" class="headerlink" title="此外，有些命令可能会返回特定的非零状态码来表示不同类型的错误。例如，grep 命令在找不到匹配项时会返回 1，而在遇到其他错误时会返回不同的值。因此，理解你正在使用的命令的文档，以了解它们返回的不同状态码的含义，也是非常重要的。"></a>此外，有些命令可能会返回特定的非零状态码来表示不同类型的错误。例如，<code>grep</code> 命令在找不到匹配项时会返回 1，而在遇到其他错误时会返回不同的值。因此，理解你正在使用的命令的文档，以了解它们返回的不同状态码的含义，也是非常重要的。</h5><h3 id="k8s创建pod的流程"><a href="#k8s创建pod的流程" class="headerlink" title="k8s创建pod的流程"></a>k8s创建pod的流程</h3><figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs markdown"><span class="hljs-bullet">1.</span> 客户端提交 Pod 的配置信息(可以是 yaml 文件定义的信息)到 kube-apiserver.<br><br><span class="hljs-bullet">2.</span> Apiserver 收到指令后,通知 controllr-manager 创建一个资源对象<br><br><span class="hljs-bullet">3.</span> controller-manager 通过 apiserver 将 pod 的配置信息存储到 ETCD 数据中心中<br><br><span class="hljs-bullet">4.</span> kube-scheduler 检查到 pod 信息会开始调度预选,会先过滤不符合 Pod 资源配置要求的节点,然后开始调度调优,主要是挑选出更适合运行的 pod 节点,然后将 pod 的资源配置单发送到 node 节点上的 kubelet 组件上<br><br><span class="hljs-bullet">5.</span>  kubelet 根据 scheduler 发来的资源配置单运行 pod,运行成功后,将 pod 的运行的信息返回 scheduler, scheduler 将返回的 pod 运行状况的信息存储到 etcd 数据中心<br></code></pre></td></tr></table></figure>
+
+
+
+<h3 id="dockerfile的copy和add的区别"><a href="#dockerfile的copy和add的区别" class="headerlink" title="dockerfile的copy和add的区别"></a>dockerfile的copy和add的区别</h3><figure class="highlight oxygene"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs oxygene">Dockerfile中的<span class="hljs-keyword">COPY</span>和<span class="hljs-keyword">ADD</span>指令都用于将文件或目录从构建上下文复制到容器中，但它们之间存在一些关键区别：<br><br>解压缩功能：<br><span class="hljs-keyword">COPY</span>指令仅用于复制本地文件到镜像，不涉及解压缩操作。<br><span class="hljs-keyword">ADD</span>指令除了复制文件外，还具有自动解压缩的功能。如果源路径为URL地址或压缩文件，<span class="hljs-keyword">ADD</span>会尝试自动解压缩文件到目标路径。这意味着使用<span class="hljs-keyword">ADD</span>时，如果源文件是压缩格式（如tar.gz），它会在复制过程中自动解压。<br>源文件来源：<br><span class="hljs-keyword">COPY</span>指令只能从执行docker build所在的主机上读取资源并复制到镜像中。<br><span class="hljs-keyword">ADD</span>指令除了能够复制本地文件和目录外，还支持通过URL从远程服务器读取资源并复制到镜像中。这使得<span class="hljs-keyword">ADD</span>在需要从外部源获取文件时非常有用。<br>目录创建：<br><span class="hljs-keyword">ADD</span>指令在复制文件时，如果目标路径不存在，则会自动创建目标路径。而<span class="hljs-keyword">COPY</span>指令没有这个自动创建路径的功能。<br>最佳实践：<br>由于<span class="hljs-keyword">COPY</span>指令更简单且直接，通常推荐在只需要复制本地文件到容器中的情况下使用<span class="hljs-keyword">COPY</span>，这样可以避免意外的解压缩行为，也更符合直觉。<br>multistage构建：<br>在multistage构建的场景中，<span class="hljs-keyword">COPY</span>指令具有特定的用法。它可以将前一阶段构建的产物拷贝到另一个镜像中。这是<span class="hljs-keyword">ADD</span>指令所不具备的功能。<br>综上所述，<span class="hljs-keyword">COPY</span>和<span class="hljs-keyword">ADD</span>指令在Dockerfile中各有其独特之处，选择使用哪个指令取决于具体的需求和场景。在大多数情况下，如果只需要复制本地文件且不需要解压缩或远程获取文件，<span class="hljs-keyword">COPY</span>指令是更好的选择。然而，如果需要从远程URL获取文件或自动解压缩压缩文件，那么<span class="hljs-keyword">ADD</span>指令将更为合适。<br></code></pre></td></tr></table></figure>
+
+
+
+<h4 id="helm-chart的包怎么打？"><a href="#helm-chart的包怎么打？" class="headerlink" title="helm chart的包怎么打？"></a>helm chart的包怎么打？</h4><figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs vim">Helm Chart包的打包过程可以通过以下步骤完成：<br><br>安装Helm工具。<br>创建一个新的目录，作为Helm包的根目录。<br>在根目录中创建一个Chart.yaml文件，用于存储Helm包的元数据。<br>在根目录中创建一个templates目录，用于存储Kubernetes资源的模板文件。这些模板文件可以包括各种Kubernetes资源的定义，例如Deployment、Service等。<br>在templates目录中编写需要的Kubernetes资源模板文件。这些文件使用Go模板语言编写，可以根据需要引用<span class="hljs-built_in">values</span>.yaml文件中的变量。<br>使用Helm工具将模板文件打包成Chart包。这可以通过执行helm package <span class="hljs-symbol">&lt;chart_path&gt;</span>命令完成，其中<span class="hljs-symbol">&lt;chart_path&gt;</span>是包含Chart.yaml和templates目录的Helm包路径。<br>打包完成后，你就得到了一个Helm Chart包，它包含了所有用于部署Kubernetes应用的必要文件和模板。你可以将这个包发布到Helm Chart仓库中，以便其他人使用，或者使用Helm工具将其安装到Kubernetes集群中。<br><br>请注意，这只是一个基本的打包过程，实际的步骤可能会根据你的具体需求和Helm的版本有所不同。因此，在打包Helm Chart包之前，建议查阅Helm的官方文档或相关教程以获取更详细和准确的信息。<br></code></pre></td></tr></table></figure>
+
+<h3 id="http的504错误"><a href="#http的504错误" class="headerlink" title="http的504错误"></a>http的504错误</h3><figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs awk"><span class="hljs-number">504</span>错误代表网关超时 （Gateway timeout），是指服务器作为网关或代理，但是没有及时从上游服务器收到请求。这通常意味着上游服务器已关闭（不响应网关 <span class="hljs-regexp">/ 代理），而不是上游服务器和网关/</span>代理在交换数据的协议上不一致。<br><br>首先，了解什么是网关。<br><br>网络的基本概念：<br><br>客户端:应用 C<span class="hljs-regexp">/S（客户端/</span>服务器） B<span class="hljs-regexp">/S（浏览器/</span>服务器）<br><br>服务器：为客户端提供服务、数据、资源的机器<br><br>请求：客户端向服务器索取数据<br><br>响应：服务器对客户端请求作出反应，一般是返回给客户端数据<br><br>在这之中，把nginx或Apache作为网关。一般服务的架构是：用PHP则是nginx+php的一系列进程，Apache+tomcat+JVM。<br><br>网关超时就与nginx或Apache配置的超时时间，和与php线程、java线程的响应时间有关。以nginx与PHP为例：它的超时配置fastcgi_connect_timeout、fastcgi_send_timeout、fastcgi_read_timeout。nginx将请求丢给PHP来处理，某个PHP的线程响应时间假如是<span class="hljs-number">10</span>s，在<span class="hljs-number">10</span>s内没有响应给nginx就报超时。这时可以打开PHP慢日志记录，然后排查之。<br><br>另外，数据库的慢查询也会导致<span class="hljs-number">504</span> 。nginx只要进程没有死，一般不是nginx的问题。假如场景是：确定程序执行是正确的，比如向数据库插入大量数据，需要<span class="hljs-number">5</span>分钟，nginx设置的超时时间是<span class="hljs-number">3</span>分钟。这时候可以将超时时间临时设置为大于<span class="hljs-number">5</span>分钟。<br><br></code></pre></td></tr></table></figure>
+
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>面试0308 2024-04-03 14:57:53.576</div>
+      <div>http://example.com/2025/01/16/面试0308-mian-shi-0308/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E6%9C%89%E8%BF%993%E4%B8%AA%E8%BF%B9%E8%B1%A1%EF%BC%8C%E4%BD%A0%E5%B0%B1%E8%AF%A5%E7%A6%BB%E8%81%8C%E4%BA%86-you-zhe-3-ge-ji-xiang--ni-jiu-gai-li-zhi-le/" title="有这3个迹象，你就该离职了 2023-09-21 16:00:22.432">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">有这3个迹象，你就该离职了 2023-09-21 16:00:22.432</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E4%BD%BF%E7%94%A8%20Keepalived%20%E5%92%8C%20HAproxy%20%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8%20Kubernetes%20%E9%9B%86%E7%BE%A4-shi-yong-keepalived-he-haproxy-chuang-jian-gao-ke-yong-kubernetes-ji-qun/" title="使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群 2023-04-12 04:04:09.458">
+                        <span class="hidden-mobile">使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群 2023-04-12 04:04:09.458</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

@@ -1,0 +1,1257 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="一文学会Calico网络自定义一、确定最佳的网络选项Calico支持多个容器网络选项，用于可伸缩性、网络性能和与现有基础设施的互操作性。 1. 值不同的网络实现更适合不同的环境。Calico提供了几种不需要封装的基于IP路由的网络实现。如果您的部署需要封装，Calico提供覆盖网络(IP in IP或VXLAN)。Calico还支持使用其他Kubernetes网络选项来执行策略。本文档帮助您为集群">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Calico网络自定义 2024-04-03 15:08:43.394">
+<meta property="og:url" content="http://example.com/2025/01/16/Calico%E7%BD%91%E7%BB%9C%E8%87%AA%E5%AE%9A%E4%B9%89-calico-wang-luo-zi-ding-yi/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="一文学会Calico网络自定义一、确定最佳的网络选项Calico支持多个容器网络选项，用于可伸缩性、网络性能和与现有基础设施的互操作性。 1. 值不同的网络实现更适合不同的环境。Calico提供了几种不需要封装的基于IP路由的网络实现。如果您的部署需要封装，Calico提供覆盖网络(IP in IP或VXLAN)。Calico还支持使用其他Kubernetes网络选项来执行策略。本文档帮助您为集群">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301203127.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301203545.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301202386.webp">
+<meta property="og:image" content="https://pic3.zhimg.com/80/v2-0e507f0e4280c97401d9e0f15fb13cb2_720w.webp">
+<meta property="og:image" content="https://pic3.zhimg.com/80/v2-c317c0e8bb9d9a7a94b0db7aa7798856_720w.webp">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309555.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309969.webp">
+<meta property="og:image" content="https://pic3.zhimg.com/80/v2-01b13e0b942ce3efc8924711339ef77e_720w.webp">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309475.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309471.webp">
+<meta property="og:image" content="https://pic1.zhimg.com/80/v2-58f0a09c739dd5f2c9613d5de23b010c_720w.webp">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309957.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309217.webp">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309104.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309853.png">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309990.webp">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309015.webp">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309122.webp">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309271.webp">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309330.webp">
+<meta property="og:image" content="https://pic3.zhimg.com/80/v2-fa85f864b2350f86b434c70628722be2_720w.webp">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309406.webp">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309451.webp">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309472.webp">
+<meta property="og:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309552.png">
+<meta property="article:published_time" content="2025-01-16T02:08:28.040Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:18.550Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301203127.png">
+  
+  
+  
+  <title>Calico网络自定义 2024-04-03 15:08:43.394 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Calico网络自定义 2024-04-03 15:08:43.394"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          12k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          97 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Calico网络自定义 2024-04-03 15:08:43.394</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="一文学会Calico网络自定义"><a href="#一文学会Calico网络自定义" class="headerlink" title="一文学会Calico网络自定义"></a>一文学会Calico网络自定义</h1><h1 id="一、确定最佳的网络选项"><a href="#一、确定最佳的网络选项" class="headerlink" title="一、确定最佳的网络选项"></a>一、确定最佳的网络选项</h1><p>Calico支持多个容器网络选项，用于可伸缩性、网络性能和与现有基础设施的互操作性。</p>
+<h4 id="1-值"><a href="#1-值" class="headerlink" title="1. 值"></a>1. 值</h4><p>不同的网络实现更适合不同的环境。Calico提供了几种不需要封装的基于IP路由的网络实现。如果您的部署需要封装，Calico提供覆盖网络(IP in IP或VXLAN)。Calico还支持使用其他Kubernetes网络选项来执行策略。本文档帮助您为集群选择最佳的网络选项。</p>
+<h4 id="2-概念"><a href="#2-概念" class="headerlink" title="2. 概念"></a>2. 概念</h4><h5 id="2-1-关于calico-networking"><a href="#2-1-关于calico-networking" class="headerlink" title="2.1 关于calico networking"></a>2.1 关于calico networking</h5><p>Calico提供了一些方法，允许pod连接到其他pod、主机和外部网络(例如internet)。</p>
+<p>Calico网络：</p>
+<ul>
+<li>使用Calico的IP地址管理(IPAM)将IP地址分配给pods</li>
+<li>编写本地节点的路由表</li>
+<li>将路由分配给其他节点和网络设备</li>
+</ul>
+<h5 id="2-2-关于BGP"><a href="#2-2-关于BGP" class="headerlink" title="2.2 关于BGP"></a>2.2 关于BGP</h5><p>Calico支持使用边界网关协议(BGP)将路由信息共享到网络中。Calico支持节点到节点的全网格部署(有和没有路由反射器)，以及BGP直接对机架(ToR)路由器顶部的现场部署;允许流量直接路由到工作负载，而不需要NAT或封装。</p>
+<h5 id="2-3-其它Kubernetes-网络选项"><a href="#2-3-其它Kubernetes-网络选项" class="headerlink" title="2.3 其它Kubernetes 网络选项"></a>2.3 其它Kubernetes 网络选项</h5><p>Calico可以使用许多其他Kubernetes网络选项执行网络策略强制。</p>
+<ul>
+<li>Flannel</li>
+<li>Amazon AWS VPC CNI</li>
+<li>Azure CNI</li>
+<li>Google cloud networking</li>
+</ul>
+<p>下表显示了使用Calico时常见的网络选项。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301203127.png" srcset="/img/loading.gif" lazyload alt="image-20230630120304024"></p>
+<p>网络选项</p>
+<h4 id="3-基本说明"><a href="#3-基本说明" class="headerlink" title="3. 基本说明"></a>3. 基本说明</h4><p>本节提供更多关于Calico的内置网络选项的细节:</p>
+<ul>
+<li>Unencapsulated, peered with physical infrastructure</li>
+<li>Unencapsulated, not peered with physical infrastructure</li>
+<li>IP in IP or VXLAN encapsulation</li>
+</ul>
+<h5 id="3-1-Unencapsulated-peered-with-physical-infrastructure"><a href="#3-1-Unencapsulated-peered-with-physical-infrastructure" class="headerlink" title="3.1 Unencapsulated, peered with physical infrastructure"></a>3.1 Unencapsulated, peered with physical infrastructure</h5><p>Calico可以与你的路由器使用BGP对等。这提供了出色的性能和易于调试的非封装流量，以及广泛的网络拓扑和连接选项。</p>
+<ul>
+<li>您的集群可以跨越多个L2子网，而不需要封装</li>
+<li>集群外的资源可以直接与pod通信，而不需要NAT</li>
+<li>如果你想的话，你甚至可以把pod直接暴露在互联网上!</li>
+</ul>
+<h5 id="3-2-Unencapsulated-not-peered-with-physical-infrastructure"><a href="#3-2-Unencapsulated-not-peered-with-physical-infrastructure" class="headerlink" title="3.2 Unencapsulated, not peered with physical infrastructure"></a>3.2 Unencapsulated, not peered with physical infrastructure</h5><p>此选项还提供了接近主机到主机的性能级别，并允许网络直接看到流量。</p>
+<p>当所有节点都在一个L2子网上时，如果底层网络不强制执行IP地址检查，Calico可以在节点之间路由pod流量，而不需要封装。如果您的网络由多个L2子网组成，那么您可以使用路由器在BGP上进行对等，或者使用跨子网封装来仅封装跨子网边界的流量。</p>
+<p>如果不允许在集群外部进行工作负载访问或使用基础设施进行对等访问，就无法在pod和不属于Calico集群的目的地之间路由流量。</p>
+<h5 id="3-3-IP-in-IP-or-VXLAN-encapsulation"><a href="#3-3-IP-in-IP-or-VXLAN-encapsulation" class="headerlink" title="3.3 IP in IP or VXLAN encapsulation"></a>3.3 IP in IP or VXLAN encapsulation</h5><p>如果可能，我们建议运行Calico没有网络覆盖&#x2F;封装。这提供了最高的性能和最简单的网络;离开您的工作负载的包是连接到网络上的包。</p>
+<p>但是，当运行在底层网络上时，有选择地使用覆盖(IP中的IP或VXLAN中的IP)是非常有用的，因为底层网络不容易知道工作负载IP。Calico可以对:所有的流量，没有流量，或者只对跨越子网边界的流量进行封装。</p>
+<p>IP中的IP或VXLAN封装也可以在子网之间选择性地使用——这提供了子网中未封装的流量的性能优势，适用于织物包含多个L2网络且无法进行对等连接的环境。例如，如果您在AWS中跨多个VPC&#x2F;子网使用Calico网络，Calico可以选择性地只封装在VPC&#x2F;子网之间路由的流量，而不封装在每个VPC&#x2F;子网中运行。</p>
+<h1 id="二、配置BGP路由反射及对等体"><a href="#二、配置BGP路由反射及对等体" class="headerlink" title="二、配置BGP路由反射及对等体"></a>二、配置BGP路由反射及对等体</h1><h4 id="1-BGP协议配置"><a href="#1-BGP协议配置" class="headerlink" title="1. BGP协议配置"></a>1. BGP协议配置</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs shell">apiVersion: projectcalico.org/v3<br>kind: BGPConfiguration<br>metadata:<br>  name: default<br>spec:<br>  logSeverityScreen: Info<br>  nodeToNodeMeshEnabled: true<br>  asNumber: 63400<br>  serviceClusterIPs:<br>  - cidr: 10.96.0.0/12<br>  serviceExternalIPs:<br>  - cidr: 192.168.20.99/32<br></code></pre></td></tr></table></figure>
+
+<h4 id="2-关闭默认的BGP-node-to-node-mesh"><a href="#2-关闭默认的BGP-node-to-node-mesh" class="headerlink" title="2. 关闭默认的BGP node-to-node mesh"></a>2. 关闭默认的BGP node-to-node mesh</h4><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301203545.png" srcset="/img/loading.gif" lazyload alt="image-20230630120324478"></p>
+<p>BGP网格</p>
+<p>缺省的节点到节点的BGP网格必须关闭，以启用其他BGP拓扑。为此，修改默认的BGP配置资源。</p>
+<ul>
+<li>运行下面的命令去关闭BGP full-mesh</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">calicoctl patch bgpconfiguration default -p &#x27;&#123;&quot;spec&quot;: &#123;&quot;nodeToNodeMeshEnabled&quot;: false&#125;&#125;&#x27;<br></code></pre></td></tr></table></figure>
+
+<h4 id="2-配置全局的-BGP-对等体"><a href="#2-配置全局的-BGP-对等体" class="headerlink" title="2. 配置全局的 BGP 对等体"></a>2. 配置全局的 BGP 对等体</h4><ul>
+<li>下面的示例创建一个全局BGP对等点，它将每个Calico节点配置为在AS 64567中使用192.20.30.40的对等点。</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs shell">apiVersion: projectcalico.org/v3<br>kind: BGPPeer<br>metadata:<br>  name: my-global-peer<br>spec:<br>  peerIP: 192.20.30.40<br>  asNumber: 64567<br></code></pre></td></tr></table></figure>
+
+<h4 id="3-配置每节点的-BGP-peer"><a href="#3-配置每节点的-BGP-peer" class="headerlink" title="3. 配置每节点的 BGP peer"></a>3. 配置每节点的 BGP peer</h4><p>每个节点的BGP对等点应用于集群中的一个或多个节点。您可以通过精确地指定节点的名称或使用标签选择器来选择节点。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs shell">apiVersion: projectcalico.org/v3<br>kind: BGPPeer<br>metadata:<br>  name: rack1-tor<br>spec:<br>  peerIP: 192.20.30.40<br>  asNumber: 64567<br>  nodeSelector: rack == ‘rack-1’<br></code></pre></td></tr></table></figure>
+
+<h4 id="4-配置node作为路由反射器"><a href="#4-配置node作为路由反射器" class="headerlink" title="4. 配置node作为路由反射器"></a>4. 配置node作为路由反射器</h4><p>Calico 可以配置扮演成一个路由反射器。每个节点要充当路由反射器必须有一个集群ID——通常一个未使用的IPv4地址。</p>
+<ul>
+<li>配置一个节点作为路由反射器，有个集群ID 244.0.0.1， 运行如下命令：</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">calicoctl patch node c76085.xiodi.cn -p &#x27;&#123;&quot;spec&quot;: &#123;&quot;bgp&quot;: &#123;&quot;routeReflectorClusterID&quot;: &quot;244.0.0.1&quot;&#125;&#125;&#125;&#x27;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>常规情况下，给这个节点打上标签，标明这个是路由反射器。允许它更容易通过BGPPeer resource选择。</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">kubectl label node c76085.xiodi.cn route-reflector=true<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>现在使用标签器很容易配置路由反射器节点和非路由反射器节点。比如：</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs shell">kind: BGPPeer<br>apiVersion: projectcalico.org/v3<br>metadata:<br>  name: peer-with-route-reflectors<br>spec:<br>  nodeSelector: all()<br>  peerSelector: route-reflector == &#x27;true&#x27;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>针对一个节点查看BGP peering 状态<br>您可以使用calicoctl查看一个特定节点的边界网关协议连接的当前状态。这是用于确认您的配置是根据需要的行为。</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">sudo calicoctl node status<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>改变默认的global AS number</li>
+</ul>
+<p>默认的，所有的calico 节点使用64512 autonomous system, 除非特殊指定。下面的命令把它改成64513.</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">calicoctl patch bgpconfiguration default -p &#x27;&#123;&quot;spec&quot;: &#123;&quot;asNumber&quot;: “64513”&#125;&#125;&#x27;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>针对特定的节点改变AS number,如下所示</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">calicoctl patch node node-1 -p &#x27;&#123;&quot;spec&quot;: &#123;&quot;bgp&quot;: &#123;“asNumber”: “64514”&#125;&#125;&#125;&#x27;<br></code></pre></td></tr></table></figure>
+
+<h1 id="三、IPinIP模式"><a href="#三、IPinIP模式" class="headerlink" title="三、IPinIP模式"></a>三、IPinIP模式</h1><p>您可以配置每个IP池不同封装配置。然而,你不能一个IP池内混合封装类型。</p>
+<ul>
+<li>Configure IP in IP encapsulation for only cross subnet traffic</li>
+<li>Configure IP in IP encapsulation for all inter workload traffic</li>
+<li>Configure VXLAN encapsulation for only cross subnet traffic</li>
+<li>Configure VXLAN encapsulation for all inter workload traffic</li>
+</ul>
+<ol>
+<li>IPv4&#x2F;6 地址支持</li>
+</ol>
+<p>IP in IP和 VXLAN只支持IPv4地址。</p>
+<ol>
+<li>最佳实践</li>
+</ol>
+<p>Calico 只有一个选项来选择性地封装流量 ,跨越子网边界。我们建议使用<code>IP in IP</code>的<code>cross subnet</code>选项把开销降到最低。</p>
+<p>注意：切换封装模式会导到正在连接的进程中断。</p>
+<ol>
+<li>针对仅跨子网的流量配置IP in IP</li>
+</ol>
+<p>IP in IP封装可以选择性的执行， 并且仅用于通过子网边界的通信量 。</p>
+<p>开启这个功能，设置<code>ipipMode</code>为<code>CrossSubnet</code></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs shell">apiVersion: projectcalico.org/v3<br>kind: IPPool<br>metadata:<br>  name: ippool-ipip-cross-subnet-1<br>spec:<br>  cidr: 192.168.0.0/16<br>  ipipMode: CrossSubnet<br>  natOutgoing: true<br></code></pre></td></tr></table></figure>
+
+<ol>
+<li>针对workload间的流量配置IP in IP的封装</li>
+</ol>
+<figure class="highlight autohotkey"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs autohotkey">ipipMode`设置`Always<br></code></pre></td></tr></table></figure>
+
+
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs shell">apiVersion: projectcalico.org/v3<br>kind: IPPool<br>metadata:<br>  name: ippool-ipip-1<br>spec:<br>  cidr: 192.168.0.0/16<br>  ipipMode: Always<br>  natOutgoing: true<br></code></pre></td></tr></table></figure>
+
+<h1 id="四、vxlan两种模式解析"><a href="#四、vxlan两种模式解析" class="headerlink" title="四、vxlan两种模式解析"></a>四、vxlan两种模式解析</h1><ol>
+<li>针对仅跨越子网的流量 ，配置VXLAN封装</li>
+</ol>
+<ul>
+<li>配置这个功能，设置vxlanMode为<code>CrossSubnet</code></li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs shell">apiVersion: projectcalico.org/v3<br>kind: IPPool<br>metadata:<br>  name: ippool-vxlan-cross-subnet-1<br>spec:<br>  cidr: 192.168.0.0/16<br>  vxlanMode: CrossSubnet<br>  natOutgoing: true<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>针对workload间的流量 配置VXLAN的封装</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs shell">apiVersion: projectcalico.org/v3<br>kind: IPPool<br>metadata:<br>  name: ippool-vxlan-1<br>spec:<br>  cidr: 192.168.0.0/16<br>  vxlanMode: Always<br>  natOutgoing: true<br></code></pre></td></tr></table></figure>
+
+<h1 id="五、通过Mtu增加网络性能"><a href="#五、通过Mtu增加网络性能" class="headerlink" title="五、通过Mtu增加网络性能"></a>五、通过Mtu增加网络性能</h1><h4 id="1-确定MTU的大小"><a href="#1-确定MTU的大小" class="headerlink" title="1. 确定MTU的大小"></a>1. 确定MTU的大小</h4><p>下表针对Calico环境列出了常见的MTU大小。 因为MTU是endpoints间网络路径的全局属性， 你应该设定最低MTU的MTU包可能需要的任何路径。</p>
+<h5 id="1-1-常见的MTU大小"><a href="#1-1-常见的MTU大小" class="headerlink" title="1.1 常见的MTU大小"></a>1.1 常见的MTU大小</h5><table>
+<thead>
+<tr>
+<th>Network MTU</th>
+<th>Calico MTU</th>
+<th>Calico MTU with IP-in-IP (IPv4)</th>
+<th>Calico MTU with VXLAN (IPv4)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1500</td>
+<td>1500</td>
+<td>1480</td>
+<td>1450</td>
+</tr>
+<tr>
+<td>9000</td>
+<td>9000</td>
+<td>8980</td>
+<td>8950</td>
+</tr>
+<tr>
+<td>1460(GCE)</td>
+<td>1460</td>
+<td>1440</td>
+<td>1410</td>
+</tr>
+<tr>
+<td>9001(AWS jumbo)</td>
+<td>9001</td>
+<td>8981</td>
+<td>8951</td>
+</tr>
+<tr>
+<td>1450(OpenStack VXLAN)</td>
+<td>1450</td>
+<td>1430</td>
+<td>1400</td>
+</tr>
+</tbody></table>
+<h5 id="1-2-针对overlay网络推荐的MTU"><a href="#1-2-针对overlay网络推荐的MTU" class="headerlink" title="1.2 针对overlay网络推荐的MTU"></a>1.2 针对overlay网络推荐的MTU</h5><p>额外的报头用于在IP和VXLAN IP协议,降低了最小的MTU大小头。在IP使用20-byte头(IP, VXLAN使用50-byte头)。因此,我们建议如下:</p>
+<ul>
+<li>如果你使用在Pod网络使用VXLAN,配置MTU大小“物理网络MTU大小- 50”。</li>
+<li>假如你使用<code>IP in IP</code>, 配置MTU大小为“物理网络大小-20”</li>
+<li>workload endpoint MTU和 tunnel MTU设置为相同的值。</li>
+</ul>
+<h5 id="1-3-针对flannel网络的MTU"><a href="#1-3-针对flannel网络的MTU" class="headerlink" title="1.3 针对flannel网络的MTU"></a>1.3 针对flannel网络的MTU</h5><p>当使用flannel的网络时，网络接口的MTU应该匹配flannel接口的MTU。 假如使用flannel的VXLAN， 使用上面的<code>calico MTU with VXLAN</code>列的大小。</p>
+<h4 id="2-配置MTU针对workloads"><a href="#2-配置MTU针对workloads" class="headerlink" title="2. 配置MTU针对workloads"></a>2. 配置MTU针对workloads</h4><p>当你设置MTU,它适用于新工作负载。MTU变化应用于现有的工作负载,必须重新启动calico nodes。</p>
+<ul>
+<li>编辑calico-config ConfigMap FelixConfiguration设置值。例如:</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">kubectl patch configmap/Calico-config -n kube-system --type merge \<br>  -p &#x27;&#123;&quot;data&quot;:&#123;&quot;veth_mtu&quot;: &quot;1440&quot;&#125;&#125;&#x27;<br></code></pre></td></tr></table></figure>
+
+<h4 id="3-针对overlay-网络配置MTU"><a href="#3-针对overlay-网络配置MTU" class="headerlink" title="3. 针对overlay 网络配置MTU"></a>3. 针对overlay 网络配置MTU</h4><p>如果您使用的是IP in IP和&#x2F;或VXLAN calico overlay 网络,设置隧道MTU匹配veth MTU配置的值。</p>
+<ul>
+<li>编辑calico-config ConfigMap设置MTU在FelixConfiguration隧道值。例如:</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_"># </span><span class="language-bash">Configure the MTU to use</span><br>veth_mtu: &quot;1440&quot; <br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>查看当前tunnel MTU值</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">ip link show<br></code></pre></td></tr></table></figure>
+
+<p>IP在IP隧道作为tunlx出现(例如,tunl0),连同MTU大小。例如:</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301202386.webp" srcset="/img/loading.gif" lazyload alt="img"></p>
+<p>mtu</p>
+<h1 id="六、calico网络地址转换"><a href="#六、calico网络地址转换" class="headerlink" title="六、calico网络地址转换"></a>六、calico网络地址转换</h1><h4 id="1-允许workloads-访问-internet，私有IP地址"><a href="#1-允许workloads-访问-internet，私有IP地址" class="headerlink" title="1. 允许workloads 访问 internet，私有IP地址"></a>1. 允许workloads 访问 internet，私有IP地址</h4><p>允许工作负载使用私有IP地址访问互联网,你可以用你现有NAT功能,或者你可以在Calico IPPool上开启natOutgoing。</p>
+<p>在以下的示例中,我们创建一个Calicco IPPool，并开启natOutgoing 。Outbound NAT是在节点本地执行的。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs shell">apiVersion: projectcalico.org/v3<br>kind: IPPool<br>metadata:<br>  name: default-ipv4-ippool<br>spec:<br>  cidr: 192.168.0.0/16<br>  natOutgoing: true<br></code></pre></td></tr></table></figure>
+
+<h4 id="2-仅去nat那些指定的IP地址范围"><a href="#2-仅去nat那些指定的IP地址范围" class="headerlink" title="2. 仅去nat那些指定的IP地址范围"></a>2. 仅去nat那些指定的IP地址范围</h4><p>您可以创建额外的IPPools不用于IP地址管理,防止NAT某些CIDR块。这是有用的,如果你想让节点NAT网络流量,但不是在某些内部ip范围。例如,如果您不想NAT流量10.0.0.0&#x2F;8,您可以创建以下池。您必须确保集群之间的网络和10.0.0.0&#x2F;8可路由。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs shell">apiVersion: projectcalico.org/v3<br>kind: IPPool<br>metadata:<br>  name: no-nat-10.0.0.0-8<br>spec:<br>  cidr: 10.0.0.0/8<br>  disabled: true<br></code></pre></td></tr></table></figure>
+
+<h1 id="七、IP地址检测剖析"><a href="#七、IP地址检测剖析" class="headerlink" title="七、IP地址检测剖析"></a>七、IP地址检测剖析</h1><p>针对calico节点配置IP自动检测，确保路由使用正确的P地址。</p>
+<h4 id="1-值-1"><a href="#1-值-1" class="headerlink" title="1. 值"></a>1. 值</h4><p>当你安装Calico在一个节点上时，一个IP地址和子网被自动检测。Calico提供几种方式去配置子网自动检测，和支持配置指定的IPs。</p>
+<ul>
+<li>拥有多个外部接口的主机</li>
+<li>主机接口拥有多个IP地址</li>
+<li>改变跨子网包的封装</li>
+<li>改变主机IP地址</li>
+</ul>
+<h4 id="2-概念-1"><a href="#2-概念-1" class="headerlink" title="2. 概念"></a>2. 概念</h4><h5 id="2-1-自动检测节点IP地址和子网"><a href="#2-1-自动检测节点IP地址和子网" class="headerlink" title="2.1 自动检测节点IP地址和子网"></a>2.1 自动检测节点IP地址和子网</h5><p>针对节点间的路由，每个calico节点必须配置一个IPv4地址 和&#x2F;或 一个IPV6地址，当安装一个calico在一个节点上时，一个节点资源使用从主机检测到的路由信息自动创建。针对一些部署，你可能想要自动的更新检测，确保节点获取正确的IP地址。</p>
+<ul>
+<li>在安装后默认的节点资源案例</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs shell">apiVersion: projectcalico.org/v3<br>kind: Node<br>metadata:<br>  name: node-hostname<br>spec:<br>  bgp:<br>    asNumber: 64512<br>    ipv4Address: 10.244.0.1/24<br>    ipv6Address: 2000:db8:85a3::8a2e:370:7335/120<br>    ipv4IPIPTunnelAddr: 192.168.0.1<br></code></pre></td></tr></table></figure>
+
+<h5 id="2-2-自动检测方法"><a href="#2-2-自动检测方法" class="headerlink" title="2.2 自动检测方法"></a>2.2 自动检测方法</h5><p>默认的，Calico使用<code>first-found</code>方法，也就是说第一个接口第一个有效的IP地址（排除local interface，因为它是docker bridge）.你可以使用以下方法的任一一种改变默认方法。</p>
+<p>（1）使用一个能到达特定IP或domain的地址。</p>
+<p>（2）使用正则的方式，去匹配接口（interface)</p>
+<p>（3）使用正则的方式，去排除匹配的接口（skip interface）</p>
+<h5 id="2-3-手动配置IP地址和子网"><a href="#2-3-手动配置IP地址和子网" class="headerlink" title="2.3 手动配置IP地址和子网"></a>2.3 手动配置IP地址和子网</h5><ul>
+<li>有两种方式去手动的配置IP地址和子网</li>
+</ul>
+<p>(1) calico node container(start&#x2F;restart),使用环境变量去设置节点的值</p>
+<p>(2) 更新节点的资源</p>
+<ul>
+<li>使用环境变量和节点的资源</li>
+</ul>
+<p>因为你可以通过配置环境变量和节点资源，去更改IP地址和子网，下表描述了这些值如何同步的。</p>
+<table>
+<thead>
+<tr>
+<th>If this environment variable…</th>
+<th>Is…</th>
+<th>Then…</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>IP&#x2F;IP6</td>
+<td>Explicitly set</td>
+<td>The specified values are used, and the Node resource is updated.</td>
+</tr>
+<tr>
+<td></td>
+<td>Set to autodetect</td>
+<td>The requested method is used (first-found, can-reach, interface, skip-interface), and the Node resource is updated.</td>
+</tr>
+<tr>
+<td></td>
+<td>Not set, but Node resource has IP&#x2F;IP6 values</td>
+<td>Node resource value is used.</td>
+</tr>
+<tr>
+<td>IP</td>
+<td>Not set, and there is no IP value in Node resource</td>
+<td>Autodetects an IPv4 address and subnet, and updates Node resource.</td>
+</tr>
+<tr>
+<td>IP6</td>
+<td>Not set, and there is a notIP6 value in Node resource</td>
+<td>No IP6 routing is performed on the node。</td>
+</tr>
+</tbody></table>
+<h4 id="3-动作"><a href="#3-动作" class="headerlink" title="3. 动作"></a>3. 动作</h4><h5 id="3-1-改变自动检测方法"><a href="#3-1-改变自动检测方法" class="headerlink" title="3.1 改变自动检测方法"></a>3.1 改变自动检测方法</h5><p>由于默认的自动检测方法是<code>first valid interface found</code>(first-found). 去使用不同的自动检测方法，使用<code>kubectl set env</code>命令指定方法。</p>
+<ul>
+<li>IPv4</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=&lt;autodetection-method&gt;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>IPv6</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">kubectl set env daemonset/calico-node -n kube-system IP6_AUTODETECTION_METHOD=&lt;autodetection-method&gt;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>设置检测方法基于情况</li>
+</ul>
+<p>（1）IP 或 domain name</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=can-reach=www.google.com<br></code></pre></td></tr></table></figure>
+
+<p>（2）包含匹配的接口</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=interface=eth.*<br></code></pre></td></tr></table></figure>
+
+<p>（3）排除匹配的接口</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=skip-interface=eth.*<br></code></pre></td></tr></table></figure>
+
+<h5 id="3-2-针对节点手动配置IP地址和子网"><a href="#3-2-针对节点手动配置IP地址和子网" class="headerlink" title="3.2 针对节点手动配置IP地址和子网"></a>3.2 针对节点手动配置IP地址和子网</h5><p>在下列情况下,您可能需要配置一个特定的IP子网:</p>
+<ul>
+<li>主机拥有多个外部的接口</li>
+<li>主机接口拥有多个IP地址</li>
+<li>改变跨子网数据包的封装</li>
+<li>改变主机IP地址</li>
+</ul>
+<ol>
+<li>使用环境变量配置IP和子网</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">kubectl set env daemonset/calico-node -n kube-system IP=10.0.2.10/24 IP6=fd80:24e2:f998:72d6::/120<br></code></pre></td></tr></table></figure>
+
+<ol>
+<li>使用节点资源配置IP和子网</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">calicoctl patch node kind-control-plane \<br>  --patch=&#x27;&#123;&quot;spec&quot;:&#123;&quot;bgp&quot;: &#123;&quot;ipv4Address&quot;: &quot;10.0.2.10/24&quot;, &quot;ipv6Address&quot;: &quot;fd80:24e2:f998:72d6::/120&quot;&#125;&#125;&#125;&#x27;<br></code></pre></td></tr></table></figure>
+
+<p>八、IP地址及封装模式切换<br>针对安装Calico到kubernetes集群中的每个节点，每个manifest包含所有需要的资源。</p>
+<p>它安装如下的kubernetes资源：</p>
+<ul>
+<li>在每个主机上使用Daemonset的方式安装<code>calico/node</code>容器。</li>
+<li>在每个主机上使用Daemonset的方式安装Calico CNI和网络的配置。</li>
+<li>使用deployment的方式运行<code>calico/kube-controllers</code></li>
+<li><code>calico-etcd-secrets</code>secret, 它提供到etcd存储的TLS.</li>
+<li><code>calico-config</code> ConfigMap. 它包含安装配置的参数。</li>
+</ul>
+<h4 id="1-配置pod-IP-范围"><a href="#1-配置pod-IP-范围" class="headerlink" title="1. 配置pod IP 范围"></a>1. 配置pod IP 范围</h4><p>Calico IPAM从IP pools中分配 IP地址。</p>
+<p>如果要修改pods使用的默认IP地址范围，那么修改calico.yaml清单中的<code>CALICO_IPV4POOL_CIDR</code>。</p>
+<h4 id="2-配置IP-in-IP"><a href="#2-配置IP-in-IP" class="headerlink" title="2. 配置IP-in-IP"></a>2. 配置IP-in-IP</h4><p>默认情况下，清单支持跨子网的IP-in-IP封装。许多用户可能希望禁用IP-in-IP封装，例如在以下情况下。</p>
+<ul>
+<li>他们的集群运行在正确配置的AWS VPC中。</li>
+<li>它们的所有Kubernetes节点都连接到同一个第2层网络。</li>
+<li>他们打算使用BGP peer，使他们的基础设施意识到pod IP地址。</li>
+</ul>
+<p>如果要关闭IP-in-IP的封装，修改清单中的<code>CALICO-IPV4POOL_IPIP</code>.</p>
+<h4 id="3-从IP-in-IP到VXLAN的切换"><a href="#3-从IP-in-IP到VXLAN的切换" class="headerlink" title="3. 从IP-in-IP到VXLAN的切换"></a>3. 从IP-in-IP到VXLAN的切换</h4><p>默认情况下，Calico清单支持IP-in-IP封装。如果您所在的网络阻塞了ip中的ip，比如Azure，您可能希望切换到Calico的VXLAN封装模式。要做到这一点，在安装时(以便Calico创建默认的IP池与VXLAN和没有IP-in-IP配置必须撤消):</p>
+<ul>
+<li>启动<code>calico for policy and networking</code> 清单</li>
+<li>使用<code>CALICO_IPV4POOL_VXLAN</code>取代<code>CALICO_IPV4POOL_IPIP</code>的名字。新的变量值同样保持为<br><code>Always</code></li>
+<li>完全的关闭Calico的基于BGP网络：<ul>
+<li>使用<code>calico_backend: &quot;vxlan&quot;</code> 代替<code>calico_backend: &quot;bird&quot;</code>. 此步是关闭BIRD。</li>
+<li>从calico&#x2F;node readiness&#x2F;liveness check中注释掉<code>--bird-ready</code>和<code>bird-live</code>行。（否则关闭BIRD，将会导致readniess&#x2F;liveness检查失败）</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs shell">livenessProbe:<br>  exec:<br>    command:<br>    - /bin/calico-node<br>    - -felix-live<br><span class="hljs-meta prompt_">   # </span><span class="language-bash">- -bird-live</span><br>readinessProbe:<br>  exec:<br>    command:<br>    - /bin/calico-node<br>    # - -bird-ready<br>    - -felix-ready<br></code></pre></td></tr></table></figure>
+
+<h1 id="k8s-操作"><a href="#k8s-操作" class="headerlink" title="k8s 操作"></a>k8s 操作</h1><h3 id="1-取消k8s-master节点不可调度"><a href="#1-取消k8s-master节点不可调度" class="headerlink" title="1.取消k8s master节点不可调度"></a>1.取消k8s master节点不可调度</h3><figure class="highlight crmsh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs crmsh">kubectl taint nodes k8s-<span class="hljs-keyword">master</span> <span class="hljs-title">node-role</span>.kubernetes.io/<span class="hljs-literal">master</span>:NoSchedule-<br></code></pre></td></tr></table></figure>
+
+
+
+
+
+
+
+<p>目录<br> <strong>Calico简介<br> Calico 网络Node之间通信网络<br> Calico网络模型主要工作组件</strong><br> 示例1:安装calico<br> <strong>calicoctl命令安装与使用</strong><br> 示例2:修改BGP网络</p>
+<h3 id="Calico简介"><a href="#Calico简介" class="headerlink" title="Calico简介"></a>Calico简介</h3><p>Calico 是一种容器之间互通的网络方案。在虚拟化平台中，比如 OpenStack、Docker 等都需要实现 workloads 之间互连，但同时也需要对容器做隔离控制，就像在 Internet 中的服务仅开放80端口、公有云的多租户一样，提供隔离和管控机制。而在多数的虚拟化平台实现中，通常都使用二层隔离技术来实现容器的网络，这些二层的技术有一些弊端，比如需要依赖 VLAN、bridge 和隧道等技术，其中 bridge 带来了复杂性，vlan 隔离和 tunnel 隧道则消耗更多的资源并对物理环境有要求，随着网络规模的增大，整体会变得越加复杂。我们尝试把 Host 当作 Internet 中的路由器，同样使用 BGP 同步路由，并使用 iptables 来做安全访问策略，最终设计出了 Calico 方案。</p>
+<p><strong>设计思想</strong>：Calico 不使用隧道或 NAT 来实现转发，而是巧妙的把所有二三层流量转换成三层流量，并通过 host 上路由配置完成跨 Host 转发</p>
+<h4 id="设计优势："><a href="#设计优势：" class="headerlink" title="设计优势："></a>设计优势：</h4><p>1.更优的资源利用<br> 二层网络通讯需要依赖广播消息机制，广播消息的开销与 host 的数量呈指数级增长，Calico 使用的三层路由方法，则完全抑制了二层广播，减少了资源开销。</p>
+<p>2.可扩展性<br> Calico 使用与 Internet 类似的方案，Internet 的网络比任何数据中心都大，Calico 同样天然具有可扩展性。</p>
+<p>3.简单而更容易 debug<br> 因为没有隧道，意味着 workloads 之间路径更短更简单，配置更少，在 host 上更容易进行 debug 调试。</p>
+<p>4.更少的依赖<br> Calico 仅依赖三层路由可达。</p>
+<p>5.可适配性<br> Calico 较少的依赖性使它能适配所有 VM、Container、白盒或者混合环境场景。</p>
+<h4 id="Calico-网络Node之间通信网络"><a href="#Calico-网络Node之间通信网络" class="headerlink" title="Calico 网络Node之间通信网络"></a>Calico 网络Node之间通信网络</h4><p><strong>IPIP(可跨网段通信)</strong><br> 从字面来理解，就是把一个IP数据包又套在一个IP包里，即把 IP 层封装到 IP 层的一个 tunnel。它的作用其实基本上就相当于一个基于IP层的网桥！一般来说，普通的网桥是基于mac层的，根本不需 IP，而这个 ipip 则是通过两端的路由做一个 tunnel，把两个本来不通的网络通过点对点连接起来。<br> 类似vxlan 但封装开销比vxlan小 效率相对更高一些，但安全性也更差</p>
+<p><strong>Vxlan(可跨网段通信)</strong><br> 与Flannel Vxlan原理相同</p>
+<p><strong>BGP(二层网络通信)</strong><br> 边界网关协议（Border Gateway Protocol, BGP）是互联网上一个核心的去中心化自治路由协议。它通过维护IP路由表或‘前缀’表来实现自治系统（AS）之间的可达性，属于矢量路由协议。BGP不使用传统的内部网关协议（IGP）的指标，而使用基于路径、网络策略或规则集来决定路由。因此，它更适合被称为矢量性协议，而不是路由协议。BGP，通俗的讲就是讲接入到机房的多条线路（如电信、联通、移动等）融合为一体，实现多线单IP，BGP 机房的优点：服务器只需要设置一个IP地址，最佳访问路由是由网络上的骨干路由器根据路由跳数与其它技术指标来确定的，不会占用服务器的任何系统<br> <strong>实际上，Calico 项目提供的 BGP 网络解决方案，与 Flannel 的 host-gw 模式几乎一样。也就是说，Calico也是基于路由表实现容器数据包转发，但不同于Flannel使用flanneld进程来维护路由信息的做法，而Calico项目使用BGP协议来自动维护整个集群的路由信息。</strong></p>
+<p><strong>部署推荐方案:</strong><br> BGP+Vxlan</p>
+<p><strong>其中BGP在官方的推荐方案中 以50个节点为界区别了不同规模使用不同的部署方案</strong></p>
+<ul>
+<li>小规模网络:BGP peer  一对一网络：每个节点都是有N-1条路由，小型网络适用，当节点数N变多时，路由表更新及AIP-SERVER都需要承受很大的压力 类似网络拓扑结构中的 网状拓扑结构</li>
+<li>大规模网络:BGP Reflector 路由反射器：选择一到多个节点做为Reflector，所有节点路由都汇总给Reflector，所有节点都路由都指向Reflector ，适合大型网络，类似网络拓扑结构中的星型网络</li>
+</ul>
+<h3 id="Calico网络模型主要工作组件："><a href="#Calico网络模型主要工作组件：" class="headerlink" title="Calico网络模型主要工作组件：###"></a>Calico网络模型主要工作组件：###</h3><ol>
+<li>Felix：运行在每一台 Host 的 agent 进程，主要负责网络接口管理和监听、路由、ARP 管理、ACL 管理和同步、状态上报等。</li>
+<li>etcd：分布式键值存储，主要负责网络元数据一致性，确保Calico网络状态的准确性，可以与kubernetes共用；</li>
+<li>BGP Client（BIRD）：Calico 为每一台 Host 部署一个 BGP Client，使用 BIRD 实现，BIRD 是一个单独的持续发展的项目，实现了众多动态路由协议比如 BGP、OSPF、RIP 等。在 Calico 的角色是监听 Host 上由 Felix 注入的路由信息，然后通过 BGP 协议广播告诉剩余 Host 节点，从而实现网络互通。</li>
+<li>BGP Route Reflector：在大型网络规模中，如果仅仅使用 BGP client 形成 mesh 全网互联的方案就会导致规模限制，因为所有节点之间俩俩互联，需要 N^2 个连接，为了解决这个规模问题，可以采用 BGP 的 Router Reflector 的方法，使所有 BGP Client 仅与特定 RR 节点互联并做路由同步，从而大大减少连接数。</li>
+</ol>
+<h4 id="Calico有两种运行方式，"><a href="#Calico有两种运行方式，" class="headerlink" title="Calico有两种运行方式，"></a>Calico有两种运行方式，</h4><ol>
+<li>是让calico&#x2F;node独立运行于Kubernetes集群之外，但calico&#x2F;kube-controllers依然需要以Pod资源运行中集群之上;</li>
+<li>是以CNI插件方式配置Calico完全托管运行于Kubernetes集群之上，类似于我们前面曾经部署托管Flannel网络插件的方式。<br>对于后一种方式,Calico提供了在线的部署清单，它分别为50节点及以下规模和50节点以上规模的Kubernetes集群使用Kubernetes API作为Dabastore提供了不同的配置清单，也为使用独立的etcd集群提供了专用配置清单。但这3种类型的配置清单中,Calico默认启用的是基于IPIP隧道的叠加网络，因而它会在所有流量上使用IPIP隧道而不是BGP路由。以下配置定义在部署清单中DaemonSet&#x2F;calico-node资源的Pod模板中的calico-node容器之上。</li>
+</ol>
+<p><strong>配置选项</strong><br> 在IPv4类型的地址池上启用的IPIP及其类型，支持3种可用值<br> Always(全局流量)、Cross-SubNet(跨子网流量)和Never3种可用值</p>
+<ul>
+<li>name: CALICO_IPV4POOL_IPIP<br>value: “Always”</li>
+<li>是否在IPV4地址池上启用VXLAN隧道协议，取值及意义与Flannel的VXLAN后端相同;但在全局流量启用VXLAN时将完全不再需要BGP网络，建议将相关的组件禁用</li>
+<li>name: CALICO_ IPV4POOL_VXLAN<br>value: “Never”</li>
+<li>需要注意的是，Calico分配的地址池需要同Ktbernetes集群的Pod网络的定义保持一致。Pod网络通常由kubeadm init初始化集群时使用–pod-network-cidr选项指定的网络，而Calico在其默认的配置清单中默认使用192.168.0.0&#x2F;16作为Pod网络，因而部署Kubernetes集群时应该规划好要使用的网络地址，并设定此二者相匹配。对于曾经使用了flannel的默认的10.244.0.0&#x2F;16网络的环境而言,我们也可以选择修改资源清单中的定义，从而将其修改为其他网络地址,它定义在DaemonSet&#x2F;calico-node资源的Pod模板中的calico-node容器之上。</li>
+</ul>
+<p>官网链接：</p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://links.jianshu.com/go?to=https://docs.projectcalico.org/getting-started/kubernetes/self-managed-onprem/onpremises">https://docs.projectcalico.org/getting-started/kubernetes/self-managed-onprem/onpremises</a></p>
+</blockquote>
+<h5 id="示例1-安装calico"><a href="#示例1-安装calico" class="headerlink" title="示例1:安装calico"></a>示例1:安装calico</h5><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><code class="hljs shell">wget https://docs.projectcalico.org/manifests/calico.yaml<br><br>[root@k8s-master ~]# cd /etc/kubernetes/manifests/<br>[root@k8s-master manifests]# cat kube-controller-manager.yaml <br>...<br>System Info:<br>  Machine ID:                 32599e2a74704b2e95443e24ea15d4f6<br>  System UUID:                34979a62-16de-4287-b149-2d4c2d8a70fb<br>  Boot ID:                    f31de60e-4f89-4553-ba7a-99a46d049936<br>  Kernel Version:             5.4.109-1.el7.elrepo.x86_64<br>  OS Image:                   CentOS Linux 7 (Core)<br>  Operating System:           linux<br>  Architecture:               amd64<br>  Container Runtime Version:  docker://20.10.7<br>  Kubelet Version:            v1.19.9<br>  Kube-Proxy Version:         v1.19.9<br>PodCIDR:                      10.244.1.0/24  #第个节点的地址块都是由K8S分配<br>PodCIDRs:                     10.244.1.0/24   <br>Non-terminated Pods:          (17 in total)<br><br>[root@k8s-master ~]# kubectl describe node k8s-node1<br>System Info:<br>  Machine ID:                 32599e2a74704b2e95443e24ea15d4f6<br>  System UUID:                34979a62-16de-4287-b149-2d4c2d8a70fb<br>  Boot ID:                    f31de60e-4f89-4553-ba7a-99a46d049936<br>  Kernel Version:             5.4.109-1.el7.elrepo.x86_64<br>  OS Image:                   CentOS Linux 7 (Core)<br>  Operating System:           linux<br>  Architecture:               amd64<br>  Container Runtime Version:  docker://20.10.7<br>  Kubelet Version:            v1.19.9<br>  Kube-Proxy Version:         v1.19.9<br>PodCIDR:                      10.244.1.0/24   #每个Node Pod都是由K8S分配IP<br>PodCIDRs:                     10.244.1.0/24<br><br>[root@k8s-master Network]# vim calico.yaml<br>...<br> &quot;ipam&quot;: &#123;<br>              &quot;type&quot;: &quot;host-local&quot;,<br>              &quot;subnet&quot;: &quot;usePodCidr&quot;   #使用k8s ipam插件分配地址 <br>          &#125;,<br>          &quot;policy&quot;: &#123;<br>              &quot;type&quot;: &quot;k8s&quot;<br>          &#125;,<br><br>...<br>- name: FELIX_WIREGUARDMTU<br>              valueFrom:<br>                configMapKeyRef:<br>                  name: calico-config<br>                  key: veth_mtu<br>            # The default IPv4 pool to create on startup if none exists. Pod IPs will be<br>            # chosen from this range. Changing this value after installation will have<br>            # no effect. This should fall within `--cluster-cidr`.<br>            - name: CALICO_IPV4POOL_CIDR<br>              value: &quot;10.244.0.0/16&quot;  #为了和之前的flannel 10.244.0.0/16适配<br>            - name: CALICO_IPV4POOL_BLOCK_SIZE  #添加这一行修改默认块大小<br>              value: &quot;24&quot;<br>            - name: USE_POD_CIDR  #使用K8S的分配的IP地址，不然calico和K8S分配的地址会不一样<br>              value: &quot;true&quot;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>安装calico</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><code class="hljs shell">[root@k8s-master plugin]# kubectl delete -f kube-flannel.yml<br>podsecuritypolicy.policy &quot;psp.flannel.unprivileged&quot; deleted<br>clusterrole.rbac.authorization.k8s.io &quot;flannel&quot; deleted<br>clusterrolebinding.rbac.authorization.k8s.io &quot;flannel&quot; deleted<br>serviceaccount &quot;flannel&quot; deleted<br>configmap &quot;kube-flannel-cfg&quot; deleted<br>daemonset.apps &quot;kube-flannel-ds&quot; deleted<br><br>[root@k8s-master plugin]# kubectl apply -f calico.yaml <br>configmap/calico-config created<br>customresourcedefinition.apiextensions.k8s.io/bgpconfigurations.crd.projectcalico.org created<br>customresourcedefinition.apiextensions.k8s.io/bgppeers.crd.projectcalico.org created<br>customresourcedefinition.apiextensions.k8s.io/blockaffinities.crd.projectcalico.org created<br>customresourcedefinition.apiextensions.k8s.io/clusterinformations.crd.projectcalico.org created<br>customresourcedefinition.apiextensions.k8s.io/felixconfigurations.crd.projectcalico.org created<br>customresourcedefinition.apiextensions.k8s.io/globalnetworkpolicies.crd.projectcalico.org created<br>customresourcedefinition.apiextensions.k8s.io/globalnetworksets.crd.projectcalico.org created<br>customresourcedefinition.apiextensions.k8s.io/hostendpoints.crd.projectcalico.org created<br>customresourcedefinition.apiextensions.k8s.io/ipamblocks.crd.projectcalico.org created<br>customresourcedefinition.apiextensions.k8s.io/ipamconfigs.crd.projectcalico.org created<br>customresourcedefinition.apiextensions.k8s.io/ipamhandles.crd.projectcalico.org created<br>customresourcedefinition.apiextensions.k8s.io/ippools.crd.projectcalico.org created<br>customresourcedefinition.apiextensions.k8s.io/kubecontrollersconfigurations.crd.projectcalico.org created<br>customresourcedefinition.apiextensions.k8s.io/networkpolicies.crd.projectcalico.org created<br>customresourcedefinition.apiextensions.k8s.io/networksets.crd.projectcalico.org created<br>clusterrole.rbac.authorization.k8s.io/calico-kube-controllers created<br>clusterrolebinding.rbac.authorization.k8s.io/calico-kube-controllers created<br>clusterrole.rbac.authorization.k8s.io/calico-node created<br>clusterrolebinding.rbac.authorization.k8s.io/calico-node created<br>daemonset.apps/calico-node created<br>serviceaccount/calico-node created<br>deployment.apps/calico-kube-controllers created<br>serviceaccount/calico-kube-controllers created<br>poddisruptionbudget.policy/calico-kube-controllers created<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>calico几个组件</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs shell">[root@k8s-master ~]# ps aux|grep calico<br>root     10867  0.0  0.1 112816  2156 pts/1    S+   13:51   0:00 grep --color=auto calico<br>root     20680  0.0  2.3 1215184 35216 ?       Sl   10:27   0:06 calico-node -allocate-tunnel-addrs<br>root     20681  0.0  2.1 1215184 32672 ?       Sl   10:27   0:06 calico-node -monitor-addresses<br>root     20682  2.4  3.3 1510624 51636 ?       Sl   10:27   4:54 calico-node -felix<br>root     20683  0.0  2.3 1657832 35496 ?       Sl   10:27   0:09 calico-node -confd<br>root     20686  0.0  2.0 1214928 31628 ?       Sl   10:27   0:05 calico-node -monitor-token<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>因为calico并没有使用k8s的ipam分配IP,所以节点会有2个IP,一个是K8S分配的IP 一个是calico分配的IP</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs shell">Kernel IP routing table<br>Destination     Gateway         Genmask         Flags Metric Ref    Use Iface<br>0.0.0.0         192.168.54.2    0.0.0.0         UG    101    0        0 eth4<br>172.17.0.0      0.0.0.0         255.255.0.0     U     0      0        0 docker0<br>192.168.4.0     0.0.0.0         255.255.255.0   U     100    0        0 eth0<br>192.168.12.0    192.168.4.172   255.255.255.0   UG    0      0        0 tunl0  #可以看到tunl0的路由信息<br>192.168.51.0    192.168.4.173   255.255.255.0   UG    0      0        0 tunl0  #同时可以看到节点的IP不像之前一定是连续的<br>192.168.54.0    0.0.0.0         255.255.255.0   U     101    0        0 eth4<br>192.168.113.0   192.168.4.171   255.255.255.0   UG    0      0        0 tunl0  #隧道接口<br>192.168.237.0   0.0.0.0         255.255.255.0   U     0      0        0 *<br>192.168.237.1   0.0.0.0         255.255.255.255 UH    0      0        0 cali7c0fb624285<br>192.168.237.2   0.0.0.0         255.255.255.255 UH    0      0        0 caliedaf285d4ef<br>192.168.237.3   0.0.0.0         255.255.255.255 UH    0      0        0 cali854da94d42a<br><br><br>[root@k8s-master calico]# ip route list<br>default via 192.168.54.2 dev eth4 proto static metric 101 <br>172.17.0.0/16 dev docker0 proto kernel scope link src 172.17.0.1 linkdown <br>192.168.4.0/24 dev eth0 proto kernel scope link src 192.168.4.170 metric 100 <br>192.168.12.0/24 via 192.168.4.172 dev tunl0 proto bird onlink   #可以看到tunl0的路由信息<br>192.168.51.0/24 via 192.168.4.173 dev tunl0 proto bird onlink    <br>192.168.54.0/24 dev eth4 proto kernel scope link src 192.168.54.170 metric 101 <br>192.168.113.0/24 via 192.168.4.171 dev tunl0 proto bird onlink <br>blackhole 192.168.237.0/24 proto bird <br>192.168.237.1 dev cali7c0fb624285 scope link <br>192.168.237.2 dev caliedaf285d4ef scope link <br>192.168.237.3 dev cali854da94d42a scope link <br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>192.168.51.0&#x2F;24 via 192.168.4.173 dev tunl0 proto bird onlink 下面的路由表可以看到 calico会为每个节点分配网络地址段 并不是使用节点的网络地址</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs shell">[root@k8s-node1 ~]# ip route list<br>default via 192.168.54.2 dev eth4 proto static metric 101 <br>172.17.0.0/16 dev docker0 proto kernel scope link src 172.17.0.1 linkdown <br>192.168.4.0/24 dev eth0 proto kernel scope link src 192.168.4.171 metric 100 <br>192.168.12.0/24 via 192.168.4.172 dev tunl0 proto bird onlink <br>192.168.51.0/24 via 192.168.4.173 dev tunl0 proto bird onlink <br>192.168.54.0/24 dev eth4 proto kernel scope link src 192.168.54.171 metric 101 <br>blackhole 192.168.113.0/24 proto bird   #黑洞 代表自己网段 <br>192.168.237.0/24 via 192.168.4.170 dev tunl0 proto bird onlink<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>查看目前工作模式</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs shell">[root@k8s-master calico]# kubectl api-resources<br>NAME                              SHORTNAMES   APIGROUP                       NAMESPACED   KIND<br>bgpconfigurations                              crd.projectcalico.org          false        BGPConfiguration<br>bgppeers                                       crd.projectcalico.org          false        BGPPeer<br>blockaffinities                                crd.projectcalico.org          false        BlockAffinity<br>clusterinformations                            crd.projectcalico.org          false        ClusterInformation<br>felixconfigurations                            crd.projectcalico.org          false        FelixConfiguration<br>globalnetworkpolicies                          crd.projectcalico.org          false        GlobalNetworkPolicy<br>globalnetworksets                              crd.projectcalico.org          false        GlobalNetworkSet<br>hostendpoints                                  crd.projectcalico.org          false        HostEndpoint<br>ipamblocks                                     crd.projectcalico.org          false        IPAMBlock<br>ipamconfigs                                    crd.projectcalico.org          false        IPAMConfig<br>ipamhandles                                    crd.projectcalico.org          false        IPAMHandle<br>ippools                                        crd.projectcalico.org          false        IPPool  #calico地址池<br>kubecontrollersconfigurations                  crd.projectcalico.org          false        KubeControllersConfiguration<br>networkpolicies                                crd.projectcalico.org          true         NetworkPolicy<br>networksets                                    crd.projectcalico.org          true         NetworkSet<br><br><br>[root@k8s-master calico]# kubectl get  ippools -o yaml<br>....<br>  spec:<br>    blockSize: 24   #掩码长度<br>    cidr: 192.168.0.0/16  #地址池<br>    ipipMode: Always      #可以看到目前为ipip模式<br>    natOutgoing: true<br>    nodeSelector: all()<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>访问抓包</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><code class="hljs shell">[root@k8s-master PodControl]# kubectl get pod -o wide<br>NAME                              READY   STATUS    RESTARTS   AGE    IP             NODE        NOMINATED NODE   READINESS GATES<br>deployment-demo-fb544c5d8-r7pc8   1/1     Running   0          8m3s   192.168.51.1   k8s-node3   &lt;none&gt;           &lt;none&gt;<br>deployment-demo-fb544c5d8-splfr   1/1     Running   0          8m3s   192.168.12.1   k8s-node2   &lt;none&gt;           &lt;none&gt;<br>[root@k8s-master PodControl]# kubectl exec deployment-demo-fb544c5d8-r7pc8 -it -- /bin/sh<br>[root@deployment-demo-fb544c5d8-r7pc8 /]# ifconfig<br>eth0      Link encap:Ethernet  HWaddr 16:96:97:3F:F3:C5  <br>          inet addr:192.168.51.1  Bcast:192.168.51.1  Mask:255.255.255.255<br>          UP BROADCAST RUNNING MULTICAST  MTU:1480  Metric:1<br>          RX packets:0 errors:0 dropped:0 overruns:0 frame:0<br>          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0<br>          collisions:0 txqueuelen:0 <br>          RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)<br><br>lo        Link encap:Local Loopback  <br>          inet addr:127.0.0.1  Mask:255.0.0.0<br>          UP LOOPBACK RUNNING  MTU:65536  Metric:1<br>          RX packets:0 errors:0 dropped:0 overruns:0 frame:0<br>          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0<br>          collisions:0 txqueuelen:1000 <br>          RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)<br><br>[root@deployment-demo-fb544c5d8-r7pc8 /]# curl 192.168.12.1<br>iKubernetes demoapp v1.0 !! ClientIP: 192.168.51.1, ServerName: deployment-demo-fb544c5d8-splfr, ServerIP: 192.168.12.1!<br>[root@deployment-demo-fb544c5d8-r7pc8 /]# curl 192.168.12.1<br>iKubernetes demoapp v1.0 !! ClientIP: 192.168.51.1, ServerName: deployment-demo-fb544c5d8-splfr, ServerIP: 192.168.12.1!<br>[root@deployment-demo-fb544c5d8-r7pc8 /]# curl 192.168.12.1<br><br><br><br>[root@k8s-node2 ~]# tcpdump -i eth0 -nn ip host 192.168.4.172  and host 192.168.4.173<br>tcpdump: verbose output suppressed, use -v or -vv for full protocol decode<br>listening on eth0, link-type EN10MB (Ethernet), capture size 262144 bytes<br>11:48:24.421003 IP 192.168.4.173 &gt; 192.168.4.172: IP 192.168.51.1.33436 &gt; 192.168.12.1.80: Flags [S], seq 3259804851, win 64800, options [mss 1440,sackOK,TS val 2008488248 ecr 0,nop,wscale 7], length 0 (ipip-proto-4)<br>11:48:24.421093 IP 192.168.4.172 &gt; 192.168.4.173: IP 192.168.12.1.80 &gt; 192.168.51.1.33436: Flags [S.], seq 3234480084, ack 3259804852, win 64260, options [mss 1440,sackOK,TS val 1053230437 ecr 2008488248,nop,wscale 7], length 0 (ipip-proto-4)  #可以看到(ipip-proto-4)为IPIP模式<br>11:48:24.422305 IP 192.168.4.173 &gt; 192.168.4.172: IP 192.168.51.1.33436 &gt; 192.168.12.1.80: Flags [.], ack 1, win 507, options [nop,nop,TS val 2008488250 ecr 1053230437], length 0 (ipip-proto-4)<br>11:48:24.422308 IP 192.168.4.173 &gt; 192.168.4.172: IP 192.168.51.1.33436 &gt; 192.168.12.1.80: Flags [P.], seq 1:77, ack 1, win 507, options [nop,nop,TS val 2008488250 ecr 1053230437], length 76: HTTP: GET / HTTP/1.1 (ipip-proto-4)<br>11:48:24.422554 IP 192.168.4.172 &gt; 192.168.4.173: IP 192.168.12.1.80 &gt; 192.168.51.1.33436: Flags [.], ack 77, win 502, options [nop,nop,TS val 1053230439 ecr 2008488250], length 0 (ipip-proto-4)<br>11:48:24.431688 IP 192.168.4.172 &gt; 192.168.4.173: IP 192.168.12.1.80 &gt; 192.168.51.1.33436: Flags [P.], seq 1:18, ack 77, win 502, options [nop,nop,TS val 1053230447 ecr 2008488250], length 17: HTTP: HTTP/1.0 200 OK (ipip-proto-4)<br>11:48:24.432638 IP 192.168.4.172 &gt; 192.168.4.173: IP 192.168.12.1.80 &gt; 192.168.51.1.33436: Flags [FP.], seq 18:276, ack 77, win 502, options [nop,nop,TS val 1053230449 ecr 2008488250], length 258: HTTP (ipip-proto-4)<br>11:48:24.433660 IP 192.168.4.173 &gt; 192.168.4.172: IP 192.168.51.1.33436 &gt; 192.168.12.1.80: Flags [.], ack 18, win 507, options [nop,nop,TS val 2008488261 ecr 1053230447], length 0 (ipip-proto-4)<br>11:48:24.437531 IP 192.168.4.173 &gt; 192.168.4.172: IP 192.168.51.1.33436 &gt; 192.168.12.1.80: Flags [F.], seq 77, ack 277, win 505, options [nop,nop,TS val 2008488261 ecr 1053230449], length 0 (ipip-proto-4)<br>11:48:24.437775 IP 192.168.4.172 &gt; 192.168.4.173: IP 192.168.12.1.80 &gt; 192.168.51.1.33436: Flags [.], ack 78, win 502, options [nop,nop,TS val 1053230454 ecr 2008488261], length 0 (ipip-proto-4)<br>IP 192.168.4.172 &gt; 192.168.4.173: IP 192.168.12.1.80 &gt; 192.168.51.1.33436 <br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>可以看到默认为ipip模式 也是经过封装在转发的 和Flannel很类似,但相对Flannel经过虚拟网桥CNI calico直接内核(内核的路由由 kube-proxy或IPVS生成)到在由tunl0传输想对Flannel少了一层交换机交换的过程,性能相比Flannel会快一些 但这并不是calico最佳的模式</li>
+</ul>
+<h3 id="calicoctl命令安装与使用"><a href="#calicoctl命令安装与使用" class="headerlink" title="calicoctl命令安装与使用"></a>calicoctl命令安装与使用</h3><p><strong>calicoctl安装的2种方式<br> 第1种方式 calicoctl</strong></p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://links.jianshu.com/go?to=https://docs.projectcalico.org/getting-started/clis/calicoctl/install">https://docs.projectcalico.org/getting-started/clis/calicoctl/install</a></p>
+</blockquote>
+<ul>
+<li>几种方式运行calicoctl 常用方式1:直接下载2进制calicoctl 直接运行</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs shell">[root@k8s-master ~]# curl -o calicoctl -O -L  &quot;https://github.com/projectcalico/calicoctl/releases/download/v3.20.0/calicoctl&quot;<br><span class="hljs-meta prompt_">  % </span><span class="language-bash">Total    % Received % Xferd  Average Speed   Time    Time     Time  Current</span><br>                                 Dload  Upload   Total   Spent    Left  Speed<br>100   615  100   615    0     0    498      0  0:00:01  0:00:01 --:--:--   504<br>100 43.2M  100 43.2M    0     0   518k      0  0:01:25  0:01:25 --:--:--  920k<br><br>[root@k8s-master ~]# mv calicoctl /usr/bin/<br><br>[root@k8s-master ~]# chmod +x /usr/bin/calicoctl <br>[root@k8s-master ~]# calicoctl  --help<br>Usage:<br>  calicoctl [options] &lt;command&gt; [&lt;args&gt;...]<br><br>    create       Create a resource by file, directory or stdin.<br>    replace      Replace a resource by file, directory or stdin.<br>    apply        Apply a resource by file, directory or stdin.  This creates a resource<br>                 if it does not exist, and replaces a resource if it does exists.<br>    patch        Patch a pre-exisiting resource in place.<br>    delete       Delete a resource identified by file, directory, stdin or resource type and<br>                 name.<br>    get          Get a resource identified by file, directory, stdin or resource type and<br>                 name.<br>    label        Add or update labels of resources.<br>    convert      Convert config files between different API versions.<br>    ipam         IP address management.<br>    node         Calico node management.<br>    version      Display the version of this binary.<br>    export       Export the Calico datastore objects for migration<br>    import       Import the Calico datastore objects for migration<br>    datastore    Calico datastore management.<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>calicoctl 命令使用</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br></pre></td><td class="code"><pre><code class="hljs shell">- calicoctl 默认会读取 ~/.kube/下文件加载认证信息,也可以通过配置文件指定认证信息位置<br><br>[root@k8s-master calico]# mkdir /etc/calico/^C<br>[root@k8s-master calico]# cd /etc/calico/<br>[root@k8s-master calico]# cat calicoctl.cfg <br>apiVersion: projectcalico.org/v3<br>kind: CalicoAPIConfig<br>metadata:<br>spec:<br>  datastoreType: &quot;kubernetes&quot;<br>  kubeconfig: &quot;/etc/kubernetes/admin.conf&quot; #指定conf路径<br>[root@k8s-master calico]# <br><br>[root@k8s-master calico]# kubectl get ippools<br>NAME                  AGE<br>default-ipv4-ippool   23h<br>[root@k8s-master calico]# calicoctl get ippool  #可以用calicoctl直接访问 calico资源<br>NAME                  CIDR             SELECTOR   <br>default-ipv4-ippool   192.168.0.0/16   all() <br><br><br>[root@k8s-master calico]# calicoctl get ippool default-ipv4-ippool -o yaml<br>apiVersion: projectcalico.org/v3<br>kind: IPPool<br>metadata:<br>  creationTimestamp: &quot;2021-08-29T14:33:53Z&quot;<br>  name: default-ipv4-ippool<br>  resourceVersion: &quot;1305&quot;<br>  uid: c01d73f3-c0c9-4674-b27e-725a1eaa5717<br>spec:<br>  blockSize: 24<br>  cidr: 192.168.0.0/16<br>  ipipMode: Always<br>  natOutgoing: true<br>  nodeSelector: all()<br>  vxlanMode: Never<br><br><br>[root@k8s-master calico]# calicoctl ipam --help  <br>Usage:<br>  calicoctl [options] [&lt;args&gt;...]<br><br>Options:<br>  -h --help                 Show this screen.<br>  -c --config=&lt;config&gt;      Path to the file containing connection<br>                            configuration in YAML or JSON format.<br>                            [default: /etc/calico/calicoctl.cfg]<br>  --context=&lt;context&gt;       The name of the kubeconfig context to use.<br>  -a<br>  -A --all-namespaces<br>     --as=&lt;AS_NUM&gt;<br>     --backend=(bird|gobgp|none)<br>     --dryrun<br>     --export<br>     --felix-config=&lt;CONFIG&gt;<br>  -f --filename=&lt;FILENAME&gt;<br>     --force<br>     --from-report=&lt;REPORT&gt;<br>     --ignore-validation<br>     --init-system<br>     --ip6-autodetection-method=&lt;IP6_AUTODETECTION_METHOD&gt;<br>     --ip6=&lt;IP6&gt;<br>     --ip-autodetection-method=&lt;IP_AUTODETECTION_METHOD&gt;<br>...<br><br>[root@k8s-master calico]# calicoctl ipam show<br>+----------+----------------+-----------+------------+--------------+<br>| GROUPING |      CIDR      | IPS TOTAL | IPS IN USE |   IPS FREE   |<br>+----------+----------------+-----------+------------+--------------+<br>| IP Pool  | 192.168.0.0/16 |     65536 | 9 (0%)     | 65527 (100%) |<br>+----------+----------------+-----------+------------+--------------+<br><br><br>[root@k8s-master calico]# calicoctl ipam show  --show-blocks  #每个地址段使用了多少个<br>+----------+------------------+-----------+------------+--------------+<br>| GROUPING |       CIDR       | IPS TOTAL | IPS IN USE |   IPS FREE   |<br>+----------+------------------+-----------+------------+--------------+<br>| IP Pool  | 192.168.0.0/16   |     65536 | 9 (0%)     | 65527 (100%) |<br>| Block    | 192.168.113.0/24 |       256 | 1 (0%)     | 255 (100%)   |<br>| Block    | 192.168.12.0/24  |       256 | 2 (1%)     | 254 (99%)    |<br>| Block    | 192.168.237.0/24 |       256 | 4 (2%)     | 252 (98%)    |<br>| Block    | 192.168.51.0/24  |       256 | 2 (1%)     | 254 (99%)    |<br>+----------+------------------+-----------+------------+--------------+<br><br>[root@k8s-master calico]# calicoctl ipam show  --show-config  #查看配置信息<br>+--------------------+-------+<br>|      PROPERTY      | VALUE |<br>+--------------------+-------+<br>| StrictAffinity     | false |<br>| AutoAllocateBlocks | true  |<br>| MaxBlocksPerHost   |     0 |<br>+--------------------+-------+<br></code></pre></td></tr></table></figure>
+
+<h5 id="第2种方式-以kubectl插件方式运行"><a href="#第2种方式-以kubectl插件方式运行" class="headerlink" title="第2种方式 以kubectl插件方式运行"></a>第2种方式 以kubectl插件方式运行</h5><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs shell">[root@k8s-master calico]# cp -p /usr/bin/calicoctl  /usr/bin/kubectl-calico  #把之前的文件改个名字就可以了<br><br>[root@k8s-master calico]# kubectl calico<br>Usage:<br>  kubectl-calico [options] &lt;command&gt; [&lt;args&gt;...]<br>Invalid option: &#x27;&#x27;. Use flag &#x27;--help&#x27; to read about a specific subcommand<br><br>[root@k8s-master calico]# kubectl calico get nodes  #和第1种方式相比加kubectl<br>NAME         <br>k8s-master   <br>k8s-node1    <br>k8s-node2    <br>k8s-node3    <br><br>[root@k8s-master calico]# kubectl calico ipam show<br>+----------+----------------+-----------+------------+--------------+<br>| GROUPING |      CIDR      | IPS TOTAL | IPS IN USE |   IPS FREE   |<br>+----------+----------------+-----------+------------+--------------+<br>| IP Pool  | 192.168.0.0/16 |     65536 | 9 (0%)     | 65527 (100%) |<br>+----------+----------------+-----------+------------+--------------+<br></code></pre></td></tr></table></figure>
+
+<h5 id="示例2-修改BGP网络"><a href="#示例2-修改BGP网络" class="headerlink" title="示例2:修改BGP网络"></a>示例2:修改BGP网络</h5><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_">#</span><span class="language-bash">获取现有配置在此基础上修改</span><br><br>[root@k8s-master calico]# kubectl calico get ippool -o yaml &gt; default-ipv4-ippool.yaml <br><br>[root@k8s-master calico]# cat default-ipv4-ippool.yaml <br>apiVersion: projectcalico.org/v3<br>kind: IPPool<br>metadata:<br>  name: default-ipv4-ippool<br>spec:<br>  blockSize: 24<br>  cidr: 192.168.0.0/16<br>  ipipMode: CrossSubnet #跨节点子网时使用IPIP 没有跨子网使用BGP<br>  natOutgoing: true<br>  nodeSelector: all()<br>  vxlanMode: Never  #vxlanMode与ipipMode不能同时打开 必须有一个为Never<br><span class="hljs-meta prompt_">  </span><br><span class="hljs-meta prompt_">#</span><span class="language-bash">通过ipipMode、vxlanMode不同选项可以使calico运行在纯GBP、ipip、vxlanMode或混合模式下</span><br><span class="hljs-meta prompt_">#</span><span class="language-bash">如:ipipMode: Never vxlanMode: Never 为纯BGP模式  ipipMode: Never vxlanMode: CrossSubnet 为BGP+vxlan模式</span><br><br>[root@k8s-master calico]# calicoctl apply -f default-ipv4-ippool.yaml <br>Successfully applied 1 &#x27;IPPool&#x27; resource(s)<br><span class="hljs-meta prompt_"></span><br><span class="hljs-meta prompt_">#</span><span class="language-bash">在来看路由信息 已经没有之前的tunl0 直接从节点网络出去</span><br>[root@k8s-master calico]# ip route list<br>default via 192.168.54.2 dev eth4 proto static metric 101 <br>172.17.0.0/16 dev docker0 proto kernel scope link src 172.17.0.1 linkdown <br>192.168.4.0/24 dev eth0 proto kernel scope link src 192.168.4.170 metric 100 <br>192.168.12.0/24 via 192.168.4.172 dev eth0 proto bird <br>192.168.51.0/24 via 192.168.4.173 dev eth0 proto bird     #已经没有之前的tunl0隧道<br>192.168.54.0/24 dev eth4 proto kernel scope link src 192.168.54.170 metric 101 <br>192.168.113.0/24 via 192.168.4.171 dev eth0 proto bird <br>blackhole 192.168.237.0/24 proto bird <br>192.168.237.1 dev cali7c0fb624285 scope link <br>192.168.237.2 dev caliedaf285d4ef scope link <br>192.168.237.3 dev cali854da94d42a scope link <br>[root@k8s-master calico]# <br></code></pre></td></tr></table></figure>
+
+<p>抓包测试</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><code class="hljs shell">[root@k8s-master ~]# kubectl get pod -o wide<br>NAME                              READY   STATUS    RESTARTS   AGE   IP             NODE        NOMINATED NODE   READINESS GATES<br>deployment-demo-fb544c5d8-r7pc8   1/1     Running   0          10h   192.168.51.1   k8s-node3   &lt;none&gt;           &lt;none&gt;<br>deployment-demo-fb544c5d8-splfr   1/1     Running   0          10h   192.168.12.1   k8s-node2   &lt;none&gt;           &lt;none&gt;<br><span class="hljs-meta prompt_"></span><br><span class="hljs-meta prompt_">#</span><span class="language-bash">从节点3访问节点3</span> <br>[root@k8s-master calico]# kubectl exec deployment-demo-fb544c5d8-r7pc8 -it -- /bin/sh<br>[root@deployment-demo-fb544c5d8-r7pc8 /]# curl 192.168.12.1<br>iKubernetes demoapp v1.0 !! ClientIP: 192.168.51.1, ServerName: deployment-demo-fb544c5d8-splfr, ServerIP: 192.168.12.1!<br>[root@deployment-demo-fb544c5d8-r7pc8 /]# curl 192.168.12.1<br>iKubernetes demoapp v1.0 !! ClientIP: 192.168.51.1, ServerName: deployment-demo-fb544c5d8-splfr, ServerIP: 192.168.12.1!<br><span class="hljs-meta prompt_"></span><br><span class="hljs-meta prompt_">#</span><span class="language-bash">直接抓Pod IP的包 因为没有封装 所以是Pod IP直接通信 没有外层IP</span><br><br>[root@k8s-node2 ~]# tcpdump -i eth0 -nn ip host 192.168.51.1  and host 192.168.12.1<br>tcpdump: verbose output suppressed, use -v or -vv for full protocol decode<br>listening on eth0, link-type EN10MB (Ethernet), capture size 262144 bytes<br>22:11:54.704770 IP 192.168.51.1.33464 &gt; 192.168.12.1.80: Flags [S], seq 4075444778, win 64800, options [mss 1440,sackOK,TS val 2045898534 ecr 0,nop,wscale 7], length 0<br>22:11:54.705866 IP 192.168.12.1.80 &gt; 192.168.51.1.33464: Flags [S.], seq 402120893, ack 4075444779, win 64260, options [mss 1440,sackOK,TS val 1090640722 ecr 2045898534,nop,wscale 7], length 0<br>22:11:54.706670 IP 192.168.51.1.33464 &gt; 192.168.12.1.80: Flags [.], ack 1, win 507, options [nop,nop,TS val 2045898537 ecr 1090640722], length 0<br>22:11:54.707077 IP 192.168.51.1.33464 &gt; 192.168.12.1.80: Flags [P.], seq 1:77, ack 1, win 507, options [nop,nop,TS val 2045898537 ecr 1090640722], length 76: HTTP: GET / HTTP/1.1<br>22:11:54.707132 IP 192.168.12.1.80 &gt; 192.168.51.1.33464: Flags [.], ack 77, win 502, options [nop,nop,TS val 1090640723 ecr 2045898537], length 0<br>22:11:54.737231 IP 192.168.12.1.80 &gt; 192.168.51.1.33464: Flags [P.], seq 1:18, ack 77, win 502, options [nop,nop,TS val 1090640754 ecr 2045898537], length 17: HTTP: HTTP/1.0 200 OK<br>22:11:54.738439 IP 192.168.51.1.33464 &gt; 192.168.12.1.80: Flags [.], ack 18, win 507, options [nop,nop,TS val 2045898568 ecr 1090640754], length 0<br>22:11:54.739117 IP 192.168.12.1.80 &gt; 192.168.51.1.33464: Flags [P.], seq 18:155, ack 77, win 502, options [nop,nop,TS val 1090640755 ecr 2045898568], length 137: HTTP<br>22:11:54.739630 IP 192.168.12.1.80 &gt; 192.168.51.1.33464: Flags [FP.], seq 155:276, ack 77, win 502, options [nop,nop,TS val 1090640756 ecr 2045898568], length 121: HTTP<br>22:11:54.739810 IP 192.168.51.1.33464 &gt; 192.168.12.1.80: Flags [.], ack 155, win 506, options [nop,nop,TS val 2045898570 ecr 1090640755], length 0<br><br><br>[root@k8s-master calico]# calicoctl  node status <br>Calico process is running.<br><br>IPv4 BGP status  #可以看到已经BGP模式了 这里看到是除去自己其它的3个节点<br>+---------------+-------------------+-------+----------+-------------+<br>| PEER ADDRESS  |     PEER TYPE     | STATE |  SINCE   |    INFO     |<br>+---------------+-------------------+-------+----------+-------------+<br>| 192.168.4.171 | node-to-node mesh | up    | 02:27:59 | Established |<br>| 192.168.4.172 | node-to-node mesh | up    | 02:27:58 | Established |<br>| 192.168.4.173 | node-to-node mesh | up    | 02:27:58 | Established |<br>+---------------+-------------------+-------+----------+-------------+<br><br>IPv6 BGP status<br>No IPv6 peers found.<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>到目前为止 如果是小规模的集群 比如50台以下 就可以直接使用了</li>
+<li>如果是大规模集群 部署reflector路由反射器，避免过多的路由表更新 减轻AIP-SERVER压力</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_">#</span><span class="language-bash">把maseter配置成reflector节点</span><br><br>[root@k8s-master calico]# cat reflector-node.yaml <br>apiVersion: projectcalico.org/v3<br>kind: Node<br>metadata:<br>  labels:<br>    route-reflector: true<br>  name: k8s-master   #节点名<br>spec:<br>  bgp:<br>    ipv4Address: 192.168.4.170/24  #Master IP<br>    ipv4IPIPTunnelAddr: 192.168.237.0  #tunl0网络地址<br>    routeReflectorClusterID: 1.1.1.1  #ID信息 如果有多个node 不能和其它重复就行<br><br><br>[root@k8s-master calico]# calicoctl apply -f reflector-node.yaml <br>Successfully applied 1 &#x27;Node&#x27; resource(s)<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>配置所有节点与reflector节点通信</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><code class="hljs shell">[root@k8s-master calico]# cat bgppeer-demo.yaml<br>kind: BGPPeer<br>apiVersion: projectcalico.org/v3<br>metadata:<br>  name: bgppeer-demo<br>spec:<br>  nodeSelector: all()   #所有节点<br>  peerSelector: route-reflector==&quot;true&quot; #与有这个标签的节点通信<br>  <br>[root@k8s-master calico]# calicoctl apply -f bgppeer-demo.yaml <br>Successfully applied 1 &#x27;BGPPeer&#x27; resource(s)<br>[root@k8s-master calico]# calicoctl node status<br>Calico process is running.<br><br>IPv4 BGP status<br>+---------------+-------------------+-------+----------+-------------+<br>| PEER ADDRESS  |     PEER TYPE     | STATE |  SINCE   |    INFO     |<br>+---------------+-------------------+-------+----------+-------------+<br>| 192.168.4.171 | node-to-node mesh | up    | 02:27:59 | Established |#之前的mesh工作模式还在<br>| 192.168.4.172 | node-to-node mesh | up    | 02:27:58 | Established |<br>| 192.168.4.173 | node-to-node mesh | up    | 02:27:58 | Established |<br>| 192.168.4.171 | node specific     | start | 14:36:40 | Idle        |#基于reflector工作模式<br>| 192.168.4.172 | node specific     | start | 14:36:40 | Idle        |<br>| 192.168.4.173 | node specific     | start | 14:36:40 | Idle        |<br>+---------------+-------------------+-------+----------+-------------+<br><br>IPv6 BGP status<br><span class="hljs-meta prompt_"></span><br><span class="hljs-meta prompt_">#</span><span class="language-bash">关掉mesh 点对点的工作模式</span><br><br>[root@k8s-master calico]# cat  default-bgpconfiguration.yaml <br>apiVersion: projectcalico.org/v3<br>kind: BGPConfiguration<br>metadata:<br>  name: default<br>spec:<br>  logSeverityScreen: Info<br>  nodeToNodeMeshEnabled: false  #是赤允许点对点通信<br>  asNumber : 63400<br><br>[root@k8s-master calico]# calicoctl apply -f default-bgpconfiguration.yaml <br>Successfully applied 1 &#x27;BGPConfiguration&#x27; resource(s)<br>[root@k8s-master calico]# calicoctl node status<br>Calico process is running.<br><br>IPv4 BGP status<br>+---------------+---------------+-------+----------+-------------+<br>| PEER ADDRESS  |   PEER TYPE   | STATE |  SINCE   |    INFO     |<br>+---------------+---------------+-------+----------+-------------+<br>| 192.168.4.171 | node specific | up    | 14:45:26 | Established |<br>| 192.168.4.172 | node specific | up    | 14:45:26 | Established |<br>| 192.168.4.173 | node specific | up    | 14:45:26 | Established |<br>+---------------+---------------+-------+----------+-------------+<br><br>IPv6 BGP status<br>No IPv6 peers found.<br></code></pre></td></tr></table></figure>
+
+
+
+
+
+
+
+<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>Calico 是一种开源网络和网络安全解决方案，适用于容器，虚拟机和基于主机的本机工作负载。Calico 支持广泛的平台，包括 Kubernetes，docker，OpenStack 和裸机服务。Calico 后端支持多种网络模式。</p>
+<ul>
+<li>BGP 模式：将节点做为虚拟路由器通过 BGP 路由协议来实现集群内容器之间的网络访问。</li>
+<li>IPIP 模式：在原有 IP 报文中封装一个新的 IP 报文，新的 IP 报文中将源地址 IP 和目的地址 IP 都修改为对端宿主机 IP。</li>
+<li>cross-subnet：Calico-ipip 模式和 calico-bgp 模式都有对应的局限性，对于一些主机跨子网而又无法使网络设备使用 BGP 的场景可以使用 cross-subnet 模式，实现同子网机器使用 calico-BGP 模式，跨子网机器使用 calico-ipip 模式。</li>
+</ul>
+<p><img src="https://pic3.zhimg.com/80/v2-0e507f0e4280c97401d9e0f15fb13cb2_720w.webp" srcset="/img/loading.gif" lazyload alt="img"></p>
+<h2 id="calico-切换-BGP-模式"><a href="#calico-切换-BGP-模式" class="headerlink" title="calico 切换 BGP 模式"></a>calico 切换 BGP 模式</h2><p><img src="https://pic3.zhimg.com/80/v2-c317c0e8bb9d9a7a94b0db7aa7798856_720w.webp" srcset="/img/loading.gif" lazyload alt="img"></p>
+<p>部署完成后默认使用 calico-ipip 的模式，通过在节点的路由即可得知，通往其他节点路由通过 tunl0 网卡出去</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309555.png" srcset="/img/loading.gif" lazyload alt="img"></p>
+<p>修改为 BGP 网络模式，在 system 项目中修改 calico-node daemonset</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309969.webp" srcset="/img/loading.gif" lazyload alt="img"></p>
+<p><img src="https://pic3.zhimg.com/80/v2-01b13e0b942ce3efc8924711339ef77e_720w.webp" srcset="/img/loading.gif" lazyload alt="img"></p>
+<p>修改<code>CALICO_IPV4POOL_IPIP</code>改为 off，添加新环境变量<code>FELIX_IPINIPENABLED</code>为 false</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309475.png" srcset="/img/loading.gif" lazyload alt="img"></p>
+<p>修改完成后对节点进行重启，等待恢复后查看主机路由，与 ipip 最大区别在于去往其他节点的路由，由 Tunnel0 走向网络网卡。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309471.webp" srcset="/img/loading.gif" lazyload alt="img"></p>
+<h2 id="calico-切换-cross-subnet-模式"><a href="#calico-切换-cross-subnet-模式" class="headerlink" title="calico 切换 cross-subnet 模式"></a>calico 切换 cross-subnet 模式</h2><p>Calico-ipip 模式和 calico-bgp 模式都有对应的局限性，对于一些主机跨子网而又无法使网络设备使用 BGP 的场景可以使用 cross-subnet 模式，实现同子网机器使用 calico-BGP 模式，跨子网机器使用 calico-ipip 模式。</p>
+<p>部署集群网络选择 calico 网络插件</p>
+<p><img src="https://pic1.zhimg.com/80/v2-58f0a09c739dd5f2c9613d5de23b010c_720w.webp" srcset="/img/loading.gif" lazyload alt="img"></p>
+<p>默认部署出来是 calico 的 ip-in-ip 的模式 查看宿主机网卡，会发现多了个 tunl0 网卡，这个是建立 ip 隧道的网卡</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309957.png" srcset="/img/loading.gif" lazyload alt="img"></p>
+<p>去其他主机的路由都是走 tunl0 网卡出去</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309217.webp" srcset="/img/loading.gif" lazyload alt="img"></p>
+<p>切换到 cross-subnet 模式</p>
+<figure class="highlight actionscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs actionscript">kubectleditipPool/<span class="hljs-keyword">default</span>-ipv4-ippool<br></code></pre></td></tr></table></figure>
+
+<p>将 ipipMode 改为 crossSubnet</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309104.png" srcset="/img/loading.gif" lazyload alt="img"></p>
+<p>在 UI 将 calico-node 的 POD 删了重建</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309853.png" srcset="/img/loading.gif" lazyload alt="img"></p>
+<p>重启检查 calico 网络</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309990.webp" srcset="/img/loading.gif" lazyload alt="img"></p>
+<p>可以看见同子网的主机出口走的是 bgp，不同子网主机走的是 tunl0 网卡走 ipip 模式</p>
+<p>创建应用测试跨主机网络，在不同主机上互相 ping 测试，看看跨主机网络是否正常。</p>
+<h2 id="配置-Route-reflector"><a href="#配置-Route-reflector" class="headerlink" title="配置 Route reflector"></a>配置 Route reflector</h2><h3 id="安装-calicoctl"><a href="#安装-calicoctl" class="headerlink" title="安装 calicoctl"></a>安装 calicoctl</h3><p>安装方式有以下几种</p>
+<ul>
+<li>Single host 上面 binary 安装</li>
+<li>Single host 上面 continer 安装</li>
+<li>作为 k8s pod 运行</li>
+</ul>
+<p>实际经验：</p>
+<p>Binary 方式在集群里面的一台 worker 节点安装（比如 RR），calicoctl 会检测 bird&#x2F;felix 的运行状态。在非 calico node 节点运行只能使用部分命令，不能运行 calico node 相关命令。</p>
+<p>通过配置 calicoctl 来对 calico 进行控制，通常情况下建议将</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs awk">curl-O-Lhttps:<span class="hljs-regexp">//gi</span>thub.com<span class="hljs-regexp">/projectcalico/</span>calicoctl<span class="hljs-regexp">/releases/</span>download<span class="hljs-regexp">/v3.13.3/</span>calicoctl<br></code></pre></td></tr></table></figure>
+
+<p>配置可执行权限</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">chmod</span>+xcalicoctl<br></code></pre></td></tr></table></figure>
+
+<p>复制的&#x2F;usr&#x2F;bin&#x2F;目录</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs awk">cpcalicoctl<span class="hljs-regexp">/usr/</span>bin/<br></code></pre></td></tr></table></figure>
+
+<p>配置 calicoctl 连接 Kubernetes 集群</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs routeros"><span class="hljs-attribute">exportCALICO_DATASTORE_TYPE</span>=kubernetes <span class="hljs-attribute">exportCALICO_KUBECONFIG</span>=~/.kube/config calicoctlnodestatus<br></code></pre></td></tr></table></figure>
+
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309015.webp" srcset="/img/loading.gif" lazyload alt="img"></p>
+<h3 id="calico-node-to-node-mesh"><a href="#calico-node-to-node-mesh" class="headerlink" title="calico node-to-node mesh"></a>calico node-to-node mesh</h3><p>默认情况下 calico 采用 node-to-node mesh 方式 ，为了防止 BGP 路由环路，BGP 协议规定在一个 AS（自治系统）内部，IBGP 路由器之间只能传一跳路由信息，所以在一个 AS 内部，IBGP 路由器之间为了学习路由信息需要建立全互联的对等体关系，但是当一个 AS 规模很大的时候，这种全互联的对等体关系维护会大量消耗网络和 CPU 资源，所以这种情况下就需要建立路由反射器以减少 IBGP 路由器之间的对等体关系数量。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309122.webp" srcset="/img/loading.gif" lazyload alt="img"></p>
+<h3 id="Route-reflector-角色介绍"><a href="#Route-reflector-角色介绍" class="headerlink" title="Route reflector 角色介绍"></a>Route reflector 角色介绍</h3><p>早期 calico 版本提供专门的 route reflector 镜像，在新版本 calico node 内置集成 route reflector 功能。Route reflector 可以是以下角色：</p>
+<ul>
+<li>集群内部的 node 节点</li>
+<li>集群外部节点运行 calico node</li>
+<li>其他支持 route reflector 的软件或者设备。</li>
+</ul>
+<p>这里以一个集群内部的 node 节点为例：</p>
+<h4 id="关闭-node-to-node-mesh"><a href="#关闭-node-to-node-mesh" class="headerlink" title="关闭 node-to-node mesh"></a>关闭 node-to-node mesh</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">cat</span>&lt;&lt;<span class="hljs-string">EOF|calicoctlapply-f- apiVersion:projectcalico.org/v3 kind:BGPConfiguration metadata: name:default spec: logSeverityScreen:Info nodeToNodeMeshEnabled:false asNumber:63400 EOF</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="设置-Route-reflector"><a href="#设置-Route-reflector" class="headerlink" title="设置 Route reflector"></a>设置 Route reflector</h3><p>配置 Route reflector 支持多种配置方式如：1、支持配置全局 BGP peer，。2、支持针对单个节点进行配置 BGP Peer。也可以将 calico 节点充当 Route reflector 这里以配置 calico 节点充当 Router reflector 为例。</p>
+<p>配置节点充当 BGP Route Reflector</p>
+<p>可将 Calico 节点配置为充当路由反射器。为此，要用作路由反射器的每个节点必须具有群集 ID-通常是未使用的 IPv4 地址。</p>
+<p>要将节点配置为集群 ID 为 244.0.0.1 的路由反射器，请运行以下命令。这里将节点名为 rke-node4 的节点配置为 Route Reflector，若一个集群中要配置主备 rr，为了防止 rr 之间的路由环路，需要将集群 ID 配置成一样</p>
+<figure class="highlight matlab"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs matlab">calicoctlpatchnoderke-node4-p&#x27;&#123;<span class="hljs-string">&quot;spec&quot;</span>:&#123;<span class="hljs-string">&quot;bgp&quot;</span>:&#123;<span class="hljs-string">&quot;routeReflectorClusterID&quot;</span>:<span class="hljs-string">&quot;244.0.0.1&quot;</span>&#125;&#125;&#125;&#x27;<br></code></pre></td></tr></table></figure>
+
+<p>给节点打上对应的 label 标记该节点以表明它是 Route Reflector，从而允许 BGPPeer 资源选择它。</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ini"><span class="hljs-attr">kubectllabelnoderke-node4route-reflector</span>=<span class="hljs-literal">true</span><br></code></pre></td></tr></table></figure>
+
+<p>创建 BGPPeer</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs routeros"><span class="hljs-attribute">exportCALICO_DATASTORE_TYPE</span>=kubernetes <span class="hljs-attribute">exportCALICO_KUBECONFIG</span>=~/.kube/config cat&lt;&lt;EOF|calicoctlapply-f- kind:BGPPeer apiVersion:projectcalico.org/v3 metadata: name:peer-with-route-reflectors spec: nodeSelector:all() peerSelector:<span class="hljs-attribute">route-reflector</span>==&#x27;true&#x27; EOF<br></code></pre></td></tr></table></figure>
+
+<h4 id="查看-BGP-节点状态"><a href="#查看-BGP-节点状态" class="headerlink" title="查看 BGP 节点状态"></a>查看 BGP 节点状态</h4><p>node 上查看，peer type 由 node-to-node mesh 变为 node specific</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309271.webp" srcset="/img/loading.gif" lazyload alt="img"></p>
+<p>Route Reflector 上节点查看，节点已正常建立连接</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309330.webp" srcset="/img/loading.gif" lazyload alt="img"></p>
+<h2 id="设置-veth-网卡-mtu"><a href="#设置-veth-网卡-mtu" class="headerlink" title="设置 veth 网卡 mtu"></a>设置 veth 网卡 mtu</h2><p>通常，通过使用最高 MTU 值（不会在路径上引起碎片或丢包）来实现最高性能。对于给定的流量速率，最大带宽增加，CPU 消耗可能下降。对于一些支持 jumbo frames 的网络设备，可以配置 calico 支持使用。</p>
+<p>下表列举了，常见几种 MTU 配置下 calico 对应的网卡 mtu 的配置</p>
+<p><img src="https://pic3.zhimg.com/80/v2-fa85f864b2350f86b434c70628722be2_720w.webp" srcset="/img/loading.gif" lazyload alt="img"></p>
+<p>IPIP 和 VXLAN 协议中的 IP 中使用的额外报文头，通过头的大小减小了最小 MTU。（IP 中的 IP 使用 20 字节的标头，而 VXLAN 使用 50 字节的标头）。</p>
+<p>如果在 Pod 网络中的任何地方使用 VXLAN，请将 MTU 大小配置为“物理网络 MTU 大小减去 50”。如果仅在 IP 中使用 IP，则将 MTU 大小配置为“物理网络 MTU 大小减去 20” 。</p>
+<h3 id="将工作负载端点-MTU-和隧道-MTU-设置为相同的值"><a href="#将工作负载端点-MTU-和隧道-MTU-设置为相同的值" class="headerlink" title="将工作负载端点 MTU 和隧道 MTU 设置为相同的值"></a>将工作负载端点 MTU 和隧道 MTU 设置为相同的值</h3><p>配置方法：</p>
+<p>升级集群</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309406.webp" srcset="/img/loading.gif" lazyload alt="img"></p>
+<p>配置网卡 MTU，此时通过 system 项目下 calico-config 文件可以看见对应的 mtu 设置</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309451.webp" srcset="/img/loading.gif" lazyload alt="img"></p>
+<p>创建 workload 查看 POD 网卡 MTU 为 9001</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309472.webp" srcset="/img/loading.gif" lazyload alt="img"></p>
+<h2 id="设置全局-AS-号"><a href="#设置全局-AS-号" class="headerlink" title="设置全局 AS 号"></a>设置全局 AS 号</h2><p>默认情况下，除非已为节点指定每个节点的 AS，否则所有 Calico 节点都使用 64512 自治系统。可以通过修改默认的 BGPConfiguration 资源来更改所有节点的全局默认值。以下示例命令将全局默认 AS 编号设置为 64513。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">cat</span>&lt;&lt;<span class="hljs-string">EOF|calicoctlapply-f- apiVersion:projectcalico.org/v3 kind:BGPConfiguration metadata: name:default spec: logSeverityScreen:Info nodeToNodeMeshEnabled:false asNumber:64513 EOF</span><br></code></pre></td></tr></table></figure>
+
+<h2 id="设置单个主机和-AS-号"><a href="#设置单个主机和-AS-号" class="headerlink" title="设置单个主机和 AS 号"></a>设置单个主机和 AS 号</h2><p>例如，以下命令将名为 node-1 的节点更改为属于 AS 64514。</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">calicoctlpatchnodenode</span>-<span class="hljs-number">1</span>-p&#x27;&#123;<span class="hljs-string">&quot;spec&quot;</span>:&#123;<span class="hljs-string">&quot;bgp&quot;</span>:&#123;“asNumber”:“<span class="hljs-number">64514</span>”&#125;&#125;&#125;&#x27;<br></code></pre></td></tr></table></figure>
+
+<h2 id="修改节点地址范围"><a href="#修改节点地址范围" class="headerlink" title="修改节点地址范围"></a>修改节点地址范围</h2><p>此操作建议在部署完集群后立刻进行。</p>
+<p>默认情况下 calico 在集群层面分配一个 10.42.0.0&#x2F;16 的 CIDR 网段，在这基础上在单独为每个主机划分一个单独子网采用 26 位子网掩码对应的集群支持的节点数为 2^10&#x3D;1024 节点，单个子网最大支持 64 个 POD，当单个子网对应 IP 消耗后，calico 会重新在本机上划分一个新的子网如下，在集群对端主机可以看见对应的多个 CIDR 路由信息。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202306301309552.png" srcset="/img/loading.gif" lazyload alt="img"></p>
+<blockquote>
+<p>注意：块大小将影响节点 POD 的 IP 地址分配和路由条目数量，如果主机在一个 CIDR 中分配所有地址，则将为其分配一个附加 CIDR。如果没有更多可用的块，则主机可以从分配给其他主机的 CIDR 中获取地址。为借用的地址添加了特定的路由，这会影响路由表的大小。</p>
+</blockquote>
+<p>将块大小从默认值增加（例如，使用&#x2F;24 则为每个块提供 256 个地址）意味着每个主机更少的块，会减少路由。但是对应的集群可容纳主机数也对应减少为 2^8。</p>
+<p>从默认值减小 CIDR 大小（例如，使用&#x2F;28 为每个块提供 16 个地址）意味着每个主机有更多 CIDR，因此会有更多路由。</p>
+<p>calico 允许用户修改对应的 IP 池和集群 CIDR</p>
+<p>创建和替换步骤</p>
+<blockquote>
+<p>注意：删除 Pod 时，应用程序会出现暂时不可用</p>
+</blockquote>
+<ul>
+<li>添加一个新的 IP 池。</li>
+<li>注意：新 IP 池必须在同一群集 CIDR 中。</li>
+<li>禁用旧的 IP 池（注意：禁用 IP 池只会阻止分配新的 IP 地址。它不会影响现有 POD 的联网）</li>
+<li>从旧的 IP 池中删除 Pod。</li>
+<li>验证新的 Pod 是否从新的 IP 池中获取地址。</li>
+<li>删除旧的 IP 池。</li>
+</ul>
+<p>定义 ippool 资源</p>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">apiVersion:projectcalico.org/v3 kind:IPPool metadata: <span class="hljs-type">name</span>:my-ippool spec: blockSize:<span class="hljs-number">24</span> <span class="hljs-type">cidr</span>:<span class="hljs-number">192.0</span><span class="hljs-number">.0</span><span class="hljs-number">.0</span>/<span class="hljs-number">16</span> ipipMode:<span class="hljs-keyword">Always</span> natOutgoing:<span class="hljs-keyword">true</span><br></code></pre></td></tr></table></figure>
+
+<p>修改对应的 blockSize 号</p>
+<p>创建新的</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs">calicoctlapply-fpool.yaml<br></code></pre></td></tr></table></figure>
+
+<p>将旧的 ippool 禁用</p>
+<figure class="highlight sml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sml">calicoctlpatchippooldefault-ipv4-ippool-p&#x27;&#123;<span class="hljs-string">&quot;spec&quot;</span>:&#123;<span class="hljs-string">&quot;disabled&quot;</span>:“<span class="hljs-literal">true</span>”&#125;&#125;<span class="hljs-string">&#x27;</span><br></code></pre></td></tr></table></figure>
+
+<p>创建 workload 测试</p>
+<h2 id="根据节点标签定义对应的-ippool"><a href="#根据节点标签定义对应的-ippool" class="headerlink" title="根据节点标签定义对应的 ippool"></a>根据节点标签定义对应的 ippool</h2><p>Calico 能够进行配置，为不同拓扑指定 IP 地址池。例如可能希望某些机架、地区、或者区域能够从同一个 IP 池中获取地址。这对于降低路由数量或者配合防火墙策略的要求会很有帮助。</p>
+<p>给节点配置对应 label</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">kubectllabelnodeskube</span>-node-<span class="hljs-number">0</span>rack=<span class="hljs-number">0</span> kubectllabelnodeskube-node-<span class="hljs-number">1</span>rack=<span class="hljs-number">1</span><br></code></pre></td></tr></table></figure>
+
+<p>通过标签定义对应的节点 IPpool</p>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">calicoctlcreate-f-&lt;&lt;EOF apiVersion:projectcalico.org/v3 kind:IPPool metadata: <span class="hljs-type">name</span>:rack<span class="hljs-number">-0</span>-ippool spec: <span class="hljs-type">cidr</span>:<span class="hljs-number">192.168</span><span class="hljs-number">.0</span><span class="hljs-number">.0</span>/<span class="hljs-number">24</span> ipipMode:<span class="hljs-keyword">Always</span> natOutgoing:<span class="hljs-keyword">true</span> nodeSelector:rack==&quot;0&quot; EOF calicoctlcreate-f-&lt;&lt;EOF apiVersion:projectcalico.org/v3 kind:IPPool metadata: <span class="hljs-type">name</span>:rack<span class="hljs-number">-1</span>-ippool spec: <span class="hljs-type">cidr</span>:<span class="hljs-number">192.168</span><span class="hljs-number">.1</span><span class="hljs-number">.0</span>/<span class="hljs-number">24</span> ipipMode:<span class="hljs-keyword">Always</span> natOutgoing:<span class="hljs-keyword">true</span> nodeSelector:rack==&quot;1&quot; EOF<br></code></pre></td></tr></table></figure>
+
+<h2 id="关闭-SNAT"><a href="#关闭-SNAT" class="headerlink" title="关闭 SNAT"></a>关闭 SNAT</h2><p>默认情况下，calico 访问集群外网络是通过 SNAT 成宿主机 ip 方式，在一些金融客户环境中为了能实现防火墙规则，需要直接针对 POD ip 进行进行规则配置，所以需要关闭 natOutgoing</p>
+<figure class="highlight actionscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs actionscript">kubectleditippool/<span class="hljs-keyword">default</span>-ipv4-ippool<br></code></pre></td></tr></table></figure>
+
+<p>将<code>natOutgoing: true</code>修改为<code>natOutgoing: false</code></p>
+<p>此时，calico 网络访问集群外的 ip 源 ip 就不会 snat 成 宿主机的 ip 地址。</p>
+<h2 id="固定-POD-IP"><a href="#固定-POD-IP" class="headerlink" title="固定 POD IP"></a>固定 POD IP</h2><p>固定单个 ip</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">apiVersion</span>:apps/v1 kind:Deployment metadata: name:nginx-test spec: selector: matchLabels: app:nginx replicas:<span class="hljs-number">1</span>#tellsdeploymenttorun1podsmatchingthetemplate template: metadata: labels: app:nginx annotations: <span class="hljs-string">&quot;cni.projectcalico.org/ipAddrs&quot;</span>:<span class="hljs-string">&quot;[\&quot;10.42.210.135\&quot;]&quot;</span> spec: containers: -name:nginx image:nginx:<span class="hljs-number">1</span>.<span class="hljs-number">7</span>.<span class="hljs-number">9</span> ports: -containerPort:<span class="hljs-number">80</span><br></code></pre></td></tr></table></figure>
+
+<p>固定多个 ip，只能通过 ippool 的方式</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">catippool1</span>.yaml apiVersion:projectcalico.org/v3 kind:IPPool metadata: name:pool-<span class="hljs-number">1</span> spec: blockSize:<span class="hljs-number">31</span> cidr:<span class="hljs-number">10.21.0.0</span>/<span class="hljs-number">31</span> ipipMode:Never natOutgoing:true apiVersion:apps/v1 kind:Deployment metadata: name:nginx-test spec: selector: matchLabels: app:nginx replicas:<span class="hljs-number">1</span>#tellsdeploymenttorun1podsmatchingthetemplate template: metadata: labels: app:nginx annotations: <span class="hljs-string">&quot;cni.projectcalico.org/ipv4pools&quot;</span>:<span class="hljs-string">&quot;[\&quot;pool-1\&quot;]&quot;</span> spec: containers: -name:nginx image:nginx:<span class="hljs-number">1</span>.<span class="hljs-number">7</span>.<span class="hljs-number">9</span> ports: -containerPort:<span class="hljs-number">80</span><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs awk"><span class="hljs-regexp">/lib/m</span>odules<br><span class="hljs-regexp">/var/</span>run/calico<br><span class="hljs-regexp">/var/</span>lib/calico<br><span class="hljs-regexp">/run/</span>xtables.lock<br><span class="hljs-regexp">/opt/</span>cni/bin<br><span class="hljs-regexp">/etc/</span>cni/net.d<br><span class="hljs-regexp">/var/</span>log<span class="hljs-regexp">/calico/</span>cni<br><span class="hljs-regexp">/var/</span>lib<span class="hljs-regexp">/cni/</span>networks<br><span class="hljs-regexp">/var/</span>run/nodeagent<br><span class="hljs-regexp">/usr/</span>libexec<span class="hljs-regexp">/kubernetes/</span>kubelet-plugins<span class="hljs-regexp">/volume/</span>exec/nodeagent~uds<br><br><br>rm -rf <span class="hljs-regexp">/var/</span>lib/cni<br>rm -rf <span class="hljs-regexp">/etc/</span>cni/net.d<br><br>rm <span class="hljs-regexp">/var/</span>lib<span class="hljs-regexp">/cni/</span> -rf &amp;&amp; rm -f <span class="hljs-regexp">/etc/</span>cni<span class="hljs-regexp">/net.d/</span>*<br>systemctl restart  docker containerd kubelet<br></code></pre></td></tr></table></figure>
+
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Calico网络自定义 2024-04-03 15:08:43.394</div>
+      <div>http://example.com/2025/01/16/Calico网络自定义-calico-wang-luo-zi-ding-yi/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/Containerd%20%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C-containerd-ji-ben-cao-zuo/" title="Containerd 基本操作 2024-04-03 14:55:46.786">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Containerd 基本操作 2024-04-03 14:55:46.786</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/Client-go%20%E6%9E%B6%E6%9E%84-client-go-jia-gou/" title="Client-go 架构 2024-04-03 14:48:40.716">
+                        <span class="hidden-mobile">Client-go 架构 2024-04-03 14:48:40.716</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

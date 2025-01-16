@@ -1,0 +1,620 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152535455565758596061626364656667686970717273747576777879808182838485868788899091929394959697989910010110210">
+<meta property="og:type" content="article">
+<meta property="og:title" content="K8S控制器之sync.go 同步 源码解读 2024-04-09 11:33:26.356">
+<meta property="og:url" content="http://example.com/2025/01/16/K8S%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bsyncgo%20%E5%90%8C%E6%AD%A5%20%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-syncgo-tong-bu-yuan-ma-jie-du/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152535455565758596061626364656667686970717273747576777879808182838485868788899091929394959697989910010110210">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-01-16T02:08:28.061Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:18.801Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>K8S控制器之sync.go 同步 源码解读 2024-04-09 11:33:26.356 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="K8S控制器之sync.go 同步 源码解读 2024-04-09 11:33:26.356"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          38 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">K8S控制器之sync.go 同步 源码解读 2024-04-09 11:33:26.356</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br><span class="line">251</span><br><span class="line">252</span><br><span class="line">253</span><br><span class="line">254</span><br><span class="line">255</span><br><span class="line">256</span><br><span class="line">257</span><br><span class="line">258</span><br><span class="line">259</span><br><span class="line">260</span><br><span class="line">261</span><br><span class="line">262</span><br><span class="line">263</span><br><span class="line">264</span><br><span class="line">265</span><br><span class="line">266</span><br><span class="line">267</span><br><span class="line">268</span><br><span class="line">269</span><br><span class="line">270</span><br><span class="line">271</span><br><span class="line">272</span><br><span class="line">273</span><br><span class="line">274</span><br><span class="line">275</span><br><span class="line">276</span><br><span class="line">277</span><br><span class="line">278</span><br><span class="line">279</span><br><span class="line">280</span><br><span class="line">281</span><br><span class="line">282</span><br><span class="line">283</span><br><span class="line">284</span><br><span class="line">285</span><br><span class="line">286</span><br><span class="line">287</span><br><span class="line">288</span><br><span class="line">289</span><br><span class="line">290</span><br><span class="line">291</span><br><span class="line">292</span><br><span class="line">293</span><br><span class="line">294</span><br><span class="line">295</span><br><span class="line">296</span><br><span class="line">297</span><br><span class="line">298</span><br><span class="line">299</span><br><span class="line">300</span><br><span class="line">301</span><br><span class="line">302</span><br><span class="line">303</span><br><span class="line">304</span><br><span class="line">305</span><br><span class="line">306</span><br><span class="line">307</span><br><span class="line">308</span><br><span class="line">309</span><br><span class="line">310</span><br><span class="line">311</span><br><span class="line">312</span><br><span class="line">313</span><br><span class="line">314</span><br><span class="line">315</span><br><span class="line">316</span><br><span class="line">317</span><br><span class="line">318</span><br><span class="line">319</span><br><span class="line">320</span><br><span class="line">321</span><br><span class="line">322</span><br><span class="line">323</span><br><span class="line">324</span><br><span class="line">325</span><br><span class="line">326</span><br><span class="line">327</span><br><span class="line">328</span><br><span class="line">329</span><br><span class="line">330</span><br><span class="line">331</span><br><span class="line">332</span><br><span class="line">333</span><br><span class="line">334</span><br><span class="line">335</span><br><span class="line">336</span><br><span class="line">337</span><br><span class="line">338</span><br><span class="line">339</span><br><span class="line">340</span><br><span class="line">341</span><br><span class="line">342</span><br><span class="line">343</span><br><span class="line">344</span><br><span class="line">345</span><br><span class="line">346</span><br><span class="line">347</span><br><span class="line">348</span><br><span class="line">349</span><br><span class="line">350</span><br><span class="line">351</span><br><span class="line">352</span><br><span class="line">353</span><br><span class="line">354</span><br><span class="line">355</span><br><span class="line">356</span><br><span class="line">357</span><br><span class="line">358</span><br><span class="line">359</span><br><span class="line">360</span><br><span class="line">361</span><br><span class="line">362</span><br><span class="line">363</span><br><span class="line">364</span><br><span class="line">365</span><br><span class="line">366</span><br><span class="line">367</span><br><span class="line">368</span><br><span class="line">369</span><br><span class="line">370</span><br><span class="line">371</span><br><span class="line">372</span><br><span class="line">373</span><br><span class="line">374</span><br><span class="line">375</span><br><span class="line">376</span><br><span class="line">377</span><br><span class="line">378</span><br><span class="line">379</span><br><span class="line">380</span><br><span class="line">381</span><br><span class="line">382</span><br><span class="line">383</span><br><span class="line">384</span><br><span class="line">385</span><br><span class="line">386</span><br><span class="line">387</span><br><span class="line">388</span><br><span class="line">389</span><br><span class="line">390</span><br><span class="line">391</span><br><span class="line">392</span><br><span class="line">393</span><br><span class="line">394</span><br><span class="line">395</span><br><span class="line">396</span><br><span class="line">397</span><br><span class="line">398</span><br><span class="line">399</span><br><span class="line">400</span><br><span class="line">401</span><br><span class="line">402</span><br><span class="line">403</span><br><span class="line">404</span><br><span class="line">405</span><br><span class="line">406</span><br><span class="line">407</span><br><span class="line">408</span><br><span class="line">409</span><br><span class="line">410</span><br><span class="line">411</span><br><span class="line">412</span><br><span class="line">413</span><br><span class="line">414</span><br><span class="line">415</span><br><span class="line">416</span><br><span class="line">417</span><br><span class="line">418</span><br><span class="line">419</span><br><span class="line">420</span><br><span class="line">421</span><br><span class="line">422</span><br><span class="line">423</span><br><span class="line">424</span><br><span class="line">425</span><br><span class="line">426</span><br><span class="line">427</span><br><span class="line">428</span><br><span class="line">429</span><br><span class="line">430</span><br><span class="line">431</span><br><span class="line">432</span><br><span class="line">433</span><br><span class="line">434</span><br><span class="line">435</span><br><span class="line">436</span><br><span class="line">437</span><br><span class="line">438</span><br><span class="line">439</span><br><span class="line">440</span><br><span class="line">441</span><br><span class="line">442</span><br><span class="line">443</span><br><span class="line">444</span><br><span class="line">445</span><br><span class="line">446</span><br><span class="line">447</span><br><span class="line">448</span><br><span class="line">449</span><br><span class="line">450</span><br><span class="line">451</span><br><span class="line">452</span><br><span class="line">453</span><br><span class="line">454</span><br><span class="line">455</span><br><span class="line">456</span><br><span class="line">457</span><br><span class="line">458</span><br><span class="line">459</span><br><span class="line">460</span><br><span class="line">461</span><br><span class="line">462</span><br><span class="line">463</span><br><span class="line">464</span><br><span class="line">465</span><br><span class="line">466</span><br><span class="line">467</span><br><span class="line">468</span><br><span class="line">469</span><br><span class="line">470</span><br><span class="line">471</span><br><span class="line">472</span><br><span class="line">473</span><br><span class="line">474</span><br><span class="line">475</span><br><span class="line">476</span><br><span class="line">477</span><br><span class="line">478</span><br><span class="line">479</span><br><span class="line">480</span><br><span class="line">481</span><br><span class="line">482</span><br><span class="line">483</span><br><span class="line">484</span><br><span class="line">485</span><br><span class="line">486</span><br><span class="line">487</span><br><span class="line">488</span><br><span class="line">489</span><br><span class="line">490</span><br><span class="line">491</span><br><span class="line">492</span><br><span class="line">493</span><br><span class="line">494</span><br><span class="line">495</span><br><span class="line">496</span><br><span class="line">497</span><br><span class="line">498</span><br><span class="line">499</span><br><span class="line">500</span><br><span class="line">501</span><br><span class="line">502</span><br><span class="line">503</span><br><span class="line">504</span><br><span class="line">505</span><br><span class="line">506</span><br><span class="line">507</span><br><span class="line">508</span><br><span class="line">509</span><br><span class="line">510</span><br><span class="line">511</span><br><span class="line">512</span><br><span class="line">513</span><br><span class="line">514</span><br><span class="line">515</span><br><span class="line">516</span><br><span class="line">517</span><br><span class="line">518</span><br><span class="line">519</span><br><span class="line">520</span><br><span class="line">521</span><br><span class="line">522</span><br><span class="line">523</span><br><span class="line">524</span><br><span class="line">525</span><br><span class="line">526</span><br><span class="line">527</span><br><span class="line">528</span><br><span class="line">529</span><br><span class="line">530</span><br><span class="line">531</span><br><span class="line">532</span><br><span class="line">533</span><br><span class="line">534</span><br><span class="line">535</span><br><span class="line">536</span><br><span class="line">537</span><br><span class="line">538</span><br><span class="line">539</span><br><span class="line">540</span><br><span class="line">541</span><br><span class="line">542</span><br><span class="line">543</span><br><span class="line">544</span><br><span class="line">545</span><br><span class="line">546</span><br><span class="line">547</span><br><span class="line">548</span><br><span class="line">549</span><br><span class="line">550</span><br><span class="line">551</span><br><span class="line">552</span><br><span class="line">553</span><br><span class="line">554</span><br><span class="line">555</span><br><span class="line">556</span><br><span class="line">557</span><br><span class="line">558</span><br><span class="line">559</span><br><span class="line">560</span><br><span class="line">561</span><br><span class="line">562</span><br><span class="line">563</span><br><span class="line">564</span><br><span class="line">565</span><br><span class="line">566</span><br><span class="line">567</span><br><span class="line">568</span><br><span class="line">569</span><br><span class="line">570</span><br><span class="line">571</span><br><span class="line">572</span><br><span class="line">573</span><br><span class="line">574</span><br><span class="line">575</span><br><span class="line">576</span><br><span class="line">577</span><br><span class="line">578</span><br><span class="line">579</span><br><span class="line">580</span><br><span class="line">581</span><br><span class="line">582</span><br><span class="line">583</span><br><span class="line">584</span><br><span class="line">585</span><br><span class="line">586</span><br><span class="line">587</span><br><span class="line">588</span><br><span class="line">589</span><br><span class="line">590</span><br><span class="line">591</span><br><span class="line">592</span><br><span class="line">593</span><br><span class="line">594</span><br><span class="line">595</span><br><span class="line">596</span><br><span class="line">597</span><br><span class="line">598</span><br><span class="line">599</span><br><span class="line">600</span><br><span class="line">601</span><br><span class="line">602</span><br><span class="line">603</span><br><span class="line">604</span><br><span class="line">605</span><br><span class="line">606</span><br><span class="line">607</span><br><span class="line">608</span><br><span class="line">609</span><br><span class="line">610</span><br><span class="line">611</span><br><span class="line">612</span><br><span class="line">613</span><br><span class="line">614</span><br><span class="line">615</span><br><span class="line">616</span><br><span class="line">617</span><br><span class="line">618</span><br><span class="line">619</span><br><span class="line">620</span><br><span class="line">621</span><br><span class="line">622</span><br><span class="line">623</span><br><span class="line">624</span><br><span class="line">625</span><br><span class="line">626</span><br><span class="line">627</span><br><span class="line">628</span><br><span class="line">629</span><br><span class="line">630</span><br><span class="line">631</span><br><span class="line">632</span><br><span class="line">633</span><br><span class="line">634</span><br><span class="line">635</span><br><span class="line">636</span><br><span class="line">637</span><br><span class="line">638</span><br><span class="line">639</span><br><span class="line">640</span><br><span class="line">641</span><br><span class="line">642</span><br><span class="line">643</span><br><span class="line">644</span><br><span class="line">645</span><br><span class="line">646</span><br><span class="line">647</span><br><span class="line">648</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">/*</span><br><span class="hljs-comment">Copyright 2016 The Kubernetes Authors.</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span><br><span class="hljs-comment">you may not use this file except in compliance with the License.</span><br><span class="hljs-comment">You may obtain a copy of the License at</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">    http://www.apache.org/licenses/LICENSE-2.0</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">Unless required by applicable law or agreed to in writing, software</span><br><span class="hljs-comment">distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span><br><span class="hljs-comment">WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span><br><span class="hljs-comment">See the License for the specific language governing permissions and</span><br><span class="hljs-comment">limitations under the License.</span><br><span class="hljs-comment">*/</span><br><br><span class="hljs-keyword">package</span> deployment<br><br><span class="hljs-keyword">import</span> (<br>	<span class="hljs-string">&quot;context&quot;</span><br>	<span class="hljs-string">&quot;fmt&quot;</span><br>	<span class="hljs-string">&quot;reflect&quot;</span><br>	<span class="hljs-string">&quot;sort&quot;</span><br>	<span class="hljs-string">&quot;strconv&quot;</span><br><br>	apps <span class="hljs-string">&quot;k8s.io/api/apps/v1&quot;</span><br>	v1 <span class="hljs-string">&quot;k8s.io/api/core/v1&quot;</span><br>	<span class="hljs-string">&quot;k8s.io/apimachinery/pkg/api/errors&quot;</span><br>	metav1 <span class="hljs-string">&quot;k8s.io/apimachinery/pkg/apis/meta/v1&quot;</span><br>	<span class="hljs-string">&quot;k8s.io/kubernetes/pkg/controller&quot;</span><br>	deploymentutil <span class="hljs-string">&quot;k8s.io/kubernetes/pkg/controller/deployment/util&quot;</span><br>	labelsutil <span class="hljs-string">&quot;k8s.io/kubernetes/pkg/util/labels&quot;</span><br>)<br><br><span class="hljs-comment">// syncStatusOnly only updates Deployments Status and doesn&#x27;t take any mutating actions.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(dc *DeploymentController)</span></span> syncStatusOnly(ctx context.Context, d *apps.Deployment, rsList []*apps.ReplicaSet) <span class="hljs-type">error</span> &#123;<br>	newRS, oldRSs, err := dc.getAllReplicaSetsAndSyncRevision(ctx, d, rsList, <span class="hljs-literal">false</span>)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br><br>	allRSs := <span class="hljs-built_in">append</span>(oldRSs, newRS)<br>	<span class="hljs-keyword">return</span> dc.syncDeploymentStatus(ctx, allRSs, newRS, d)<br>&#125;<br><br><span class="hljs-comment">//该函数用于同步更新Deployment的状态，而不进行任何变更操作。</span><br><span class="hljs-comment">//它通过调用getAllReplicaSetsAndSyncRevision方法获取所有ReplicaSet的列表，并将新旧ReplicaSet区分开来。</span><br><span class="hljs-comment">//然后，它将所有ReplicaSet附加到旧ReplicaSet列表中，并调用syncDeploymentStatus方法来同步更新Deployment的状态。</span><br><span class="hljs-comment">//如果在获取ReplicaSet列表时出现错误，则返回该错误。</span><br><br><span class="hljs-comment">// sync is responsible for reconciling deployments on scaling events or when they</span><br><span class="hljs-comment">// are paused.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(dc *DeploymentController)</span></span> sync(ctx context.Context, d *apps.Deployment, rsList []*apps.ReplicaSet) <span class="hljs-type">error</span> &#123;<br>	newRS, oldRSs, err := dc.getAllReplicaSetsAndSyncRevision(ctx, d, rsList, <span class="hljs-literal">false</span>)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br>	<span class="hljs-keyword">if</span> err := dc.scale(ctx, d, newRS, oldRSs); err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-comment">// If we get an error while trying to scale, the deployment will be requeued</span><br>		<span class="hljs-comment">// so we can abort this resync</span><br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br><br>	<span class="hljs-comment">// Clean up the deployment when it&#x27;s paused and no rollback is in flight.</span><br>	<span class="hljs-keyword">if</span> d.Spec.Paused &amp;&amp; getRollbackTo(d) == <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">if</span> err := dc.cleanupDeployment(ctx, oldRSs, d); err != <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">return</span> err<br>		&#125;<br>	&#125;<br><br>	allRSs := <span class="hljs-built_in">append</span>(oldRSs, newRS)<br>	<span class="hljs-keyword">return</span> dc.syncDeploymentStatus(ctx, allRSs, newRS, d)<br>&#125;<br><br><span class="hljs-comment">//该函数是一个Go语言函数，定义在DeploymentController结构体中，名为sync。它负责在缩放事件或暂停时协调部署。</span><br><span class="hljs-comment">//函数使用context.Context作为上下文，接收一个*apps.Deployment类型的参数d和一个[]*apps.ReplicaSet类型的参数rsList，返回一个error类型的值。</span><br><span class="hljs-comment">//函数主要执行以下操作：</span><br><span class="hljs-comment">//1. 调用getAllReplicaSetsAndSyncRevision方法获取所有复制集并同步修订版本，返回新复制集、旧复制集和错误（如果有）。</span><br><span class="hljs-comment">//2. 如果scale方法调用失败，则返回错误，以便重新排队处理。</span><br><span class="hljs-comment">//3. 如果部署被暂停并且没有进行中的回滚，则尝试清理部署。</span><br><span class="hljs-comment">//4. 将旧复制集和新复制集合并为一个列表，并调用syncDeploymentStatus方法来同步部署状态。</span><br><span class="hljs-comment">//最后，函数返回可能的错误。</span><br><br><span class="hljs-comment">// checkPausedConditions checks if the given deployment is paused or not and adds an appropriate condition.</span><br><span class="hljs-comment">// These conditions are needed so that we won&#x27;t accidentally report lack of progress for resumed deployments</span><br><span class="hljs-comment">// that were paused for longer than progressDeadlineSeconds.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(dc *DeploymentController)</span></span> checkPausedConditions(ctx context.Context, d *apps.Deployment) <span class="hljs-type">error</span> &#123;<br>	<span class="hljs-keyword">if</span> !deploymentutil.HasProgressDeadline(d) &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>	&#125;<br>	cond := deploymentutil.GetDeploymentCondition(d.Status, apps.DeploymentProgressing)<br>	<span class="hljs-keyword">if</span> cond != <span class="hljs-literal">nil</span> &amp;&amp; cond.Reason == deploymentutil.TimedOutReason &#123;<br>		<span class="hljs-comment">// If we have reported lack of progress, do not overwrite it with a paused condition.</span><br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>	&#125;<br>	pausedCondExists := cond != <span class="hljs-literal">nil</span> &amp;&amp; cond.Reason == deploymentutil.PausedDeployReason<br><br>	needsUpdate := <span class="hljs-literal">false</span><br>	<span class="hljs-keyword">if</span> d.Spec.Paused &amp;&amp; !pausedCondExists &#123;<br>		condition := deploymentutil.NewDeploymentCondition(apps.DeploymentProgressing, v1.ConditionUnknown, deploymentutil.PausedDeployReason, <span class="hljs-string">&quot;Deployment is paused&quot;</span>)<br>		deploymentutil.SetDeploymentCondition(&amp;d.Status, *condition)<br>		needsUpdate = <span class="hljs-literal">true</span><br>	&#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> !d.Spec.Paused &amp;&amp; pausedCondExists &#123;<br>		condition := deploymentutil.NewDeploymentCondition(apps.DeploymentProgressing, v1.ConditionUnknown, deploymentutil.ResumedDeployReason, <span class="hljs-string">&quot;Deployment is resumed&quot;</span>)<br>		deploymentutil.SetDeploymentCondition(&amp;d.Status, *condition)<br>		needsUpdate = <span class="hljs-literal">true</span><br>	&#125;<br><br>	<span class="hljs-keyword">if</span> !needsUpdate &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>	&#125;<br><br>	<span class="hljs-keyword">var</span> err <span class="hljs-type">error</span><br>	_, err = dc.client.AppsV1().Deployments(d.Namespace).UpdateStatus(ctx, d, metav1.UpdateOptions&#123;&#125;)<br>	<span class="hljs-keyword">return</span> err<br>&#125;<br><br><span class="hljs-comment">//该函数用于检查给定的部署是否暂停，并添加适当的条件。</span><br><span class="hljs-comment">//这些条件是必要的，以避免意外报告恢复的部署缺乏进展，这些部署被暂停的时间超过了progressDeadlineSeconds。</span><br><span class="hljs-comment">//函数首先检查部署是否具有进度截止时间，如果没有，则返回nil。</span><br><span class="hljs-comment">//然后获取部署的状态，如果状态中存在DeploymentProgressing条件且原因等于TimedOutReason，则不添加暂停条件。</span><br><span class="hljs-comment">//接下来，函数检查部署是否暂停以及是否存在暂停条件。</span><br><span class="hljs-comment">//如果部署已暂停但不存在暂停条件，则创建一个新的DeploymentProgressing条件并设置其原因为PausedDeployReason。</span><br><span class="hljs-comment">//如果部署未暂停但存在暂停条件，则创建一个新的DeploymentProgressing条件并设置其原因为ResumedDeployReason。</span><br><span class="hljs-comment">//最后，如果条件有更新，则使用client更新部署的状态。函数返回更新状态时可能发生的错误。</span><br><br><span class="hljs-comment">// getAllReplicaSetsAndSyncRevision returns all the replica sets for the provided deployment (new and all old), with new RS&#x27;s and deployment&#x27;s revision updated.</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">// rsList should come from getReplicaSetsForDeployment(d).</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">//  1. Get all old RSes this deployment targets, and calculate the max revision number among them (maxOldV).</span><br><span class="hljs-comment">//  2. Get new RS this deployment targets (whose pod template matches deployment&#x27;s), and update new RS&#x27;s revision number to (maxOldV + 1),</span><br><span class="hljs-comment">//     only if its revision number is smaller than (maxOldV + 1). If this step failed, we&#x27;ll update it in the next deployment sync loop.</span><br><span class="hljs-comment">//  3. Copy new RS&#x27;s revision number to deployment (update deployment&#x27;s revision). If this step failed, we&#x27;ll update it in the next deployment sync loop.</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">// Note that currently the deployment controller is using caches to avoid querying the server for reads.</span><br><span class="hljs-comment">// This may lead to stale reads of replica sets, thus incorrect deployment status.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(dc *DeploymentController)</span></span> getAllReplicaSetsAndSyncRevision(ctx context.Context, d *apps.Deployment, rsList []*apps.ReplicaSet, createIfNotExisted <span class="hljs-type">bool</span>) (*apps.ReplicaSet, []*apps.ReplicaSet, <span class="hljs-type">error</span>) &#123;<br>	_, allOldRSs := deploymentutil.FindOldReplicaSets(d, rsList)<br><br>	<span class="hljs-comment">// Get new replica set with the updated revision number</span><br>	newRS, err := dc.getNewReplicaSet(ctx, d, rsList, allOldRSs, createIfNotExisted)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, <span class="hljs-literal">nil</span>, err<br>	&#125;<br><br>	<span class="hljs-keyword">return</span> newRS, allOldRSs, <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-keyword">const</span> (<br>	<span class="hljs-comment">// limit revision history length to 100 element (~2000 chars)</span><br>	maxRevHistoryLengthInChars = <span class="hljs-number">2000</span><br>)<br><br><span class="hljs-comment">// Returns a replica set that matches the intent of the given deployment. Returns nil if the new replica set doesn&#x27;t exist yet.</span><br><span class="hljs-comment">// 1. Get existing new RS (the RS that the given deployment targets, whose pod template is the same as deployment&#x27;s).</span><br><span class="hljs-comment">// 2. If there&#x27;s existing new RS, update its revision number if it&#x27;s smaller than (maxOldRevision + 1), where maxOldRevision is the max revision number among all old RSes.</span><br><span class="hljs-comment">// 3. If there&#x27;s no existing new RS and createIfNotExisted is true, create one with appropriate revision number (maxOldRevision + 1) and replicas.</span><br><span class="hljs-comment">// Note that the pod-template-hash will be added to adopted RSes and pods.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(dc *DeploymentController)</span></span> getNewReplicaSet(ctx context.Context, d *apps.Deployment, rsList, oldRSs []*apps.ReplicaSet, createIfNotExisted <span class="hljs-type">bool</span>) (*apps.ReplicaSet, <span class="hljs-type">error</span>) &#123;<br>	logger := klog.FromContext(ctx)<br>	existingNewRS := deploymentutil.FindNewReplicaSet(d, rsList)<br><br>	<span class="hljs-comment">// Calculate the max revision number among all old RSes</span><br>	maxOldRevision := deploymentutil.MaxRevision(logger, oldRSs)<br>	<span class="hljs-comment">// Calculate revision number for this new replica set</span><br>	newRevision := strconv.FormatInt(maxOldRevision+<span class="hljs-number">1</span>, <span class="hljs-number">10</span>)<br><br>	<span class="hljs-comment">// Latest replica set exists. We need to sync its annotations (includes copying all but</span><br>	<span class="hljs-comment">// annotationsToSkip from the parent deployment, and update revision, desiredReplicas,</span><br>	<span class="hljs-comment">// and maxReplicas) and also update the revision annotation in the deployment with the</span><br>	<span class="hljs-comment">// latest revision.</span><br>	<span class="hljs-keyword">if</span> existingNewRS != <span class="hljs-literal">nil</span> &#123;<br>		rsCopy := existingNewRS.DeepCopy()<br><br>		<span class="hljs-comment">// Set existing new replica set&#x27;s annotation</span><br>		annotationsUpdated := deploymentutil.SetNewReplicaSetAnnotations(ctx, d, rsCopy, newRevision, <span class="hljs-literal">true</span>, maxRevHistoryLengthInChars)<br>		minReadySecondsNeedsUpdate := rsCopy.Spec.MinReadySeconds != d.Spec.MinReadySeconds<br>		<span class="hljs-keyword">if</span> annotationsUpdated || minReadySecondsNeedsUpdate &#123;<br>			rsCopy.Spec.MinReadySeconds = d.Spec.MinReadySeconds<br>			<span class="hljs-keyword">return</span> dc.client.AppsV1().ReplicaSets(rsCopy.ObjectMeta.Namespace).Update(ctx, rsCopy, metav1.UpdateOptions&#123;&#125;)<br>		&#125;<br><br>		<span class="hljs-comment">// Should use the revision in existingNewRS&#x27;s annotation, since it set by before</span><br>		needsUpdate := deploymentutil.SetDeploymentRevision(d, rsCopy.Annotations[deploymentutil.RevisionAnnotation])<br>		<span class="hljs-comment">// If no other Progressing condition has been recorded and we need to estimate the progress</span><br>		<span class="hljs-comment">// of this deployment then it is likely that old users started caring about progress. In that</span><br>		<span class="hljs-comment">// case we need to take into account the first time we noticed their new replica set.</span><br>		cond := deploymentutil.GetDeploymentCondition(d.Status, apps.DeploymentProgressing)<br>		<span class="hljs-keyword">if</span> deploymentutil.HasProgressDeadline(d) &amp;&amp; cond == <span class="hljs-literal">nil</span> &#123;<br>			msg := fmt.Sprintf(<span class="hljs-string">&quot;Found new replica set %q&quot;</span>, rsCopy.Name)<br>			condition := deploymentutil.NewDeploymentCondition(apps.DeploymentProgressing, v1.ConditionTrue, deploymentutil.FoundNewRSReason, msg)<br>			deploymentutil.SetDeploymentCondition(&amp;d.Status, *condition)<br>			needsUpdate = <span class="hljs-literal">true</span><br>		&#125;<br><br>		<span class="hljs-keyword">if</span> needsUpdate &#123;<br>			<span class="hljs-keyword">var</span> err <span class="hljs-type">error</span><br>			<span class="hljs-keyword">if</span> _, err = dc.client.AppsV1().Deployments(d.Namespace).UpdateStatus(ctx, d, metav1.UpdateOptions&#123;&#125;); err != <span class="hljs-literal">nil</span> &#123;<br>				<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>			&#125;<br>		&#125;<br>		<span class="hljs-keyword">return</span> rsCopy, <span class="hljs-literal">nil</span><br>	&#125;<br><br>	<span class="hljs-keyword">if</span> !createIfNotExisted &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, <span class="hljs-literal">nil</span><br>	&#125;<br><br>	<span class="hljs-comment">// new ReplicaSet does not exist, create one.</span><br>	newRSTemplate := *d.Spec.Template.DeepCopy()<br>	podTemplateSpecHash := controller.ComputeHash(&amp;newRSTemplate, d.Status.CollisionCount)<br>	newRSTemplate.Labels = labelsutil.CloneAndAddLabel(d.Spec.Template.Labels, apps.DefaultDeploymentUniqueLabelKey, podTemplateSpecHash)<br>	<span class="hljs-comment">// Add podTemplateHash label to selector.</span><br>	newRSSelector := labelsutil.CloneSelectorAndAddLabel(d.Spec.Selector, apps.DefaultDeploymentUniqueLabelKey, podTemplateSpecHash)<br><br>	<span class="hljs-comment">// Create new ReplicaSet</span><br>	newRS := apps.ReplicaSet&#123;<br>		ObjectMeta: metav1.ObjectMeta&#123;<br>			<span class="hljs-comment">// Make the name deterministic, to ensure idempotence</span><br>			Name:            d.Name + <span class="hljs-string">&quot;-&quot;</span> + podTemplateSpecHash,<br>			Namespace:       d.Namespace,<br>			OwnerReferences: []metav1.OwnerReference&#123;*metav1.NewControllerRef(d, controllerKind)&#125;,<br>			Labels:          newRSTemplate.Labels,<br>		&#125;,<br>		Spec: apps.ReplicaSetSpec&#123;<br>			Replicas:        <span class="hljs-built_in">new</span>(<span class="hljs-type">int32</span>),<br>			MinReadySeconds: d.Spec.MinReadySeconds,<br>			Selector:        newRSSelector,<br>			Template:        newRSTemplate,<br>		&#125;,<br>	&#125;<br>	allRSs := <span class="hljs-built_in">append</span>(oldRSs, &amp;newRS)<br>	newReplicasCount, err := deploymentutil.NewRSNewReplicas(d, allRSs, &amp;newRS)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>	&#125;<br><br>	*(newRS.Spec.Replicas) = newReplicasCount<br>	<span class="hljs-comment">// Set new replica set&#x27;s annotation</span><br>	deploymentutil.SetNewReplicaSetAnnotations(ctx, d, &amp;newRS, newRevision, <span class="hljs-literal">false</span>, maxRevHistoryLengthInChars)<br>	<span class="hljs-comment">// Create the new ReplicaSet. If it already exists, then we need to check for possible</span><br>	<span class="hljs-comment">// hash collisions. If there is any other error, we need to report it in the status of</span><br>	<span class="hljs-comment">// the Deployment.</span><br>	alreadyExists := <span class="hljs-literal">false</span><br>	createdRS, err := dc.client.AppsV1().ReplicaSets(d.Namespace).Create(ctx, &amp;newRS, metav1.CreateOptions&#123;&#125;)<br>	<span class="hljs-keyword">switch</span> &#123;<br>	<span class="hljs-comment">// We may end up hitting this due to a slow cache or a fast resync of the Deployment.</span><br>	<span class="hljs-keyword">case</span> errors.IsAlreadyExists(err):<br>		alreadyExists = <span class="hljs-literal">true</span><br><br>		<span class="hljs-comment">// Fetch a copy of the ReplicaSet.</span><br>		rs, rsErr := dc.rsLister.ReplicaSets(newRS.Namespace).Get(newRS.Name)<br>		<span class="hljs-keyword">if</span> rsErr != <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, rsErr<br>		&#125;<br><br>		<span class="hljs-comment">// If the Deployment owns the ReplicaSet and the ReplicaSet&#x27;s PodTemplateSpec is semantically</span><br>		<span class="hljs-comment">// deep equal to the PodTemplateSpec of the Deployment, it&#x27;s the Deployment&#x27;s new ReplicaSet.</span><br>		<span class="hljs-comment">// Otherwise, this is a hash collision and we need to increment the collisionCount field in</span><br>		<span class="hljs-comment">// the status of the Deployment and requeue to try the creation in the next sync.</span><br>		controllerRef := metav1.GetControllerOf(rs)<br>		<span class="hljs-keyword">if</span> controllerRef != <span class="hljs-literal">nil</span> &amp;&amp; controllerRef.UID == d.UID &amp;&amp; deploymentutil.EqualIgnoreHash(&amp;d.Spec.Template, &amp;rs.Spec.Template) &#123;<br>			createdRS = rs<br>			err = <span class="hljs-literal">nil</span><br>			<span class="hljs-keyword">break</span><br>		&#125;<br><br>		<span class="hljs-comment">// Matching ReplicaSet is not equal - increment the collisionCount in the DeploymentStatus</span><br>		<span class="hljs-comment">// and requeue the Deployment.</span><br>		<span class="hljs-keyword">if</span> d.Status.CollisionCount == <span class="hljs-literal">nil</span> &#123;<br>			d.Status.CollisionCount = <span class="hljs-built_in">new</span>(<span class="hljs-type">int32</span>)<br>		&#125;<br>		preCollisionCount := *d.Status.CollisionCount<br>		*d.Status.CollisionCount++<br>		<span class="hljs-comment">// Update the collisionCount for the Deployment and let it requeue by returning the original</span><br>		<span class="hljs-comment">// error.</span><br>		_, dErr := dc.client.AppsV1().Deployments(d.Namespace).UpdateStatus(ctx, d, metav1.UpdateOptions&#123;&#125;)<br>		<span class="hljs-keyword">if</span> dErr == <span class="hljs-literal">nil</span> &#123;<br>			logger.V(<span class="hljs-number">2</span>).Info(<span class="hljs-string">&quot;Found a hash collision for deployment - bumping collisionCount to resolve it&quot;</span>, <span class="hljs-string">&quot;deployment&quot;</span>, klog.KObj(d), <span class="hljs-string">&quot;oldCollisionCount&quot;</span>, preCollisionCount, <span class="hljs-string">&quot;newCollisionCount&quot;</span>, *d.Status.CollisionCount)<br>		&#125;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>	<span class="hljs-keyword">case</span> errors.HasStatusCause(err, v1.NamespaceTerminatingCause):<br>		<span class="hljs-comment">// if the namespace is terminating, all subsequent creates will fail and we can safely do nothing</span><br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>	<span class="hljs-keyword">case</span> err != <span class="hljs-literal">nil</span>:<br>		msg := fmt.Sprintf(<span class="hljs-string">&quot;Failed to create new replica set %q: %v&quot;</span>, newRS.Name, err)<br>		<span class="hljs-keyword">if</span> deploymentutil.HasProgressDeadline(d) &#123;<br>			cond := deploymentutil.NewDeploymentCondition(apps.DeploymentProgressing, v1.ConditionFalse, deploymentutil.FailedRSCreateReason, msg)<br>			deploymentutil.SetDeploymentCondition(&amp;d.Status, *cond)<br>			<span class="hljs-comment">// We don&#x27;t really care about this error at this point, since we have a bigger issue to report.</span><br>			<span class="hljs-comment">// <span class="hljs-doctag">TODO:</span> Identify which errors are permanent and switch DeploymentIsFailed to take into account</span><br>			<span class="hljs-comment">// these reasons as well. Related issue: https://github.com/kubernetes/kubernetes/issues/18568</span><br>			_, _ = dc.client.AppsV1().Deployments(d.Namespace).UpdateStatus(ctx, d, metav1.UpdateOptions&#123;&#125;)<br>		&#125;<br>		dc.eventRecorder.Eventf(d, v1.EventTypeWarning, deploymentutil.FailedRSCreateReason, msg)<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>	&#125;<br>	<span class="hljs-keyword">if</span> !alreadyExists &amp;&amp; newReplicasCount &gt; <span class="hljs-number">0</span> &#123;<br>		dc.eventRecorder.Eventf(d, v1.EventTypeNormal, <span class="hljs-string">&quot;ScalingReplicaSet&quot;</span>, <span class="hljs-string">&quot;Scaled up replica set %s to %d&quot;</span>, createdRS.Name, newReplicasCount)<br>	&#125;<br><br>	needsUpdate := deploymentutil.SetDeploymentRevision(d, newRevision)<br>	<span class="hljs-keyword">if</span> !alreadyExists &amp;&amp; deploymentutil.HasProgressDeadline(d) &#123;<br>		msg := fmt.Sprintf(<span class="hljs-string">&quot;Created new replica set %q&quot;</span>, createdRS.Name)<br>		condition := deploymentutil.NewDeploymentCondition(apps.DeploymentProgressing, v1.ConditionTrue, deploymentutil.NewReplicaSetReason, msg)<br>		deploymentutil.SetDeploymentCondition(&amp;d.Status, *condition)<br>		needsUpdate = <span class="hljs-literal">true</span><br>	&#125;<br>	<span class="hljs-keyword">if</span> needsUpdate &#123;<br>		_, err = dc.client.AppsV1().Deployments(d.Namespace).UpdateStatus(ctx, d, metav1.UpdateOptions&#123;&#125;)<br>	&#125;<br>	<span class="hljs-keyword">return</span> createdRS, err<br>&#125;<br><br><span class="hljs-comment">//该函数是Go语言编写的，用于获取与给定部署相匹配的复制集（ReplicaSet）。</span><br><span class="hljs-comment">//如果该新的复制集不存在，且createIfNotExisted参数为true，则会创建一个新的复制集。</span><br><span class="hljs-comment">//函数首先查找与给定部署目标相匹配的现有新的复制集（即具有与部署相同的Pod模板）。</span><br><span class="hljs-comment">//然后，它会计算所有旧复制集的最大修订号（revision number），并为新的复制集计算一个适当的修订号。</span><br><span class="hljs-comment">//如果存在现有的新复制集，函数将更新其修订号和注释，并可能更新部署的状态。</span><br><span class="hljs-comment">//如果不存在新的复制集且createIfNotExisted为true，则函数将创建一个新的复制集，并更新部署的状态。</span><br><span class="hljs-comment">//该函数使用了context.Context来控制函数执行的上下文，使用了apps.Deployment、apps.ReplicaSet等结构体来表示部署和复制集的信息，</span><br><span class="hljs-comment">//使用了client来与Kubernetes API进行交互。</span><br><span class="hljs-comment">//函数的具体逻辑包括：</span><br><span class="hljs-comment">//1. 查找与给定部署相匹配的新的复制集。</span><br><span class="hljs-comment">//2. 计算所有旧复制集的最大修订号。</span><br><span class="hljs-comment">//3. 如果存在现有的新复制集，更新其修订号和注释，并可能更新部署的状态。</span><br><span class="hljs-comment">//4. 如果不存在新的复制集且createIfNotExisted为true，创建一个新的复制集，并更新部署的状态。</span><br><span class="hljs-comment">//该函数涉及的操作包括查找、更新和创建复制集，以及更新部署的状态。</span><br><br><span class="hljs-comment">// scale scales proportionally in order to mitigate risk. Otherwise, scaling up can increase the size</span><br><span class="hljs-comment">// of the new replica set and scaling down can decrease the sizes of the old ones, both of which would</span><br><span class="hljs-comment">// have the effect of hastening the rollout progress, which could produce a higher proportion of unavailable</span><br><span class="hljs-comment">// replicas in the event of a problem with the rolled out template. Should run only on scaling events or</span><br><span class="hljs-comment">// when a deployment is paused and not during the normal rollout process.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(dc *DeploymentController)</span></span> scale(ctx context.Context, deployment *apps.Deployment, newRS *apps.ReplicaSet, oldRSs []*apps.ReplicaSet) <span class="hljs-type">error</span> &#123;<br>	<span class="hljs-comment">// If there is only one active replica set then we should scale that up to the full count of the</span><br>	<span class="hljs-comment">// deployment. If there is no active replica set, then we should scale up the newest replica set.</span><br>	<span class="hljs-keyword">if</span> activeOrLatest := deploymentutil.FindActiveOrLatest(newRS, oldRSs); activeOrLatest != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">if</span> *(activeOrLatest.Spec.Replicas) == *(deployment.Spec.Replicas) &#123;<br>			<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>		&#125;<br>		_, _, err := dc.scaleReplicaSetAndRecordEvent(ctx, activeOrLatest, *(deployment.Spec.Replicas), deployment)<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br><br>	<span class="hljs-comment">// If the new replica set is saturated, old replica sets should be fully scaled down.</span><br>	<span class="hljs-comment">// This case handles replica set adoption during a saturated new replica set.</span><br>	<span class="hljs-keyword">if</span> deploymentutil.IsSaturated(deployment, newRS) &#123;<br>		<span class="hljs-keyword">for</span> _, old := <span class="hljs-keyword">range</span> controller.FilterActiveReplicaSets(oldRSs) &#123;<br>			<span class="hljs-keyword">if</span> _, _, err := dc.scaleReplicaSetAndRecordEvent(ctx, old, <span class="hljs-number">0</span>, deployment); err != <span class="hljs-literal">nil</span> &#123;<br>				<span class="hljs-keyword">return</span> err<br>			&#125;<br>		&#125;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>	&#125;<br><br>	<span class="hljs-comment">// There are old replica sets with pods and the new replica set is not saturated.</span><br>	<span class="hljs-comment">// We need to proportionally scale all replica sets (new and old) in case of a</span><br>	<span class="hljs-comment">// rolling deployment.</span><br>	<span class="hljs-keyword">if</span> deploymentutil.IsRollingUpdate(deployment) &#123;<br>		allRSs := controller.FilterActiveReplicaSets(<span class="hljs-built_in">append</span>(oldRSs, newRS))<br>		allRSsReplicas := deploymentutil.GetReplicaCountForReplicaSets(allRSs)<br><br>		allowedSize := <span class="hljs-type">int32</span>(<span class="hljs-number">0</span>)<br>		<span class="hljs-keyword">if</span> *(deployment.Spec.Replicas) &gt; <span class="hljs-number">0</span> &#123;<br>			allowedSize = *(deployment.Spec.Replicas) + deploymentutil.MaxSurge(*deployment)<br>		&#125;<br><br>		<span class="hljs-comment">// Number of additional replicas that can be either added or removed from the total</span><br>		<span class="hljs-comment">// replicas count. These replicas should be distributed proportionally to the active</span><br>		<span class="hljs-comment">// replica sets.</span><br>		deploymentReplicasToAdd := allowedSize - allRSsReplicas<br><br>		<span class="hljs-comment">// The additional replicas should be distributed proportionally amongst the active</span><br>		<span class="hljs-comment">// replica sets from the larger to the smaller in size replica set. Scaling direction</span><br>		<span class="hljs-comment">// drives what happens in case we are trying to scale replica sets of the same size.</span><br>		<span class="hljs-comment">// In such a case when scaling up, we should scale up newer replica sets first, and</span><br>		<span class="hljs-comment">// when scaling down, we should scale down older replica sets first.</span><br>		<span class="hljs-keyword">var</span> scalingOperation <span class="hljs-type">string</span><br>		<span class="hljs-keyword">switch</span> &#123;<br>		<span class="hljs-keyword">case</span> deploymentReplicasToAdd &gt; <span class="hljs-number">0</span>:<br>			sort.Sort(controller.ReplicaSetsBySizeNewer(allRSs))<br>			scalingOperation = <span class="hljs-string">&quot;up&quot;</span><br><br>		<span class="hljs-keyword">case</span> deploymentReplicasToAdd &lt; <span class="hljs-number">0</span>:<br>			sort.Sort(controller.ReplicaSetsBySizeOlder(allRSs))<br>			scalingOperation = <span class="hljs-string">&quot;down&quot;</span><br>		&#125;<br><br>		<span class="hljs-comment">// Iterate over all active replica sets and estimate proportions for each of them.</span><br>		<span class="hljs-comment">// The absolute value of deploymentReplicasAdded should never exceed the absolute</span><br>		<span class="hljs-comment">// value of deploymentReplicasToAdd.</span><br>		deploymentReplicasAdded := <span class="hljs-type">int32</span>(<span class="hljs-number">0</span>)<br>		nameToSize := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]<span class="hljs-type">int32</span>)<br>		logger := klog.FromContext(ctx)<br>		<span class="hljs-keyword">for</span> i := <span class="hljs-keyword">range</span> allRSs &#123;<br>			rs := allRSs[i]<br><br>			<span class="hljs-comment">// Estimate proportions if we have replicas to add, otherwise simply populate</span><br>			<span class="hljs-comment">// nameToSize with the current sizes for each replica set.</span><br>			<span class="hljs-keyword">if</span> deploymentReplicasToAdd != <span class="hljs-number">0</span> &#123;<br>				proportion := deploymentutil.GetProportion(logger, rs, *deployment, deploymentReplicasToAdd, deploymentReplicasAdded)<br><br>				nameToSize[rs.Name] = *(rs.Spec.Replicas) + proportion<br>				deploymentReplicasAdded += proportion<br>			&#125; <span class="hljs-keyword">else</span> &#123;<br>				nameToSize[rs.Name] = *(rs.Spec.Replicas)<br>			&#125;<br>		&#125;<br><br>		<span class="hljs-comment">// Update all replica sets</span><br>		<span class="hljs-keyword">for</span> i := <span class="hljs-keyword">range</span> allRSs &#123;<br>			rs := allRSs[i]<br><br>			<span class="hljs-comment">// Add/remove any leftovers to the largest replica set.</span><br>			<span class="hljs-keyword">if</span> i == <span class="hljs-number">0</span> &amp;&amp; deploymentReplicasToAdd != <span class="hljs-number">0</span> &#123;<br>				leftover := deploymentReplicasToAdd - deploymentReplicasAdded<br>				nameToSize[rs.Name] = nameToSize[rs.Name] + leftover<br>				<span class="hljs-keyword">if</span> nameToSize[rs.Name] &lt; <span class="hljs-number">0</span> &#123;<br>					nameToSize[rs.Name] = <span class="hljs-number">0</span><br>				&#125;<br>			&#125;<br><br>			<span class="hljs-comment">// <span class="hljs-doctag">TODO:</span> Use transactions when we have them.</span><br>			<span class="hljs-keyword">if</span> _, _, err := dc.scaleReplicaSet(ctx, rs, nameToSize[rs.Name], deployment, scalingOperation); err != <span class="hljs-literal">nil</span> &#123;<br>				<span class="hljs-comment">// Return as soon as we fail, the deployment is requeued</span><br>				<span class="hljs-keyword">return</span> err<br>			&#125;<br>		&#125;<br>	&#125;<br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-comment">//该函数是一个Go语言函数，名为scale，属于DeploymentController类型。</span><br><span class="hljs-comment">//它接收四个参数：ctx是一个上下文对象，deployment是一个Deployment指针，newRS是一个ReplicaSet指针，oldRSs是一个ReplicaSet指针数组。</span><br><span class="hljs-comment">//函数返回一个错误。</span><br><span class="hljs-comment">//该函数用于根据给定的部署（deployment）和新的副本集（newRS）来比例地调整副本集的大小，以减轻风险。</span><br><span class="hljs-comment">//函数首先检查是否有活跃或最新的副本集需要进行大小调整，如果有，则将其调整到部署的指定大小。</span><br><span class="hljs-comment">//如果新的副本集已饱和，则将旧的副本集完全缩放 down。</span><br><span class="hljs-comment">//如果部署是滚动更新类型，则按比例缩放所有副本集（新旧副本集）。</span><br><span class="hljs-comment">//在滚动更新的情况下，函数会根据部署的规格（deployment.Spec.Replicas）和最大突增值（MaxSurge）计算出可以添加或移除的额外副本数量，</span><br><span class="hljs-comment">//并将这些副本按比例分配给所有活跃的副本集。</span><br><span class="hljs-comment">//在缩放过程中，函数会根据副本集的大小进行排序，并根据缩放操作的类型（上/下）选择合适的排序方式。</span><br><span class="hljs-comment">//函数会迭代所有活跃的副本集，并根据比例计算出每个副本集应该增加或减少的副本数量。</span><br><span class="hljs-comment">//最后，函数会更新所有副本集的大小，并在遇到错误时返回错误。</span><br><span class="hljs-comment">//总结： 该函数用于根据给定的部署和新的副本集来比例地调整副本集的大小，以减轻风险。</span><br><span class="hljs-comment">//它会根据不同的条件来判断如何缩放副本集，并将缩放操作应用于所有活跃的副本集。</span><br><span class="hljs-comment">//该函数在滚动更新的情况下，会按比例分配额外的副本数量给所有活跃的副本集。</span><br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(dc *DeploymentController)</span></span> scaleReplicaSetAndRecordEvent(ctx context.Context, rs *apps.ReplicaSet, newScale <span class="hljs-type">int32</span>, deployment *apps.Deployment) (<span class="hljs-type">bool</span>, *apps.ReplicaSet, <span class="hljs-type">error</span>) &#123;<br>	<span class="hljs-comment">// No need to scale</span><br>	<span class="hljs-keyword">if</span> *(rs.Spec.Replicas) == newScale &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, rs, <span class="hljs-literal">nil</span><br>	&#125;<br>	<span class="hljs-keyword">var</span> scalingOperation <span class="hljs-type">string</span><br>	<span class="hljs-keyword">if</span> *(rs.Spec.Replicas) &lt; newScale &#123;<br>		scalingOperation = <span class="hljs-string">&quot;up&quot;</span><br>	&#125; <span class="hljs-keyword">else</span> &#123;<br>		scalingOperation = <span class="hljs-string">&quot;down&quot;</span><br>	&#125;<br>	scaled, newRS, err := dc.scaleReplicaSet(ctx, rs, newScale, deployment, scalingOperation)<br>	<span class="hljs-keyword">return</span> scaled, newRS, err<br>&#125;<br><br><span class="hljs-comment">//该函数是一个Go语言函数，名为scaleReplicaSetAndRecordEvent，属于DeploymentController类型。</span><br><span class="hljs-comment">//它接收四个参数：ctx是一个上下文对象，rs是一个ReplicaSet指针，newScale是一个int32类型的变量，deployment是一个Deployment指针。</span><br><span class="hljs-comment">//函数返回三个值：一个布尔值，一个ReplicaSet指针和一个错误。</span><br><span class="hljs-comment">//函数首先检查当前ReplicaSet的副本数量是否已经等于目标副本数量newScale，如果是，则直接返回不进行任何操作。</span><br><span class="hljs-comment">//如果需要进行缩放操作，则根据目标副本数量与当前副本数量的关系，确定是向上扩展还是向下缩小。</span><br><span class="hljs-comment">//接着，函数调用dc.scaleReplicaSet方法来执行实际的缩放操作，并将缩放操作的结果返回。</span><br><span class="hljs-comment">//最后，函数返回缩放操作是否成功、新的ReplicaSet指针以及可能的错误信息。</span><br><span class="hljs-comment">//总结： 该函数用于根据给定的目标副本数量对ReplicaSet进行缩放操作，并记录相关事件。</span><br><span class="hljs-comment">//它会检查当前副本数量是否已经等于目标数量，如果是则不进行操作；否则，根据目标数量与当前数量的关系确定是向上扩展还是向下缩小，并执行相应的缩放操作。</span><br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(dc *DeploymentController)</span></span> scaleReplicaSet(ctx context.Context, rs *apps.ReplicaSet, newScale <span class="hljs-type">int32</span>, deployment *apps.Deployment, scalingOperation <span class="hljs-type">string</span>) (<span class="hljs-type">bool</span>, *apps.ReplicaSet, <span class="hljs-type">error</span>) &#123;<br><br>	sizeNeedsUpdate := *(rs.Spec.Replicas) != newScale<br><br>	annotationsNeedUpdate := deploymentutil.ReplicasAnnotationsNeedUpdate(rs, *(deployment.Spec.Replicas), *(deployment.Spec.Replicas)+deploymentutil.MaxSurge(*deployment))<br><br>	scaled := <span class="hljs-literal">false</span><br>	<span class="hljs-keyword">var</span> err <span class="hljs-type">error</span><br>	<span class="hljs-keyword">if</span> sizeNeedsUpdate || annotationsNeedUpdate &#123;<br>		oldScale := *(rs.Spec.Replicas)<br>		rsCopy := rs.DeepCopy()<br>		*(rsCopy.Spec.Replicas) = newScale<br>		deploymentutil.SetReplicasAnnotations(rsCopy, *(deployment.Spec.Replicas), *(deployment.Spec.Replicas)+deploymentutil.MaxSurge(*deployment))<br>		rs, err = dc.client.AppsV1().ReplicaSets(rsCopy.Namespace).Update(ctx, rsCopy, metav1.UpdateOptions&#123;&#125;)<br>		<span class="hljs-keyword">if</span> err == <span class="hljs-literal">nil</span> &amp;&amp; sizeNeedsUpdate &#123;<br>			scaled = <span class="hljs-literal">true</span><br>			dc.eventRecorder.Eventf(deployment, v1.EventTypeNormal, <span class="hljs-string">&quot;ScalingReplicaSet&quot;</span>, <span class="hljs-string">&quot;Scaled %s replica set %s to %d from %d&quot;</span>, scalingOperation, rs.Name, newScale, oldScale)<br>		&#125;<br>	&#125;<br>	<span class="hljs-keyword">return</span> scaled, rs, err<br>&#125;<br><br><span class="hljs-comment">//该函数用于缩放副本集的副本数量。</span><br><span class="hljs-comment">//它首先检查副本集的当前副本数量是否与目标副本数量不同，以及副本集的注解是否需要更新。</span><br><span class="hljs-comment">//如果任一条件为真，则创建一个副本集的深拷贝，并更新其副本数量和注解。</span><br><span class="hljs-comment">//然后，使用更新后的副本集调用客户端的Update方法来更新副本集。</span><br><span class="hljs-comment">//如果更新成功并且副本数量发生了变化，则记录一个事件表示副本集已被缩放。</span><br><span class="hljs-comment">//函数返回一个布尔值表示副本集是否被缩放，更新后的副本集对象和可能出现的错误。</span><br><br><span class="hljs-comment">// cleanupDeployment is responsible for cleaning up a deployment ie. retains all but the latest N old replica sets</span><br><span class="hljs-comment">// where N=d.Spec.RevisionHistoryLimit. Old replica sets are older versions of the podtemplate of a deployment kept</span><br><span class="hljs-comment">// around by default 1) for historical reasons and 2) for the ability to rollback a deployment.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(dc *DeploymentController)</span></span> cleanupDeployment(ctx context.Context, oldRSs []*apps.ReplicaSet, deployment *apps.Deployment) <span class="hljs-type">error</span> &#123;<br>	logger := klog.FromContext(ctx)<br>	<span class="hljs-keyword">if</span> !deploymentutil.HasRevisionHistoryLimit(deployment) &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>	&#125;<br><br>	<span class="hljs-comment">// Avoid deleting replica set with deletion timestamp set</span><br>	aliveFilter := <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(rs *apps.ReplicaSet)</span></span> <span class="hljs-type">bool</span> &#123;<br>		<span class="hljs-keyword">return</span> rs != <span class="hljs-literal">nil</span> &amp;&amp; rs.ObjectMeta.DeletionTimestamp == <span class="hljs-literal">nil</span><br>	&#125;<br>	cleanableRSes := controller.FilterReplicaSets(oldRSs, aliveFilter)<br><br>	diff := <span class="hljs-type">int32</span>(<span class="hljs-built_in">len</span>(cleanableRSes)) - *deployment.Spec.RevisionHistoryLimit<br>	<span class="hljs-keyword">if</span> diff &lt;= <span class="hljs-number">0</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>	&#125;<br><br>	sort.Sort(deploymentutil.ReplicaSetsByRevision(cleanableRSes))<br>	logger.V(<span class="hljs-number">4</span>).Info(<span class="hljs-string">&quot;Looking to cleanup old replica sets for deployment&quot;</span>, <span class="hljs-string">&quot;deployment&quot;</span>, klog.KObj(deployment))<br><br>	<span class="hljs-keyword">for</span> i := <span class="hljs-type">int32</span>(<span class="hljs-number">0</span>); i &lt; diff; i++ &#123;<br>		rs := cleanableRSes[i]<br>		<span class="hljs-comment">// Avoid delete replica set with non-zero replica counts</span><br>		<span class="hljs-keyword">if</span> rs.Status.Replicas != <span class="hljs-number">0</span> || *(rs.Spec.Replicas) != <span class="hljs-number">0</span> || rs.Generation &gt; rs.Status.ObservedGeneration || rs.DeletionTimestamp != <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">continue</span><br>		&#125;<br>		logger.V(<span class="hljs-number">4</span>).Info(<span class="hljs-string">&quot;Trying to cleanup replica set for deployment&quot;</span>, <span class="hljs-string">&quot;replicaSet&quot;</span>, klog.KObj(rs), <span class="hljs-string">&quot;deployment&quot;</span>, klog.KObj(deployment))<br>		<span class="hljs-keyword">if</span> err := dc.client.AppsV1().ReplicaSets(rs.Namespace).Delete(ctx, rs.Name, metav1.DeleteOptions&#123;&#125;); err != <span class="hljs-literal">nil</span> &amp;&amp; !errors.IsNotFound(err) &#123;<br>			<span class="hljs-comment">// Return error instead of aggregating and continuing DELETEs on the theory</span><br>			<span class="hljs-comment">// that we may be overloading the api server.</span><br>			<span class="hljs-keyword">return</span> err<br>		&#125;<br>	&#125;<br><br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-comment">//该函数用于清理部署，即保留最新N个旧的副本集，其中N等于d.Spec.RevisionHistoryLimit。</span><br><span class="hljs-comment">//旧的副本集是部署的pod模板的旧版本，保留它们的原因有：</span><br><span class="hljs-comment">//1）历史原因；</span><br><span class="hljs-comment">//2）为了能够回滚部署。函数首先检查部署是否设置了修订历史限制，如果没有设置，则直接返回。</span><br><span class="hljs-comment">//然后，过滤掉具有删除时间戳的副本集，并计算需要清理的副本集数量。</span><br><span class="hljs-comment">//如果需要清理的副本集数量小于等于0，则直接返回。</span><br><span class="hljs-comment">//接下来，按修订版本对可清理的副本集进行排序，并尝试清理旧的副本集。</span><br><span class="hljs-comment">//对于每个需要清理的副本集，如果其副本数量不为零，或者期望的副本数量不为零，或者其生成代数大于观察到的生成代数，或者具有删除时间戳，则跳过清理。</span><br><span class="hljs-comment">//最后，如果清理过程中发生错误，则返回错误。</span><br><br><span class="hljs-comment">// syncDeploymentStatus checks if the status is up-to-date and sync it if necessary</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(dc *DeploymentController)</span></span> syncDeploymentStatus(ctx context.Context, allRSs []*apps.ReplicaSet, newRS *apps.ReplicaSet, d *apps.Deployment) <span class="hljs-type">error</span> &#123;<br>	newStatus := calculateStatus(allRSs, newRS, d)<br><br>	<span class="hljs-keyword">if</span> reflect.DeepEqual(d.Status, newStatus) &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>	&#125;<br><br>	newDeployment := d<br>	newDeployment.Status = newStatus<br>	_, err := dc.client.AppsV1().Deployments(newDeployment.Namespace).UpdateStatus(ctx, newDeployment, metav1.UpdateOptions&#123;&#125;)<br>	<span class="hljs-keyword">return</span> err<br>&#125;<br><br><span class="hljs-comment">//该函数是一个Go语言函数，用于检查部署（Deployment）的状态是否是最新的，如果不是最新的，则将其同步到最新的状态。</span><br><span class="hljs-comment">//函数定义在DeploymentController结构体中。</span><br><span class="hljs-comment">//函数接受四个参数：</span><br><span class="hljs-comment">//- ctx：上下文对象，用于控制函数执行期间的流程。</span><br><span class="hljs-comment">//- allRSs：一个包含所有副本集（ReplicaSet）的切片。</span><br><span class="hljs-comment">//- newRS：一个新的副本集。</span><br><span class="hljs-comment">//- d：一个部署对象。</span><br><span class="hljs-comment">//函数首先调用calculateStatus函数来计算最新的状态。</span><br><span class="hljs-comment">//然后，它将检查当前部署的状态是否与计算出的最新状态相等。</span><br><span class="hljs-comment">//如果相等，函数将直接返回，不做任何操作。</span><br><span class="hljs-comment">//如果不相等，函数将更新部署的状态为最新状态，并调用UpdateStatus方法将其更新到Kubernetes集群中。</span><br><span class="hljs-comment">//最后，函数返回可能发生的错误。</span><br><br><span class="hljs-comment">// calculateStatus calculates the latest status for the provided deployment by looking into the provided replica sets.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">calculateStatus</span><span class="hljs-params">(allRSs []*apps.ReplicaSet, newRS *apps.ReplicaSet, deployment *apps.Deployment)</span></span> apps.DeploymentStatus &#123;<br>	availableReplicas := deploymentutil.GetAvailableReplicaCountForReplicaSets(allRSs)<br>	totalReplicas := deploymentutil.GetReplicaCountForReplicaSets(allRSs)<br>	unavailableReplicas := totalReplicas - availableReplicas<br>	<span class="hljs-comment">// If unavailableReplicas is negative, then that means the Deployment has more available replicas running than</span><br>	<span class="hljs-comment">// desired, e.g. whenever it scales down. In such a case we should simply default unavailableReplicas to zero.</span><br>	<span class="hljs-keyword">if</span> unavailableReplicas &lt; <span class="hljs-number">0</span> &#123;<br>		unavailableReplicas = <span class="hljs-number">0</span><br>	&#125;<br><br>	status := apps.DeploymentStatus&#123;<br>		<span class="hljs-comment">// <span class="hljs-doctag">TODO:</span> Ensure that if we start retrying status updates, we won&#x27;t pick up a new Generation value.</span><br>		ObservedGeneration:  deployment.Generation,<br>		Replicas:            deploymentutil.GetActualReplicaCountForReplicaSets(allRSs),<br>		UpdatedReplicas:     deploymentutil.GetActualReplicaCountForReplicaSets([]*apps.ReplicaSet&#123;newRS&#125;),<br>		ReadyReplicas:       deploymentutil.GetReadyReplicaCountForReplicaSets(allRSs),<br>		AvailableReplicas:   availableReplicas,<br>		UnavailableReplicas: unavailableReplicas,<br>		CollisionCount:      deployment.Status.CollisionCount,<br>	&#125;<br><br>	<span class="hljs-comment">// Copy conditions one by one so we won&#x27;t mutate the original object.</span><br>	conditions := deployment.Status.Conditions<br>	<span class="hljs-keyword">for</span> i := <span class="hljs-keyword">range</span> conditions &#123;<br>		status.Conditions = <span class="hljs-built_in">append</span>(status.Conditions, conditions[i])<br>	&#125;<br><br>	<span class="hljs-keyword">if</span> availableReplicas &gt;= *(deployment.Spec.Replicas)-deploymentutil.MaxUnavailable(*deployment) &#123;<br>		minAvailability := deploymentutil.NewDeploymentCondition(apps.DeploymentAvailable, v1.ConditionTrue, deploymentutil.MinimumReplicasAvailable, <span class="hljs-string">&quot;Deployment has minimum availability.&quot;</span>)<br>		deploymentutil.SetDeploymentCondition(&amp;status, *minAvailability)<br>	&#125; <span class="hljs-keyword">else</span> &#123;<br>		noMinAvailability := deploymentutil.NewDeploymentCondition(apps.DeploymentAvailable, v1.ConditionFalse, deploymentutil.MinimumReplicasUnavailable, <span class="hljs-string">&quot;Deployment does not have minimum availability.&quot;</span>)<br>		deploymentutil.SetDeploymentCondition(&amp;status, *noMinAvailability)<br>	&#125;<br><br>	<span class="hljs-keyword">return</span> status<br>&#125;<br><br><span class="hljs-comment">// isScalingEvent checks whether the provided deployment has been updated with a scaling event</span><br><span class="hljs-comment">// by looking at the desired-replicas annotation in the active replica sets of the deployment.</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">// rsList should come from getReplicaSetsForDeployment(d).</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(dc *DeploymentController)</span></span> isScalingEvent(ctx context.Context, d *apps.Deployment, rsList []*apps.ReplicaSet) (<span class="hljs-type">bool</span>, <span class="hljs-type">error</span>) &#123;<br>	newRS, oldRSs, err := dc.getAllReplicaSetsAndSyncRevision(ctx, d, rsList, <span class="hljs-literal">false</span>)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, err<br>	&#125;<br>	allRSs := <span class="hljs-built_in">append</span>(oldRSs, newRS)<br>	logger := klog.FromContext(ctx)<br>	<span class="hljs-keyword">for</span> _, rs := <span class="hljs-keyword">range</span> controller.FilterActiveReplicaSets(allRSs) &#123;<br>		desired, ok := deploymentutil.GetDesiredReplicasAnnotation(logger, rs)<br>		<span class="hljs-keyword">if</span> !ok &#123;<br>			<span class="hljs-keyword">continue</span><br>		&#125;<br>		<span class="hljs-keyword">if</span> desired != *(d.Spec.Replicas) &#123;<br>			<span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>, <span class="hljs-literal">nil</span><br>		&#125;<br>	&#125;<br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-comment">//该函数用于检查提供的deployment是否已通过调整活动replica set的数量来进行更新。</span><br><span class="hljs-comment">//它通过查看deployment的desired-replicas注解来判断</span><br><span class="hljs-comment">//。函数首先获取deployment的所有replica set并同步修订版本号，然后遍历所有活动的replica set，</span><br><span class="hljs-comment">//检查其desired-replicas注解与deployment的期望副本数是否一致，如果一致则返回false，否则返回true。</span><br><br></code></pre></td></tr></table></figure>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>K8S控制器之sync.go 同步 源码解读 2024-04-09 11:33:26.356</div>
+      <div>http://example.com/2025/01/16/K8S控制器之syncgo 同步 源码解读-k8s-kong-zhi-qi-zhi-syncgo-tong-bu-yuan-ma-jie-du/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/Kubernetes%20API-kubernetesapi/" title="Kubernetes API 2024-04-03 14:47:30.212">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Kubernetes API 2024-04-03 14:47:30.212</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/K8S%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_set_status_updatego%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetstatusupdatego-yuan-ma-jie-du/" title="K8S控制器之stateful_set_status_update.go源码解读 2024-04-10">
+                        <span class="hidden-mobile">K8S控制器之stateful_set_status_update.go源码解读 2024-04-10</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

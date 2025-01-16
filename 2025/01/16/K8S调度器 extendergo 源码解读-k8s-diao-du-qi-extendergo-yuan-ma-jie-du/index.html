@@ -1,0 +1,620 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152535455565758596061626364656667686970717273747576777879808182838485868788899091929394959697989910010110210">
+<meta property="og:type" content="article">
+<meta property="og:title" content="K8S调度器 extender.go 源码解读 2024-04-09 11:45:59.666">
+<meta property="og:url" content="http://example.com/2025/01/16/K8S%E8%B0%83%E5%BA%A6%E5%99%A8%20extendergo%20%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-diao-du-qi-extendergo-yuan-ma-jie-du/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152535455565758596061626364656667686970717273747576777879808182838485868788899091929394959697989910010110210">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-01-16T02:08:28.050Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:18.669Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>K8S调度器 extender.go 源码解读 2024-04-09 11:45:59.666 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="K8S调度器 extender.go 源码解读 2024-04-09 11:45:59.666"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          35 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">K8S调度器 extender.go 源码解读 2024-04-09 11:45:59.666</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br><span class="line">251</span><br><span class="line">252</span><br><span class="line">253</span><br><span class="line">254</span><br><span class="line">255</span><br><span class="line">256</span><br><span class="line">257</span><br><span class="line">258</span><br><span class="line">259</span><br><span class="line">260</span><br><span class="line">261</span><br><span class="line">262</span><br><span class="line">263</span><br><span class="line">264</span><br><span class="line">265</span><br><span class="line">266</span><br><span class="line">267</span><br><span class="line">268</span><br><span class="line">269</span><br><span class="line">270</span><br><span class="line">271</span><br><span class="line">272</span><br><span class="line">273</span><br><span class="line">274</span><br><span class="line">275</span><br><span class="line">276</span><br><span class="line">277</span><br><span class="line">278</span><br><span class="line">279</span><br><span class="line">280</span><br><span class="line">281</span><br><span class="line">282</span><br><span class="line">283</span><br><span class="line">284</span><br><span class="line">285</span><br><span class="line">286</span><br><span class="line">287</span><br><span class="line">288</span><br><span class="line">289</span><br><span class="line">290</span><br><span class="line">291</span><br><span class="line">292</span><br><span class="line">293</span><br><span class="line">294</span><br><span class="line">295</span><br><span class="line">296</span><br><span class="line">297</span><br><span class="line">298</span><br><span class="line">299</span><br><span class="line">300</span><br><span class="line">301</span><br><span class="line">302</span><br><span class="line">303</span><br><span class="line">304</span><br><span class="line">305</span><br><span class="line">306</span><br><span class="line">307</span><br><span class="line">308</span><br><span class="line">309</span><br><span class="line">310</span><br><span class="line">311</span><br><span class="line">312</span><br><span class="line">313</span><br><span class="line">314</span><br><span class="line">315</span><br><span class="line">316</span><br><span class="line">317</span><br><span class="line">318</span><br><span class="line">319</span><br><span class="line">320</span><br><span class="line">321</span><br><span class="line">322</span><br><span class="line">323</span><br><span class="line">324</span><br><span class="line">325</span><br><span class="line">326</span><br><span class="line">327</span><br><span class="line">328</span><br><span class="line">329</span><br><span class="line">330</span><br><span class="line">331</span><br><span class="line">332</span><br><span class="line">333</span><br><span class="line">334</span><br><span class="line">335</span><br><span class="line">336</span><br><span class="line">337</span><br><span class="line">338</span><br><span class="line">339</span><br><span class="line">340</span><br><span class="line">341</span><br><span class="line">342</span><br><span class="line">343</span><br><span class="line">344</span><br><span class="line">345</span><br><span class="line">346</span><br><span class="line">347</span><br><span class="line">348</span><br><span class="line">349</span><br><span class="line">350</span><br><span class="line">351</span><br><span class="line">352</span><br><span class="line">353</span><br><span class="line">354</span><br><span class="line">355</span><br><span class="line">356</span><br><span class="line">357</span><br><span class="line">358</span><br><span class="line">359</span><br><span class="line">360</span><br><span class="line">361</span><br><span class="line">362</span><br><span class="line">363</span><br><span class="line">364</span><br><span class="line">365</span><br><span class="line">366</span><br><span class="line">367</span><br><span class="line">368</span><br><span class="line">369</span><br><span class="line">370</span><br><span class="line">371</span><br><span class="line">372</span><br><span class="line">373</span><br><span class="line">374</span><br><span class="line">375</span><br><span class="line">376</span><br><span class="line">377</span><br><span class="line">378</span><br><span class="line">379</span><br><span class="line">380</span><br><span class="line">381</span><br><span class="line">382</span><br><span class="line">383</span><br><span class="line">384</span><br><span class="line">385</span><br><span class="line">386</span><br><span class="line">387</span><br><span class="line">388</span><br><span class="line">389</span><br><span class="line">390</span><br><span class="line">391</span><br><span class="line">392</span><br><span class="line">393</span><br><span class="line">394</span><br><span class="line">395</span><br><span class="line">396</span><br><span class="line">397</span><br><span class="line">398</span><br><span class="line">399</span><br><span class="line">400</span><br><span class="line">401</span><br><span class="line">402</span><br><span class="line">403</span><br><span class="line">404</span><br><span class="line">405</span><br><span class="line">406</span><br><span class="line">407</span><br><span class="line">408</span><br><span class="line">409</span><br><span class="line">410</span><br><span class="line">411</span><br><span class="line">412</span><br><span class="line">413</span><br><span class="line">414</span><br><span class="line">415</span><br><span class="line">416</span><br><span class="line">417</span><br><span class="line">418</span><br><span class="line">419</span><br><span class="line">420</span><br><span class="line">421</span><br><span class="line">422</span><br><span class="line">423</span><br><span class="line">424</span><br><span class="line">425</span><br><span class="line">426</span><br><span class="line">427</span><br><span class="line">428</span><br><span class="line">429</span><br><span class="line">430</span><br><span class="line">431</span><br><span class="line">432</span><br><span class="line">433</span><br><span class="line">434</span><br><span class="line">435</span><br><span class="line">436</span><br><span class="line">437</span><br><span class="line">438</span><br><span class="line">439</span><br><span class="line">440</span><br><span class="line">441</span><br><span class="line">442</span><br><span class="line">443</span><br><span class="line">444</span><br><span class="line">445</span><br><span class="line">446</span><br><span class="line">447</span><br><span class="line">448</span><br><span class="line">449</span><br><span class="line">450</span><br><span class="line">451</span><br><span class="line">452</span><br><span class="line">453</span><br><span class="line">454</span><br><span class="line">455</span><br><span class="line">456</span><br><span class="line">457</span><br><span class="line">458</span><br><span class="line">459</span><br><span class="line">460</span><br><span class="line">461</span><br><span class="line">462</span><br><span class="line">463</span><br><span class="line">464</span><br><span class="line">465</span><br><span class="line">466</span><br><span class="line">467</span><br><span class="line">468</span><br><span class="line">469</span><br><span class="line">470</span><br><span class="line">471</span><br><span class="line">472</span><br><span class="line">473</span><br><span class="line">474</span><br><span class="line">475</span><br><span class="line">476</span><br><span class="line">477</span><br><span class="line">478</span><br><span class="line">479</span><br><span class="line">480</span><br><span class="line">481</span><br><span class="line">482</span><br><span class="line">483</span><br><span class="line">484</span><br><span class="line">485</span><br><span class="line">486</span><br><span class="line">487</span><br><span class="line">488</span><br><span class="line">489</span><br><span class="line">490</span><br><span class="line">491</span><br><span class="line">492</span><br><span class="line">493</span><br><span class="line">494</span><br><span class="line">495</span><br><span class="line">496</span><br><span class="line">497</span><br><span class="line">498</span><br><span class="line">499</span><br><span class="line">500</span><br><span class="line">501</span><br><span class="line">502</span><br><span class="line">503</span><br><span class="line">504</span><br><span class="line">505</span><br><span class="line">506</span><br><span class="line">507</span><br><span class="line">508</span><br><span class="line">509</span><br><span class="line">510</span><br><span class="line">511</span><br><span class="line">512</span><br><span class="line">513</span><br><span class="line">514</span><br><span class="line">515</span><br><span class="line">516</span><br><span class="line">517</span><br><span class="line">518</span><br><span class="line">519</span><br><span class="line">520</span><br><span class="line">521</span><br><span class="line">522</span><br><span class="line">523</span><br><span class="line">524</span><br><span class="line">525</span><br><span class="line">526</span><br><span class="line">527</span><br><span class="line">528</span><br><span class="line">529</span><br><span class="line">530</span><br><span class="line">531</span><br><span class="line">532</span><br><span class="line">533</span><br><span class="line">534</span><br><span class="line">535</span><br><span class="line">536</span><br><span class="line">537</span><br><span class="line">538</span><br><span class="line">539</span><br><span class="line">540</span><br><span class="line">541</span><br><span class="line">542</span><br><span class="line">543</span><br><span class="line">544</span><br><span class="line">545</span><br><span class="line">546</span><br><span class="line">547</span><br><span class="line">548</span><br><span class="line">549</span><br><span class="line">550</span><br><span class="line">551</span><br><span class="line">552</span><br><span class="line">553</span><br><span class="line">554</span><br><span class="line">555</span><br><span class="line">556</span><br><span class="line">557</span><br><span class="line">558</span><br><span class="line">559</span><br><span class="line">560</span><br><span class="line">561</span><br><span class="line">562</span><br><span class="line">563</span><br><span class="line">564</span><br><span class="line">565</span><br><span class="line">566</span><br><span class="line">567</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">/*</span><br><span class="hljs-comment">Copyright 2015 The Kubernetes Authors.</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span><br><span class="hljs-comment">you may not use this file except in compliance with the License.</span><br><span class="hljs-comment">You may obtain a copy of the License at</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">    http://www.apache.org/licenses/LICENSE-2.0</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">Unless required by applicable law or agreed to in writing, software</span><br><span class="hljs-comment">distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span><br><span class="hljs-comment">WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span><br><span class="hljs-comment">See the License for the specific language governing permissions and</span><br><span class="hljs-comment">limitations under the License.</span><br><span class="hljs-comment">*/</span><br><br><span class="hljs-keyword">package</span> scheduler<br><br><span class="hljs-keyword">import</span> (<br>	<span class="hljs-string">&quot;bytes&quot;</span><br>	<span class="hljs-string">&quot;encoding/json&quot;</span><br>	<span class="hljs-string">&quot;fmt&quot;</span><br>	<span class="hljs-string">&quot;net/http&quot;</span><br>	<span class="hljs-string">&quot;strings&quot;</span><br>	<span class="hljs-string">&quot;time&quot;</span><br><br>	v1 <span class="hljs-string">&quot;k8s.io/api/core/v1&quot;</span><br>	utilnet <span class="hljs-string">&quot;k8s.io/apimachinery/pkg/util/net&quot;</span><br>	<span class="hljs-string">&quot;k8s.io/apimachinery/pkg/util/sets&quot;</span><br>	restclient <span class="hljs-string">&quot;k8s.io/client-go/rest&quot;</span><br>	extenderv1 <span class="hljs-string">&quot;k8s.io/kube-scheduler/extender/v1&quot;</span><br>	schedulerapi <span class="hljs-string">&quot;k8s.io/kubernetes/pkg/scheduler/apis/config&quot;</span><br>	<span class="hljs-string">&quot;k8s.io/kubernetes/pkg/scheduler/framework&quot;</span><br>)<br><br><span class="hljs-keyword">const</span> (<br>	<span class="hljs-comment">// DefaultExtenderTimeout defines the default extender timeout in second.</span><br>	DefaultExtenderTimeout = <span class="hljs-number">5</span> * time.Second<br>)<br><br><span class="hljs-comment">// HTTPExtender implements the Extender interface.</span><br><span class="hljs-keyword">type</span> HTTPExtender <span class="hljs-keyword">struct</span> &#123;<br>	extenderURL      <span class="hljs-type">string</span><br>	preemptVerb      <span class="hljs-type">string</span><br>	filterVerb       <span class="hljs-type">string</span><br>	prioritizeVerb   <span class="hljs-type">string</span><br>	bindVerb         <span class="hljs-type">string</span><br>	weight           <span class="hljs-type">int64</span><br>	client           *http.Client<br>	nodeCacheCapable <span class="hljs-type">bool</span><br>	managedResources sets.Set[<span class="hljs-type">string</span>]<br>	ignorable        <span class="hljs-type">bool</span><br>&#125;<br><br><span class="hljs-comment">//这段代码定义了一个名为HTTPExtender的结构体，它实现了Extender接口。</span><br><span class="hljs-comment">//HTTPExtender表示一个HTTP扩展器，用于扩展Kubernetes调度器的功能。</span><br><span class="hljs-comment">//它通过发送HTTP请求与Kubernetes调度器进行交互，以实现自定义的调度逻辑。</span><br><span class="hljs-comment">//该结构体包含以下字段：  - extenderURL：扩展器的URL，用于向扩展器发送HTTP请求。</span><br><span class="hljs-comment">//- preemptVerb：抢占操作的动词，表示扩展器在抢占过程中执行的操作。</span><br><span class="hljs-comment">//- filterVerb：过滤操作的动词，表示扩展器在过滤节点时执行的操作。</span><br><span class="hljs-comment">//- prioritizeVerb：优先级排序操作的动词，表示扩展器在对节点进行优先级排序时执行的操作。</span><br><span class="hljs-comment">//- bindVerb：绑定操作的动词，表示扩展器在绑定Pod到节点时执行的操作。</span><br><span class="hljs-comment">//- weight：扩展器的权重，用于在优先级排序时对多个扩展器的结果进行加权计算。</span><br><span class="hljs-comment">//- client：用于发送HTTP请求的HTTP客户端。</span><br><span class="hljs-comment">//- nodeCacheCapable：表示扩展器是否支持节点缓存。</span><br><span class="hljs-comment">//如果为true，调度器会将节点信息缓存在本地，以减少对扩展器的请求次数。</span><br><span class="hljs-comment">//- managedResources：表示扩展器管理的资源集合。</span><br><span class="hljs-comment">//调度器会将这些资源的调度委托给扩展器处理。</span><br><span class="hljs-comment">//- ignorable：表示扩展器是否可以被忽略。如果为true，当扩展器出现错误时，调度器可以忽略该错误并继续进行调度。</span><br><span class="hljs-comment">//此外，代码还定义了一个常量DefaultExtenderTimeout，它表示默认的扩展器超时时间，单位为秒。</span><br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">makeTransport</span><span class="hljs-params">(config *schedulerapi.Extender)</span></span> (http.RoundTripper, <span class="hljs-type">error</span>) &#123;<br>	<span class="hljs-keyword">var</span> cfg restclient.Config<br>	<span class="hljs-keyword">if</span> config.TLSConfig != <span class="hljs-literal">nil</span> &#123;<br>		cfg.TLSClientConfig.Insecure = config.TLSConfig.Insecure<br>		cfg.TLSClientConfig.ServerName = config.TLSConfig.ServerName<br>		cfg.TLSClientConfig.CertFile = config.TLSConfig.CertFile<br>		cfg.TLSClientConfig.KeyFile = config.TLSConfig.KeyFile<br>		cfg.TLSClientConfig.CAFile = config.TLSConfig.CAFile<br>		cfg.TLSClientConfig.CertData = config.TLSConfig.CertData<br>		cfg.TLSClientConfig.KeyData = config.TLSConfig.KeyData<br>		cfg.TLSClientConfig.CAData = config.TLSConfig.CAData<br>	&#125;<br>	<span class="hljs-keyword">if</span> config.EnableHTTPS &#123;<br>		hasCA := <span class="hljs-built_in">len</span>(cfg.CAFile) &gt; <span class="hljs-number">0</span> || <span class="hljs-built_in">len</span>(cfg.CAData) &gt; <span class="hljs-number">0</span><br>		<span class="hljs-keyword">if</span> !hasCA &#123;<br>			cfg.Insecure = <span class="hljs-literal">true</span><br>		&#125;<br>	&#125;<br>	tlsConfig, err := restclient.TLSConfigFor(&amp;cfg)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>	&#125;<br>	<span class="hljs-keyword">if</span> tlsConfig != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> utilnet.SetTransportDefaults(&amp;http.Transport&#123;<br>			TLSClientConfig: tlsConfig,<br>		&#125;), <span class="hljs-literal">nil</span><br>	&#125;<br>	<span class="hljs-keyword">return</span> utilnet.SetTransportDefaults(&amp;http.Transport&#123;&#125;), <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-comment">//该函数根据给定的schedulerapi.Extender配置创建一个http.RoundTripper传输对象。</span><br><span class="hljs-comment">//它首先将config.TLSConfig中的配置项复制到cfg.TLSClientConfig中，然后根据config.EnableHTTPS的值设置cfg.Insecure。</span><br><span class="hljs-comment">//接下来，它通过调用restclient.TLSConfigFor(&amp;cfg)来获取TLS配置，并将其设置到http.Transport中。</span><br><span class="hljs-comment">//最后，返回设置了默认值的http.Transport对象。如果在过程中出现错误，则返回错误。</span><br><br><span class="hljs-comment">// NewHTTPExtender creates an HTTPExtender object.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">NewHTTPExtender</span><span class="hljs-params">(config *schedulerapi.Extender)</span></span> (framework.Extender, <span class="hljs-type">error</span>) &#123;<br>	<span class="hljs-keyword">if</span> config.HTTPTimeout.Duration.Nanoseconds() == <span class="hljs-number">0</span> &#123;<br>		config.HTTPTimeout.Duration = time.Duration(DefaultExtenderTimeout)<br>	&#125;<br><br>	transport, err := makeTransport(config)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>	&#125;<br>	client := &amp;http.Client&#123;<br>		Transport: transport,<br>		Timeout:   config.HTTPTimeout.Duration,<br>	&#125;<br>	managedResources := sets.New[<span class="hljs-type">string</span>]()<br>	<span class="hljs-keyword">for</span> _, r := <span class="hljs-keyword">range</span> config.ManagedResources &#123;<br>		managedResources.Insert(<span class="hljs-type">string</span>(r.Name))<br>	&#125;<br>	<span class="hljs-keyword">return</span> &amp;HTTPExtender&#123;<br>		extenderURL:      config.URLPrefix,<br>		preemptVerb:      config.PreemptVerb,<br>		filterVerb:       config.FilterVerb,<br>		prioritizeVerb:   config.PrioritizeVerb,<br>		bindVerb:         config.BindVerb,<br>		weight:           config.Weight,<br>		client:           client,<br>		nodeCacheCapable: config.NodeCacheCapable,<br>		managedResources: managedResources,<br>		ignorable:        config.Ignorable,<br>	&#125;, <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-comment">//该函数用于创建一个HTTPExtender对象。它根据传入的config参数初始化HTTPExtender对象的属性，并返回该对象。</span><br><span class="hljs-comment">//其中，makeTransport函数用于创建一个http.Transport对象，http.Client对象则使用该Transport对象以及config参数中的HTTP超时时间进行初始化。</span><br><span class="hljs-comment">//此外，该函数还对config.ManagedResources进行遍历，将其中的Name字段转换为string类型，并插入到managedResources集合中。</span><br><span class="hljs-comment">//最后，该函数返回一个初始化完成的HTTPExtender对象。</span><br><br><span class="hljs-comment">// Name returns extenderURL to identify the extender.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(h *HTTPExtender)</span></span> Name() <span class="hljs-type">string</span> &#123;<br>	<span class="hljs-keyword">return</span> h.extenderURL<br>&#125;<br><br><span class="hljs-comment">// IsIgnorable returns true indicates scheduling should not fail when this extender</span><br><span class="hljs-comment">// is unavailable</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(h *HTTPExtender)</span></span> IsIgnorable() <span class="hljs-type">bool</span> &#123;<br>	<span class="hljs-keyword">return</span> h.ignorable<br>&#125;<br><br><span class="hljs-comment">// SupportsPreemption returns true if an extender supports preemption.</span><br><span class="hljs-comment">// An extender should have preempt verb defined and enabled its own node cache.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(h *HTTPExtender)</span></span> SupportsPreemption() <span class="hljs-type">bool</span> &#123;<br>	<span class="hljs-keyword">return</span> <span class="hljs-built_in">len</span>(h.preemptVerb) &gt; <span class="hljs-number">0</span><br>&#125;<br><br><span class="hljs-comment">//这段代码定义了一个名为HTTPExtender的结构体及其三个方法。</span><br><span class="hljs-comment">//1. Name()方法返回extenderURL，用于标识扩展程序。</span><br><span class="hljs-comment">//2. IsIgnorable()方法返回一个布尔值，指示当此扩展程序不可用时，调度是否不应失败。如果ignorable字段为true，则返回true。</span><br><span class="hljs-comment">//3. SupportsPreemption()方法返回一个布尔值，表示扩展程序是否支持抢占。</span><br><span class="hljs-comment">//如果preemptVerb字段的长度大于0，则返回true。</span><br><span class="hljs-comment">//这意味着扩展程序应该定义抢占动词并启用自己的节点缓存。</span><br><br><span class="hljs-comment">// ProcessPreemption returns filtered candidate nodes and victims after running preemption logic in extender.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(h *HTTPExtender)</span></span> ProcessPreemption(<br>	pod *v1.Pod,<br>	nodeNameToVictims <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]*extenderv1.Victims,<br>	nodeInfos framework.NodeInfoLister,<br>) (<span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]*extenderv1.Victims, <span class="hljs-type">error</span>) &#123;<br>	<span class="hljs-keyword">var</span> (<br>		result extenderv1.ExtenderPreemptionResult<br>		args   *extenderv1.ExtenderPreemptionArgs<br>	)<br><br>	<span class="hljs-keyword">if</span> !h.SupportsPreemption() &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, fmt.Errorf(<span class="hljs-string">&quot;preempt verb is not defined for extender %v but run into ProcessPreemption&quot;</span>, h.extenderURL)<br>	&#125;<br><br>	<span class="hljs-keyword">if</span> h.nodeCacheCapable &#123;<br>		<span class="hljs-comment">// If extender has cached node info, pass NodeNameToMetaVictims in args.</span><br>		nodeNameToMetaVictims := convertToMetaVictims(nodeNameToVictims)<br>		args = &amp;extenderv1.ExtenderPreemptionArgs&#123;<br>			Pod:                   pod,<br>			NodeNameToMetaVictims: nodeNameToMetaVictims,<br>		&#125;<br>	&#125; <span class="hljs-keyword">else</span> &#123;<br>		args = &amp;extenderv1.ExtenderPreemptionArgs&#123;<br>			Pod:               pod,<br>			NodeNameToVictims: nodeNameToVictims,<br>		&#125;<br>	&#125;<br><br>	<span class="hljs-keyword">if</span> err := h.send(h.preemptVerb, args, &amp;result); err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>	&#125;<br><br>	<span class="hljs-comment">// Extender will always return NodeNameToMetaVictims.</span><br>	<span class="hljs-comment">// So let&#x27;s convert it to NodeNameToVictims by using &lt;nodeInfos&gt;.</span><br>	newNodeNameToVictims, err := h.convertToVictims(result.NodeNameToMetaVictims, nodeInfos)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>	&#125;<br>	<span class="hljs-comment">// Do not override &lt;nodeNameToVictims&gt;.</span><br>	<span class="hljs-keyword">return</span> newNodeNameToVictims, <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-comment">//该函数是用于处理抢占逻辑的HTTP扩展器方法。</span><br><span class="hljs-comment">//它根据传入的Pod和节点信息，通过调用扩展器的抢占逻辑，返回过滤后的候选节点和受害者。</span><br><span class="hljs-comment">//- 首先，函数检查扩展器是否支持抢占。如果不支持，则返回错误。</span><br><span class="hljs-comment">//- 接下来，根据扩展器是否具有缓存的节点信息，构建不同的ExtenderPreemptionArgs对象，其中包含Pod和节点信息。</span><br><span class="hljs-comment">//- 然后，通过调用扩展器的指定动词（preempt），将ExtenderPreemptionArgs发送给扩展器，并将结果存储在ExtenderPreemptionResult中。</span><br><span class="hljs-comment">//- 最后，将扩展器返回的NodeNameToMetaVictims转换为NodeNameToVictims，并返回新的NodeNameToVictims对象。</span><br><span class="hljs-comment">//该函数返回的地图map[string]*extenderv1.Victims表示了每个节点的受害者列表，其中每个受害者包含了被抢占的Pod列表。</span><br><br><span class="hljs-comment">// convertToVictims converts &quot;nodeNameToMetaVictims&quot; from object identifiers,</span><br><span class="hljs-comment">// such as UIDs and names, to object pointers.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(h *HTTPExtender)</span></span> convertToVictims(<br>	nodeNameToMetaVictims <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]*extenderv1.MetaVictims,<br>	nodeInfos framework.NodeInfoLister,<br>) (<span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]*extenderv1.Victims, <span class="hljs-type">error</span>) &#123;<br>	nodeNameToVictims := <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]*extenderv1.Victims&#123;&#125;<br>	<span class="hljs-keyword">for</span> nodeName, metaVictims := <span class="hljs-keyword">range</span> nodeNameToMetaVictims &#123;<br>		nodeInfo, err := nodeInfos.Get(nodeName)<br>		<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>		&#125;<br>		victims := &amp;extenderv1.Victims&#123;<br>			Pods:             []*v1.Pod&#123;&#125;,<br>			NumPDBViolations: metaVictims.NumPDBViolations,<br>		&#125;<br>		<span class="hljs-keyword">for</span> _, metaPod := <span class="hljs-keyword">range</span> metaVictims.Pods &#123;<br>			pod, err := h.convertPodUIDToPod(metaPod, nodeInfo)<br>			<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>				<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>			&#125;<br>			victims.Pods = <span class="hljs-built_in">append</span>(victims.Pods, pod)<br>		&#125;<br>		nodeNameToVictims[nodeName] = victims<br>	&#125;<br>	<span class="hljs-keyword">return</span> nodeNameToVictims, <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-comment">//该函数是一个Go语言函数，它将从对象标识符（如UID和名称）组成的&quot;nodeNameToMetaVictims&quot;映射转换为对象指针组成的&quot;nodeNameToVictims&quot;映射。</span><br><span class="hljs-comment">//该函数使用给定的节点信息获取节点名称对应的受害者信息，并将其转换为包含Pod信息和PDB违规数量的Victims对象。</span><br><span class="hljs-comment">//具体来说，它遍历输入的映射，获取每个节点的MetaVictims对象，并通过节点信息获取节点的Pod信息。</span><br><span class="hljs-comment">//然后，它将MetaPod对象转换为Pod对象，并将其添加到Victims对象的Pod列表中。</span><br><span class="hljs-comment">//最后，它将转换后的Victims对象添加到输出映射中，并返回该映射。如果在转换过程中发生错误，函数将返回错误。</span><br><br><span class="hljs-comment">// convertPodUIDToPod returns v1.Pod object for given MetaPod and node info.</span><br><span class="hljs-comment">// The v1.Pod object is restored by nodeInfo.Pods().</span><br><span class="hljs-comment">// It returns an error if there&#x27;s cache inconsistency between default scheduler</span><br><span class="hljs-comment">// and extender, i.e. when the pod is not found in nodeInfo.Pods.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(h *HTTPExtender)</span></span> convertPodUIDToPod(<br>	metaPod *extenderv1.MetaPod,<br>	nodeInfo *framework.NodeInfo) (*v1.Pod, <span class="hljs-type">error</span>) &#123;<br>	<span class="hljs-keyword">for</span> _, p := <span class="hljs-keyword">range</span> nodeInfo.Pods &#123;<br>		<span class="hljs-keyword">if</span> <span class="hljs-type">string</span>(p.Pod.UID) == metaPod.UID &#123;<br>			<span class="hljs-keyword">return</span> p.Pod, <span class="hljs-literal">nil</span><br>		&#125;<br>	&#125;<br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, fmt.Errorf(<span class="hljs-string">&quot;extender: %v claims to preempt pod (UID: %v) on node: %v, but the pod is not found on that node&quot;</span>,<br>		h.extenderURL, metaPod, nodeInfo.Node().Name)<br>&#125;<br><br><span class="hljs-comment">// convertToMetaVictims converts from struct type to meta types.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">convertToMetaVictims</span><span class="hljs-params">(</span></span><br><span class="hljs-params"><span class="hljs-function">	nodeNameToVictims <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]*extenderv1.Victims,</span></span><br><span class="hljs-params"><span class="hljs-function">)</span></span> <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]*extenderv1.MetaVictims &#123;<br>	nodeNameToMetaVictims := <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]*extenderv1.MetaVictims&#123;&#125;<br>	<span class="hljs-keyword">for</span> node, victims := <span class="hljs-keyword">range</span> nodeNameToVictims &#123;<br>		metaVictims := &amp;extenderv1.MetaVictims&#123;<br>			Pods:             []*extenderv1.MetaPod&#123;&#125;,<br>			NumPDBViolations: victims.NumPDBViolations,<br>		&#125;<br>		<span class="hljs-keyword">for</span> _, pod := <span class="hljs-keyword">range</span> victims.Pods &#123;<br>			metaPod := &amp;extenderv1.MetaPod&#123;<br>				UID: <span class="hljs-type">string</span>(pod.UID),<br>			&#125;<br>			metaVictims.Pods = <span class="hljs-built_in">append</span>(metaVictims.Pods, metaPod)<br>		&#125;<br>		nodeNameToMetaVictims[node] = metaVictims<br>	&#125;<br>	<span class="hljs-keyword">return</span> nodeNameToMetaVictims<br>&#125;<br><br><span class="hljs-comment">//该函数的功能是将从结构体类型转换为元类型。</span><br><span class="hljs-comment">//它接收一个nodeNameToVictims参数，该参数是一个map，其中键是节点名称，值是*extenderv1.Victims类型的指针。</span><br><span class="hljs-comment">//函数创建一个空的nodeNameToMetaVictims映射，然后遍历nodeNameToVictims中的每个元素。</span><br><span class="hljs-comment">//对于每个节点，它创建一个新的extenderv1.MetaVictims实例，并将NumPDBViolations从旧的victims实例复制到新的metaVictims实例中。</span><br><span class="hljs-comment">//然后，它遍历旧的victims实例中的每个Pod，为每个Pod创建一个新的extenderv1.MetaPod实例，并将UID从旧的pod实例复制到新的metaPod实例中。</span><br><span class="hljs-comment">//最后，它将新的metaVictims实例添加到nodeNameToMetaVictims映射中，并返回该映射。</span><br><br><span class="hljs-comment">// Filter based on extender implemented predicate functions. The filtered list is</span><br><span class="hljs-comment">// expected to be a subset of the supplied list; otherwise the function returns an error.</span><br><span class="hljs-comment">// The failedNodes and failedAndUnresolvableNodes optionally contains the list</span><br><span class="hljs-comment">// of failed nodes and failure reasons, except nodes in the latter are</span><br><span class="hljs-comment">// unresolvable.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(h *HTTPExtender)</span></span> Filter(<br>	pod *v1.Pod,<br>	nodes []*framework.NodeInfo,<br>) (filteredList []*framework.NodeInfo, failedNodes, failedAndUnresolvableNodes extenderv1.FailedNodesMap, err <span class="hljs-type">error</span>) &#123;<br>	<span class="hljs-keyword">var</span> (<br>		result     extenderv1.ExtenderFilterResult<br>		nodeList   *v1.NodeList<br>		nodeNames  *[]<span class="hljs-type">string</span><br>		nodeResult []*framework.NodeInfo<br>		args       *extenderv1.ExtenderArgs<br>	)<br>	fromNodeName := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]*framework.NodeInfo)<br>	<span class="hljs-keyword">for</span> _, n := <span class="hljs-keyword">range</span> nodes &#123;<br>		fromNodeName[n.Node().Name] = n<br>	&#125;<br><br>	<span class="hljs-keyword">if</span> h.filterVerb == <span class="hljs-string">&quot;&quot;</span> &#123;<br>		<span class="hljs-keyword">return</span> nodes, extenderv1.FailedNodesMap&#123;&#125;, extenderv1.FailedNodesMap&#123;&#125;, <span class="hljs-literal">nil</span><br>	&#125;<br><br>	<span class="hljs-keyword">if</span> h.nodeCacheCapable &#123;<br>		nodeNameSlice := <span class="hljs-built_in">make</span>([]<span class="hljs-type">string</span>, <span class="hljs-number">0</span>, <span class="hljs-built_in">len</span>(nodes))<br>		<span class="hljs-keyword">for</span> _, node := <span class="hljs-keyword">range</span> nodes &#123;<br>			nodeNameSlice = <span class="hljs-built_in">append</span>(nodeNameSlice, node.Node().Name)<br>		&#125;<br>		nodeNames = &amp;nodeNameSlice<br>	&#125; <span class="hljs-keyword">else</span> &#123;<br>		nodeList = &amp;v1.NodeList&#123;&#125;<br>		<span class="hljs-keyword">for</span> _, node := <span class="hljs-keyword">range</span> nodes &#123;<br>			nodeList.Items = <span class="hljs-built_in">append</span>(nodeList.Items, *node.Node())<br>		&#125;<br>	&#125;<br><br>	args = &amp;extenderv1.ExtenderArgs&#123;<br>		Pod:       pod,<br>		Nodes:     nodeList,<br>		NodeNames: nodeNames,<br>	&#125;<br><br>	<span class="hljs-keyword">if</span> err := h.send(h.filterVerb, args, &amp;result); err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, <span class="hljs-literal">nil</span>, <span class="hljs-literal">nil</span>, err<br>	&#125;<br>	<span class="hljs-keyword">if</span> result.Error != <span class="hljs-string">&quot;&quot;</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, <span class="hljs-literal">nil</span>, <span class="hljs-literal">nil</span>, fmt.Errorf(result.Error)<br>	&#125;<br><br>	<span class="hljs-keyword">if</span> h.nodeCacheCapable &amp;&amp; result.NodeNames != <span class="hljs-literal">nil</span> &#123;<br>		nodeResult = <span class="hljs-built_in">make</span>([]*framework.NodeInfo, <span class="hljs-built_in">len</span>(*result.NodeNames))<br>		<span class="hljs-keyword">for</span> i, nodeName := <span class="hljs-keyword">range</span> *result.NodeNames &#123;<br>			<span class="hljs-keyword">if</span> n, ok := fromNodeName[nodeName]; ok &#123;<br>				nodeResult[i] = n<br>			&#125; <span class="hljs-keyword">else</span> &#123;<br>				<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, <span class="hljs-literal">nil</span>, <span class="hljs-literal">nil</span>, fmt.Errorf(<br>					<span class="hljs-string">&quot;extender %q claims a filtered node %q which is not found in the input node list&quot;</span>,<br>					h.extenderURL, nodeName)<br>			&#125;<br>		&#125;<br>	&#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> result.Nodes != <span class="hljs-literal">nil</span> &#123;<br>		nodeResult = <span class="hljs-built_in">make</span>([]*framework.NodeInfo, <span class="hljs-built_in">len</span>(result.Nodes.Items))<br>		<span class="hljs-keyword">for</span> i := <span class="hljs-keyword">range</span> result.Nodes.Items &#123;<br>			nodeResult[i] = framework.NewNodeInfo()<br>			nodeResult[i].SetNode(&amp;result.Nodes.Items[i])<br>		&#125;<br>	&#125;<br><br>	<span class="hljs-keyword">return</span> nodeResult, result.FailedNodes, result.FailedAndUnresolvableNodes, <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-comment">//该函数是一个过滤函数，基于扩展器实现的谓词函数对节点进行过滤。</span><br><span class="hljs-comment">//函数的输入是一个Pod对象和一个节点信息数组，输出是过滤后的节点信息数组、失败的节点信息映射、不可解析的节点信息映射和错误信息。</span><br><span class="hljs-comment">//函数首先通过遍历输入节点信息数组，创建一个从节点名称到节点信息的映射。</span><br><span class="hljs-comment">//然后根据扩展器的过滤动词，决定使用节点名称列表还是节点列表作为输入参数，构建ExtenderArgs对象，并调用扩展器的过滤方法。</span><br><span class="hljs-comment">//如果过滤方法返回错误，函数直接返回错误。如果过滤方法成功，函数根据返回结果构建过滤后的节点信息数组，并返回。</span><br><span class="hljs-comment">//如果扩展器声明了一个节点被过滤，但是在输入节点信息数组中找不到该节点，则函数返回错误。</span><br><span class="hljs-comment">//如果扩展器返回的结果中包含失败的节点和不可解析的节点信息，则将其添加到相应的映射中。</span><br><span class="hljs-comment">//总之，该函数通过调用扩展器的过滤方法，对节点进行过滤，并返回过滤后的节点信息数组和相关错误信息。</span><br><br><span class="hljs-comment">// Prioritize based on extender implemented priority functions. Weight*priority is added</span><br><span class="hljs-comment">// up for each such priority function. The returned score is added to the score computed</span><br><span class="hljs-comment">// by Kubernetes scheduler. The total score is used to do the host selection.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(h *HTTPExtender)</span></span> Prioritize(pod *v1.Pod, nodes []*framework.NodeInfo) (*extenderv1.HostPriorityList, <span class="hljs-type">int64</span>, <span class="hljs-type">error</span>) &#123;<br>	<span class="hljs-keyword">var</span> (<br>		result    extenderv1.HostPriorityList<br>		nodeList  *v1.NodeList<br>		nodeNames *[]<span class="hljs-type">string</span><br>		args      *extenderv1.ExtenderArgs<br>	)<br><br>	<span class="hljs-keyword">if</span> h.prioritizeVerb == <span class="hljs-string">&quot;&quot;</span> &#123;<br>		result := extenderv1.HostPriorityList&#123;&#125;<br>		<span class="hljs-keyword">for</span> _, node := <span class="hljs-keyword">range</span> nodes &#123;<br>			result = <span class="hljs-built_in">append</span>(result, extenderv1.HostPriority&#123;Host: node.Node().Name, Score: <span class="hljs-number">0</span>&#125;)<br>		&#125;<br>		<span class="hljs-keyword">return</span> &amp;result, <span class="hljs-number">0</span>, <span class="hljs-literal">nil</span><br>	&#125;<br><br>	<span class="hljs-keyword">if</span> h.nodeCacheCapable &#123;<br>		nodeNameSlice := <span class="hljs-built_in">make</span>([]<span class="hljs-type">string</span>, <span class="hljs-number">0</span>, <span class="hljs-built_in">len</span>(nodes))<br>		<span class="hljs-keyword">for</span> _, node := <span class="hljs-keyword">range</span> nodes &#123;<br>			nodeNameSlice = <span class="hljs-built_in">append</span>(nodeNameSlice, node.Node().Name)<br>		&#125;<br>		nodeNames = &amp;nodeNameSlice<br>	&#125; <span class="hljs-keyword">else</span> &#123;<br>		nodeList = &amp;v1.NodeList&#123;&#125;<br>		<span class="hljs-keyword">for</span> _, node := <span class="hljs-keyword">range</span> nodes &#123;<br>			nodeList.Items = <span class="hljs-built_in">append</span>(nodeList.Items, *node.Node())<br>		&#125;<br>	&#125;<br><br>	args = &amp;extenderv1.ExtenderArgs&#123;<br>		Pod:       pod,<br>		Nodes:     nodeList,<br>		NodeNames: nodeNames,<br>	&#125;<br><br>	<span class="hljs-keyword">if</span> err := h.send(h.prioritizeVerb, args, &amp;result); err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, <span class="hljs-number">0</span>, err<br>	&#125;<br>	<span class="hljs-keyword">return</span> &amp;result, h.weight, <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-comment">//该函数是一个Go语言函数，定义在HTTPExtender结构体中，用于根据扩展程序实现的优先级函数对节点进行优先级排序。</span><br><span class="hljs-comment">//该函数将权重乘以优先级的总和添加到每个此类优先级函数中。</span><br><span class="hljs-comment">//返回的分数将添加到Kubernetes调度程序计算的分数中。总</span><br><span class="hljs-comment">//分数用于进行主机选择。</span><br><span class="hljs-comment">//函数接受一个*v1.Pod类型的pod参数，一个[]*framework.NodeInfo类型的nodes参数，以及一个error类型的结果参数。</span><br><span class="hljs-comment">//函数首先定义了一些局部变量，包括一个extenderv1.HostPriorityList类型的result变量，</span><br><span class="hljs-comment">//一个*v1.NodeList类型的nodeList变量，一个*[]string类型的nodeNames变量，以及一个*extenderv1.ExtenderArgs类型的args变量。</span><br><span class="hljs-comment">//如果h.prioritizeVerb为空字符串，则将每个节点的分数设置为0，并返回结果。</span><br><span class="hljs-comment">//如果h.nodeCacheCapable为true，则将节点名称添加到nodeNameSlice切片中，并将其赋值给nodeNames变量。</span><br><span class="hljs-comment">//否则，将节点对象追加到nodeList的Items字段中。</span><br><span class="hljs-comment">//接下来，将pod、nodeList和nodeNames赋值给args的相应字段。</span><br><span class="hljs-comment">//最后，调用h.send方法，将h.prioritizeVerb、args和&amp;result作为参数传递，并检查是否有错误发生。</span><br><span class="hljs-comment">//如果有错误，则返回错误。否则，返回结果和权重。</span><br><br><span class="hljs-comment">// Bind delegates the action of binding a pod to a node to the extender.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(h *HTTPExtender)</span></span> Bind(binding *v1.Binding) <span class="hljs-type">error</span> &#123;<br>	<span class="hljs-keyword">var</span> result extenderv1.ExtenderBindingResult<br>	<span class="hljs-keyword">if</span> !h.IsBinder() &#123;<br>		<span class="hljs-comment">// This shouldn&#x27;t happen as this extender wouldn&#x27;t have become a Binder.</span><br>		<span class="hljs-keyword">return</span> fmt.Errorf(<span class="hljs-string">&quot;unexpected empty bindVerb in extender&quot;</span>)<br>	&#125;<br>	req := &amp;extenderv1.ExtenderBindingArgs&#123;<br>		PodName:      binding.Name,<br>		PodNamespace: binding.Namespace,<br>		PodUID:       binding.UID,<br>		Node:         binding.Target.Name,<br>	&#125;<br>	<span class="hljs-keyword">if</span> err := h.send(h.bindVerb, req, &amp;result); err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br>	<span class="hljs-keyword">if</span> result.Error != <span class="hljs-string">&quot;&quot;</span> &#123;<br>		<span class="hljs-keyword">return</span> fmt.Errorf(result.Error)<br>	&#125;<br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-comment">// IsBinder returns whether this extender is configured for the Bind method.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(h *HTTPExtender)</span></span> IsBinder() <span class="hljs-type">bool</span> &#123;<br>	<span class="hljs-keyword">return</span> h.bindVerb != <span class="hljs-string">&quot;&quot;</span><br>&#125;<br><br><span class="hljs-comment">// IsPrioritizer returns whether this extender is configured for the Prioritize method.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(h *HTTPExtender)</span></span> IsPrioritizer() <span class="hljs-type">bool</span> &#123;<br>	<span class="hljs-keyword">return</span> h.prioritizeVerb != <span class="hljs-string">&quot;&quot;</span><br>&#125;<br><br><span class="hljs-comment">// IsFilter returns whether this extender is configured for the Filter method.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(h *HTTPExtender)</span></span> IsFilter() <span class="hljs-type">bool</span> &#123;<br>	<span class="hljs-keyword">return</span> h.filterVerb != <span class="hljs-string">&quot;&quot;</span><br>&#125;<br><br><span class="hljs-comment">//这段代码定义了一个名为HTTPExtender的结构体及其相关方法。</span><br><span class="hljs-comment">//这个结构体用于委托将Pod绑定到节点的操作给扩展器。</span><br><span class="hljs-comment">//- Bind方法用于将Pod绑定到节点</span><br><span class="hljs-comment">//。它首先检查当前扩展器是否配置为绑定扩展器，如果不是，则返回错误。</span><br><span class="hljs-comment">//然后创建一个ExtenderBindingArgs请求，包含Pod的名称、命名空间、UID以及目标节点的名称，并通过调用send方法将请求发送给扩展器。</span><br><span class="hljs-comment">//如果发送请求或处理结果出现错误，则返回相应的错误。</span><br><span class="hljs-comment">//- IsBinder方法用于判断当前扩展器是否配置了绑定方法。如果bindVerb不为空，则表示配置了绑定方法。</span><br><span class="hljs-comment">//- IsPrioritizer方法用于判断当前扩展器是否配置了优先级方法。如果prioritizeVerb不为空，则表示配置了优先级方法。</span><br><span class="hljs-comment">//- IsFilter方法用于判断当前扩展器是否配置了过滤方法。如果filterVerb不为空，则表示配置了过滤方法。</span><br><br><span class="hljs-comment">// Helper function to send messages to the extender</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(h *HTTPExtender)</span></span> send(action <span class="hljs-type">string</span>, args <span class="hljs-keyword">interface</span>&#123;&#125;, result <span class="hljs-keyword">interface</span>&#123;&#125;) <span class="hljs-type">error</span> &#123;<br>	out, err := json.Marshal(args)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br><br>	url := strings.TrimRight(h.extenderURL, <span class="hljs-string">&quot;/&quot;</span>) + <span class="hljs-string">&quot;/&quot;</span> + action<br><br>	req, err := http.NewRequest(<span class="hljs-string">&quot;POST&quot;</span>, url, bytes.NewReader(out))<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br><br>	req.Header.Set(<span class="hljs-string">&quot;Content-Type&quot;</span>, <span class="hljs-string">&quot;application/json&quot;</span>)<br><br>	resp, err := h.client.Do(req)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br>	<span class="hljs-keyword">defer</span> resp.Body.Close()<br><br>	<span class="hljs-keyword">if</span> resp.StatusCode != http.StatusOK &#123;<br>		<span class="hljs-keyword">return</span> fmt.Errorf(<span class="hljs-string">&quot;failed %v with extender at URL %v, code %v&quot;</span>, action, url, resp.StatusCode)<br>	&#125;<br><br>	<span class="hljs-keyword">return</span> json.NewDecoder(resp.Body).Decode(result)<br>&#125;<br><br><span class="hljs-comment">//该函数是一个发送消息给扩展程序的辅助函数。</span><br><span class="hljs-comment">//它使用HTTP POST请求将动作、参数和结果发送到指定的扩展程序URL。</span><br><span class="hljs-comment">//具体步骤如下：</span><br><span class="hljs-comment">//1. 将参数args转换为JSON格式。</span><br><span class="hljs-comment">//2. 构建请求URL，通过拼接扩展程序URL和动作字符串。</span><br><span class="hljs-comment">//3. 创建HTTP POST请求，设置请求头的Content-Type为application/json，并将JSON数据作为请求体。</span><br><span class="hljs-comment">//4. 发送请求并获取响应。</span><br><span class="hljs-comment">//5. 检查响应状态码，如果不是200 OK，则返回错误。</span><br><span class="hljs-comment">//6. 将响应体解码为结果参数result。  如果在上述过程中发生错误，则返回相应的错误。</span><br><br><span class="hljs-comment">// IsInterested returns true if at least one extended resource requested by</span><br><span class="hljs-comment">// this pod is managed by this extender.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(h *HTTPExtender)</span></span> IsInterested(pod *v1.Pod) <span class="hljs-type">bool</span> &#123;<br>	<span class="hljs-keyword">if</span> h.managedResources.Len() == <span class="hljs-number">0</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">true</span><br>	&#125;<br>	<span class="hljs-keyword">if</span> h.hasManagedResources(pod.Spec.Containers) &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">true</span><br>	&#125;<br>	<span class="hljs-keyword">if</span> h.hasManagedResources(pod.Spec.InitContainers) &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">true</span><br>	&#125;<br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span><br>&#125;<br><br><span class="hljs-comment">//该函数是一个Go语言函数，名为IsInterested，它属于HTTPExtender类型。</span><br><span class="hljs-comment">//函数用于判断给定的Pod是否至少请求了一个由该extender管理的扩展资源。</span><br><span class="hljs-comment">//函数返回一个布尔值，如果Pod请求了至少一个由该extender管理的扩展资源，则返回true，否则返回false。</span><br><span class="hljs-comment">//函数主要包含以下两个步骤：</span><br><span class="hljs-comment">//1. 首先，函数检查HTTPExtender的managedResources列表是否为空。如果为空，则表示该extender管理所有资源，因此直接返回true。</span><br><span class="hljs-comment">//2. 如果managedResources不为空，函数会分别检查Pod的Spec.Containers和Spec.InitContainers字段中是否包含由该extender管理的扩展资源。</span><br><span class="hljs-comment">//如果存在至少一个由extender管理的扩展资源，则返回true。如果两个字段中都不包含由extender管理的扩展资源，则返回false。</span><br><span class="hljs-comment">//总结：该函数用于判断给定的Pod是否请求了由该extender管理的扩展资源，根据管理资源列表和Pod的容器配置进行匹配判断。</span><br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(h *HTTPExtender)</span></span> hasManagedResources(containers []v1.Container) <span class="hljs-type">bool</span> &#123;<br>	<span class="hljs-keyword">for</span> i := <span class="hljs-keyword">range</span> containers &#123;<br>		container := &amp;containers[i]<br>		<span class="hljs-keyword">for</span> resourceName := <span class="hljs-keyword">range</span> container.Resources.Requests &#123;<br>			<span class="hljs-keyword">if</span> h.managedResources.Has(<span class="hljs-type">string</span>(resourceName)) &#123;<br>				<span class="hljs-keyword">return</span> <span class="hljs-literal">true</span><br>			&#125;<br>		&#125;<br>		<span class="hljs-keyword">for</span> resourceName := <span class="hljs-keyword">range</span> container.Resources.Limits &#123;<br>			<span class="hljs-keyword">if</span> h.managedResources.Has(<span class="hljs-type">string</span>(resourceName)) &#123;<br>				<span class="hljs-keyword">return</span> <span class="hljs-literal">true</span><br>			&#125;<br>		&#125;<br>	&#125;<br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span><br>&#125;<br><br><span class="hljs-comment">//该函数用于判断给定的容器列表中是否包含有管理资源。</span><br><span class="hljs-comment">//具体实现为遍历容器列表，再遍历容器的资源请求和限制，</span><br><span class="hljs-comment">//若存在管理资源则返回true，否则返回false。</span><br><br></code></pre></td></tr></table></figure>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>K8S调度器 extender.go 源码解读 2024-04-09 11:45:59.666</div>
+      <div>http://example.com/2025/01/16/K8S调度器 extendergo 源码解读-k8s-diao-du-qi-extendergo-yuan-ma-jie-du/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/K8S%E9%9D%A2%E8%AF%95%E9%A2%98-k8s-mian-shi-ti/" title="K8S面试题 2024-08-02 17:50:50.418">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">K8S面试题 2024-08-02 17:50:50.418</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/K8S%E4%B9%8Bingress-nginx%E5%8E%9F%E7%90%86%E5%8F%8A%E9%85%8D%E7%BD%AE-k8s-zhi-ingress-nginx-yuan-li-ji-pei-zhi/" title="K8S之ingress-nginx原理及配置 2024-07-05 18:02:14.243">
+                        <span class="hidden-mobile">K8S之ingress-nginx原理及配置 2024-07-05 18:02:14.243</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

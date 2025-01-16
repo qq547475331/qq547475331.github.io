@@ -1,0 +1,620 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152535455565758596061626364656667686970717273747576777879808182838485868788899091929394959697989910010110210">
+<meta property="og:type" content="article">
+<meta property="og:title" content="K8S控制器之 progress.go 进度 源码解读 2024-04-09 11:31:08.86">
+<meta property="og:url" content="http://example.com/2025/01/16/K8S%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B%20progressgo%20%E8%BF%9B%E5%BA%A6%20%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-progressgo-jin-du-yuan-ma-jie-du/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152535455565758596061626364656667686970717273747576777879808182838485868788899091929394959697989910010110210">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-01-16T02:08:28.052Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:18.700Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>K8S控制器之 progress.go 进度 源码解读 2024-04-09 11:31:08.86 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="K8S控制器之 progress.go 进度 源码解读 2024-04-09 11:31:08.86"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.8k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          15 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">K8S控制器之 progress.go 进度 源码解读 2024-04-09 11:31:08.86</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">/*</span><br><span class="hljs-comment">Copyright 2016 The Kubernetes Authors.</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span><br><span class="hljs-comment">you may not use this file except in compliance with the License.</span><br><span class="hljs-comment">You may obtain a copy of the License at</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">    http://www.apache.org/licenses/LICENSE-2.0</span><br><span class="hljs-comment"></span><br><span class="hljs-comment">Unless required by applicable law or agreed to in writing, software</span><br><span class="hljs-comment">distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span><br><span class="hljs-comment">WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span><br><span class="hljs-comment">See the License for the specific language governing permissions and</span><br><span class="hljs-comment">limitations under the License.</span><br><span class="hljs-comment">*/</span><br><br><span class="hljs-keyword">package</span> deployment<br><br><span class="hljs-keyword">import</span> (<br>	<span class="hljs-string">&quot;context&quot;</span><br>	<span class="hljs-string">&quot;fmt&quot;</span><br>	<span class="hljs-string">&quot;reflect&quot;</span><br>	<span class="hljs-string">&quot;time&quot;</span><br><br>	apps <span class="hljs-string">&quot;k8s.io/api/apps/v1&quot;</span><br>	<span class="hljs-string">&quot;k8s.io/api/core/v1&quot;</span><br>	metav1 <span class="hljs-string">&quot;k8s.io/apimachinery/pkg/apis/meta/v1&quot;</span><br>	<span class="hljs-string">&quot;k8s.io/kubernetes/pkg/controller/deployment/util&quot;</span><br>)<br><br><span class="hljs-comment">// syncRolloutStatus updates the status of a deployment during a rollout. There are</span><br><span class="hljs-comment">// cases this helper will run that cannot be prevented from the scaling detection,</span><br><span class="hljs-comment">// for example a resync of the deployment after it was scaled up. In those cases,</span><br><span class="hljs-comment">// we shouldn&#x27;t try to estimate any progress.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(dc *DeploymentController)</span></span> syncRolloutStatus(ctx context.Context, allRSs []*apps.ReplicaSet, newRS *apps.ReplicaSet, d *apps.Deployment) <span class="hljs-type">error</span> &#123;<br>	newStatus := calculateStatus(allRSs, newRS, d)<br><br>	<span class="hljs-comment">// If there is no progressDeadlineSeconds set, remove any Progressing condition.</span><br>	<span class="hljs-keyword">if</span> !util.HasProgressDeadline(d) &#123;<br>		util.RemoveDeploymentCondition(&amp;newStatus, apps.DeploymentProgressing)<br>	&#125;<br>	<span class="hljs-comment">//该函数用于更新部署期间的部署状态。在某些情况下，无法从缩放检测中防止此帮助程序运行，例如在部署缩放后进行同步。</span><br>	<span class="hljs-comment">//在这些情况下，不应尝试估计任何进度。</span><br>	<span class="hljs-comment">//函数首先计算所有复制集、新复制集和部署的状态，然后如果未设置进度截止时间，则删除任何正在进行的条件。</span><br><br>	<span class="hljs-comment">// If there is only one replica set that is active then that means we are not running</span><br>	<span class="hljs-comment">// a new rollout and this is a resync where we don&#x27;t need to estimate any progress.</span><br>	<span class="hljs-comment">// In such a case, we should simply not estimate any progress for this deployment.</span><br>	currentCond := util.GetDeploymentCondition(d.Status, apps.DeploymentProgressing)<br>	isCompleteDeployment := newStatus.Replicas == newStatus.UpdatedReplicas &amp;&amp; currentCond != <span class="hljs-literal">nil</span> &amp;&amp; currentCond.Reason == util.NewRSAvailableReason<br>	<span class="hljs-comment">// Check for progress only if there is a progress deadline set and the latest rollout</span><br>	<span class="hljs-comment">// hasn&#x27;t completed yet.</span><br>	<span class="hljs-keyword">if</span> util.HasProgressDeadline(d) &amp;&amp; !isCompleteDeployment &#123;<br>		<span class="hljs-keyword">switch</span> &#123;<br>		<span class="hljs-keyword">case</span> util.DeploymentComplete(d, &amp;newStatus):<br>			<span class="hljs-comment">// Update the deployment conditions with a message for the new replica set that</span><br>			<span class="hljs-comment">// was successfully deployed. If the condition already exists, we ignore this update.</span><br>			msg := fmt.Sprintf(<span class="hljs-string">&quot;Deployment %q has successfully progressed.&quot;</span>, d.Name)<br>			<span class="hljs-keyword">if</span> newRS != <span class="hljs-literal">nil</span> &#123;<br>				msg = fmt.Sprintf(<span class="hljs-string">&quot;ReplicaSet %q has successfully progressed.&quot;</span>, newRS.Name)<br>			&#125;<br>			condition := util.NewDeploymentCondition(apps.DeploymentProgressing, v1.ConditionTrue, util.NewRSAvailableReason, msg)<br>			util.SetDeploymentCondition(&amp;newStatus, *condition)<br><br>		<span class="hljs-keyword">case</span> util.DeploymentProgressing(d, &amp;newStatus):<br>			<span class="hljs-comment">// If there is any progress made, continue by not checking if the deployment failed. This</span><br>			<span class="hljs-comment">// behavior emulates the rolling updater progressDeadline check.</span><br>			msg := fmt.Sprintf(<span class="hljs-string">&quot;Deployment %q is progressing.&quot;</span>, d.Name)<br>			<span class="hljs-keyword">if</span> newRS != <span class="hljs-literal">nil</span> &#123;<br>				msg = fmt.Sprintf(<span class="hljs-string">&quot;ReplicaSet %q is progressing.&quot;</span>, newRS.Name)<br>			&#125;<br>			condition := util.NewDeploymentCondition(apps.DeploymentProgressing, v1.ConditionTrue, util.ReplicaSetUpdatedReason, msg)<br>			<span class="hljs-comment">//这段Go代码是用于检查和更新Kubernetes部署（Deployment）的进度状态的。具体来说，它根据以下条件来判断是否需要更新部署的进度状态：</span><br>			<span class="hljs-comment">//1. 如果当前只有一个活动的副本集（replica set），则认为这不是一个新的滚动发布（rollout），而是一个重新同步（resync），</span><br>			<span class="hljs-comment">//在这种情况下，不需要估计任何进度，因此直接不估计该部署的进度。</span><br>			<span class="hljs-comment">//2. 如果设置了进度截止时间（progress deadline）并且最新滚动发布尚未完成，则检查部署的进度。</span><br>			<span class="hljs-comment">//- 如果部署已完成，则更新部署状态，设置进度状态为成功，并添加相应的消息。</span><br>			<span class="hljs-comment">//- 如果部署正在进展中，则更新部署状态，设置进度状态为正在进展，并添加相应的消息。</span><br>			<span class="hljs-comment">//这段代码通过调用util包中的一系列函数来实现对部署进度的检查和更新，其中涉及到对部署条件（condition）的获取、设置和更新等操作。</span><br><br>			<span class="hljs-comment">// Update the current Progressing condition or add a new one if it doesn&#x27;t exist.</span><br>			<span class="hljs-comment">// If a Progressing condition with status=true already exists, we should update</span><br>			<span class="hljs-comment">// everything but lastTransitionTime. SetDeploymentCondition already does that but</span><br>			<span class="hljs-comment">// it also is not updating conditions when the reason of the new condition is the</span><br>			<span class="hljs-comment">// same as the old. The Progressing condition is a special case because we want to</span><br>			<span class="hljs-comment">// update with the same reason and change just lastUpdateTime iff we notice any</span><br>			<span class="hljs-comment">// progress. That&#x27;s why we handle it here.</span><br>			<span class="hljs-keyword">if</span> currentCond != <span class="hljs-literal">nil</span> &#123;<br>				<span class="hljs-keyword">if</span> currentCond.Status == v1.ConditionTrue &#123;<br>					condition.LastTransitionTime = currentCond.LastTransitionTime<br>				&#125;<br>				util.RemoveDeploymentCondition(&amp;newStatus, apps.DeploymentProgressing)<br>			&#125;<br>			util.SetDeploymentCondition(&amp;newStatus, *condition)<br><br>		<span class="hljs-keyword">case</span> util.DeploymentTimedOut(ctx, d, &amp;newStatus):<br>			<span class="hljs-comment">// Update the deployment with a timeout condition. If the condition already exists,</span><br>			<span class="hljs-comment">// we ignore this update.</span><br>			msg := fmt.Sprintf(<span class="hljs-string">&quot;Deployment %q has timed out progressing.&quot;</span>, d.Name)<br>			<span class="hljs-keyword">if</span> newRS != <span class="hljs-literal">nil</span> &#123;<br>				msg = fmt.Sprintf(<span class="hljs-string">&quot;ReplicaSet %q has timed out progressing.&quot;</span>, newRS.Name)<br>			&#125;<br>			condition := util.NewDeploymentCondition(apps.DeploymentProgressing, v1.ConditionFalse, util.TimedOutReason, msg)<br>			util.SetDeploymentCondition(&amp;newStatus, *condition)<br>		&#125;<br>		<span class="hljs-comment">//该代码片段是Go语言编写的，它包含两个分支，分别处理不同的条件。</span><br>		<span class="hljs-comment">//第一个分支更新或添加一个正在进行的条件。如果已经存在一个状态为true的正在进行的条件，那么只更新除lastTransitionTime之外的所有内容。</span><br>		<span class="hljs-comment">//这通过调用util.RemoveDeploymentCondition和util.SetDeploymentCondition函数来实现。</span><br>		<span class="hljs-comment">//第二个分支处理超时条件。如果部署或新ReplicaSet超时进行，则更新部署的条件为超时状态，并忽略已经存在的超时条件。</span><br>		<span class="hljs-comment">//这通过调用util.NewDeploymentCondition和util.SetDeploymentCondition函数来实现。</span><br><br>	&#125;<br><br>	<span class="hljs-comment">// Move failure conditions of all replica sets in deployment conditions. For now,</span><br>	<span class="hljs-comment">// only one failure condition is returned from getReplicaFailures.</span><br>	<span class="hljs-keyword">if</span> replicaFailureCond := dc.getReplicaFailures(allRSs, newRS); <span class="hljs-built_in">len</span>(replicaFailureCond) &gt; <span class="hljs-number">0</span> &#123;<br>		<span class="hljs-comment">// There will be only one ReplicaFailure condition on the replica set.</span><br>		util.SetDeploymentCondition(&amp;newStatus, replicaFailureCond[<span class="hljs-number">0</span>])<br>	&#125; <span class="hljs-keyword">else</span> &#123;<br>		util.RemoveDeploymentCondition(&amp;newStatus, apps.DeploymentReplicaFailure)<br>	&#125;<br><br>	<span class="hljs-comment">// Do not update if there is nothing new to add.</span><br>	<span class="hljs-keyword">if</span> reflect.DeepEqual(d.Status, newStatus) &#123;<br>		<span class="hljs-comment">// Requeue the deployment if required.</span><br>		dc.requeueStuckDeployment(ctx, d, newStatus)<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>	&#125;<br><br>	newDeployment := d<br>	newDeployment.Status = newStatus<br>	_, err := dc.client.AppsV1().Deployments(newDeployment.Namespace).UpdateStatus(ctx, newDeployment, metav1.UpdateOptions&#123;&#125;)<br>	<span class="hljs-keyword">return</span> err<br>&#125;<br><br><span class="hljs-comment">//该函数是用于更新部署（deployment）在滚动更新过程中的状态。</span><br><span class="hljs-comment">//它根据给定的所有复制集（replica set）和新的复制集的信息，计算出新的部署状态。</span><br><span class="hljs-comment">//然后，根据是否有进度截止时间，以及部署是否已完成，来检查和更新部署的进度状态。</span><br><span class="hljs-comment">//此外，它还会将复制集的失败条件转移到部署的条件中。</span><br><span class="hljs-comment">//最后，如果状态有更新，它会将新的部署状态更新到Kubernetes API中。</span><br><br><span class="hljs-comment">// getReplicaFailures will convert replica failure conditions from replica sets</span><br><span class="hljs-comment">// to deployment conditions.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(dc *DeploymentController)</span></span> getReplicaFailures(allRSs []*apps.ReplicaSet, newRS *apps.ReplicaSet) []apps.DeploymentCondition &#123;<br>	<span class="hljs-keyword">var</span> conditions []apps.DeploymentCondition<br>	<span class="hljs-keyword">if</span> newRS != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">for</span> _, c := <span class="hljs-keyword">range</span> newRS.Status.Conditions &#123;<br>			<span class="hljs-keyword">if</span> c.Type != apps.ReplicaSetReplicaFailure &#123;<br>				<span class="hljs-keyword">continue</span><br>			&#125;<br>			conditions = <span class="hljs-built_in">append</span>(conditions, util.ReplicaSetToDeploymentCondition(c))<br>		&#125;<br>	&#125;<br><br>	<span class="hljs-comment">// Return failures for the new replica set over failures from old replica sets.</span><br>	<span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(conditions) &gt; <span class="hljs-number">0</span> &#123;<br>		<span class="hljs-keyword">return</span> conditions<br>	&#125;<br><br>	<span class="hljs-keyword">for</span> i := <span class="hljs-keyword">range</span> allRSs &#123;<br>		rs := allRSs[i]<br>		<span class="hljs-keyword">if</span> rs == <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">continue</span><br>		&#125;<br><br>		<span class="hljs-keyword">for</span> _, c := <span class="hljs-keyword">range</span> rs.Status.Conditions &#123;<br>			<span class="hljs-keyword">if</span> c.Type != apps.ReplicaSetReplicaFailure &#123;<br>				<span class="hljs-keyword">continue</span><br>			&#125;<br>			conditions = <span class="hljs-built_in">append</span>(conditions, util.ReplicaSetToDeploymentCondition(c))<br>		&#125;<br>	&#125;<br>	<span class="hljs-keyword">return</span> conditions<br>&#125;<br><br><span class="hljs-comment">//该函数是用于将副本集的副本失败条件转换为部署条件的。</span><br><span class="hljs-comment">//函数首先检查新副本集（newRS）的状态条件，将除ReplicaSetReplicaFailure类型外的条件添加到conditions切片中。</span><br><span class="hljs-comment">//如果conditions切片不为空，则直接返回。</span><br><span class="hljs-comment">//否则，遍历所有旧副本集（allRSs），将除ReplicaSetReplicaFailure类型外的条件添加到conditions切片中。</span><br><span class="hljs-comment">//最后返回conditions切片。</span><br><br><span class="hljs-comment">// used for unit testing</span><br><span class="hljs-keyword">var</span> nowFn = <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> time.Time &#123; <span class="hljs-keyword">return</span> time.Now() &#125;<br><br><span class="hljs-comment">// requeueStuckDeployment checks whether the provided deployment needs to be synced for a progress</span><br><span class="hljs-comment">// check. It returns the time after the deployment will be requeued for the progress check, 0 if it</span><br><span class="hljs-comment">// will be requeued now, or -1 if it does not need to be requeued.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(dc *DeploymentController)</span></span> requeueStuckDeployment(ctx context.Context, d *apps.Deployment, newStatus apps.DeploymentStatus) time.Duration &#123;<br>	logger := klog.FromContext(ctx)<br>	currentCond := util.GetDeploymentCondition(d.Status, apps.DeploymentProgressing)<br>	<span class="hljs-comment">// Can&#x27;t estimate progress if there is no deadline in the spec or progressing condition in the current status.</span><br>	<span class="hljs-keyword">if</span> !util.HasProgressDeadline(d) || currentCond == <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> time.Duration(<span class="hljs-number">-1</span>)<br>	&#125;<br>	<span class="hljs-comment">// No need to estimate progress if the rollout is complete or already timed out.</span><br>	<span class="hljs-keyword">if</span> util.DeploymentComplete(d, &amp;newStatus) || currentCond.Reason == util.TimedOutReason &#123;<br>		<span class="hljs-keyword">return</span> time.Duration(<span class="hljs-number">-1</span>)<br>	&#125;<br>	<span class="hljs-comment">// If there is no sign of progress at this point then there is a high chance that the</span><br>	<span class="hljs-comment">// deployment is stuck. We should resync this deployment at some point in the future[1]</span><br>	<span class="hljs-comment">// and check whether it has timed out. We definitely need this, otherwise we depend on the</span><br>	<span class="hljs-comment">// controller resync interval. See https://github.com/kubernetes/kubernetes/issues/34458.</span><br>	<span class="hljs-comment">//</span><br>	<span class="hljs-comment">// [1] ProgressingCondition.LastUpdatedTime + progressDeadlineSeconds - time.Now()</span><br>	<span class="hljs-comment">//</span><br>	<span class="hljs-comment">// For example, if a Deployment updated its Progressing condition 3 minutes ago and has a</span><br>	<span class="hljs-comment">// deadline of 10 minutes, it would need to be resynced for a progress check after 7 minutes.</span><br>	<span class="hljs-comment">//</span><br>	<span class="hljs-comment">// lastUpdated: 			00:00:00</span><br>	<span class="hljs-comment">// now: 					00:03:00</span><br>	<span class="hljs-comment">// progressDeadlineSeconds: 600 (10 minutes)</span><br>	<span class="hljs-comment">//</span><br>	<span class="hljs-comment">// lastUpdated + progressDeadlineSeconds - now =&gt; 00:00:00 + 00:10:00 - 00:03:00 =&gt; 07:00</span><br>	after := currentCond.LastUpdateTime.Time.Add(time.Duration(*d.Spec.ProgressDeadlineSeconds) * time.Second).Sub(nowFn())<br>	<span class="hljs-comment">// If the remaining time is less than a second, then requeue the deployment immediately.</span><br>	<span class="hljs-comment">// Make it ratelimited so we stay on the safe side, eventually the Deployment should</span><br>	<span class="hljs-comment">// transition either to a Complete or to a TimedOut condition.</span><br>	<span class="hljs-keyword">if</span> after &lt; time.Second &#123;<br>		logger.V(<span class="hljs-number">4</span>).Info(<span class="hljs-string">&quot;Queueing up deployment for a progress check now&quot;</span>, <span class="hljs-string">&quot;deployment&quot;</span>, klog.KObj(d))<br>		dc.enqueueRateLimited(d)<br>		<span class="hljs-keyword">return</span> time.Duration(<span class="hljs-number">0</span>)<br>	&#125;<br>	logger.V(<span class="hljs-number">4</span>).Info(<span class="hljs-string">&quot;Queueing up deployment for a progress check&quot;</span>, <span class="hljs-string">&quot;deployment&quot;</span>, klog.KObj(d), <span class="hljs-string">&quot;queueAfter&quot;</span>, <span class="hljs-type">int</span>(after.Seconds()))<br>	<span class="hljs-comment">// Add a second to avoid milliseconds skew in AddAfter.</span><br>	<span class="hljs-comment">// See https://github.com/kubernetes/kubernetes/issues/39785#issuecomment-279959133 for more info.</span><br>	dc.enqueueAfter(d, after+time.Second)<br>	<span class="hljs-keyword">return</span> after<br>&#125;<br><br><span class="hljs-comment">//该函数用于检查提供的部署是否需要同步进行进度检查。</span><br><span class="hljs-comment">//它返回部署重新排队进行进度检查的时间，如果需要立即重新排队则返回0，如果不需要重新排队则返回-1。</span><br><span class="hljs-comment">//函数首先从上下文中获取日志记录器，然后获取部署的当前状态和新的状态。</span><br><span class="hljs-comment">//如果部署的规范中没有截止日期或当前状态中没有进行中的条件，则无法估计进度，函数将返回-1。</span><br><span class="hljs-comment">//如果部署已经完成或已经超时，则无需估计进度，函数将返回-1。</span><br><span class="hljs-comment">//如果此时没有进度的迹象，则部署可能卡住了。函数将在未来的某个时间点重新同步此部署，并检查是否超时。</span><br><span class="hljs-comment">//这需要通过调用enqueueRateLimited方法将部署加入到队列中，并立即返回0。</span><br><span class="hljs-comment">//否则，函数将计算重新同步部署的时间，并通过调用enqueueAfter方法将部署加入到队列中，并返回计算的时间。</span><br><span class="hljs-comment">//如果计算的时间小于1秒，则函数将立即重新排队，并通过调用enqueueRateLimited方法将部署加入到队列中，并返回0。</span><br><span class="hljs-comment">//最后，函数将相关的日志信息记录下来。</span><br><br></code></pre></td></tr></table></figure>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>K8S控制器之 progress.go 进度 源码解读 2024-04-09 11:31:08.86</div>
+      <div>http://example.com/2025/01/16/K8S控制器之 progressgo 进度 源码解读-k8s-kong-zhi-qi-zhi-progressgo-jin-du-yuan-ma-jie-du/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/K8S%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B%20rollinggo%20%E6%BB%9A%E5%8A%A8%E6%9B%B4%E6%96%B0%20%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-rollinggo-gun-dong-geng-xin-yuan-ma-jie-du/" title="K8S控制器之 rolling.go 滚动更新 源码解读 2024-04-09 11:32:58.133">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">K8S控制器之 rolling.go 滚动更新 源码解读 2024-04-09 11:32:58.133</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/K8S%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B%20deployment_controllergo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-deploymentcontrollergo-yuan-ma-jie-du/" title="K8S控制器之 deployment_controller.go源码解读 2024-04-09 11:30:03.133">
+                        <span class="hidden-mobile">K8S控制器之 deployment_controller.go源码解读 2024-04-09 11:30:03.133</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

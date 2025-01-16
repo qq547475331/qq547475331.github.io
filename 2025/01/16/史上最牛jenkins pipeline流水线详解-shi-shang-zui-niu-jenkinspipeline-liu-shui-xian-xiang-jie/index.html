@@ -1,0 +1,914 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="一、什么是流水线jenkins 有 2 种流水线分为声明式流水线与脚本化流水线，脚本化流水线是 jenkins 旧版本使用的流水线脚本，新版本 Jenkins 推荐使用声明式流水线。文档只介绍声明流水线。 1.1 声明式流水线在声明式流水线语法中，流水线过程定义在 Pipeline{}中，Pipeline 块定义了整个流水线中完成的所有工作，比如 参数说明：  agent any：在任何可用的代理">
+<meta property="og:type" content="article">
+<meta property="og:title" content="史上最牛jenkins pipeline流水线详解 2024-08-02">
+<meta property="og:url" content="http://example.com/2025/01/16/%E5%8F%B2%E4%B8%8A%E6%9C%80%E7%89%9Bjenkins%20pipeline%E6%B5%81%E6%B0%B4%E7%BA%BF%E8%AF%A6%E8%A7%A3-shi-shang-zui-niu-jenkinspipeline-liu-shui-xian-xiang-jie/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="一、什么是流水线jenkins 有 2 种流水线分为声明式流水线与脚本化流水线，脚本化流水线是 jenkins 旧版本使用的流水线脚本，新版本 Jenkins 推荐使用声明式流水线。文档只介绍声明流水线。 1.1 声明式流水线在声明式流水线语法中，流水线过程定义在 Pipeline{}中，Pipeline 块定义了整个流水线中完成的所有工作，比如 参数说明：  agent any：在任何可用的代理">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-01-16T02:08:28.092Z">
+<meta property="article:modified_time" content="2025-01-16T02:39:19.187Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>史上最牛jenkins pipeline流水线详解 2024-08-02 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="史上最牛jenkins pipeline流水线详解 2024-08-02"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-16 10:08" pubdate>
+          2025年1月16日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          6.7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          56 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">史上最牛jenkins pipeline流水线详解 2024-08-02</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="一、什么是流水线"><a href="#一、什么是流水线" class="headerlink" title="一、什么是流水线"></a>一、什么是流水线</h1><p>jenkins 有 2 种流水线分为声明式流水线与脚本化流水线，脚本化流水线是 jenkins 旧版本使用的流水线脚本，新版本 Jenkins 推荐使用声明式流水线。文档只介绍声明流水线。</p>
+<h2 id="1-1-声明式流水线"><a href="#1-1-声明式流水线" class="headerlink" title="1.1 声明式流水线"></a>1.1 声明式流水线</h2><p>在声明式流水线语法中，流水线过程定义在 Pipeline{}中，Pipeline 块定义了整个流水线中完成的所有工作，比如</p>
+<p><strong>参数说明</strong>：</p>
+<ul>
+<li>agent any：在任何可用的代理上执行流水线或它的任何阶段，也就是执行流水线过程的位置，也可以指定到具体的节点</li>
+<li>stage：定义流水线的执行过程（相当于一个阶段），比如下文所示的 Build、Test、Deploy， 但是这个名字是根据实际情况进行定义的，并非固定的名字</li>
+<li>steps：执行某阶段具体的步骤。</li>
+</ul>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs typescript"><span class="hljs-comment">//Jenkinsfile (Declarative Pipeline)</span><br>pipeline &#123;<br>  agent <span class="hljs-built_in">any</span><br>    stages &#123;<br>      <span class="hljs-title function_">stage</span>(<span class="hljs-params"><span class="hljs-string">&#x27;Build&#x27;</span></span>) &#123;<br>        steps &#123;<br>          echo <span class="hljs-string">&#x27;Build&#x27;</span><br>        &#125;<br>      &#125;<br>      <span class="hljs-title function_">stage</span>(<span class="hljs-params"><span class="hljs-string">&#x27;Test&#x27;</span></span>) &#123;<br>        steps &#123;<br>          echo <span class="hljs-string">&#x27;Test&#x27;</span><br>        &#125;<br>      &#125;<br>      <span class="hljs-title function_">stage</span>(<span class="hljs-params"><span class="hljs-string">&#x27;Deploy&#x27;</span></span>) &#123;<br>        steps &#123;<br>          echo <span class="hljs-string">&#x27;Deploy&#x27;</span><br>      &#125;<br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="1-2-脚本化流水线"><a href="#1-2-脚本化流水线" class="headerlink" title="1.2 脚本化流水线"></a>1.2 脚本化流水线</h2><p>在脚本化流水线语法中，会有一个或多个 Node（节点）块在整个流水线中执行核心工作</p>
+<p><strong>参数说明</strong>:</p>
+<ul>
+<li>node：在任何可用的代理上执行流水线或它的任何阶段，也可以指定到具体的节点</li>
+<li>stage：和声明式的含义一致，定义流水线的阶段。Stage 块在脚本化流水线语法中是可选的，然而在脚本化流水线中实现 stage 块，可以清楚地在 Jenkins UI 界面中显示每个 stage 的任务子集。</li>
+</ul>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs javascript"><span class="hljs-comment">//Jenkinsfile (Scripted Pipeline)</span><br>node &#123;<br>  <span class="hljs-title function_">stage</span>(<span class="hljs-params"><span class="hljs-string">&#x27;Build&#x27;</span></span>) &#123;<br>    echo <span class="hljs-string">&#x27;Build&#x27;</span><br>  &#125;<br>  <span class="hljs-title function_">stage</span>(<span class="hljs-params"><span class="hljs-string">&#x27;Test&#x27;</span></span>) &#123;<br>    echo <span class="hljs-string">&#x27;Test&#x27;</span><br>  &#125;<br>  <span class="hljs-title function_">stage</span>(<span class="hljs-params"><span class="hljs-string">&#x27;Deploy&#x27;</span></span>) &#123;<br>    echo <span class="hljs-string">&#x27;Deploy&#x27;</span><br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h1 id="二、声明式流水线"><a href="#二、声明式流水线" class="headerlink" title="二、声明式流水线"></a>二、声明式流水线</h1><p>声明式流水线必须包含在一个 Pipeline 块中，比如是一个 Pipeline 块的格式</p>
+<figure class="highlight dts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs dts"><span class="hljs-title class_">pipeline</span> <span class="hljs-punctuation">&#123;</span><br>  <span class="hljs-comment">/* insert Declarative Pipeline here */</span><br><span class="hljs-punctuation">&#125;</span><br></code></pre></td></tr></table></figure>
+
+<p>在声明式流水线中有效的基本语句和表达式遵循与 Groovy 的语法同样的规则，但有以下例外</p>
+<ul>
+<li>流水线顶层必须是一个 block，即 <code>pipeline&#123;&#125;</code></li>
+<li>分隔符可以不需要分号，但是每条语句都必须在自己的行上</li>
+<li>块只能由 Sections、Directives、Steps 或 assignment statements 组成</li>
+<li>属性引用语句被当做是无参数的方法调用，比如 input 会被当做 input()。</li>
+</ul>
+<h2 id="2-1-Sections"><a href="#2-1-Sections" class="headerlink" title="2.1 Sections"></a>2.1 Sections</h2><p>声明式流水线中的 Sections 不是一个关键字或指令，而是包含一个或多个 Agent、Stages、 post、Directives 和 Steps 的代码区域块。</p>
+<h3 id="1-Agent"><a href="#1-Agent" class="headerlink" title="1.Agent"></a>1.Agent</h3><p>Agent 表示整个流水线或特定阶段中的步骤和命令执行的位置，该部分必须在 pipeline 块的顶层被定义，也可以在 stage 中再次定义，但是 stage 级别是可选的。</p>
+<h4 id="any"><a href="#any" class="headerlink" title="any"></a>any</h4><p>在任何可用的代理上执行流水线，配置语法</p>
+<figure class="highlight arcade"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs arcade">pipeline &#123;<br>  agent <span class="hljs-built_in">any</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h4 id="none"><a href="#none" class="headerlink" title="none"></a>none</h4><p>表示该 Pipeline 脚本没有全局的 agent 配置。当顶层的 agent 配置为 none 时， 每个 stage 部分都需要包含它自己的 agent。配置语法</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs typescript">pipeline &#123;<br>  agent none<br>  stages &#123;<br>    <span class="hljs-title function_">stage</span>(<span class="hljs-params"><span class="hljs-string">&#x27;Stage For Build&#x27;</span></span>)&#123;<br>      agent <span class="hljs-built_in">any</span><br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h4 id="label"><a href="#label" class="headerlink" title="label"></a>label</h4><p>以节点标签形式选择某个具体的节点执行 Pipeline 命令，例如：agent { label ‘my-defined-label’ }。节点需要提前配置标签。</p>
+<figure class="highlight sqf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs sqf">pipeline &#123;<br>  <span class="hljs-built_in">agent</span> none<br>    stages &#123;<br>      stage(<span class="hljs-string">&#x27;Stage For Build&#x27;</span>)&#123;<br>        <span class="hljs-built_in">agent</span> &#123; label <span class="hljs-string">&#x27;role-master&#x27;</span> &#125;<br>        steps &#123;<br>          <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;role-master&quot;</span><br>        &#125;<br>      &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h4 id="node"><a href="#node" class="headerlink" title="node"></a>node</h4><p>和 label 配置类似，只不过是可以添加一些额外的配置，比如 customWorkspace(设置默认工作目录)</p>
+<figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs fsharp"><span class="hljs-keyword">pipeline</span> &#123;<br>  agent none<br>    <span class="hljs-keyword">stages</span> &#123;<br>      stage(<span class="hljs-symbol">&#x27;Stage</span> For Build&#x27;)&#123;<br>        <span class="hljs-keyword">agent</span> &#123;<br>          <span class="hljs-keyword">node</span> &#123;<br>            label <span class="hljs-symbol">&#x27;role</span><span class="hljs-operator">-</span>master&#x27;<br>            customWorkspace <span class="hljs-string">&quot;/tmp/zhangzhuo/data&quot;</span><br>          &#125;<br>        &#125;<br>        <span class="hljs-keyword">steps</span> &#123;<br>          sh <span class="hljs-string">&quot;echo role-master &gt; 1.txt&quot;</span><br>        &#125;<br>      &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h4 id="dockerfile"><a href="#dockerfile" class="headerlink" title="dockerfile"></a>dockerfile</h4><p>使用从源码中包含的 Dockerfile 所构建的容器执行流水线或 stage。此时对应的 agent 写法如下</p>
+<figure class="highlight sqf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs sqf"><span class="hljs-built_in">agent</span> &#123;<br>   dockerfile &#123;<br>     filename <span class="hljs-string">&#x27;Dockerfile.build&#x27;</span>  <span class="hljs-comment">//dockerfile文件名称</span><br>     dir <span class="hljs-string">&#x27;build&#x27;</span>                  <span class="hljs-comment">//执行构建镜像的工作目录</span><br>     label <span class="hljs-string">&#x27;role-master&#x27;</span>          <span class="hljs-comment">//执行的node节点，标签选择</span><br>     additionalBuildArgs <span class="hljs-string">&#x27;--build-arg version=1.0.2&#x27;</span> <span class="hljs-comment">//构建参数</span><br>   &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h4 id="docker"><a href="#docker" class="headerlink" title="docker"></a>docker</h4><p>相当于 dockerfile，可以直接使用 docker 字段指定外部镜像即可，可以省去构建的时间。比如使用 maven 镜像进行打包，同时可以指定 args</p>
+<figure class="highlight sqf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs sqf"><span class="hljs-built_in">agent</span>&#123;<br>  docker&#123;<br>    <span class="hljs-built_in">image</span> <span class="hljs-string">&#x27;192.168.10.15/kubernetes/alpine:latest&#x27;</span>   <span class="hljs-comment">//镜像地址</span><br>    label <span class="hljs-string">&#x27;role-master&#x27;</span> <span class="hljs-comment">//执行的节点，标签选择</span><br>    args <span class="hljs-string">&#x27;-v /tmp:/tmp&#x27;</span>      <span class="hljs-comment">//启动镜像的参数</span><br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h4 id="kubernetes"><a href="#kubernetes" class="headerlink" title="kubernetes"></a>kubernetes</h4><p>需要部署 kubernetes 相关的插件，官方文档：</p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://github.com/jenkinsci/kubernetes-plugin/">https://github.com/jenkinsci/kubernetes-plugin/</a></p>
+</blockquote>
+<p>Jenkins 也支持使用 Kubernetes 创建 Slave，也就是常说的动态 Slave。配置示例如下</p>
+<ul>
+<li><p>cloud: Configure Clouds 的名称，指定到其中一个 k8s</p>
+</li>
+<li><p>slaveConnectTimeout: 连接超时时间</p>
+</li>
+<li><p>yaml: pod 定义文件，jnlp 容器的配置必须有配置无需改变，其余 containerd 根据自己情况指定</p>
+</li>
+<li><p>workspaceVolume：持久化 jenkins 的工作目录。</p>
+</li>
+<li><ul>
+<li>persistentVolumeClaimWorkspaceVolume：挂载已有 pvc。</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight less"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs less"><span class="hljs-selector-tag">workspaceVolume</span> <span class="hljs-selector-tag">persistentVolumeClaimWorkspaceVolume</span>(<span class="hljs-attribute">claimName</span>: <span class="hljs-string">&quot;jenkins-agent&quot;</span>, <span class="hljs-attribute">mountPath</span>: <span class="hljs-string">&quot;/&quot;</span>, <span class="hljs-attribute">readOnly</span>: <span class="hljs-string">&quot;false&quot;</span>)<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>nfsWorkspaceVolume：挂载 nfs 服务器目录</li>
+</ul>
+<figure class="highlight less"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs less"><span class="hljs-selector-tag">workspaceVolume</span> <span class="hljs-selector-tag">nfsWorkspaceVolume</span>(<span class="hljs-attribute">serverAddress</span>: <span class="hljs-string">&quot;192.168.10.254&quot;</span>, <span class="hljs-attribute">serverPath</span>: <span class="hljs-string">&quot;/nfs&quot;</span>, <span class="hljs-attribute">readOnly</span>: <span class="hljs-string">&quot;false&quot;</span>)<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>dynamicPVC：动态申请 pvc，任务执行结束后删除</li>
+</ul>
+<figure class="highlight less"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs less"><span class="hljs-selector-tag">workspaceVolume</span> <span class="hljs-selector-tag">dynamicPVC</span>(<span class="hljs-attribute">storageClassName</span>: <span class="hljs-string">&quot;nfs-client&quot;</span>, <span class="hljs-attribute">requestsSize</span>: <span class="hljs-string">&quot;1Gi&quot;</span>, <span class="hljs-attribute">accessModes</span>: <span class="hljs-string">&quot;ReadWriteMany&quot;</span>)<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>emptyDirWorkspaceVolume：临时目录，任务执行结束后会随着 pod 删除被删除，主要功能多个任务 container 共享 jenkins 工作目录。</li>
+</ul>
+<figure class="highlight isbl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs isbl"><span class="hljs-variable">workspaceVolume</span> <span class="hljs-function"><span class="hljs-title">emptyDirWorkspaceVolume</span>()</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>hostPathWorkspaceVolume：挂载 node 节点本机目录，注意挂载本机目录注意权限问题，可以先创建设置 777 权限，否则默认 kubelet 创建的目录权限为 755 默认其他用户没有写权限，执行流水线会报错。</li>
+</ul>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs php">workspaceVolume <span class="hljs-title function_ invoke__">hostPathWorkspaceVolume</span>(<span class="hljs-attr">hostPath</span>: <span class="hljs-string">&quot;/opt/workspace&quot;</span>, <span class="hljs-attr">readOnly</span>: <span class="hljs-literal">false</span>)<br></code></pre></td></tr></table></figure>
+
+<p><strong>示例</strong></p>
+<figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-attribute">agent &#123;</span><br><span class="hljs-attribute">  kubernetes &#123;</span><br><span class="hljs-attribute">      cloud &#x27;kubernetes&#x27;</span><br><span class="hljs-attribute">      slaveConnectTimeout 1200</span><br><span class="hljs-attribute">      workspaceVolume emptyDirWorkspaceVolume()</span><br><span class="hljs-attribute">      yaml &#x27;&#x27;&#x27;</span><br><span class="hljs-attribute">kind</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Pod</span><br><span class="hljs-attribute">metadata</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">jenkins-agent</span><br><span class="hljs-attribute">spec</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-attribute">containers</span><span class="hljs-punctuation">:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">args: [\&#x27;$(JENKINS_SECRET)\&#x27;, \&#x27;$(JENKINS_NAME)\&#x27;]</span><br>    <span class="hljs-attribute">image</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&#x27;192.168.10.15/kubernetes/jnlp:alpine&#x27;</span><br>    <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">jnlp</span><br>    <span class="hljs-attribute">imagePullPolicy</span><span class="hljs-punctuation">:</span> <span class="hljs-string">IfNotPresent</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-string">command:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-string">&quot;cat&quot;</span><br>    <span class="hljs-attribute">image</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;192.168.10.15/kubernetes/alpine:latest&quot;</span><br>    <span class="hljs-attribute">imagePullPolicy</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;IfNotPresent&quot;</span><br>    <span class="hljs-attribute">name</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;date&quot;</span><br>    <span class="hljs-attribute">tty</span><span class="hljs-punctuation">:</span> <span class="hljs-string">true</span><br>  <span class="hljs-attribute">restartPolicy</span><span class="hljs-punctuation">:</span> <span class="hljs-string">Never</span><br>&#x27;&#x27;&#x27;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="2-agent-的配置示例"><a href="#2-agent-的配置示例" class="headerlink" title="2.agent 的配置示例"></a>2.agent 的配置示例</h3><h4 id="kubernetes-示例"><a href="#kubernetes-示例" class="headerlink" title="kubernetes 示例"></a>kubernetes 示例</h4><p><a target="_blank" rel="noopener" href="http://mp.weixin.qq.com/s?__biz=MzAwNTM5Njk3Mw==&mid=2247506725&idx=2&sn=cb0395b93925ce3a06edf60d7ca7d2c1&chksm=9b1fdba7ac6852b182a5907c301fc9df85497315989ee99c4fbc2a88fad84a6032783b3524b0&scene=21#wechat_redirect">Docker+K8s+Jenkins 主流技术全解视频资料【干货免费分享】</a></p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><code class="hljs awk">pipeline &#123;<br>  agent &#123;<br>    kubernetes &#123;<br>      cloud <span class="hljs-string">&#x27;kubernetes&#x27;</span><br>      slaveConnectTimeout <span class="hljs-number">1200</span><br>      workspaceVolume emptyDirWorkspaceVolume()<br>      yaml <span class="hljs-string">&#x27;&#x27;&#x27;</span><br><span class="hljs-string">kind: Pod</span><br><span class="hljs-string">metadata:</span><br><span class="hljs-string">  name: jenkins-agent</span><br><span class="hljs-string">spec:</span><br><span class="hljs-string">  containers:</span><br><span class="hljs-string">  - args: [\&#x27;$(JENKINS_SECRET)\&#x27;, \&#x27;$(JENKINS_NAME)\&#x27;]</span><br><span class="hljs-string">    image: &#x27;192.168.10.15/kubernetes/jnlp:alpine&#x27;</span><br><span class="hljs-string">    name: jnlp</span><br><span class="hljs-string">    imagePullPolicy: IfNotPresent</span><br><span class="hljs-string">  - command:</span><br><span class="hljs-string">      - &quot;cat&quot;</span><br><span class="hljs-string">    image: &quot;192.168.10.15/kubernetes/alpine:latest&quot;</span><br><span class="hljs-string">    imagePullPolicy: &quot;IfNotPresent&quot;</span><br><span class="hljs-string">    name: &quot;date&quot;</span><br><span class="hljs-string">    tty: true</span><br><span class="hljs-string">  - command:</span><br><span class="hljs-string">      - &quot;cat&quot;</span><br><span class="hljs-string">    image: &quot;192.168.10.15/kubernetes/kubectl:apline&quot;</span><br><span class="hljs-string">    imagePullPolicy: &quot;IfNotPresent&quot;</span><br><span class="hljs-string">    name: &quot;kubectl&quot;</span><br><span class="hljs-string">    tty: true</span><br><span class="hljs-string">  restartPolicy: Never</span><br><span class="hljs-string">&#x27;&#x27;&#x27;</span><br>    &#125;<br>  &#125;<br>  environment &#123;<br>    MY_KUBECONFIG = credentials(<span class="hljs-string">&#x27;kubernetes-cluster&#x27;</span>)<br>  &#125;<br>  stages &#123;<br>    stage(<span class="hljs-string">&#x27;Data&#x27;</span>) &#123;<br>      steps &#123;<br>        container(name: <span class="hljs-string">&#x27;date&#x27;</span>) &#123;<br>          sh <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">            date</span><br><span class="hljs-string">          &quot;&quot;&quot;</span><br>        &#125;<br>      &#125;<br>    &#125;<br>    stage(<span class="hljs-string">&#x27;echo&#x27;</span>) &#123;<br>      steps &#123;<br>        container(name: <span class="hljs-string">&#x27;date&#x27;</span>) &#123;<br>          sh <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">            echo &#x27;k8s is pod&#x27;</span><br><span class="hljs-string">          &quot;&quot;&quot;</span><br>        &#125;<br>      &#125;<br>    &#125;<br>    stage(<span class="hljs-string">&#x27;kubectl&#x27;</span>) &#123;<br>      steps &#123;<br>        container(name: <span class="hljs-string">&#x27;kubectl&#x27;</span>) &#123;<br>          sh <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">            kubectl get pod -A  --kubeconfig $MY_KUBECONFIG</span><br><span class="hljs-string">          &quot;&quot;&quot;</span><br>        &#125;<br>      &#125;<br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h4 id="docker-的示例"><a href="#docker-的示例" class="headerlink" title="docker 的示例"></a>docker 的示例</h4><figure class="highlight sqf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs sqf">pipeline &#123;<br>  <span class="hljs-built_in">agent</span> none<br>  stages &#123;<br>    stage(<span class="hljs-string">&#x27;Example Build&#x27;</span>) &#123;<br>      <span class="hljs-built_in">agent</span> &#123; docker <span class="hljs-string">&#x27;maven:3-alpine&#x27;</span> &#125;<br>      steps &#123;<br>        <span class="hljs-built_in">echo</span> <span class="hljs-string">&#x27;Hello, Maven&#x27;</span><br>        sh <span class="hljs-string">&#x27;mvn --version&#x27;</span><br>      &#125;<br>    &#125;<br>    stage(<span class="hljs-string">&#x27;Example Test&#x27;</span>) &#123;<br>      <span class="hljs-built_in">agent</span> &#123; docker <span class="hljs-string">&#x27;openjdk:8-jre&#x27;</span> &#125;<br>      steps &#123;<br>        <span class="hljs-built_in">echo</span> <span class="hljs-string">&#x27;Hello, JDK&#x27;</span><br>        sh <span class="hljs-string">&#x27;java -version&#x27;</span><br>      &#125;<br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="3-Post"><a href="#3-Post" class="headerlink" title="3.Post"></a>3.Post</h3><ol>
+<li>Post 一般用于流水线结束后的进一步处理，比如错误通知等。Post 可以针对流水线不同的结果做出不同的处理，就像开发程序的错误处理，比如 Python 语言的 try catch。</li>
+<li>Post 可以定义在 Pipeline 或 stage 中，目前支持以下条件</li>
+<li>always：无论 Pipeline 或 stage 的完成状态如何，都允许运行该 post 中定义的指令；</li>
+<li>changed：只有当前 Pipeline 或 stage 的完成状态与它之前的运行不同时，才允许在该 post 部分运行该步骤；</li>
+<li>fixed：当本次 Pipeline 或 stage 成功，且上一次构建是失败或不稳定时，允许运行该 post 中定义的指令；</li>
+<li>regression：当本次 Pipeline 或 stage 的状态为失败、不稳定或终止，且上一次构建的 状态为成功时，允许运行该 post 中定义的指令；</li>
+<li>failure：只有当前 Pipeline 或 stage 的完成状态为失败（failure），才允许在 post 部分运行该步骤，通常这时在 Web 界面中显示为红色</li>
+<li>success：当前状态为成功（success），执行 post 步骤，通常在 Web 界面中显示为蓝色 或绿色</li>
+<li>unstable：当前状态为不稳定（unstable），执行 post 步骤，通常由于测试失败或代码 违规等造成，在 Web 界面中显示为黄色</li>
+<li>aborted：当前状态为终止（aborted），执行该 post 步骤，通常由于流水线被手动终止触发，这时在 Web 界面中显示为灰色；</li>
+<li>unsuccessful：当前状态不是 success 时，执行该 post 步骤；</li>
+<li>cleanup：无论 pipeline 或 stage 的完成状态如何，都允许运行该 post 中定义的指令。和 always 的区别在于，cleanup 会在其它执行之后执行。</li>
+</ol>
+<h4 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h4><p>一般情况下 post 部分放在流水线的底部，比如本实例，无论 stage 的完成状态如何，都会输出一条 I will always say Hello again!信息</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs typescript"><span class="hljs-comment">//Jenkinsfile (Declarative Pipeline)</span><br>pipeline &#123;<br>  agent <span class="hljs-built_in">any</span><br>  stages &#123;<br>    <span class="hljs-title function_">stage</span>(<span class="hljs-params"><span class="hljs-string">&#x27;Example1&#x27;</span></span>) &#123;<br>      steps &#123;<br>        echo <span class="hljs-string">&#x27;Hello World1&#x27;</span><br>      &#125;<br>    &#125;<br>    <span class="hljs-title function_">stage</span>(<span class="hljs-params"><span class="hljs-string">&#x27;Example2&#x27;</span></span>) &#123;<br>      steps &#123;<br>        echo <span class="hljs-string">&#x27;Hello World2&#x27;</span><br>      &#125;<br>    &#125;<br>  &#125;<br>  post &#123;<br>    always &#123;<br>      echo <span class="hljs-string">&#x27;I will always say Hello again!&#x27;</span><br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>也可以将 post 写在 stage，下面示例表示 Example1 执行失败执行 post。</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs typescript"><span class="hljs-comment">//Jenkinsfile (Declarative Pipeline)</span><br>pipeline &#123;<br>  agent <span class="hljs-built_in">any</span><br>  stages &#123;<br>    <span class="hljs-title function_">stage</span>(<span class="hljs-params"><span class="hljs-string">&#x27;Example1&#x27;</span></span>) &#123;<br>      steps &#123;<br>        sh <span class="hljs-string">&#x27;ip a&#x27;</span><br>      &#125;<br>      post &#123;<br>        failure &#123;<br>          echo <span class="hljs-string">&#x27;I will always say Hello again!&#x27;</span><br>        &#125;<br>      &#125;<br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="4-sepes"><a href="#4-sepes" class="headerlink" title="4.sepes"></a>4.sepes</h3><p>Steps 部分在给定的 stage 指令中执行的一个或多个步骤，比如在 steps 定义执行一条 shell 命令</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs typescript"><span class="hljs-comment">//Jenkinsfile (Declarative Pipeline)</span><br>pipeline &#123;<br>  agent <span class="hljs-built_in">any</span><br>  stages &#123;<br>    <span class="hljs-title function_">stage</span>(<span class="hljs-params"><span class="hljs-string">&#x27;Example&#x27;</span></span>) &#123;<br>      steps &#123;<br>        echo <span class="hljs-string">&#x27;Hello World&#x27;</span><br>      &#125;<br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>或者是使用 sh 字段执行多条指令</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs awk"><span class="hljs-regexp">//</span>Jenkinsfile (Declarative Pipeline)<br>pipeline &#123;<br>  agent any<br>  stages &#123;<br>    stage(<span class="hljs-string">&#x27;Example&#x27;</span>) &#123;<br>      steps &#123;<br>        sh <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">           echo &#x27;Hello World1&#x27;</span><br><span class="hljs-string">           echo &#x27;Hello World2&#x27;</span><br><span class="hljs-string">        &quot;&quot;&quot;</span><br>      &#125;<br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="2-2-Directives"><a href="#2-2-Directives" class="headerlink" title="2.2 Directives"></a>2.2 Directives</h2><p>Directives 可用于一些执行 stage 时的条件判断或预处理一些数据，和 Sections 一致，Directives 不是一个关键字或指令，而是包含了 environment、options、parameters、triggers、stage、tools、 input、when 等配置。</p>
+<h3 id="1-Environment"><a href="#1-Environment" class="headerlink" title="1.Environment"></a>1.Environment</h3><p>Environment 主要用于在流水线中配置的一些环境变量，根据配置的位置决定环境变量的作用域。可以定义在 pipeline 中作为全局变量，也可以配置在 stage 中作为该 stage 的环境变量。该指令支持一个特殊的方法 <code>credentials()</code>，该方法可用于在 Jenkins 环境中通过标识符访问预定义的凭证。对于类型为 Secret Text 的凭证，<code>credentials()</code>可以将该 Secret 中的文本内容赋值给环境变量。对于类型为标准的账号密码型的凭证，指定的环境变量为 username 和 password，并且也会定义两个额外的环境变量，分别为<code>MYVARNAME_USR</code>和<code>MYVARNAME_PSW</code>。</p>
+<h4 id="基本变量使用"><a href="#基本变量使用" class="headerlink" title="基本变量使用"></a>基本变量使用</h4><figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs typescript"><span class="hljs-comment">//示例</span><br>pipeline &#123;<br>  agent <span class="hljs-built_in">any</span><br>  environment &#123;   <span class="hljs-comment">//全局变量，会在所有stage中生效</span><br>    <span class="hljs-variable constant_">NAME</span>= <span class="hljs-string">&#x27;zhangzhuo&#x27;</span><br>  &#125;<br>  stages &#123;<br>    <span class="hljs-title function_">stage</span>(<span class="hljs-params"><span class="hljs-string">&#x27;env1&#x27;</span></span>) &#123;<br>      environment &#123; <span class="hljs-comment">//定义在stage中的变量只会在当前stage生效，其他的stage不会生效</span><br>        <span class="hljs-variable constant_">HARBOR</span> = <span class="hljs-string">&#x27;https://192.168.10.15&#x27;</span><br>      &#125;<br>      steps &#123;<br>        sh <span class="hljs-string">&quot;env&quot;</span><br>      &#125;<br>    &#125;<br>    <span class="hljs-title function_">stage</span>(<span class="hljs-params"><span class="hljs-string">&#x27;env2&#x27;</span></span>) &#123;<br>      steps &#123;<br>        sh <span class="hljs-string">&quot;env&quot;</span><br>      &#125;<br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h4 id="使用变量引用-secret-的凭证"><a href="#使用变量引用-secret-的凭证" class="headerlink" title="使用变量引用 secret 的凭证"></a>使用变量引用 secret 的凭证</h4><figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs typescript"><span class="hljs-comment">//这里使用k8s的kubeconfig文件示例</span><br>pipeline &#123;<br>  agent <span class="hljs-built_in">any</span><br>  environment &#123;<br>    <span class="hljs-variable constant_">KUBECONFIG</span> = <span class="hljs-title function_">credentials</span>(<span class="hljs-string">&#x27;kubernetes-cluster&#x27;</span>)<br>  &#125;<br>  stages &#123;<br>    <span class="hljs-title function_">stage</span>(<span class="hljs-params"><span class="hljs-string">&#x27;env&#x27;</span></span>) &#123;<br>      steps &#123;<br>        sh <span class="hljs-string">&quot;env&quot;</span>  <span class="hljs-comment">//默认情况下输出的变量内容会被加密</span><br>      &#125;<br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h4 id="使用变量引用类型为标准的账号密码型的凭证"><a href="#使用变量引用类型为标准的账号密码型的凭证" class="headerlink" title="使用变量引用类型为标准的账号密码型的凭证"></a>使用变量引用类型为标准的账号密码型的凭证</h4><p>这里使用 HARBOR 变量进行演示，默认情况下账号密码型的凭证会自动创建 3 个变量</p>
+<ul>
+<li>HARBOR_USR:会把凭证中 username 值赋值给这个变量</li>
+<li>HARBOR_PSW:会把凭证中 password 值赋值给这个变量</li>
+<li>HARBOR:默认情况下赋值的值为<code>usernamme:password</code></li>
+</ul>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs typescript"><span class="hljs-comment">//这里使用k8s的kubeconfig文件示例</span><br>pipeline &#123;<br>  agent <span class="hljs-built_in">any</span><br>  environment &#123;<br>    <span class="hljs-variable constant_">HARBOR</span> = <span class="hljs-title function_">credentials</span>(<span class="hljs-string">&#x27;harbor-account&#x27;</span>)<br>  &#125;<br>  stages &#123;<br>    <span class="hljs-title function_">stage</span>(<span class="hljs-params"><span class="hljs-string">&#x27;env&#x27;</span></span>) &#123;<br>      steps &#123;<br>        sh <span class="hljs-string">&quot;env&quot;</span><br>      &#125;<br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="2-Options"><a href="#2-Options" class="headerlink" title="2.Options"></a>2.Options</h3><p>Jenkins 流水线支持很多内置指令，比如 retry 可以对失败的步骤进行重复执行 n 次，可以根据不同的指令实现不同的效果。比较常用的指令如下:</p>
+<ul>
+<li>buildDiscarder ：保留多少个流水线的构建记录</li>
+<li>disableConcurrentBuilds：禁止流水线并行执行，防止并行流水线同时访问共享资源导致流水线失败。</li>
+<li>disableResume ：如果控制器重启，禁止流水线自动恢复。</li>
+<li>newContainerPerStage：agent 为 docker 或 dockerfile 时，每个阶段将在同一个节点的新容器中运行，而不是所有的阶段都在同一个容器中运行。</li>
+<li>quietPeriod：流水线静默期，也就是触发流水线后等待一会在执行。</li>
+<li>retry：流水线失败后重试次数。</li>
+<li>timeout：设置流水线的超时时间，超过流水线时间，job 会自动终止。如果不加 unit 参数默认为 1 分。</li>
+<li>timestamps：为控制台输出时间戳。</li>
+</ul>
+<h4 id="定义在-pipeline-中"><a href="#定义在-pipeline-中" class="headerlink" title="定义在 pipeline 中"></a>定义在 pipeline 中</h4><figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs stylus">pipeline &#123;<br>  agent any<br>  options &#123;<br>    <span class="hljs-built_in">timeout</span>(<span class="hljs-selector-tag">time</span>: <span class="hljs-number">1</span>, unit: <span class="hljs-string">&#x27;HOURS&#x27;</span>)  <span class="hljs-comment">//超时时间1小时，如果不加unit参数默认为1分</span><br>    <span class="hljs-built_in">timestamps</span>()                     <span class="hljs-comment">//所有输出每行都会打印时间戳</span><br>    <span class="hljs-built_in">buildDiscarder</span>(<span class="hljs-built_in">logRotator</span>(numToKeepStr: <span class="hljs-string">&#x27;3&#x27;</span>)) <span class="hljs-comment">//保留三个历史构建版本</span><br>    <span class="hljs-built_in">quietPeriod</span>(<span class="hljs-number">10</span>)  <span class="hljs-comment">//注意手动触发的构建不生效</span><br>    <span class="hljs-built_in">retry</span>(<span class="hljs-number">3</span>)    <span class="hljs-comment">//流水线失败后重试次数</span><br>  &#125;<br>  stages &#123;<br>    <span class="hljs-built_in">stage</span>(<span class="hljs-string">&#x27;env1&#x27;</span>) &#123;<br>      steps &#123;<br>        sh <span class="hljs-string">&quot;env&quot;</span><br>        sleep <span class="hljs-number">2</span><br>      &#125;<br>    &#125;<br>    <span class="hljs-built_in">stage</span>(<span class="hljs-string">&#x27;env2&#x27;</span>) &#123;<br>      steps &#123;<br>        sh <span class="hljs-string">&quot;env&quot;</span><br>      &#125;<br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h4 id="定义在-stage-中"><a href="#定义在-stage-中" class="headerlink" title="定义在 stage 中"></a>定义在 stage 中</h4><p>Option 除了写在 Pipeline 顶层，还可以写在 stage 中，但是写在 stage 中的 option 仅支持 retry、 timeout、timestamps，或者是和 stage 相关的声明式选项，比如 skipDefaultCheckout。处于 stage 级别的 options 写法如下</p>
+<figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs stylus">pipeline &#123;<br>  agent any<br>  stages &#123;<br>    <span class="hljs-built_in">stage</span>(<span class="hljs-string">&#x27;env1&#x27;</span>) &#123;<br>      options &#123;   <span class="hljs-comment">//定义在这里这对这个stage生效</span><br>        <span class="hljs-built_in">timeout</span>(<span class="hljs-selector-tag">time</span>: <span class="hljs-number">2</span>, unit: <span class="hljs-string">&#x27;SECONDS&#x27;</span>) <span class="hljs-comment">//超时时间2秒</span><br>        <span class="hljs-built_in">timestamps</span>()                     <span class="hljs-comment">//所有输出每行都会打印时间戳</span><br>        <span class="hljs-built_in">retry</span>(<span class="hljs-number">3</span>)    <span class="hljs-comment">//流水线失败后重试次数</span><br>      &#125;<br>      steps &#123;<br>        sh <span class="hljs-string">&quot;env &amp;&amp; sleep 2&quot;</span><br>      &#125;<br>    &#125;<br>    <span class="hljs-built_in">stage</span>(<span class="hljs-string">&#x27;env2&#x27;</span>) &#123;<br>      steps &#123;<br>        sh <span class="hljs-string">&quot;env&quot;</span><br>      &#125;<br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="3-Parameters"><a href="#3-Parameters" class="headerlink" title="3.Parameters"></a>3.Parameters</h3><p>Parameters 提供了一个用户在触发流水线时应该提供的参数列表，这些用户指定参数的值可以通过 params 对象提供给流水线的 step（步骤）。只能定义在 pipeline 顶层。</p>
+<p><a target="_blank" rel="noopener" href="http://mp.weixin.qq.com/s?__biz=MjM5MzU5NDYwNA==&mid=2247501042&idx=1&sn=d72cf96b451ddecc591ce62954183c11&chksm=a696297191e1a067bc8291e4c781c839bd7d35aa960116c7a7b5ac97f143a9fced73a480b823&scene=21#wechat_redirect"><strong>目前支持的参数类型如下</strong></a></p>
+<ul>
+<li>string：字符串类型的参数。</li>
+<li>text：文本型参数，一般用于定义多行文本内容的变量。</li>
+<li>booleanParam：布尔型参数。</li>
+<li>choice：选择型参数，一般用于给定几个可选的值，然后选择其中一个进行赋值。</li>
+<li>password：密码型变量，一般用于定义敏感型变量，在 Jenkins 控制台会输出为*。</li>
+</ul>
+<p><strong>插件 Parameters</strong></p>
+<ul>
+<li>imageTag：镜像 tag，需要安装 Image Tag Parameter 插件后使用</li>
+<li>gitParameter：获取 git 仓库分支，需要 Git Parameter 插件后使用</li>
+</ul>
+<p><strong>示例</strong></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs php">pipeline &#123;<br>  agent any<br>  parameters &#123;<br>    <span class="hljs-keyword">string</span>(name: <span class="hljs-string">&#x27;DEPLOY_ENV&#x27;</span>, defaultValue:  <span class="hljs-string">&#x27;staging&#x27;</span>, description: <span class="hljs-string">&#x27;1&#x27;</span>)   <span class="hljs-comment">//执行构建时需要手动配置字符串类型参数，之后赋值给变量</span><br>    <span class="hljs-title function_ invoke__">text</span>(<span class="hljs-attr">name</span>:  <span class="hljs-string">&#x27;DEPLOY_TEXT&#x27;</span>, <span class="hljs-attr">defaultValue</span>: <span class="hljs-string">&#x27;One\nTwo\nThree\n&#x27;</span>, <span class="hljs-attr">description</span>: <span class="hljs-string">&#x27;2&#x27;</span>)  <span class="hljs-comment">//执行构建时需要提供文本参数，之后赋值给变量</span><br>    <span class="hljs-title function_ invoke__">booleanParam</span>(<span class="hljs-attr">name</span>: <span class="hljs-string">&#x27;DEBUG_BUILD&#x27;</span>,  <span class="hljs-attr">defaultValue</span>: <span class="hljs-literal">true</span>, <span class="hljs-attr">description</span>: <span class="hljs-string">&#x27;3&#x27;</span>)   <span class="hljs-comment">//布尔型参数</span><br>    <span class="hljs-title function_ invoke__">choice</span>(<span class="hljs-attr">name</span>: <span class="hljs-string">&#x27;CHOICES&#x27;</span>, <span class="hljs-attr">choices</span>: [<span class="hljs-string">&#x27;one&#x27;</span>, <span class="hljs-string">&#x27;two&#x27;</span>, <span class="hljs-string">&#x27;three&#x27;</span>], <span class="hljs-attr">description</span>: <span class="hljs-string">&#x27;4&#x27;</span>)  <span class="hljs-comment">//选择形式列表参数</span><br>    <span class="hljs-title function_ invoke__">password</span>(<span class="hljs-attr">name</span>: <span class="hljs-string">&#x27;PASSWORD&#x27;</span>, <span class="hljs-attr">defaultValue</span>: <span class="hljs-string">&#x27;SECRET&#x27;</span>, <span class="hljs-attr">description</span>: <span class="hljs-string">&#x27;A  secret password&#x27;</span>)  <span class="hljs-comment">//密码类型参数，会进行加密</span><br>    <span class="hljs-title function_ invoke__">imageTag</span>(<span class="hljs-attr">name</span>: <span class="hljs-string">&#x27;DOCKER_IMAGE&#x27;</span>, <span class="hljs-attr">description</span>: <span class="hljs-string">&#x27;&#x27;</span>, <span class="hljs-attr">image</span>: <span class="hljs-string">&#x27;kubernetes/kubectl&#x27;</span>, <span class="hljs-attr">filter</span>: <span class="hljs-string">&#x27;.*&#x27;</span>, <span class="hljs-attr">defaultTag</span>: <span class="hljs-string">&#x27;&#x27;</span>, <span class="hljs-attr">registry</span>: <span class="hljs-string">&#x27;https://192.168.10.15&#x27;</span>, <span class="hljs-attr">credentialId</span>: <span class="hljs-string">&#x27;harbor-account&#x27;</span>, <span class="hljs-attr">tagOrder</span>: <span class="hljs-string">&#x27;NATURAL&#x27;</span>)   <span class="hljs-comment">//获取镜像名称与tag</span><br>    <span class="hljs-title function_ invoke__">gitParameter</span>(<span class="hljs-attr">branch</span>: <span class="hljs-string">&#x27;&#x27;</span>, <span class="hljs-attr">branchFilter</span>: <span class="hljs-string">&#x27;origin/(.*)&#x27;</span>, <span class="hljs-attr">defaultValue</span>: <span class="hljs-string">&#x27;&#x27;</span>, <span class="hljs-attr">description</span>: <span class="hljs-string">&#x27;Branch for build and deploy&#x27;</span>, <span class="hljs-attr">name</span>: <span class="hljs-string">&#x27;BRANCH&#x27;</span>, <span class="hljs-attr">quickFilterEnabled</span>: <span class="hljs-literal">false</span>, <span class="hljs-attr">selectedValue</span>: <span class="hljs-string">&#x27;NONE&#x27;</span>, <span class="hljs-attr">sortMode</span>: <span class="hljs-string">&#x27;NONE&#x27;</span>,  <span class="hljs-attr">tagFilter</span>: <span class="hljs-string">&#x27;*&#x27;</span>, <span class="hljs-attr">type</span>: <span class="hljs-string">&#x27;PT_BRANCH&#x27;</span>)<br>  &#125;  <span class="hljs-comment">//获取git仓库分支列表，必须有git引用</span><br>  stages &#123;<br>    <span class="hljs-title function_ invoke__">stage</span>(<span class="hljs-string">&#x27;env1&#x27;</span>) &#123;<br>      steps &#123;<br>        sh <span class="hljs-string">&quot;env&quot;</span><br>      &#125;<br>    &#125;<br>    <span class="hljs-title function_ invoke__">stage</span>(<span class="hljs-string">&#x27;git&#x27;</span>) &#123;<br>      steps &#123;<br>        git branch: <span class="hljs-string">&quot;<span class="hljs-subst">$BRANCH</span>&quot;</span>, credentialsId: <span class="hljs-string">&#x27;gitlab-key&#x27;</span>, url: <span class="hljs-string">&#x27;git@192.168.10.14:root/env.git&#x27;</span>   <span class="hljs-comment">//使用gitParameter，必须有这个</span><br>      &#125;<br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="4-Triggers"><a href="#4-Triggers" class="headerlink" title="4.Triggers"></a>4.Triggers</h3><p>在 Pipeline 中可以用 triggers 实现自动触发流水线执行任务，可以通过 Webhook、Cron、 pollSCM 和 upstream 等方式触发流水线。</p>
+<h4 id="Cron"><a href="#Cron" class="headerlink" title="Cron"></a>Cron</h4><p>定时构建假如某个流水线构建的时间比较长，或者某个流水线需要定期在某个时间段执行构建，可以 使用 cron 配置触发器，比如周一到周五每隔四个小时执行一次</p>
+<p>注意：H 的意思不是 HOURS 的意思，而是 Hash 的缩写。主要为了解决多个流水线在同一时间同时运行带来的系统负载压力。</p>
+<figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs stylus">pipeline &#123;<br>  agent any<br>  triggers &#123;<br>    <span class="hljs-built_in">cron</span>(<span class="hljs-string">&#x27;H */4 * * 1-5&#x27;</span>)   <span class="hljs-comment">//周一到周五每隔四个小时执行一次</span><br>    <span class="hljs-built_in">cron</span>(<span class="hljs-string">&#x27;H/12 * * * *&#x27;</span>)   <span class="hljs-comment">//每隔12分钟执行一次</span><br>    <span class="hljs-built_in">cron</span>(<span class="hljs-string">&#x27;H * * * *&#x27;</span>)   <span class="hljs-comment">//每隔1小时执行一次</span><br>  &#125;<br>  stages &#123;<br>    <span class="hljs-built_in">stage</span>(<span class="hljs-string">&#x27;Example&#x27;</span>) &#123;<br>      steps &#123;<br>        echo <span class="hljs-string">&#x27;Hello World&#x27;</span><br>      &#125;<br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h4 id="Upstream"><a href="#Upstream" class="headerlink" title="Upstream"></a>Upstream</h4><p>Upstream 可以根据上游 job 的执行结果决定是否触发该流水线。比如当 job1 或 job2 执行成功时触发该流水线</p>
+<p><a target="_blank" rel="noopener" href="http://mp.weixin.qq.com/s?__biz=MzAwNTM5Njk3Mw==&mid=2247506725&idx=2&sn=cb0395b93925ce3a06edf60d7ca7d2c1&chksm=9b1fdba7ac6852b182a5907c301fc9df85497315989ee99c4fbc2a88fad84a6032783b3524b0&scene=21#wechat_redirect">Docker+K8s+Jenkins 主流技术全解视频资料【干货免费分享】</a></p>
+<p>目前支持的状态有 SUCCESS、UNSTABLE、FAILURE、NOT_BUILT、ABORTED 等。</p>
+<figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs stylus">pipeline &#123;<br>  agent any<br>  triggers &#123;<br>    <span class="hljs-built_in">upstream</span>(upstreamProjects: <span class="hljs-string">&#x27;env&#x27;</span>, threshold: hudson<span class="hljs-selector-class">.model</span><span class="hljs-selector-class">.Result</span>.SUCCESS)  <span class="hljs-comment">//当env构建成功时构建这个流水线</span><br>  &#125;<br>  stages &#123;<br>    <span class="hljs-built_in">stage</span>(<span class="hljs-string">&#x27;Example&#x27;</span>) &#123;<br>      steps &#123;<br>        echo <span class="hljs-string">&#x27;Hello World&#x27;</span><br>      &#125;<br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="5-Input"><a href="#5-Input" class="headerlink" title="5.Input"></a>5.Input</h3><p>Input 字段可以实现在流水线中进行交互式操作，比如选择要部署的环境、是否继续执行某个阶段等。</p>
+<p><a target="_blank" rel="noopener" href="http://mp.weixin.qq.com/s?__biz=MjM5MzU5NDYwNA==&mid=2247500578&idx=1&sn=4b56ad52e9f19f5c3dd955eeeb08a092&chksm=a6962ea191e1a7b7c476fbe4c45827441d6a47a37a5830a45ad57853e588447bab6cb50a97de&scene=21#wechat_redirect"><strong>配置 Input 支持以下选项</strong></a></p>
+<ul>
+<li>message：必选，需要用户进行 input 的提示信息，比如：“是否发布到生产环境？”；</li>
+<li>id：可选，input 的标识符，默认为 stage 的名称；</li>
+<li>ok：可选，确认按钮的显示信息，比如：“确定”、“允许”；</li>
+<li>submitter：可选，允许提交 input 操作的用户或组的名称，如果为空，任何登录用户均可提交 input；</li>
+<li>parameters：提供一个参数列表供 input 使用。</li>
+</ul>
+<p>假如需要配置一个提示消息为“还继续么”、确认按钮为“继续”、提供一个 PERSON 的变量的参数，并且只能由登录用户为 alice 和 bob 提交的 input 流水线</p>
+<figure class="highlight gams"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs gams">pipeline &#123;<br>  agent any<br>  stages &#123;<br>    stage(<span class="hljs-string">&#x27;Example&#x27;</span>) &#123;<br>      input &#123;<br>        message <span class="hljs-string">&quot;还继续么?&quot;</span><br>        ok <span class="hljs-string">&quot;继续&quot;</span><br>        submitter <span class="hljs-string">&quot;alice,bob&quot;</span><br>        <span class="hljs-keyword">parameters</span> &#123;<br>          string(name: <span class="hljs-string">&#x27;PERSON&#x27;</span>, defaultValue: <span class="hljs-string">&#x27;Mr Jenkins&#x27;</span>, description: <span class="hljs-string">&#x27;Who should I say hello to?&#x27;</span>)<br>        &#125;<br>      &#125;<br>      steps <span class="hljs-comment">&#123;</span><br>        echo <span class="hljs-comment">&quot;Hello, $&#123;PERSON&#125;, nice to meet you.&quot;</span><br>      &#125;<br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="6-when"><a href="#6-when" class="headerlink" title="6.when"></a>6.when</h3><p>When 指令允许流水线根据给定的条件决定是否应该执行该 stage，when 指令必须包含至少 一个条件。如果 when 包含多个条件，所有的子条件必须都返回 True，stage 才能执行。</p>
+<p>When 也可以结合 not、allOf、anyOf 语法达到更灵活的条件匹配。</p>
+<p><strong>目前比较常用的内置条件如下</strong></p>
+<ul>
+<li>branch：当正在构建的分支与给定的分支匹配时，执行这个 stage。注意，branch 只适用于多分支流水线</li>
+<li>changelog：匹配提交的 changeLog 决定是否构建，例如:<code>when &#123; changelog &#39;.*^\\[DEPENDENCY\\] .+$&#39; &#125;</code></li>
+<li>environment：当指定的环境变量和给定的变量匹配时，执行这个 stage，例如：when { environment name: ‘DEPLOY_TO’, value: ‘production’ }</li>
+<li>equals：当期望值和实际值相同时，执行这个 stage，例如：when { equals expected: 2, actual: currentBuild.number }；</li>
+<li>expression：当指定的 Groovy 表达式评估为 True，执行这个 stage，例如：when { expression { return params.DEBUG_BUILD } }；</li>
+<li>tag：如果 TAG_NAME 的值和给定的条件匹配，执行这个 stage，例如：when { tag “release-“ }；</li>
+<li>not：当嵌套条件出现错误时，执行这个 stage，必须包含一个条件，例如：when { not { branch ‘master’ } }；</li>
+<li>allOf：当所有的嵌套条件都正确时，执行这个 stage，必须包含至少一个条件，例如：when { allOf { branch ‘master’; environment name: ‘DEPLOY_TO’, value: ‘production’ } }；</li>
+<li>anyOf：当至少有一个嵌套条件为 True 时，执行这个 stage，例如：when { anyOf { branch ‘master’; branch ‘staging’ } }。</li>
+</ul>
+<p><strong>示例：当分支为 main 时执行 Example Deploy 步骤</strong></p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs typescript">pipeline &#123;<br>  agent <span class="hljs-built_in">any</span><br>  stages &#123;<br>    <span class="hljs-title function_">stage</span>(<span class="hljs-params"><span class="hljs-string">&#x27;Example Build&#x27;</span></span>) &#123;<br>      steps &#123;<br>        echo <span class="hljs-string">&#x27;Hello World&#x27;</span><br>      &#125;<br>    &#125;<br>    <span class="hljs-title function_">stage</span>(<span class="hljs-params"><span class="hljs-string">&#x27;Example Deploy&#x27;</span></span>) &#123;<br>      when &#123;<br>        branch <span class="hljs-string">&#x27;main&#x27;</span> <span class="hljs-comment">//多分支流水线，分支为才会执行。</span><br>      &#125;<br>      steps &#123;<br>        echo <span class="hljs-string">&#x27;Deploying&#x27;</span><br>      &#125;<br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>也可以同时配置多个条件，比如分支是 production，而且 DEPLOY_TO 变量的值为 main 时，才执行 Example Deploy</p>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">pipeline &#123;<br>  agent <span class="hljs-keyword">any</span><br>  environment &#123;<br>    DEPLOY_TO = &quot;main&quot;<br>  &#125;<br>  stages &#123;<br>    stage(<span class="hljs-string">&#x27;Example Deploy&#x27;</span>) &#123;<br>      <span class="hljs-keyword">when</span> &#123;<br>        branch <span class="hljs-string">&#x27;main&#x27;</span><br>        environment <span class="hljs-type">name</span>: <span class="hljs-string">&#x27;DEPLOY_TO&#x27;</span>, <span class="hljs-keyword">value</span>: <span class="hljs-string">&#x27;main&#x27;</span><br>      &#125;<br>      steps &#123;<br>        echo <span class="hljs-string">&#x27;Deploying&#x27;</span><br>      &#125;<br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>也可以使用 anyOf 进行匹配其中一个条件即可，比如分支为 main 或 DEPLOY_TO 为 main 或 master 时执行 Deploy</p>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">pipeline &#123;<br>  agent <span class="hljs-keyword">any</span><br>  stages &#123;<br>    stage(<span class="hljs-string">&#x27;Example Deploy&#x27;</span>) &#123;<br>      <span class="hljs-keyword">when</span> &#123;<br>        anyOf &#123;<br>          branch <span class="hljs-string">&#x27;main&#x27;</span><br>          environment <span class="hljs-type">name</span>: <span class="hljs-string">&#x27;DEPLOY_TO&#x27;</span>, <span class="hljs-keyword">value</span>: <span class="hljs-string">&#x27;main&#x27;</span><br>          environment <span class="hljs-type">name</span>: <span class="hljs-string">&#x27;DEPLOY_TO&#x27;</span>, <span class="hljs-keyword">value</span>: <span class="hljs-string">&#x27;master&#x27;</span><br>        &#125;<br>      &#125;<br>      steps &#123;<br>        echo <span class="hljs-string">&#x27;Deploying&#x27;</span><br>      &#125;<br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>也可以使用 expression 进行正则匹配，比如当 BRANCH_NAME 为 main 或 master，并且 DEPLOY_TO 为 master 或 main 时才会执行 Example Deploy</p>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">pipeline &#123;<br>  agent <span class="hljs-keyword">any</span><br>  stages &#123;<br>    stage(<span class="hljs-string">&#x27;Example Deploy&#x27;</span>) &#123;<br>      <span class="hljs-keyword">when</span> &#123;<br>        expression &#123; BRANCH_NAME ==~ /(main|master)/ &#125;<br>        anyOf &#123;<br>          environment <span class="hljs-type">name</span>: <span class="hljs-string">&#x27;DEPLOY_TO&#x27;</span>, <span class="hljs-keyword">value</span>: <span class="hljs-string">&#x27;main&#x27;</span><br>          environment <span class="hljs-type">name</span>: <span class="hljs-string">&#x27;DEPLOY_TO&#x27;</span>, <span class="hljs-keyword">value</span>: <span class="hljs-string">&#x27;master&#x27;</span><br>        &#125;<br>      &#125;<br>      steps &#123;<br>        echo <span class="hljs-string">&#x27;Deploying&#x27;</span><br>      &#125;<br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>默认情况下，如果定义了某个 stage 的 agent，在进入该 stage 的 agent 后，该 stage 的 when 条件才会被评估，但是可以通过一些选项更改此选项。比如在进入 stage 的 agent 前评估 when， 可以使用 beforeAgent，当 when 为 true 时才进行该 stage</p>
+<p><strong>目前支持的前置条件如下</strong></p>
+<ul>
+<li>beforeAgent：如果 beforeAgent 为 true，则会先评估 when 条件。在 when 条件为 true 时，才会进入该 stage</li>
+<li>beforeInput：如果 beforeInput 为 true，则会先评估 when 条件。在 when 条件为 true 时，才会进入到 input 阶段；</li>
+<li>beforeOptions：如果 beforeInput 为 true，则会先评估 when 条件。在 when 条件为 true 时，才会进入到 options 阶段；</li>
+</ul>
+<p><strong>beforeOptions 优先级大于 beforeInput 大于 beforeAgent</strong></p>
+<p>示例</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs javascript">pipeline &#123;<br>  agent none<br>  stages &#123;<br>    <span class="hljs-title function_">stage</span>(<span class="hljs-params"><span class="hljs-string">&#x27;Example Build&#x27;</span></span>) &#123;<br>      steps &#123;<br>        echo <span class="hljs-string">&#x27;Hello World&#x27;</span><br>      &#125;<br>    &#125;<br>    <span class="hljs-title function_">stage</span>(<span class="hljs-params"><span class="hljs-string">&#x27;Example Deploy&#x27;</span></span>) &#123;<br>      when &#123;<br>        beforeAgent <span class="hljs-literal">true</span><br>        branch <span class="hljs-string">&#x27;main&#x27;</span><br>      &#125;<br>      steps &#123;<br>        echo <span class="hljs-string">&#x27;Deploying&#x27;</span><br>      &#125;<br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="2-3-Parallel"><a href="#2-3-Parallel" class="headerlink" title="2.3 Parallel"></a>2.3 Parallel</h2><p>在声明式流水线中可以使用 Parallel 字段，即可很方便的实现并发构建，比如对分支 A、B、 C 进行并行处理</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><code class="hljs typescript">pipeline &#123;<br>  agent <span class="hljs-built_in">any</span><br>  stages &#123;<br>    <span class="hljs-title function_">stage</span>(<span class="hljs-params"><span class="hljs-string">&#x27;Non-Parallel Stage&#x27;</span></span>) &#123;<br>      steps &#123;<br>        echo <span class="hljs-string">&#x27;This stage will be executed first.&#x27;</span><br>      &#125;<br>    &#125;<br>    <span class="hljs-title function_">stage</span>(<span class="hljs-params"><span class="hljs-string">&#x27;Parallel Stage&#x27;</span></span>) &#123;<br>      failFast <span class="hljs-literal">true</span>         <span class="hljs-comment">//表示其中只要有一个分支构建执行失败，就直接推出不等待其他分支构建</span><br>      parallel &#123;<br>        <span class="hljs-title function_">stage</span>(<span class="hljs-params"><span class="hljs-string">&#x27;Branch A&#x27;</span></span>) &#123;<br>          steps &#123;<br>            echo <span class="hljs-string">&quot;On Branch A&quot;</span><br>          &#125;<br>        &#125;<br>        <span class="hljs-title function_">stage</span>(<span class="hljs-params"><span class="hljs-string">&#x27;Branch B&#x27;</span></span>) &#123;<br>          steps &#123;<br>            echo <span class="hljs-string">&quot;On Branch B&quot;</span><br>          &#125;<br>        &#125;<br>        <span class="hljs-title function_">stage</span>(<span class="hljs-params"><span class="hljs-string">&#x27;Branch C&#x27;</span></span>) &#123;<br>          stages &#123;<br>            <span class="hljs-title function_">stage</span>(<span class="hljs-params"><span class="hljs-string">&#x27;Nested 1&#x27;</span></span>) &#123;<br>              steps &#123;<br>                echo <span class="hljs-string">&quot;In stage Nested 1 within Branch C&quot;</span><br>              &#125;<br>            &#125;<br>            <span class="hljs-title function_">stage</span>(<span class="hljs-params"><span class="hljs-string">&#x27;Nested 2&#x27;</span></span>) &#123;<br>              steps &#123;<br>               echo <span class="hljs-string">&quot;In stage Nested 2 within Branch C&quot;</span><br>              &#125;<br>            &#125;<br>          &#125;<br>        &#125;<br>      &#125;<br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h1 id="三、Jenkinsfile-的使用"><a href="#三、Jenkinsfile-的使用" class="headerlink" title="三、Jenkinsfile 的使用"></a>三、Jenkinsfile 的使用</h1><p>上面讲过流水线支持两种语法，即声明式和脚本式，这两种语法都支持构建持续交付流水线。并且都可以用来在 Web UI 或 Jenkinsfile 中定义流水线，不过通常将 Jenkinsfile 放置于代码仓库中（当然也可以放在单独的代码仓库中进行管理）。</p>
+<p>创建一个 Jenkinsfile 并将其放置于代码仓库中，有以下好处</p>
+<ul>
+<li>方便对流水线上的代码进行复查&#x2F;迭代</li>
+<li>对管道进行审计跟踪</li>
+<li>流水线真正的源代码能够被项目的多个成员查看和编辑</li>
+</ul>
+<h2 id="3-1-环境变量"><a href="#3-1-环境变量" class="headerlink" title="3.1 环境变量"></a>3.1 环境变量</h2><h3 id="1-静态变量"><a href="#1-静态变量" class="headerlink" title="1.静态变量"></a>1.静态变量</h3><p>Jenkins 有许多内置变量可以直接在 Jenkinsfile 中使用，可以通过 <code>JENKINS_URL/pipeline/syntax/globals#env</code> 获取完整列表。目前比较常用的环境变量如下</p>
+<ul>
+<li><p>BUILD_ID：当前构建的 ID，与 Jenkins 版本 1.597+中的 BUILD_NUMBER 完全相同</p>
+</li>
+<li><p>BUILD_NUMBER：当前构建的 ID，和 BUILD_ID 一致</p>
+</li>
+<li><p>BUILD_TAG：用来标识构建的版本号，格式为：<code>jenkins-$&#123;JOB_NAME&#125;-$&#123;BUILD_NUMBER&#125;</code>， 可以对产物进行命名，比如生产的 jar 包名字、镜像的 TAG 等；</p>
+</li>
+<li><p>BUILD_URL：本次构建的完整 URL，比如：</p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="http://buildserver/jenkins/job/MyJobName/17/%EF%BC%9B">http://buildserver/jenkins/job/MyJobName/17/%EF%BC%9B</a></p>
+</blockquote>
+</li>
+<li><p>JOB_NAME：本次构建的项目名称</p>
+</li>
+<li><p>NODE_NAME：当前构建节点的名称；</p>
+</li>
+<li><p>JENKINS_URL：Jenkins 完整的 URL，需要在 SystemConfiguration 设置；</p>
+</li>
+<li><p>WORKSPACE：执行构建的工作目录。</p>
+</li>
+</ul>
+<p>示例如果一个流水线名称为<code>print_env</code>，第 2 次构建，各个变量的值。</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">BUILD_ID</span>：<span class="hljs-number">2</span><br><span class="hljs-attribute">BUILD_NUMBER</span>：<span class="hljs-number">2</span><br><span class="hljs-attribute">BUILD_TAG</span>：jenkins-print_env-<span class="hljs-number">2</span><br><span class="hljs-attribute">BUILD_URL</span>：http://<span class="hljs-number">192.168.10.16:8080</span>/job/print_env/<span class="hljs-number">2</span>/<br><span class="hljs-attribute">JOB_NAME</span>：print_env<br><span class="hljs-attribute">NODE_NAME</span>：built-in<br><span class="hljs-attribute">JENKINS_URL</span>：http://<span class="hljs-number">192.168.10.16:8080</span>/<br><span class="hljs-attribute">WORKSPACE</span>：/bitnami/jenkins/home/workspace/print_env<br></code></pre></td></tr></table></figure>
+
+<p>上述变量会保存在一个 Map 中，可以使用 env.BUILD_ID 或 env.JENKINS_URL 引用某个内置变量</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs typescript">pipeline &#123;<br>  agent <span class="hljs-built_in">any</span><br>  stages &#123;<br>    <span class="hljs-title function_">stage</span>(<span class="hljs-params"><span class="hljs-string">&#x27;print env&#x27;</span></span>) &#123;<br>      parallel &#123;<br>        <span class="hljs-title function_">stage</span>(<span class="hljs-params"><span class="hljs-string">&#x27;BUILD_ID&#x27;</span></span>) &#123;<br>          steps &#123;<br>            echo <span class="hljs-string">&quot;$env.BUILD_ID&quot;</span><br>          &#125;<br>        &#125;<br>        <span class="hljs-title function_">stage</span>(<span class="hljs-params"><span class="hljs-string">&#x27;BUILD_NUMBER&#x27;</span></span>) &#123;<br>          steps &#123;<br>            echo <span class="hljs-string">&quot;$env.BUILD_NUMBER&quot;</span><br>          &#125;<br>        &#125;<br>        <span class="hljs-title function_">stage</span>(<span class="hljs-params"><span class="hljs-string">&#x27;BUILD_TAG&#x27;</span></span>) &#123;<br>          steps &#123;<br>            echo <span class="hljs-string">&quot;$env.BUILD_TAG&quot;</span><br>          &#125;<br>        &#125;<br>      &#125;<br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="2-动态变量"><a href="#2-动态变量" class="headerlink" title="2.动态变量"></a>2.动态变量</h3><p>动态变量是根据某个指令的结果进行动态赋值，变量的值根据指令的执行结果而不同。如下所示</p>
+<ul>
+<li>returnStdout：将命令的执行结果赋值给变量，比如下述的命令返回的是 clang，此时 CC 的值为“clang”。</li>
+<li>returnStatus：将命令的执行状态赋值给变量，比如下述命令的执行状态为 1，此时 EXIT_STATUS 的值为 1。</li>
+</ul>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs awk"><span class="hljs-regexp">//</span>Jenkinsfile (Declarative Pipeline)<br>pipeline &#123;<br>  agent any<br>  environment &#123;<br>    <span class="hljs-regexp">//</span> 使用 returnStdout<br>    CC = <span class="hljs-string">&quot;&quot;&quot;$&#123;sh(</span><br><span class="hljs-string">         returnStdout: true,</span><br><span class="hljs-string">         script: &#x27;echo -n &quot;clang&quot;&#x27;   //如果使用shell命令的echo赋值变量最好加-n取消换行</span><br><span class="hljs-string">         )&#125;&quot;&quot;&quot;</span><br>    <span class="hljs-regexp">//</span> 使用 returnStatus<br>    EXIT_STATUS = <span class="hljs-string">&quot;&quot;&quot;$&#123;sh(</span><br><span class="hljs-string">         returnStatus: true,</span><br><span class="hljs-string">         script: &#x27;exit 1&#x27;</span><br><span class="hljs-string">         )&#125;&quot;&quot;&quot;</span><br>  &#125;<br>  stages &#123;<br>    stage(<span class="hljs-string">&#x27;Example&#x27;</span>) &#123;<br>      environment &#123;<br>        DEBUG_FLAGS = <span class="hljs-string">&#x27;-g&#x27;</span><br>      &#125;<br>      steps &#123;<br>        sh <span class="hljs-string">&#x27;printenv&#x27;</span><br>      &#125;<br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="3-2-凭证管理"><a href="#3-2-凭证管理" class="headerlink" title="3.2 凭证管理"></a>3.2 凭证管理</h2><p>Jenkins 的声明式流水线语法有一个 credentials()函数，它支持 secret text（加密文本）、username 和 password（用户名和密码）以及 secret file（加密文件）等。接下来看一下一些常用的凭证处理方法。</p>
+<h3 id="1-加密文本"><a href="#1-加密文本" class="headerlink" title="1.加密文本"></a>1.加密文本</h3><p>本实例演示将两个 Secret 文本凭证分配给单独的环境变量来访问 Amazon Web 服务，需要 提前创建这两个文件的 credentials（实践的章节会有演示），Jenkinsfile 文件的内容如下</p>
+<figure class="highlight isbl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs isbl"><span class="hljs-comment">//Jenkinsfile (Declarative Pipeline)</span><br><span class="hljs-variable">pipeline</span> &#123;<br>  <span class="hljs-variable">agent</span> <span class="hljs-variable">any</span><br>  <span class="hljs-variable">environment</span> &#123;<br>    <span class="hljs-variable">AWS_ACCESS_KEY_ID</span> = <span class="hljs-function"><span class="hljs-title">credentials</span>(<span class="hljs-string">&#x27;txt1&#x27;</span>)</span><br>    <span class="hljs-variable">AWS_SECRET_ACCESS_KEY</span> = <span class="hljs-function"><span class="hljs-title">credentials</span>(<span class="hljs-string">&#x27;txt2&#x27;</span>)</span><br>  &#125;<br>  <span class="hljs-variable">stages</span> &#123;<br>    <span class="hljs-function"><span class="hljs-title">stage</span>(<span class="hljs-string">&#x27;Example stage 1&#x27;</span>) &#123;</span><br><span class="hljs-function">      <span class="hljs-variable">steps</span> &#123;</span><br><span class="hljs-function">        <span class="hljs-variable">echo</span> <span class="hljs-string">&quot;$AWS_ACCESS_KEY_ID&quot;</span></span><br><span class="hljs-function">      &#125;</span><br><span class="hljs-function">    &#125;</span><br><span class="hljs-function">    <span class="hljs-title">stage</span>(<span class="hljs-string">&#x27;Example stage 2&#x27;</span>) &#123;</span><br><span class="hljs-function">      <span class="hljs-variable">steps</span> &#123;</span><br><span class="hljs-function">        <span class="hljs-variable">echo</span> <span class="hljs-string">&quot;$AWS_SECRET_ACCESS_KEY&quot;</span></span><br><span class="hljs-function">      &#125;</span><br><span class="hljs-function">    &#125;</span><br><span class="hljs-function">  &#125;</span><br><span class="hljs-function">&#125;</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-用户名密码"><a href="#2-用户名密码" class="headerlink" title="2.用户名密码"></a>2.用户名密码</h3><p>本示例用来演示 credentials 账号密码的使用，比如使用一个公用账户访问 Bitbucket、GitLab、 Harbor 等。假设已经配置完成了用户名密码形式的 credentials，凭证 ID 为 harbor-account</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs typescript"><span class="hljs-comment">//Jenkinsfile (Declarative Pipeline)</span><br>pipeline &#123;<br>  agent <span class="hljs-built_in">any</span><br>  environment &#123;<br>    <span class="hljs-variable constant_">BITBUCKET_COMMON_CREDS</span> = <span class="hljs-title function_">credentials</span>(<span class="hljs-string">&#x27;harbor-account&#x27;</span>)<br>  &#125;<br>  stages &#123;<br>    <span class="hljs-title function_">stage</span>(<span class="hljs-params"><span class="hljs-string">&#x27;printenv&#x27;</span></span>) &#123;<br>      steps &#123;<br>        sh <span class="hljs-string">&quot;env&quot;</span><br>      &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>上述的配置会自动生成 3 个环境变量</strong></p>
+<ul>
+<li>BITBUCKET_COMMON_CREDS：包含一个以冒号分隔的用户名和密码，格式为 username:password</li>
+<li>BITBUCKET_COMMON_CREDS_USR：仅包含用户名的附加变量</li>
+<li>BITBUCKET_COMMON_CREDS_PSW：仅包含密码的附加变量。</li>
+</ul>
+<h3 id="3-加密文件"><a href="#3-加密文件" class="headerlink" title="3.加密文件"></a>3.加密文件</h3><p>需要加密保存的文件，也可以使用 credential，比如链接到 Kubernetes 集群的 kubeconfig 文件等。</p>
+<p>假如已经配置好了一个 kubeconfig 文件，此时可以在 Pipeline 中引用该文件</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><code class="hljs awk"><span class="hljs-regexp">//</span>Jenkinsfile (Declarative Pipeline)<br>pipeline &#123;<br>  agent &#123;<br>    kubernetes &#123;<br>      cloud <span class="hljs-string">&#x27;kubernetes&#x27;</span><br>      slaveConnectTimeout <span class="hljs-number">1200</span><br>      workspaceVolume emptyDirWorkspaceVolume()<br>      yaml <span class="hljs-string">&#x27;&#x27;&#x27;</span><br><span class="hljs-string">kind: Pod</span><br><span class="hljs-string">metadata:</span><br><span class="hljs-string">  name: jenkins-agent</span><br><span class="hljs-string">spec:</span><br><span class="hljs-string">  containers:</span><br><span class="hljs-string">  - args: [\&#x27;$(JENKINS_SECRET)\&#x27;, \&#x27;$(JENKINS_NAME)\&#x27;]</span><br><span class="hljs-string">    image: &#x27;192.168.10.15/kubernetes/jnlp:alpine&#x27;</span><br><span class="hljs-string">    name: jnlp</span><br><span class="hljs-string">    imagePullPolicy: IfNotPresent</span><br><span class="hljs-string">  - command:</span><br><span class="hljs-string">      - &quot;cat&quot;</span><br><span class="hljs-string">    image: &quot;192.168.10.15/kubernetes/kubectl:apline&quot;</span><br><span class="hljs-string">    imagePullPolicy: &quot;IfNotPresent&quot;</span><br><span class="hljs-string">    name: &quot;kubectl&quot;</span><br><span class="hljs-string">    tty: true</span><br><span class="hljs-string">  restartPolicy: Never</span><br><span class="hljs-string">&#x27;&#x27;&#x27;</span><br>    &#125;<br>  &#125;<br>  environment &#123;<br>    MY_KUBECONFIG = credentials(<span class="hljs-string">&#x27;kubernetes-cluster&#x27;</span>)<br>  &#125;<br>  stages &#123;<br>    stage(<span class="hljs-string">&#x27;kubectl&#x27;</span>) &#123;<br>      steps &#123;<br>        container(name: <span class="hljs-string">&#x27;kubectl&#x27;</span>) &#123;<br>          sh <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">            kubectl get pod -A  --kubeconfig $MY_KUBECONFIG</span><br><span class="hljs-string">          &quot;&quot;&quot;</span><br>        &#125;<br>      &#125;<br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+
+<p>- END -</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>史上最牛jenkins pipeline流水线详解 2024-08-02</div>
+      <div>http://example.com/2025/01/16/史上最牛jenkins pipeline流水线详解-shi-shang-zui-niu-jenkinspipeline-liu-shui-xian-xiang-jie/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85kubephere-li-xian-an-zhuang-kubephere/" title="离线安装kubephere 2024-04-03 14:59:59.885">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">离线安装kubephere 2024-04-03 14:59:59.885</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/16/%E8%87%AA%E5%8A%A8%E5%B1%8F%E8%94%BDIP%E6%94%BB%E5%87%BB-zi-dong-ping-bi-ip-gong-ji/" title="自动屏蔽IP攻击 2024-04-03 14:54:11.783">
+                        <span class="hidden-mobile">自动屏蔽IP攻击 2024-04-03 14:54:11.783</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
