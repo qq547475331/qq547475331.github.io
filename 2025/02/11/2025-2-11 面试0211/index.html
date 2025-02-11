@@ -1,0 +1,1576 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="504错误是啥504 错误（Gateway Timeout）是一个 HTTP 状态码，表示网关或代理服务器超时。让我详细解释一下： 主要原因： 服务器响应超时  上游服务器（如应用服务器）没有在预定时间内响应网关&#x2F;代理服务器 可能是因为服务器负载过高或处理请求时间过长   网络问题  网关与上游服务器之间的网络连接存在问题 网络拥堵或延迟过高    常见场景： 使用 Nginx 作为反向">
+<meta property="og:type" content="article">
+<meta property="og:title" content="面试2025-02-11">
+<meta property="og:url" content="http://example.com/2025/02/11/2025-2-11%20%E9%9D%A2%E8%AF%950211/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="504错误是啥504 错误（Gateway Timeout）是一个 HTTP 状态码，表示网关或代理服务器超时。让我详细解释一下： 主要原因： 服务器响应超时  上游服务器（如应用服务器）没有在预定时间内响应网关&#x2F;代理服务器 可能是因为服务器负载过高或处理请求时间过长   网络问题  网关与上游服务器之间的网络连接存在问题 网络拥堵或延迟过高    常见场景： 使用 Nginx 作为反向">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-02-11T07:17:51.739Z">
+<meta property="article:modified_time" content="2025-02-11T07:17:51.739Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>面试2025-02-11 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="面试2025-02-11"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-02-11 15:17" pubdate>
+          2025年2月11日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          8.9k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          75 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">面试2025-02-11</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="504错误是啥"><a href="#504错误是啥" class="headerlink" title="504错误是啥"></a>504错误是啥</h2><p>504 错误（Gateway Timeout）是一个 HTTP 状态码，表示网关或代理服务器超时。让我详细解释一下：</p>
+<h3 id="主要原因："><a href="#主要原因：" class="headerlink" title="主要原因："></a>主要原因：</h3><ol>
+<li><p><strong>服务器响应超时</strong></p>
+<ul>
+<li>上游服务器（如应用服务器）没有在预定时间内响应网关&#x2F;代理服务器</li>
+<li>可能是因为服务器负载过高或处理请求时间过长</li>
+</ul>
+</li>
+<li><p><strong>网络问题</strong></p>
+<ul>
+<li>网关与上游服务器之间的网络连接存在问题</li>
+<li>网络拥堵或延迟过高</li>
+</ul>
+</li>
+</ol>
+<h3 id="常见场景："><a href="#常见场景：" class="headerlink" title="常见场景："></a>常见场景：</h3><ul>
+<li>使用 Nginx 作为反向代理时，后端服务响应太慢</li>
+<li>数据库查询操作耗时过长</li>
+<li>服务器资源不足（CPU、内存等）</li>
+<li>网络带宽不足</li>
+</ul>
+<h3 id="解决方案："><a href="#解决方案：" class="headerlink" title="解决方案："></a>解决方案：</h3><ol>
+<li><p><strong>服务器端</strong></p>
+<ul>
+<li>增加超时设置时间</li>
+<li>优化后端代码性能</li>
+<li>增加服务器资源</li>
+<li>使用缓存减少处理时间</li>
+</ul>
+</li>
+<li><p><strong>配置示例</strong><br>如果使用 Nginx，可以调整超时设置：</p>
+</li>
+</ol>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs nginx"><span class="hljs-section">http</span> &#123;<br>    <span class="hljs-attribute">proxy_connect_timeout</span> <span class="hljs-number">300s</span>;<br>    <span class="hljs-attribute">proxy_send_timeout</span> <span class="hljs-number">300s</span>;<br>    <span class="hljs-attribute">proxy_read_timeout</span> <span class="hljs-number">300s</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<ol start="3">
+<li><strong>客户端</strong><ul>
+<li>实现请求重试机制</li>
+<li>添加适当的错误处理</li>
+<li>考虑使用断路器模式</li>
+</ul>
+</li>
+</ol>
+<p>504 错误通常是临时性的，如果持续发生，建议检查服务器日志并进行相应优化。</p>
+<h2 id="常见的状态码"><a href="#常见的状态码" class="headerlink" title="常见的状态码"></a>常见的状态码</h2><p>让我为你介绍最常见的 HTTP 状态码：</p>
+<h3 id="2XX-成功响应"><a href="#2XX-成功响应" class="headerlink" title="2XX - 成功响应"></a>2XX - 成功响应</h3><ul>
+<li><p><strong>200 OK</strong></p>
+<ul>
+<li>最常见的成功状态码</li>
+<li>请求成功且正常返回结果</li>
+</ul>
+</li>
+<li><p><strong>201 Created</strong></p>
+<ul>
+<li>创建资源成功</li>
+<li>通常在 POST 请求后返回</li>
+</ul>
+</li>
+<li><p><strong>204 No Content</strong></p>
+<ul>
+<li>请求成功但无返回内容</li>
+<li>常用于删除操作</li>
+</ul>
+</li>
+</ul>
+<h3 id="3XX-重定向"><a href="#3XX-重定向" class="headerlink" title="3XX - 重定向"></a>3XX - 重定向</h3><ul>
+<li><p><strong>301 Moved Permanently</strong></p>
+<ul>
+<li>永久重定向</li>
+<li>资源已永久移动到新位置</li>
+</ul>
+</li>
+<li><p><strong>302 Found</strong></p>
+<ul>
+<li>临时重定向</li>
+<li>资源临时移动到新位置</li>
+</ul>
+</li>
+<li><p><strong>304 Not Modified</strong></p>
+<ul>
+<li>资源未修改</li>
+<li>可使用缓存版本</li>
+</ul>
+</li>
+</ul>
+<h3 id="4XX-客户端错误"><a href="#4XX-客户端错误" class="headerlink" title="4XX - 客户端错误"></a>4XX - 客户端错误</h3><ul>
+<li><p><strong>400 Bad Request</strong></p>
+<ul>
+<li>请求语法错误</li>
+<li>服务器无法理解请求</li>
+</ul>
+</li>
+<li><p><strong>401 Unauthorized</strong></p>
+<ul>
+<li>未授权</li>
+<li>需要身份认证</li>
+</ul>
+</li>
+<li><p><strong>403 Forbidden</strong></p>
+<ul>
+<li>禁止访问</li>
+<li>服务器拒绝请求</li>
+</ul>
+</li>
+<li><p><strong>404 Not Found</strong></p>
+<ul>
+<li>资源未找到</li>
+<li>请求的资源不存在</li>
+</ul>
+</li>
+<li><p><strong>429 Too Many Requests</strong></p>
+<ul>
+<li>请求过多</li>
+<li>超出频率限制</li>
+</ul>
+</li>
+</ul>
+<h3 id="5XX-服务器错误"><a href="#5XX-服务器错误" class="headerlink" title="5XX - 服务器错误"></a>5XX - 服务器错误</h3><ul>
+<li><p><strong>500 Internal Server Error</strong></p>
+<ul>
+<li>服务器内部错误</li>
+<li>通常是代码异常</li>
+</ul>
+</li>
+<li><p><strong>502 Bad Gateway</strong></p>
+<ul>
+<li>网关错误</li>
+<li>上游服务器返回无效响应</li>
+</ul>
+</li>
+<li><p><strong>503 Service Unavailable</strong></p>
+<ul>
+<li>服务不可用</li>
+<li>服务器暂时无法处理请求</li>
+</ul>
+</li>
+<li><p><strong>504 Gateway Timeout</strong></p>
+<ul>
+<li>网关超时</li>
+<li>上游服务器响应超时</li>
+</ul>
+</li>
+</ul>
+<h3 id="使用建议"><a href="#使用建议" class="headerlink" title="使用建议"></a>使用建议</h3><ol>
+<li>在开发 API 时应合理使用状态码</li>
+<li>确保错误响应包含有用的错误信息</li>
+<li>在前端要对不同状态码进行适当处理</li>
+</ol>
+<p>示例代码（前端处理）：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs javascript"><span class="hljs-title function_">fetch</span>(<span class="hljs-string">&#x27;api/data&#x27;</span>)<br>  .<span class="hljs-title function_">then</span>(<span class="hljs-function"><span class="hljs-params">response</span> =&gt;</span> &#123;<br>    <span class="hljs-keyword">switch</span>(response.<span class="hljs-property">status</span>) &#123;<br>      <span class="hljs-keyword">case</span> <span class="hljs-number">200</span>:<br>        <span class="hljs-keyword">return</span> response.<span class="hljs-title function_">json</span>();<br>      <span class="hljs-keyword">case</span> <span class="hljs-number">401</span>:<br>        <span class="hljs-comment">// 跳转到登录页</span><br>        <span class="hljs-variable language_">window</span>.<span class="hljs-property">location</span>.<span class="hljs-property">href</span> = <span class="hljs-string">&#x27;/login&#x27;</span>;<br>        <span class="hljs-keyword">break</span>;<br>      <span class="hljs-keyword">case</span> <span class="hljs-number">403</span>:<br>        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Error</span>(<span class="hljs-string">&#x27;没有权限访问&#x27;</span>);<br>      <span class="hljs-keyword">case</span> <span class="hljs-number">404</span>:<br>        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Error</span>(<span class="hljs-string">&#x27;资源不存在&#x27;</span>);<br>      <span class="hljs-attr">default</span>:<br>        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Error</span>(<span class="hljs-string">&#x27;服务器错误&#x27;</span>);<br>    &#125;<br>  &#125;)<br>  .<span class="hljs-title function_">catch</span>(<span class="hljs-function"><span class="hljs-params">error</span> =&gt;</span> &#123;<br>    <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">error</span>(<span class="hljs-string">&#x27;请求失败:&#x27;</span>, error);<br>  &#125;);<br></code></pre></td></tr></table></figure>
+
+<p>这些是最基本和常见的 HTTP 状态码，良好地使用它们可以帮助客户端更好地理解请求的处理结果。</p>
+<h2 id="k8s创建pod的过程"><a href="#k8s创建pod的过程" class="headerlink" title="k8s创建pod的过程"></a>k8s创建pod的过程</h2><p>让我为你详细解释一下 Kubernetes 创建 Pod 的完整过程：</p>
+<h3 id="1-提交请求阶段"><a href="#1-提交请求阶段" class="headerlink" title="1. 提交请求阶段"></a>1. 提交请求阶段</h3><ol>
+<li><p><strong>用户提交请求</strong></p>
+<ul>
+<li>通过 kubectl 或 API 提交 Pod 创建请求</li>
+<li>API Server 接收请求并进行认证和授权</li>
+</ul>
+</li>
+<li><p><strong>API Server 处理</strong></p>
+<ul>
+<li>验证 Pod 配置的合法性</li>
+<li>将 Pod 信息持久化到 etcd</li>
+<li>生成 Pod 的唯一标识符</li>
+</ul>
+</li>
+</ol>
+<h3 id="2-调度阶段"><a href="#2-调度阶段" class="headerlink" title="2. 调度阶段"></a>2. 调度阶段</h3><ol>
+<li><p><strong>Scheduler 监听</strong></p>
+<ul>
+<li>Scheduler 通过 Watch 机制发现新的未调度 Pod</li>
+</ul>
+</li>
+<li><p><strong>调度算法执行</strong></p>
+<ul>
+<li><p><strong>预选（Predicate）</strong></p>
+<ul>
+<li>筛选符合基本条件的节点</li>
+<li>检查资源是否满足</li>
+<li>检查节点亲和性&#x2F;污点容忍</li>
+</ul>
+</li>
+<li><p><strong>优选（Priority）</strong></p>
+<ul>
+<li>对预选节点进行打分</li>
+<li>考虑负载均衡</li>
+<li>选择最优节点</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>更新调度结果</strong></p>
+<ul>
+<li>将选中节点信息更新到 Pod 对象</li>
+<li>API Server 将更新后的 Pod 信息存储到 etcd</li>
+</ul>
+</li>
+</ol>
+<h3 id="3-创建阶段"><a href="#3-创建阶段" class="headerlink" title="3. 创建阶段"></a>3. 创建阶段</h3><ol>
+<li><p><strong>Kubelet 监听</strong></p>
+<ul>
+<li>节点上的 Kubelet 发现被调度到本节点的 Pod</li>
+</ul>
+</li>
+<li><p><strong>容器运行时准备</strong></p>
+<ul>
+<li>准备容器运行环境</li>
+<li>下载容器镜像</li>
+<li>配置容器网络</li>
+</ul>
+</li>
+<li><p><strong>创建容器</strong></p>
+<ul>
+<li>按顺序创建 Init 容器</li>
+<li>创建业务容器</li>
+<li>配置健康检查</li>
+</ul>
+</li>
+</ol>
+<h3 id="4-运行阶段"><a href="#4-运行阶段" class="headerlink" title="4. 运行阶段"></a>4. 运行阶段</h3><ol>
+<li><p><strong>状态监控</strong></p>
+<ul>
+<li>Kubelet 持续监控 Pod 状态</li>
+<li>执行配置的探针检查</li>
+<li>更新 Pod 状态到 API Server</li>
+</ul>
+</li>
+<li><p><strong>生命周期管理</strong></p>
+<ul>
+<li>处理容器重启</li>
+<li>执行生命周期钩子</li>
+<li>资源清理</li>
+</ul>
+</li>
+</ol>
+<h3 id="示例-Pod-配置："><a href="#示例-Pod-配置：" class="headerlink" title="示例 Pod 配置："></a>示例 Pod 配置：</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><code class="hljs yaml:pod.yaml">apiVersion: v1<br>kind: Pod<br>metadata:<br>  name: example-pod<br>  labels:<br>    app: example<br>spec:<br>  containers:<br>  - name: main-container<br>    image: nginx:latest<br>    ports:<br>    - containerPort: 80<br>    resources:<br>      requests:<br>        memory: &quot;64Mi&quot;<br>        cpu: &quot;250m&quot;<br>      limits:<br>        memory: &quot;128Mi&quot;<br>        cpu: &quot;500m&quot;<br>    readinessProbe:<br>      httpGet:<br>        path: /<br>        port: 80<br>      initialDelaySeconds: 5<br>      periodSeconds: 10<br>    livenessProbe:<br>      httpGet:<br>        path: /<br>        port: 80<br>      initialDelaySeconds: 15<br>      periodSeconds: 20<br>  nodeSelector:<br>    kubernetes.io/os: linux<br></code></pre></td></tr></table></figure>
+
+<h3 id="可能的问题和解决方案："><a href="#可能的问题和解决方案：" class="headerlink" title="可能的问题和解决方案："></a>可能的问题和解决方案：</h3><ol>
+<li><p><strong>镜像拉取失败</strong></p>
+<ul>
+<li>检查镜像名称是否正确</li>
+<li>确认镜像仓库访问权限</li>
+<li>配置 imagePullSecrets</li>
+</ul>
+</li>
+<li><p><strong>资源不足</strong></p>
+<ul>
+<li>调整资源请求和限制</li>
+<li>增加节点资源</li>
+<li>优化节点调度</li>
+</ul>
+</li>
+<li><p><strong>网络问题</strong></p>
+<ul>
+<li>检查网络插件状态</li>
+<li>验证网络策略配置</li>
+<li>排查 DNS 解析问题</li>
+</ul>
+</li>
+</ol>
+<p>理解这个过程对于排查 Pod 创建问题和优化部署策略非常重要。每个阶段都可能出现问题，了解创建流程有助于快速定位和解决问题。</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs"><br></code></pre></td></tr></table></figure>
+
+
+
+
+
+<p>nginx 优化的措施</p>
+<p>让我为你介绍 Nginx 的主要优化措施：</p>
+<h3 id="1-基础配置优化"><a href="#1-基础配置优化" class="headerlink" title="1. 基础配置优化"></a>1. 基础配置优化</h3><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs nginx"><span class="hljs-comment"># nginx.conf 主要优化配置</span><br><span class="hljs-attribute">worker_processes</span> auto;                <span class="hljs-comment"># 根据 CPU 核心数自动设置</span><br><span class="hljs-attribute">worker_rlimit_nofile</span> <span class="hljs-number">65535</span>;          <span class="hljs-comment"># 增加工作进程文件描述符限制</span><br><span class="hljs-section">events</span> &#123;<br>    <span class="hljs-attribute">use</span> <span class="hljs-literal">epoll</span>;                       <span class="hljs-comment"># 使用 epoll 事件模型</span><br>    <span class="hljs-attribute">worker_connections</span> <span class="hljs-number">65535</span>;        <span class="hljs-comment"># 增加每个工作进程的最大连接数</span><br>    <span class="hljs-attribute">multi_accept</span> <span class="hljs-literal">on</span>;                 <span class="hljs-comment"># 开启一次接受多个连接</span><br>&#125;<br><br><span class="hljs-section">http</span> &#123;<br>    <span class="hljs-comment"># 开启 gzip 压缩</span><br>    <span class="hljs-attribute">gzip</span> <span class="hljs-literal">on</span>;<br>    <span class="hljs-attribute">gzip_comp_level</span> <span class="hljs-number">5</span>;<br>    <span class="hljs-attribute">gzip_min_length</span> <span class="hljs-number">1k</span>;<br>    <span class="hljs-attribute">gzip_types</span> text/plain text/css application/javascript application/json;<br><br>    <span class="hljs-comment"># 缓存相关</span><br>    <span class="hljs-attribute">open_file_cache</span> max=<span class="hljs-number">1000</span> inactive=<span class="hljs-number">20s</span>;<br>    <span class="hljs-attribute">open_file_cache_valid</span> <span class="hljs-number">30s</span>;<br>    <span class="hljs-attribute">open_file_cache_min_uses</span> <span class="hljs-number">2</span>;<br>    <span class="hljs-attribute">open_file_cache_errors</span> <span class="hljs-literal">on</span>;<br>    <br>    <span class="hljs-comment"># 客户端优化</span><br>    <span class="hljs-attribute">client_max_body_size</span> <span class="hljs-number">20m</span>;        <span class="hljs-comment"># 上传文件大小限制</span><br>    <span class="hljs-attribute">keepalive_timeout</span> <span class="hljs-number">65</span>;            <span class="hljs-comment"># 保持连接超时时间</span><br>    <span class="hljs-attribute">client_body_buffer_size</span> <span class="hljs-number">128k</span>;    <span class="hljs-comment"># 请求体缓冲区大小</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="2-静态文件优化"><a href="#2-静态文件优化" class="headerlink" title="2. 静态文件优化"></a>2. 静态文件优化</h3><ol>
+<li><p><strong>启用缓存控制</strong></p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs nginx"><span class="hljs-section">location</span> <span class="hljs-regexp">~* \.(jpg|jpeg|png|gif|ico|css|js)$</span> &#123;<br>    <span class="hljs-attribute">expires</span> <span class="hljs-number">30d</span>;                     <span class="hljs-comment"># 设置缓存过期时间</span><br>    <span class="hljs-attribute">add_header</span> Cache-Control public;<br>    <span class="hljs-attribute">access_log</span> <span class="hljs-literal">off</span>;                  <span class="hljs-comment"># 关闭访问日志</span><br>&#125;<br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>启用 sendfile</strong></p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs nginx"><span class="hljs-section">http</span> &#123;<br>    <span class="hljs-attribute">sendfile</span> <span class="hljs-literal">on</span>;                     <span class="hljs-comment"># 启用零拷贝</span><br>    <span class="hljs-attribute">tcp_nopush</span> <span class="hljs-literal">on</span>;                   <span class="hljs-comment"># 优化数据包传输</span><br>    <span class="hljs-attribute">tcp_nodelay</span> <span class="hljs-literal">on</span>;                  <span class="hljs-comment"># 禁用 Nagle 算法</span><br>&#125;<br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="3-负载均衡优化"><a href="#3-负载均衡优化" class="headerlink" title="3. 负载均衡优化"></a>3. 负载均衡优化</h3><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs nginx"><span class="hljs-section">upstream</span> backend &#123;<br>    least_conn;                      <span class="hljs-comment"># 最少连接数算法</span><br>    <span class="hljs-attribute">server</span> backend1.example.com max_fails=<span class="hljs-number">3</span> fail_timeout=<span class="hljs-number">30s</span>;<br>    <span class="hljs-attribute">server</span> backend2.example.com max_fails=<span class="hljs-number">3</span> fail_timeout=<span class="hljs-number">30s</span>;<br>    <span class="hljs-attribute">keepalive</span> <span class="hljs-number">32</span>;                    <span class="hljs-comment"># 保持后端连接数</span><br>&#125;<br><br><span class="hljs-section">server</span> &#123;<br>    <span class="hljs-section">location</span> / &#123;<br>        <span class="hljs-attribute">proxy_pass</span> http://backend;<br>        <span class="hljs-attribute">proxy_http_version</span> <span class="hljs-number">1</span>.<span class="hljs-number">1</span>;<br>        <span class="hljs-attribute">proxy_set_header</span> Connection <span class="hljs-string">&quot;&quot;</span>;<br>        <span class="hljs-attribute">proxy_next_upstream</span> <span class="hljs-literal">error</span> timeout http_500;  <span class="hljs-comment"># 故障转移</span><br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="4-SSL-优化"><a href="#4-SSL-优化" class="headerlink" title="4. SSL 优化"></a>4. SSL 优化</h3><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs nginx"><span class="hljs-section">http</span> &#123;<br>    <span class="hljs-attribute">ssl_session_cache</span> shared:SSL:<span class="hljs-number">10m</span>;<br>    <span class="hljs-attribute">ssl_session_timeout</span> <span class="hljs-number">10m</span>;<br>    <span class="hljs-attribute">ssl_protocols</span> TLSv1.<span class="hljs-number">2</span> TLSv1.<span class="hljs-number">3</span>;<br>    <span class="hljs-attribute">ssl_prefer_server_ciphers</span> <span class="hljs-literal">on</span>;<br>    <span class="hljs-attribute">ssl_ciphers</span> ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;<br>    <br>    <span class="hljs-comment"># OCSP Stapling</span><br>    <span class="hljs-attribute">ssl_stapling</span> <span class="hljs-literal">on</span>;<br>    <span class="hljs-attribute">ssl_stapling_verify</span> <span class="hljs-literal">on</span>;<br>    <span class="hljs-attribute">resolver</span> <span class="hljs-number">8.8.8.8</span> <span class="hljs-number">8.8.4.4</span> valid=<span class="hljs-number">300s</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="5-安全优化"><a href="#5-安全优化" class="headerlink" title="5. 安全优化"></a>5. 安全优化</h3><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs nginx"><span class="hljs-section">server</span> &#123;<br>    <span class="hljs-comment"># 隐藏版本号</span><br>    <span class="hljs-attribute">server_tokens</span> <span class="hljs-literal">off</span>;<br>    <br>    <span class="hljs-comment"># XSS 防护</span><br>    <span class="hljs-attribute">add_header</span> X-XSS-Protection <span class="hljs-string">&quot;1; mode=block&quot;</span>;<br>    <br>    <span class="hljs-comment"># 点击劫持防护</span><br>    <span class="hljs-attribute">add_header</span> X-Frame-Options <span class="hljs-string">&quot;SAMEORIGIN&quot;</span>;<br>    <br>    <span class="hljs-comment"># 限制请求频率</span><br>    <span class="hljs-attribute">limit_req_zone</span> <span class="hljs-variable">$binary_remote_addr</span> zone=one:<span class="hljs-number">10m</span> rate=1r/s;<br>    <span class="hljs-section">location</span> /login/ &#123;<br>        <span class="hljs-attribute">limit_req</span> zone=one burst=<span class="hljs-number">5</span>;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="6-日志优化"><a href="#6-日志优化" class="headerlink" title="6. 日志优化"></a>6. 日志优化</h3><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs nginx"><span class="hljs-section">http</span> &#123;<br>    <span class="hljs-comment"># 自定义日志格式</span><br>    <span class="hljs-attribute">log_format</span> main <span class="hljs-string">&#x27;<span class="hljs-variable">$remote_addr</span> - <span class="hljs-variable">$remote_user</span> [<span class="hljs-variable">$time_local</span>] &quot;<span class="hljs-variable">$request</span>&quot; &#x27;</span><br>                    <span class="hljs-string">&#x27;<span class="hljs-variable">$status</span> <span class="hljs-variable">$body_bytes_sent</span> &quot;<span class="hljs-variable">$http_referer</span>&quot; &#x27;</span><br>                    <span class="hljs-string">&#x27;&quot;<span class="hljs-variable">$http_user_agent</span>&quot; &quot;<span class="hljs-variable">$http_x_forwarded_for</span>&quot;&#x27;</span>;<br>    <br>    <span class="hljs-comment"># 缓冲日志写入</span><br>    <span class="hljs-attribute">access_log</span> /var/log/nginx/access.log main buffer=<span class="hljs-number">32k</span> flush=<span class="hljs-number">1m</span>;<br>    <br>    <span class="hljs-comment"># 对特定资源关闭日志</span><br>    <span class="hljs-section">location</span> /static/ &#123;<br>        <span class="hljs-attribute">access_log</span> <span class="hljs-literal">off</span>;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="7-监控指标"><a href="#7-监控指标" class="headerlink" title="7. 监控指标"></a>7. 监控指标</h3><ul>
+<li>配置 stub_status 模块监控 Nginx 状态：</li>
+</ul>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs nginx"><span class="hljs-section">location</span> /nginx_status &#123;<br>    <span class="hljs-attribute">stub_status</span> <span class="hljs-literal">on</span>;<br>    <span class="hljs-attribute">access_log</span> <span class="hljs-literal">off</span>;<br>    <span class="hljs-attribute">allow</span> <span class="hljs-number">127.0.0.1</span>;<br>    <span class="hljs-attribute">deny</span> all;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="优化建议："><a href="#优化建议：" class="headerlink" title="优化建议："></a>优化建议：</h3><ol>
+<li><p><strong>定期监控</strong></p>
+<ul>
+<li>监控连接数</li>
+<li>监控请求延迟</li>
+<li>监控错误率</li>
+<li>监控资源使用</li>
+</ul>
+</li>
+<li><p><strong>性能测试</strong></p>
+<ul>
+<li>使用 ab、wrk 等工具进行压力测试</li>
+<li>根据测试结果调整配置</li>
+</ul>
+</li>
+<li><p><strong>定期维护</strong></p>
+<ul>
+<li>清理日志文件</li>
+<li>更新 SSL 证书</li>
+<li>检查配置是否最优</li>
+</ul>
+</li>
+</ol>
+<p>这些优化措施需要根据实际情况选择性使用，不是所有的优化都适用于所有场景。建议在测试环境验证后再应用到生产环境。</p>
+<h2 id="gitlab的runner-干嘛的"><a href="#gitlab的runner-干嘛的" class="headerlink" title="gitlab的runner 干嘛的"></a>gitlab的runner 干嘛的</h2><p>GitLab Runner 是 GitLab CI&#x2F;CD 的执行器，主要负责运行 CI&#x2F;CD 流水线中定义的作业（Jobs）。让我详细解释一下：</p>
+<h3 id="1-Runner-的主要功能"><a href="#1-Runner-的主要功能" class="headerlink" title="1. Runner 的主要功能"></a>1. Runner 的主要功能</h3><ol>
+<li><p><strong>执行 CI&#x2F;CD 作业</strong></p>
+<ul>
+<li>运行测试</li>
+<li>构建应用</li>
+<li>部署服务</li>
+<li>自动化任务</li>
+</ul>
+</li>
+<li><p><strong>支持多种执行方式</strong></p>
+<ul>
+<li>Shell 执行器</li>
+<li>Docker 执行器</li>
+<li>Kubernetes 执行器</li>
+<li>虚拟机执行器</li>
+</ul>
+</li>
+</ol>
+<h3 id="2-Runner-类型"><a href="#2-Runner-类型" class="headerlink" title="2. Runner 类型"></a>2. Runner 类型</h3><ol>
+<li><p><strong>共享 Runner</strong></p>
+<ul>
+<li>所有项目可用</li>
+<li>由 GitLab 管理员配置</li>
+<li>适合通用构建任务</li>
+</ul>
+</li>
+<li><p><strong>特定 Runner</strong></p>
+<ul>
+<li>专门为特定项目服务</li>
+<li>由项目维护者配置</li>
+<li>适合特殊需求的项目</li>
+</ul>
+</li>
+</ol>
+<h3 id="3-配置示例"><a href="#3-配置示例" class="headerlink" title="3. 配置示例"></a>3. 配置示例</h3><p>以下是一个典型的 <code>.gitlab-ci.yml</code> 配置文件示例：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs yaml:.gitlab-ci.yml">stages:<br>  - build<br>  - test<br>  - deploy<br><br>build-job:<br>  stage: build<br>  script:<br>    - echo &quot;编译代码...&quot;<br>    - mvn package<br>  artifacts:<br>    paths:<br>      - target/*.jar<br><br>test-job:<br>  stage: test<br>  script:<br>    - echo &quot;运行测试...&quot;<br>    - mvn test<br><br>deploy-job:<br>  stage: deploy<br>  script:<br>    - echo &quot;部署应用...&quot;<br>    - kubectl apply -f pod.yaml<br>  only:<br>    - master<br></code></pre></td></tr></table></figure>
+
+<h3 id="4-Runner-在-Kubernetes-中的配置"><a href="#4-Runner-在-Kubernetes-中的配置" class="headerlink" title="4. Runner 在 Kubernetes 中的配置"></a>4. Runner 在 Kubernetes 中的配置</h3><p>如果使用 Kubernetes 执行器，需要配置类似这样的 Runner：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><code class="hljs yaml:gitlab-runner-k8s.yaml">apiVersion: apps/v1<br>kind: Deployment<br>metadata:<br>  name: gitlab-runner<br>  namespace: gitlab<br>spec:<br>  replicas: 1<br>  selector:<br>    matchLabels:<br>      app: gitlab-runner<br>  template:<br>    metadata:<br>      labels:<br>        app: gitlab-runner<br>    spec:<br>      containers:<br>      - name: gitlab-runner<br>        image: gitlab/gitlab-runner:latest<br>        args:<br>        - run<br>        volumeMounts:<br>        - name: config<br>          mountPath: /etc/gitlab-runner<br>        - name: docker-sock<br>          mountPath: /var/run/docker.sock<br>      volumes:<br>      - name: config<br>        configMap:<br>          name: gitlab-runner-config<br>      - name: docker-sock<br>        hostPath:<br>          path: /var/run/docker.sock<br></code></pre></td></tr></table></figure>
+
+<h3 id="5-Runner-注册配置"><a href="#5-Runner-注册配置" class="headerlink" title="5. Runner 注册配置"></a>5. Runner 注册配置</h3><p>Runner 需要注册到 GitLab 才能使用，配置示例：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs bash">gitlab-runner register \<br>  --non-interactive \<br>  --url <span class="hljs-string">&quot;https://gitlab.example.com/&quot;</span> \<br>  --registration-token <span class="hljs-string">&quot;PROJECT_REGISTRATION_TOKEN&quot;</span> \<br>  --executor <span class="hljs-string">&quot;docker&quot;</span> \<br>  --docker-image alpine:latest \<br>  --description <span class="hljs-string">&quot;docker-runner&quot;</span> \<br>  --tag-list <span class="hljs-string">&quot;docker,aws&quot;</span> \<br>  --run-untagged=<span class="hljs-string">&quot;true&quot;</span> \<br>  --locked=<span class="hljs-string">&quot;false&quot;</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="6-常见使用场景"><a href="#6-常见使用场景" class="headerlink" title="6. 常见使用场景"></a>6. 常见使用场景</h3><ol>
+<li><p><strong>自动化测试</strong></p>
+<ul>
+<li>单元测试</li>
+<li>集成测试</li>
+<li>代码质量检查</li>
+</ul>
+</li>
+<li><p><strong>自动化构建</strong></p>
+<ul>
+<li>编译代码</li>
+<li>构建 Docker 镜像</li>
+<li>生成制品</li>
+</ul>
+</li>
+<li><p><strong>自动化部署</strong></p>
+<ul>
+<li>部署到测试环境</li>
+<li>部署到生产环境</li>
+<li>更新 K8s 配置</li>
+</ul>
+</li>
+</ol>
+<h3 id="7-最佳实践"><a href="#7-最佳实践" class="headerlink" title="7. 最佳实践"></a>7. 最佳实践</h3><ol>
+<li><p><strong>资源管理</strong></p>
+<ul>
+<li>合理设置并发数</li>
+<li>配置作业超时时间</li>
+<li>清理构建缓存</li>
+</ul>
+</li>
+<li><p><strong>安全考虑</strong></p>
+<ul>
+<li>使用安全的执行器</li>
+<li>限制 Runner 权限</li>
+<li>保护敏感信息</li>
+</ul>
+</li>
+<li><p><strong>性能优化</strong></p>
+<ul>
+<li>使用缓存加速构建</li>
+<li>选择合适的执行器</li>
+<li>优化构建脚本</li>
+</ul>
+</li>
+</ol>
+<p>GitLab Runner 是 CI&#x2F;CD 流程中的重要组件，合理配置和使用可以大大提高开发团队的效率。</p>
+<h2 id="jenkins常用插件"><a href="#jenkins常用插件" class="headerlink" title="jenkins常用插件"></a>jenkins常用插件</h2><p>让我介绍一下 Jenkins 最常用和最实用的插件：</p>
+<h3 id="1-基础功能插件"><a href="#1-基础功能插件" class="headerlink" title="1. 基础功能插件"></a>1. 基础功能插件</h3><ol>
+<li><p><strong>Credentials Plugin</strong></p>
+<ul>
+<li>凭证管理</li>
+<li>存储密码、密钥、Token 等</li>
+<li>支持多种凭证类型</li>
+</ul>
+</li>
+<li><p><strong>Git Plugin</strong></p>
+<ul>
+<li>Git 代码仓库集成</li>
+<li>支持分支、标签管理</li>
+<li>代码检出配置</li>
+</ul>
+</li>
+<li><p><strong>Pipeline</strong></p>
+<ul>
+<li>流水线支持</li>
+<li>支持 Jenkinsfile</li>
+<li>可视化流水线编辑器</li>
+</ul>
+</li>
+</ol>
+<h3 id="2-构建相关插件"><a href="#2-构建相关插件" class="headerlink" title="2. 构建相关插件"></a>2. 构建相关插件</h3><ol>
+<li><p><strong>Maven Integration</strong></p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs groovy"><span class="hljs-comment">// Jenkinsfile 示例</span><br>pipeline &#123;<br>    agent any<br>    tools &#123;<br>        maven <span class="hljs-string">&#x27;Maven 3.8.1&#x27;</span><br>    &#125;<br>    stages &#123;<br>        stage(<span class="hljs-string">&#x27;Build&#x27;</span>) &#123;<br>            steps &#123;<br>                sh <span class="hljs-string">&#x27;mvn clean package&#x27;</span><br>            &#125;<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>Gradle Plugin</strong></p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs groovy"><span class="hljs-comment">// Jenkinsfile 示例</span><br>pipeline &#123;<br>    agent any<br>    stages &#123;<br>        stage(<span class="hljs-string">&#x27;Build&#x27;</span>) &#123;<br>            steps &#123;<br>                gradle <span class="hljs-string">&#x27;clean build&#x27;</span><br>            &#125;<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="3-容器相关插件"><a href="#3-容器相关插件" class="headerlink" title="3. 容器相关插件"></a>3. 容器相关插件</h3><ol>
+<li><p><strong>Docker Plugin</strong></p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs groovy"><span class="hljs-comment">// Jenkinsfile 示例</span><br>pipeline &#123;<br>    agent &#123;<br>        docker &#123;<br>            image <span class="hljs-string">&#x27;maven:3.8.1-jdk-8&#x27;</span><br>        &#125;<br>    &#125;<br>    stages &#123;<br>        stage(<span class="hljs-string">&#x27;Build&#x27;</span>) &#123;<br>            steps &#123;<br>                sh <span class="hljs-string">&#x27;mvn package&#x27;</span><br>            &#125;<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>Kubernetes Plugin</strong></p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs groovy"><span class="hljs-comment">// Jenkinsfile 示例</span><br>pipeline &#123;<br>    agent &#123;<br>        kubernetes &#123;<br>            yaml <span class="hljs-string">&#x27;&#x27;&#x27;</span><br><span class="hljs-string">                apiVersion: v1</span><br><span class="hljs-string">                kind: Pod</span><br><span class="hljs-string">                spec:</span><br><span class="hljs-string">                  containers:</span><br><span class="hljs-string">                  - name: maven</span><br><span class="hljs-string">                    image: maven:3.8.1-jdk-8</span><br><span class="hljs-string">                    command:</span><br><span class="hljs-string">                    - cat</span><br><span class="hljs-string">                    tty: true</span><br><span class="hljs-string">            &#x27;&#x27;&#x27;</span><br>        &#125;<br>    &#125;<br>    stages &#123;<br>        stage(<span class="hljs-string">&#x27;Build&#x27;</span>) &#123;<br>            steps &#123;<br>                container(<span class="hljs-string">&#x27;maven&#x27;</span>) &#123;<br>                    sh <span class="hljs-string">&#x27;mvn package&#x27;</span><br>                &#125;<br>            &#125;<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="4-代码质量插件"><a href="#4-代码质量插件" class="headerlink" title="4. 代码质量插件"></a>4. 代码质量插件</h3><ol>
+<li><p><strong>SonarQube Scanner</strong></p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs groovy"><span class="hljs-comment">// Jenkinsfile 示例</span><br>pipeline &#123;<br>    agent any<br>    stages &#123;<br>        stage(<span class="hljs-string">&#x27;SonarQube Analysis&#x27;</span>) &#123;<br>            steps &#123;<br>                withSonarQubeEnv(<span class="hljs-string">&#x27;SonarQube&#x27;</span>) &#123;<br>                    sh <span class="hljs-string">&#x27;mvn sonar:sonar&#x27;</span><br>                &#125;<br>            &#125;<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>Checkstyle</strong></p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs groovy"><span class="hljs-comment">// Jenkinsfile 示例</span><br>pipeline &#123;<br>    agent any<br>    stages &#123;<br>        stage(<span class="hljs-string">&#x27;Code Analysis&#x27;</span>) &#123;<br>            steps &#123;<br>                sh <span class="hljs-string">&#x27;mvn checkstyle:checkstyle&#x27;</span><br>            &#125;<br>            post &#123;<br>                always &#123;<br>                    recordIssues(<span class="hljs-attr">tools:</span> [checkStyle()])<br>                &#125;<br>            &#125;<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="5-通知类插件"><a href="#5-通知类插件" class="headerlink" title="5. 通知类插件"></a>5. 通知类插件</h3><ol>
+<li><p><strong>Email Extension Plugin</strong></p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs groovy"><span class="hljs-comment">// Jenkinsfile 示例</span><br>pipeline &#123;<br>    agent any<br>    post &#123;<br>        failure &#123;<br>            emailext (<br>                <span class="hljs-symbol">subject:</span> <span class="hljs-string">&quot;构建失败: $&#123;env.JOB_NAME&#125; [$&#123;env.BUILD_NUMBER&#125;]&quot;</span>,<br>                <span class="hljs-symbol">body:</span> <span class="hljs-string">&quot;&quot;&quot;&lt;p&gt;构建失败:&lt;/p&gt;</span><br><span class="hljs-string">                    &lt;p&gt;查看: &lt;a href=&#x27;$&#123;env.BUILD_URL&#125;&#x27;&gt;$&#123;env.JOB_NAME&#125; [$&#123;env.BUILD_NUMBER&#125;]&lt;/a&gt;&lt;/p&gt;&quot;&quot;&quot;</span>,<br>                <span class="hljs-symbol">to:</span> <span class="hljs-string">&quot;team@example.com&quot;</span><br>            )<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>钉钉通知插件</strong></p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs groovy"><span class="hljs-comment">// Jenkinsfile 示例</span><br>pipeline &#123;<br>    agent any<br>    post &#123;<br>        always &#123;<br>            dingtalk (<br>                <span class="hljs-symbol">robot:</span> <span class="hljs-string">&#x27;钉钉机器人TOKEN&#x27;</span>,<br>                <span class="hljs-symbol">type:</span> <span class="hljs-string">&#x27;MARKDOWN&#x27;</span>,<br>                <span class="hljs-symbol">title:</span> <span class="hljs-string">&#x27;构建通知&#x27;</span>,<br>                <span class="hljs-symbol">text:</span> [<br>                    <span class="hljs-string">&quot;### 构建结果: $&#123;currentBuild.result&#125;&quot;</span>,<br>                    <span class="hljs-string">&quot;- 项目: $&#123;env.JOB_NAME&#125;&quot;</span>,<br>                    <span class="hljs-string">&quot;- 构建号: $&#123;env.BUILD_NUMBER&#125;&quot;</span>,<br>                    <span class="hljs-string">&quot;- 详情: [查看]($&#123;env.BUILD_URL&#125;)&quot;</span><br>                ]<br>            )<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="6-其他实用插件"><a href="#6-其他实用插件" class="headerlink" title="6. 其他实用插件"></a>6. 其他实用插件</h3><ol>
+<li><p><strong>Timestamper</strong></p>
+<ul>
+<li>为控制台输出添加时间戳</li>
+<li>方便调试和日志分析</li>
+</ul>
+</li>
+<li><p><strong>AnsiColor</strong></p>
+<ul>
+<li>支持控制台彩色输出</li>
+<li>提高日志可读性</li>
+</ul>
+</li>
+<li><p><strong>Build Timeout</strong></p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs groovy"><span class="hljs-comment">// Jenkinsfile 示例</span><br>pipeline &#123;<br>    agent any<br>    options &#123;<br>        timeout(<span class="hljs-attr">time:</span> <span class="hljs-number">1</span>, <span class="hljs-attr">unit:</span> <span class="hljs-string">&#x27;HOURS&#x27;</span>)<br>    &#125;<br>    stages &#123;<br>        stage(<span class="hljs-string">&#x27;Build&#x27;</span>) &#123;<br>            steps &#123;<br>                sh <span class="hljs-string">&#x27;mvn package&#x27;</span><br>            &#125;<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="安装建议"><a href="#安装建议" class="headerlink" title="安装建议"></a>安装建议</h3><ol>
+<li><p><strong>按需安装</strong></p>
+<ul>
+<li>避免安装过多不必要的插件</li>
+<li>定期清理未使用的插件</li>
+</ul>
+</li>
+<li><p><strong>版本兼容</strong></p>
+<ul>
+<li>注意插件之间的版本兼容性</li>
+<li>定期更新插件到最新稳定版</li>
+</ul>
+</li>
+<li><p><strong>性能考虑</strong></p>
+<ul>
+<li>插件过多会影响 Jenkins 性能</li>
+<li>建议只保留必要的插件</li>
+</ul>
+</li>
+</ol>
+<p>这些插件能够显著提升 Jenkins 的功能和使用体验，但建议根据实际需求选择安装。</p>
+<h2 id="声明式和脚本式的jenkins的写法举例"><a href="#声明式和脚本式的jenkins的写法举例" class="headerlink" title="声明式和脚本式的jenkins的写法举例"></a>声明式和脚本式的jenkins的写法举例</h2><p>让我介绍几种 Jenkins 运行多个任务的方案：</p>
+<h3 id="1-并行执行-Parallel"><a href="#1-并行执行-Parallel" class="headerlink" title="1. 并行执行 (Parallel)"></a>1. 并行执行 (Parallel)</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs groovy:Jenkinsfile">pipeline &#123;<br>    agent any<br>    <br>    stages &#123;<br>        stage(&#x27;并行任务&#x27;) &#123;<br>            parallel &#123;<br>                stage(&#x27;任务A&#x27;) &#123;<br>                    steps &#123;<br>                        sh &#x27;mvn test -Dtest=TestA&#x27;<br>                    &#125;<br>                &#125;<br>                stage(&#x27;任务B&#x27;) &#123;<br>                    steps &#123;<br>                        sh &#x27;mvn test -Dtest=TestB&#x27;<br>                    &#125;<br>                &#125;<br>                stage(&#x27;任务C&#x27;) &#123;<br>                    steps &#123;<br>                        sh &#x27;docker build -t imageA .&#x27;<br>                    &#125;<br>                &#125;<br>            &#125;<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="2-矩阵构建-Matrix"><a href="#2-矩阵构建-Matrix" class="headerlink" title="2. 矩阵构建 (Matrix)"></a>2. 矩阵构建 (Matrix)</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs groovy:Jenkinsfile">pipeline &#123;<br>    agent any<br>    <br>    matrix &#123;<br>        axes &#123;<br>            axis &#123;<br>                name &#x27;PLATFORM&#x27;<br>                values &#x27;linux&#x27;, &#x27;windows&#x27;, &#x27;mac&#x27;<br>            &#125;<br>            axis &#123;<br>                name &#x27;BROWSER&#x27;<br>                values &#x27;chrome&#x27;, &#x27;firefox&#x27;, &#x27;safari&#x27;<br>            &#125;<br>        &#125;<br>        <br>        stages &#123;<br>            stage(&#x27;测试&#x27;) &#123;<br>                steps &#123;<br>                    sh &quot;run-tests.sh $&#123;PLATFORM&#125; $&#123;BROWSER&#125;&quot;<br>                &#125;<br>            &#125;<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="3-多分支流水线"><a href="#3-多分支流水线" class="headerlink" title="3. 多分支流水线"></a>3. 多分支流水线</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><code class="hljs groovy:Jenkinsfile">pipeline &#123;<br>    agent any<br>    <br>    stages &#123;<br>        stage(&#x27;构建&#x27;) &#123;<br>            when &#123;<br>                anyOf &#123;<br>                    branch &#x27;main&#x27;<br>                    branch &#x27;develop&#x27;<br>                    branch &#x27;feature/*&#x27;<br>                &#125;<br>            &#125;<br>            steps &#123;<br>                sh &#x27;mvn clean package&#x27;<br>            &#125;<br>        &#125;<br>        <br>        stage(&#x27;部署开发环境&#x27;) &#123;<br>            when &#123; branch &#x27;develop&#x27; &#125;<br>            steps &#123;<br>                sh &#x27;deploy-to-dev.sh&#x27;<br>            &#125;<br>        &#125;<br>        <br>        stage(&#x27;部署生产环境&#x27;) &#123;<br>            when &#123; branch &#x27;main&#x27; &#125;<br>            steps &#123;<br>                sh &#x27;deploy-to-prod.sh&#x27;<br>            &#125;<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="4-上游-下游任务-Upstream-Downstream"><a href="#4-上游-下游任务-Upstream-Downstream" class="headerlink" title="4. 上游&#x2F;下游任务 (Upstream&#x2F;Downstream)"></a>4. 上游&#x2F;下游任务 (Upstream&#x2F;Downstream)</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs groovy:Jenkinsfile">pipeline &#123;<br>    agent any<br>    <br>    stages &#123;<br>        stage(&#x27;触发下游任务&#x27;) &#123;<br>            steps &#123;<br>                build job: &#x27;downstream-job-1&#x27;, wait: false<br>                build job: &#x27;downstream-job-2&#x27;, wait: false<br>                <br>                parallel (<br>                    &quot;任务1&quot;: &#123;<br>                        build job: &#x27;parallel-job-1&#x27;<br>                    &#125;,<br>                    &quot;任务2&quot;: &#123;<br>                        build job: &#x27;parallel-job-2&#x27;<br>                    &#125;<br>                )<br>            &#125;<br>        &#125;<br>    &#125;<br>    <br>    post &#123;<br>        success &#123;<br>            build job: &#x27;notification-job&#x27;, <br>                  parameters: [string(name: &#x27;STATUS&#x27;, value: &#x27;SUCCESS&#x27;)]<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="5-参数化构建矩阵"><a href="#5-参数化构建矩阵" class="headerlink" title="5. 参数化构建矩阵"></a>5. 参数化构建矩阵</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><code class="hljs groovy:Jenkinsfile">pipeline &#123;<br>    agent any<br>    <br>    parameters &#123;<br>        choice(<br>            name: &#x27;ENVIRONMENT&#x27;,<br>            choices: [&#x27;dev&#x27;, &#x27;test&#x27;, &#x27;prod&#x27;],<br>            description: &#x27;选择部署环境&#x27;<br>        )<br>        booleanParam(<br>            name: &#x27;RUN_TESTS&#x27;,<br>            defaultValue: true,<br>            description: &#x27;是否运行测试&#x27;<br>        )<br>    &#125;<br>    <br>    stages &#123;<br>        stage(&#x27;并行任务&#x27;) &#123;<br>            parallel &#123;<br>                stage(&#x27;部署&#x27;) &#123;<br>                    steps &#123;<br>                        sh &quot;deploy-to-$&#123;params.ENVIRONMENT&#125;.sh&quot;<br>                    &#125;<br>                &#125;<br>                stage(&#x27;测试&#x27;) &#123;<br>                    when &#123; expression &#123; params.RUN_TESTS &#125; &#125;<br>                    steps &#123;<br>                        sh &#x27;run-tests.sh&#x27;<br>                    &#125;<br>                &#125;<br>            &#125;<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="6-资源分配和限制"><a href="#6-资源分配和限制" class="headerlink" title="6. 资源分配和限制"></a>6. 资源分配和限制</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs groovy:Jenkinsfile">pipeline &#123;<br>    agent none<br>    <br>    stages &#123;<br>        stage(&#x27;并行构建&#x27;) &#123;<br>            parallel &#123;<br>                stage(&#x27;Java构建&#x27;) &#123;<br>                    agent &#123;<br>                        label &#x27;java-builder&#x27;<br>                    &#125;<br>                    steps &#123;<br>                        sh &#x27;mvn clean package&#x27;<br>                    &#125;<br>                &#125;<br>                stage(&#x27;Node构建&#x27;) &#123;<br>                    agent &#123;<br>                        label &#x27;node-builder&#x27;<br>                    &#125;<br>                    steps &#123;<br>                        sh &#x27;npm install &amp;&amp; npm run build&#x27;<br>                    &#125;<br>                &#125;<br>            &#125;<br>        &#125;<br>    &#125;<br>    <br>    options &#123;<br>        parallelsAlwaysFailFast()<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="最佳实践建议："><a href="#最佳实践建议：" class="headerlink" title="最佳实践建议："></a>最佳实践建议：</h3><ol>
+<li><p><strong>资源管理</strong></p>
+<ul>
+<li>合理设置并发数</li>
+<li>注意资源使用限制</li>
+<li>避免资源竞争</li>
+</ul>
+</li>
+<li><p><strong>错误处理</strong></p>
+<ul>
+<li>设置超时限制</li>
+<li>合理处理任务失败</li>
+<li>配置重试机制</li>
+</ul>
+</li>
+<li><p><strong>性能优化</strong></p>
+<ul>
+<li>合理使用并行执行</li>
+<li>避免不必要的等待</li>
+<li>优化构建顺序</li>
+</ul>
+</li>
+<li><p><strong>监控和通知</strong></p>
+<ul>
+<li>配置构建状态通知</li>
+<li>监控资源使用情况</li>
+<li>记录构建历史</li>
+</ul>
+</li>
+</ol>
+<p>通过这些方式，你可以根据具体需求选择合适的多任务执行方案，提高构建效率和资源利用率。</p>
+<h2 id="怎么确保密码-这些不会明文写到流水线里面"><a href="#怎么确保密码-这些不会明文写到流水线里面" class="headerlink" title="怎么确保密码 这些不会明文写到流水线里面"></a>怎么确保密码 这些不会明文写到流水线里面</h2><p>在 Jenkins 中，有几个关于敏感信息输出的重要注意点：</p>
+<h3 id="1-默认行为"><a href="#1-默认行为" class="headerlink" title="1. 默认行为"></a>1. 默认行为</h3><ol>
+<li><strong>凭据变量</strong></li>
+</ol>
+<ul>
+<li>通过 <code>credentials()</code> 绑定的变量默认是被 Jenkins 保护的</li>
+<li>即使使用 <code>echo $PASSWORD</code> 也会显示为 <code>****</code></li>
+</ul>
+<ol start="2">
+<li><strong>环境变量</strong></li>
+</ol>
+<ul>
+<li>普通环境变量不会自动被掩码</li>
+<li>需要特别注意不要直接打印</li>
+</ul>
+<h3 id="2-安全处理示例"><a href="#2-安全处理示例" class="headerlink" title="2. 安全处理示例"></a>2. 安全处理示例</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><code class="hljs groovy:Jenkinsfile">pipeline &#123;<br>    agent any<br>    <br>    environment &#123;<br>        // 这样定义的凭据会自动被保护<br>        DB_CREDS = credentials(&#x27;db-credentials&#x27;)<br>        // 普通环境变量需要注意保护<br>        API_KEY = &#x27;sensitive-value&#x27;<br>    &#125;<br>    <br>    stages &#123;<br>        stage(&#x27;安全示例&#x27;) &#123;<br>            steps &#123;<br>                script &#123;<br>                    // 错误示例 - 不要这样做<br>                    // sh &quot;echo $API_KEY&quot;  // 会暴露敏感信息<br>                    <br>                    // 正确示例<br>                    wrap([$class: &#x27;MaskPasswordsBuildWrapper&#x27;, <br>                          varPasswordPairs: [[var: &#x27;API_KEY&#x27;, password: env.API_KEY]]]) &#123;<br>                        // 现在 API_KEY 会被自动掩码<br>                        sh &#x27;curl -H &quot;Authorization: Bearer $API_KEY&quot; https://api.example.com&#x27;<br>                    &#125;<br>                &#125;<br>                <br>                // credentials() 绑定的变量会自动被保护<br>                withCredentials([<br>                    usernamePassword(<br>                        credentialsId: &#x27;my-credentials&#x27;,<br>                        usernameVariable: &#x27;USER&#x27;,<br>                        passwordVariable: &#x27;PASS&#x27;<br>                    )<br>                ]) &#123;<br>                    // 即使echo，也会显示为 ****<br>                    sh &#x27;echo $PASS&#x27;<br>                &#125;<br>            &#125;<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="3-最佳实践"><a href="#3-最佳实践" class="headerlink" title="3. 最佳实践"></a>3. 最佳实践</h3><ol>
+<li><p><strong>使用凭据插件</strong></p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs groovy">withCredentials([string(<span class="hljs-attr">credentialsId:</span> <span class="hljs-string">&#x27;my-secret&#x27;</span>, <span class="hljs-attr">variable:</span> <span class="hljs-string">&#x27;SECRET&#x27;</span>)]) &#123;<br>    <span class="hljs-comment">// SECRET 变量会自动被掩码</span><br>    sh <span class="hljs-string">&#x27;./deploy.sh&#x27;</span>  <span class="hljs-comment">// 在脚本中使用 $SECRET</span><br>&#125;<br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>使用掩码包装器</strong></p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs groovy">wrap([<span class="hljs-attr">$class:</span> <span class="hljs-string">&#x27;MaskPasswordsBuildWrapper&#x27;</span>, <span class="hljs-attr">varPasswordPairs:</span> [<br>    [<span class="hljs-attr">var:</span> <span class="hljs-string">&#x27;PASSWORD&#x27;</span>, <span class="hljs-attr">password:</span> <span class="hljs-string">&#x27;sensitive-value&#x27;</span>]<br>]]) &#123;<br>    <span class="hljs-comment">// 所有输出中的 &#x27;sensitive-value&#x27; 都会被替换为 ****</span><br>    sh <span class="hljs-string">&#x27;your-command&#x27;</span><br>&#125;<br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>避免直接输出</strong></p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs groovy"><span class="hljs-comment">// 不要这样做</span><br>sh <span class="hljs-string">&quot;echo &#x27;Using password: $PASSWORD&#x27;&quot;</span><br><br><span class="hljs-comment">// 而是这样</span><br>sh <span class="hljs-string">&#x27;&#x27;&#x27;</span><br><span class="hljs-string">    if [ -n &quot;$PASSWORD&quot; ]; then</span><br><span class="hljs-string">        echo &quot;Password is configured&quot;</span><br><span class="hljs-string">    else</span><br><span class="hljs-string">        echo &quot;Password is missing&quot;</span><br><span class="hljs-string">    fi</span><br><span class="hljs-string">&#x27;&#x27;&#x27;</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>日志处理</strong></p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs groovy">options &#123;<br>    <span class="hljs-comment">// 设置构建日志保留策略</span><br>    buildDiscarder(logRotator(<span class="hljs-attr">numToKeepStr:</span> <span class="hljs-string">&#x27;10&#x27;</span>))<br>&#125;<br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="4-安全检查清单"><a href="#4-安全检查清单" class="headerlink" title="4. 安全检查清单"></a>4. 安全检查清单</h3><ol>
+<li><strong>避免</strong></li>
+</ol>
+<ul>
+<li>直接 echo 敏感变量</li>
+<li>在命令参数中显示密码</li>
+<li>在构建日志中保留敏感信息</li>
+</ul>
+<ol start="2">
+<li><strong>应该</strong></li>
+</ol>
+<ul>
+<li>使用凭据插件管理敏感信息</li>
+<li>使用掩码包装器保护变量</li>
+<li>定期审查构建日志</li>
+<li>限制日志访问权限</li>
+</ul>
+<ol start="3">
+<li><strong>配置建议</strong><figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs groovy">pipeline &#123;<br>    agent any<br>    <br>    options &#123;<br>        <span class="hljs-comment">// 禁用并发构建</span><br>        disableConcurrentBuilds()<br>        <span class="hljs-comment">// 设置超时</span><br>        timeout(<span class="hljs-attr">time:</span> <span class="hljs-number">1</span>, <span class="hljs-attr">unit:</span> <span class="hljs-string">&#x27;HOURS&#x27;</span>)<br>    &#125;<br>    <br>    environment &#123;<br>        <span class="hljs-comment">// 使用凭据绑定</span><br>        DEPLOY_KEY = credentials(<span class="hljs-string">&#x27;deploy-key&#x27;</span>)<br>    &#125;<br>    <br>    stages &#123;<br>        stage(<span class="hljs-string">&#x27;部署&#x27;</span>) &#123;<br>            steps &#123;<br>                <span class="hljs-comment">// 使用安全的方式处理敏感信息</span><br>                withCredentials([<br>                    file(<span class="hljs-attr">credentialsId:</span> <span class="hljs-string">&#x27;kubeconfig&#x27;</span>, <span class="hljs-attr">variable:</span> <span class="hljs-string">&#x27;KUBECONFIG&#x27;</span>)<br>                ]) &#123;<br>                    sh <span class="hljs-string">&#x27;kubectl apply -f deployment.yaml&#x27;</span><br>                &#125;<br>            &#125;<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+</ol>
+<p>通过这些措施，可以有效防止敏感信息在构建过程中被泄露。</p>
+<h2 id="说下你对容器和k8s的理解"><a href="#说下你对容器和k8s的理解" class="headerlink" title="说下你对容器和k8s的理解"></a>说下你对容器和k8s的理解</h2><p>让我分享下对容器和 Kubernetes 的理解：</p>
+<h3 id="1-容器的本质"><a href="#1-容器的本质" class="headerlink" title="1. 容器的本质"></a>1. 容器的本质</h3><ol>
+<li><p><strong>隔离性</strong></p>
+<ul>
+<li>使用 Linux 的 Namespace 技术实现资源隔离</li>
+<li>每个容器有自己的进程空间、网络空间、挂载空间等</li>
+<li>容器间互不影响</li>
+</ul>
+</li>
+<li><p><strong>资源限制</strong></p>
+<ul>
+<li>使用 Linux 的 Cgroups 技术限制资源使用</li>
+<li>可以限制 CPU、内存、IO 等资源</li>
+<li>防止单个容器占用过多资源</li>
+</ul>
+</li>
+<li><p><strong>轻量级</strong></p>
+<ul>
+<li>共享主机内核</li>
+<li>秒级启动</li>
+<li>资源利用率高</li>
+</ul>
+</li>
+</ol>
+<h3 id="2-K8s-的核心功能"><a href="#2-K8s-的核心功能" class="headerlink" title="2. K8s 的核心功能"></a>2. K8s 的核心功能</h3><ol>
+<li><p><strong>自动化管理</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-comment"># Deployment 自动管理 Pod 的生命周期</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">nginx</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">replicas:</span> <span class="hljs-number">3</span>  <span class="hljs-comment"># 自动维护3个副本</span><br>  <span class="hljs-attr">selector:</span><br>    <span class="hljs-attr">matchLabels:</span><br>      <span class="hljs-attr">app:</span> <span class="hljs-string">nginx</span><br>  <span class="hljs-attr">template:</span><br>    <span class="hljs-attr">metadata:</span><br>      <span class="hljs-attr">labels:</span><br>        <span class="hljs-attr">app:</span> <span class="hljs-string">nginx</span><br>    <span class="hljs-attr">spec:</span><br>      <span class="hljs-attr">containers:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">nginx</span><br>        <span class="hljs-attr">image:</span> <span class="hljs-string">nginx:alpine</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>自愈能力</strong></p>
+<ul>
+<li>节点故障自动迁移</li>
+<li>容器崩溃自动重启</li>
+<li>健康检查和恢复</li>
+</ul>
+</li>
+<li><p><strong>负载均衡</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-comment"># Service 提供负载均衡</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Service</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">nginx-service</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">type:</span> <span class="hljs-string">LoadBalancer</span><br>  <span class="hljs-attr">selector:</span><br>    <span class="hljs-attr">app:</span> <span class="hljs-string">nginx</span><br>  <span class="hljs-attr">ports:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">port:</span> <span class="hljs-number">80</span><br>    <span class="hljs-attr">targetPort:</span> <span class="hljs-number">80</span><br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="3-架构设计理念"><a href="#3-架构设计理念" class="headerlink" title="3. 架构设计理念"></a>3. 架构设计理念</h3><ol>
+<li><p><strong>声明式 API</strong></p>
+<ul>
+<li>描述期望状态</li>
+<li>系统自动调整实际状态</li>
+<li>易于维护和自动化</li>
+</ul>
+</li>
+<li><p><strong>控制器模式</strong></p>
+<ul>
+<li>每个控制器负责特定资源</li>
+<li>持续监控和调整状态</li>
+<li>松耦合设计</li>
+</ul>
+</li>
+<li><p><strong>水平扩展</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-comment"># HPA 自动扩缩容</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">autoscaling/v2</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">HorizontalPodAutoscaler</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">nginx-hpa</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">scaleTargetRef:</span><br>    <span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span><br>    <span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span><br>    <span class="hljs-attr">name:</span> <span class="hljs-string">nginx</span><br>  <span class="hljs-attr">minReplicas:</span> <span class="hljs-number">1</span><br>  <span class="hljs-attr">maxReplicas:</span> <span class="hljs-number">10</span><br>  <span class="hljs-attr">metrics:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">type:</span> <span class="hljs-string">Resource</span><br>    <span class="hljs-attr">resource:</span><br>      <span class="hljs-attr">name:</span> <span class="hljs-string">cpu</span><br>      <span class="hljs-attr">target:</span><br>        <span class="hljs-attr">type:</span> <span class="hljs-string">Utilization</span><br>        <span class="hljs-attr">averageUtilization:</span> <span class="hljs-number">80</span><br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="4-实际应用场景"><a href="#4-实际应用场景" class="headerlink" title="4. 实际应用场景"></a>4. 实际应用场景</h3><ol>
+<li><p><strong>微服务架构</strong></p>
+<ul>
+<li>服务独立部署</li>
+<li>快速迭代</li>
+<li>弹性伸缩</li>
+</ul>
+</li>
+<li><p><strong>DevOps 实践</strong></p>
+<ul>
+<li>持续集成&#x2F;部署</li>
+<li>自动化运维</li>
+<li>环境一致性</li>
+</ul>
+</li>
+<li><p><strong>高可用设计</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-comment"># Pod 反亲和性确保高可用</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">webapp</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">template:</span><br>    <span class="hljs-attr">spec:</span><br>      <span class="hljs-attr">affinity:</span><br>        <span class="hljs-attr">podAntiAffinity:</span><br>          <span class="hljs-attr">requiredDuringSchedulingIgnoredDuringExecution:</span><br>          <span class="hljs-bullet">-</span> <span class="hljs-attr">labelSelector:</span><br>              <span class="hljs-attr">matchExpressions:</span><br>              <span class="hljs-bullet">-</span> <span class="hljs-attr">key:</span> <span class="hljs-string">app</span><br>                <span class="hljs-attr">operator:</span> <span class="hljs-string">In</span><br>                <span class="hljs-attr">values:</span><br>                <span class="hljs-bullet">-</span> <span class="hljs-string">webapp</span><br>            <span class="hljs-attr">topologyKey:</span> <span class="hljs-string">&quot;kubernetes.io/hostname&quot;</span><br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="5-生产环境考虑"><a href="#5-生产环境考虑" class="headerlink" title="5. 生产环境考虑"></a>5. 生产环境考虑</h3><ol>
+<li><p><strong>资源管理</strong></p>
+<ul>
+<li>合理设置请求和限制</li>
+<li>资源预留和超卖</li>
+<li>成本优化</li>
+</ul>
+</li>
+<li><p><strong>安全性</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-comment"># 网络策略隔离</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">networking.k8s.io/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">NetworkPolicy</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">api-allow</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">podSelector:</span><br>    <span class="hljs-attr">matchLabels:</span><br>      <span class="hljs-attr">app:</span> <span class="hljs-string">api</span><br>  <span class="hljs-attr">ingress:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">from:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-attr">podSelector:</span><br>        <span class="hljs-attr">matchLabels:</span><br>          <span class="hljs-attr">app:</span> <span class="hljs-string">frontend</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>可观测性</strong></p>
+<ul>
+<li>监控指标</li>
+<li>日志收集</li>
+<li>链路追踪</li>
+</ul>
+</li>
+</ol>
+<h3 id="6-最佳实践"><a href="#6-最佳实践" class="headerlink" title="6. 最佳实践"></a>6. 最佳实践</h3><ol>
+<li><p><strong>容器设计</strong></p>
+<ul>
+<li>单一职责</li>
+<li>无状态设计</li>
+<li>合理的资源限制</li>
+<li>健康检查</li>
+</ul>
+</li>
+<li><p><strong>K8s 配置</strong></p>
+<ul>
+<li>使用命名空间隔离</li>
+<li>实施资源配额</li>
+<li>RBAC 权限控制</li>
+<li>备份和恢复策略</li>
+</ul>
+</li>
+<li><p><strong>运维管理</strong></p>
+<ul>
+<li>监控告警</li>
+<li>日志管理</li>
+<li>灾备方案</li>
+<li>升级策略</li>
+</ul>
+</li>
+</ol>
+<p>容器和 Kubernetes 的结合极大地改变了应用部署和运维的方式，提供了一个强大的平台来运行和管理现代应用。理解它们的核心概念和最佳实践对于构建可靠的生产系统至关重要。</p>
+<p>我看到你有一个 pod.yaml 文件，让我基于这个实际的配置文件来进一步解释一些重要概念。</p>
+<p>从你的 pod.yaml 文件中可以看到几个关键的最佳实践：</p>
+<h3 id="1-资源管理"><a href="#1-资源管理" class="headerlink" title="1. 资源管理"></a>1. 资源管理</h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">resources:</span><br>  <span class="hljs-attr">requests:</span><br>    <span class="hljs-attr">memory:</span> <span class="hljs-string">&quot;64Mi&quot;</span>    <span class="hljs-comment"># 保证最小内存</span><br>    <span class="hljs-attr">cpu:</span> <span class="hljs-string">&quot;250m&quot;</span>       <span class="hljs-comment"># 0.25 CPU</span><br>  <span class="hljs-attr">limits:</span><br>    <span class="hljs-attr">memory:</span> <span class="hljs-string">&quot;256Mi&quot;</span>   <span class="hljs-comment"># 内存上限</span><br>    <span class="hljs-attr">cpu:</span> <span class="hljs-string">&quot;500m&quot;</span>       <span class="hljs-comment"># 0.5 CPU</span><br></code></pre></td></tr></table></figure>
+<p>这里展示了合理的资源控制：</p>
+<ul>
+<li>requests: 保证 Pod 运行的最小资源</li>
+<li>limits: 限制资源使用的上限</li>
+<li>设置合适的比例（limits&#x2F;requests）避免资源浪费</li>
+</ul>
+<h3 id="2-健康检查"><a href="#2-健康检查" class="headerlink" title="2. 健康检查"></a>2. 健康检查</h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">readinessProbe:</span><br>  <span class="hljs-attr">httpGet:</span><br>    <span class="hljs-attr">path:</span> <span class="hljs-string">/</span><br>    <span class="hljs-attr">port:</span> <span class="hljs-number">80</span><br>  <span class="hljs-attr">initialDelaySeconds:</span> <span class="hljs-number">5</span><br>  <span class="hljs-attr">periodSeconds:</span> <span class="hljs-number">10</span><br><span class="hljs-attr">livenessProbe:</span><br>  <span class="hljs-attr">httpGet:</span><br>    <span class="hljs-attr">path:</span> <span class="hljs-string">/</span><br>    <span class="hljs-attr">port:</span> <span class="hljs-number">80</span><br>  <span class="hljs-attr">initialDelaySeconds:</span> <span class="hljs-number">15</span><br>  <span class="hljs-attr">periodSeconds:</span> <span class="hljs-number">20</span><br></code></pre></td></tr></table></figure>
+<p>两种探针的使用：</p>
+<ul>
+<li>readinessProbe: 确定 Pod 是否准备好接收流量</li>
+<li>livenessProbe: 确定 Pod 是否需要重启</li>
+</ul>
+<h3 id="3-配置管理"><a href="#3-配置管理" class="headerlink" title="3. 配置管理"></a>3. 配置管理</h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">volumeMounts:</span><br><span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">config</span><br>  <span class="hljs-attr">mountPath:</span> <span class="hljs-string">/app/config</span><br><span class="hljs-attr">volumes:</span><br><span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">config</span><br>  <span class="hljs-attr">configMap:</span><br>    <span class="hljs-attr">name:</span> <span class="hljs-string">app-config</span><br></code></pre></td></tr></table></figure>
+<p>使用 ConfigMap 管理配置：</p>
+<ul>
+<li>配置与代码分离</li>
+<li>可以动态更新</li>
+<li>便于环境管理</li>
+</ul>
+<h3 id="4-节点选择"><a href="#4-节点选择" class="headerlink" title="4. 节点选择"></a>4. 节点选择</h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">nodeSelector:</span><br>  <span class="hljs-attr">kubernetes.io/os:</span> <span class="hljs-string">linux</span><br></code></pre></td></tr></table></figure>
+<p>通过标签选择合适的节点：</p>
+<ul>
+<li>确保 Pod 调度到正确的节点</li>
+<li>可以基于操作系统、硬件特性等选择</li>
+</ul>
+<p>这些配置反映了在生产环境中运行容器的几个重要考虑点：</p>
+<ol>
+<li>资源控制</li>
+<li>可靠性保证</li>
+<li>配置管理</li>
+<li>调度策略</li>
+</ol>
+<p>这是一个比较完善的 Pod 配置，体现了 K8s 的核心价值：自动化管理、高可用性和可维护性。</p>
+<h2 id="你用过go或者python写东西吗-有关运维的-devops的"><a href="#你用过go或者python写东西吗-有关运维的-devops的" class="headerlink" title="你用过go或者python写东西吗 有关运维的 devops的"></a>你用过go或者python写东西吗 有关运维的 devops的</h2><p>是的，我经常使用 Python 和 Go 来编写运维和 DevOps 相关的工具。让我分享一些常见的场景和示例：</p>
+<h3 id="1-Python-自动化运维示例"><a href="#1-Python-自动化运维示例" class="headerlink" title="1. Python 自动化运维示例"></a>1. Python 自动化运维示例</h3><ol>
+<li><p><strong>K8s 资源监控</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> kubernetes <span class="hljs-keyword">import</span> client, config<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">monitor_pods</span>():<br>    <span class="hljs-comment"># 加载 k8s 配置</span><br>    config.load_kube_config()<br>    v1 = client.CoreV1Api()<br>    <br>    <span class="hljs-keyword">try</span>:<br>        <span class="hljs-comment"># 获取所有 namespace 的 pods</span><br>        pods = v1.list_pod_for_all_namespaces(watch=<span class="hljs-literal">False</span>)<br>        <span class="hljs-keyword">for</span> pod <span class="hljs-keyword">in</span> pods.items:<br>            <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;Pod: <span class="hljs-subst">&#123;pod.metadata.name&#125;</span>&quot;</span>)<br>            <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;Namespace: <span class="hljs-subst">&#123;pod.metadata.namespace&#125;</span>&quot;</span>)<br>            <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;Status: <span class="hljs-subst">&#123;pod.status.phase&#125;</span>&quot;</span>)<br>            <br>            <span class="hljs-comment"># 检查资源使用</span><br>            <span class="hljs-keyword">if</span> pod.status.container_statuses:<br>                <span class="hljs-keyword">for</span> container <span class="hljs-keyword">in</span> pod.status.container_statuses:<br>                    <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;Container: <span class="hljs-subst">&#123;container.name&#125;</span>&quot;</span>)<br>                    <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;Ready: <span class="hljs-subst">&#123;container.ready&#125;</span>&quot;</span>)<br>                    <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;Restart Count: <span class="hljs-subst">&#123;container.restart_count&#125;</span>&quot;</span>)<br>    <span class="hljs-keyword">except</span> Exception <span class="hljs-keyword">as</span> e:<br>        <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;Error: <span class="hljs-subst">&#123;e&#125;</span>&quot;</span>)<br><br><span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">&quot;__main__&quot;</span>:<br>    monitor_pods()<br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>日志分析工具</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> re<br><span class="hljs-keyword">from</span> datetime <span class="hljs-keyword">import</span> datetime<br><span class="hljs-keyword">import</span> pandas <span class="hljs-keyword">as</span> pd<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">analyze_nginx_logs</span>(<span class="hljs-params">log_file</span>):<br>    <span class="hljs-comment"># 定义日志格式正则</span><br>    pattern = <span class="hljs-string">r&#x27;(?P&lt;ip&gt;.*?) - - \[(?P&lt;time&gt;.*?)\] &quot;(?P&lt;request&gt;.*?)&quot; (?P&lt;status&gt;\d+) (?P&lt;size&gt;\d+)&#x27;</span><br>    <br>    logs = []<br>    <span class="hljs-keyword">with</span> <span class="hljs-built_in">open</span>(log_file, <span class="hljs-string">&#x27;r&#x27;</span>) <span class="hljs-keyword">as</span> f:<br>        <span class="hljs-keyword">for</span> line <span class="hljs-keyword">in</span> f:<br>            <span class="hljs-keyword">match</span> = re.<span class="hljs-keyword">match</span>(pattern, line)<br>            <span class="hljs-keyword">if</span> <span class="hljs-keyword">match</span>:<br>                data = <span class="hljs-keyword">match</span>.groupdict()<br>                data[<span class="hljs-string">&#x27;time&#x27;</span>] = datetime.strptime(data[<span class="hljs-string">&#x27;time&#x27;</span>], <span class="hljs-string">&#x27;%d/%b/%Y:%H:%M:%S %z&#x27;</span>)<br>                logs.append(data)<br>    <br>    <span class="hljs-comment"># 转换为 DataFrame 分析</span><br>    df = pd.DataFrame(logs)<br>    <span class="hljs-keyword">return</span> &#123;<br>        <span class="hljs-string">&#x27;total_requests&#x27;</span>: <span class="hljs-built_in">len</span>(df),<br>        <span class="hljs-string">&#x27;status_codes&#x27;</span>: df[<span class="hljs-string">&#x27;status&#x27;</span>].value_counts().to_dict(),<br>        <span class="hljs-string">&#x27;top_ips&#x27;</span>: df[<span class="hljs-string">&#x27;ip&#x27;</span>].value_counts().head(<span class="hljs-number">10</span>).to_dict()<br>    &#125;<br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="2-Go-运维工具示例"><a href="#2-Go-运维工具示例" class="headerlink" title="2. Go 运维工具示例"></a>2. Go 运维工具示例</h3><ol>
+<li><p><strong>Docker 容器监控</strong></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br><br><span class="hljs-keyword">import</span> (<br>    <span class="hljs-string">&quot;context&quot;</span><br>    <span class="hljs-string">&quot;fmt&quot;</span><br>    <span class="hljs-string">&quot;github.com/docker/docker/api/types&quot;</span><br>    <span class="hljs-string">&quot;github.com/docker/docker/client&quot;</span><br>)<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">monitorContainers</span><span class="hljs-params">()</span></span> &#123;<br>    ctx := context.Background()<br>    cli, err := client.NewClientWithOpts(client.FromEnv)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-built_in">panic</span>(err)<br>    &#125;<br><br>    containers, err := cli.ContainerList(ctx, types.ContainerListOptions&#123;&#125;)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-built_in">panic</span>(err)<br>    &#125;<br><br>    <span class="hljs-keyword">for</span> _, container := <span class="hljs-keyword">range</span> containers &#123;<br>        stats, err := cli.ContainerStats(ctx, container.ID, <span class="hljs-literal">false</span>)<br>        <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>            fmt.Printf(<span class="hljs-string">&quot;Error getting stats for %s: %v\n&quot;</span>, container.ID, err)<br>            <span class="hljs-keyword">continue</span><br>        &#125;<br>        <br>        fmt.Printf(<span class="hljs-string">&quot;Container: %s\n&quot;</span>, container.Names[<span class="hljs-number">0</span>])<br>        fmt.Printf(<span class="hljs-string">&quot;Status: %s\n&quot;</span>, container.Status)<br>        fmt.Printf(<span class="hljs-string">&quot;Stats: %v\n&quot;</span>, stats)<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>自动化部署工具</strong></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br><br><span class="hljs-keyword">import</span> (<br>    <span class="hljs-string">&quot;fmt&quot;</span><br>    <span class="hljs-string">&quot;k8s.io/client-go/kubernetes&quot;</span><br>    <span class="hljs-string">&quot;k8s.io/client-go/tools/clientcmd&quot;</span><br>    appsv1 <span class="hljs-string">&quot;k8s.io/api/apps/v1&quot;</span><br>    metav1 <span class="hljs-string">&quot;k8s.io/apimachinery/pkg/apis/meta/v1&quot;</span><br>)<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">deployApplication</span><span class="hljs-params">(namespace, name <span class="hljs-type">string</span>, image <span class="hljs-type">string</span>)</span></span> <span class="hljs-type">error</span> &#123;<br>    <span class="hljs-comment">// 加载 kubeconfig</span><br>    config, err := clientcmd.BuildConfigFromFlags(<span class="hljs-string">&quot;&quot;</span>, <span class="hljs-string">&quot;~/.kube/config&quot;</span>)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> err<br>    &#125;<br><br>    <span class="hljs-comment">// 创建 clientset</span><br>    clientset, err := kubernetes.NewForConfig(config)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> err<br>    &#125;<br><br>    <span class="hljs-comment">// 创建 deployment</span><br>    deployment := &amp;appsv1.Deployment&#123;<br>        ObjectMeta: metav1.ObjectMeta&#123;<br>            Name: name,<br>        &#125;,<br>        Spec: appsv1.DeploymentSpec&#123;<br>            Replicas: int32Ptr(<span class="hljs-number">3</span>),<br>            Selector: &amp;metav1.LabelSelector&#123;<br>                MatchLabels: <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]<span class="hljs-type">string</span>&#123;<br>                    <span class="hljs-string">&quot;app&quot;</span>: name,<br>                &#125;,<br>            &#125;,<br>            Template: corev1.PodTemplateSpec&#123;<br>                ObjectMeta: metav1.ObjectMeta&#123;<br>                    Labels: <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]<span class="hljs-type">string</span>&#123;<br>                        <span class="hljs-string">&quot;app&quot;</span>: name,<br>                    &#125;,<br>                &#125;,<br>                Spec: corev1.PodSpec&#123;<br>                    Containers: []corev1.Container&#123;<br>                        &#123;<br>                            Name:  name,<br>                            Image: image,<br>                        &#125;,<br>                    &#125;,<br>                &#125;,<br>            &#125;,<br>        &#125;,<br>    &#125;<br><br>    <span class="hljs-comment">// 执行部署</span><br>    _, err = clientset.AppsV1().Deployments(namespace).Create(context.TODO(), deployment, metav1.CreateOptions&#123;&#125;)<br>    <span class="hljs-keyword">return</span> err<br>&#125;<br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="3-实用的-DevOps-脚本"><a href="#3-实用的-DevOps-脚本" class="headerlink" title="3. 实用的 DevOps 脚本"></a>3. 实用的 DevOps 脚本</h3><ol>
+<li><p><strong>CI&#x2F;CD 辅助工具</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> requests<br><span class="hljs-keyword">import</span> json<br><span class="hljs-keyword">import</span> os<br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">GitlabCI</span>:<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, token, url</span>):<br>        <span class="hljs-variable language_">self</span>.token = token<br>        <span class="hljs-variable language_">self</span>.url = url<br>        <span class="hljs-variable language_">self</span>.headers = &#123;<span class="hljs-string">&#x27;PRIVATE-TOKEN&#x27;</span>: token&#125;<br>    <br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">trigger_pipeline</span>(<span class="hljs-params">self, project_id, ref=<span class="hljs-string">&#x27;main&#x27;</span></span>):<br>        endpoint = <span class="hljs-string">f&quot;<span class="hljs-subst">&#123;self.url&#125;</span>/api/v4/projects/<span class="hljs-subst">&#123;project_id&#125;</span>/pipeline&quot;</span><br>        data = &#123;<span class="hljs-string">&#x27;ref&#x27;</span>: ref&#125;<br>        <br>        response = requests.post(endpoint, headers=<span class="hljs-variable language_">self</span>.headers, data=data)<br>        <span class="hljs-keyword">return</span> response.json()<br>    <br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">get_pipeline_status</span>(<span class="hljs-params">self, project_id, pipeline_id</span>):<br>        endpoint = <span class="hljs-string">f&quot;<span class="hljs-subst">&#123;self.url&#125;</span>/api/v4/projects/<span class="hljs-subst">&#123;project_id&#125;</span>/pipelines/<span class="hljs-subst">&#123;pipeline_id&#125;</span>&quot;</span><br>        response = requests.get(endpoint, headers=<span class="hljs-variable language_">self</span>.headers)<br>        <span class="hljs-keyword">return</span> response.json()<br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>资源清理工具</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> kubernetes <span class="hljs-keyword">import</span> client, config<br><span class="hljs-keyword">from</span> datetime <span class="hljs-keyword">import</span> datetime, timedelta<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">cleanup_old_pods</span>(<span class="hljs-params">namespace, hours=<span class="hljs-number">24</span></span>):<br>    config.load_kube_config()<br>    v1 = client.CoreV1Api()<br>    <br>    <span class="hljs-keyword">try</span>:<br>        pods = v1.list_namespaced_pod(namespace)<br>        now = datetime.now(timezone.utc)<br>        <br>        <span class="hljs-keyword">for</span> pod <span class="hljs-keyword">in</span> pods.items:<br>            <span class="hljs-keyword">if</span> pod.status.phase <span class="hljs-keyword">in</span> [<span class="hljs-string">&#x27;Failed&#x27;</span>, <span class="hljs-string">&#x27;Succeeded&#x27;</span>]:<br>                created_time = pod.metadata.creation_timestamp<br>                age = now - created_time<br>                <br>                <span class="hljs-keyword">if</span> age &gt; timedelta(hours=hours):<br>                    <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;Deleting pod: <span class="hljs-subst">&#123;pod.metadata.name&#125;</span>&quot;</span>)<br>                    v1.delete_namespaced_pod(<br>                        pod.metadata.name,<br>                        namespace,<br>                        body=client.V1DeleteOptions()<br>                    )<br>    <span class="hljs-keyword">except</span> Exception <span class="hljs-keyword">as</span> e:<br>        <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;Error during cleanup: <span class="hljs-subst">&#123;e&#125;</span>&quot;</span>)<br></code></pre></td></tr></table></figure></li>
+</ol>
+<p>这些工具都是基于实际运维需求开发的。主要特点：</p>
+<ol>
+<li><p><strong>自动化</strong></p>
+<ul>
+<li>减少人工操作</li>
+<li>提高效率</li>
+<li>降低错误率</li>
+</ul>
+</li>
+<li><p><strong>监控告警</strong></p>
+<ul>
+<li>实时监控系统状态</li>
+<li>及时发现问题</li>
+<li>自动处理或通知</li>
+</ul>
+</li>
+<li><p><strong>运维管理</strong></p>
+<ul>
+<li>资源清理</li>
+<li>配置管理</li>
+<li>日志分析</li>
+</ul>
+</li>
+<li><p><strong>持续集成&#x2F;部署</strong></p>
+<ul>
+<li>自动化构建</li>
+<li>自动化测试</li>
+<li>自动化部署</li>
+</ul>
+</li>
+</ol>
+<p>根据实际需求，这些工具可以进一步定制和扩展。</p>
+<p>让我基于你的 pod.yaml 文件，写一个实用的 Python 脚本来监控和管理这个 Pod：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> kubernetes <span class="hljs-keyword">import</span> client, config<br><span class="hljs-keyword">import</span> time<br><span class="hljs-keyword">from</span> datetime <span class="hljs-keyword">import</span> datetime<br><span class="hljs-keyword">import</span> logging<br><br>logging.basicConfig(level=logging.INFO)<br>logger = logging.getLogger(__name__)<br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">PodMonitor</span>:<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, namespace=<span class="hljs-string">&quot;default&quot;</span></span>):<br>        <span class="hljs-comment"># 加载 k8s 配置</span><br>        config.load_kube_config()<br>        <span class="hljs-variable language_">self</span>.v1 = client.CoreV1Api()<br>        <span class="hljs-variable language_">self</span>.namespace = namespace<br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">monitor_pod_resources</span>(<span class="hljs-params">self, pod_name</span>):<br>        <span class="hljs-string">&quot;&quot;&quot;监控 Pod 的资源使用情况&quot;&quot;&quot;</span><br>        <span class="hljs-keyword">try</span>:<br>            pod = <span class="hljs-variable language_">self</span>.v1.read_namespaced_pod(pod_name, <span class="hljs-variable language_">self</span>.namespace)<br>            <br>            <span class="hljs-comment"># 检查资源限制和请求</span><br>            <span class="hljs-keyword">for</span> container <span class="hljs-keyword">in</span> pod.spec.containers:<br>                resources = container.resources<br>                logger.info(<span class="hljs-string">f&quot;Container: <span class="hljs-subst">&#123;container.name&#125;</span>&quot;</span>)<br>                logger.info(<span class="hljs-string">f&quot;Resource Limits: <span class="hljs-subst">&#123;resources.limits&#125;</span>&quot;</span>)<br>                logger.info(<span class="hljs-string">f&quot;Resource Requests: <span class="hljs-subst">&#123;resources.requests&#125;</span>&quot;</span>)<br><br>            <span class="hljs-comment"># 检查 Pod 状态</span><br>            logger.info(<span class="hljs-string">f&quot;Pod Status: <span class="hljs-subst">&#123;pod.status.phase&#125;</span>&quot;</span>)<br>            <br>            <span class="hljs-comment"># 检查就绪状态</span><br>            <span class="hljs-keyword">if</span> pod.status.container_statuses:<br>                <span class="hljs-keyword">for</span> container <span class="hljs-keyword">in</span> pod.status.container_statuses:<br>                    logger.info(<span class="hljs-string">f&quot;Container <span class="hljs-subst">&#123;container.name&#125;</span> Ready: <span class="hljs-subst">&#123;container.ready&#125;</span>&quot;</span>)<br>                    logger.info(<span class="hljs-string">f&quot;Restart Count: <span class="hljs-subst">&#123;container.restart_count&#125;</span>&quot;</span>)<br><br>        <span class="hljs-keyword">except</span> Exception <span class="hljs-keyword">as</span> e:<br>            logger.error(<span class="hljs-string">f&quot;Error monitoring pod <span class="hljs-subst">&#123;pod_name&#125;</span>: <span class="hljs-subst">&#123;e&#125;</span>&quot;</span>)<br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">check_probes</span>(<span class="hljs-params">self, pod_name</span>):<br>        <span class="hljs-string">&quot;&quot;&quot;检查 Pod 的健康检查状态&quot;&quot;&quot;</span><br>        <span class="hljs-keyword">try</span>:<br>            pod = <span class="hljs-variable language_">self</span>.v1.read_namespaced_pod(pod_name, <span class="hljs-variable language_">self</span>.namespace)<br>            <br>            <span class="hljs-keyword">for</span> container <span class="hljs-keyword">in</span> pod.spec.containers:<br>                logger.info(<span class="hljs-string">f&quot;Container: <span class="hljs-subst">&#123;container.name&#125;</span>&quot;</span>)<br>                <br>                <span class="hljs-keyword">if</span> container.readiness_probe:<br>                    logger.info(<span class="hljs-string">&quot;Readiness Probe:&quot;</span>)<br>                    logger.info(<span class="hljs-string">f&quot;Initial Delay: <span class="hljs-subst">&#123;container.readiness_probe.initial_delay_seconds&#125;</span>s&quot;</span>)<br>                    logger.info(<span class="hljs-string">f&quot;Period: <span class="hljs-subst">&#123;container.readiness_probe.period_seconds&#125;</span>s&quot;</span>)<br>                <br>                <span class="hljs-keyword">if</span> container.liveness_probe:<br>                    logger.info(<span class="hljs-string">&quot;Liveness Probe:&quot;</span>)<br>                    logger.info(<span class="hljs-string">f&quot;Initial Delay: <span class="hljs-subst">&#123;container.liveness_probe.initial_delay_seconds&#125;</span>s&quot;</span>)<br>                    logger.info(<span class="hljs-string">f&quot;Period: <span class="hljs-subst">&#123;container.liveness_probe.period_seconds&#125;</span>s&quot;</span>)<br><br>        <span class="hljs-keyword">except</span> Exception <span class="hljs-keyword">as</span> e:<br>            logger.error(<span class="hljs-string">f&quot;Error checking probes for pod <span class="hljs-subst">&#123;pod_name&#125;</span>: <span class="hljs-subst">&#123;e&#125;</span>&quot;</span>)<br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">check_configmap_mounted</span>(<span class="hljs-params">self, pod_name</span>):<br>        <span class="hljs-string">&quot;&quot;&quot;检查 ConfigMap 挂载状态&quot;&quot;&quot;</span><br>        <span class="hljs-keyword">try</span>:<br>            pod = <span class="hljs-variable language_">self</span>.v1.read_namespaced_pod(pod_name, <span class="hljs-variable language_">self</span>.namespace)<br>            <br>            <span class="hljs-keyword">for</span> volume <span class="hljs-keyword">in</span> pod.spec.volumes:<br>                <span class="hljs-keyword">if</span> volume.config_map:<br>                    logger.info(<span class="hljs-string">f&quot;ConfigMap mounted: <span class="hljs-subst">&#123;volume.config_map.name&#125;</span>&quot;</span>)<br>                    <br>                    <span class="hljs-comment"># 检查 ConfigMap 是否存在</span><br>                    <span class="hljs-keyword">try</span>:<br>                        config_map = <span class="hljs-variable language_">self</span>.v1.read_namespaced_config_map(<br>                            volume.config_map.name, <br>                            <span class="hljs-variable language_">self</span>.namespace<br>                        )<br>                        logger.info(<span class="hljs-string">&quot;ConfigMap exists and is accessible&quot;</span>)<br>                    <span class="hljs-keyword">except</span> Exception <span class="hljs-keyword">as</span> e:<br>                        logger.error(<span class="hljs-string">f&quot;Error accessing ConfigMap: <span class="hljs-subst">&#123;e&#125;</span>&quot;</span>)<br><br>        <span class="hljs-keyword">except</span> Exception <span class="hljs-keyword">as</span> e:<br>            logger.error(<span class="hljs-string">f&quot;Error checking ConfigMap for pod <span class="hljs-subst">&#123;pod_name&#125;</span>: <span class="hljs-subst">&#123;e&#125;</span>&quot;</span>)<br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">continuous_monitoring</span>(<span class="hljs-params">self, pod_name, interval=<span class="hljs-number">60</span></span>):<br>        <span class="hljs-string">&quot;&quot;&quot;持续监控 Pod&quot;&quot;&quot;</span><br>        <span class="hljs-keyword">while</span> <span class="hljs-literal">True</span>:<br>            logger.info(<span class="hljs-string">f&quot;\n=== Monitoring Pod <span class="hljs-subst">&#123;pod_name&#125;</span> at <span class="hljs-subst">&#123;datetime.now()&#125;</span> ===&quot;</span>)<br>            <span class="hljs-variable language_">self</span>.monitor_pod_resources(pod_name)<br>            <span class="hljs-variable language_">self</span>.check_probes(pod_name)<br>            <span class="hljs-variable language_">self</span>.check_configmap_mounted(pod_name)<br>            time.sleep(interval)<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">main</span>():<br>    monitor = PodMonitor()<br>    pod_name = <span class="hljs-string">&quot;app-pod&quot;</span>  <span class="hljs-comment"># 你的 pod 名称</span><br>    <br>    <span class="hljs-keyword">try</span>:<br>        monitor.continuous_monitoring(pod_name)<br>    <span class="hljs-keyword">except</span> KeyboardInterrupt:<br>        logger.info(<span class="hljs-string">&quot;Monitoring stopped by user&quot;</span>)<br>    <span class="hljs-keyword">except</span> Exception <span class="hljs-keyword">as</span> e:<br>        logger.error(<span class="hljs-string">f&quot;Unexpected error: <span class="hljs-subst">&#123;e&#125;</span>&quot;</span>)<br><br><span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">&quot;__main__&quot;</span>:<br>    main()<br></code></pre></td></tr></table></figure>
+
+<p>这个脚本提供了以下功能：</p>
+<ol>
+<li><p><strong>资源监控</strong></p>
+<ul>
+<li>检查 CPU 和内存使用</li>
+<li>监控容器状态</li>
+<li>跟踪重启次数</li>
+</ul>
+</li>
+<li><p><strong>健康检查监控</strong></p>
+<ul>
+<li>监控 readinessProbe</li>
+<li>监控 livenessProbe</li>
+<li>检查探针配置</li>
+</ul>
+</li>
+<li><p><strong>配置检查</strong></p>
+<ul>
+<li>验证 ConfigMap 挂载</li>
+<li>检查 ConfigMap 可访问性</li>
+</ul>
+</li>
+<li><p><strong>持续监控</strong></p>
+<ul>
+<li>定期检查 Pod 状态</li>
+<li>输出详细日志</li>
+<li>异常处理和报告</li>
+</ul>
+</li>
+</ol>
+<p>你可以根据需要调整监控间隔和添加其他监控指标。要使用这个脚本，需要先安装 kubernetes 客户端：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">pip install kubernetes<br></code></pre></td></tr></table></figure>
+
+<p>这个工具可以帮助你更好地监控和管理你的 Pod。</p>
+<p>我再基于你的 pod.yaml 写一个更实用的 Go 版本的监控工具，这个版本会更关注性能和并发处理：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br><br><span class="hljs-keyword">import</span> (<br>    <span class="hljs-string">&quot;context&quot;</span><br>    <span class="hljs-string">&quot;fmt&quot;</span><br>    <span class="hljs-string">&quot;time&quot;</span><br>    <span class="hljs-string">&quot;log&quot;</span><br>    <br>    metav1 <span class="hljs-string">&quot;k8s.io/apimachinery/pkg/apis/meta/v1&quot;</span><br>    <span class="hljs-string">&quot;k8s.io/client-go/kubernetes&quot;</span><br>    <span class="hljs-string">&quot;k8s.io/client-go/tools/clientcmd&quot;</span><br>    <span class="hljs-string">&quot;k8s.io/client-go/util/homedir&quot;</span><br>    <span class="hljs-string">&quot;path/filepath&quot;</span><br>)<br><br><span class="hljs-keyword">type</span> PodMonitor <span class="hljs-keyword">struct</span> &#123;<br>    clientset *kubernetes.Clientset<br>    namespace <span class="hljs-type">string</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">NewPodMonitor</span><span class="hljs-params">(namespace <span class="hljs-type">string</span>)</span></span> (*PodMonitor, <span class="hljs-type">error</span>) &#123;<br>    <span class="hljs-comment">// 获取 kubeconfig 路径</span><br>    kubeconfig := filepath.Join(homedir.HomeDir(), <span class="hljs-string">&quot;.kube&quot;</span>, <span class="hljs-string">&quot;config&quot;</span>)<br>    <br>    <span class="hljs-comment">// 创建 config</span><br>    config, err := clientcmd.BuildConfigFromFlags(<span class="hljs-string">&quot;&quot;</span>, kubeconfig)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, fmt.Errorf(<span class="hljs-string">&quot;error building config: %v&quot;</span>, err)<br>    &#125;<br>    <br>    <span class="hljs-comment">// 创建 clientset</span><br>    clientset, err := kubernetes.NewForConfig(config)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, fmt.Errorf(<span class="hljs-string">&quot;error creating clientset: %v&quot;</span>, err)<br>    &#125;<br>    <br>    <span class="hljs-keyword">return</span> &amp;PodMonitor&#123;<br>        clientset: clientset,<br>        namespace: namespace,<br>    &#125;, <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(pm *PodMonitor)</span></span> MonitorPod(ctx context.Context, podName <span class="hljs-type">string</span>) &#123;<br>    ticker := time.NewTicker(<span class="hljs-number">30</span> * time.Second)<br>    <span class="hljs-keyword">defer</span> ticker.Stop()<br>    <br>    <span class="hljs-keyword">for</span> &#123;<br>        <span class="hljs-keyword">select</span> &#123;<br>        <span class="hljs-keyword">case</span> &lt;-ctx.Done():<br>            log.Println(<span class="hljs-string">&quot;Monitoring stopped&quot;</span>)<br>            <span class="hljs-keyword">return</span><br>        <span class="hljs-keyword">case</span> &lt;-ticker.C:<br>            pod, err := pm.clientset.CoreV1().Pods(pm.namespace).Get(<br>                context.Background(),<br>                podName,<br>                metav1.GetOptions&#123;&#125;,<br>            )<br>            <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>                log.Printf(<span class="hljs-string">&quot;Error getting pod %s: %v\n&quot;</span>, podName, err)<br>                <span class="hljs-keyword">continue</span><br>            &#125;<br>            <br>            <span class="hljs-comment">// 检查 Pod 状态</span><br>            log.Printf(<span class="hljs-string">&quot;Pod Status: %s\n&quot;</span>, pod.Status.Phase)<br>            <br>            <span class="hljs-comment">// 检查容器状态</span><br>            <span class="hljs-keyword">for</span> _, container := <span class="hljs-keyword">range</span> pod.Status.ContainerStatuses &#123;<br>                log.Printf(<span class="hljs-string">&quot;Container: %s\n&quot;</span>, container.Name)<br>                log.Printf(<span class="hljs-string">&quot;  Ready: %v\n&quot;</span>, container.Ready)<br>                log.Printf(<span class="hljs-string">&quot;  RestartCount: %d\n&quot;</span>, container.RestartCount)<br>                <br>                <span class="hljs-comment">// 检查资源使用</span><br>                <span class="hljs-keyword">if</span> container.State.Running != <span class="hljs-literal">nil</span> &#123;<br>                    log.Printf(<span class="hljs-string">&quot;  Running since: %v\n&quot;</span>, container.State.Running.StartedAt)<br>                &#125;<br>            &#125;<br>            <br>            <span class="hljs-comment">// 检查资源配置</span><br>            <span class="hljs-keyword">for</span> _, container := <span class="hljs-keyword">range</span> pod.Spec.Containers &#123;<br>                resources := container.Resources<br>                log.Printf(<span class="hljs-string">&quot;Resource Limits - CPU: %s, Memory: %s\n&quot;</span>,<br>                    resources.Limits.Cpu(),<br>                    resources.Limits.Memory(),<br>                )<br>                log.Printf(<span class="hljs-string">&quot;Resource Requests - CPU: %s, Memory: %s\n&quot;</span>,<br>                    resources.Requests.Cpu(),<br>                    resources.Requests.Memory(),<br>                )<br>            &#125;<br>        &#125;<br>    &#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(pm *PodMonitor)</span></span> CheckProbes(podName <span class="hljs-type">string</span>) <span class="hljs-type">error</span> &#123;<br>    pod, err := pm.clientset.CoreV1().Pods(pm.namespace).Get(<br>        context.Background(),<br>        podName,<br>        metav1.GetOptions&#123;&#125;,<br>    )<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> fmt.Errorf(<span class="hljs-string">&quot;error getting pod: %v&quot;</span>, err)<br>    &#125;<br>    <br>    <span class="hljs-keyword">for</span> _, container := <span class="hljs-keyword">range</span> pod.Spec.Containers &#123;<br>        log.Printf(<span class="hljs-string">&quot;Container: %s\n&quot;</span>, container.Name)<br>        <br>        <span class="hljs-keyword">if</span> container.ReadinessProbe != <span class="hljs-literal">nil</span> &#123;<br>            log.Printf(<span class="hljs-string">&quot;ReadinessProbe:\n&quot;</span>)<br>            log.Printf(<span class="hljs-string">&quot;  InitialDelay: %ds\n&quot;</span>, container.ReadinessProbe.InitialDelaySeconds)<br>            log.Printf(<span class="hljs-string">&quot;  Period: %ds\n&quot;</span>, container.ReadinessProbe.PeriodSeconds)<br>        &#125;<br>        <br>        <span class="hljs-keyword">if</span> container.LivenessProbe != <span class="hljs-literal">nil</span> &#123;<br>            log.Printf(<span class="hljs-string">&quot;LivenessProbe:\n&quot;</span>)<br>            log.Printf(<span class="hljs-string">&quot;  InitialDelay: %ds\n&quot;</span>, container.LivenessProbe.InitialDelaySeconds)<br>            log.Printf(<span class="hljs-string">&quot;  Period: %ds\n&quot;</span>, container.LivenessProbe.PeriodSeconds)<br>        &#125;<br>    &#125;<br>    <br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>    monitor, err := NewPodMonitor(<span class="hljs-string">&quot;default&quot;</span>)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        log.Fatalf(<span class="hljs-string">&quot;Error creating monitor: %v&quot;</span>, err)<br>    &#125;<br>    <br>    ctx, cancel := context.WithCancel(context.Background())<br>    <span class="hljs-keyword">defer</span> cancel()<br>    <br>    <span class="hljs-comment">// 启动监控</span><br>    <span class="hljs-keyword">go</span> monitor.MonitorPod(ctx, <span class="hljs-string">&quot;app-pod&quot;</span>)<br>    <br>    <span class="hljs-comment">// 检查探针配置</span><br>    <span class="hljs-keyword">if</span> err := monitor.CheckProbes(<span class="hljs-string">&quot;app-pod&quot;</span>); err != <span class="hljs-literal">nil</span> &#123;<br>        log.Printf(<span class="hljs-string">&quot;Error checking probes: %v\n&quot;</span>, err)<br>    &#125;<br>    <br>    <span class="hljs-comment">// 保持程序运行</span><br>    <span class="hljs-keyword">select</span> &#123;<br>    <span class="hljs-keyword">case</span> &lt;-ctx.Done():<br>        log.Println(<span class="hljs-string">&quot;Program terminated&quot;</span>)<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>这个 Go 版本的监控工具具有以下特点：</p>
+<ol>
+<li><p><strong>性能更好</strong></p>
+<ul>
+<li>使用 Go 的并发特性</li>
+<li>更低的资源消耗</li>
+<li>更快的响应速度</li>
+</ul>
+</li>
+<li><p><strong>更好的错误处理</strong></p>
+<ul>
+<li>使用 context 控制生命周期</li>
+<li>详细的错误信息</li>
+<li>优雅的退出机制</li>
+</ul>
+</li>
+<li><p><strong>功能完整</strong></p>
+<ul>
+<li>监控 Pod 状态</li>
+<li>检查资源使用</li>
+<li>探针状态监控</li>
+</ul>
+</li>
+</ol>
+<p>要运行这个程序，需要先安装依赖：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">go get k8s.io/client-go@latest<br></code></pre></td></tr></table></figure>
+
+<p>这个工具比 Python 版本的性能更好，特别是在需要长期运行或监控多个 Pod 的场景下。</p>
+<h2 id="减少docker镜像的体积大小"><a href="#减少docker镜像的体积大小" class="headerlink" title="减少docker镜像的体积大小"></a>减少docker镜像的体积大小</h2><p>基于减少 Docker 镜像体积，我来举例说明几种常用的优化方法：</p>
+<h3 id="1-多阶段构建-Multi-stage-Build"><a href="#1-多阶段构建-Multi-stage-Build" class="headerlink" title="1. 多阶段构建 (Multi-stage Build)"></a>1. 多阶段构建 (Multi-stage Build)</h3><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-comment"># 构建阶段</span><br><span class="hljs-keyword">FROM</span> maven:<span class="hljs-number">3.8</span>.<span class="hljs-number">1</span>-jdk-<span class="hljs-number">8</span> AS builder<br><span class="hljs-keyword">WORKDIR</span><span class="language-bash"> /app</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> pom.xml .</span><br><span class="hljs-comment"># 缓存依赖</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> mvn dependency:go-offline</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> src ./src</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> mvn package -DskipTests</span><br><br><span class="hljs-comment"># 运行阶段 - 使用更小的基础镜像</span><br><span class="hljs-keyword">FROM</span> openjdk:<span class="hljs-number">8</span>-jre-alpine<br><span class="hljs-keyword">WORKDIR</span><span class="language-bash"> /app</span><br><span class="hljs-comment"># 只复制构建产物</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> --from=builder /app/target/*.jar app.jar</span><br><span class="hljs-keyword">ENTRYPOINT</span><span class="language-bash"> [<span class="hljs-string">&quot;java&quot;</span>, <span class="hljs-string">&quot;-jar&quot;</span>, <span class="hljs-string">&quot;app.jar&quot;</span>]</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-使用轻量级基础镜像"><a href="#2-使用轻量级基础镜像" class="headerlink" title="2. 使用轻量级基础镜像"></a>2. 使用轻量级基础镜像</h3><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-comment"># 不推荐</span><br><span class="hljs-keyword">FROM</span> ubuntu:latest    <span class="hljs-comment"># ~70MB</span><br><br><span class="hljs-comment"># 推荐</span><br><span class="hljs-keyword">FROM</span> alpine:latest    <span class="hljs-comment"># ~5MB</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="3-优化-RUN-指令和清理"><a href="#3-优化-RUN-指令和清理" class="headerlink" title="3. 优化 RUN 指令和清理"></a>3. 优化 RUN 指令和清理</h3><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-keyword">FROM</span> python:<span class="hljs-number">3.9</span>-alpine<br><br><span class="hljs-keyword">WORKDIR</span><span class="language-bash"> /app</span><br><br><span class="hljs-keyword">COPY</span><span class="language-bash"> requirements.txt .</span><br><br><span class="hljs-comment"># 合并命令并清理缓存</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> pip install --no-cache-dir -r requirements.txt &amp;&amp; \</span><br><span class="language-bash">    <span class="hljs-built_in">rm</span> -rf /root/.cache/pip &amp;&amp; \</span><br><span class="language-bash">    <span class="hljs-built_in">rm</span> -rf /var/cache/apk/*</span><br><br><span class="hljs-keyword">COPY</span><span class="language-bash"> . .</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="4-使用-dockerignore"><a href="#4-使用-dockerignore" class="headerlink" title="4. 使用 .dockerignore"></a>4. 使用 .dockerignore</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs text:.dockerignore"># 排除不需要的文件<br>node_modules<br>*.log<br>.git<br>.env<br>*.md<br>tests<br>docs<br>*.pyc<br>__pycache__<br>.pytest_cache<br></code></pre></td></tr></table></figure>
+
+<h3 id="5-生产环境优化示例"><a href="#5-生产环境优化示例" class="headerlink" title="5. 生产环境优化示例"></a>5. 生产环境优化示例</h3><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-comment"># Node.js 应用优化示例</span><br><span class="hljs-keyword">FROM</span> node:alpine AS builder<br><span class="hljs-keyword">WORKDIR</span><span class="language-bash"> /app</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> package*.json ./</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> npm ci --only=production</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> . .</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> npm run build</span><br><br><span class="hljs-comment"># 使用更轻量的镜像运行</span><br><span class="hljs-keyword">FROM</span> nginx:alpine<br><span class="hljs-keyword">COPY</span><span class="language-bash"> --from=builder /app/build /usr/share/nginx/html</span><br><span class="hljs-keyword">EXPOSE</span> <span class="hljs-number">80</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="6-分离开发和生产依赖"><a href="#6-分离开发和生产依赖" class="headerlink" title="6. 分离开发和生产依赖"></a>6. 分离开发和生产依赖</h3><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-comment"># 开发环境</span><br><span class="hljs-keyword">FROM</span> node:alpine AS development<br><span class="hljs-keyword">WORKDIR</span><span class="language-bash"> /app</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> package*.json ./</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> npm install</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> . .</span><br><br><span class="hljs-comment"># 生产环境</span><br><span class="hljs-keyword">FROM</span> node:alpine AS production<br><span class="hljs-keyword">WORKDIR</span><span class="language-bash"> /app</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> package*.json ./</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> npm ci --only=production</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> --from=development /app/dist ./dist</span><br><span class="hljs-keyword">CMD</span><span class="language-bash"> [<span class="hljs-string">&quot;node&quot;</span>, <span class="hljs-string">&quot;dist/main&quot;</span>]</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="7-最佳实践总结"><a href="#7-最佳实践总结" class="headerlink" title="7. 最佳实践总结"></a>7. 最佳实践总结</h3><ol>
+<li><p><strong>选择合适的基础镜像</strong></p>
+<ul>
+<li>使用官方镜像</li>
+<li>选择 alpine 版本</li>
+<li>使用特定版本标签</li>
+</ul>
+</li>
+<li><p><strong>优化构建过程</strong></p>
+<ul>
+<li>合并 RUN 指令</li>
+<li>清理缓存文件</li>
+<li>使用多阶段构建</li>
+</ul>
+</li>
+<li><p><strong>文件处理</strong></p>
+<ul>
+<li>使用 .dockerignore</li>
+<li>只复制必要文件</li>
+<li>删除临时文件</li>
+</ul>
+</li>
+<li><p><strong>依赖管理</strong></p>
+<ul>
+<li>只安装生产依赖</li>
+<li>使用版本锁定</li>
+<li>清理包管理器缓存</li>
+</ul>
+</li>
+</ol>
+<h3 id="8-实际示例（基于你的-pod-yaml）"><a href="#8-实际示例（基于你的-pod-yaml）" class="headerlink" title="8. 实际示例（基于你的 pod.yaml）"></a>8. 实际示例（基于你的 pod.yaml）</h3><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-comment"># 多阶段构建示例</span><br><span class="hljs-keyword">FROM</span> node:alpine AS builder<br><span class="hljs-keyword">WORKDIR</span><span class="language-bash"> /app</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> package*.json ./</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> npm ci --only=production</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> . .</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> npm run build</span><br><br><span class="hljs-comment"># 生产镜像</span><br><span class="hljs-keyword">FROM</span> nginx:alpine<br><span class="hljs-comment"># 复制构建产物</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> --from=builder /app/dist /usr/share/nginx/html</span><br><span class="hljs-comment"># 复制 nginx 配置</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> nginx.conf /etc/nginx/conf.d/default.conf</span><br><br><span class="hljs-comment"># 设置用户</span><br><span class="hljs-keyword">USER</span> nginx<br><br><span class="hljs-comment"># 资源使用限制（对应 pod.yaml 中的设置）</span><br><span class="hljs-keyword">ENV</span> NODE_OPTIONS=<span class="hljs-string">&quot;--max-old-space-size=256&quot;</span><br><br><span class="hljs-keyword">EXPOSE</span> <span class="hljs-number">80</span><br><br><span class="hljs-comment"># 健康检查</span><br><span class="hljs-keyword">HEALTHCHECK</span><span class="language-bash"> --interval=30s --<span class="hljs-built_in">timeout</span>=3s \</span><br><span class="language-bash">    CMD wget -q --spider http://localhost/ || <span class="hljs-built_in">exit</span> 1</span><br></code></pre></td></tr></table></figure>
+
+<p>这些优化可以显著减少镜像大小，提高部署效率。记住要根据实际应用需求选择适当的优化策略。</p>
+<h2 id="多阶段构建啥意思"><a href="#多阶段构建啥意思" class="headerlink" title="多阶段构建啥意思"></a>多阶段构建啥意思</h2><p>多阶段构建（Multi-stage Build）是一种优化 Docker 镜像大小的技术。让我用具体例子解释：</p>
+<h3 id="1-传统构建方式（单阶段）"><a href="#1-传统构建方式（单阶段）" class="headerlink" title="1. 传统构建方式（单阶段）"></a>1. 传统构建方式（单阶段）</h3><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-comment"># 这种方式最终镜像会包含构建工具和中间文件，体积很大</span><br><span class="hljs-keyword">FROM</span> maven:<span class="hljs-number">3.8</span>.<span class="hljs-number">1</span>-jdk-<span class="hljs-number">8</span><br><span class="hljs-keyword">WORKDIR</span><span class="language-bash"> /app</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> . .</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> mvn package</span><br><span class="hljs-keyword">CMD</span><span class="language-bash"> [<span class="hljs-string">&quot;java&quot;</span>, <span class="hljs-string">&quot;-jar&quot;</span>, <span class="hljs-string">&quot;target/app.jar&quot;</span>]</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-多阶段构建方式"><a href="#2-多阶段构建方式" class="headerlink" title="2. 多阶段构建方式"></a>2. 多阶段构建方式</h3><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-comment"># 第一阶段：构建阶段</span><br><span class="hljs-keyword">FROM</span> maven:<span class="hljs-number">3.8</span>.<span class="hljs-number">1</span>-jdk-<span class="hljs-number">8</span> AS builder<br><span class="hljs-keyword">WORKDIR</span><span class="language-bash"> /app</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> pom.xml .</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> src ./src</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> mvn package</span><br><br><span class="hljs-comment"># 第二阶段：运行阶段</span><br><span class="hljs-keyword">FROM</span> openjdk:<span class="hljs-number">8</span>-jre-alpine<br><span class="hljs-keyword">WORKDIR</span><span class="language-bash"> /app</span><br><span class="hljs-comment"># 只复制第一阶段构建的产物</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> --from=builder /app/target/*.jar app.jar</span><br><span class="hljs-keyword">CMD</span><span class="language-bash"> [<span class="hljs-string">&quot;java&quot;</span>, <span class="hljs-string">&quot;-jar&quot;</span>, <span class="hljs-string">&quot;app.jar&quot;</span>]</span><br></code></pre></td></tr></table></figure>
+
+<p>主要优点：</p>
+<ol>
+<li><strong>最终镜像更小</strong>：只包含运行必需的文件</li>
+<li><strong>更安全</strong>：不包含构建工具和源代码</li>
+<li><strong>层更少</strong>：优化缓存和构建速度</li>
+</ol>
+<h3 id="3-更复杂的多阶段构建示例"><a href="#3-更复杂的多阶段构建示例" class="headerlink" title="3. 更复杂的多阶段构建示例"></a>3. 更复杂的多阶段构建示例</h3><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-comment"># 第一阶段：依赖安装</span><br><span class="hljs-keyword">FROM</span> node:alpine AS dependencies<br><span class="hljs-keyword">WORKDIR</span><span class="language-bash"> /app</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> package*.json ./</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> npm ci --only=production</span><br><br><span class="hljs-comment"># 第二阶段：构建</span><br><span class="hljs-keyword">FROM</span> node:alpine AS builder<br><span class="hljs-keyword">WORKDIR</span><span class="language-bash"> /app</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> --from=dependencies /app/node_modules ./node_modules</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> . .</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> npm run build</span><br><br><span class="hljs-comment"># 第三阶段：运行</span><br><span class="hljs-keyword">FROM</span> nginx:alpine<br><span class="hljs-comment"># 只复制构建产物</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> --from=builder /app/dist /usr/share/nginx/html</span><br><span class="hljs-comment"># 配置文件</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> nginx.conf /etc/nginx/conf.d/default.conf</span><br><span class="hljs-keyword">EXPOSE</span> <span class="hljs-number">80</span><br></code></pre></td></tr></table></figure>
+
+<p>这个例子中：</p>
+<ol>
+<li>第一阶段安装依赖</li>
+<li>第二阶段进行构建</li>
+<li>第三阶段只包含运行所需的文件</li>
+</ol>
+<p>最终镜像只包含：</p>
+<ul>
+<li>nginx 运行环境</li>
+<li>构建后的静态文件</li>
+<li>nginx 配置</li>
+</ul>
+<p>不包含：</p>
+<ul>
+<li>node.js 环境</li>
+<li>npm 包</li>
+<li>源代码</li>
+<li>构建工具</li>
+</ul>
+<p>这样可以大大减少最终镜像的大小，通常可以减少 60-90% 的体积。</p>
+<p>好的，我看到你有一个 pod.yaml 文件。让我结合你的 pod.yaml 配置，写一个实际的多阶段构建的例子，这样可以确保构建出的镜像既小巧又符合你的资源限制要求：</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-comment"># 第一阶段：依赖安装和构建</span><br><span class="hljs-keyword">FROM</span> node:alpine AS builder<br><span class="hljs-keyword">WORKDIR</span><span class="language-bash"> /app</span><br><br><span class="hljs-comment"># 安装依赖</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> package*.json ./</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> npm ci --only=production</span><br><br><span class="hljs-comment"># 复制源代码并构建</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> . .</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> npm run build</span><br><br><span class="hljs-comment"># 第二阶段：运行环境</span><br><span class="hljs-keyword">FROM</span> nginx:alpine<br><span class="hljs-keyword">WORKDIR</span><span class="language-bash"> /usr/share/nginx/html</span><br><br><span class="hljs-comment"># 从builder阶段复制构建产物</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> --from=builder /app/dist .</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> nginx.conf /etc/nginx/conf.d/default.conf</span><br><br><span class="hljs-comment"># 设置非root用户运行</span><br><span class="hljs-keyword">USER</span> nginx<br><br><span class="hljs-comment"># 配置健康检查，对应 pod.yaml 中的探针配置</span><br><span class="hljs-keyword">HEALTHCHECK</span><span class="language-bash"> --interval=10s --<span class="hljs-built_in">timeout</span>=3s \</span><br><span class="language-bash">    CMD wget -q --spider http://localhost/ || <span class="hljs-built_in">exit</span> 1</span><br><br><span class="hljs-comment"># 资源使用优化，对应 pod.yaml 中的资源限制</span><br><span class="hljs-keyword">ENV</span> NODE_OPTIONS=<span class="hljs-string">&quot;--max-old-space-size=256&quot;</span><br><br><span class="hljs-keyword">EXPOSE</span> <span class="hljs-number">80</span><br></code></pre></td></tr></table></figure>
+
+<p>这个 Dockerfile：</p>
+<ol>
+<li>构建阶段只包含必要的构建工具</li>
+<li>运行阶段使用轻量级的 alpine 基础镜像</li>
+<li>最终镜像符合 pod.yaml 中的资源限制和健康检查要求</li>
+</ol>
+<p>这样构建出的镜像会更小，更适合在你的 K8s 环境中运行。</p>
+<p>是的！我注意到你的 pod.yaml 配置得很规范，包含了资源限制、健康检查等重要配置。让我们可以进一步优化 Dockerfile，使其完全匹配你的 pod.yaml 配置：</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-comment"># 第一阶段：构建</span><br><span class="hljs-keyword">FROM</span> node:alpine AS builder<br><span class="hljs-keyword">WORKDIR</span><span class="language-bash"> /app</span><br><br><span class="hljs-comment"># 使用 .dockerignore 排除不必要文件</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> package*.json ./</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> npm ci --only=production</span><br><br><span class="hljs-keyword">COPY</span><span class="language-bash"> . .</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> npm run build</span><br><br><span class="hljs-comment"># 第二阶段：运行</span><br><span class="hljs-keyword">FROM</span> nginx:alpine<br><span class="hljs-keyword">WORKDIR</span><span class="language-bash"> /usr/share/nginx/html</span><br><br><span class="hljs-comment"># 对应 pod.yaml 中的资源限制</span><br><span class="hljs-comment"># memory: &quot;256Mi&quot;</span><br><span class="hljs-comment"># cpu: &quot;500m&quot;</span><br><span class="hljs-keyword">ENV</span> NGINX_WORKER_PROCESSES=<span class="hljs-string">&quot;auto&quot;</span><br><span class="hljs-keyword">ENV</span> NGINX_WORKER_CONNECTIONS=<span class="hljs-string">&quot;1024&quot;</span><br><br><span class="hljs-comment"># 复制构建产物</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> --from=builder /app/dist .</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> nginx.conf /etc/nginx/conf.d/default.conf</span><br><br><span class="hljs-comment"># 对应 pod.yaml 中的健康检查配置</span><br><span class="hljs-comment"># readinessProbe 和 livenessProbe</span><br><span class="hljs-keyword">HEALTHCHECK</span><span class="language-bash"> --interval=10s --<span class="hljs-built_in">timeout</span>=3s \</span><br><span class="language-bash">    CMD wget -q --spider http://localhost/ || <span class="hljs-built_in">exit</span> 1</span><br><br><span class="hljs-comment"># 安全性配置</span><br><span class="hljs-keyword">USER</span> nginx<br><br><span class="hljs-keyword">EXPOSE</span> <span class="hljs-number">80</span><br></code></pre></td></tr></table></figure>
+
+<p>这样构建出的镜像不仅体积小，而且完全符合你在 pod.yaml 中定义的运行要求。你觉得这样的优化方向对吗？</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>面试2025-02-11</div>
+      <div>http://example.com/2025/02/11/2025-2-11 面试0211/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年2月11日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/02/07/2025-2-7%20%E8%AE%A1%E5%88%92/" title="美国码农薪酬">
+                        <span class="hidden-mobile">美国码农薪酬</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
