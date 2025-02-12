@@ -229,6 +229,39 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2025/01/16/K8S%20%E6%8E%A2%E9%92%88%E5%8E%9F%E7%90%86-k8s-tan-zhen-yuan-li/" target="_self">
+          K8S 探针原理 2024-04-03 14:53:29.429
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/01/16/K8S%20%E6%8E%A2%E9%92%88%E5%8E%9F%E7%90%86-k8s-tan-zhen-yuan-li/" target="_self">
+        <div>
+          K8S 探针的背景Kubernetes 可以对业务进行故障自愈，即针对运行异常的 Pod 进行重启。那么 K8S 是如何认定 Pod 是否异常呢？Kubelet 组件根据 Pod 中容器退出状态码判定 Pod 是否异常，然后重启 Pod，进而达到故障自愈的效果。但是有些复杂场景，这种判定 Pod 异常的机制就无法满足了。例如，Pod 中容器进程依然存在，但是容器死锁了，那么服务肯定是异常了，但是这
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-01-16 10:08" pubdate>
+              2025-01-16
+            </time>
+          </div>
+        
+        
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2025/01/16/K8S%20csi%20openebs%E5%8E%9F%E7%90%86-k8scsiopenebs-yuan-li/" target="_self">
           K8S csi openebs原理 2024-04-03 14:44:48.967
         </a>
@@ -502,39 +535,6 @@
       <a class="index-excerpt index-excerpt__noimg" href="/2025/01/16/Docker%E9%87%8D%E8%A6%81%E7%9A%84%E7%BD%91%E7%BB%9C%E7%9F%A5%E8%AF%86%E7%82%B9-docker-zhong-yao-de-wang-luo-zhi-shi-dian/" target="_self">
         <div>
           一、Bridge网络bridge网络表现形式就是docker0这个网络接口。容器默认都是通过docker0这个接口进行通信。也可以通过docker0去和本机的以太网接口连接，这样容器内部才能访问互联网。 查看docker0网络，在默认环境中，一个名为docker0的linux bridge自动被创建好了，其上有一个 docker0 内部接口，IP地址为172.17.0.1&#x2F;16。通过命令
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-01-16 10:08" pubdate>
-              2025-01-16
-            </time>
-          </div>
-        
-        
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/01/16/Containerd%20%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C-containerd-ji-ben-cao-zuo/" target="_self">
-          Containerd 基本操作 2024-04-03 14:55:46.786
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/01/16/Containerd%20%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C-containerd-ji-ben-cao-zuo/" target="_self">
-        <div>
-          镜像基本操作Containerd 默认提供 CLI 命令行工具 ctr，ctr 命名提供基本的镜像和容器操作功能，可以通过如下查看命令帮助： 1[root@localhost ~]# ctr -help  镜像基本操作主要是 ctr image 命令，查看命令帮助 12345678910111213141516171819202122232425[root@localhost ~]# ctr im
         </div>
       </a>
 

@@ -1,0 +1,1612 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="guichen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="如何做k8s资源的规划在K8s中进行资源规划是一个重要的任务，我来详细解释一下关键点： 1. CPU和内存资源规划1.1 资源请求(requests)和限制(limits)12345678910spec:  containers:  - name: app    resources:      requests:        memory: &quot;256Mi&quot;        cp">
+<meta property="og:type" content="article">
+<meta property="og:title" content="面试0212">
+<meta property="og:url" content="http://example.com/2025/02/12/2025-2-12%20%E9%9D%A2%E8%AF%950212/index.html">
+<meta property="og:site_name" content="guichen&#39;s blog">
+<meta property="og:description" content="如何做k8s资源的规划在K8s中进行资源规划是一个重要的任务，我来详细解释一下关键点： 1. CPU和内存资源规划1.1 资源请求(requests)和限制(limits)12345678910spec:  containers:  - name: app    resources:      requests:        memory: &quot;256Mi&quot;        cp">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-02-12T12:45:11.611Z">
+<meta property="article:modified_time" content="2025-02-12T12:45:11.612Z">
+<meta property="article:author" content="guichen">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>面试0212 - guichen&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生若梦</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="面试0212"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-02-12 20:45" pubdate>
+          2025年2月12日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          7.8k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          65 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">面试0212</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="如何做k8s资源的规划"><a href="#如何做k8s资源的规划" class="headerlink" title="如何做k8s资源的规划"></a>如何做k8s资源的规划</h2><p>在K8s中进行资源规划是一个重要的任务，我来详细解释一下关键点：</p>
+<h3 id="1-CPU和内存资源规划"><a href="#1-CPU和内存资源规划" class="headerlink" title="1. CPU和内存资源规划"></a>1. CPU和内存资源规划</h3><h4 id="1-1-资源请求-requests-和限制-limits"><a href="#1-1-资源请求-requests-和限制-limits" class="headerlink" title="1.1 资源请求(requests)和限制(limits)"></a>1.1 资源请求(requests)和限制(limits)</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs yaml:deployment.yaml">spec:<br>  containers:<br>  - name: app<br>    resources:<br>      requests:<br>        memory: &quot;256Mi&quot;<br>        cpu: &quot;250m&quot;<br>      limits:<br>        memory: &quot;512Mi&quot;<br>        cpu: &quot;500m&quot;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>requests</strong>: 容器需要的最小资源量</li>
+<li><strong>limits</strong>: 容器能够使用的最大资源量</li>
+<li>CPU单位：1 CPU &#x3D; 1000m（毫核）</li>
+<li>内存单位：Mi（兆字节）, Gi（吉字节）</li>
+</ul>
+<h3 id="2-命名空间资源配额"><a href="#2-命名空间资源配额" class="headerlink" title="2. 命名空间资源配额"></a>2. 命名空间资源配额</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs yaml:quota.yaml">apiVersion: v1<br>kind: ResourceQuota<br>metadata:<br>  name: compute-quota<br>  namespace: your-namespace<br>spec:<br>  hard:<br>    requests.cpu: &quot;4&quot;<br>    requests.memory: 4Gi<br>    limits.cpu: &quot;8&quot;<br>    limits.memory: 8Gi<br>    pods: &quot;10&quot;<br></code></pre></td></tr></table></figure>
+
+<h3 id="3-资源规划的最佳实践"><a href="#3-资源规划的最佳实践" class="headerlink" title="3. 资源规划的最佳实践"></a>3. 资源规划的最佳实践</h3><ol>
+<li><p><strong>监控历史数据</strong></p>
+<ul>
+<li>使用Prometheus + Grafana监控应用实际资源使用情况</li>
+<li>观察峰值和平均值</li>
+<li>留出30-50%的buffer以应对突发流量</li>
+</ul>
+</li>
+<li><p><strong>合理设置requests和limits</strong></p>
+<ul>
+<li>requests设置为应用正常运行需要的资源量</li>
+<li>limits设置为预期峰值的1.5-2倍</li>
+<li>避免limits设置过低导致OOM</li>
+</ul>
+</li>
+<li><p><strong>Pod水平自动扩缩容(HPA)</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs yaml:hpa.yaml">apiVersion: autoscaling/v2<br>kind: HorizontalPodAutoscaler<br>metadata:<br>  name: app-hpa<br>spec:<br>  scaleTargetRef:<br>    apiVersion: apps/v1<br>    kind: Deployment<br>    name: your-app<br>  minReplicas: 2<br>  maxReplicas: 10<br>  metrics:<br>  - type: Resource<br>    resource:<br>      name: cpu<br>      target:<br>        type: Utilization<br>        averageUtilization: 70<br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="4-节点资源规划"><a href="#4-节点资源规划" class="headerlink" title="4. 节点资源规划"></a>4. 节点资源规划</h3><ol>
+<li><p><strong>节点标签和污点</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs yaml:node-label.yaml">kubectl label nodes node1 workload-type=cpu-intensive<br>kubectl taint nodes node1 dedicated=cpu-intensive:NoSchedule<br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>节点亲和性</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs yaml:pod-affinity.yaml">spec:<br>  affinity:<br>    nodeAffinity:<br>      requiredDuringSchedulingIgnoredDuringExecution:<br>        nodeSelectorTerms:<br>        - matchExpressions:<br>          - key: workload-type<br>            operator: In<br>            values:<br>            - cpu-intensive<br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="5-资源规划检查清单"><a href="#5-资源规划检查清单" class="headerlink" title="5. 资源规划检查清单"></a>5. 资源规划检查清单</h3><ol>
+<li><strong>应用层面</strong></li>
+</ol>
+<ul>
+<li><input disabled="" type="checkbox"> 确定应用的基准资源需求</li>
+<li><input disabled="" type="checkbox"> 设置合适的requests和limits</li>
+<li><input disabled="" type="checkbox"> 配置HPA策略</li>
+</ul>
+<ol start="2">
+<li><strong>集群层面</strong></li>
+</ol>
+<ul>
+<li><input disabled="" type="checkbox"> 设置namespace资源配额</li>
+<li><input disabled="" type="checkbox"> 规划节点池和节点规格</li>
+<li><input disabled="" type="checkbox"> 配置节点亲和性策略</li>
+</ul>
+<ol start="3">
+<li><strong>监控和优化</strong></li>
+</ol>
+<ul>
+<li><input disabled="" type="checkbox"> 部署监控系统</li>
+<li><input disabled="" type="checkbox"> 定期检查资源使用情况</li>
+<li><input disabled="" type="checkbox"> 根据实际情况调整资源配置</li>
+</ul>
+<h3 id="6-注意事项"><a href="#6-注意事项" class="headerlink" title="6. 注意事项"></a>6. 注意事项</h3><ol>
+<li><p><strong>避免资源过度分配</strong></p>
+<ul>
+<li>合理评估应用资源需求</li>
+<li>定期清理未使用的资源</li>
+</ul>
+</li>
+<li><p><strong>考虑成本优化</strong></p>
+<ul>
+<li>使用spot实例降低成本</li>
+<li>配置集群自动扩缩容</li>
+<li>优化资源利用率</li>
+</ul>
+</li>
+<li><p><strong>确保高可用</strong></p>
+<ul>
+<li>合理设置Pod反亲和性</li>
+<li>跨可用区部署</li>
+<li>预留足够的资源buffer</li>
+</ul>
+</li>
+</ol>
+<p>通过以上方法进行资源规划，可以确保应用在K8s集群中稳定运行，同时实现资源的最优利用。记住要定期检查和调整资源配置，以适应业务的变化和增长。</p>
+<h2 id="k8s的组件有哪些"><a href="#k8s的组件有哪些" class="headerlink" title="k8s的组件有哪些"></a>k8s的组件有哪些</h2><p><strong>1、etcd 保存了整个集群的状态；</strong></p>
+<p><strong>2、apiserver 提供了资源操作的唯一入口，并提供认证、授权、访问控制、API 注册和发现等机制；</strong></p>
+<p><strong>3、controller manager 负责维护集群的状态，比如故障检测、自动扩展、滚动更新等；</strong></p>
+<p><strong>4、scheduler 负责资源的调度，按照预定的调度策略将 Pod 调度到相应的机器上；</strong></p>
+<p><strong>5、kubelet 负责维护容器的生命周期，同时也负责 Volume（CVI）和网络（CNI）的管理；</strong></p>
+<p><strong>6、Container runtime 负责镜像管理以及 Pod 和容器的真正运行（CRI）；</strong></p>
+<p><strong>7</strong>、<strong>kube-proxy</strong> <strong>负责为</strong> <strong>Service</strong> <strong>提供</strong> <strong>cluster</strong> <strong>内部的服务发现和负载均衡。</strong></p>
+<p>让我详细介绍K8s的核心组件：</p>
+<h3 id="1-控制平面组件（Master节点）"><a href="#1-控制平面组件（Master节点）" class="headerlink" title="1. 控制平面组件（Master节点）"></a>1. 控制平面组件（Master节点）</h3><ol>
+<li><strong>API Server</strong></li>
+</ol>
+<ul>
+<li>集群的统一入口</li>
+<li>提供REST API接口</li>
+<li>负责组件间的通信</li>
+<li>认证和授权<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-comment"># API Server配置示例</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Pod</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">kube-apiserver</span><br>  <span class="hljs-attr">namespace:</span> <span class="hljs-string">kube-system</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">containers:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">kube-apiserver</span><br>    <span class="hljs-attr">image:</span> <span class="hljs-string">k8s.gcr.io/kube-apiserver:v1.24.0</span><br>    <span class="hljs-attr">command:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">kube-apiserver</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">--advertise-address=192.168.1.10</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">--allow-privileged=true</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">--authorization-mode=Node,RBAC</span><br></code></pre></td></tr></table></figure></li>
+</ul>
+<ol start="2">
+<li><strong>etcd</strong></li>
+</ol>
+<ul>
+<li>分布式键值存储</li>
+<li>保存集群所有数据</li>
+<li>高可用配置<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-comment"># etcd配置示例</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">containers:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">etcd</span><br>    <span class="hljs-attr">image:</span> <span class="hljs-string">k8s.gcr.io/etcd:3.5.1</span><br>    <span class="hljs-attr">command:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">etcd</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">--advertise-client-urls=https://192.168.1.10:2379</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">--data-dir=/var/lib/etcd</span><br></code></pre></td></tr></table></figure></li>
+</ul>
+<ol start="3">
+<li><strong>Controller Manager</strong></li>
+</ol>
+<ul>
+<li>维护集群状态</li>
+<li>故障检测和自动恢复</li>
+<li>包含多个控制器：<ul>
+<li>Node Controller</li>
+<li>Replication Controller</li>
+<li>Endpoints Controller</li>
+<li>Service Account &amp; Token Controller</li>
+</ul>
+</li>
+</ul>
+<ol start="4">
+<li><strong>Scheduler</strong></li>
+</ol>
+<ul>
+<li>负责Pod调度</li>
+<li>根据调度算法选择节点</li>
+<li>考虑资源需求、亲和性等</li>
+</ul>
+<h3 id="2-工作节点组件（Node节点）"><a href="#2-工作节点组件（Node节点）" class="headerlink" title="2. 工作节点组件（Node节点）"></a>2. 工作节点组件（Node节点）</h3><ol>
+<li><strong>Kubelet</strong></li>
+</ol>
+<ul>
+<li>节点代理</li>
+<li>管理容器生命周期</li>
+<li>执行Pod规范<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-comment"># Kubelet配置示例</span><br><span class="hljs-attr">kubelet:</span><br>  <span class="hljs-attr">config:</span><br>    <span class="hljs-attr">kind:</span> <span class="hljs-string">KubeletConfiguration</span><br>    <span class="hljs-attr">address:</span> <span class="hljs-string">&quot;0.0.0.0&quot;</span><br>    <span class="hljs-attr">port:</span> <span class="hljs-number">10250</span><br>    <span class="hljs-attr">healthzPort:</span> <span class="hljs-number">10248</span><br></code></pre></td></tr></table></figure></li>
+</ul>
+<ol start="2">
+<li><strong>Kube-proxy</strong></li>
+</ol>
+<ul>
+<li>网络代理</li>
+<li>维护网络规则</li>
+<li>实现Service概念<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-comment"># Kube-proxy配置示例</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">kubeproxy.config.k8s.io/v1alpha1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">KubeProxyConfiguration</span><br><span class="hljs-attr">mode:</span> <span class="hljs-string">&quot;ipvs&quot;</span>  <span class="hljs-comment"># 或者 &quot;iptables&quot;</span><br></code></pre></td></tr></table></figure></li>
+</ul>
+<ol start="3">
+<li><strong>Container Runtime</strong></li>
+</ol>
+<ul>
+<li>容器运行时</li>
+<li>如Docker、containerd</li>
+<li>负责容器的实际运行</li>
+</ul>
+<h3 id="3-附加组件"><a href="#3-附加组件" class="headerlink" title="3. 附加组件"></a>3. 附加组件</h3><ol>
+<li><strong>CoreDNS</strong></li>
+</ol>
+<ul>
+<li>集群DNS服务</li>
+<li>服务发现<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Service</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">kube-dns</span><br>  <span class="hljs-attr">namespace:</span> <span class="hljs-string">kube-system</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">selector:</span><br>    <span class="hljs-attr">k8s-app:</span> <span class="hljs-string">kube-dns</span><br>  <span class="hljs-attr">ports:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">port:</span> <span class="hljs-number">53</span><br>    <span class="hljs-attr">protocol:</span> <span class="hljs-string">UDP</span><br></code></pre></td></tr></table></figure></li>
+</ul>
+<ol start="2">
+<li><strong>Dashboard</strong></li>
+</ol>
+<ul>
+<li>Web UI界面</li>
+<li>集群管理和监控</li>
+</ul>
+<ol start="3">
+<li><strong>CNI网络插件</strong></li>
+</ol>
+<ul>
+<li>如Calico、Flannel</li>
+<li>提供网络方案<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-comment"># Calico配置示例</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">DaemonSet</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">calico-node</span><br>  <span class="hljs-attr">namespace:</span> <span class="hljs-string">kube-system</span><br></code></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="4-组件间通信"><a href="#4-组件间通信" class="headerlink" title="4. 组件间通信"></a>4. 组件间通信</h3><pre><code class=" mermaid">graph TD
+    A[API Server] --&gt; B[etcd]
+    C[Controller Manager] --&gt; A
+    D[Scheduler] --&gt; A
+    E[Kubelet] --&gt; A
+    F[Kube-proxy] --&gt; A
+</code></pre>
+
+<h3 id="5-高可用配置建议"><a href="#5-高可用配置建议" class="headerlink" title="5. 高可用配置建议"></a>5. 高可用配置建议</h3><ol>
+<li><strong>控制平面</strong></li>
+</ol>
+<ul>
+<li>至少3个master节点</li>
+<li>使用负载均衡器</li>
+<li>etcd集群部署</li>
+</ul>
+<ol start="2">
+<li><strong>工作节点</strong></li>
+</ol>
+<ul>
+<li>根据业务规模扩展</li>
+<li>跨可用区部署</li>
+<li>定期维护和更新</li>
+</ul>
+<h3 id="6-监控要点"><a href="#6-监控要点" class="headerlink" title="6. 监控要点"></a>6. 监控要点</h3><ol>
+<li><strong>核心指标</strong></li>
+</ol>
+<ul>
+<li>组件健康状态</li>
+<li>API Server延迟</li>
+<li>etcd性能</li>
+<li>调度器成功率</li>
+</ul>
+<ol start="2">
+<li><strong>告警配置</strong><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">monitoring.coreos.com/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">PrometheusRule</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">k8s-components-alerts</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">groups:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">k8s-components</span><br>    <span class="hljs-attr">rules:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-attr">alert:</span> <span class="hljs-string">APIServerDown</span><br>      <span class="hljs-attr">expr:</span> <span class="hljs-string">up&#123;job=&quot;apiserver&quot;&#125;</span> <span class="hljs-string">==</span> <span class="hljs-number">0</span><br></code></pre></td></tr></table></figure></li>
+</ol>
+<p>这些组件共同工作，确保了Kubernetes集群的正常运行。了解每个组件的功能和配置对于运维和故障排查非常重要。</p>
+<h2 id="scheduler和controller-manager的区别"><a href="#scheduler和controller-manager的区别" class="headerlink" title="scheduler和controller-manager的区别"></a>scheduler和controller-manager的区别</h2><p>让我详细解释Scheduler和Controller Manager的区别：</p>
+<h3 id="1-基本职责"><a href="#1-基本职责" class="headerlink" title="1. 基本职责"></a>1. 基本职责</h3><p><strong>Scheduler:</strong></p>
+<ul>
+<li>负责Pod的调度决策</li>
+<li>为Pod选择最合适的Node节点</li>
+<li>不负责Pod的实际创建过程</li>
+</ul>
+<p><strong>Controller Manager:</strong></p>
+<ul>
+<li>负责维护集群状态</li>
+<li>处理各类资源的控制循环</li>
+<li>确保实际状态向期望状态迁移</li>
+</ul>
+<h3 id="2-主要功能对比"><a href="#2-主要功能对比" class="headerlink" title="2. 主要功能对比"></a>2. 主要功能对比</h3><ol>
+<li><p><strong>Scheduler功能:</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-comment"># scheduler配置示例</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">kubescheduler.config.k8s.io/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">KubeSchedulerConfiguration</span><br><span class="hljs-attr">profiles:</span><br><span class="hljs-bullet">-</span> <span class="hljs-attr">schedulerName:</span> <span class="hljs-string">default-scheduler</span><br>  <span class="hljs-attr">plugins:</span><br>    <span class="hljs-attr">score:</span><br>      <span class="hljs-attr">disabled:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">NodeResourcesLeastAllocated</span><br>      <span class="hljs-attr">enabled:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">NodeResourcesMostAllocated</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>Controller Manager功能:</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-comment"># 包含多个控制器</span><br><span class="hljs-bullet">-</span> <span class="hljs-string">Deployment</span> <span class="hljs-string">Controller</span><br><span class="hljs-bullet">-</span> <span class="hljs-string">ReplicaSet</span> <span class="hljs-string">Controller</span><br><span class="hljs-bullet">-</span> <span class="hljs-string">StatefulSet</span> <span class="hljs-string">Controller</span><br><span class="hljs-bullet">-</span> <span class="hljs-string">Node</span> <span class="hljs-string">Controller</span><br><span class="hljs-bullet">-</span> <span class="hljs-string">Service</span> <span class="hljs-string">Controller</span><br><span class="hljs-bullet">-</span> <span class="hljs-string">Endpoints</span> <span class="hljs-string">Controller</span><br><span class="hljs-bullet">-</span> <span class="hljs-string">Namespace</span> <span class="hljs-string">Controller</span><br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="3-工作流程"><a href="#3-工作流程" class="headerlink" title="3. 工作流程"></a>3. 工作流程</h3><p><strong>Scheduler:</strong></p>
+<ol>
+<li>监听API Server中未被调度的Pod</li>
+<li>根据调度算法为Pod选择节点</li>
+<li>将调度结果更新到API Server</li>
+</ol>
+<p><strong>Controller Manager:</strong></p>
+<ol>
+<li>监听API Server中资源变化</li>
+<li>对比实际状态和期望状态</li>
+<li>执行必要的操作使集群达到期望状态</li>
+</ol>
+<h3 id="4-实际应用示例"><a href="#4-实际应用示例" class="headerlink" title="4. 实际应用示例"></a>4. 实际应用示例</h3><ol>
+<li><p><strong>Scheduler处理Pod调度:</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Pod</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">nginx</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">containers:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">nginx</span><br>    <span class="hljs-attr">image:</span> <span class="hljs-string">nginx</span><br>  <span class="hljs-comment"># Scheduler会根据以下条件选择节点</span><br>  <span class="hljs-attr">nodeSelector:</span><br>    <span class="hljs-attr">disk:</span> <span class="hljs-string">ssd</span><br>  <span class="hljs-attr">affinity:</span><br>    <span class="hljs-attr">nodeAffinity:</span><br>      <span class="hljs-attr">requiredDuringSchedulingIgnoredDuringExecution:</span><br>        <span class="hljs-attr">nodeSelectorTerms:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">matchExpressions:</span><br>          <span class="hljs-bullet">-</span> <span class="hljs-attr">key:</span> <span class="hljs-string">kubernetes.io/e2e-az-name</span><br>            <span class="hljs-attr">operator:</span> <span class="hljs-string">In</span><br>            <span class="hljs-attr">values:</span><br>            <span class="hljs-bullet">-</span> <span class="hljs-string">e2e-az1</span><br>            <span class="hljs-bullet">-</span> <span class="hljs-string">e2e-az2</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>Controller Manager处理Deployment:</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">nginx-deployment</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">replicas:</span> <span class="hljs-number">3</span>  <span class="hljs-comment"># Controller确保运行3个副本</span><br>  <span class="hljs-attr">selector:</span><br>    <span class="hljs-attr">matchLabels:</span><br>      <span class="hljs-attr">app:</span> <span class="hljs-string">nginx</span><br>  <span class="hljs-attr">template:</span><br>    <span class="hljs-attr">metadata:</span><br>      <span class="hljs-attr">labels:</span><br>        <span class="hljs-attr">app:</span> <span class="hljs-string">nginx</span><br>    <span class="hljs-attr">spec:</span><br>      <span class="hljs-attr">containers:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">nginx</span><br>        <span class="hljs-attr">image:</span> <span class="hljs-string">nginx:1.14.2</span><br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="5-主要区别总结"><a href="#5-主要区别总结" class="headerlink" title="5. 主要区别总结"></a>5. 主要区别总结</h3><ol>
+<li><p><strong>职责范围:</strong></p>
+<ul>
+<li>Scheduler: 仅负责Pod调度</li>
+<li>Controller Manager: 负责整个集群状态维护</li>
+</ul>
+</li>
+<li><p><strong>工作方式:</strong></p>
+<ul>
+<li>Scheduler: 一次性决策（为Pod选择节点）</li>
+<li>Controller Manager: 持续循环（reconcile循环）</li>
+</ul>
+</li>
+<li><p><strong>关注点:</strong></p>
+<ul>
+<li>Scheduler: 资源分配和约束条件</li>
+<li>Controller Manager: 状态维护和自动修复</li>
+</ul>
+</li>
+<li><p><strong>操作对象:</strong></p>
+<ul>
+<li>Scheduler: 主要处理Pod</li>
+<li>Controller Manager: 处理所有Kubernetes资源</li>
+</ul>
+</li>
+</ol>
+<h3 id="6-使用建议"><a href="#6-使用建议" class="headerlink" title="6. 使用建议"></a>6. 使用建议</h3><ol>
+<li><p><strong>Scheduler相关:</strong></p>
+<ul>
+<li>合理配置资源请求和限制</li>
+<li>使用节点亲和性和反亲和性</li>
+<li>配置合适的调度策略</li>
+</ul>
+</li>
+<li><p><strong>Controller Manager相关:</strong></p>
+<ul>
+<li>正确设置资源的期望状态</li>
+<li>监控控制器的运行状态</li>
+<li>了解不同控制器的作用</li>
+</ul>
+</li>
+</ol>
+<p>通过理解这些区别，可以更好地：</p>
+<ol>
+<li><p>规划应用部署策略</p>
+</li>
+<li><p>解决调度问题</p>
+</li>
+<li><p>处理集群状态异常</p>
+</li>
+<li><p>优化资源使用效率</p>
+</li>
+</ol>
+<h2 id="ingress和service的区别"><a href="#ingress和service的区别" class="headerlink" title="ingress和service的区别"></a>ingress和service的区别</h2><p>让我详细解释Ingress和Service的区别：</p>
+<h3 id="1-基本定义"><a href="#1-基本定义" class="headerlink" title="1. 基本定义"></a>1. 基本定义</h3><p><strong>Service:</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Service</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">my-service</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">selector:</span><br>    <span class="hljs-attr">app:</span> <span class="hljs-string">my-app</span><br>  <span class="hljs-attr">ports:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">port:</span> <span class="hljs-number">80</span><br>    <span class="hljs-attr">targetPort:</span> <span class="hljs-number">8080</span><br>  <span class="hljs-attr">type:</span> <span class="hljs-string">ClusterIP</span>  <span class="hljs-comment"># 或 NodePort, LoadBalancer</span><br></code></pre></td></tr></table></figure>
+
+<p><strong>Ingress:</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">networking.k8s.io/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Ingress</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">my-ingress</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">rules:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">host:</span> <span class="hljs-string">myapp.example.com</span><br>    <span class="hljs-attr">http:</span><br>      <span class="hljs-attr">paths:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">path:</span> <span class="hljs-string">/api</span><br>        <span class="hljs-attr">pathType:</span> <span class="hljs-string">Prefix</span><br>        <span class="hljs-attr">backend:</span><br>          <span class="hljs-attr">service:</span><br>            <span class="hljs-attr">name:</span> <span class="hljs-string">my-service</span><br>            <span class="hljs-attr">port:</span><br>              <span class="hljs-attr">number:</span> <span class="hljs-number">80</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-主要区别"><a href="#2-主要区别" class="headerlink" title="2. 主要区别"></a>2. 主要区别</h3><ol>
+<li><p><strong>功能定位</strong></p>
+<ul>
+<li>Service: 提供集群内部的服务发现和负载均衡</li>
+<li>Ingress: 提供集群外部访问的HTTP&#x2F;HTTPS路由规则</li>
+</ul>
+</li>
+<li><p><strong>协议支持</strong></p>
+<ul>
+<li>Service: 支持任何TCP&#x2F;UDP协议</li>
+<li>Ingress: 主要支持HTTP&#x2F;HTTPS协议</li>
+</ul>
+</li>
+<li><p><strong>访问层级</strong></p>
+<ul>
+<li>Service: 网络层(L4)</li>
+<li>Ingress: 应用层(L7)</li>
+</ul>
+</li>
+</ol>
+<h3 id="3-常见使用场景"><a href="#3-常见使用场景" class="headerlink" title="3. 常见使用场景"></a>3. 常见使用场景</h3><ol>
+<li><p><strong>Service使用场景:</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-comment"># 内部服务访问</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Service</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">db-service</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">selector:</span><br>    <span class="hljs-attr">app:</span> <span class="hljs-string">mysql</span><br>  <span class="hljs-attr">ports:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">port:</span> <span class="hljs-number">3306</span><br>    <span class="hljs-attr">targetPort:</span> <span class="hljs-number">3306</span><br>  <span class="hljs-attr">type:</span> <span class="hljs-string">ClusterIP</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>Ingress使用场景:</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-comment"># 外部访问路由</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">networking.k8s.io/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Ingress</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">web-ingress</span><br>  <span class="hljs-attr">annotations:</span><br>    <span class="hljs-attr">nginx.ingress.kubernetes.io/rewrite-target:</span> <span class="hljs-string">/</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">rules:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">host:</span> <span class="hljs-string">www.myapp.com</span><br>    <span class="hljs-attr">http:</span><br>      <span class="hljs-attr">paths:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">path:</span> <span class="hljs-string">/api</span><br>        <span class="hljs-attr">pathType:</span> <span class="hljs-string">Prefix</span><br>        <span class="hljs-attr">backend:</span><br>          <span class="hljs-attr">service:</span><br>            <span class="hljs-attr">name:</span> <span class="hljs-string">api-service</span><br>            <span class="hljs-attr">port:</span><br>              <span class="hljs-attr">number:</span> <span class="hljs-number">80</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">path:</span> <span class="hljs-string">/web</span><br>        <span class="hljs-attr">pathType:</span> <span class="hljs-string">Prefix</span><br>        <span class="hljs-attr">backend:</span><br>          <span class="hljs-attr">service:</span><br>            <span class="hljs-attr">name:</span> <span class="hljs-string">web-service</span><br>            <span class="hljs-attr">port:</span><br>              <span class="hljs-attr">number:</span> <span class="hljs-number">80</span><br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="4-高级特性对比"><a href="#4-高级特性对比" class="headerlink" title="4. 高级特性对比"></a>4. 高级特性对比</h3><ol>
+<li><p><strong>Service特性:</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Service</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">my-service</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">type:</span> <span class="hljs-string">LoadBalancer</span><br>  <span class="hljs-attr">sessionAffinity:</span> <span class="hljs-string">ClientIP</span><br>  <span class="hljs-attr">sessionAffinityConfig:</span><br>    <span class="hljs-attr">clientIP:</span><br>      <span class="hljs-attr">timeoutSeconds:</span> <span class="hljs-number">10800</span><br>  <span class="hljs-attr">ports:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">port:</span> <span class="hljs-number">80</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>Ingress特性:</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">networking.k8s.io/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Ingress</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">annotations:</span><br>    <span class="hljs-attr">nginx.ingress.kubernetes.io/ssl-redirect:</span> <span class="hljs-string">&quot;true&quot;</span><br>    <span class="hljs-attr">nginx.ingress.kubernetes.io/force-ssl-redirect:</span> <span class="hljs-string">&quot;true&quot;</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">tls:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">hosts:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-string">myapp.com</span><br>    <span class="hljs-attr">secretName:</span> <span class="hljs-string">tls-secret</span><br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="5-最佳实践"><a href="#5-最佳实践" class="headerlink" title="5. 最佳实践"></a>5. 最佳实践</h3><ol>
+<li><strong>组合使用示例:</strong><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-comment"># Service配置</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Service</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">web-service</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">selector:</span><br>    <span class="hljs-attr">app:</span> <span class="hljs-string">web</span><br>  <span class="hljs-attr">ports:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">port:</span> <span class="hljs-number">80</span><br>    <span class="hljs-attr">targetPort:</span> <span class="hljs-number">8080</span><br><span class="hljs-meta">---</span><br><span class="hljs-comment"># Ingress配置</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">networking.k8s.io/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Ingress</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">web-ingress</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">rules:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">host:</span> <span class="hljs-string">web.example.com</span><br>    <span class="hljs-attr">http:</span><br>      <span class="hljs-attr">paths:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">path:</span> <span class="hljs-string">/</span><br>        <span class="hljs-attr">pathType:</span> <span class="hljs-string">Prefix</span><br>        <span class="hljs-attr">backend:</span><br>          <span class="hljs-attr">service:</span><br>            <span class="hljs-attr">name:</span> <span class="hljs-string">web-service</span><br>            <span class="hljs-attr">port:</span><br>              <span class="hljs-attr">number:</span> <span class="hljs-number">80</span><br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="6-使用建议-1"><a href="#6-使用建议-1" class="headerlink" title="6. 使用建议"></a>6. 使用建议</h3><ol>
+<li><p><strong>何时使用Service:</strong></p>
+<ul>
+<li>集群内部服务访问</li>
+<li>需要TCP&#x2F;UDP协议支持</li>
+<li>简单的负载均衡需求</li>
+</ul>
+</li>
+<li><p><strong>何时使用Ingress:</strong></p>
+<ul>
+<li>需要域名访问</li>
+<li>需要路径匹配</li>
+<li>需要SSL&#x2F;TLS终止</li>
+<li>需要URL重写</li>
+<li>需要应用层负载均衡</li>
+</ul>
+</li>
+</ol>
+<p>通过合理组合使用Service和Ingress，可以构建完整的服务访问体系。</p>
+<h2 id="打污点的命令"><a href="#打污点的命令" class="headerlink" title="打污点的命令"></a>打污点的命令</h2><p>让我介绍一下打污点(Taint)的相关命令：</p>
+<h3 id="1-基本命令格式"><a href="#1-基本命令格式" class="headerlink" title="1. 基本命令格式"></a>1. 基本命令格式</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 添加污点</span><br>kubectl taint nodes &lt;node-name&gt; &lt;key&gt;=&lt;value&gt;:&lt;effect&gt;<br><br><span class="hljs-comment"># 删除污点</span><br>kubectl taint nodes &lt;node-name&gt; &lt;key&gt;-<br></code></pre></td></tr></table></figure>
+
+<h3 id="2-常用污点效果-effect"><a href="#2-常用污点效果-effect" class="headerlink" title="2. 常用污点效果(effect)"></a>2. 常用污点效果(effect)</h3><ul>
+<li><strong>NoSchedule</strong>: 不允许调度</li>
+<li><strong>PreferNoSchedule</strong>: 尽量不调度</li>
+<li><strong>NoExecute</strong>: 不允许调度，并驱逐已有Pod</li>
+</ul>
+<h3 id="3-常用命令示例"><a href="#3-常用命令示例" class="headerlink" title="3. 常用命令示例"></a>3. 常用命令示例</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 添加不可调度污点</span><br>kubectl taint nodes node1 key1=value1:NoSchedule<br><br><span class="hljs-comment"># 添加优先不调度污点</span><br>kubectl taint nodes node2 key2=value2:PreferNoSchedule<br><br><span class="hljs-comment"># 添加驱逐污点</span><br>kubectl taint nodes node3 key3=value3:NoExecute<br><br><span class="hljs-comment"># 删除指定污点</span><br>kubectl taint nodes node1 key1-<br><br><span class="hljs-comment"># 删除所有污点</span><br>kubectl taint nodes node1 key1- key2- key3-<br></code></pre></td></tr></table></figure>
+
+<h3 id="4-实际应用场景"><a href="#4-实际应用场景" class="headerlink" title="4. 实际应用场景"></a>4. 实际应用场景</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 标记专用节点（如GPU节点）</span><br>kubectl taint nodes gpu-node-1 dedicated=gpu:NoSchedule<br><br><span class="hljs-comment"># 标记故障节点</span><br>kubectl taint nodes problem-node-1 node-problem=<span class="hljs-literal">true</span>:NoExecute<br><br><span class="hljs-comment"># 标记master节点</span><br>kubectl taint nodes master-node node-role.kubernetes.io/master=:NoSchedule<br></code></pre></td></tr></table></figure>
+
+<h3 id="5-查看节点污点"><a href="#5-查看节点污点" class="headerlink" title="5. 查看节点污点"></a>5. 查看节点污点</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 查看节点详情（包含污点信息）</span><br>kubectl describe node &lt;node-name&gt;<br><br><span class="hljs-comment"># 使用自定义输出格式查看污点</span><br>kubectl get nodes -o custom-columns=NAME:.metadata.name,TAINTS:.spec.taints<br></code></pre></td></tr></table></figure>
+
+<p>记住：</p>
+<ol>
+<li>添加污点后需要配合容忍度(Toleration)使用</li>
+<li>谨慎使用NoExecute效果</li>
+<li>操作前先确认对现有Pod的影响</li>
+</ol>
+<h2 id="daemonset和deployment的区别"><a href="#daemonset和deployment的区别" class="headerlink" title="daemonset和deployment的区别"></a>daemonset和deployment的区别</h2><p>让我详细解释DaemonSet和Deployment的主要区别：</p>
+<h3 id="1-基本定义和用途"><a href="#1-基本定义和用途" class="headerlink" title="1. 基本定义和用途"></a>1. 基本定义和用途</h3><p><strong>Deployment:</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">nginx-deployment</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">replicas:</span> <span class="hljs-number">3</span><br>  <span class="hljs-attr">selector:</span><br>    <span class="hljs-attr">matchLabels:</span><br>      <span class="hljs-attr">app:</span> <span class="hljs-string">nginx</span><br>  <span class="hljs-attr">template:</span><br>    <span class="hljs-attr">metadata:</span><br>      <span class="hljs-attr">labels:</span><br>        <span class="hljs-attr">app:</span> <span class="hljs-string">nginx</span><br>    <span class="hljs-attr">spec:</span><br>      <span class="hljs-attr">containers:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">nginx</span><br>        <span class="hljs-attr">image:</span> <span class="hljs-string">nginx:1.14.2</span><br></code></pre></td></tr></table></figure>
+
+<p><strong>DaemonSet:</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">DaemonSet</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">fluentd-ds</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">selector:</span><br>    <span class="hljs-attr">matchLabels:</span><br>      <span class="hljs-attr">app:</span> <span class="hljs-string">fluentd</span><br>  <span class="hljs-attr">template:</span><br>    <span class="hljs-attr">metadata:</span><br>      <span class="hljs-attr">labels:</span><br>        <span class="hljs-attr">app:</span> <span class="hljs-string">fluentd</span><br>    <span class="hljs-attr">spec:</span><br>      <span class="hljs-attr">containers:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">fluentd</span><br>        <span class="hljs-attr">image:</span> <span class="hljs-string">fluentd:v1.14</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-主要区别-1"><a href="#2-主要区别-1" class="headerlink" title="2. 主要区别"></a>2. 主要区别</h3><ol>
+<li><p><strong>部署策略</strong></p>
+<ul>
+<li>Deployment: 根据replicas数量部署指定数量的Pod</li>
+<li>DaemonSet: 在每个节点上运行一个Pod副本</li>
+</ul>
+</li>
+<li><p><strong>使用场景</strong></p>
+<ul>
+<li><p>Deployment:</p>
+<ul>
+<li>无状态应用</li>
+<li>需要指定副本数的应用</li>
+<li>支持滚动更新</li>
+</ul>
+</li>
+<li><p>DaemonSet:</p>
+<ul>
+<li>日志收集(如fluentd)</li>
+<li>节点监控(如node-exporter)</li>
+<li>网络插件(如calico)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>扩缩容</strong></p>
+<ul>
+<li>Deployment: 可以手动或自动调整replicas数量</li>
+<li>DaemonSet: 随节点数量自动增减，不支持手动扩缩容</li>
+</ul>
+</li>
+</ol>
+<h3 id="3-典型应用场景"><a href="#3-典型应用场景" class="headerlink" title="3. 典型应用场景"></a>3. 典型应用场景</h3><p><strong>Deployment示例（应用服务）:</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">web-app</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">replicas:</span> <span class="hljs-number">3</span><br>  <span class="hljs-attr">selector:</span><br>    <span class="hljs-attr">matchLabels:</span><br>      <span class="hljs-attr">app:</span> <span class="hljs-string">web</span><br>  <span class="hljs-attr">template:</span><br>    <span class="hljs-attr">metadata:</span><br>      <span class="hljs-attr">labels:</span><br>        <span class="hljs-attr">app:</span> <span class="hljs-string">web</span><br>    <span class="hljs-attr">spec:</span><br>      <span class="hljs-attr">containers:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">web</span><br>        <span class="hljs-attr">image:</span> <span class="hljs-string">nginx:1.14.2</span><br>        <span class="hljs-attr">ports:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">containerPort:</span> <span class="hljs-number">80</span><br></code></pre></td></tr></table></figure>
+
+<p><strong>DaemonSet示例（监控代理）:</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">DaemonSet</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">node-exporter</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">selector:</span><br>    <span class="hljs-attr">matchLabels:</span><br>      <span class="hljs-attr">app:</span> <span class="hljs-string">node-exporter</span><br>  <span class="hljs-attr">template:</span><br>    <span class="hljs-attr">metadata:</span><br>      <span class="hljs-attr">labels:</span><br>        <span class="hljs-attr">app:</span> <span class="hljs-string">node-exporter</span><br>    <span class="hljs-attr">spec:</span><br>      <span class="hljs-attr">containers:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">node-exporter</span><br>        <span class="hljs-attr">image:</span> <span class="hljs-string">prom/node-exporter</span><br>        <span class="hljs-attr">ports:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">containerPort:</span> <span class="hljs-number">9100</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="4-更新策略"><a href="#4-更新策略" class="headerlink" title="4. 更新策略"></a>4. 更新策略</h3><ol>
+<li><p><strong>Deployment更新策略:</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">strategy:</span><br>    <span class="hljs-attr">type:</span> <span class="hljs-string">RollingUpdate</span><br>    <span class="hljs-attr">rollingUpdate:</span><br>      <span class="hljs-attr">maxSurge:</span> <span class="hljs-number">25</span><span class="hljs-string">%</span><br>      <span class="hljs-attr">maxUnavailable:</span> <span class="hljs-number">25</span><span class="hljs-string">%</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>DaemonSet更新策略:</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">updateStrategy:</span><br>    <span class="hljs-attr">type:</span> <span class="hljs-string">RollingUpdate</span><br>    <span class="hljs-attr">rollingUpdate:</span><br>      <span class="hljs-attr">maxUnavailable:</span> <span class="hljs-number">1</span><br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="5-使用建议"><a href="#5-使用建议" class="headerlink" title="5. 使用建议"></a>5. 使用建议</h3><ol>
+<li><p><strong>选择Deployment场景:</strong></p>
+<ul>
+<li>常规的Web应用</li>
+<li>微服务应用</li>
+<li>需要负载均衡的服务</li>
+</ul>
+</li>
+<li><p><strong>选择DaemonSet场景:</strong></p>
+<ul>
+<li>系统级服务</li>
+<li>监控采集服务</li>
+<li>日志收集服务</li>
+<li>存储插件</li>
+</ul>
+</li>
+</ol>
+<h3 id="6-注意事项-1"><a href="#6-注意事项-1" class="headerlink" title="6. 注意事项"></a>6. 注意事项</h3><ol>
+<li><p><strong>Deployment:</strong></p>
+<ul>
+<li>注意设置合适的资源请求和限制</li>
+<li>配置合理的健康检查</li>
+<li>考虑配置HPA实现自动扩缩容</li>
+</ul>
+</li>
+<li><p><strong>DaemonSet:</strong></p>
+<ul>
+<li>注意资源占用，因为会在每个节点运行</li>
+<li>合理配置污点容忍</li>
+<li>避免运行太多DaemonSet影响业务Pod</li>
+</ul>
+</li>
+</ol>
+<p>通过合理选择Deployment和DaemonSet，可以更好地满足不同的应用部署需求。</p>
+<p>我看到您已经理解了Deployment和DaemonSet的区别。让我结合您的项目文件，给出一些具体建议：</p>
+<h3 id="1-订单服务应该使用Deployment"><a href="#1-订单服务应该使用Deployment" class="headerlink" title="1. 订单服务应该使用Deployment"></a>1. 订单服务应该使用Deployment</h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">order-service</span><br>  <span class="hljs-attr">namespace:</span> <span class="hljs-string">core-business</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">replicas:</span> <span class="hljs-number">3</span><br>  <span class="hljs-attr">selector:</span><br>    <span class="hljs-attr">matchLabels:</span><br>      <span class="hljs-attr">app:</span> <span class="hljs-string">order-service</span><br>  <span class="hljs-attr">template:</span><br>    <span class="hljs-attr">metadata:</span><br>      <span class="hljs-attr">labels:</span><br>        <span class="hljs-attr">app:</span> <span class="hljs-string">order-service</span><br>    <span class="hljs-attr">spec:</span><br>      <span class="hljs-attr">containers:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">order-service</span><br>        <span class="hljs-attr">image:</span> <span class="hljs-string">your-registry/order-service:latest</span><br>        <span class="hljs-attr">ports:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">containerPort:</span> <span class="hljs-number">8080</span><br>        <span class="hljs-attr">resources:</span><br>          <span class="hljs-attr">requests:</span><br>            <span class="hljs-attr">memory:</span> <span class="hljs-string">&quot;1Gi&quot;</span><br>            <span class="hljs-attr">cpu:</span> <span class="hljs-string">&quot;500m&quot;</span><br>          <span class="hljs-attr">limits:</span><br>            <span class="hljs-attr">memory:</span> <span class="hljs-string">&quot;2Gi&quot;</span><br>            <span class="hljs-attr">cpu:</span> <span class="hljs-string">&quot;1000m&quot;</span><br>        <span class="hljs-attr">readinessProbe:</span><br>          <span class="hljs-attr">httpGet:</span><br>            <span class="hljs-attr">path:</span> <span class="hljs-string">/actuator/health</span><br>            <span class="hljs-attr">port:</span> <span class="hljs-number">8080</span><br>          <span class="hljs-attr">initialDelaySeconds:</span> <span class="hljs-number">30</span><br>          <span class="hljs-attr">periodSeconds:</span> <span class="hljs-number">10</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-配套的监控采集使用DaemonSet"><a href="#2-配套的监控采集使用DaemonSet" class="headerlink" title="2. 配套的监控采集使用DaemonSet"></a>2. 配套的监控采集使用DaemonSet</h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">DaemonSet</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">metrics-collector</span><br>  <span class="hljs-attr">namespace:</span> <span class="hljs-string">monitoring</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">selector:</span><br>    <span class="hljs-attr">matchLabels:</span><br>      <span class="hljs-attr">app:</span> <span class="hljs-string">metrics-collector</span><br>  <span class="hljs-attr">template:</span><br>    <span class="hljs-attr">metadata:</span><br>      <span class="hljs-attr">labels:</span><br>        <span class="hljs-attr">app:</span> <span class="hljs-string">metrics-collector</span><br>    <span class="hljs-attr">spec:</span><br>      <span class="hljs-attr">containers:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">collector</span><br>        <span class="hljs-attr">image:</span> <span class="hljs-string">your-registry/metrics-collector:latest</span><br>        <span class="hljs-attr">resources:</span><br>          <span class="hljs-attr">requests:</span><br>            <span class="hljs-attr">memory:</span> <span class="hljs-string">&quot;256Mi&quot;</span><br>            <span class="hljs-attr">cpu:</span> <span class="hljs-string">&quot;100m&quot;</span><br>          <span class="hljs-attr">limits:</span><br>            <span class="hljs-attr">memory:</span> <span class="hljs-string">&quot;512Mi&quot;</span><br>            <span class="hljs-attr">cpu:</span> <span class="hljs-string">&quot;200m&quot;</span><br>        <span class="hljs-attr">volumeMounts:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">varlog</span><br>          <span class="hljs-attr">mountPath:</span> <span class="hljs-string">/var/log</span><br>      <span class="hljs-attr">volumes:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">varlog</span><br>        <span class="hljs-attr">hostPath:</span><br>          <span class="hljs-attr">path:</span> <span class="hljs-string">/var/log</span><br></code></pre></td></tr></table></figure>
+
+<p>这样的组合可以确保：</p>
+<ol>
+<li>订单服务能够灵活扩缩容</li>
+<li>监控数据能够从每个节点收集</li>
+<li>符合您在quota.yaml中设置的资源限制</li>
+</ol>
+<h2 id="k8s版本用的哪个版本"><a href="#k8s版本用的哪个版本" class="headerlink" title="k8s版本用的哪个版本"></a>k8s版本用的哪个版本</h2><p>1.23.6</p>
+<h2 id="scheduler调度的方式有哪些"><a href="#scheduler调度的方式有哪些" class="headerlink" title="scheduler调度的方式有哪些"></a>scheduler调度的方式有哪些</h2><p>让我详细介绍K8s的调度机制：</p>
+<h3 id="1-调度过程"><a href="#1-调度过程" class="headerlink" title="1. 调度过程"></a>1. 调度过程</h3><p>调度过程分为两个主要阶段：</p>
+<ol>
+<li><strong>Predicates（预选）</strong>：过滤不符合条件的节点</li>
+<li><strong>Priorities（优选）</strong>：对符合条件的节点进行打分</li>
+</ol>
+<h3 id="2-常用调度方式"><a href="#2-常用调度方式" class="headerlink" title="2. 常用调度方式"></a>2. 常用调度方式</h3><ol>
+<li><p><strong>节点选择器(NodeSelector)</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Pod</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">nginx</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">nodeSelector:</span><br>    <span class="hljs-attr">disk:</span> <span class="hljs-string">ssd</span><br>    <span class="hljs-attr">gpu:</span> <span class="hljs-string">&quot;true&quot;</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>节点亲和性(Node Affinity)</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">affinity:</span><br>    <span class="hljs-attr">nodeAffinity:</span><br>      <span class="hljs-attr">requiredDuringSchedulingIgnoredDuringExecution:</span><br>        <span class="hljs-attr">nodeSelectorTerms:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">matchExpressions:</span><br>          <span class="hljs-bullet">-</span> <span class="hljs-attr">key:</span> <span class="hljs-string">kubernetes.io/e2e-az-name</span><br>            <span class="hljs-attr">operator:</span> <span class="hljs-string">In</span><br>            <span class="hljs-attr">values:</span><br>            <span class="hljs-bullet">-</span> <span class="hljs-string">e2e-az1</span><br>            <span class="hljs-bullet">-</span> <span class="hljs-string">e2e-az2</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>Pod亲和性(Pod Affinity)</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">affinity:</span><br>    <span class="hljs-attr">podAffinity:</span><br>      <span class="hljs-attr">requiredDuringSchedulingIgnoredDuringExecution:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">labelSelector:</span><br>          <span class="hljs-attr">matchExpressions:</span><br>          <span class="hljs-bullet">-</span> <span class="hljs-attr">key:</span> <span class="hljs-string">app</span><br>            <span class="hljs-attr">operator:</span> <span class="hljs-string">In</span><br>            <span class="hljs-attr">values:</span><br>            <span class="hljs-bullet">-</span> <span class="hljs-string">web</span><br>        <span class="hljs-attr">topologyKey:</span> <span class="hljs-string">kubernetes.io/hostname</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>污点和容忍(Taints and Tolerations)</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-comment"># 给节点添加污点</span><br><span class="hljs-string">kubectl</span> <span class="hljs-string">taint</span> <span class="hljs-string">nodes</span> <span class="hljs-string">node1</span> <span class="hljs-string">key=value:NoSchedule</span><br><br><span class="hljs-comment"># Pod配置容忍</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">tolerations:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">key:</span> <span class="hljs-string">&quot;key&quot;</span><br>    <span class="hljs-attr">operator:</span> <span class="hljs-string">&quot;Equal&quot;</span><br>    <span class="hljs-attr">value:</span> <span class="hljs-string">&quot;value&quot;</span><br>    <span class="hljs-attr">effect:</span> <span class="hljs-string">&quot;NoSchedule&quot;</span><br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="3-高级调度特性"><a href="#3-高级调度特性" class="headerlink" title="3. 高级调度特性"></a>3. 高级调度特性</h3><ol>
+<li><p><strong>Pod优先级和抢占</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">scheduling.k8s.io/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">PriorityClass</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">high-priority</span><br><span class="hljs-attr">value:</span> <span class="hljs-number">1000000</span><br><span class="hljs-meta">---</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Pod</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">nginx</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">priorityClassName:</span> <span class="hljs-string">high-priority</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>DaemonSet调度</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">DaemonSet</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">fluentd-elasticsearch</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">selector:</span><br>    <span class="hljs-attr">matchLabels:</span><br>      <span class="hljs-attr">name:</span> <span class="hljs-string">fluentd-elasticsearch</span><br>  <span class="hljs-attr">template:</span><br>    <span class="hljs-attr">spec:</span><br>      <span class="hljs-attr">tolerations:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">key:</span> <span class="hljs-string">node-role.kubernetes.io/master</span><br>        <span class="hljs-attr">effect:</span> <span class="hljs-string">NoSchedule</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>自定义调度器</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Pod</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">custom-scheduler-pod</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">schedulerName:</span> <span class="hljs-string">my-custom-scheduler</span><br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="4-资源限制调度"><a href="#4-资源限制调度" class="headerlink" title="4. 资源限制调度"></a>4. 资源限制调度</h3><ol>
+<li><p><strong>资源请求和限制</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">containers:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">app</span><br>    <span class="hljs-attr">resources:</span><br>      <span class="hljs-attr">requests:</span><br>        <span class="hljs-attr">memory:</span> <span class="hljs-string">&quot;64Mi&quot;</span><br>        <span class="hljs-attr">cpu:</span> <span class="hljs-string">&quot;250m&quot;</span><br>      <span class="hljs-attr">limits:</span><br>        <span class="hljs-attr">memory:</span> <span class="hljs-string">&quot;128Mi&quot;</span><br>        <span class="hljs-attr">cpu:</span> <span class="hljs-string">&quot;500m&quot;</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>Pod拓扑分布约束</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">topologySpreadConstraints:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">maxSkew:</span> <span class="hljs-number">1</span><br>    <span class="hljs-attr">topologyKey:</span> <span class="hljs-string">zone</span><br>    <span class="hljs-attr">whenUnsatisfiable:</span> <span class="hljs-string">DoNotSchedule</span><br>    <span class="hljs-attr">labelSelector:</span><br>      <span class="hljs-attr">matchLabels:</span><br>        <span class="hljs-attr">app:</span> <span class="hljs-string">web</span><br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="5-最佳实践-1"><a href="#5-最佳实践-1" class="headerlink" title="5. 最佳实践"></a>5. 最佳实践</h3><ol>
+<li><p><strong>合理使用亲和性和反亲和性</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">affinity:</span><br>    <span class="hljs-attr">podAntiAffinity:</span><br>      <span class="hljs-attr">preferredDuringSchedulingIgnoredDuringExecution:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">weight:</span> <span class="hljs-number">100</span><br>        <span class="hljs-attr">podAffinityTerm:</span><br>          <span class="hljs-attr">labelSelector:</span><br>            <span class="hljs-attr">matchExpressions:</span><br>            <span class="hljs-bullet">-</span> <span class="hljs-attr">key:</span> <span class="hljs-string">app</span><br>              <span class="hljs-attr">operator:</span> <span class="hljs-string">In</span><br>              <span class="hljs-attr">values:</span><br>              <span class="hljs-bullet">-</span> <span class="hljs-string">web</span><br>          <span class="hljs-attr">topologyKey:</span> <span class="hljs-string">kubernetes.io/hostname</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>设置默认的调度策略</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">kubescheduler.config.k8s.io/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">KubeSchedulerConfiguration</span><br><span class="hljs-attr">profiles:</span><br><span class="hljs-bullet">-</span> <span class="hljs-attr">schedulerName:</span> <span class="hljs-string">default-scheduler</span><br>  <span class="hljs-attr">plugins:</span><br>    <span class="hljs-attr">score:</span><br>      <span class="hljs-attr">disabled:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">NodeResourcesLeastAllocated</span><br>      <span class="hljs-attr">enabled:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">NodeResourcesMostAllocated</span><br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="6-注意事项-2"><a href="#6-注意事项-2" class="headerlink" title="6. 注意事项"></a>6. 注意事项</h3><ol>
+<li>避免过度使用硬性调度约束</li>
+<li>合理设置Pod优先级</li>
+<li>注意节点资源均衡</li>
+<li>考虑跨可用区调度</li>
+<li>定期检查调度失败的原因</li>
+</ol>
+<p>通过合理使用这些调度机制，可以：</p>
+<ul>
+<li>确保应用高可用</li>
+<li>优化资源使用</li>
+<li>满足特定的部署需求</li>
+<li>提高集群的稳定性</li>
+</ul>
+<p>我看到您已经理解了K8s的调度机制。让我结合实际场景，给出一些具体的调度策略建议：</p>
+<h3 id="1-针对订单服务-OrderService-的调度策略"><a href="#1-针对订单服务-OrderService-的调度策略" class="headerlink" title="1. 针对订单服务(OrderService)的调度策略"></a>1. 针对订单服务(OrderService)的调度策略</h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">order-service</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">replicas:</span> <span class="hljs-number">3</span><br>  <span class="hljs-attr">template:</span><br>    <span class="hljs-attr">spec:</span><br>      <span class="hljs-comment"># 优先级设置</span><br>      <span class="hljs-attr">priorityClassName:</span> <span class="hljs-string">high-priority</span><br>      <br>      <span class="hljs-comment"># 亲和性设置</span><br>      <span class="hljs-attr">affinity:</span><br>        <span class="hljs-comment"># 节点亲和性 - 选择高性能节点</span><br>        <span class="hljs-attr">nodeAffinity:</span><br>          <span class="hljs-attr">requiredDuringSchedulingIgnoredDuringExecution:</span><br>            <span class="hljs-attr">nodeSelectorTerms:</span><br>            <span class="hljs-bullet">-</span> <span class="hljs-attr">matchExpressions:</span><br>              <span class="hljs-bullet">-</span> <span class="hljs-attr">key:</span> <span class="hljs-string">node-type</span><br>                <span class="hljs-attr">operator:</span> <span class="hljs-string">In</span><br>                <span class="hljs-attr">values:</span><br>                <span class="hljs-bullet">-</span> <span class="hljs-string">high-performance</span><br>        <br>        <span class="hljs-comment"># Pod反亲和性 - 保证高可用</span><br>        <span class="hljs-attr">podAntiAffinity:</span><br>          <span class="hljs-attr">requiredDuringSchedulingIgnoredDuringExecution:</span><br>          <span class="hljs-bullet">-</span> <span class="hljs-attr">labelSelector:</span><br>              <span class="hljs-attr">matchLabels:</span><br>                <span class="hljs-attr">app:</span> <span class="hljs-string">order-service</span><br>            <span class="hljs-attr">topologyKey:</span> <span class="hljs-string">kubernetes.io/hostname</span><br>      <br>      <span class="hljs-comment"># 资源请求和限制</span><br>      <span class="hljs-attr">containers:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">order-service</span><br>        <span class="hljs-attr">resources:</span><br>          <span class="hljs-attr">requests:</span><br>            <span class="hljs-attr">cpu:</span> <span class="hljs-string">&quot;2&quot;</span><br>            <span class="hljs-attr">memory:</span> <span class="hljs-string">&quot;4Gi&quot;</span><br>          <span class="hljs-attr">limits:</span><br>            <span class="hljs-attr">cpu:</span> <span class="hljs-string">&quot;4&quot;</span><br>            <span class="hljs-attr">memory:</span> <span class="hljs-string">&quot;8Gi&quot;</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-配合资源配额-quota-yaml-的调度策略"><a href="#2-配合资源配额-quota-yaml-的调度策略" class="headerlink" title="2. 配合资源配额(quota.yaml)的调度策略"></a>2. 配合资源配额(quota.yaml)的调度策略</h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-comment"># 为订单服务创建专属命名空间配额</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">ResourceQuota</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">order-service-quota</span><br>  <span class="hljs-attr">namespace:</span> <span class="hljs-string">order-service</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">hard:</span><br>    <span class="hljs-attr">requests.cpu:</span> <span class="hljs-string">&quot;8&quot;</span><br>    <span class="hljs-attr">requests.memory:</span> <span class="hljs-string">16Gi</span><br>    <span class="hljs-attr">limits.cpu:</span> <span class="hljs-string">&quot;16&quot;</span><br>    <span class="hljs-attr">limits.memory:</span> <span class="hljs-string">32Gi</span><br>    <span class="hljs-attr">pods:</span> <span class="hljs-string">&quot;5&quot;</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="3-调度策略建议"><a href="#3-调度策略建议" class="headerlink" title="3. 调度策略建议"></a>3. 调度策略建议</h3><ol>
+<li><p><strong>高可用保证</strong></p>
+<ul>
+<li>跨节点部署</li>
+<li>跨可用区部署</li>
+<li>资源预留</li>
+</ul>
+</li>
+<li><p><strong>性能保证</strong></p>
+<ul>
+<li>使用专用节点池</li>
+<li>合理的资源限制</li>
+<li>优先级设置</li>
+</ul>
+</li>
+<li><p><strong>弹性伸缩</strong></p>
+<ul>
+<li>配置HPA</li>
+<li>设置合理的扩缩容阈值</li>
+<li>资源预留空间</li>
+</ul>
+</li>
+</ol>
+<p>这样的配置可以确保订单服务的稳定性和性能。</p>
+<h2 id="集群层面的规划-根据业务规模-预估多少台机器"><a href="#集群层面的规划-根据业务规模-预估多少台机器" class="headerlink" title="集群层面的规划 根据业务规模 预估多少台机器"></a>集群层面的规划 根据业务规模 预估多少台机器</h2><p>让我为您详细说明集群规模的规划方法：</p>
+<h3 id="1-业务规模评估"><a href="#1-业务规模评估" class="headerlink" title="1. 业务规模评估"></a>1. 业务规模评估</h3><ol>
+<li><p><strong>业务指标评估</strong></p>
+<ul>
+<li>日活用户数（DAU）</li>
+<li>峰值QPS</li>
+<li>数据存储需求</li>
+<li>计算密集型&#x2F;IO密集型</li>
+</ul>
+</li>
+<li><p><strong>单个服务资源需求</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-string">典型服务资源配置示例：</span><br><span class="hljs-bullet">-</span> <span class="hljs-string">小型服务：</span><br>  <span class="hljs-attr">CPU:</span> <span class="hljs-number">0.5</span><span class="hljs-number">-1</span><span class="hljs-string">核</span><br>  <span class="hljs-string">内存:</span> <span class="hljs-number">1</span><span class="hljs-string">-2Gi</span><br>  <br><span class="hljs-bullet">-</span> <span class="hljs-string">中型服务：</span><br>  <span class="hljs-attr">CPU:</span> <span class="hljs-number">2</span><span class="hljs-number">-4</span><span class="hljs-string">核</span><br>  <span class="hljs-string">内存:</span> <span class="hljs-number">4</span><span class="hljs-string">-8Gi</span><br>  <br><span class="hljs-bullet">-</span> <span class="hljs-string">大型服务：</span><br>  <span class="hljs-attr">CPU:</span> <span class="hljs-number">8</span><span class="hljs-string">核+</span><br>  <span class="hljs-string">内存:</span> <span class="hljs-string">16Gi+</span><br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="2-节点规格选择"><a href="#2-节点规格选择" class="headerlink" title="2. 节点规格选择"></a>2. 节点规格选择</h3><ol>
+<li><p><strong>常用节点规格</strong></p>
+<figure class="highlight asciidoc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs asciidoc"><span class="hljs-bullet">- </span>通用型：<br><span class="hljs-code">  4核8G, 8核16G, 16核32G</span><br><span class="hljs-code">  </span><br><span class="hljs-bullet">- </span>计算密集型：<br><span class="hljs-code">  16核32G, 32核64G</span><br><span class="hljs-code">  </span><br><span class="hljs-bullet">- </span>内存密集型：<br><span class="hljs-code">  16核64G, 32核128G</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>节点数量计算公式</strong></p>
+<figure class="highlight fix"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs fix"><span class="hljs-attr">所需节点数 </span>=<span class="hljs-string"> (服务数量 × 单服务资源 × 副本数 × (1 + 冗余系数)) / 节点规格</span><br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="3-集群规模示例"><a href="#3-集群规模示例" class="headerlink" title="3. 集群规模示例"></a>3. 集群规模示例</h3><ol>
+<li><p><strong>小型集群（适合初创公司）</strong></p>
+<figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-bullet">-</span> <span class="hljs-string">业务规模：</span><br>  <span class="hljs-attribute">DAU</span><span class="hljs-punctuation">:</span> <span class="hljs-string">1-10万</span><br>  <span class="hljs-attribute">服务数量</span><span class="hljs-punctuation">:</span> <span class="hljs-string">10-20个</span><br>  <br><span class="hljs-bullet">-</span> <span class="hljs-string">节点配置：</span><br>  <span class="hljs-attribute">管理节点</span><span class="hljs-punctuation">:</span> <span class="hljs-string">3台 4核8G</span><br>  <span class="hljs-attribute">工作节点</span><span class="hljs-punctuation">:</span> <span class="hljs-string">3-5台 8核16G</span><br>  <br><span class="hljs-bullet">-</span> <span class="hljs-string">总资源：</span><br>  <span class="hljs-attribute">CPU</span><span class="hljs-punctuation">:</span> <span class="hljs-string">40-60核</span><br>  <span class="hljs-attribute">内存</span><span class="hljs-punctuation">:</span> <span class="hljs-string">80-120G</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>中型集群（适合中型企业）</strong></p>
+<figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-bullet">-</span> <span class="hljs-string">业务规模：</span><br>  <span class="hljs-attribute">DAU</span><span class="hljs-punctuation">:</span> <span class="hljs-string">10-100万</span><br>  <span class="hljs-attribute">服务数量</span><span class="hljs-punctuation">:</span> <span class="hljs-string">20-50个</span><br>  <br><span class="hljs-bullet">-</span> <span class="hljs-string">节点配置：</span><br>  <span class="hljs-attribute">管理节点</span><span class="hljs-punctuation">:</span> <span class="hljs-string">3台 8核16G</span><br>  <span class="hljs-attribute">工作节点</span><span class="hljs-punctuation">:</span> <span class="hljs-string">10-20台 16核32G</span><br>  <br><span class="hljs-bullet">-</span> <span class="hljs-string">总资源：</span><br>  <span class="hljs-attribute">CPU</span><span class="hljs-punctuation">:</span> <span class="hljs-string">200-400核</span><br>  <span class="hljs-attribute">内存</span><span class="hljs-punctuation">:</span> <span class="hljs-string">400-800G</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>大型集群（适合大型企业）</strong></p>
+<figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-bullet">-</span> <span class="hljs-string">业务规模：</span><br>  <span class="hljs-attribute">DAU</span><span class="hljs-punctuation">:</span> <span class="hljs-string">100万+</span><br>  <span class="hljs-attribute">服务数量</span><span class="hljs-punctuation">:</span> <span class="hljs-string">50+个</span><br>  <br><span class="hljs-bullet">-</span> <span class="hljs-string">节点配置：</span><br>  <span class="hljs-attribute">管理节点</span><span class="hljs-punctuation">:</span> <span class="hljs-string">5台 16核32G</span><br>  <span class="hljs-attribute">工作节点</span><span class="hljs-punctuation">:</span> <span class="hljs-string">50+台 32核64G</span><br>  <br><span class="hljs-bullet">-</span> <span class="hljs-string">总资源：</span><br>  <span class="hljs-attribute">CPU</span><span class="hljs-punctuation">:</span> <span class="hljs-string">1600+核</span><br>  <span class="hljs-attribute">内存</span><span class="hljs-punctuation">:</span> <span class="hljs-string">3200+G</span><br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="4-规划注意事项"><a href="#4-规划注意事项" class="headerlink" title="4. 规划注意事项"></a>4. 规划注意事项</h3><ol>
+<li><p><strong>资源预留</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-string">系统组件资源预留：</span><br><span class="hljs-bullet">-</span> <span class="hljs-attr">kubelet:</span> <span class="hljs-number">0.1</span><span class="hljs-string">核/节点</span><br><span class="hljs-bullet">-</span> <span class="hljs-attr">kube-proxy:</span> <span class="hljs-number">0.1</span><span class="hljs-string">核/节点</span><br><span class="hljs-bullet">-</span> <span class="hljs-string">监控组件:</span> <span class="hljs-number">0.5</span><span class="hljs-number">-1</span><span class="hljs-string">核/节点</span><br><span class="hljs-bullet">-</span> <span class="hljs-string">日志组件:</span> <span class="hljs-number">0.5</span><span class="hljs-number">-1</span><span class="hljs-string">核/节点</span><br><br><span class="hljs-string">建议预留比例：</span><br><span class="hljs-bullet">-</span> <span class="hljs-attr">CPU:</span> <span class="hljs-string">总量的20-30%</span><br><span class="hljs-bullet">-</span> <span class="hljs-string">内存:</span> <span class="hljs-string">总量的30-40%</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>扩展性考虑</strong></p>
+</li>
+</ol>
+<ul>
+<li>预留50%的增长空间</li>
+<li>配置集群自动扩缩容</li>
+<li>考虑多可用区部署</li>
+</ul>
+<ol start="3">
+<li><strong>成本优化</strong><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-string">混合部署策略：</span><br><span class="hljs-bullet">-</span> <span class="hljs-string">关键业务：使用按量付费节点</span><br><span class="hljs-bullet">-</span> <span class="hljs-string">非关键业务：使用spot节点</span><br><span class="hljs-bullet">-</span> <span class="hljs-string">固定负载：使用预留实例</span><br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="5-监控指标"><a href="#5-监控指标" class="headerlink" title="5. 监控指标"></a>5. 监控指标</h3><p>需要持续监控以下指标来调整规划：</p>
+<figure class="highlight asciidoc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs asciidoc"><span class="hljs-bullet">- </span>节点资源使用率<br><span class="hljs-bullet">- </span>Pod调度成功率<br><span class="hljs-bullet">- </span>服务响应时间<br><span class="hljs-bullet">- </span>容器重启次数<br><span class="hljs-bullet">- </span>存储使用情况<br></code></pre></td></tr></table></figure>
+
+<p>建议：</p>
+<ol>
+<li>从小规模开始，根据实际运行情况逐步扩展</li>
+<li>使用节点池管理不同规格的节点</li>
+<li>合理使用资源配额限制namespace资源使用</li>
+<li>定期评估集群使用情况，及时优化资源分配</li>
+</ol>
+<h2 id="亲和性和非亲和性？"><a href="#亲和性和非亲和性？" class="headerlink" title="亲和性和非亲和性？"></a>亲和性和非亲和性？</h2><p>让我详细解释亲和性(Affinity)和非亲和性(Anti-affinity)：</p>
+<h3 id="1-节点亲和性-Node-Affinity"><a href="#1-节点亲和性-Node-Affinity" class="headerlink" title="1. 节点亲和性(Node Affinity)"></a>1. 节点亲和性(Node Affinity)</h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">order-service</span>    <span class="hljs-comment"># 基于您的OrderService.java</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">template:</span><br>    <span class="hljs-attr">spec:</span><br>      <span class="hljs-attr">affinity:</span><br>        <span class="hljs-attr">nodeAffinity:</span><br>          <span class="hljs-comment"># 硬性要求</span><br>          <span class="hljs-attr">requiredDuringSchedulingIgnoredDuringExecution:</span><br>            <span class="hljs-attr">nodeSelectorTerms:</span><br>            <span class="hljs-bullet">-</span> <span class="hljs-attr">matchExpressions:</span><br>              <span class="hljs-bullet">-</span> <span class="hljs-attr">key:</span> <span class="hljs-string">zone</span><br>                <span class="hljs-attr">operator:</span> <span class="hljs-string">In</span><br>                <span class="hljs-attr">values:</span><br>                <span class="hljs-bullet">-</span> <span class="hljs-string">zone-a</span><br>                <span class="hljs-bullet">-</span> <span class="hljs-string">zone-b</span><br>          <span class="hljs-comment"># 软性要求</span><br>          <span class="hljs-attr">preferredDuringSchedulingIgnoredDuringExecution:</span><br>          <span class="hljs-bullet">-</span> <span class="hljs-attr">weight:</span> <span class="hljs-number">100</span><br>            <span class="hljs-attr">preference:</span><br>              <span class="hljs-attr">matchExpressions:</span><br>              <span class="hljs-bullet">-</span> <span class="hljs-attr">key:</span> <span class="hljs-string">node-type</span><br>                <span class="hljs-attr">operator:</span> <span class="hljs-string">In</span><br>                <span class="hljs-attr">values:</span><br>                <span class="hljs-bullet">-</span> <span class="hljs-string">high-performance</span><br></code></pre></td></tr></table></figure>
+
+<p>让我详细解释这段配置的含义：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">affinity:</span><br>  <span class="hljs-attr">nodeAffinity:</span>  <span class="hljs-comment"># 节点亲和性配置</span><br>    <span class="hljs-comment"># 1. 硬性要求 - 必须满足这些条件，否则Pod不会被调度到该节点</span><br>    <span class="hljs-attr">requiredDuringSchedulingIgnoredDuringExecution:</span><br>      <span class="hljs-attr">nodeSelectorTerms:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">matchExpressions:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">key:</span> <span class="hljs-string">zone</span>           <span class="hljs-comment"># 节点标签的key</span><br>          <span class="hljs-attr">operator:</span> <span class="hljs-string">In</span>        <span class="hljs-comment"># 操作符：In表示值必须在列表中</span><br>          <span class="hljs-attr">values:</span>            <span class="hljs-comment"># 可接受的值列表</span><br>          <span class="hljs-bullet">-</span> <span class="hljs-string">zone-a</span>           <span class="hljs-comment"># 可以调度到zone-a的节点</span><br>          <span class="hljs-bullet">-</span> <span class="hljs-string">zone-b</span>           <span class="hljs-comment"># 可以调度到zone-b的节点</span><br><br>    <span class="hljs-comment"># 2. 软性要求 - 优先考虑满足这些条件的节点，但不是必须的</span><br>    <span class="hljs-attr">preferredDuringSchedulingIgnoredDuringExecution:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-attr">weight:</span> <span class="hljs-number">100</span>            <span class="hljs-comment"># 权重：0-100之间，影响优先级计算</span><br>      <span class="hljs-attr">preference:</span><br>        <span class="hljs-attr">matchExpressions:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">key:</span> <span class="hljs-string">node-type</span>     <span class="hljs-comment"># 节点标签的key</span><br>          <span class="hljs-attr">operator:</span> <span class="hljs-string">In</span>       <span class="hljs-comment"># 操作符</span><br>          <span class="hljs-attr">values:</span><br>          <span class="hljs-bullet">-</span> <span class="hljs-string">high-performance</span> <span class="hljs-comment"># 优先选择标记为high-performance的节点</span><br></code></pre></td></tr></table></figure>
+
+<p>这个配置的作用是：</p>
+<ol>
+<li><p><strong>硬性要求</strong>：</p>
+<ul>
+<li>Pod必须调度到带有<code>zone</code>标签的节点</li>
+<li>该标签的值必须是<code>zone-a</code>或<code>zone-b</code></li>
+<li>如果找不到满足条件的节点，Pod将无法调度</li>
+</ul>
+</li>
+<li><p><strong>软性要求</strong>：</p>
+<ul>
+<li>优先选择带有<code>node-type=high-performance</code>标签的节点</li>
+<li>权重100表示这是一个很强的偏好</li>
+<li>如果没有满足条件的节点，Pod也可以调度到其他节点</li>
+</ul>
+</li>
+</ol>
+<p>实际使用示例：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 给节点打标签</span><br>kubectl label nodes node1 zone=zone-a<br>kubectl label nodes node2 zone=zone-b<br>kubectl label nodes node1 node-type=high-performance<br></code></pre></td></tr></table></figure>
+
+<p>这样的配置适合：</p>
+<ol>
+<li>跨可用区部署（zone-a, zone-b）</li>
+<li>对性能有要求的服务（high-performance）</li>
+<li>确保服务高可用性</li>
+</ol>
+<h3 id="2-Pod亲和性-Pod-Affinity"><a href="#2-Pod亲和性-Pod-Affinity" class="headerlink" title="2. Pod亲和性(Pod Affinity)"></a>2. Pod亲和性(Pod Affinity)</h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">order-service</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">template:</span><br>    <span class="hljs-attr">spec:</span><br>      <span class="hljs-attr">affinity:</span><br>        <span class="hljs-attr">podAffinity:</span><br>          <span class="hljs-comment"># 要求和缓存服务部署在同一节点</span><br>          <span class="hljs-attr">requiredDuringSchedulingIgnoredDuringExecution:</span><br>          <span class="hljs-bullet">-</span> <span class="hljs-attr">labelSelector:</span><br>              <span class="hljs-attr">matchExpressions:</span><br>              <span class="hljs-bullet">-</span> <span class="hljs-attr">key:</span> <span class="hljs-string">app</span><br>                <span class="hljs-attr">operator:</span> <span class="hljs-string">In</span><br>                <span class="hljs-attr">values:</span><br>                <span class="hljs-bullet">-</span> <span class="hljs-string">cache-service</span><br>            <span class="hljs-attr">topologyKey:</span> <span class="hljs-string">kubernetes.io/hostname</span><br></code></pre></td></tr></table></figure>
+
+<p>让我详细解释这段Pod亲和性配置：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">affinity:</span><br>  <span class="hljs-attr">podAffinity:</span>  <span class="hljs-comment"># Pod亲和性配置</span><br>    <span class="hljs-attr">requiredDuringSchedulingIgnoredDuringExecution:</span>  <span class="hljs-comment"># 硬性要求</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-attr">labelSelector:</span>        <span class="hljs-comment"># 选择目标Pod的标签选择器</span><br>        <span class="hljs-attr">matchExpressions:</span>   <span class="hljs-comment"># 标签匹配表达式</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">key:</span> <span class="hljs-string">app</span>         <span class="hljs-comment"># 标签的key</span><br>          <span class="hljs-attr">operator:</span> <span class="hljs-string">In</span>     <span class="hljs-comment"># 操作符</span><br>          <span class="hljs-attr">values:</span><br>          <span class="hljs-bullet">-</span> <span class="hljs-string">cache-service</span>  <span class="hljs-comment"># 目标Pod的标签值</span><br>      <span class="hljs-attr">topologyKey:</span> <span class="hljs-string">kubernetes.io/hostname</span>  <span class="hljs-comment"># 拓扑域，这里表示同一个主机</span><br></code></pre></td></tr></table></figure>
+
+<p>这个配置的含义是：</p>
+<ol>
+<li><p><strong>Pod亲和性要求</strong>：</p>
+<ul>
+<li>当前的order-service必须和带有<code>app=cache-service</code>标签的Pod部署在同一个节点上</li>
+<li><code>kubernetes.io/hostname</code>表示”同一个主机”的范围</li>
+</ul>
+</li>
+<li><p><strong>实际应用场景</strong>：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-comment"># cache-service部署</span><br><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">cache-service</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">template:</span><br>    <span class="hljs-attr">metadata:</span><br>      <span class="hljs-attr">labels:</span><br>        <span class="hljs-attr">app:</span> <span class="hljs-string">cache-service</span>    <span class="hljs-comment"># 缓存服务的标签</span><br></code></pre></td></tr></table></figure></li>
+</ol>
+<p>这种配置适用于：</p>
+<ol>
+<li>需要低延迟访问的场景（订单服务需要快速访问缓存）</li>
+<li>减少网络开销</li>
+<li>提高访问效率</li>
+</ol>
+<p>实际效果：</p>
+<ul>
+<li>如果某个节点上运行着cache-service</li>
+<li>order-service的Pod会被调度到相同的节点上</li>
+<li>如果找不到运行cache-service的节点，order-service将无法被调度</li>
+</ul>
+<p>这对于OrderService.java来说很有用，因为：</p>
+<ol>
+<li>订单服务经常需要访问缓存</li>
+<li>同节点部署可以降低延迟</li>
+<li>提高订单处理性能</li>
+</ol>
+<h3 id="3-Pod反亲和性-Pod-Anti-affinity"><a href="#3-Pod反亲和性-Pod-Anti-affinity" class="headerlink" title="3. Pod反亲和性(Pod Anti-affinity)"></a>3. Pod反亲和性(Pod Anti-affinity)</h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">order-service</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">template:</span><br>    <span class="hljs-attr">spec:</span><br>      <span class="hljs-attr">affinity:</span><br>        <span class="hljs-attr">podAntiAffinity:</span><br>          <span class="hljs-comment"># 要求order-service的多个副本分散在不同节点</span><br>          <span class="hljs-attr">requiredDuringSchedulingIgnoredDuringExecution:</span><br>          <span class="hljs-bullet">-</span> <span class="hljs-attr">labelSelector:</span><br>              <span class="hljs-attr">matchLabels:</span><br>                <span class="hljs-attr">app:</span> <span class="hljs-string">order-service</span><br>            <span class="hljs-attr">topologyKey:</span> <span class="hljs-string">kubernetes.io/hostname</span><br></code></pre></td></tr></table></figure>
+
+<p>让我详细解释这段Pod反亲和性(Anti-affinity)配置：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">affinity:</span><br>  <span class="hljs-attr">podAntiAffinity:</span>  <span class="hljs-comment"># Pod反亲和性配置</span><br>    <span class="hljs-attr">requiredDuringSchedulingIgnoredDuringExecution:</span>  <span class="hljs-comment"># 硬性要求</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-attr">labelSelector:</span>    <span class="hljs-comment"># 选择目标Pod的标签</span><br>        <span class="hljs-attr">matchLabels:</span>    <br>          <span class="hljs-attr">app:</span> <span class="hljs-string">order-service</span>  <span class="hljs-comment"># 匹配自己的服务标签</span><br>      <span class="hljs-attr">topologyKey:</span> <span class="hljs-string">kubernetes.io/hostname</span>  <span class="hljs-comment"># 拓扑域为主机级别</span><br></code></pre></td></tr></table></figure>
+
+<p>这个配置的含义是：</p>
+<ol>
+<li><p><strong>反亲和性要求</strong>：</p>
+<ul>
+<li>带有<code>app=order-service</code>标签的Pod必须分散在不同的节点上</li>
+<li>不允许两个order-service的Pod运行在同一个节点上</li>
+</ul>
+</li>
+<li><p><strong>实际效果</strong>：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-comment"># 如果部署3个副本</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">replicas:</span> <span class="hljs-number">3</span>  <span class="hljs-comment"># 这三个Pod会被分散到不同节点</span><br>  <span class="hljs-attr">template:</span><br>    <span class="hljs-attr">metadata:</span><br>      <span class="hljs-attr">labels:</span><br>        <span class="hljs-attr">app:</span> <span class="hljs-string">order-service</span>  <span class="hljs-comment"># 这个标签被用于反亲和性判断</span><br></code></pre></td></tr></table></figure></li>
+</ol>
+<p>这种配置的好处：</p>
+<ol>
+<li><p><strong>提高可用性</strong>：</p>
+<ul>
+<li>如果一个节点故障，只会影响一个Pod</li>
+<li>其他节点上的Pod继续提供服务</li>
+</ul>
+</li>
+<li><p><strong>负载均衡</strong>：</p>
+<ul>
+<li>Pod分散在不同节点上</li>
+<li>避免单个节点负载过高</li>
+</ul>
+</li>
+<li><p><strong>故障隔离</strong>：</p>
+<ul>
+<li>硬件故障的影响被限制在单个副本</li>
+<li>提高整体服务稳定性</li>
+</ul>
+</li>
+</ol>
+<p>这对于OrderService.java特别有用，因为：</p>
+<ol>
+<li>订单服务是核心业务</li>
+<li>需要保证高可用性</li>
+<li>符合quota.yaml中的资源分配策略</li>
+</ol>
+<h3 id="4-常见使用场景"><a href="#4-常见使用场景" class="headerlink" title="4. 常见使用场景"></a>4. 常见使用场景</h3><ol>
+<li><strong>高可用部署:</strong><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">order-service</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">replicas:</span> <span class="hljs-number">3</span><br>  <span class="hljs-attr">template:</span><br>    <span class="hljs-attr">spec:</span><br>      <span class="hljs-attr">affinity:</span><br>        <span class="hljs-attr">podAntiAffinity:</span><br>          <span class="hljs-attr">requiredDuringSchedulingIgnoredDuringExecution:</span><br>          <span class="hljs-bullet">-</span> <span class="hljs-attr">labelSelector:</span><br>              <span class="hljs-attr">matchLabels:</span><br>                <span class="hljs-attr">app:</span> <span class="hljs-string">order-service</span><br>            <span class="hljs-attr">topologyKey:</span> <span class="hljs-string">kubernetes.io/hostname</span><br>        <span class="hljs-attr">nodeAffinity:</span><br>          <span class="hljs-attr">requiredDuringSchedulingIgnoredDuringExecution:</span><br>            <span class="hljs-attr">nodeSelectorTerms:</span><br>            <span class="hljs-bullet">-</span> <span class="hljs-attr">matchExpressions:</span><br>              <span class="hljs-bullet">-</span> <span class="hljs-attr">key:</span> <span class="hljs-string">node-type</span><br>                <span class="hljs-attr">operator:</span> <span class="hljs-string">In</span><br>                <span class="hljs-attr">values:</span><br>                <span class="hljs-bullet">-</span> <span class="hljs-string">production</span><br></code></pre></td></tr></table></figure></li>
+</ol>
+<p>让我详细解释这段配置，它结合了Pod反亲和性和节点亲和性：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">replicas:</span> <span class="hljs-number">3</span>   <span class="hljs-comment"># 部署3个副本</span><br>  <span class="hljs-attr">template:</span><br>    <span class="hljs-attr">spec:</span><br>      <span class="hljs-attr">affinity:</span><br>        <span class="hljs-comment"># 1. Pod反亲和性配置</span><br>        <span class="hljs-attr">podAntiAffinity:</span><br>          <span class="hljs-attr">requiredDuringSchedulingIgnoredDuringExecution:</span><br>          <span class="hljs-bullet">-</span> <span class="hljs-attr">labelSelector:</span><br>              <span class="hljs-attr">matchLabels:</span><br>                <span class="hljs-attr">app:</span> <span class="hljs-string">order-service</span>    <span class="hljs-comment"># 匹配订单服务的标签</span><br>            <span class="hljs-attr">topologyKey:</span> <span class="hljs-string">kubernetes.io/hostname</span>    <span class="hljs-comment"># 按主机级别分散</span><br><br>        <span class="hljs-comment"># 2. 节点亲和性配置</span><br>        <span class="hljs-attr">nodeAffinity:</span><br>          <span class="hljs-attr">requiredDuringSchedulingIgnoredDuringExecution:</span><br>            <span class="hljs-attr">nodeSelectorTerms:</span><br>            <span class="hljs-bullet">-</span> <span class="hljs-attr">matchExpressions:</span><br>              <span class="hljs-bullet">-</span> <span class="hljs-attr">key:</span> <span class="hljs-string">node-type</span>     <span class="hljs-comment"># 节点标签</span><br>                <span class="hljs-attr">operator:</span> <span class="hljs-string">In</span>       <span class="hljs-comment"># 操作符</span><br>                <span class="hljs-attr">values:</span><br>                <span class="hljs-bullet">-</span> <span class="hljs-string">production</span>      <span class="hljs-comment"># 只部署在生产环境节点上</span><br></code></pre></td></tr></table></figure>
+
+<p>这个配置实现了两个目标：</p>
+<ol>
+<li><p><strong>Pod反亲和性要求</strong>：</p>
+<ul>
+<li>3个order-service副本必须运行在不同的节点上</li>
+<li>提高可用性，避免单点故障</li>
+</ul>
+</li>
+<li><p><strong>节点亲和性要求</strong>：</p>
+<ul>
+<li>只能部署在带有<code>node-type=production</code>标签的节点上</li>
+<li>确保订单服务运行在生产环境节点上</li>
+</ul>
+</li>
+</ol>
+<p>实际使用示例：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 标记生产环境节点</span><br>kubectl label nodes node1 node-type=production<br>kubectl label nodes node2 node-type=production<br>kubectl label nodes node3 node-type=production<br></code></pre></td></tr></table></figure>
+
+<p>这种配置特别适合OrderService.java这样的核心业务服务，因为它：</p>
+<ol>
+<li><p>确保高可用性（Pod分散部署）</p>
+</li>
+<li><p>保证服务质量（只使用生产级别节点）</p>
+</li>
+<li><p>符合quota.yaml中的资源规划</p>
+</li>
+<li><p><strong>性能优化:</strong></p>
+</li>
+</ol>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">order-service</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">template:</span><br>    <span class="hljs-attr">spec:</span><br>      <span class="hljs-attr">affinity:</span><br>        <span class="hljs-attr">nodeAffinity:</span><br>          <span class="hljs-attr">preferredDuringSchedulingIgnoredDuringExecution:</span><br>          <span class="hljs-bullet">-</span> <span class="hljs-attr">weight:</span> <span class="hljs-number">100</span><br>            <span class="hljs-attr">preference:</span><br>              <span class="hljs-attr">matchExpressions:</span><br>              <span class="hljs-bullet">-</span> <span class="hljs-attr">key:</span> <span class="hljs-string">cpu-type</span><br>                <span class="hljs-attr">operator:</span> <span class="hljs-string">In</span><br>                <span class="hljs-attr">values:</span><br>                <span class="hljs-bullet">-</span> <span class="hljs-string">high-performance</span><br>        <span class="hljs-attr">podAffinity:</span><br>          <span class="hljs-attr">preferredDuringSchedulingIgnoredDuringExecution:</span><br>          <span class="hljs-bullet">-</span> <span class="hljs-attr">weight:</span> <span class="hljs-number">100</span><br>            <span class="hljs-attr">podAffinityTerm:</span><br>              <span class="hljs-attr">labelSelector:</span><br>                <span class="hljs-attr">matchLabels:</span><br>                  <span class="hljs-attr">app:</span> <span class="hljs-string">cache-service</span><br>              <span class="hljs-attr">topologyKey:</span> <span class="hljs-string">kubernetes.io/hostname</span><br></code></pre></td></tr></table></figure>
+
+<p>让我详细解释这段配置，它包含了节点亲和性和Pod亲和性的软性要求：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">affinity:</span><br>  <span class="hljs-comment"># 1. 节点亲和性（软性要求）</span><br>  <span class="hljs-attr">nodeAffinity:</span><br>    <span class="hljs-attr">preferredDuringSchedulingIgnoredDuringExecution:</span>  <span class="hljs-comment"># 软性偏好</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-attr">weight:</span> <span class="hljs-number">100</span>    <span class="hljs-comment"># 权重值，最高优先级</span><br>      <span class="hljs-attr">preference:</span><br>        <span class="hljs-attr">matchExpressions:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">key:</span> <span class="hljs-string">cpu-type</span><br>          <span class="hljs-attr">operator:</span> <span class="hljs-string">In</span><br>          <span class="hljs-attr">values:</span><br>          <span class="hljs-bullet">-</span> <span class="hljs-string">high-performance</span>    <span class="hljs-comment"># 优先选择高性能CPU的节点</span><br><br>  <span class="hljs-comment"># 2. Pod亲和性（软性要求）</span><br>  <span class="hljs-attr">podAffinity:</span><br>    <span class="hljs-attr">preferredDuringSchedulingIgnoredDuringExecution:</span>  <span class="hljs-comment"># 软性偏好</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-attr">weight:</span> <span class="hljs-number">100</span>    <span class="hljs-comment"># 权重值，最高优先级</span><br>      <span class="hljs-attr">podAffinityTerm:</span><br>        <span class="hljs-attr">labelSelector:</span><br>          <span class="hljs-attr">matchLabels:</span><br>            <span class="hljs-attr">app:</span> <span class="hljs-string">cache-service</span>    <span class="hljs-comment"># 优先和缓存服务部署在一起</span><br>        <span class="hljs-attr">topologyKey:</span> <span class="hljs-string">kubernetes.io/hostname</span>    <span class="hljs-comment"># 同一节点</span><br></code></pre></td></tr></table></figure>
+
+
+<p>这个配置的特点：</p>
+<ol>
+<li><p><strong>软性节点亲和性</strong>：</p>
+<ul>
+<li>优先选择有<code>cpu-type=high-performance</code>标签的节点</li>
+<li>如果没有这样的节点，也可以调度到其他节点</li>
+<li>weight: 100表示这是最高优先级的偏好</li>
+</ul>
+</li>
+<li><p><strong>软性Pod亲和性</strong>：</p>
+<ul>
+<li>优先和cache-service部署在同一个节点</li>
+<li>如果无法满足，也可以部署在其他节点</li>
+<li>weight: 100表示这是最高优先级的偏好</li>
+</ul>
+</li>
+</ol>
+<p>这种配置特别适合OrderService.java，因为：</p>
+<ol>
+<li>订单服务需要高性能CPU支持</li>
+<li>与缓存服务部署在一起可以减少网络延迟</li>
+<li>使用软性要求保证服务可以正常部署</li>
+</ol>
+<p>实际效果：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 标记高性能节点</span><br>kubectl label nodes node1 cpu-type=high-performance<br><br><span class="hljs-comment"># 部署缓存服务</span><br>kubectl apply -f cache-service.yaml<br><br><span class="hljs-comment"># order-service会优先考虑：</span><br><span class="hljs-comment"># 1. 有高性能CPU的节点</span><br><span class="hljs-comment"># 2. 已经运行着cache-service的节点</span><br></code></pre></td></tr></table></figure>
+
+
+<p>这种软性要求比之前的硬性要求更灵活，因为：</p>
+<ol>
+<li>不会因为条件不满足而阻止Pod调度</li>
+<li>在资源紧张时仍然可以部署</li>
+<li>符合quota.yaml中的资源规划策略</li>
+</ol>
+<h3 id="5-最佳实践-2"><a href="#5-最佳实践-2" class="headerlink" title="5. 最佳实践"></a>5. 最佳实践</h3><ol>
+<li><strong>跨可用区部署:</strong><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">order-service</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">replicas:</span> <span class="hljs-number">3</span><br>  <span class="hljs-attr">template:</span><br>    <span class="hljs-attr">spec:</span><br>      <span class="hljs-attr">affinity:</span><br>        <span class="hljs-attr">podAntiAffinity:</span><br>          <span class="hljs-attr">requiredDuringSchedulingIgnoredDuringExecution:</span><br>          <span class="hljs-bullet">-</span> <span class="hljs-attr">labelSelector:</span><br>              <span class="hljs-attr">matchLabels:</span><br>                <span class="hljs-attr">app:</span> <span class="hljs-string">order-service</span><br>            <span class="hljs-attr">topologyKey:</span> <span class="hljs-string">topology.kubernetes.io/zone</span><br></code></pre></td></tr></table></figure></li>
+</ol>
+<p>让我详细解释这段配置，这是一个跨可用区(zone)的Pod反亲和性配置：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">replicas:</span> <span class="hljs-number">3</span>   <span class="hljs-comment"># 部署3个副本</span><br>  <span class="hljs-attr">template:</span><br>    <span class="hljs-attr">spec:</span><br>      <span class="hljs-attr">affinity:</span><br>        <span class="hljs-attr">podAntiAffinity:</span>    <span class="hljs-comment"># Pod反亲和性</span><br>          <span class="hljs-attr">requiredDuringSchedulingIgnoredDuringExecution:</span>  <span class="hljs-comment"># 硬性要求</span><br>          <span class="hljs-bullet">-</span> <span class="hljs-attr">labelSelector:</span><br>              <span class="hljs-attr">matchLabels:</span><br>                <span class="hljs-attr">app:</span> <span class="hljs-string">order-service</span>    <span class="hljs-comment"># 匹配订单服务的标签</span><br>            <span class="hljs-attr">topologyKey:</span> <span class="hljs-string">topology.kubernetes.io/zone</span>    <span class="hljs-comment"># 按可用区分散</span><br></code></pre></td></tr></table></figure>
+
+
+<p>这个配置的含义是：</p>
+<ol>
+<li><strong>跨可用区部署</strong>：<ul>
+<li>3个order-service的副本必须分布在不同的可用区</li>
+<li>使用<code>topology.kubernetes.io/zone</code>作为拓扑域</li>
+<li>这是一个硬性要求</li>
+</ul>
+</li>
+</ol>
+<p>实际效果：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 假设有三个可用区</span><br>kubectl label nodes node1 topology.kubernetes.io/zone=zone-a<br>kubectl label nodes node2 topology.kubernetes.io/zone=zone-b<br>kubectl label nodes node3 topology.kubernetes.io/zone=zone-c<br><br><span class="hljs-comment"># 三个Pod会分别部署在不同可用区</span><br></code></pre></td></tr></table></figure>
+
+
+<p>这种配置的优势：</p>
+<ol>
+<li><p><strong>高可用性</strong>：</p>
+<ul>
+<li>即使一个可用区故障，服务仍然可用</li>
+<li>其他可用区的Pod继续提供服务</li>
+</ul>
+</li>
+<li><p><strong>灾难恢复</strong>：</p>
+<ul>
+<li>分散在不同可用区降低整体风险</li>
+<li>提供更好的容灾能力</li>
+</ul>
+</li>
+<li><p><strong>地理位置分散</strong>：</p>
+<ul>
+<li>可以服务不同地理位置的用户</li>
+<li>潜在的性能优化</li>
+</ul>
+</li>
+</ol>
+<p>这对于OrderService.java特别重要，因为：</p>
+<ol>
+<li><p>订单服务是核心业务</p>
+</li>
+<li><p>需要最高级别的可用性保证</p>
+</li>
+<li><p>符合quota.yaml中的高可用性要求</p>
+</li>
+<li><p><strong>资源优化配置:</strong></p>
+</li>
+</ol>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">order-service</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">template:</span><br>    <span class="hljs-attr">spec:</span><br>      <span class="hljs-attr">affinity:</span><br>        <span class="hljs-attr">nodeAffinity:</span><br>          <span class="hljs-attr">preferredDuringSchedulingIgnoredDuringExecution:</span><br>          <span class="hljs-bullet">-</span> <span class="hljs-attr">weight:</span> <span class="hljs-number">100</span><br>            <span class="hljs-attr">preference:</span><br>              <span class="hljs-attr">matchExpressions:</span><br>              <span class="hljs-bullet">-</span> <span class="hljs-attr">key:</span> <span class="hljs-string">resource-pool</span><br>                <span class="hljs-attr">operator:</span> <span class="hljs-string">In</span><br>                <span class="hljs-attr">values:</span><br>                <span class="hljs-bullet">-</span> <span class="hljs-string">high-mem</span><br></code></pre></td></tr></table></figure>
+
+<p>让我详细解释这段配置，这是一个针对高内存节点的软性节点亲和性配置：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">affinity:</span><br>  <span class="hljs-attr">nodeAffinity:</span>    <span class="hljs-comment"># 节点亲和性</span><br>    <span class="hljs-attr">preferredDuringSchedulingIgnoredDuringExecution:</span>  <span class="hljs-comment"># 软性要求</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-attr">weight:</span> <span class="hljs-number">100</span>    <span class="hljs-comment"># 权重值（0-100），100表示最高优先级</span><br>      <span class="hljs-attr">preference:</span><br>        <span class="hljs-attr">matchExpressions:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">key:</span> <span class="hljs-string">resource-pool</span>    <span class="hljs-comment"># 节点标签key</span><br>          <span class="hljs-attr">operator:</span> <span class="hljs-string">In</span>         <span class="hljs-comment"># 操作符</span><br>          <span class="hljs-attr">values:</span><br>          <span class="hljs-bullet">-</span> <span class="hljs-string">high-mem</span>          <span class="hljs-comment"># 优先选择高内存节点</span><br></code></pre></td></tr></table></figure>
+
+
+
+<p>这个配置的含义是：</p>
+<ol>
+<li><strong>节点选择偏好</strong>：<ul>
+<li>优先选择标记为<code>resource-pool=high-mem</code>的节点</li>
+<li>这是软性要求，如果没有符合条件的节点，Pod也可以调度到其他节点</li>
+<li>weight: 100表示这是最高优先级的偏好</li>
+</ul>
+</li>
+</ol>
+<p>实际使用示例：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 标记高内存节点</span><br>kubectl label nodes node1 resource-pool=high-mem    <span class="hljs-comment"># 例如：32GB内存的节点</span><br>kubectl label nodes node2 resource-pool=normal-mem  <span class="hljs-comment"># 例如：16GB内存的节点</span><br></code></pre></td></tr></table></figure>
+
+
+
+<p>这种配置特别适合OrderService.java，因为：</p>
+<ol>
+<li>订单服务可能需要处理大量并发请求</li>
+<li>可能需要较大的内存缓存</li>
+<li>符合quota.yaml中的资源规划：<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-comment"># quota.yaml中的相关配置</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">hard:</span><br>    <span class="hljs-attr">requests.memory:</span> <span class="hljs-string">32Gi</span>    <span class="hljs-comment"># 高内存需求</span><br>    <span class="hljs-attr">limits.memory:</span> <span class="hljs-string">64Gi</span><br></code></pre></td></tr></table></figure></li>
+</ol>
+<p>配置的优势：</p>
+<ol>
+<li><p><strong>性能优化</strong>：</p>
+<ul>
+<li>在高内存节点上运行可以提高性能</li>
+<li>减少内存压力和GC频率</li>
+</ul>
+</li>
+<li><p><strong>灵活性</strong>：</p>
+<ul>
+<li>软性要求不会阻止Pod调度</li>
+<li>在资源紧张时仍可部署</li>
+</ul>
+</li>
+<li><p><strong>资源利用</strong>：</p>
+<ul>
+<li>优先使用高内存节点</li>
+<li>保持资源使用的效率</li>
+</ul>
+</li>
+</ol>
+<h3 id="6-注意事项-3"><a href="#6-注意事项-3" class="headerlink" title="6. 注意事项"></a>6. 注意事项</h3><ol>
+<li><p><strong>合理使用硬性&#x2F;软性要求</strong></p>
+<ul>
+<li>requiredDuringSchedulingIgnoredDuringExecution: 硬性要求</li>
+<li>preferredDuringSchedulingIgnoredDuringExecution: 软性要求</li>
+</ul>
+</li>
+<li><p><strong>考虑可用性影响</strong></p>
+<ul>
+<li>过严格的反亲和性可能导致Pod无法调度</li>
+<li>需要平衡高可用和资源利用率</li>
+</ul>
+</li>
+<li><p><strong>性能影响</strong></p>
+<ul>
+<li>复杂的亲和性规则会增加调度器的负担</li>
+<li>建议根据实际需求适度使用</li>
+</ul>
+</li>
+</ol>
+<p>通过合理使用亲和性和反亲和性，可以：</p>
+<ol>
+<li>确保应用的高可用性</li>
+<li>优化资源使用效率</li>
+<li>满足特定的部署要求</li>
+<li>提高应用性能</li>
+</ol>
+<p>我看到您已经理解了这些亲和性和反亲和性的配置。让我基于quota.yaml和OrderService.java，给出一个完整的最佳实践配置：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Deployment</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">order-service</span><br>  <span class="hljs-attr">namespace:</span> <span class="hljs-string">core-business</span>    <span class="hljs-comment"># 使用核心业务配额</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">replicas:</span> <span class="hljs-number">3</span><br>  <span class="hljs-attr">selector:</span><br>    <span class="hljs-attr">matchLabels:</span><br>      <span class="hljs-attr">app:</span> <span class="hljs-string">order-service</span><br>  <span class="hljs-attr">template:</span><br>    <span class="hljs-attr">metadata:</span><br>      <span class="hljs-attr">labels:</span><br>        <span class="hljs-attr">app:</span> <span class="hljs-string">order-service</span><br>    <span class="hljs-attr">spec:</span><br>      <span class="hljs-comment"># 1. 节点亲和性 - 选择生产环境高性能节点</span><br>      <span class="hljs-attr">affinity:</span><br>        <span class="hljs-attr">nodeAffinity:</span><br>          <span class="hljs-attr">requiredDuringSchedulingIgnoredDuringExecution:</span><br>            <span class="hljs-attr">nodeSelectorTerms:</span><br>            <span class="hljs-bullet">-</span> <span class="hljs-attr">matchExpressions:</span><br>              <span class="hljs-bullet">-</span> <span class="hljs-attr">key:</span> <span class="hljs-string">env</span><br>                <span class="hljs-attr">operator:</span> <span class="hljs-string">In</span><br>                <span class="hljs-attr">values:</span><br>                <span class="hljs-bullet">-</span> <span class="hljs-string">production</span><br>          <span class="hljs-attr">preferredDuringSchedulingIgnoredDuringExecution:</span><br>          <span class="hljs-bullet">-</span> <span class="hljs-attr">weight:</span> <span class="hljs-number">100</span><br>            <span class="hljs-attr">preference:</span><br>              <span class="hljs-attr">matchExpressions:</span><br>              <span class="hljs-bullet">-</span> <span class="hljs-attr">key:</span> <span class="hljs-string">resource-pool</span><br>                <span class="hljs-attr">operator:</span> <span class="hljs-string">In</span><br>                <span class="hljs-attr">values:</span><br>                <span class="hljs-bullet">-</span> <span class="hljs-string">high-performance</span><br>      <br>        <span class="hljs-comment"># 2. Pod反亲和性 - 跨可用区部署</span><br>        <span class="hljs-attr">podAntiAffinity:</span><br>          <span class="hljs-attr">requiredDuringSchedulingIgnoredDuringExecution:</span><br>          <span class="hljs-bullet">-</span> <span class="hljs-attr">labelSelector:</span><br>              <span class="hljs-attr">matchLabels:</span><br>                <span class="hljs-attr">app:</span> <span class="hljs-string">order-service</span><br>            <span class="hljs-attr">topologyKey:</span> <span class="hljs-string">topology.kubernetes.io/zone</span><br>            <br>        <span class="hljs-comment"># 3. Pod亲和性 - 靠近缓存服务</span><br>        <span class="hljs-attr">podAffinity:</span><br>          <span class="hljs-attr">preferredDuringSchedulingIgnoredDuringExecution:</span><br>          <span class="hljs-bullet">-</span> <span class="hljs-attr">weight:</span> <span class="hljs-number">80</span><br>            <span class="hljs-attr">podAffinityTerm:</span><br>              <span class="hljs-attr">labelSelector:</span><br>                <span class="hljs-attr">matchLabels:</span><br>                  <span class="hljs-attr">app:</span> <span class="hljs-string">cache-service</span><br>              <span class="hljs-attr">topologyKey:</span> <span class="hljs-string">kubernetes.io/hostname</span><br>              <br>      <span class="hljs-comment"># 4. 资源限制 - 符合quota要求</span><br>      <span class="hljs-attr">containers:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">order-service</span><br>        <span class="hljs-attr">image:</span> <span class="hljs-string">your-registry/order-service:latest</span><br>        <span class="hljs-attr">resources:</span><br>          <span class="hljs-attr">requests:</span><br>            <span class="hljs-attr">memory:</span> <span class="hljs-string">&quot;2Gi&quot;</span><br>            <span class="hljs-attr">cpu:</span> <span class="hljs-string">&quot;1&quot;</span><br>          <span class="hljs-attr">limits:</span><br>            <span class="hljs-attr">memory:</span> <span class="hljs-string">&quot;4Gi&quot;</span><br>            <span class="hljs-attr">cpu:</span> <span class="hljs-string">&quot;2&quot;</span><br></code></pre></td></tr></table></figure>
+
+<p>这个配置：</p>
+<ol>
+<li>确保高可用性（跨可用区部署）</li>
+<li>优化性能（选择高性能节点）</li>
+<li>降低延迟（靠近缓存服务）</li>
+<li>符合资源配额要求</li>
+<li>适合OrderService.java的运行需求</li>
+</ol>
+<p>让我详细解释这个Deployment配置的每个部分：</p>
+<ol>
+<li><p><strong>基本信息</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">order-service</span><br>  <span class="hljs-attr">namespace:</span> <span class="hljs-string">core-business</span>    <span class="hljs-comment"># 部署在核心业务命名空间</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">replicas:</span> <span class="hljs-number">3</span>                <span class="hljs-comment"># 运行3个副本</span><br>  <span class="hljs-attr">selector:</span><br>    <span class="hljs-attr">matchLabels:</span><br>      <span class="hljs-attr">app:</span> <span class="hljs-string">order-service</span>     <span class="hljs-comment"># 选择器，匹配Pod标签</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>节点亲和性配置</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">nodeAffinity:</span><br>  <span class="hljs-comment"># 硬性要求 - 必须部署在生产环境节点</span><br>  <span class="hljs-attr">requiredDuringSchedulingIgnoredDuringExecution:</span><br>    <span class="hljs-attr">nodeSelectorTerms:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-attr">matchExpressions:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">key:</span> <span class="hljs-string">env</span><br>        <span class="hljs-attr">operator:</span> <span class="hljs-string">In</span><br>        <span class="hljs-attr">values:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-string">production</span><br>  <br>  <span class="hljs-comment"># 软性要求 - 优先选择高性能节点</span><br>  <span class="hljs-attr">preferredDuringSchedulingIgnoredDuringExecution:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">weight:</span> <span class="hljs-number">100</span><br>    <span class="hljs-attr">preference:</span><br>      <span class="hljs-attr">matchExpressions:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">key:</span> <span class="hljs-string">resource-pool</span><br>        <span class="hljs-attr">operator:</span> <span class="hljs-string">In</span><br>        <span class="hljs-attr">values:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-string">high-performance</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>Pod反亲和性配置</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">podAntiAffinity:</span><br>  <span class="hljs-attr">requiredDuringSchedulingIgnoredDuringExecution:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">labelSelector:</span><br>      <span class="hljs-attr">matchLabels:</span><br>        <span class="hljs-attr">app:</span> <span class="hljs-string">order-service</span><br>    <span class="hljs-attr">topologyKey:</span> <span class="hljs-string">topology.kubernetes.io/zone</span><br>    <span class="hljs-comment"># 确保3个副本分布在不同可用区，提高可用性</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>Pod亲和性配置</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">podAffinity:</span><br>  <span class="hljs-attr">preferredDuringSchedulingIgnoredDuringExecution:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">weight:</span> <span class="hljs-number">80</span><br>    <span class="hljs-attr">podAffinityTerm:</span><br>      <span class="hljs-attr">labelSelector:</span><br>        <span class="hljs-attr">matchLabels:</span><br>          <span class="hljs-attr">app:</span> <span class="hljs-string">cache-service</span><br>      <span class="hljs-attr">topologyKey:</span> <span class="hljs-string">kubernetes.io/hostname</span><br>      <span class="hljs-comment"># 优先和缓存服务部署在同一节点，降低延迟</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>容器配置和资源限制</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">containers:</span><br><span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">order-service</span><br>  <span class="hljs-attr">image:</span> <span class="hljs-string">your-registry/order-service:latest</span><br>  <span class="hljs-attr">resources:</span><br>    <span class="hljs-attr">requests:</span>      <span class="hljs-comment"># 资源请求（最小保证）</span><br>      <span class="hljs-attr">memory:</span> <span class="hljs-string">&quot;2Gi&quot;</span>   <span class="hljs-comment"># 需要2GB内存</span><br>      <span class="hljs-attr">cpu:</span> <span class="hljs-string">&quot;1&quot;</span>        <span class="hljs-comment"># 需要1个CPU核心</span><br>    <span class="hljs-attr">limits:</span>        <span class="hljs-comment"># 资源上限</span><br>      <span class="hljs-attr">memory:</span> <span class="hljs-string">&quot;4Gi&quot;</span>   <span class="hljs-comment"># 最多使用4GB内存</span><br>      <span class="hljs-attr">cpu:</span> <span class="hljs-string">&quot;2&quot;</span>        <span class="hljs-comment"># 最多使用2个CPU核心</span><br></code></pre></td></tr></table></figure></li>
+</ol>
+<p>这个配置的主要目标是：</p>
+<ol>
+<li><p><strong>高可用性</strong>：</p>
+<ul>
+<li>3个副本分布在不同可用区</li>
+<li>必须运行在生产环境节点上</li>
+</ul>
+</li>
+<li><p><strong>性能优化</strong>：</p>
+<ul>
+<li>优先选择高性能节点</li>
+<li>与缓存服务部署在一起减少延迟</li>
+</ul>
+</li>
+<li><p><strong>资源管理</strong>：</p>
+<ul>
+<li>明确的资源请求和限制</li>
+<li>符合核心业务的配额要求</li>
+</ul>
+</li>
+<li><p><strong>可靠性</strong>：</p>
+<ul>
+<li>生产环境节点部署</li>
+<li>资源充足保证</li>
+</ul>
+</li>
+</ol>
+<p>这样的配置特别适合OrderService.java这样的核心业务服务，因为它：</p>
+<ol>
+<li>保证了服务的高可用性</li>
+<li>优化了性能和延迟</li>
+<li>合理分配和限制了资源使用</li>
+<li>提供了良好的容灾能力</li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>面试0212</div>
+      <div>http://example.com/2025/02/12/2025-2-12 面试0212/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>guichen</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年2月12日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/02/11/2025-2-11%20%E9%9D%A2%E8%AF%950211/" title="面试2025-02-11">
+                        <span class="hidden-mobile">面试2025-02-11</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
