@@ -29,7 +29,7 @@
 <meta property="og:description" content="delete pvc时 设置什么字段可以保证pv不被删除在 Kubernetes 中，当你删除 PersistentVolumeClaim（PVC） 时，默认情况下与之关联的 PersistentVolume（PV） 会根据 PV 的 回收策略 被删除。为了确保在删除 PVC 时 PV 不被删除，你需要修改 PV 的 回收策略（reclaimPolicy） 字段。 步骤 设置 PV 的回收策略：">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2025-02-20T14:34:48.211Z">
-<meta property="article:modified_time" content="2025-02-20T14:34:48.212Z">
+<meta property="article:modified_time" content="2025-02-20T14:40:47.991Z">
 <meta property="article:author" content="guichen">
 <meta name="twitter:card" content="summary_large_image">
   
@@ -224,7 +224,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          19k 字
+          20k 字
         
       </span>
     
@@ -235,7 +235,7 @@
         
         
         
-          162 分钟
+          167 分钟
         
       </span>
     
@@ -615,6 +615,25 @@
 <li><strong>Topology Spread Constraints</strong>：控制 Pod 在不同节点、区域的分布。</li>
 </ol>
 <p>这些调度策略提供了灵活的方式来控制 Pod 的调度，以满足特定的业务需求和集群配置。</p>
+<h2 id="daemonset-忽略污点-使其可以调度到所有节点"><a href="#daemonset-忽略污点-使其可以调度到所有节点" class="headerlink" title="daemonset 忽略污点 使其可以调度到所有节点"></a>daemonset 忽略污点 使其可以调度到所有节点</h2><p>要让一个 <code>DaemonSet</code> 忽略污点并且能够调度到所有节点，可以通过设置 <code>tolerations</code> 来实现。<code>tolerations</code> 允许调度器忽略节点上的污点，允许 Pod 调度到那些被标记为“有污点”的节点。</p>
+<h3 id="1-理解污点和容忍"><a href="#1-理解污点和容忍" class="headerlink" title="1. 理解污点和容忍"></a>1. <strong>理解污点和容忍</strong></h3><ul>
+<li><strong>污点 (Taints)</strong>: 污点是用于标记节点的属性，它防止特定的 Pod 被调度到这些节点上。污点有三种类型：<code>NoSchedule</code>、<code>PreferNoSchedule</code> 和 <code>NoExecute</code>。</li>
+<li><strong>容忍 (Tolerations)</strong>: 容忍允许 Pod 忽略节点的污点，允许它们调度到这些节点上。</li>
+</ul>
+<h3 id="2-修改-DaemonSet-的配置"><a href="#2-修改-DaemonSet-的配置" class="headerlink" title="2. 修改 DaemonSet 的配置"></a>2. <strong>修改 DaemonSet 的配置</strong></h3><p>在 DaemonSet 的 Pod 模板中添加 <code>tolerations</code>，使其容忍所有节点上的污点。示例配置如下：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">apps/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">DaemonSet</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">example-daemonset</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">selector:</span><br>    <span class="hljs-attr">matchLabels:</span><br>      <span class="hljs-attr">app:</span> <span class="hljs-string">example</span><br>  <span class="hljs-attr">template:</span><br>    <span class="hljs-attr">metadata:</span><br>      <span class="hljs-attr">labels:</span><br>        <span class="hljs-attr">app:</span> <span class="hljs-string">example</span><br>    <span class="hljs-attr">spec:</span><br>      <span class="hljs-attr">tolerations:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">key:</span> <span class="hljs-string">&quot;node.kubernetes.io/not-ready&quot;</span><br>          <span class="hljs-attr">operator:</span> <span class="hljs-string">&quot;Exists&quot;</span><br>          <span class="hljs-attr">effect:</span> <span class="hljs-string">&quot;NoSchedule&quot;</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">key:</span> <span class="hljs-string">&quot;node.kubernetes.io/unreachable&quot;</span><br>          <span class="hljs-attr">operator:</span> <span class="hljs-string">&quot;Exists&quot;</span><br>          <span class="hljs-attr">effect:</span> <span class="hljs-string">&quot;NoExecute&quot;</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">key:</span> <span class="hljs-string">&quot;some-taint-key&quot;</span><br>          <span class="hljs-attr">operator:</span> <span class="hljs-string">&quot;Exists&quot;</span><br>          <span class="hljs-attr">effect:</span> <span class="hljs-string">&quot;NoSchedule&quot;</span><br>      <span class="hljs-attr">containers:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">example-container</span><br>          <span class="hljs-attr">image:</span> <span class="hljs-string">nginx</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="3-解释上述配置"><a href="#3-解释上述配置" class="headerlink" title="3. 解释上述配置"></a>3. <strong>解释上述配置</strong></h3><ul>
+<li><pre><code class="hljs">tolerations
+<figure class="highlight autohotkey"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs autohotkey"><br>   字段允许 DaemonSet 忽略特定污点。<br><br><span class="hljs-title">  - `key`:</span> 污点的键。<br><span class="hljs-title">  - `operator:</span> <span class="hljs-string">&quot;Exists&quot;</span>`: 表示只要节点上有相应的污点，Pod 就能容忍并调度到该节点。<br><span class="hljs-title">  - `effect`:</span> 污点的作用，`NoSchedule` 表示该节点不允许调度到 Pod，`NoExecute` 表示已经调度到节点的 Pod 会被驱逐。<br><br>在上述配置中，`DaemonSet` 会容忍节点上的 `not-ready`、`unreachable` 和自定义的污点 `some-taint-key`，从而允许 Pod 调度到这些被污点标记的节点上。<br><br>### <span class="hljs-number">4</span>. **使其可以调度到所有节点**<br><br>如果希望 `DaemonSet` 忽略所有污点并且可以调度到所有节点，可以添加一个容忍，表示所有污点都能容忍：<br><br>```yaml<br><span class="hljs-title">      tolerations:</span><br><span class="hljs-title">        - operator:</span> <span class="hljs-string">&quot;Exists&quot;</span><br></code></pre></td></tr></table></figure>
+</code></pre>
+</li>
+</ul>
+<p>这样配置后，<code>DaemonSet</code> 的 Pod 将容忍所有污点，从而能够调度到所有节点。</p>
+<h3 id="5-应用配置"><a href="#5-应用配置" class="headerlink" title="5. 应用配置"></a>5. <strong>应用配置</strong></h3><p>将修改后的 DaemonSet 配置保存为 YAML 文件，然后应用到 Kubernetes 集群：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">kubectl apply -f daemonset.yaml<br></code></pre></td></tr></table></figure>
+
+<h3 id="总结-5"><a href="#总结-5" class="headerlink" title="总结"></a>总结</h3><p>通过在 <code>DaemonSet</code> 的 <code>spec.template.spec.tolerations</code> 中添加容忍规则，可以让 <code>DaemonSet</code> 忽略节点的污点，进而使 Pod 能够调度到所有节点，包括那些被污点标记的节点。</p>
 <h2 id="pod的状态有哪些？"><a href="#pod的状态有哪些？" class="headerlink" title="pod的状态有哪些？"></a>pod的状态有哪些？</h2><p>Kubernetes 中的 <strong>Pod</strong> 是最基本的部署单元，它的生命周期包括多个不同的 <strong>状态</strong>，每个状态反映了 Pod 在运行时的不同阶段或情况。Pod 的状态主要包括以下几种，每种状态都有不同的意义和用途：</p>
 <h3 id="1-Pending（等待中）"><a href="#1-Pending（等待中）" class="headerlink" title="1. Pending（等待中）"></a>1. <strong>Pending（等待中）</strong></h3><ul>
 <li><strong>描述</strong>：Pod 被调度到集群中的节点，但容器尚未启动。这通常发生在以下几种情况：<ul>
@@ -690,7 +709,7 @@
 <li><code>lastState</code>：表示容器最近一次的状态，只有在容器终止时才会显示。</li>
 <li><code>restartCount</code>：表示容器的重启次数。</li>
 </ul>
-<h3 id="总结-5"><a href="#总结-5" class="headerlink" title="总结"></a>总结</h3><p>Kubernetes 中的 Pod 状态分为几种主要类型，每种状态反映了 Pod 在集群中执行的不同阶段：</p>
+<h3 id="总结-6"><a href="#总结-6" class="headerlink" title="总结"></a>总结</h3><p>Kubernetes 中的 Pod 状态分为几种主要类型，每种状态反映了 Pod 在集群中执行的不同阶段：</p>
 <ol>
 <li><strong>Pending</strong>：Pod 正在等待调度或资源。</li>
 <li><strong>Running</strong>：Pod 正在运行，至少有一个容器在运行。</li>
@@ -748,7 +767,7 @@
 </ul>
 </li>
 </ul>
-<h3 id="总结-6"><a href="#总结-6" class="headerlink" title="总结"></a>总结</h3><p><strong>Evicted</strong> 状态表示 Pod 被从节点上驱逐，通常是由于资源不足（如内存、磁盘压力等）。Pod 被驱逐后，它不会自动重启，而是需要通过控制器（如 <code>Deployment</code>）重新调度或手动重新部署。理解和监控驱逐的原因有助于优化集群资源分配，减少 Pod 被驱逐的情况。</p>
+<h3 id="总结-7"><a href="#总结-7" class="headerlink" title="总结"></a>总结</h3><p><strong>Evicted</strong> 状态表示 Pod 被从节点上驱逐，通常是由于资源不足（如内存、磁盘压力等）。Pod 被驱逐后，它不会自动重启，而是需要通过控制器（如 <code>Deployment</code>）重新调度或手动重新部署。理解和监控驱逐的原因有助于优化集群资源分配，减少 Pod 被驱逐的情况。</p>
 <h2 id="如果同一个pod-出现几十几百次的evicted-是啥原因？"><a href="#如果同一个pod-出现几十几百次的evicted-是啥原因？" class="headerlink" title="如果同一个pod 出现几十几百次的evicted 是啥原因？"></a>如果同一个pod 出现几十几百次的evicted 是啥原因？</h2><h6 id=""><a href="#" class="headerlink" title=""></a></h6><p>如果同一个 Pod 多次被驱逐（<strong>Evicted</strong>），尤其是出现几十次甚至几百次的驱逐，这通常是由集群资源压力、Pod 配置问题、或者调度策略不当导致的。以下是一些可能的原因及其排查方式：</p>
 <h3 id="1-资源不足-MemoryPressure-DiskPressure"><a href="#1-资源不足-MemoryPressure-DiskPressure" class="headerlink" title="1. 资源不足 (MemoryPressure &#x2F; DiskPressure)"></a>1. <strong>资源不足 (MemoryPressure &#x2F; DiskPressure)</strong></h3><p>最常见的原因是集群中的节点资源（尤其是内存或磁盘）不足。当节点资源不足时，Kubernetes 会驱逐资源消耗较多的 Pod。Pod 被驱逐后，由于资源压力可能没有得到缓解，Pod 会再次被调度到同一节点或其他资源同样紧张的节点，导致多次驱逐。</p>
 <h4 id="可能原因："><a href="#可能原因：" class="headerlink" title="可能原因："></a>可能原因：</h4><ul>
@@ -833,7 +852,7 @@
 <li><strong>调整 Pod 优先级</strong>：为关键的 Pod 设置更高的优先级，以确保它们不会被低优先级 Pod 驱逐。</li>
 <li><strong>检查并优化调度策略</strong>：检查调度策略，确保 Pod 被调度到合适的节点，避免资源集中在某个节点导致频繁驱逐。</li>
 </ol>
-<h3 id="总结-7"><a href="#总结-7" class="headerlink" title="总结"></a>总结</h3><p>Pod 多次被驱逐通常是由于集群资源不足、Pod 配置问题或调度策略不当等原因。通过优化 Pod 的资源请求、调整调度策略、增加集群资源或修复配置问题，可以减少 Pod 被频繁驱逐的情况。</p>
+<h3 id="总结-8"><a href="#总结-8" class="headerlink" title="总结"></a>总结</h3><p>Pod 多次被驱逐通常是由于集群资源不足、Pod 配置问题或调度策略不当等原因。通过优化 Pod 的资源请求、调整调度策略、增加集群资源或修复配置问题，可以减少 Pod 被频繁驱逐的情况。</p>
 <h2 id="如果pod超出资源限制被杀死，那他时重启-重建还是什么呢？"><a href="#如果pod超出资源限制被杀死，那他时重启-重建还是什么呢？" class="headerlink" title="如果pod超出资源限制被杀死，那他时重启 重建还是什么呢？"></a>如果pod超出资源限制被杀死，那他时重启 重建还是什么呢？</h2><p>当一个 Pod 超出资源限制（如 <strong>CPU</strong> 或 <strong>内存</strong>）并被杀死时，Kubernetes 会根据 Pod 的控制器类型（如 <strong>Deployment</strong>、<strong>StatefulSet</strong> 等）采取不同的处理方式。下面是具体的行为：</p>
 <h3 id="1-容器被杀死时的行为"><a href="#1-容器被杀死时的行为" class="headerlink" title="1. 容器被杀死时的行为"></a>1. <strong>容器被杀死时的行为</strong></h3><ul>
 <li><strong>内存限制超出（Out of Memory，OOM）</strong>：当 Pod 的容器超出了定义的内存限制时，容器会被操作系统内核（Linux 的 OOM Killer）杀死。这通常发生在容器使用的内存超出了指定的限制。容器会退出，并且退出状态码为 <code>137</code>（表示容器因接收到 <code>SIGKILL</code> 信号而终止）。</li>
@@ -885,7 +904,7 @@
 </ul>
 </li>
 </ol>
-<h3 id="总结-8"><a href="#总结-8" class="headerlink" title="总结"></a>总结</h3><p>当 Pod 因超出资源限制被杀死时，容器会根据 Pod 的 <strong>重启策略</strong> 进行 <strong>重启</strong> 或 <strong>重新创建</strong>。如果是 <strong>Deployment</strong> 等控制器管理的 Pod，Pod 会被重建以确保副本数不变。如果是 <strong>OOM（Out of Memory）</strong> 导致的，容器退出状态码为 <code>137</code>，并会根据重启策略决定是否重启。如果是 <strong>CPU 限制</strong>，容器不会被杀死，只是 CPU 资源被限制，容器仍然会继续运行。</p>
+<h3 id="总结-9"><a href="#总结-9" class="headerlink" title="总结"></a>总结</h3><p>当 Pod 因超出资源限制被杀死时，容器会根据 Pod 的 <strong>重启策略</strong> 进行 <strong>重启</strong> 或 <strong>重新创建</strong>。如果是 <strong>Deployment</strong> 等控制器管理的 Pod，Pod 会被重建以确保副本数不变。如果是 <strong>OOM（Out of Memory）</strong> 导致的，容器退出状态码为 <code>137</code>，并会根据重启策略决定是否重启。如果是 <strong>CPU 限制</strong>，容器不会被杀死，只是 CPU 资源被限制，容器仍然会继续运行。</p>
 <h2 id="如果-Pod-配置了-restartPolicy-Always（这是-Deployment、ReplicaSet-等控制器的默认重启策略），即使容器被-OOM-杀死或因其他原因退出，Kubernetes-会自动重新启动容器。-控制器行为：如果是由-Deployment-或-ReplicaSet-管理的-Pod，当容器因资源超限而被杀死时，Kubernetes-会自动重新调度一个新的容器实例，以确保-Pod-的副本数不变。-自相矛盾了吧"><a href="#如果-Pod-配置了-restartPolicy-Always（这是-Deployment、ReplicaSet-等控制器的默认重启策略），即使容器被-OOM-杀死或因其他原因退出，Kubernetes-会自动重新启动容器。-控制器行为：如果是由-Deployment-或-ReplicaSet-管理的-Pod，当容器因资源超限而被杀死时，Kubernetes-会自动重新调度一个新的容器实例，以确保-Pod-的副本数不变。-自相矛盾了吧" class="headerlink" title="如果 Pod 配置了 restartPolicy: Always（这是 Deployment、ReplicaSet 等控制器的默认重启策略），即使容器被 OOM 杀死或因其他原因退出，Kubernetes 会自动重新启动容器。 控制器行为：如果是由 Deployment 或 ReplicaSet 管理的 Pod，当容器因资源超限而被杀死时，Kubernetes 会自动重新调度一个新的容器实例，以确保 Pod 的副本数不变。 自相矛盾了吧"></a>如果 Pod 配置了 restartPolicy: Always（这是 Deployment、ReplicaSet 等控制器的默认重启策略），即使容器被 OOM 杀死或因其他原因退出，Kubernetes 会自动重新启动容器。 控制器行为：如果是由 Deployment 或 ReplicaSet 管理的 Pod，当容器因资源超限而被杀死时，Kubernetes 会自动重新调度一个新的容器实例，以确保 Pod 的副本数不变。 自相矛盾了吧</h2><h6 id="-1"><a href="#-1" class="headerlink" title=""></a></h6><p>你说得对！我在这段描述中确实存在自相矛盾的表述，感谢你指出来。让我澄清一下这部分内容。</p>
 <h3 id="restartPolicy-Always-和-控制器行为"><a href="#restartPolicy-Always-和-控制器行为" class="headerlink" title="restartPolicy: Always 和 控制器行为"></a><code>restartPolicy: Always</code> 和 控制器行为</h3><p>对于由 <strong>Deployment</strong>、<strong>ReplicaSet</strong> 等控制器管理的 Pod，即使容器因为 <strong>OOM（Out of Memory）</strong> 被杀死，<strong>容器本身</strong> 会 <strong>重新启动</strong>，而不是直接重建。实际上，控制器会确保 Pod 的副本数保持一致，并且容器会被 <strong>重新调度重启</strong>，而不是创建一个新的 Pod。</p>
 <p>但是，有一些细节需要进一步说明：</p>
@@ -1018,7 +1037,7 @@
 <li><strong>缺少依赖</strong>：确保容器内所需的所有文件、环境变量和网络服务都能正常访问。</li>
 <li><strong>权限问题</strong>：检查容器是否有足够的权限访问所需的文件和网络资源。</li>
 </ul>
-<h3 id="总结-9"><a href="#总结-9" class="headerlink" title="总结"></a>总结</h3><p>当 Pod 进入 <strong>CrashBackOff</strong> 状态时，通常是由于容器启动失败或异常退出。通过查看日志、描述事件、检查资源配置和启动命令，你可以找到并解决容器崩溃的根本原因。如果有必要，还可以调整 Pod 的重启策略、添加调试信息，或者使用 <code>kubectl exec</code> 进入容器进行更深入的调试。</p>
+<h3 id="总结-10"><a href="#总结-10" class="headerlink" title="总结"></a>总结</h3><p>当 Pod 进入 <strong>CrashBackOff</strong> 状态时，通常是由于容器启动失败或异常退出。通过查看日志、描述事件、检查资源配置和启动命令，你可以找到并解决容器崩溃的根本原因。如果有必要，还可以调整 Pod 的重启策略、添加调试信息，或者使用 <code>kubectl exec</code> 进入容器进行更深入的调试。</p>
 <h2 id="kubectl-exec-进不去因为-会一直重启"><a href="#kubectl-exec-进不去因为-会一直重启" class="headerlink" title="kubectl exec 进不去因为 会一直重启"></a>kubectl exec 进不去因为 会一直重启</h2><p>当容器处于 <strong>CrashBackOff</strong> 状态时，由于容器会不断重启，你是无法通过 <code>kubectl exec</code> 直接进入容器的，因为容器可能根本没有持续运行足够长的时间来建立连接。这种情况需要一些特别的操作来调试和诊断问题。以下是一些解决方案和调试技巧：</p>
 <h3 id="1-使用-kubectl-logs-查看日志"><a href="#1-使用-kubectl-logs-查看日志" class="headerlink" title="1. 使用 kubectl logs 查看日志"></a>1. <strong>使用 <code>kubectl logs</code> 查看日志</strong></h3><p>首先，最简单的办法是查看容器的日志，尽管容器在 CrashBackOff 状态，但通常会有一些日志记录（如错误信息或异常），可以帮助你定位问题。</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">kubectl logs &lt;pod-name&gt; -c &lt;container-name&gt; --previous<br></code></pre></td></tr></table></figure>
@@ -1065,7 +1084,7 @@
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">kubectl debug -it &lt;pod-name&gt; --image=busybox --target=&lt;container-name&gt;<br></code></pre></td></tr></table></figure>
 
 <p>这个命令会启动一个新容器，与目标容器共享网络和挂载的卷，从而可以进入容器并进行进一步的调试。</p>
-<h3 id="总结-10"><a href="#总结-10" class="headerlink" title="总结"></a>总结</h3><p>如果 Pod 处于 <code>CrashBackOff</code> 状态，直接使用 <code>kubectl exec</code> 可能会遇到困难，因为容器会不断重启。你可以通过以下方法调试：</p>
+<h3 id="总结-11"><a href="#总结-11" class="headerlink" title="总结"></a>总结</h3><p>如果 Pod 处于 <code>CrashBackOff</code> 状态，直接使用 <code>kubectl exec</code> 可能会遇到困难，因为容器会不断重启。你可以通过以下方法调试：</p>
 <ul>
 <li>查看日志（<code>kubectl logs</code>）。</li>
 <li>临时修改 <code>restartPolicy</code> 为 <code>Never</code>，避免 Pod 继续重启。</li>
@@ -1101,7 +1120,7 @@
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">kubectl logs &lt;pod-name&gt; -c &lt;container-name&gt; -n &lt;namespace&gt;<br></code></pre></td></tr></table></figure>
 
 <p>如果 Pod 中有多个容器，可以指定容器名称。</p>
-<h3 id="总结-11"><a href="#总结-11" class="headerlink" title="总结"></a>总结</h3><ul>
+<h3 id="总结-12"><a href="#总结-12" class="headerlink" title="总结"></a>总结</h3><ul>
 <li><strong>Docker 环境</strong>：日志存储在 <code>/var/lib/docker/containers/&lt;container-id&gt;/&lt;container-id&gt;-json.log</code>。</li>
 <li><strong>containerd 环境</strong>：日志存储在 <code>/var/log/containers/&lt;pod-name&gt;_&lt;namespace&gt;_&lt;container-name&gt;-&lt;container-id&gt;.log</code>。</li>
 <li>在大多数 Kubernetes 环境中，日志可以通过宿主机上的 <code>/var/log/containers/</code> 目录找到，并且可以通过 <code>kubectl logs</code> 命令查看容器日志。</li>
@@ -1250,7 +1269,7 @@
 </ul>
 </li>
 </ul>
-<h3 id="总结-12"><a href="#总结-12" class="headerlink" title="总结"></a>总结</h3><table>
+<h3 id="总结-13"><a href="#总结-13" class="headerlink" title="总结"></a>总结</h3><table>
 <thead>
 <tr>
 <th>特性</th>
@@ -1373,7 +1392,7 @@
 <li><strong>资源限制</strong>：部署 EFK 堆栈时，要为 Elasticsearch、Fluentd 和 Kibana 设置适当的资源限制，防止因日志量过大而导致集群性能下降。</li>
 </ul>
 <hr>
-<h3 id="总结-13"><a href="#总结-13" class="headerlink" title="总结"></a>总结</h3><ul>
+<h3 id="总结-14"><a href="#总结-14" class="headerlink" title="总结"></a>总结</h3><ul>
 <li><strong>Fluentd</strong> 负责收集 Kubernetes Pod 和容器的日志。</li>
 <li><strong>Elasticsearch</strong> 负责存储日志，并支持强大的搜索和分析。</li>
 <li><strong>Kibana</strong> 提供一个友好的 Web 界面，用于展示和分析存储在 Elasticsearch 中的日志。</li>
