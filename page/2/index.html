@@ -229,6 +229,39 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2025/01/16/%E5%AE%B9%E5%99%A8%E4%B8%AD%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E4%BB%A5%E5%8F%8A%E4%B8%8D%E5%90%8Cdnspolicy%E5%AF%B9%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E7%9A%84%E5%BD%B1%E5%93%8D-rong-qi-zhong-yu-ming-jie-xi-yi-ji-bu-tong-dnspolicy-dui-yu-ming-jie-xi-de-ying-xiang/" target="_self">
+          容器中域名解析以及不同dnspolicy对域名解析的影响 2024-04-03 15:04:09.254
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/01/16/%E5%AE%B9%E5%99%A8%E4%B8%AD%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E4%BB%A5%E5%8F%8A%E4%B8%8D%E5%90%8Cdnspolicy%E5%AF%B9%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E7%9A%84%E5%BD%B1%E5%93%8D-rong-qi-zhong-yu-ming-jie-xi-yi-ji-bu-tong-dnspolicy-dui-yu-ming-jie-xi-de-ying-xiang/" target="_self">
+        <div>
+          一、coreDNS背景部署在kubernetes集群中的容器业务通过coreDNS服务解析域名，Coredns基于caddy框架，将整个CoreDNS服务都建立在一个使用Go编写的HTTP&#x2F;2 Web 服务器Caddy上。通过插件化（链）架构，以预配置的方式（configmap卷挂载内容配置）选择需要的插件编译，按序执行插件链上的逻辑，通过四种方式（TCP、UDP、gRPC和HTTPS）
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-01-16 10:08" pubdate>
+              2025-01-16
+            </time>
+          </div>
+        
+        
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2025/01/16/%E5%A4%A7%E8%A7%84%E6%A8%A1%E5%B9%B6%E5%8F%91%E4%B8%8B%E5%A6%82%E4%BD%95%E5%8A%A0%E5%BF%AB%20Pod%20%E5%90%AF%E5%8A%A8%E9%80%9F%E5%BA%A6-da-gui-mo-bing-fa-xia-ru-he-jia-kuai-pod-qi-dong-su-du/" target="_self">
           大规模并发下如何加快 Pod 启动速度 2024-04-03
         </a>
@@ -502,39 +535,6 @@
       <a class="index-excerpt index-excerpt__noimg" href="/2025/01/16/%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C%E5%8E%9F%E7%90%86-rong-qi-wang-luo-yuan-li/" target="_self">
         <div>
           容器网络前文容器原理一文说到容器在网络上，容器使用 Network Namespace 实现对网络资源的隔离，被隔离的进程只能看到当前 Namespace 里的网络栈。网络栈包括了：网卡（Network Interface）、回环设备（Loopback Device）、路由表（Routing Table）和 iptables 规则。Linux 宿主机的网络通过网络栈来实现，同样容器的网络也是通过网
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-01-16 10:08" pubdate>
-              2025-01-16
-            </time>
-          </div>
-        
-        
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/01/16/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4-li-xian-an-zhuang-ji-qun/" target="_self">
-          离线安装集群 2023-09-28 15:29:14.742
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/01/16/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4-li-xian-an-zhuang-ji-qun/" target="_self">
-        <div>
-          离线安装集群使用kubeasz 离线安装 k8s集群需要下载四个部分： kubeasz 项目代码 二进制文件（k8s、etcd、containerd等组件） 容器镜像文件（calico、coredns、metrics-server等容器镜像） 系统软件安装包（ipset、libseccomp2等，仅无法使用本地yum&#x2F;apt源时需要）  离线文件准备在一台能够访问互联网的服务器上执行：
         </div>
       </a>
 
