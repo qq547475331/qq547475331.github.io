@@ -1,0 +1,3096 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="介绍 Tetrate Enterprise Gateway 及与 Istio 集成：云原生应用的全面网关解决方案
+深入了解 Tetrate Enterprise Gateway (TEG) 及其如何与 Istio 服务网格集成 —— 一种基于 Envoy 的企业级网关解决方案，包括它的架构、基本功能以及如何在 Kubernetes 中使用 TEG 来暴露和管理应用。
+
+  TEG 简介
+  #
+
+Tetrate Enterprise Gateway（TEG）是基于 Envoy Gateway (EG) 的企业级解决方案，专门针对 Envoy Proxy 设计，通过 Kubernetes Gateway API 提供更易于消费的 Envoy 代理配置和管理包。TEG 结合了 Kubernetes Gateway API 的特性，支持在 Kubernetes 中轻松暴露服务和应用程序。
+TEG 相对于 Envoy Gateway 的主要新增特性包括：
+
+全局速率限制（Rate Limiting）：TEG 支持基于 IP 5-tuple、请求头等进行流量控制，需要通过 Redis 实例管理。
+WAF 功能（Web Application Firewall）：TEG 提供了与 mod_security 兼容的 WAF 功能，增强了安全防护能力。
+OIDC/OAuth2认证：支持在网关级别进行 OIDC/OAuth2 认证，应用程序可以按路由配置认证方式。
+使用 Kubernetes Gateway API：相较于其他 API，Kubernetes Gateway API 的设计更加现代，结合了众多 Ingress 实现的经验，将网关的配置与流量的路由分离，使平台所有者可以管理网关，而应用团队可以掌控流量路由。
+
+TEG 将 Envoy 的高级网络流量处理能力带入 Kubernetes 环境，提供了一种简化的方法来部署和管理负载平衡、API 网关功能、安全控制等，同时支持现代的、开放的应用程序暴露 API，如 Kubernetes Gateway API。这些特性使 TEG 成为一个功能丰富、易于管理的企业级网关解决方案。">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="http://192.168.0.139:1313/docs/teg%E4%B8%8Eistio%E9%9B%86%E6%88%90-teg-yu-istio-ji-cheng/">
+  <meta property="og:site_name" content="Guichen&#39;s Blog">
+  <meta property="og:title" content="TEG与istio集成 2024-08-02 17:51:20.389">
+  <meta property="og:description" content="介绍 Tetrate Enterprise Gateway 及与 Istio 集成：云原生应用的全面网关解决方案
+深入了解 Tetrate Enterprise Gateway (TEG) 及其如何与 Istio 服务网格集成 —— 一种基于 Envoy 的企业级网关解决方案，包括它的架构、基本功能以及如何在 Kubernetes 中使用 TEG 来暴露和管理应用。
+TEG 简介 # Tetrate Enterprise Gateway（TEG）是基于 Envoy Gateway (EG) 的企业级解决方案，专门针对 Envoy Proxy 设计，通过 Kubernetes Gateway API 提供更易于消费的 Envoy 代理配置和管理包。TEG 结合了 Kubernetes Gateway API 的特性，支持在 Kubernetes 中轻松暴露服务和应用程序。
+TEG 相对于 Envoy Gateway 的主要新增特性包括：
+全局速率限制（Rate Limiting）：TEG 支持基于 IP 5-tuple、请求头等进行流量控制，需要通过 Redis 实例管理。 WAF 功能（Web Application Firewall）：TEG 提供了与 mod_security 兼容的 WAF 功能，增强了安全防护能力。 OIDC/OAuth2认证：支持在网关级别进行 OIDC/OAuth2 认证，应用程序可以按路由配置认证方式。 使用 Kubernetes Gateway API：相较于其他 API，Kubernetes Gateway API 的设计更加现代，结合了众多 Ingress 实现的经验，将网关的配置与流量的路由分离，使平台所有者可以管理网关，而应用团队可以掌控流量路由。 TEG 将 Envoy 的高级网络流量处理能力带入 Kubernetes 环境，提供了一种简化的方法来部署和管理负载平衡、API 网关功能、安全控制等，同时支持现代的、开放的应用程序暴露 API，如 Kubernetes Gateway API。这些特性使 TEG 成为一个功能丰富、易于管理的企业级网关解决方案。">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+<title>TEG与istio集成 2024-08-02 17:51:20.389 | Guichen&#39;s Blog</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="http://192.168.0.139:1313/docs/teg%E4%B8%8Eistio%E9%9B%86%E6%88%90-teg-yu-istio-ji-cheng/">
+<link rel="stylesheet" href="/book.min.6c8b9d2a1fc95075ed7da46ca81060b39add8fff6741ac51259f768929281e2c.css" integrity="sha256-bIudKh/JUHXtfaRsqBBgs5rdj/9nQaxRJZ92iSkoHiw=" crossorigin="anonymous">
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/en.search.min.6f52273b9f5fa65803e3991faf27d1a7b7b8f6b148888237d77b4e841cb030e3.js" integrity="sha256-b1InO59fplgD45kfryfRp7e49rFIiII313tOhBywMOM=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/"><span>Guichen&#39;s Blog</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/00-%E9%9B%86%E7%BE%A4%E8%A7%84%E5%88%92%E5%92%8C%E5%9F%BA%E7%A1%80%E5%8F%82%E6%95%B0%E8%AE%BE%E5%AE%9A-00--ji-qun-gui-hua-he-ji-chu-can-shu-she-ding/" class="">00-集群规划和基础参数设定 2023-09-28 15:19:02.214</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/01-%E5%88%9B%E5%BB%BA%E8%AF%81%E4%B9%A6%E5%92%8C%E7%8E%AF%E5%A2%83%E5%87%86%E5%A4%87-01--chuang-jian-zheng-shu-he-huan-jing-zhun-bei/" class="">01-创建证书和环境准备 2023-09-28 15:22:19.812</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/02-%E5%AE%89%E8%A3%85etcd%E9%9B%86%E7%BE%A4-02--an-zhuang-etcd-ji-qun/" class="">02-安装etcd集群 2023-09-28 15:23:07.363</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E9%9D%A2%E8%AF%950224/" class="">0224面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-26-k8s%E7%9B%B8%E5%85%B3/" class="">0226 k8s题目</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/03-%E5%AE%89%E8%A3%85%E5%AE%B9%E5%99%A8%E8%BF%90%E8%A1%8C%E6%97%B6-03--an-zhuang-rong-qi-yun-xing-shi/" class="">03-安装容器运行时 2023-09-28 15:23:56.241</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/04-%E5%AE%89%E8%A3%85kube_master%E8%8A%82%E7%82%B9-04--an-zhuang-kubemaster-jie-dian/" class="">04-安装kube_master节点 2023-09-28 15:24:21.203</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/05-%E5%AE%89%E8%A3%85kube_node%E8%8A%82%E7%82%B9-05--an-zhuang-kubenode-jie-dian/" class="">05-安装kube_node节点 2023-09-28 15:24:43.201</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85calico%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-calico-wang-luo-zu-jian/" class="">06-安装calico网络组件 2023-09-28 15:34:28.483</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85cilium%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-cilium-wang-luo-zu-jian/" class="">06-安装cilium网络组件 2023-09-28 15:35:23.884</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85flannel%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-flannel-wang-luo-zu-jian/" class="">06-安装flannel网络组件 2023-09-28 15:35:50.039</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85kube-ovn%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-kube-ovn-wang-luo-zu-jian/" class="">06-安装kube-ovn网络组件 2023-09-28 15:36:11.265</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-wang-luo-zu-jian/" class="">06-安装网络组件 2023-09-28 15:25:14.997</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/07-%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4%E4%B8%BB%E8%A6%81%E6%8F%92%E4%BB%B6-07--an-zhuang-ji-qun-zhu-yao-cha-jian/" class="">07-安装集群主要插件 2023-09-28 15:26:42.651</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/08-k8s-%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8--k8s-ji-qun-cun-chu/" class="">08-K8S 集群存储  2023-09-28 15:27:29.454</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/16%E4%B8%AA%E6%A6%82%E5%BF%B5%E5%B8%A6%E4%BD%A0%E5%85%A5%E9%97%A8-kubernetes-16-ge-gai-nian-dai-ni-ru-men-kubernetes/" class="">16个概念带你入门 Kubernetes 2024-04-03 15:09:21.671</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/16%E5%BC%A0%E7%A1%AC%E6%A0%B8%E5%9B%BE%E8%A7%A3k8s%E7%BD%91%E7%BB%9C-16-zhang-ying-he-tu-jie-k8s-wang-luo/" class="">16张硬核图解k8s网络 2024-04-03 15:12:49.601</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-07-microk8s/" class="">2024-12-07 microk8s</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-devstack/" class="">2024-12-08 devstack</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-mutilpass%E6%93%8D%E4%BD%9C/" class="">2024-12-08 mutilpass操作</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-nano%E6%93%8D%E4%BD%9C/" class="">2024-12-08 nano操作</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-openstack%E5%92%8Ckubernetes%E5%8C%BA%E5%88%AB/" class="">2024-12-08 openstack和kubernetes区别</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-openstack%E9%9C%80%E8%A6%81%E5%87%A0%E5%8F%B0%E8%99%9A%E6%8B%9F%E6%9C%BA/" class="">2024-12-08 openstack需要几台虚拟机</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-%E5%9D%97%E5%AD%98%E5%82%A8%E5%92%8C%E5%AF%B9%E8%B1%A1%E5%82%A8%E5%AD%98%E5%8C%BA%E5%88%AB/" class="">2024-12-08 块存储和对象储存区别</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-docker-daemon.json/" class="">2024-12-09 docker daemon.json</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-helmchart-%E9%83%A8%E7%BD%B2flask%E5%BA%94%E7%94%A8/" class="">2024-12-09 helmchart 部署flask应用</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-mutilpass%E9%83%A8%E7%BD%B2openstack/" class="">2024-12-09 mutilpass部署openstack devstack形式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-openstack-ssh%E8%BF%9E%E6%8E%A5/" class="">2024-12-09 openstack ssh连接</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-10-docker-registrry/" class="">2024-12-10 docker registrry</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-22-k8s%E6%9E%B6%E6%9E%84%E5%B8%88%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8/" class="">2024-2-22 k8s架构师面试大全</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-22-k8s%E9%9D%A2%E8%AF%95%E5%AE%9D%E5%85%B8/" class="">2024-2-22 k8s面试宝典</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-26-%E9%9D%A2%E8%AF%95/" class="">2024-2-26 面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-19-%E4%B8%A4%E5%BC%A0%E5%9B%BE%E5%85%A8%E9%9D%A2%E7%90%86%E8%A7%A3k8s%E5%8E%9F%E7%90%86/" class="">2024-3-19 两张图全面理解k8s原理</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-cni%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B/" class="">2024-3-4 CNI剖析演进</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-8-%E9%9D%A2%E8%AF%950308/" class="">2024-3-8 面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-4-17-%E9%9D%A2%E8%AF%95%E6%80%BB%E7%BB%93/" class="">2024-4-17 面试总结</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-kubernetes%E9%9D%A2%E8%AF%95%E9%A2%98/" class="">2024-8-1 k8s面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-%E5%B8%B8%E8%A7%81linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98%E6%89%BE%E5%B7%A5%E4%BD%9C%E7%9A%84%E5%BF%85%E7%9C%8B/" class="">2024-8-1 linux运维面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98/" class="">2024-8-1 linux面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-1-1-%E5%A4%A7%E5%A0%B0%E6%B2%B3-%E6%88%91%E7%9A%84%E4%BF%9D%E5%A7%86/" class="">2025-1-1 大堰河-我的保姆</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-k8s-csi%E5%89%96%E6%9E%90/" class="">2025-1-16 CSI剖析演进</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-1-16-k8s%E5%B8%B8%E8%A7%81%E6%95%85%E9%9A%9C%E6%8C%87%E5%8D%97/" class="">2025-1-16 k8s常见故障指南</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-k8s%E6%B5%81%E9%87%8F%E9%93%BE%E8%B7%AF%E5%89%96%E6%9E%90/" class="">2025-1-16 k8s流量链路剖析</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/33%E6%AC%BEgitops%E4%B8%8Edevops%E4%B8%BB%E6%B5%81%E7%B3%BB%E7%BB%9F-33-kuan-gitops-yu-devops-zhu-liu-xi-tong/" class="">33款gitops与devops主流系统 2024-08-02 17:45:15.709</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/600%E6%9D%A1%E6%9C%80%E5%BC%BAlinux%E5%91%BD%E4%BB%A4%E6%80%BB%E7%BB%93-600-tiao-zui-qiang-linux-ming-ling-zong-jie/" class="">600条最强linux命令总结 2024-04-03 15:12:31.282</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/acme%E8%87%AA%E5%8A%A8%E6%9B%B4%E6%96%B0%E8%AF%81%E4%B9%A6-acme-zi-dong-geng-xin-zheng-shu/" class="">acme自动更新证书 2024-04-03 14:41:44.289</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/calico-%E9%85%8D%E7%BD%AE-bgp-route-reflectors-calico-pei-zhi-bgproutereflectors/" class="">calico 配置 BGP Route Reflectors 2023-09-28 15:34:01.007</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/calico%E7%BD%91%E7%BB%9C%E8%87%AA%E5%AE%9A%E4%B9%89-calico-wang-luo-zi-ding-yi/" class="">Calico网络自定义 2024-04-03 15:08:43.394</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/cicd%E6%80%9D%E8%80%83-cicd-si-kao/" class="">CICD思考 2024-04-03 15:11:24.151</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/client-go-%E5%9B%9B%E7%A7%8D%E5%AE%A2%E6%88%B7%E7%AB%AF-client-go-si-zhong-ke-hu-duan/" class="">Client-go 四种客户端 2024-04-03 14:49:34.32</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/client-go-%E6%9E%B6%E6%9E%84-client-go-jia-gou/" class="">Client-go 架构 2024-04-03 14:48:40.716</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/cni%E6%8F%92%E4%BB%B6%E9%80%89%E5%9E%8B-cni-cha-jian-xuan-xing/" class="">CNI插件选型 2024-04-03 15:01:51.29</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/containerd-%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C-containerd-ji-ben-cao-zuo/" class="">Containerd 基本操作 2024-04-03 14:55:46.786</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/coredns%E4%B9%8B%E5%85%89-coredns-zhi-guang/" class="">COREDNS之光 2024-04-03 14:54:52.059</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/dockerfile%E5%AE%9A%E5%88%B6%E4%B8%93%E5%B1%9E%E9%95%9C%E5%83%8F-dockerfile-ding-zhi-zhuan-shu-jing-xiang/" class="">dockerfile定制专属镜像 2024-08-02 17:44:00.522</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/dockerfile%E7%9A%84copy%E5%92%8Cadd%E7%9A%84%E5%8C%BA%E5%88%AB-dockerfile-de-copy-he-add-de-qu-bie/" class="">dockerfile的copy和add的区别 2024-04-03 15:01:09.565</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/docker%E9%87%8D%E8%A6%81%E7%9A%84%E7%BD%91%E7%BB%9C%E7%9F%A5%E8%AF%86%E7%82%B9-docker-zhong-yao-de-wang-luo-zhi-shi-dian/" class="">Docker重要的网络知识点  2024-04-03 15:12:10.162</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/etcd%E5%A4%87%E4%BB%BD-etcd-bei-fen/" class="">ETCD备份 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/etcd%E7%A8%B3%E5%AE%9A%E6%80%A7%E5%8F%8A%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%AE%9E%E8%B7%B5-etcd-wen-ding-xing-ji-xing-neng-you-hua-shi-jian/" class="">ETCD稳定性及性能优化实践 2024-04-03 15:06:31.141</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ex-lb-%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E9%83%A8%E7%BD%B2-ex-lb-fu-zai-jun-heng-bu-shu/" class="">EX-LB 负载均衡部署 2023-09-28 15:28:51.998</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ezctl-%E5%91%BD%E4%BB%A4%E8%A1%8C%E4%BB%8B%E7%BB%8D-ezctl-ming-ling-xing-jie-shao/" class="">ezctl 命令行介绍 2023-09-28 15:28:00.619</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/flanel%E7%BD%91%E7%BB%9C-flanel-wang-luo/" class="">flanel网络 2024-04-03 15:05:04.16</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/godel-scheduler-godel-scheduler/" class="">godel-scheduler 2024-08-02 17:41:00.668</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/helm-chart%E5%92%8Crepo-helmchart-he-repo/" class="">helm chart和repo 2024-04-03 15:00:43.125</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/istio-ingress-gateway-istio-ingress-gateway/" class="">istio-ingress-gateway 2024-08-02 17:51:54.75</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/istio%E9%83%A8%E7%BD%B2-istio-bu-shu/" class="">istio部署 2024-08-02 17:52:40.721</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-cni%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B-k8scni-pou-xi-yan-jin/" class="">K8S CNI剖析演进 2024-03-04 10:51:33.245</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-csi-openebs%E5%8E%9F%E7%90%86-k8scsiopenebs-yuan-li/" class="">K8S csi openebs原理 2024-04-03 14:44:48.967</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-csi%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B-k8scsi-pou-xi-yan-jin/" class="">K8S CSI剖析演进 2024-03-04 10:52:20.507</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-gpt-k8sgpt/" class="">K8S GPT 2024-04-03 15:02:09.127</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E5%BC%80%E5%8F%91%E5%8F%AF%E4%B8%8D%E6%AD%A2-crud-k8s-kai-fa-ke-bu-zhi-crud/" class="">K8S 开发可不止 CRUD 2024-04-03 14:50:11.765</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E6%8E%A2%E9%92%88%E5%8E%9F%E7%90%86-k8s-tan-zhen-yuan-li/" class="">K8S 探针原理 2024-04-03 14:53:29.429</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E6%B5%81%E9%87%8F%E9%93%BE%E8%B7%AF%E5%89%96%E6%9E%90-k8s-liu-liang-lian-lu-pou-xi/" class="">K8S 流量链路剖析 2024-03-04 10:50:22.991</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E8%B0%83%E5%BA%A6%E5%99%A8-scheduler_onego-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-diao-du-qi-scheduleronego-yuan-ma-jie-du/" class="">K8S 调度器 scheduler_one.go 源码解读 2024-04-09 11:45:28.22</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E4%B9%8Bingress-nginx%E5%8E%9F%E7%90%86%E5%8F%8A%E9%85%8D%E7%BD%AE-k8s-zhi-ingress-nginx-yuan-li-ji-pei-zhi/" class="">K8S之ingress-nginx原理及配置 2024-07-05 18:02:14.243</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E4%B9%8Bkubelet%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-zhi-kubelet-yuan-ma-jie-du/" class="">k8s之kubelet源码解读 2024-03-28 15:30:39.633</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7-k8s-yuan-de-sheng-ji/" class="">K8S原地升级 2024-04-03 15:04:38.125</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%91%BD%E4%BB%A4%E6%8C%87%E5%8D%97-k8s-ming-ling-zhi-nan/" class="">K8S命令指南 2024-04-03 15:14:14.207</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%A6%82%E4%BD%95%E8%8E%B7%E5%BE%97-ip-k8s-ru-he-huo-de-ip/" class="">K8S如何获得 IP 2024-04-16 17:09:59.658</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%BA%94%E7%94%A8%E7%9A%84%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5-k8s-ying-yong-de-zui-jia-shi-jian/" class="">k8s应用的最佳实践 2024-04-03 14:43:16.936</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-deployment_controllergo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-deploymentcontrollergo-yuan-ma-jie-du/" class="">K8S控制器之 deployment_controller.go源码解读 2024-04-09 11:30:03.133</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-progressgo-%E8%BF%9B%E5%BA%A6-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-progressgo-jin-du-yuan-ma-jie-du/" class="">K8S控制器之 progress.go 进度 源码解读 2024-04-09 11:31:08.86</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-rollinggo-%E6%BB%9A%E5%8A%A8%E6%9B%B4%E6%96%B0-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-rollinggo-gun-dong-geng-xin-yuan-ma-jie-du/" class="">K8S控制器之 rolling.go 滚动更新 源码解读 2024-04-09 11:32:58.133</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-schedulergo-%E8%B0%83%E5%BA%A6%E5%99%A8-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-schedulergo-diao-du-qi-yuan-ma-jie-du/" class="">K8S控制器之 scheduler.go 调度器 源码解读 2024-04-09 11:44:25.171</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Brecreatego-%E9%87%8D%E5%BB%BA-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-recreatego-zhong-jian-yuan-ma-jie-du/" class="">K8S控制器之recreate.go 重建 源码解读 2024-04-09 11:31:49.855</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Brollbackgo-%E5%9B%9E%E6%BB%9A-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-rollbackgo-hui-gun-yuan-ma-jie-du/" class="">K8S控制器之rollback.go 回滚 源码解读 2024-04-09 11:32:26.587</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_pod_controlgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulpodcontrolgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_pod_control.go源码解读 2024-04-10 09:42:50.078</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_set_controlgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetcontrolgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_set_control.go源码解读 2024-04-10 09:41:30.316</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_set_status_updatego%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetstatusupdatego-yuan-ma-jie-du/" class="">K8S控制器之stateful_set_status_update.go源码解读 2024-04-10</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_setgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_set.go源码解读 2024-04-10</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bsyncgo-%E5%90%8C%E6%AD%A5-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-syncgo-tong-bu-yuan-ma-jie-du/" class="">K8S控制器之sync.go 同步 源码解读 2024-04-09 11:33:26.356</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E7%9A%84pod%E7%B1%BB%E5%9E%8B-k8s-de-pod-lei-xing/" class="">K8S的POD类型 2024-04-03 14:57:11.072</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E7%9A%84%E6%9C%80%E5%90%8E%E4%B8%80%E5%9D%97%E6%8B%BC%E5%9B%BE-dbpaas-k8s-de-zui-hou-yi-kuai-pin-tu-dbpaas/" class="">K8S的最后一块拼图 dbpaas 2024-08-02 17:48:35.899</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-k8s%E7%BB%84%E4%BB%B6/" class="">k8s组件</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%83%8C%E5%90%8Eservice%E6%98%AF%E5%A6%82%E4%BD%95%E5%B7%A5%E4%BD%9C%E7%9A%84-k8s-bei-hou-service-shi-ru-he-gong-zuo-de/" class="">k8s背后service是如何工作的 2024-08-02 17:49:44.981</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%B0%83%E5%BA%A6%E5%99%A8-extendergo-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-diao-du-qi-extendergo-yuan-ma-jie-du/" class="">K8S调度器 extender.go 源码解读 2024-04-09 11:45:59.666</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%B0%83%E8%AF%95pod-k8s-diao-shi-pod/" class="">K8S调试POD 2024-04-03 14:58:15.293</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%BF%90%E7%BB%B4%E4%B9%8B%E6%B8%85%E7%90%86%E7%A3%81%E7%9B%98-k8s-yun-wei-zhi-qing-li-ci-pan/" class="">k8s运维之清理磁盘 2024-04-03 15:13:57.279</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8-k8s-mian-shi-da-quan/" class="">K8S面试大全 2024-04-03 15:10:54.493</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E5%AE%9D%E5%85%B8-k8s-mian-shi-bao-dian/" class="">K8S面试宝典 2024-04-03 15:11:09.316</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E9%A2%98-k8s-mian-shi-ti/" class="">K8S面试题 2024-08-02 17:50:50.418</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kruise%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7%E8%A7%A3%E6%9E%90-kruise-yuan-de-sheng-ji-jie-xi/" class="">kruise原地升级解析 2024-08-02 17:59:31.689</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kube-router-%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-kube-router-wang-luo-zu-jian/" class="">kube-router 网络组件 2023-09-28 15:33:20.658</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-05-kubeasz%E9%83%A8%E7%BD%B2k8s/" class="">kubeasz部署k8s</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubekey%E6%B7%BB%E5%8A%A0%E6%96%B0%E8%8A%82%E7%82%B9-kubekey-tian-jia-xin-jie-dian/" class="">kubekey添加新节点 2024-04-03 15:36:47.646</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-api-kubernetesapi/" class="">Kubernetes API 2024-04-03 14:47:30.212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E6%BA%90%E7%A0%81%E7%BB%93%E6%9E%84-kubernetes-yuan-ma-jie-gou/" class="">Kubernetes 源码结构 2024-04-03 14:48:05.954</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3%E8%AE%A4%E8%AF%81-kubernetes-zheng-shu-xiang-jie--ren-zheng-/" class="">Kubernetes 证书详解(认证) 2024-04-03 14:52:56.54</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3%E9%89%B4%E6%9D%83-kubernetes-zheng-shu-xiang-jie--jian-quan-/" class="">Kubernetes 证书详解(鉴权) 2024-04-03 14:49:04.385</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubewharf-kubewharf/" class="">kubewharf 2024-08-02 17:41:32.72</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux-awk%E6%96%87%E6%9C%AC%E5%A4%84%E7%90%86%E5%99%A8-8%E4%B8%AA%E6%A1%88%E4%BE%8B-linuxawk-wen-ben-chu-li-qi-8-ge-an-li/" class="">linux awk文本处理器 8个案例 2024-08-02 17:46:53.603</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux-%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%A4%A7%E5%85%A8-linux-xing-neng-you-hua-da-quan/" class="">Linux 性能优化大全 2024-04-03 15:09:06.854</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux%E7%B3%BB%E7%BB%9F%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96-%E4%B8%83%E4%B8%AA%E5%AE%9E%E6%88%98%E7%BB%8F%E9%AA%8C-linux-xi-tong-xing-neng-you-hua-qi-ge-shi-zhan-jing-yan/" class="">linux系统性能优化 七个实战经验 2024-08-02 17:47:26.212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98-linux-yun-wei-gong-cheng-shi-50-ge-chang-jian-mian-shi-ti/" class="">linux运维工程师50个常见面试题 2024-08-02 17:42:12.968</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/metallb-l2-%E5%8E%9F%E7%90%86-metallbl2-yuan-li/" class="">MetalLB L2 原理 2024-04-03 14:52:24.662</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/netctl%E6%A3%80%E6%B5%8B%E9%9B%86%E7%BE%A4pod%E9%97%B4%E8%BF%9E%E9%80%9A%E6%80%A7-netctl-jian-ce-ji-qun-pod-jian-lian-tong-xing/" class="">netctl检测集群pod间连通性 2024-08-02 18:00:36.753</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/network-check-network-check/" class="">network-check 2023-09-28 15:36:33.04</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/nginx%E5%A6%82%E4%BD%95%E8%A7%A3%E5%86%B3%E6%83%8A%E7%BE%A4%E6%95%88%E5%BA%94-nginx-ru-he-jie-jue-jing-qun-xiao-ying/" class="">nginx如何解决惊群效应 2024-08-02 17:45:54.531</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/openkruise%E8%AF%A6%E7%BB%86%E8%A7%A3%E9%87%8A%E4%BB%A5%E5%8F%8A%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7%E5%8F%8A%E5%85%A8%E9%93%BE%E8%B7%AF%E7%81%B0%E5%BA%A6%E5%8F%91%E5%B8%83%E6%96%B9%E6%A1%88-openkruise-xiang-xi-jie-shi-yi-ji-yuan-de-sheng-ji-ji-quan-lian-lu-hui-du-fa-bu-fang-an/" class="">OpenKruise详细解释以及原地升级及全链路灰度发布方案 2024-07-22 11:44:46.892</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/pixie-pixie/" class="">pixie 2024-08-02 17:52:17.843</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-28-prometheus/" class="">prometheus 面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/prometheus-stack-prometheus-stack/" class="">prometheus-stack 2024-08-02 17:55:22.326</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/prometheus%E4%BC%81%E4%B8%9A%E7%BA%A7%E7%9B%91%E6%8E%A7%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93-prometheus-qi-ye-ji-jian-kong-shi-yong-zong-jie/" class="">prometheus企业级监控使用总结 2024-04-03 15:13:11.185</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ssl%E8%AF%81%E4%B9%A6%E8%87%AA%E7%AD%BE%E5%8F%91-ssl-zheng-shu-zi-qian-fa/" class="">ssl证书自签发 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/teg%E4%B8%8Eistio%E9%9B%86%E6%88%90-teg-yu-istio-ji-cheng/" class="active">TEG与istio集成 2024-08-02 17:51:20.389</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%B8%A4%E5%BC%A0%E5%9B%BE%E5%85%A8%E9%9D%A2%E7%90%86%E8%A7%A3k8s%E5%8E%9F%E7%90%86-liang-zhang-tu-quan-mian-li-jie-k8s-yuan-li/" class="">两张图全面理解K8S原理 2024-04-03 14:51:27.431</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%B8%AA%E6%80%A7%E5%8C%96%E9%9B%86%E7%BE%A4%E5%8F%82%E6%95%B0%E9%85%8D%E7%BD%AE-ge-xing-hua-ji-qun-can-shu-pei-zhi/" class="">个性化集群参数配置 2023-09-28 15:30:56.072</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E4%B8%AD%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_%E9%A2%98%E7%9B%AE/" class="">中级运维面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BA%8C%E8%BF%9B%E5%88%B6%E9%83%A8%E7%BD%B2k8s%E5%8A%A0%E8%8A%82%E7%82%B9%E6%93%8D%E4%BD%9C-er-jin-zhi-bu-shu-k8s-jia-jie-dian-cao-zuo/" class="">二进制部署K8S加节点操作 2024-04-03 15:08:26.726</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-10-20-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8%E9%9B%86%E7%BE%A4/" class="">使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8-keepalived-%E5%92%8C-haproxy-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8-kubernetes-%E9%9B%86%E7%BE%A4-shi-yong-keepalived-he-haproxy-chuang-jian-gao-ke-yong-kubernetes-ji-qun/" class="">使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群 2023-04-12 04:04:09.458</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8-openfunction-%E5%9C%A8%E4%BB%BB%E4%BD%95%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E4%B8%8A%E8%BF%90%E8%A1%8C%E6%97%A0%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%B7%A5%E4%BD%9C%E8%B4%9F%E8%BD%BD-shi-yong-openfunction-zai-ren-he-ji-chu-she-shi-shang-yun-xing-wu-fu-wu-qi-gong-zuo-fu-zai/" class="">使用 OpenFunction 在任何基础设施上运行无服务器工作负载 2024-01-21 04:02:44.459</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8cloudflarecf%E6%90%AD%E5%BB%BAdockerhub%E4%BB%A3%E7%90%86-shi-yong-cloudflarecf-da-jian-dockerhub-dai-li/" class="">使用cloudflare(CF)搭建dockerhub代理 2024-06-28 14:38:34.339</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8kubernees-leases-%E8%BD%BB%E6%9D%BE%E5%AE%9E%E7%8E%B0leader-election-shi-yong-kuberneesleases-qing-song-shi-xian-leaderelection/" class="">使用kubernees leases 轻松实现leader election 2024-04-03 15:09:46.129</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%85%AC%E6%9C%89%E4%BA%91%E4%B8%8A%E9%83%A8%E7%BD%B2-kubeasz-gong-you-yun-shang-bu-shu-kubeasz/" class="">公有云上部署 kubeasz 2023-09-28 15:31:16.19</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-5-14-%E5%8D%95master%E5%8D%95etcd%E6%94%B9%E9%80%A0/" class="">单master单etcd改造为3master3etcd</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%8F%B2%E4%B8%8A%E6%9C%80%E7%89%9Bjenkins-pipeline%E6%B5%81%E6%B0%B4%E7%BA%BF%E8%AF%A6%E8%A7%A3-shi-shang-zui-niu-jenkinspipeline-liu-shui-xian-xiang-jie/" class="">史上最牛jenkins pipeline流水线详解 2024-08-02</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%9A%E6%9E%B6%E6%9E%84%E6%94%AF%E6%8C%81-duo-jia-gou-zhi-chi/" class="">多架构支持 2023-09-28 15:29:54.111</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%A7%E5%8E%82%E6%80%BB%E7%BB%93nginx%E9%AB%98%E5%B9%B6%E5%8F%91%E4%BC%98%E5%8C%96%E7%AC%94%E8%AE%B0-da-chang-zong-jie-nginx-gao-bing-fa-you-hua-bi-ji/" class="">大厂总结nginx高并发优化笔记 2024-08-02 17:46:19.098</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%A7%E8%A7%84%E6%A8%A1%E5%B9%B6%E5%8F%91%E4%B8%8B%E5%A6%82%E4%BD%95%E5%8A%A0%E5%BF%AB-pod-%E5%90%AF%E5%8A%A8%E9%80%9F%E5%BA%A6-da-gui-mo-bing-fa-xia-ru-he-jia-kuai-pod-qi-dong-su-du/" class="">大规模并发下如何加快 Pod 启动速度 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E4%B8%BAk8s%E4%BF%9D%E9%A9%BE%E6%8A%A4%E8%88%AA-ru-he-wei-k8s-bao-jia-hu-hang/" class="">如何为K8S保驾护航 2024-04-16 17:09:21.962</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8tekton%E5%BF%AB%E9%80%9F%E6%90%AD%E5%BB%BAcicd%E5%B9%B3%E5%8F%B0-ru-he-shi-yong-tekton-kuai-su-da-jian-cicd-ping-tai/" class="">如何使用tekton快速搭建CI/CD平台 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E8%B0%83%E8%AF%95-crash-%E5%AE%B9%E5%99%A8%E7%9A%84%E7%BD%91%E7%BB%9C-ru-he-diao-shi-crash-rong-qi-de-wang-luo/" class="">如何调试 crash 容器的网络 2024-04-03 14:50:51.378</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E4%B8%AD%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E4%BB%A5%E5%8F%8A%E4%B8%8D%E5%90%8Cdnspolicy%E5%AF%B9%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E7%9A%84%E5%BD%B1%E5%93%8D-rong-qi-zhong-yu-ming-jie-xi-yi-ji-bu-tong-dnspolicy-dui-yu-ming-jie-xi-de-ying-xiang/" class="">容器中域名解析以及不同dnspolicy对域名解析的影响 2024-04-03 15:04:09.254</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E5%86%85%E7%9A%84-1-%E5%8F%B7%E8%BF%9B%E7%A8%8B-rong-qi-nei-de-1-hao-jin-cheng/" class="">容器内的 1 号进程 2024-04-03 14:46:29.998</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E5%8E%9F%E7%90%86-rong-qi-yuan-li/" class="">容器原理 2024-04-03 14:45:58.422</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E7%9A%84%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E4%B8%80-overlayfs-%E5%8E%9F%E7%90%86-rong-qi-de-wen-jian-xi-tong--yi-overlayfs-yuan-li/" class="">容器的文件系统 OverlayFS 原理 2024-04-03 14:45:26.893</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C%E5%8E%9F%E7%90%86-rong-qi-wang-luo-yuan-li/" class="">容器网络原理 2024-04-03 14:51:51.962</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%B8%B8%E8%A7%81linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98-chang-jian-linux-yun-wei-mian-shi-ti/" class="">常见linux运维面试题 2024-08-02 17:42:33.873</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BC%80%E5%A7%8B%E4%BD%BF%E7%94%A8-cilium-kai-shi-shi-yong-cilium/" class="">开始使用 cilium 2023-09-28 15:34:49.205</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BD%BB%E6%82%9F%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C-che-wu-rong-qi-wang-luo/" class="">彻悟容器网络 2024-04-07 10:30:11.55</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BF%AB%E9%80%9F%E6%8C%87%E5%8D%97-kuai-su-zhi-nan/" class="">快速指南 2023-09-28 15:28:25.71</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%88%91%E5%8F%AA%E6%83%B3%E5%81%9A%E6%8A%80%E6%9C%AF-%E8%B5%B0%E6%8A%80%E6%9C%AF%E8%B7%AF%E7%BA%BF-wo-zhi-xiang-zuo-ji-shu-zou-ji-shu-lu-xian/" class="">我只想做技术 走技术路线 2024-08-02 17:43:31.897</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%90%9E%E6%87%82k8s%E9%89%B4%E6%9D%83-gao-dong-k8s-jian-quan/" class="">搞懂K8S鉴权 2024-04-03 15:11:54.885</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%90%AD%E4%B8%AA%E6%97%A5%E5%BF%97%E6%89%8B%E6%9C%BA%E7%B3%BB%E7%BB%9F%E4%B8%8D%E9%A6%99%E5%90%97-da-ge-ri-zhi-shou-ji-xi-tong-bu-xiang-ma/" class="">搭个日志手机系统不香吗 2024-08-02 17:47:58.794</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E8%AF%B4%E6%98%8E-cao-zuo-xi-tong-shuo-ming/" class="">操作系统说明 2023-09-28 15:31:37.694</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%96%87%E5%AD%A6%E7%9A%84%E6%95%85%E4%B9%A1-wen-xue-de-gu-xiang/" class="">文学的故乡 2024-04-03 14:40:45.926</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%98%AF%E6%8A%80%E6%9C%AF%E5%A4%A7%E7%A5%9E%E8%BF%98%E6%98%AF%E5%9F%BA%E7%A1%80%E6%9E%B6%E6%9E%84%E9%83%A8%E7%9A%84%E7%A5%B8%E5%AE%B3-shi-ji-shu-da-shen-hai-shi-ji-chu-jia-gou-bu-de-huo-hai/" class="">是技术大神还是基础架构部的祸害 2024-08-02 17:50:26.139</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9C%89%E8%BF%993%E4%B8%AA%E8%BF%B9%E8%B1%A1%E4%BD%A0%E5%B0%B1%E8%AF%A5%E7%A6%BB%E8%81%8C%E4%BA%86-you-zhe-3-ge-ji-xiang--ni-jiu-gai-li-zhi-le/" class="">有这3个迹象，你就该离职了 2023-09-21 16:00:22.432</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9E%81%E5%A4%A7%E6%8F%90%E9%AB%98%E5%B7%A5%E4%BD%9C%E6%95%88%E7%8E%87%E7%9A%84-linux-%E5%91%BD%E4%BB%A4-ji-da-ti-gao-gong-zuo-xiao-lv-de-linux-ming-ling/" class="">极大提高工作效率的 Linux 命令 2024-04-03 14:42:46.957</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9E%84%E5%BB%BA%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E5%88%A9%E5%99%A8buildkit-gou-jian-rong-qi-jing-xiang-li-qi-buildkit/" class="">构建容器镜像利器buildkit 2024-08-02 17:49:14.916</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B5%81%E9%87%8F%E4%BD%95%E5%A4%84%E6%9D%A5%E4%BD%95%E5%A4%84%E5%8E%BB-liu-liang-he-chu-lai-he-chu-qu/" class="">流量何处来何处去 2024-04-03 14:56:20.089</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B8%85%E7%90%86docker%E9%95%9C%E5%83%8F-qing-li-docker-jing-xiang/" class="">清理docker镜像 2024-08-02 17:54:48.594</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B8%85%E7%90%86%E6%AE%8B%E7%95%99%E7%9A%84calico%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6-qing-li-can-liu-de-calico-wang-luo/" class="">清理残留的calico网络插件 2024-04-03 15:07:38.854</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A3%81%E7%9B%98%E6%95%B0%E6%8D%AE%E6%81%A2%E5%A4%8D-ci-pan-shu-ju-hui-fu/" class="">磁盘数据恢复 2024-04-03 14:59:27.839</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85kubephere-li-xian-an-zhuang-kubephere/" class="">离线安装kubephere 2024-04-03 14:59:59.885</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4-li-xian-an-zhuang-ji-qun/" class="">离线安装集群 2023-09-28 15:29:14.742</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-%E8%AE%A1%E5%88%92/" class="">美国码农薪酬</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-%E8%AE%A1%E5%88%922/" class="">美国码农计划</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E8%87%AA%E5%8A%A8%E5%B1%8F%E8%94%BDip%E6%94%BB%E5%87%BB-zi-dong-ping-bi-ip-gong-ji/" class="">自动屏蔽IP攻击 2024-04-03 14:54:11.783</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-12-%E9%9D%A2%E8%AF%950212/" class="">面试0212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-19-%E9%9D%A2%E8%AF%950219/" class="">面试0219</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-20-%E9%9D%A2%E8%AF%950220/" class="">面试0220</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-26-%E9%9D%A2%E8%AF%950225/" class="">面试0225</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%9D%A2%E8%AF%950308-mian-shi-0308/" class="">面试0308 2024-04-03 14:57:53.576</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-11-%E9%9D%A2%E8%AF%950211/" class="">面试2025-02-11</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-18-%E9%9D%A2%E8%AF%95/" class="">面试2025-0218</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%9D%A2%E8%AF%95%E7%94%A8-golang-%E6%89%8B%E6%92%B8-lru-mian-shi-yong-golang-shou-lu-lru/" class="">面试用 Golang 手撸 LRU 2024-04-03 14:47:00.767</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%A1%B6%E7%BA%A7devops%E5%B7%A5%E5%85%B7%E5%A4%A7%E7%9B%98%E7%82%B9-ding-ji-devops-gong-ju-da-pan-dian/" class="">顶级devops工具大盘点 2024-08-02 17:43:03.661</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E9%AB%98%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_ai_linux%E9%83%A8%E5%88%86/" class="">高级运维面试题-linux部分</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>TEG与istio集成 2024-08-02 17:51:20.389</h3>
+
+  <label for="toc-control">
+    
+    <img src="/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#teg-简介">TEG 简介</a></li>
+    <li><a href="#teg-的能力">TEG 的能力</a>
+      <ul>
+        <li><a href="#易于安装操作和升级">易于安装、操作和升级</a></li>
+        <li><a href="#操作性一流的功能">操作性：一流的功能</a></li>
+        <li><a href="#与现有的环境集成">与现有的环境集成</a></li>
+        <li><a href="#引入现有的可观测性堆栈">引入现有的可观测性堆栈</a></li>
+        <li><a href="#简单的负载平衡">简单的负载平衡</a></li>
+        <li><a href="#简单的-api-网关">简单的 API 网关</a></li>
+      </ul>
+    </li>
+    <li><a href="#teg-的架构">TEG 的架构</a>
+      <ul>
+        <li><a href="#主要组件">主要组件</a></li>
+        <li><a href="#工作流程">工作流程</a></li>
+        <li><a href="#配置和管理">配置和管理</a></li>
+      </ul>
+    </li>
+    <li><a href="#部署-teg">部署 TEG</a></li>
+    <li><a href="#作为-istio-的入口网关">作为 Istio 的入口网关</a>
+      <ul>
+        <li><a href="#为-teg-与-istio-的互操作做准备">为 TEG 与 Istio 的互操作做准备</a></li>
+        <li><a href="#安装-istio">安装 Istio</a></li>
+        <li><a href="#重启-teg-控制平面">重启 TEG 控制平面</a></li>
+        <li><a href="#部署测试应用">部署测试应用</a></li>
+        <li><a href="#配置-teg">配置 TEG</a></li>
+        <li><a href="#发送测试请求">发送测试请求</a></li>
+        <li><a href="#启用严格的-mtls">启用严格的 mTLS</a></li>
+        <li><a href="#为网关启用-tls">为网关启用 TLS</a></li>
+      </ul>
+    </li>
+    <li><a href="#总结">总结</a></li>
+    <li><a href="#参考">参考</a></li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><p>介绍 Tetrate Enterprise Gateway 及与 Istio 集成：云原生应用的全面网关解决方案</p>
+<p>深入了解 Tetrate Enterprise Gateway (TEG) 及其如何与 Istio 服务网格集成 —— 一种基于 Envoy 的企业级网关解决方案，包括它的架构、基本功能以及如何在 Kubernetes 中使用 TEG 来暴露和管理应用。</p>
+<h2 id="teg-简介">
+  TEG 简介
+  <a class="anchor" href="#teg-%e7%ae%80%e4%bb%8b">#</a>
+</h2>
+<p>Tetrate Enterprise Gateway（TEG）是基于 <a href="https://gateway.envoyproxy.io/">Envoy Gateway</a> (EG) 的企业级解决方案，专门针对 Envoy Proxy 设计，通过 <a href="https://gateway-api.sigs.k8s.io/">Kubernetes Gateway API</a> 提供更易于消费的 Envoy 代理配置和管理包。TEG 结合了 Kubernetes Gateway API 的特性，支持在 Kubernetes 中轻松暴露服务和应用程序。</p>
+<p>TEG 相对于 Envoy Gateway 的主要新增特性包括：</p>
+<ol>
+<li><strong>全局速率限制（Rate Limiting）</strong>：TEG 支持基于 IP 5-tuple、请求头等进行流量控制，需要通过 Redis 实例管理。</li>
+<li><strong>WAF 功能（Web Application Firewall）</strong>：TEG 提供了与 <code>mod_security</code> 兼容的 WAF 功能，增强了安全防护能力。</li>
+<li><strong>OIDC/OAuth2认证</strong>：支持在网关级别进行 OIDC/OAuth2 认证，应用程序可以按路由配置认证方式。</li>
+<li><strong>使用 Kubernetes Gateway API</strong>：相较于其他 API，Kubernetes Gateway API 的设计更加现代，结合了众多 Ingress 实现的经验，将网关的配置与流量的路由分离，使平台所有者可以管理网关，而应用团队可以掌控流量路由。</li>
+</ol>
+<p>TEG 将 Envoy 的高级网络流量处理能力带入 Kubernetes 环境，提供了一种简化的方法来部署和管理负载平衡、API 网关功能、安全控制等，同时支持现代的、开放的应用程序暴露 API，如 Kubernetes Gateway API。这些特性使 TEG 成为一个功能丰富、易于管理的企业级网关解决方案。</p>
+<h2 id="teg-的能力">
+  TEG 的能力
+  <a class="anchor" href="#teg-%e7%9a%84%e8%83%bd%e5%8a%9b">#</a>
+</h2>
+<p>Tetrate Enterprise Gateway for Envoy (TEG) 构建于 Envoy Gateway 项目之上，提供了一种易于使用和操作的入口，具有先进的按请求流量控制功能、与现有环境的轻松集成，以及一流的可观测性，以理解应用流量和入口健康状况。</p>
+<h3 id="易于安装操作和升级">
+  易于安装、操作和升级
+  <a class="anchor" href="#%e6%98%93%e4%ba%8e%e5%ae%89%e8%a3%85%e6%93%8d%e4%bd%9c%e5%92%8c%e5%8d%87%e7%ba%a7">#</a>
+</h3>
+<p>TEG 从头到尾注重易用性：从首次安装到启用应用团队，从故障排查到执行升级。TEG 的初始安装只需几分钟，你就可以开始使用高级功能，如速率限制、单点登录和金丝雀流量路由。TEG 还简化了运维流程，与你现有的指标、跟踪和日志记录管道相适应，我们还提供了一个完整的、预配置的可观测性堆栈，以评估 EG 产生的数据，并帮助你计划如何将 TEG 集成到你的现有指标堆栈中。</p>
+<h3 id="操作性一流的功能">
+  操作性：一流的功能
+  <a class="anchor" href="#%e6%93%8d%e4%bd%9c%e6%80%a7%e4%b8%80%e6%b5%81%e7%9a%84%e5%8a%9f%e8%83%bd">#</a>
+</h3>
+<p>TEG 由在生产环境中运行大型、关键系统的经验丰富团队构建。TEG 简化了漏洞检查和持续升级过程，与你现有的指标和跟踪提供商轻松集成，并为你现有的 Grafana 部署提供了一套强大的入口可观测性仪表板。</p>
+<h3 id="与现有的环境集成">
+  与现有的环境集成
+  <a class="anchor" href="#%e4%b8%8e%e7%8e%b0%e6%9c%89%e7%9a%84%e7%8e%af%e5%a2%83%e9%9b%86%e6%88%90">#</a>
+</h3>
+<p>TEG 不仅适用于绿地部署的启动，还可以直接与传统环境以及现代云原生环境集成。它可以帮助你在现有的应用生态系统和你正在构建的云原生目标之间架起桥梁。</p>
+<h3 id="引入现有的可观测性堆栈">
+  引入现有的可观测性堆栈
+  <a class="anchor" href="#%e5%bc%95%e5%85%a5%e7%8e%b0%e6%9c%89%e7%9a%84%e5%8f%af%e8%a7%82%e6%b5%8b%e6%80%a7%e5%a0%86%e6%a0%88">#</a>
+</h3>
+<p>你的组织可能已经有一个可观测性系统，你的应用和运营团队已经训练有素地使用它。TEG 可以轻松地嵌入到现有的基础设施中，并在你的组织中运行。TEG 将使 Envoy 的丰富指标集导出，让你的应用团队对其应用流量的行为有最佳的洞察，并看到他们所做配置更改的效果。TEG 还为运行它的平台团队提供了仪表板和警报功能，使你能够自信地操作并快速解决发现的问题。</p>
+<h3 id="简单的负载平衡">
+  简单的负载平衡
+  <a class="anchor" href="#%e7%ae%80%e5%8d%95%e7%9a%84%e8%b4%9f%e8%bd%bd%e5%b9%b3%e8%a1%a1">#</a>
+</h3>
+<p>Envoy 非常强大，但要使其启动并运行简单用例可能很难——像 Istio 这样的系统提供 Envoy 入口管理作为更广泛功能套件的一部分，也附带了许多与简单、流畅的操作体验相冲突的额外功能。这就是 Envoy Gateway 存在的原因：使 Envoy 的强大功能易于用于入口用例。</p>
+<h3 id="简单的-api-网关">
+  简单的 API 网关
+  <a class="anchor" href="#%e7%ae%80%e5%8d%95%e7%9a%84-api-%e7%bd%91%e5%85%b3">#</a>
+</h3>
+<p>组织中绝大多数 API 网关的使用归结为三件事：认证发起请求的用户；限制用户对服务的访问；在此 API 端点的服务实例之间进行负载平衡。TEG 简化了在传统和云原生环境中完成这三项任务的过程。</p>
+<h2 id="teg-的架构">
+  TEG 的架构
+  <a class="anchor" href="#teg-%e7%9a%84%e6%9e%b6%e6%9e%84">#</a>
+</h2>
+<p>下图展示的是 TEG 的架构图。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011011152.png" alt="image-20240801101123036" /></p>
+<p>从架构图中可以看出，Tetrate Enterprise Gateway for Envoy (TEG) 的架构设计包括以下主要组件和流程：</p>
+<h3 id="主要组件">
+  主要组件
+  <a class="anchor" href="#%e4%b8%bb%e8%a6%81%e7%bb%84%e4%bb%b6">#</a>
+</h3>
+<ol>
+<li><strong>Kubernetes Cluster</strong>
+<ul>
+<li><strong>Envoy Gateway</strong>：作为控制平面，配置和管理 Envoy 代理，消费 Kubernetes Gateway API 的配置。</li>
+<li><strong>Metrics Collection</strong>：使用 Prometheus 或 OpenTelemetry (OTEL) 作为指标收集点，用于监控 Envoy Proxy 的性能和健康状态。</li>
+</ul>
+</li>
+<li><strong>Envoy Proxy</strong>
+<ul>
+<li>作为数据平面，直接处理所有进入的流量，支持基于 Kubernetes Gateway API 的配置。</li>
+</ul>
+</li>
+<li><strong>Coraza WAF</strong>
+<ul>
+<li>作为 TEG 的一部分部署，执行 WAF 规则以保护应用免受恶意请求攻击。</li>
+</ul>
+</li>
+<li><strong>Redis Rate Limit Store</strong>
+<ul>
+<li>作为全局速率限制的存储解决方案，用于跨所有 Envoy 实例维护统一的速率限制计数。</li>
+</ul>
+</li>
+<li><strong>Your OIDC Server</strong>
+<ul>
+<li>处理 OAuth2.0 和 OIDC 认证流程，确保只有经过认证的用户可以访问特定的路由和服务。</li>
+</ul>
+</li>
+</ol>
+<h3 id="工作流程">
+  工作流程
+  <a class="anchor" href="#%e5%b7%a5%e4%bd%9c%e6%b5%81%e7%a8%8b">#</a>
+</h3>
+<ol>
+<li><strong>流量入口</strong>
+<ul>
+<li>所有外部流量首先通过上游的负载均衡器，然后被路由到 Envoy Proxy。</li>
+</ul>
+</li>
+<li><strong>Envoy Proxy 处理</strong>
+<ul>
+<li>Envoy Proxy 根据 Kubernetes Cluster 中的 Envoy Gateway 的配置处理流量。</li>
+<li>配置信息包括路由规则、安全策略（如 WAF 和速率限制）等。</li>
+</ul>
+</li>
+<li><strong>安全和认证</strong>
+<ul>
+<li><strong>Coraza WAF</strong>：在流量到达应用前，根据配置的 WAF 规则进行检查和过滤，提高安全性。</li>
+<li><strong>OIDC 认证</strong>：OIDC Server 处理认证，Envoy Proxy 根据 OIDC Server 的验证结果决定是否允许访问。</li>
+</ul>
+</li>
+<li><strong>速率限制</strong>
+<ul>
+<li>使用 Redis 存储进行速率限制，Envoy Proxy 将根据从 Redis 获取的数据执行速率限制策略。</li>
+</ul>
+</li>
+<li><strong>性能监控</strong>
+<ul>
+<li>Envoy Proxy 的性能和健康状态通过集成的指标收集系统（Prometheus 或 OTEL）进行监控。</li>
+</ul>
+</li>
+</ol>
+<h3 id="配置和管理">
+  配置和管理
+  <a class="anchor" href="#%e9%85%8d%e7%bd%ae%e5%92%8c%e7%ae%a1%e7%90%86">#</a>
+</h3>
+<ul>
+<li>用户可以通过 Kubernetes Gateway API 定义和应用 Envoy Proxy 的配置。</li>
+<li>这包括定义专用网关的具体配置，如安全规则、路由策略等。</li>
+</ul>
+<p>这种架构设计利用了 Kubernetes 的灵活性和扩展性，并通过 Envoy 提供了强大的流量管理和安全功能。</p>
+<h2 id="部署-teg">
+  部署 TEG
+  <a class="anchor" href="#%e9%83%a8%e7%bd%b2-teg">#</a>
+</h2>
+<p>执行下面的命令部署 TEG V0.0.0：</p>
+<pre tabindex="0"><code>export REGISTRY=&#34;oci://docker.io/tetrate&#34;
+export CHART_VERSION=&#34;v0.0.0-latest&#34;
+helm install teg ${REGISTRY}/teg-envoy-gateway-helm \
+ --version ${CHART_VERSION} \
+ -n envoy-gateway-system --create-namespace
+</code></pre><p>检查部署：</p>
+<pre tabindex="0"><code>kubectl get pod -n envoy-gateway-system
+</code></pre><p>你将看到下面的结果：</p>
+<pre tabindex="0"><code>NAMESPACE              NAME                                                       READY   STATUS    RESTARTS        AGE
+envoy-gateway-system   envoy-gateway-596dfbcb88-tx7xb                             1/1     Running   0               3m55s
+envoy-gateway-system   envoy-ratelimit-674b8c955c-jhlfn                           2/2     Running   2 (3m48s ago)   3m54s
+envoy-gateway-system   teg-envoy-gateway-64fd8c8fbb-59b4l                         1/1     Running   0               3m55s
+envoy-gateway-system   teg-redis-86bb7d9b9d-27n44                                 1/1     Running   0               3m55s
+</code></pre><p>部署示例应用：</p>
+<pre tabindex="0"><code>kubectl create namespace httpbin
+kubectl apply -n httpbin -f https://raw.githubusercontent.com/istio/istio/master/samples/httpbin/httpbin.yaml
+</code></pre><p>部署 Envoy Proxy：</p>
+<pre tabindex="0"><code>cat &lt;&lt;EOF | kubectl apply -f -
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: dedicated-gateway
+  namespace: httpbin
+spec:
+  gatewayClassName: teg
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+EOF
+</code></pre><p>然后你会在 <code>envoy-gateway-system</code> 命名空间下看到一个新的 Envoy 代理。</p>
+<p>部署 HTTPRoute，给网关配置路由：</p>
+<pre tabindex="0"><code>cat &lt;&lt;EOF | kubectl apply -f -
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: httpbin
+  namespace: httpbin
+spec:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: dedicated-gateway
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /httpbin/
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /
+      backendRefs:
+        - group: &#34;&#34;
+          kind: Service
+          name: httpbin
+          port: 8000
+EOF
+</code></pre><p>这个路由配置中有一个 URLRewrite filter，重写 URL 前缀，去掉了 <code>/httpbin/</code> 部分。</p>
+<p>发送流量测试：</p>
+<pre tabindex="0"><code>export DEDICATED_GATEWAY_IP=$(kubectl get gateway/dedicated-gateway -n httpbin -o jsonpath=&#39;{.status.addresses[0].value}&#39;)
+curl -i http://${DEDICATED_GATEWAY_IP}/httpbin/get
+</code></pre><p>为什么使用 <code>/httpbin/get</code>?</p>
+<p>在通过 Tetrate Enterprise Gateway for Envoy (TEG) 暴露 <code>httpbin</code> 应用时，选择 <code>/httpbin/get</code> 作为访问路径的原因主要是为了在同一个 Envoy 网关下能够同时支持多个应用或服务，并能根据不同的路径将流量正确地路由到指定的服务。</p>
+<p>这种路径前缀的设置方法允许系统管理员或开发人员为每个服务配置独立的路径前缀，从而通过单一的入口点（即 Envoy 网关）来管理对多个后端服务的访问。这样的配置增加了路由的灵活性，使得在不更改现有服务配置的情况下，轻松地扩展或修改服务的暴露方式。</p>
+<h2 id="作为-istio-的入口网关">
+  作为 Istio 的入口网关
+  <a class="anchor" href="#%e4%bd%9c%e4%b8%ba-istio-%e7%9a%84%e5%85%a5%e5%8f%a3%e7%bd%91%e5%85%b3">#</a>
+</h2>
+<p>Istio 提供了成熟且灵活的入口网关支持，基于与 Tetrate Enterprise Gateway（TEG）相同的 Envoy 代理。Istio 主要专注于处理集群内服务之间的通信。相较之下，TEG 设计用于向外界暴露应用，处理人类用户的请求，并支持如 OIDC 单点登录等高级功能。通过结合 Istio 网格和 TEG 的高级网关功能，两者可以共同使用，以提升整体应用的可访问性和安全性。</p>
+<p>以下图示展示了 Istio 网格中入口网关的流量路径。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011014653.png" alt="image-20240801101449547" /></p>
+<p>下图展示了在引入 TEG 之后，流量如何从 Istio 网格边缘进入到内部。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408011015092.png" alt="image-20240801101506006" /></p>
+<p>将 TEG 集成到 Istio 网格中，通过在 TEG 上配置 sidecar 来颁发证书，同时避免 sidecar 拦截 TEG 中的流量。然后通过 Envoy Gateway 控制入口网关的流量路径。</p>
+<h3 id="为-teg-与-istio-的互操作做准备">
+  为 TEG 与 Istio 的互操作做准备
+  <a class="anchor" href="#%e4%b8%ba-teg-%e4%b8%8e-istio-%e7%9a%84%e4%ba%92%e6%93%8d%e4%bd%9c%e5%81%9a%e5%87%86%e5%a4%87">#</a>
+</h3>
+<p>为了使 TEG 作为 Istio 的入口网关，应注意以下关键点：</p>
+<ul>
+<li>在安装 Istio 时，避免启用 Ingress Gateway。我们将手动安装并配置 TEG 作为 Istio 的入口网关。</li>
+<li>由于 Istio 和 TEG 都使用 Envoy 作为代理，我们需要让 Istio 为 TEG 的网关 Pod 注入 Envoy sidecar，以便 TEG 可以安全地与 Istio 数据平面通信。</li>
+<li>配置 Envoy Gateway 创建的 Envoy 代理的<a href="https://gateway.envoyproxy.io/latest/api/extension_types/#routingtype">路由类型</a>为 <code>Service</code> 而非 <code>Endpoint</code>，确保 Envoy 代理能正确找到路由。</li>
+</ul>
+<p>为 TEG 的命名空间添加标签，以确保数据平面获得 Istio sidecar 的注入。</p>
+<pre tabindex="0"><code>kubectl label namespace envoy-gateway-system --overwrite=true istio-injection=enabled
+</code></pre><p>我们还需要配置 TEG 的 sidecar，使其不处理进入网关的 Envoy 流量。注入 sidecar 的目的是使 Envoy Gateway 的组件及其创建的代理能够被纳入 Istio 网格，并挂载正确的证书进行安全通信。</p>
+<pre tabindex="0"><code>control-plane-tls.yaml
+</code></pre><pre tabindex="0"><code>spec:
+  ports:
+  - port: 18000
+    appProtocol: tls
+</code></pre><pre tabindex="0"><code>kubectl patch service -n envoy-gateway-system envoy-gateway \
+     --type strategic --patch-file control-plane-tls.yaml
+</code></pre><p>配置 Envoy Gateway 中的 sidecar 不拦截流量：</p>
+<pre tabindex="0"><code>teg-sidecars-no-inbound.yaml
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: data-plane-sidecars
+  namespace: envoy-gateway-system
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyDeployment:
+        pod:
+          annotations:
+            traffic.sidecar.istio.io/includeInboundPorts: &#34;&#34;
+  routingType: Service
+</code></pre><pre tabindex="0"><code>kubectl apply -f teg-sidecars-no-inbound.yaml
+</code></pre><p>修改 GatewayClass 的配置，将上述 sidecar 配置应用到 Envoy Gateway 数据平面的所有 <code>EnvoyProxy</code> 上：</p>
+<pre tabindex="0"><code>gtwcls-use-envoyproxy.yaml
+---
+spec:
+  parametersRef:
+    group: gateway.envoyproxy.io
+    kind: EnvoyProxy
+    namespace: envoy-gateway-system
+    name: data-plane-sidecars
+</code></pre><pre tabindex="0"><code>kubectl patch gatewayclass teg --patch-file gtwcls-use-envoyproxy.yaml --type merge
+</code></pre><h3 id="安装-istio">
+  安装 Istio
+  <a class="anchor" href="#%e5%ae%89%e8%a3%85-istio">#</a>
+</h3>
+<p>使用 minimal profile 部署 Istio，从而不部署 Ingress Gateway：</p>
+<pre tabindex="0"><code>istioctl install --set profile=minimal -y
+</code></pre><h3 id="重启-teg-控制平面">
+  重启 TEG 控制平面
+  <a class="anchor" href="#%e9%87%8d%e5%90%af-teg-%e6%8e%a7%e5%88%b6%e5%b9%b3%e9%9d%a2">#</a>
+</h3>
+<p>现在 Istio 的 sidecar 注入已准备就绪，我们将重启所有 TEG 控制平面 Pod，它们将带有 sidecar 重新启动。</p>
+<pre tabindex="0"><code>for d in envoy-gateway envoy-ratelimit teg-envoy-gateway teg-redis; \
+    do kubectl rollout restart deployment -n envoy-gateway-system $d; \
+    done
+</code></pre><h3 id="部署测试应用">
+  部署测试应用
+  <a class="anchor" href="#%e9%83%a8%e7%bd%b2%e6%b5%8b%e8%af%95%e5%ba%94%e7%94%a8">#</a>
+</h3>
+<p>此步应在安装 Istio 之后进行，以确保它们也获得 sidecar 的注入。</p>
+<pre tabindex="0"><code>kubectl create namespace httpbin
+kubectl label namespace httpbin --overwrite=true istio-injection=enabled
+kubectl apply -n httpbin -f https://raw.githubusercontent.com/istio/istio/master/samples/httpbin/httpbin.yaml
+</code></pre><h3 id="配置-teg">
+  配置 TEG
+  <a class="anchor" href="#%e9%85%8d%e7%bd%ae-teg">#</a>
+</h3>
+<p>现在我们配置 TEG 处理边缘流量。</p>
+<pre tabindex="0"><code>apps-gateway.yaml
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: apps
+  namespace: httpbin
+spec:
+  gatewayClassName: teg
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+</code></pre><pre tabindex="0"><code>kubectl apply -f apps-gateway.yaml
+</code></pre><p>部署应用网关，包含以下容器：</p>
+<ul>
+<li><code>istio-init</code>：由 Istio 注入，负责修改 pod 中的 iptables</li>
+<li><code>envoy</code>：由 TEG 控制，作为入口网关</li>
+<li><code>istio-proxy</code>：由 Istio 注入，负责与集群内部 pod 联系</li>
+<li><code>shutdown-manager</code>：由 TEG 控制，负责 Pod 启停</li>
+</ul>
+<p>创建 HTTP 路由：</p>
+<pre tabindex="0"><code>httpbin-route.yaml
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: httpbin
+  namespace: httpbin
+spec:
+  parentRefs:
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: apps
+  hostnames:
+  - &#34;www.example.com&#34;
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /httpbin/
+    filters:
+    - type: URLRewrite
+      urlRewrite:
+        path:
+          type: ReplacePrefixMatch
+          replacePrefixMatch: /
+    backendRefs:
+    - kind: Service
+      name: httpbin
+      port: 8000
+</code></pre><pre tabindex="0"><code>kubectl apply -f httpbin-route.yaml
+</code></pre><h3 id="发送测试请求">
+  发送测试请求
+  <a class="anchor" href="#%e5%8f%91%e9%80%81%e6%b5%8b%e8%af%95%e8%af%b7%e6%b1%82">#</a>
+</h3>
+<p>获取网关的负载均衡器 IP 地址，并发送测试请求：</p>
+<pre tabindex="0"><code>export GATEWAY_URL=$(kubectl get svc -n envoy-gateway-system -l gateway.envoyproxy.io/owning-gateway-name=apps -o jsonpath=&#39;{.items[0].status.loadBalancer.ingress[0].ip}&#39;)
+curl -v -H Host:www.example.com http://$GATEWAY_URL/httpbin/get
+</code></pre><p>你将看到来自 <code>httpbin</code> 服务的正确响应，如下所示：</p>
+<pre tabindex="0"><code>*   Trying 34.41.0.90:80...
+* Connected to 34.41.0.90 (34.41.0.90) port 80
+&gt; GET /httpbin/get HTTP/1.1
+&gt; Host:www.example.com
+&gt; User-Agent: curl/8.7.1
+&gt; Accept: */*
+&gt;
+* Request completely sent off
+&lt; HTTP/1.1 200 OK
+&lt; server: envoy
+&lt; date: Wed, 31 Jul 2024 08:21:58 GMT
+&lt; content-type: application/json
+&lt; content-length: 282
+&lt; access-control-allow-origin: *
+&lt; access-control-allow-credentials: true
+&lt; x-envoy-upstream-service-time: 11
+&lt;
+{
+  &#34;args&#34;: {},
+  &#34;headers&#34;: {
+    &#34;Accept&#34;: &#34;*/*&#34;,
+    &#34;Host&#34;: &#34;www.example.com&#34;,
+    &#34;User-Agent&#34;: &#34;curl/8.7.1&#34;,
+    &#34;X-Envoy-Attempt-Count&#34;: &#34;1&#34;,
+    &#34;X-Envoy-External-Address&#34;: &#34;123.120.227.173&#34;
+  },
+  &#34;origin&#34;: &#34;123.120.227.173&#34;,
+  &#34;url&#34;: &#34;http://www.example.com/get&#34;
+}
+* Connection #0 to host 34.41.0.90 left intact
+</code></pre><h3 id="启用严格的-mtls">
+  启用严格的 mTLS
+  <a class="anchor" href="#%e5%90%af%e7%94%a8%e4%b8%a5%e6%a0%bc%e7%9a%84-mtls">#</a>
+</h3>
+<p>运行下面的命令启用严格的 mTLS：</p>
+<pre tabindex="0"><code>strict-mtls.yaml
+---
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: &#34;default&#34;
+  namespace: &#34;istio-system&#34;
+spec:
+  mtls:
+    mode: STRICT
+</code></pre><pre tabindex="0"><code>kubectl apply -f strict-mtls.yaml
+</code></pre><p>修改我们之前创建的 HTTPRoute：</p>
+<pre tabindex="0"><code>httpbin-route-mtls.yaml
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: httpbin
+  namespace: httpbin
+spec:
+  parentRefs:
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: apps
+  hostnames:
+  - &#34;httpbin.httpbin.svc.cluster.local&#34;
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /httpbin/
+    filters:
+    - type: URLRewrite
+      urlRewrite:
+        path:
+          type: ReplacePrefixMatch
+          replacePrefixMatch: /
+    backendRefs:
+    - kind: Service
+      name: httpbin
+      port: 8000
+</code></pre><pre tabindex="0"><code>kubectl apply -f httpbin-route-mtls.yaml
+</code></pre><p>注意：这次我们使用 Host 是 httpbin 在集群内部的主机名。如果使用 <code>www.example.com</code> 作为请求的主机名访问将返回 404 错误。</p>
+<pre tabindex="0"><code>curl -v -H Host:httpbin.httpbin.svc.cluster.local http://$GATEWAY_URL/httpbin/get
+</code></pre><p>现在 httpbin 服务能够正常访问了。</p>
+<h3 id="为网关启用-tls">
+  为网关启用 TLS
+  <a class="anchor" href="#%e4%b8%ba%e7%bd%91%e5%85%b3%e5%90%af%e7%94%a8-tls">#</a>
+</h3>
+<p>创建用于服务签名的根证书和私钥：</p>
+<pre tabindex="0"><code>mkdir example_certs
+openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -subj &#39;/O=example Inc./CN=example.com&#39; -keyout example_certs/example.com.key -out example_certs/example.com.crt
+</code></pre><p>为 <code>www.example.com</code> 创建证书和私钥：</p>
+<pre tabindex="0"><code>openssl req -out example_certs/www.example.com.csr -newkey rsa:2048 -nodes -keyout example_certs/www.example.com.key -subj &#34;/CN=www.example.com/O=www organization&#34;
+openssl x509 -req -sha256 -days 365 -CA example_certs/example.com.crt -CAkey example_certs/example.com.key -set_serial 0 -in example_certs/www.example.com.csr -out example_certs/www.example.com.crt
+</code></pre><p>为入口网关创建 secret：</p>
+<pre tabindex="0"><code>kubectl create -n httpbin secret tls httpbin-credential \
+  --key=example_certs/www.example.com.key \
+  --cert=example_certs/www.example.com.crt
+</code></pre><p>配置入口网关：</p>
+<pre tabindex="0"><code>tls-apps-gateway.yaml
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: apps
+  namespace: httpbin
+spec:
+  gatewayClassName: teg
+  listeners:
+  - name: https
+    protocol: HTTPS
+    port: 443
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - name: httpbin-credential
+</code></pre><pre tabindex="0"><code>kubectl apply -f tls-apps-gateway.yaml
+</code></pre><p>发送测试请求：</p>
+<pre tabindex="0"><code>curl -v -H Host:httpbin.httpbin.svc.cluster.local --resolve &#34;www.example.com:443:$GATEWAY_URL&#34; \
+  --cacert example_certs/example.com.crt &#34;https://www.example.com:443/httpbin/get&#34;
+</code></pre><p>你将可以通过 HTTPS 访问网格内的 <code>httpbin</code> 服务。</p>
+<h2 id="总结">
+  总结
+  <a class="anchor" href="#%e6%80%bb%e7%bb%93">#</a>
+</h2>
+<p>Tetrate Enterprise Gateway 为企业提供了一种强大的网关解决方案，能够在云原生环境中高效地暴露和管理应用服务。通过其基于 Envoy 的架构和对 Kubernetes Gateway API 的支持，TEG 不仅确保了高性能的流量管理，还大幅简化了网关的部署和维护。无论是面对复杂的安全需求还是高流量的业务场景，TEG 都能提供可靠的支持，帮助企业实现其业务连续性和技术创新。</p>
+<h2 id="参考">
+  参考
+  <a class="anchor" href="#%e5%8f%82%e8%80%83">#</a>
+</h2>
+<ul>
+<li><a href="https://docs.tetrate.io/envoy-gateway/v0.0.0-latest/howto/eg-and-istio">Using TEG in Conjunction with an Istio Service Mesh - docs.tetrate.io</a></li>
+</ul>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#teg-简介">TEG 简介</a></li>
+    <li><a href="#teg-的能力">TEG 的能力</a>
+      <ul>
+        <li><a href="#易于安装操作和升级">易于安装、操作和升级</a></li>
+        <li><a href="#操作性一流的功能">操作性：一流的功能</a></li>
+        <li><a href="#与现有的环境集成">与现有的环境集成</a></li>
+        <li><a href="#引入现有的可观测性堆栈">引入现有的可观测性堆栈</a></li>
+        <li><a href="#简单的负载平衡">简单的负载平衡</a></li>
+        <li><a href="#简单的-api-网关">简单的 API 网关</a></li>
+      </ul>
+    </li>
+    <li><a href="#teg-的架构">TEG 的架构</a>
+      <ul>
+        <li><a href="#主要组件">主要组件</a></li>
+        <li><a href="#工作流程">工作流程</a></li>
+        <li><a href="#配置和管理">配置和管理</a></li>
+      </ul>
+    </li>
+    <li><a href="#部署-teg">部署 TEG</a></li>
+    <li><a href="#作为-istio-的入口网关">作为 Istio 的入口网关</a>
+      <ul>
+        <li><a href="#为-teg-与-istio-的互操作做准备">为 TEG 与 Istio 的互操作做准备</a></li>
+        <li><a href="#安装-istio">安装 Istio</a></li>
+        <li><a href="#重启-teg-控制平面">重启 TEG 控制平面</a></li>
+        <li><a href="#部署测试应用">部署测试应用</a></li>
+        <li><a href="#配置-teg">配置 TEG</a></li>
+        <li><a href="#发送测试请求">发送测试请求</a></li>
+        <li><a href="#启用严格的-mtls">启用严格的 mTLS</a></li>
+        <li><a href="#为网关启用-tls">为网关启用 TLS</a></li>
+      </ul>
+    </li>
+    <li><a href="#总结">总结</a></li>
+    <li><a href="#参考">参考</a></li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

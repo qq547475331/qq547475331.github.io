@@ -1,0 +1,4391 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  一文带你检查Kubernetes应用是否为最佳实践
+  #
+
+
+一篇从应用部署/服务管治/集群配置三个方便来check你的K8S使用姿势是否正确,包含单不限于服务监控检查/资源使用/标签/HPA，VPA/安全策略/RBAC/日志/监控是否为最佳实践的check list。
+
+  一 应用部署
+  #
+
+
+  1.1 健康检查
+  #
+
+
+readiness probe确定容器何时可以接收流量。
+
+Kubelet执行检查并确定应用程序是否可以接收流量。
+
+liveness probe确定何时应重新启动容器。
+
+kubelet执行检查并确定是否应重新启动容器。
+
+  1.1.1 容器就绪性探针
+  #
+
+就绪性和存活性探针没有默认值，如果您未设置就绪探针，则kubelet会假定该应用程序已准备就绪，可以在容器启动后立即接收流量。
+
+  1.1.2 发生致命错误时容器崩溃
+  #
+
+如果应用程序遇到不可恢复的错误，则应使其崩溃，例如：
+
+未捕获的异常
+代码中的错字（用于动态语言）
+无法加载标头或依赖项
+
+请注意，您不应发信号通知Liveness探针失败，相反，您应该立即退出该过程，并让kubelet重新启动容器。
+
+  1.1.3 配置被动的存活性探针
+  #
+
+Liveness探针旨在在卡住容器时重新启动容器，例如：
+如果您的应用程序正在处理无限循环，则无法退出或寻求帮助。
+当该进程消耗100％的CPU时，将没有时间回复（其他）Readiness探针检查，并且最终将其从服务中删除。但是，该Pod仍被注册为当前Deployment的活动副本。如果没有Liveness探针，它将保持运行状态，但与服务分离。换句话说，该过程不仅不处理任何请求，而且还消耗资源。
+此时应该怎么办：
+
+从您的应用程序公开端点
+端点总是回复成功响应
+使用“活力”探针获取端点
+
+请注意，您不应该使用Liveness探针来处理应用程序中的致命错误，并要求Kubernetes重新启动应用程序。相反，您应该让应用程序崩溃。
+仅在过程无响应的情况下，才应将“活动性”探针用作恢复机制。
+
+  1.1.4 存活性探针与就绪性探针的区别
+  #
+
+当“活力”和“就绪”探针指向相同的端点时，探针的作用会合并在一起。
+当应用程序发出信号表明尚未准备就绪或尚待运行时，kubelet会将容器与服务分离并同时将其删除。
+您可能会注意到连接断开，因为容器没有足够的时间耗尽当前连接或处理传入的连接。
+可以参考：article that discussed graceful shutdown.
+
+  1.2 应用的独立性
+  #
+
+如果应用程序连接到数据库，也许你认为如果数据库为就绪就返回一个失败的就绪就ok了，但是事实并非如此，例如您有一个依赖于后端API的前端应用程序。如果该API不稳定（例如由于错误而有时不可用），则就绪探测器将失败，并且前端应用程序中的相关就绪也将失败。这就会导致停机时间。更一般而言，下游依赖项的故障可能会传播到上游的所有应用程序，并最终也降低前端面层
+
+  1.2.1 就绪性探针应该独立
+  #
+
+就绪性探针不应该依以下服务：
+
+数据库
+数据库迁移
+APIs
+第三方服务
+
+详细可参考：explore what happens when there’re dependencies in the readiness probes in this essay.">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="http://192.168.0.139:1313/docs/k8s%E5%BA%94%E7%94%A8%E7%9A%84%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5-k8s-ying-yong-de-zui-jia-shi-jian/">
+  <meta property="og:site_name" content="Guichen&#39;s Blog">
+  <meta property="og:title" content="k8s应用的最佳实践 2024-04-03 14:43:16.936">
+  <meta property="og:description" content="一文带你检查Kubernetes应用是否为最佳实践 # 一篇从应用部署/服务管治/集群配置三个方便来check你的K8S使用姿势是否正确,包含单不限于服务监控检查/资源使用/标签/HPA，VPA/安全策略/RBAC/日志/监控是否为最佳实践的check list。
+一 应用部署 # 1.1 健康检查 # readiness probe确定容器何时可以接收流量。 Kubelet执行检查并确定应用程序是否可以接收流量。
+liveness probe确定何时应重新启动容器。 kubelet执行检查并确定是否应重新启动容器。
+1.1.1 容器就绪性探针 # 就绪性和存活性探针没有默认值，如果您未设置就绪探针，则kubelet会假定该应用程序已准备就绪，可以在容器启动后立即接收流量。
+1.1.2 发生致命错误时容器崩溃 # 如果应用程序遇到不可恢复的错误，则应使其崩溃，例如：
+未捕获的异常 代码中的错字（用于动态语言） 无法加载标头或依赖项 请注意，您不应发信号通知Liveness探针失败，相反，您应该立即退出该过程，并让kubelet重新启动容器。
+1.1.3 配置被动的存活性探针 # Liveness探针旨在在卡住容器时重新启动容器，例如：
+如果您的应用程序正在处理无限循环，则无法退出或寻求帮助。
+当该进程消耗100％的CPU时，将没有时间回复（其他）Readiness探针检查，并且最终将其从服务中删除。但是，该Pod仍被注册为当前Deployment的活动副本。如果没有Liveness探针，它将保持运行状态，但与服务分离。换句话说，该过程不仅不处理任何请求，而且还消耗资源。
+此时应该怎么办：
+从您的应用程序公开端点 端点总是回复成功响应 使用“活力”探针获取端点 请注意，您不应该使用Liveness探针来处理应用程序中的致命错误，并要求Kubernetes重新启动应用程序。相反，您应该让应用程序崩溃。
+仅在过程无响应的情况下，才应将“活动性”探针用作恢复机制。
+1.1.4 存活性探针与就绪性探针的区别 # 当“活力”和“就绪”探针指向相同的端点时，探针的作用会合并在一起。
+当应用程序发出信号表明尚未准备就绪或尚待运行时，kubelet会将容器与服务分离并同时将其删除。
+您可能会注意到连接断开，因为容器没有足够的时间耗尽当前连接或处理传入的连接。
+可以参考：article that discussed graceful shutdown.
+1.2 应用的独立性 # 如果应用程序连接到数据库，也许你认为如果数据库为就绪就返回一个失败的就绪就ok了，但是事实并非如此，例如您有一个依赖于后端API的前端应用程序。如果该API不稳定（例如由于错误而有时不可用），则就绪探测器将失败，并且前端应用程序中的相关就绪也将失败。这就会导致停机时间。更一般而言，下游依赖项的故障可能会传播到上游的所有应用程序，并最终也降低前端面层
+1.2.1 就绪性探针应该独立 # 就绪性探针不应该依以下服务：
+数据库 数据库迁移 APIs 第三方服务 详细可参考：explore what happens when there’re dependencies in the readiness probes in this essay.">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+<title>k8s应用的最佳实践 2024-04-03 14:43:16.936 | Guichen&#39;s Blog</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="http://192.168.0.139:1313/docs/k8s%E5%BA%94%E7%94%A8%E7%9A%84%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5-k8s-ying-yong-de-zui-jia-shi-jian/">
+<link rel="stylesheet" href="/book.min.6c8b9d2a1fc95075ed7da46ca81060b39add8fff6741ac51259f768929281e2c.css" integrity="sha256-bIudKh/JUHXtfaRsqBBgs5rdj/9nQaxRJZ92iSkoHiw=" crossorigin="anonymous">
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/en.search.min.6f52273b9f5fa65803e3991faf27d1a7b7b8f6b148888237d77b4e841cb030e3.js" integrity="sha256-b1InO59fplgD45kfryfRp7e49rFIiII313tOhBywMOM=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/"><span>Guichen&#39;s Blog</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/00-%E9%9B%86%E7%BE%A4%E8%A7%84%E5%88%92%E5%92%8C%E5%9F%BA%E7%A1%80%E5%8F%82%E6%95%B0%E8%AE%BE%E5%AE%9A-00--ji-qun-gui-hua-he-ji-chu-can-shu-she-ding/" class="">00-集群规划和基础参数设定 2023-09-28 15:19:02.214</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/01-%E5%88%9B%E5%BB%BA%E8%AF%81%E4%B9%A6%E5%92%8C%E7%8E%AF%E5%A2%83%E5%87%86%E5%A4%87-01--chuang-jian-zheng-shu-he-huan-jing-zhun-bei/" class="">01-创建证书和环境准备 2023-09-28 15:22:19.812</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/02-%E5%AE%89%E8%A3%85etcd%E9%9B%86%E7%BE%A4-02--an-zhuang-etcd-ji-qun/" class="">02-安装etcd集群 2023-09-28 15:23:07.363</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E9%9D%A2%E8%AF%950224/" class="">0224面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-26-k8s%E7%9B%B8%E5%85%B3/" class="">0226 k8s题目</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/03-%E5%AE%89%E8%A3%85%E5%AE%B9%E5%99%A8%E8%BF%90%E8%A1%8C%E6%97%B6-03--an-zhuang-rong-qi-yun-xing-shi/" class="">03-安装容器运行时 2023-09-28 15:23:56.241</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/04-%E5%AE%89%E8%A3%85kube_master%E8%8A%82%E7%82%B9-04--an-zhuang-kubemaster-jie-dian/" class="">04-安装kube_master节点 2023-09-28 15:24:21.203</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/05-%E5%AE%89%E8%A3%85kube_node%E8%8A%82%E7%82%B9-05--an-zhuang-kubenode-jie-dian/" class="">05-安装kube_node节点 2023-09-28 15:24:43.201</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85calico%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-calico-wang-luo-zu-jian/" class="">06-安装calico网络组件 2023-09-28 15:34:28.483</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85cilium%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-cilium-wang-luo-zu-jian/" class="">06-安装cilium网络组件 2023-09-28 15:35:23.884</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85flannel%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-flannel-wang-luo-zu-jian/" class="">06-安装flannel网络组件 2023-09-28 15:35:50.039</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85kube-ovn%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-kube-ovn-wang-luo-zu-jian/" class="">06-安装kube-ovn网络组件 2023-09-28 15:36:11.265</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-wang-luo-zu-jian/" class="">06-安装网络组件 2023-09-28 15:25:14.997</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/07-%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4%E4%B8%BB%E8%A6%81%E6%8F%92%E4%BB%B6-07--an-zhuang-ji-qun-zhu-yao-cha-jian/" class="">07-安装集群主要插件 2023-09-28 15:26:42.651</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/08-k8s-%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8--k8s-ji-qun-cun-chu/" class="">08-K8S 集群存储  2023-09-28 15:27:29.454</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/16%E4%B8%AA%E6%A6%82%E5%BF%B5%E5%B8%A6%E4%BD%A0%E5%85%A5%E9%97%A8-kubernetes-16-ge-gai-nian-dai-ni-ru-men-kubernetes/" class="">16个概念带你入门 Kubernetes 2024-04-03 15:09:21.671</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/16%E5%BC%A0%E7%A1%AC%E6%A0%B8%E5%9B%BE%E8%A7%A3k8s%E7%BD%91%E7%BB%9C-16-zhang-ying-he-tu-jie-k8s-wang-luo/" class="">16张硬核图解k8s网络 2024-04-03 15:12:49.601</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-07-microk8s/" class="">2024-12-07 microk8s</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-devstack/" class="">2024-12-08 devstack</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-mutilpass%E6%93%8D%E4%BD%9C/" class="">2024-12-08 mutilpass操作</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-nano%E6%93%8D%E4%BD%9C/" class="">2024-12-08 nano操作</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-openstack%E5%92%8Ckubernetes%E5%8C%BA%E5%88%AB/" class="">2024-12-08 openstack和kubernetes区别</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-openstack%E9%9C%80%E8%A6%81%E5%87%A0%E5%8F%B0%E8%99%9A%E6%8B%9F%E6%9C%BA/" class="">2024-12-08 openstack需要几台虚拟机</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-%E5%9D%97%E5%AD%98%E5%82%A8%E5%92%8C%E5%AF%B9%E8%B1%A1%E5%82%A8%E5%AD%98%E5%8C%BA%E5%88%AB/" class="">2024-12-08 块存储和对象储存区别</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-docker-daemon.json/" class="">2024-12-09 docker daemon.json</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-helmchart-%E9%83%A8%E7%BD%B2flask%E5%BA%94%E7%94%A8/" class="">2024-12-09 helmchart 部署flask应用</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-mutilpass%E9%83%A8%E7%BD%B2openstack/" class="">2024-12-09 mutilpass部署openstack devstack形式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-openstack-ssh%E8%BF%9E%E6%8E%A5/" class="">2024-12-09 openstack ssh连接</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-10-docker-registrry/" class="">2024-12-10 docker registrry</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-22-k8s%E6%9E%B6%E6%9E%84%E5%B8%88%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8/" class="">2024-2-22 k8s架构师面试大全</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-22-k8s%E9%9D%A2%E8%AF%95%E5%AE%9D%E5%85%B8/" class="">2024-2-22 k8s面试宝典</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-26-%E9%9D%A2%E8%AF%95/" class="">2024-2-26 面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-19-%E4%B8%A4%E5%BC%A0%E5%9B%BE%E5%85%A8%E9%9D%A2%E7%90%86%E8%A7%A3k8s%E5%8E%9F%E7%90%86/" class="">2024-3-19 两张图全面理解k8s原理</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-cni%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B/" class="">2024-3-4 CNI剖析演进</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-8-%E9%9D%A2%E8%AF%950308/" class="">2024-3-8 面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-4-17-%E9%9D%A2%E8%AF%95%E6%80%BB%E7%BB%93/" class="">2024-4-17 面试总结</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-kubernetes%E9%9D%A2%E8%AF%95%E9%A2%98/" class="">2024-8-1 k8s面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-%E5%B8%B8%E8%A7%81linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98%E6%89%BE%E5%B7%A5%E4%BD%9C%E7%9A%84%E5%BF%85%E7%9C%8B/" class="">2024-8-1 linux运维面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98/" class="">2024-8-1 linux面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-1-1-%E5%A4%A7%E5%A0%B0%E6%B2%B3-%E6%88%91%E7%9A%84%E4%BF%9D%E5%A7%86/" class="">2025-1-1 大堰河-我的保姆</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-k8s-csi%E5%89%96%E6%9E%90/" class="">2025-1-16 CSI剖析演进</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-1-16-k8s%E5%B8%B8%E8%A7%81%E6%95%85%E9%9A%9C%E6%8C%87%E5%8D%97/" class="">2025-1-16 k8s常见故障指南</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-k8s%E6%B5%81%E9%87%8F%E9%93%BE%E8%B7%AF%E5%89%96%E6%9E%90/" class="">2025-1-16 k8s流量链路剖析</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/33%E6%AC%BEgitops%E4%B8%8Edevops%E4%B8%BB%E6%B5%81%E7%B3%BB%E7%BB%9F-33-kuan-gitops-yu-devops-zhu-liu-xi-tong/" class="">33款gitops与devops主流系统 2024-08-02 17:45:15.709</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/600%E6%9D%A1%E6%9C%80%E5%BC%BAlinux%E5%91%BD%E4%BB%A4%E6%80%BB%E7%BB%93-600-tiao-zui-qiang-linux-ming-ling-zong-jie/" class="">600条最强linux命令总结 2024-04-03 15:12:31.282</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/acme%E8%87%AA%E5%8A%A8%E6%9B%B4%E6%96%B0%E8%AF%81%E4%B9%A6-acme-zi-dong-geng-xin-zheng-shu/" class="">acme自动更新证书 2024-04-03 14:41:44.289</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/calico-%E9%85%8D%E7%BD%AE-bgp-route-reflectors-calico-pei-zhi-bgproutereflectors/" class="">calico 配置 BGP Route Reflectors 2023-09-28 15:34:01.007</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/calico%E7%BD%91%E7%BB%9C%E8%87%AA%E5%AE%9A%E4%B9%89-calico-wang-luo-zi-ding-yi/" class="">Calico网络自定义 2024-04-03 15:08:43.394</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/cicd%E6%80%9D%E8%80%83-cicd-si-kao/" class="">CICD思考 2024-04-03 15:11:24.151</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/client-go-%E5%9B%9B%E7%A7%8D%E5%AE%A2%E6%88%B7%E7%AB%AF-client-go-si-zhong-ke-hu-duan/" class="">Client-go 四种客户端 2024-04-03 14:49:34.32</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/client-go-%E6%9E%B6%E6%9E%84-client-go-jia-gou/" class="">Client-go 架构 2024-04-03 14:48:40.716</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/cni%E6%8F%92%E4%BB%B6%E9%80%89%E5%9E%8B-cni-cha-jian-xuan-xing/" class="">CNI插件选型 2024-04-03 15:01:51.29</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/containerd-%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C-containerd-ji-ben-cao-zuo/" class="">Containerd 基本操作 2024-04-03 14:55:46.786</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/coredns%E4%B9%8B%E5%85%89-coredns-zhi-guang/" class="">COREDNS之光 2024-04-03 14:54:52.059</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/dockerfile%E5%AE%9A%E5%88%B6%E4%B8%93%E5%B1%9E%E9%95%9C%E5%83%8F-dockerfile-ding-zhi-zhuan-shu-jing-xiang/" class="">dockerfile定制专属镜像 2024-08-02 17:44:00.522</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/dockerfile%E7%9A%84copy%E5%92%8Cadd%E7%9A%84%E5%8C%BA%E5%88%AB-dockerfile-de-copy-he-add-de-qu-bie/" class="">dockerfile的copy和add的区别 2024-04-03 15:01:09.565</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/docker%E9%87%8D%E8%A6%81%E7%9A%84%E7%BD%91%E7%BB%9C%E7%9F%A5%E8%AF%86%E7%82%B9-docker-zhong-yao-de-wang-luo-zhi-shi-dian/" class="">Docker重要的网络知识点  2024-04-03 15:12:10.162</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/etcd%E5%A4%87%E4%BB%BD-etcd-bei-fen/" class="">ETCD备份 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/etcd%E7%A8%B3%E5%AE%9A%E6%80%A7%E5%8F%8A%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%AE%9E%E8%B7%B5-etcd-wen-ding-xing-ji-xing-neng-you-hua-shi-jian/" class="">ETCD稳定性及性能优化实践 2024-04-03 15:06:31.141</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ex-lb-%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E9%83%A8%E7%BD%B2-ex-lb-fu-zai-jun-heng-bu-shu/" class="">EX-LB 负载均衡部署 2023-09-28 15:28:51.998</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ezctl-%E5%91%BD%E4%BB%A4%E8%A1%8C%E4%BB%8B%E7%BB%8D-ezctl-ming-ling-xing-jie-shao/" class="">ezctl 命令行介绍 2023-09-28 15:28:00.619</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/flanel%E7%BD%91%E7%BB%9C-flanel-wang-luo/" class="">flanel网络 2024-04-03 15:05:04.16</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/godel-scheduler-godel-scheduler/" class="">godel-scheduler 2024-08-02 17:41:00.668</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/helm-chart%E5%92%8Crepo-helmchart-he-repo/" class="">helm chart和repo 2024-04-03 15:00:43.125</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/istio-ingress-gateway-istio-ingress-gateway/" class="">istio-ingress-gateway 2024-08-02 17:51:54.75</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/istio%E9%83%A8%E7%BD%B2-istio-bu-shu/" class="">istio部署 2024-08-02 17:52:40.721</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-cni%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B-k8scni-pou-xi-yan-jin/" class="">K8S CNI剖析演进 2024-03-04 10:51:33.245</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-csi-openebs%E5%8E%9F%E7%90%86-k8scsiopenebs-yuan-li/" class="">K8S csi openebs原理 2024-04-03 14:44:48.967</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-csi%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B-k8scsi-pou-xi-yan-jin/" class="">K8S CSI剖析演进 2024-03-04 10:52:20.507</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-gpt-k8sgpt/" class="">K8S GPT 2024-04-03 15:02:09.127</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E5%BC%80%E5%8F%91%E5%8F%AF%E4%B8%8D%E6%AD%A2-crud-k8s-kai-fa-ke-bu-zhi-crud/" class="">K8S 开发可不止 CRUD 2024-04-03 14:50:11.765</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E6%8E%A2%E9%92%88%E5%8E%9F%E7%90%86-k8s-tan-zhen-yuan-li/" class="">K8S 探针原理 2024-04-03 14:53:29.429</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E6%B5%81%E9%87%8F%E9%93%BE%E8%B7%AF%E5%89%96%E6%9E%90-k8s-liu-liang-lian-lu-pou-xi/" class="">K8S 流量链路剖析 2024-03-04 10:50:22.991</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E8%B0%83%E5%BA%A6%E5%99%A8-scheduler_onego-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-diao-du-qi-scheduleronego-yuan-ma-jie-du/" class="">K8S 调度器 scheduler_one.go 源码解读 2024-04-09 11:45:28.22</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E4%B9%8Bingress-nginx%E5%8E%9F%E7%90%86%E5%8F%8A%E9%85%8D%E7%BD%AE-k8s-zhi-ingress-nginx-yuan-li-ji-pei-zhi/" class="">K8S之ingress-nginx原理及配置 2024-07-05 18:02:14.243</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E4%B9%8Bkubelet%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-zhi-kubelet-yuan-ma-jie-du/" class="">k8s之kubelet源码解读 2024-03-28 15:30:39.633</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7-k8s-yuan-de-sheng-ji/" class="">K8S原地升级 2024-04-03 15:04:38.125</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%91%BD%E4%BB%A4%E6%8C%87%E5%8D%97-k8s-ming-ling-zhi-nan/" class="">K8S命令指南 2024-04-03 15:14:14.207</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%A6%82%E4%BD%95%E8%8E%B7%E5%BE%97-ip-k8s-ru-he-huo-de-ip/" class="">K8S如何获得 IP 2024-04-16 17:09:59.658</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%BA%94%E7%94%A8%E7%9A%84%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5-k8s-ying-yong-de-zui-jia-shi-jian/" class="active">k8s应用的最佳实践 2024-04-03 14:43:16.936</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-deployment_controllergo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-deploymentcontrollergo-yuan-ma-jie-du/" class="">K8S控制器之 deployment_controller.go源码解读 2024-04-09 11:30:03.133</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-progressgo-%E8%BF%9B%E5%BA%A6-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-progressgo-jin-du-yuan-ma-jie-du/" class="">K8S控制器之 progress.go 进度 源码解读 2024-04-09 11:31:08.86</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-rollinggo-%E6%BB%9A%E5%8A%A8%E6%9B%B4%E6%96%B0-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-rollinggo-gun-dong-geng-xin-yuan-ma-jie-du/" class="">K8S控制器之 rolling.go 滚动更新 源码解读 2024-04-09 11:32:58.133</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-schedulergo-%E8%B0%83%E5%BA%A6%E5%99%A8-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-schedulergo-diao-du-qi-yuan-ma-jie-du/" class="">K8S控制器之 scheduler.go 调度器 源码解读 2024-04-09 11:44:25.171</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Brecreatego-%E9%87%8D%E5%BB%BA-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-recreatego-zhong-jian-yuan-ma-jie-du/" class="">K8S控制器之recreate.go 重建 源码解读 2024-04-09 11:31:49.855</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Brollbackgo-%E5%9B%9E%E6%BB%9A-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-rollbackgo-hui-gun-yuan-ma-jie-du/" class="">K8S控制器之rollback.go 回滚 源码解读 2024-04-09 11:32:26.587</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_pod_controlgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulpodcontrolgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_pod_control.go源码解读 2024-04-10 09:42:50.078</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_set_controlgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetcontrolgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_set_control.go源码解读 2024-04-10 09:41:30.316</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_set_status_updatego%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetstatusupdatego-yuan-ma-jie-du/" class="">K8S控制器之stateful_set_status_update.go源码解读 2024-04-10</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_setgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_set.go源码解读 2024-04-10</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bsyncgo-%E5%90%8C%E6%AD%A5-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-syncgo-tong-bu-yuan-ma-jie-du/" class="">K8S控制器之sync.go 同步 源码解读 2024-04-09 11:33:26.356</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E7%9A%84pod%E7%B1%BB%E5%9E%8B-k8s-de-pod-lei-xing/" class="">K8S的POD类型 2024-04-03 14:57:11.072</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E7%9A%84%E6%9C%80%E5%90%8E%E4%B8%80%E5%9D%97%E6%8B%BC%E5%9B%BE-dbpaas-k8s-de-zui-hou-yi-kuai-pin-tu-dbpaas/" class="">K8S的最后一块拼图 dbpaas 2024-08-02 17:48:35.899</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-k8s%E7%BB%84%E4%BB%B6/" class="">k8s组件</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%83%8C%E5%90%8Eservice%E6%98%AF%E5%A6%82%E4%BD%95%E5%B7%A5%E4%BD%9C%E7%9A%84-k8s-bei-hou-service-shi-ru-he-gong-zuo-de/" class="">k8s背后service是如何工作的 2024-08-02 17:49:44.981</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%B0%83%E5%BA%A6%E5%99%A8-extendergo-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-diao-du-qi-extendergo-yuan-ma-jie-du/" class="">K8S调度器 extender.go 源码解读 2024-04-09 11:45:59.666</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%B0%83%E8%AF%95pod-k8s-diao-shi-pod/" class="">K8S调试POD 2024-04-03 14:58:15.293</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%BF%90%E7%BB%B4%E4%B9%8B%E6%B8%85%E7%90%86%E7%A3%81%E7%9B%98-k8s-yun-wei-zhi-qing-li-ci-pan/" class="">k8s运维之清理磁盘 2024-04-03 15:13:57.279</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8-k8s-mian-shi-da-quan/" class="">K8S面试大全 2024-04-03 15:10:54.493</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E5%AE%9D%E5%85%B8-k8s-mian-shi-bao-dian/" class="">K8S面试宝典 2024-04-03 15:11:09.316</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E9%A2%98-k8s-mian-shi-ti/" class="">K8S面试题 2024-08-02 17:50:50.418</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kruise%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7%E8%A7%A3%E6%9E%90-kruise-yuan-de-sheng-ji-jie-xi/" class="">kruise原地升级解析 2024-08-02 17:59:31.689</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kube-router-%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-kube-router-wang-luo-zu-jian/" class="">kube-router 网络组件 2023-09-28 15:33:20.658</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-05-kubeasz%E9%83%A8%E7%BD%B2k8s/" class="">kubeasz部署k8s</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubekey%E6%B7%BB%E5%8A%A0%E6%96%B0%E8%8A%82%E7%82%B9-kubekey-tian-jia-xin-jie-dian/" class="">kubekey添加新节点 2024-04-03 15:36:47.646</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-api-kubernetesapi/" class="">Kubernetes API 2024-04-03 14:47:30.212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E6%BA%90%E7%A0%81%E7%BB%93%E6%9E%84-kubernetes-yuan-ma-jie-gou/" class="">Kubernetes 源码结构 2024-04-03 14:48:05.954</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3%E8%AE%A4%E8%AF%81-kubernetes-zheng-shu-xiang-jie--ren-zheng-/" class="">Kubernetes 证书详解(认证) 2024-04-03 14:52:56.54</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3%E9%89%B4%E6%9D%83-kubernetes-zheng-shu-xiang-jie--jian-quan-/" class="">Kubernetes 证书详解(鉴权) 2024-04-03 14:49:04.385</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubewharf-kubewharf/" class="">kubewharf 2024-08-02 17:41:32.72</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux-awk%E6%96%87%E6%9C%AC%E5%A4%84%E7%90%86%E5%99%A8-8%E4%B8%AA%E6%A1%88%E4%BE%8B-linuxawk-wen-ben-chu-li-qi-8-ge-an-li/" class="">linux awk文本处理器 8个案例 2024-08-02 17:46:53.603</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux-%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%A4%A7%E5%85%A8-linux-xing-neng-you-hua-da-quan/" class="">Linux 性能优化大全 2024-04-03 15:09:06.854</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux%E7%B3%BB%E7%BB%9F%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96-%E4%B8%83%E4%B8%AA%E5%AE%9E%E6%88%98%E7%BB%8F%E9%AA%8C-linux-xi-tong-xing-neng-you-hua-qi-ge-shi-zhan-jing-yan/" class="">linux系统性能优化 七个实战经验 2024-08-02 17:47:26.212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98-linux-yun-wei-gong-cheng-shi-50-ge-chang-jian-mian-shi-ti/" class="">linux运维工程师50个常见面试题 2024-08-02 17:42:12.968</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/metallb-l2-%E5%8E%9F%E7%90%86-metallbl2-yuan-li/" class="">MetalLB L2 原理 2024-04-03 14:52:24.662</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/netctl%E6%A3%80%E6%B5%8B%E9%9B%86%E7%BE%A4pod%E9%97%B4%E8%BF%9E%E9%80%9A%E6%80%A7-netctl-jian-ce-ji-qun-pod-jian-lian-tong-xing/" class="">netctl检测集群pod间连通性 2024-08-02 18:00:36.753</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/network-check-network-check/" class="">network-check 2023-09-28 15:36:33.04</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/nginx%E5%A6%82%E4%BD%95%E8%A7%A3%E5%86%B3%E6%83%8A%E7%BE%A4%E6%95%88%E5%BA%94-nginx-ru-he-jie-jue-jing-qun-xiao-ying/" class="">nginx如何解决惊群效应 2024-08-02 17:45:54.531</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/openkruise%E8%AF%A6%E7%BB%86%E8%A7%A3%E9%87%8A%E4%BB%A5%E5%8F%8A%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7%E5%8F%8A%E5%85%A8%E9%93%BE%E8%B7%AF%E7%81%B0%E5%BA%A6%E5%8F%91%E5%B8%83%E6%96%B9%E6%A1%88-openkruise-xiang-xi-jie-shi-yi-ji-yuan-de-sheng-ji-ji-quan-lian-lu-hui-du-fa-bu-fang-an/" class="">OpenKruise详细解释以及原地升级及全链路灰度发布方案 2024-07-22 11:44:46.892</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/pixie-pixie/" class="">pixie 2024-08-02 17:52:17.843</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-28-prometheus/" class="">prometheus 面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/prometheus-stack-prometheus-stack/" class="">prometheus-stack 2024-08-02 17:55:22.326</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/prometheus%E4%BC%81%E4%B8%9A%E7%BA%A7%E7%9B%91%E6%8E%A7%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93-prometheus-qi-ye-ji-jian-kong-shi-yong-zong-jie/" class="">prometheus企业级监控使用总结 2024-04-03 15:13:11.185</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ssl%E8%AF%81%E4%B9%A6%E8%87%AA%E7%AD%BE%E5%8F%91-ssl-zheng-shu-zi-qian-fa/" class="">ssl证书自签发 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/teg%E4%B8%8Eistio%E9%9B%86%E6%88%90-teg-yu-istio-ji-cheng/" class="">TEG与istio集成 2024-08-02 17:51:20.389</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%B8%A4%E5%BC%A0%E5%9B%BE%E5%85%A8%E9%9D%A2%E7%90%86%E8%A7%A3k8s%E5%8E%9F%E7%90%86-liang-zhang-tu-quan-mian-li-jie-k8s-yuan-li/" class="">两张图全面理解K8S原理 2024-04-03 14:51:27.431</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%B8%AA%E6%80%A7%E5%8C%96%E9%9B%86%E7%BE%A4%E5%8F%82%E6%95%B0%E9%85%8D%E7%BD%AE-ge-xing-hua-ji-qun-can-shu-pei-zhi/" class="">个性化集群参数配置 2023-09-28 15:30:56.072</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E4%B8%AD%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_%E9%A2%98%E7%9B%AE/" class="">中级运维面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BA%8C%E8%BF%9B%E5%88%B6%E9%83%A8%E7%BD%B2k8s%E5%8A%A0%E8%8A%82%E7%82%B9%E6%93%8D%E4%BD%9C-er-jin-zhi-bu-shu-k8s-jia-jie-dian-cao-zuo/" class="">二进制部署K8S加节点操作 2024-04-03 15:08:26.726</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-10-20-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8%E9%9B%86%E7%BE%A4/" class="">使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8-keepalived-%E5%92%8C-haproxy-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8-kubernetes-%E9%9B%86%E7%BE%A4-shi-yong-keepalived-he-haproxy-chuang-jian-gao-ke-yong-kubernetes-ji-qun/" class="">使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群 2023-04-12 04:04:09.458</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8-openfunction-%E5%9C%A8%E4%BB%BB%E4%BD%95%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E4%B8%8A%E8%BF%90%E8%A1%8C%E6%97%A0%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%B7%A5%E4%BD%9C%E8%B4%9F%E8%BD%BD-shi-yong-openfunction-zai-ren-he-ji-chu-she-shi-shang-yun-xing-wu-fu-wu-qi-gong-zuo-fu-zai/" class="">使用 OpenFunction 在任何基础设施上运行无服务器工作负载 2024-01-21 04:02:44.459</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8cloudflarecf%E6%90%AD%E5%BB%BAdockerhub%E4%BB%A3%E7%90%86-shi-yong-cloudflarecf-da-jian-dockerhub-dai-li/" class="">使用cloudflare(CF)搭建dockerhub代理 2024-06-28 14:38:34.339</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8kubernees-leases-%E8%BD%BB%E6%9D%BE%E5%AE%9E%E7%8E%B0leader-election-shi-yong-kuberneesleases-qing-song-shi-xian-leaderelection/" class="">使用kubernees leases 轻松实现leader election 2024-04-03 15:09:46.129</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%85%AC%E6%9C%89%E4%BA%91%E4%B8%8A%E9%83%A8%E7%BD%B2-kubeasz-gong-you-yun-shang-bu-shu-kubeasz/" class="">公有云上部署 kubeasz 2023-09-28 15:31:16.19</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-5-14-%E5%8D%95master%E5%8D%95etcd%E6%94%B9%E9%80%A0/" class="">单master单etcd改造为3master3etcd</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%8F%B2%E4%B8%8A%E6%9C%80%E7%89%9Bjenkins-pipeline%E6%B5%81%E6%B0%B4%E7%BA%BF%E8%AF%A6%E8%A7%A3-shi-shang-zui-niu-jenkinspipeline-liu-shui-xian-xiang-jie/" class="">史上最牛jenkins pipeline流水线详解 2024-08-02</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%9A%E6%9E%B6%E6%9E%84%E6%94%AF%E6%8C%81-duo-jia-gou-zhi-chi/" class="">多架构支持 2023-09-28 15:29:54.111</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%A7%E5%8E%82%E6%80%BB%E7%BB%93nginx%E9%AB%98%E5%B9%B6%E5%8F%91%E4%BC%98%E5%8C%96%E7%AC%94%E8%AE%B0-da-chang-zong-jie-nginx-gao-bing-fa-you-hua-bi-ji/" class="">大厂总结nginx高并发优化笔记 2024-08-02 17:46:19.098</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%A7%E8%A7%84%E6%A8%A1%E5%B9%B6%E5%8F%91%E4%B8%8B%E5%A6%82%E4%BD%95%E5%8A%A0%E5%BF%AB-pod-%E5%90%AF%E5%8A%A8%E9%80%9F%E5%BA%A6-da-gui-mo-bing-fa-xia-ru-he-jia-kuai-pod-qi-dong-su-du/" class="">大规模并发下如何加快 Pod 启动速度 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E4%B8%BAk8s%E4%BF%9D%E9%A9%BE%E6%8A%A4%E8%88%AA-ru-he-wei-k8s-bao-jia-hu-hang/" class="">如何为K8S保驾护航 2024-04-16 17:09:21.962</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8tekton%E5%BF%AB%E9%80%9F%E6%90%AD%E5%BB%BAcicd%E5%B9%B3%E5%8F%B0-ru-he-shi-yong-tekton-kuai-su-da-jian-cicd-ping-tai/" class="">如何使用tekton快速搭建CI/CD平台 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E8%B0%83%E8%AF%95-crash-%E5%AE%B9%E5%99%A8%E7%9A%84%E7%BD%91%E7%BB%9C-ru-he-diao-shi-crash-rong-qi-de-wang-luo/" class="">如何调试 crash 容器的网络 2024-04-03 14:50:51.378</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E4%B8%AD%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E4%BB%A5%E5%8F%8A%E4%B8%8D%E5%90%8Cdnspolicy%E5%AF%B9%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E7%9A%84%E5%BD%B1%E5%93%8D-rong-qi-zhong-yu-ming-jie-xi-yi-ji-bu-tong-dnspolicy-dui-yu-ming-jie-xi-de-ying-xiang/" class="">容器中域名解析以及不同dnspolicy对域名解析的影响 2024-04-03 15:04:09.254</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E5%86%85%E7%9A%84-1-%E5%8F%B7%E8%BF%9B%E7%A8%8B-rong-qi-nei-de-1-hao-jin-cheng/" class="">容器内的 1 号进程 2024-04-03 14:46:29.998</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E5%8E%9F%E7%90%86-rong-qi-yuan-li/" class="">容器原理 2024-04-03 14:45:58.422</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E7%9A%84%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E4%B8%80-overlayfs-%E5%8E%9F%E7%90%86-rong-qi-de-wen-jian-xi-tong--yi-overlayfs-yuan-li/" class="">容器的文件系统 OverlayFS 原理 2024-04-03 14:45:26.893</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C%E5%8E%9F%E7%90%86-rong-qi-wang-luo-yuan-li/" class="">容器网络原理 2024-04-03 14:51:51.962</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%B8%B8%E8%A7%81linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98-chang-jian-linux-yun-wei-mian-shi-ti/" class="">常见linux运维面试题 2024-08-02 17:42:33.873</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BC%80%E5%A7%8B%E4%BD%BF%E7%94%A8-cilium-kai-shi-shi-yong-cilium/" class="">开始使用 cilium 2023-09-28 15:34:49.205</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BD%BB%E6%82%9F%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C-che-wu-rong-qi-wang-luo/" class="">彻悟容器网络 2024-04-07 10:30:11.55</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BF%AB%E9%80%9F%E6%8C%87%E5%8D%97-kuai-su-zhi-nan/" class="">快速指南 2023-09-28 15:28:25.71</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%88%91%E5%8F%AA%E6%83%B3%E5%81%9A%E6%8A%80%E6%9C%AF-%E8%B5%B0%E6%8A%80%E6%9C%AF%E8%B7%AF%E7%BA%BF-wo-zhi-xiang-zuo-ji-shu-zou-ji-shu-lu-xian/" class="">我只想做技术 走技术路线 2024-08-02 17:43:31.897</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%90%9E%E6%87%82k8s%E9%89%B4%E6%9D%83-gao-dong-k8s-jian-quan/" class="">搞懂K8S鉴权 2024-04-03 15:11:54.885</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%90%AD%E4%B8%AA%E6%97%A5%E5%BF%97%E6%89%8B%E6%9C%BA%E7%B3%BB%E7%BB%9F%E4%B8%8D%E9%A6%99%E5%90%97-da-ge-ri-zhi-shou-ji-xi-tong-bu-xiang-ma/" class="">搭个日志手机系统不香吗 2024-08-02 17:47:58.794</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E8%AF%B4%E6%98%8E-cao-zuo-xi-tong-shuo-ming/" class="">操作系统说明 2023-09-28 15:31:37.694</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%96%87%E5%AD%A6%E7%9A%84%E6%95%85%E4%B9%A1-wen-xue-de-gu-xiang/" class="">文学的故乡 2024-04-03 14:40:45.926</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%98%AF%E6%8A%80%E6%9C%AF%E5%A4%A7%E7%A5%9E%E8%BF%98%E6%98%AF%E5%9F%BA%E7%A1%80%E6%9E%B6%E6%9E%84%E9%83%A8%E7%9A%84%E7%A5%B8%E5%AE%B3-shi-ji-shu-da-shen-hai-shi-ji-chu-jia-gou-bu-de-huo-hai/" class="">是技术大神还是基础架构部的祸害 2024-08-02 17:50:26.139</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9C%89%E8%BF%993%E4%B8%AA%E8%BF%B9%E8%B1%A1%E4%BD%A0%E5%B0%B1%E8%AF%A5%E7%A6%BB%E8%81%8C%E4%BA%86-you-zhe-3-ge-ji-xiang--ni-jiu-gai-li-zhi-le/" class="">有这3个迹象，你就该离职了 2023-09-21 16:00:22.432</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9E%81%E5%A4%A7%E6%8F%90%E9%AB%98%E5%B7%A5%E4%BD%9C%E6%95%88%E7%8E%87%E7%9A%84-linux-%E5%91%BD%E4%BB%A4-ji-da-ti-gao-gong-zuo-xiao-lv-de-linux-ming-ling/" class="">极大提高工作效率的 Linux 命令 2024-04-03 14:42:46.957</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9E%84%E5%BB%BA%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E5%88%A9%E5%99%A8buildkit-gou-jian-rong-qi-jing-xiang-li-qi-buildkit/" class="">构建容器镜像利器buildkit 2024-08-02 17:49:14.916</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B5%81%E9%87%8F%E4%BD%95%E5%A4%84%E6%9D%A5%E4%BD%95%E5%A4%84%E5%8E%BB-liu-liang-he-chu-lai-he-chu-qu/" class="">流量何处来何处去 2024-04-03 14:56:20.089</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B8%85%E7%90%86docker%E9%95%9C%E5%83%8F-qing-li-docker-jing-xiang/" class="">清理docker镜像 2024-08-02 17:54:48.594</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B8%85%E7%90%86%E6%AE%8B%E7%95%99%E7%9A%84calico%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6-qing-li-can-liu-de-calico-wang-luo/" class="">清理残留的calico网络插件 2024-04-03 15:07:38.854</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A3%81%E7%9B%98%E6%95%B0%E6%8D%AE%E6%81%A2%E5%A4%8D-ci-pan-shu-ju-hui-fu/" class="">磁盘数据恢复 2024-04-03 14:59:27.839</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85kubephere-li-xian-an-zhuang-kubephere/" class="">离线安装kubephere 2024-04-03 14:59:59.885</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4-li-xian-an-zhuang-ji-qun/" class="">离线安装集群 2023-09-28 15:29:14.742</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-%E8%AE%A1%E5%88%92/" class="">美国码农薪酬</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-%E8%AE%A1%E5%88%922/" class="">美国码农计划</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E8%87%AA%E5%8A%A8%E5%B1%8F%E8%94%BDip%E6%94%BB%E5%87%BB-zi-dong-ping-bi-ip-gong-ji/" class="">自动屏蔽IP攻击 2024-04-03 14:54:11.783</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-12-%E9%9D%A2%E8%AF%950212/" class="">面试0212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-19-%E9%9D%A2%E8%AF%950219/" class="">面试0219</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-20-%E9%9D%A2%E8%AF%950220/" class="">面试0220</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-26-%E9%9D%A2%E8%AF%950225/" class="">面试0225</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%9D%A2%E8%AF%950308-mian-shi-0308/" class="">面试0308 2024-04-03 14:57:53.576</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-11-%E9%9D%A2%E8%AF%950211/" class="">面试2025-02-11</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-18-%E9%9D%A2%E8%AF%95/" class="">面试2025-0218</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%9D%A2%E8%AF%95%E7%94%A8-golang-%E6%89%8B%E6%92%B8-lru-mian-shi-yong-golang-shou-lu-lru/" class="">面试用 Golang 手撸 LRU 2024-04-03 14:47:00.767</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%A1%B6%E7%BA%A7devops%E5%B7%A5%E5%85%B7%E5%A4%A7%E7%9B%98%E7%82%B9-ding-ji-devops-gong-ju-da-pan-dian/" class="">顶级devops工具大盘点 2024-08-02 17:43:03.661</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E9%AB%98%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_ai_linux%E9%83%A8%E5%88%86/" class="">高级运维面试题-linux部分</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>k8s应用的最佳实践 2024-04-03 14:43:16.936</h3>
+
+  <label for="toc-control">
+    
+    <img src="/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#11-健康检查">1.1 健康检查</a>
+      <ul>
+        <li><a href="#111-容器就绪性探针">1.1.1 容器就绪性探针</a></li>
+        <li><a href="#112-发生致命错误时容器崩溃">1.1.2 发生致命错误时容器崩溃</a></li>
+        <li><a href="#113-配置被动的存活性探针">1.1.3 配置被动的存活性探针</a></li>
+        <li><a href="#114-存活性探针与就绪性探针的区别">1.1.4 存活性探针与就绪性探针的区别</a></li>
+      </ul>
+    </li>
+    <li><a href="#12-应用的独立性">1.2 应用的独立性</a>
+      <ul>
+        <li><a href="#121-就绪性探针应该独立">1.2.1 就绪性探针应该独立</a></li>
+        <li><a href="#122-应用程序重连到依赖服务">1.2.2 应用程序重连到依赖服务</a></li>
+        <li><a href="#13-优雅的关机">1.3 优雅的关机</a></li>
+        <li><a href="#131-应用程序未通过sigterm信号关闭但它已经终止了链接">1.3.1 应用程序未通过SIGTERM信号关闭，但它已经终止了链接</a></li>
+        <li><a href="#132-应用程序仍在宽限期处理请求">1.3.2 应用程序仍在宽限期处理请求</a></li>
+        <li><a href="#133-dockerfile中的cmd将sigterm转发到进程">1.3.3 Dockerfile中的CMD将SIGTERM转发到进程</a></li>
+        <li><a href="#134-关闭所有空闲的保持活动套接字">1.3.4 关闭所有空闲的保持活动套接字</a></li>
+      </ul>
+    </li>
+    <li><a href="#14-容错能力">1.4 容错能力</a>
+      <ul>
+        <li></li>
+        <li><a href="#141-部署运行多个副本">1.4.1 部署运行多个副本</a></li>
+        <li><a href="#142-避免将pod放置在单个节点中">1.4.2 避免将Pod放置在单个节点中</a></li>
+        <li><a href="#143-设置pod中断预算">1.4.3 设置Pod中断预算</a></li>
+      </ul>
+    </li>
+    <li><a href="#15-资源使用">1.5 资源使用</a>
+      <ul>
+        <li></li>
+        <li><a href="#151-设置所有容器的内存限制和请求">1.5.1 设置所有容器的内存限制和请求</a></li>
+        <li><a href="#152-将cpu请求设置为1个cpu或以下">1.5.2 将CPU请求设置为1个CPU或以下</a></li>
+        <li><a href="#153-禁用cpu限制除非您有很好的用例">1.5.3 禁用CPU限制—除非您有很好的用例</a></li>
+        <li><a href="#154-命名空间具有limitrange">1.5.4 命名空间具有LimitRange</a></li>
+        <li><a href="#155-为pod设置适当的服务质量qos">1.5.5 为Pod设置适当的服务质量（QoS）</a></li>
+      </ul>
+    </li>
+    <li><a href="#16-标记资源">1.6 标记资源</a>
+      <ul>
+        <li><a href="#161-资源已定义技术标签">1.6.1 资源已定义技术标签</a></li>
+        <li><a href="#162-资源已定义业务标签">1.6.2 资源已定义业务标签</a></li>
+        <li><a href="#163-资源定义安全等级标签">1.6.3 资源定义安全等级标签</a></li>
+      </ul>
+    </li>
+    <li><a href="#17-日志">1.7 日志</a>
+      <ul>
+        <li></li>
+        <li><a href="#171-应用程序记录到stdout和stderr">1.7.1 应用程序记录到stdout和stderr</a></li>
+        <li><a href="#172-避免日志使用sidecars模式">1.7.2 避免日志使用sidecars模式</a></li>
+      </ul>
+    </li>
+    <li><a href="#18-伸缩">1.8 伸缩</a>
+      <ul>
+        <li></li>
+        <li><a href="#181-容器在其本地文件系统中不存储任何状态">1.8.1 容器在其本地文件系统中不存储任何状态</a></li>
+        <li><a href="#182-对于可变使用模式的应用应该使用hpa">1.8.2 对于可变使用模式的应用应该使用HPA</a></li>
+        <li><a href="#183-不要使用vpa因为改特性还在测试中">1.8.3 不要使用VPA，因为改特性还在测试中</a></li>
+        <li><a href="#184-如果有很高的工作负载可以使用集群自动伸缩">1.8.4 如果有很高的工作负载，可以使用集群自动伸缩</a></li>
+        <li><a href="#19-配置和密钥">1.9 配置和密钥</a></li>
+        <li><a href="#191-外部化所有配置">1.9.1 外部化所有配置</a></li>
+        <li><a href="#192-将secrets作为卷而不是环境变量">1.9.2 将Secrets作为卷而不是环境变量</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li><a href="#21-名称空间限制">2.1 名称空间限制</a>
+      <ul>
+        <li></li>
+        <li><a href="#211-名称空间限制范围">2.1.1 名称空间限制范围</a></li>
+        <li><a href="#212-名称控制资源配额">2.1.2 名称控制资源配额</a></li>
+      </ul>
+    </li>
+    <li><a href="#22-pod安全策略">2.2 POD安全策略</a>
+      <ul>
+        <li></li>
+        <li><a href="#221-启用pod安全策略">2.2.1 启用POD安全策略</a></li>
+        <li><a href="#222-禁用特权容器">2.2.2 禁用特权容器</a></li>
+        <li><a href="#223-容器使用只读文件系统">2.2.3 容器使用只读文件系统</a></li>
+        <li><a href="#224-避免利用root用户启动容器">2.2.4 避免利用root用户启动容器</a></li>
+        <li><a href="#225-限制能力">2.2.5 限制能力</a></li>
+        <li><a href="#226-防止特权升级">2.2.6 防止特权升级</a></li>
+      </ul>
+    </li>
+    <li><a href="#23-网络策略">2.3 网络策略</a>
+      <ul>
+        <li></li>
+        <li><a href="#231-启用网络策略">2.3.1 启用网络策略</a></li>
+        <li><a href="#232-每个命名空间中都有一个保守的networkpolicy">2.3.2 每个命名空间中都有一个保守的NetworkPolicy</a></li>
+      </ul>
+    </li>
+    <li><a href="#24-基于角色的访问控制rbac">2.4 基于角色的访问控制RBAC</a>
+      <ul>
+        <li></li>
+        <li><a href="#241-禁用默认服务帐户的自动挂载">2.4.1 禁用默认服务帐户的自动挂载</a></li>
+        <li><a href="#242-rbac策略设置为所需的最少特权">2.4.2 RBAC策略设置为所需的最少特权</a></li>
+        <li><a href="#243-rbac策略是精细的不能共享">2.4.3 RBAC策略是精细的，不能共享</a></li>
+      </ul>
+    </li>
+    <li><a href="#25-自定义策略">2.5 自定义策略</a>
+      <ul>
+        <li></li>
+        <li><a href="#251-仅允许从已知注册表部署容器">2.5.1 仅允许从已知注册表部署容器</a></li>
+        <li><a href="#252-强制ingress主机名唯一">2.5.2 强制Ingress主机名唯一</a></li>
+        <li><a href="#253-仅在ingress主机名中使用批准的域名">2.5.3 仅在Ingress主机名中使用批准的域名</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#31-批准的kubernetes配置">3.1 批准的Kubernetes配置</a>
+      <ul>
+        <li><a href="#311-集群通过cis基准测试">3.1.1 集群通过CIS基准测试</a></li>
+        <li><a href="#312-禁用元数据云提供程序元数据api">3.1.2 禁用元数据云提供程序元数据API</a></li>
+        <li><a href="#313-限制对alpha或beta功能的访问">3.1.3 限制对Alpha或Beta功能的访问</a></li>
+      </ul>
+    </li>
+    <li><a href="#32-认证">3.2 认证</a>
+      <ul>
+        <li></li>
+        <li><a href="#321-使用openidoidc令牌作为用户身份验证策略">3.2.1 使用OpenID（OIDC）令牌作为用户身份验证策略</a></li>
+      </ul>
+    </li>
+    <li><a href="#33-rbac">3.3 RBAC</a>
+      <ul>
+        <li><a href="#331-serviceaccount令牌仅适用于应用程序和控制器">3.3.1 ServiceAccount令牌仅适用于应用程序和控制器</a></li>
+      </ul>
+    </li>
+    <li><a href="#34-日志设定">3.4 日志设定</a>
+      <ul>
+        <li><a href="#341-有一个日志保留和归档策略">3.4.1 有一个日志保留和归档策略</a></li>
+        <li><a href="#342-从节点控制平面审核中收集日志">3.4.2 从节点，控制平面，审核中收集日志</a></li>
+        <li><a href="#343-在每个节点上最好使用守护程序来收集日志而不是在每个中运行sidecars">3.4.3 在每个节点上最好使用守护程序来收集日志，而不是在每个中运行sidecars</a></li>
+        <li><a href="#344-提供日志聚合工具">3.4.4 提供日志聚合工具</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="一文带你检查kubernetes应用是否为最佳实践">
+  一文带你检查Kubernetes应用是否为最佳实践
+  <a class="anchor" href="#%e4%b8%80%e6%96%87%e5%b8%a6%e4%bd%a0%e6%a3%80%e6%9f%a5kubernetes%e5%ba%94%e7%94%a8%e6%98%af%e5%90%a6%e4%b8%ba%e6%9c%80%e4%bd%b3%e5%ae%9e%e8%b7%b5">#</a>
+</h1>
+<blockquote>
+<p>一篇从应用部署/服务管治/集群配置三个方便来check你的K8S使用姿势是否正确,包含单不限于服务监控检查/资源使用/标签/HPA，VPA/安全策略/RBAC/日志/监控是否为最佳实践的check list。</p></blockquote>
+<h1 id="一-应用部署">
+  一 应用部署
+  <a class="anchor" href="#%e4%b8%80-%e5%ba%94%e7%94%a8%e9%83%a8%e7%bd%b2">#</a>
+</h1>
+<h2 id="11-健康检查">
+  1.1 健康检查
+  <a class="anchor" href="#11-%e5%81%a5%e5%ba%b7%e6%a3%80%e6%9f%a5">#</a>
+</h2>
+<ul>
+<li><strong>readiness probe</strong>确定容器何时可以接收流量。</li>
+</ul>
+<p>Kubelet执行检查并确定应用程序是否可以接收流量。</p>
+<ul>
+<li><strong>liveness probe</strong>确定何时应重新启动容器。</li>
+</ul>
+<p>kubelet执行检查并确定是否应重新启动容器。</p>
+<h3 id="111-容器就绪性探针">
+  1.1.1 容器就绪性探针
+  <a class="anchor" href="#111-%e5%ae%b9%e5%99%a8%e5%b0%b1%e7%bb%aa%e6%80%a7%e6%8e%a2%e9%92%88">#</a>
+</h3>
+<p>就绪性和存活性探针没有默认值，如果您未设置就绪探针，则kubelet会假定该应用程序已准备就绪，可以在容器启动后立即接收流量。</p>
+<h3 id="112-发生致命错误时容器崩溃">
+  1.1.2 发生致命错误时容器崩溃
+  <a class="anchor" href="#112-%e5%8f%91%e7%94%9f%e8%87%b4%e5%91%bd%e9%94%99%e8%af%af%e6%97%b6%e5%ae%b9%e5%99%a8%e5%b4%a9%e6%ba%83">#</a>
+</h3>
+<p>如果应用程序遇到不可恢复的错误，则应使其崩溃，例如：</p>
+<ul>
+<li>未捕获的异常</li>
+<li>代码中的错字（用于动态语言）</li>
+<li>无法加载标头或依赖项</li>
+</ul>
+<p>请注意，您不应发信号通知Liveness探针失败，相反，您应该立即退出该过程，并让kubelet重新启动容器。</p>
+<h3 id="113-配置被动的存活性探针">
+  1.1.3 配置被动的存活性探针
+  <a class="anchor" href="#113-%e9%85%8d%e7%bd%ae%e8%a2%ab%e5%8a%a8%e7%9a%84%e5%ad%98%e6%b4%bb%e6%80%a7%e6%8e%a2%e9%92%88">#</a>
+</h3>
+<p>Liveness探针旨在在卡住容器时重新启动容器，例如：</p>
+<p>如果您的应用程序正在处理无限循环，则无法退出或寻求帮助。</p>
+<p>当该进程消耗100％的CPU时，将没有时间回复（其他）Readiness探针检查，并且最终将其从服务中删除。但是，该Pod仍被注册为当前Deployment的活动副本。如果没有Liveness探针，它将保持运行状态，但与服务分离。换句话说，该过程不仅不处理任何请求，而且还消耗资源。</p>
+<p>此时应该怎么办：</p>
+<ul>
+<li>从您的应用程序公开端点</li>
+<li>端点总是回复成功响应</li>
+<li>使用“活力”探针获取端点</li>
+</ul>
+<p>请注意，您不应该使用Liveness探针来处理应用程序中的致命错误，并要求Kubernetes重新启动应用程序。相反，您应该让应用程序崩溃。</p>
+<p>仅在过程无响应的情况下，才应将“活动性”探针用作恢复机制。</p>
+<h3 id="114-存活性探针与就绪性探针的区别">
+  1.1.4 存活性探针与就绪性探针的区别
+  <a class="anchor" href="#114-%e5%ad%98%e6%b4%bb%e6%80%a7%e6%8e%a2%e9%92%88%e4%b8%8e%e5%b0%b1%e7%bb%aa%e6%80%a7%e6%8e%a2%e9%92%88%e7%9a%84%e5%8c%ba%e5%88%ab">#</a>
+</h3>
+<p>当“活力”和“就绪”探针指向相同的端点时，探针的作用会合并在一起。</p>
+<p>当应用程序发出信号表明尚未准备就绪或尚待运行时，kubelet会将容器与服务分离并同时将其删除。</p>
+<p>您可能会注意到连接断开，因为容器没有足够的时间耗尽当前连接或处理传入的连接。</p>
+<p>可以参考：article that discussed graceful shutdown.</p>
+<h2 id="12-应用的独立性">
+  1.2 应用的独立性
+  <a class="anchor" href="#12-%e5%ba%94%e7%94%a8%e7%9a%84%e7%8b%ac%e7%ab%8b%e6%80%a7">#</a>
+</h2>
+<p>如果应用程序连接到数据库，也许你认为如果数据库为就绪就返回一个失败的就绪就ok了，但是事实并非如此，例如您有一个依赖于后端API的前端应用程序。如果该API不稳定（例如由于错误而有时不可用），则就绪探测器将失败，并且前端应用程序中的相关就绪也将失败。这就会导致停机时间。更一般而言，下游依赖项的故障可能会传播到上游的所有应用程序，并最终也降低前端面层</p>
+<h3 id="121-就绪性探针应该独立">
+  1.2.1 就绪性探针应该独立
+  <a class="anchor" href="#121-%e5%b0%b1%e7%bb%aa%e6%80%a7%e6%8e%a2%e9%92%88%e5%ba%94%e8%af%a5%e7%8b%ac%e7%ab%8b">#</a>
+</h3>
+<p>就绪性探针不应该依以下服务：</p>
+<ul>
+<li>数据库</li>
+<li>数据库迁移</li>
+<li>APIs</li>
+<li>第三方服务</li>
+</ul>
+<p>详细可参考：explore what happens when there’re dependencies in the readiness probes in this essay.</p>
+<h3 id="122-应用程序重连到依赖服务">
+  1.2.2 应用程序重连到依赖服务
+  <a class="anchor" href="#122-%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e9%87%8d%e8%bf%9e%e5%88%b0%e4%be%9d%e8%b5%96%e6%9c%8d%e5%8a%a1">#</a>
+</h3>
+<h5 id="应用启动时它不应该因为数据库等依赖项尚未就绪就崩溃而是应用程序应继续尝试重新连接数据库直到成功为止">
+  应用启动时，它不应该因为数据库等依赖项尚未就绪就崩溃，而是，应用程序应继续尝试重新连接数据库，直到成功为止。
+  <a class="anchor" href="#%e5%ba%94%e7%94%a8%e5%90%af%e5%8a%a8%e6%97%b6%e5%ae%83%e4%b8%8d%e5%ba%94%e8%af%a5%e5%9b%a0%e4%b8%ba%e6%95%b0%e6%8d%ae%e5%ba%93%e7%ad%89%e4%be%9d%e8%b5%96%e9%a1%b9%e5%b0%9a%e6%9c%aa%e5%b0%b1%e7%bb%aa%e5%b0%b1%e5%b4%a9%e6%ba%83%e8%80%8c%e6%98%af%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e5%ba%94%e7%bb%a7%e7%bb%ad%e5%b0%9d%e8%af%95%e9%87%8d%e6%96%b0%e8%bf%9e%e6%8e%a5%e6%95%b0%e6%8d%ae%e5%ba%93%e7%9b%b4%e5%88%b0%e6%88%90%e5%8a%9f%e4%b8%ba%e6%ad%a2">#</a>
+</h5>
+<h5 id="kubernetes希望可以以任何顺序启动应用程序组件当您确保您的应用程序可以重新连接到诸如数据库之类的依赖项时这样可以大大提升服务的健壮性">
+  Kubernetes希望可以以任何顺序启动应用程序组件。当您确保您的应用程序可以重新连接到诸如数据库之类的依赖项时，这样可以大大提升服务的健壮性。
+  <a class="anchor" href="#kubernetes%e5%b8%8c%e6%9c%9b%e5%8f%af%e4%bb%a5%e4%bb%a5%e4%bb%bb%e4%bd%95%e9%a1%ba%e5%ba%8f%e5%90%af%e5%8a%a8%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e7%bb%84%e4%bb%b6%e5%bd%93%e6%82%a8%e7%a1%ae%e4%bf%9d%e6%82%a8%e7%9a%84%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e5%8f%af%e4%bb%a5%e9%87%8d%e6%96%b0%e8%bf%9e%e6%8e%a5%e5%88%b0%e8%af%b8%e5%a6%82%e6%95%b0%e6%8d%ae%e5%ba%93%e4%b9%8b%e7%b1%bb%e7%9a%84%e4%be%9d%e8%b5%96%e9%a1%b9%e6%97%b6%e8%bf%99%e6%a0%b7%e5%8f%af%e4%bb%a5%e5%a4%a7%e5%a4%a7%e6%8f%90%e5%8d%87%e6%9c%8d%e5%8a%a1%e7%9a%84%e5%81%a5%e5%a3%ae%e6%80%a7">#</a>
+</h5>
+<h3 id="13-优雅的关机">
+  1.3 优雅的关机
+  <a class="anchor" href="#13-%e4%bc%98%e9%9b%85%e7%9a%84%e5%85%b3%e6%9c%ba">#</a>
+</h3>
+<h5 id="您应该等待现有连接耗尽并停止处理新连接请注意当pod终止时该pod的端点将从服务中删除">
+  您应该等待现有连接耗尽并停止处理新连接。请注意，当Pod终止时，该Pod的端点将从服务中删除。
+  <a class="anchor" href="#%e6%82%a8%e5%ba%94%e8%af%a5%e7%ad%89%e5%be%85%e7%8e%b0%e6%9c%89%e8%bf%9e%e6%8e%a5%e8%80%97%e5%b0%bd%e5%b9%b6%e5%81%9c%e6%ad%a2%e5%a4%84%e7%90%86%e6%96%b0%e8%bf%9e%e6%8e%a5%e8%af%b7%e6%b3%a8%e6%84%8f%e5%bd%93pod%e7%bb%88%e6%ad%a2%e6%97%b6%e8%af%a5pod%e7%9a%84%e7%ab%af%e7%82%b9%e5%b0%86%e4%bb%8e%e6%9c%8d%e5%8a%a1%e4%b8%ad%e5%88%a0%e9%99%a4">#</a>
+</h5>
+<h5 id="但是可能需要一些时间才能将诸如kube-proxy或ingress控制器之类的组件通知更改">
+  但是，可能需要一些时间才能将诸如kube-proxy或Ingress控制器之类的组件通知更改。
+  <a class="anchor" href="#%e4%bd%86%e6%98%af%e5%8f%af%e8%83%bd%e9%9c%80%e8%a6%81%e4%b8%80%e4%ba%9b%e6%97%b6%e9%97%b4%e6%89%8d%e8%83%bd%e5%b0%86%e8%af%b8%e5%a6%82kube-proxy%e6%88%96ingress%e6%8e%a7%e5%88%b6%e5%99%a8%e4%b9%8b%e7%b1%bb%e7%9a%84%e7%bb%84%e4%bb%b6%e9%80%9a%e7%9f%a5%e6%9b%b4%e6%94%b9">#</a>
+</h5>
+<h5 id="详细可参考handling-client-requests-correctly-with-kubernetes">
+  详细可参考：handling client requests correctly with Kubernetes.
+  <a class="anchor" href="#%e8%af%a6%e7%bb%86%e5%8f%af%e5%8f%82%e8%80%83handling-client-requests-correctly-with-kubernetes">#</a>
+</h5>
+<h5 id="正确的优雅停止顺序">
+  正确的优雅停止顺序
+  <a class="anchor" href="#%e6%ad%a3%e7%a1%ae%e7%9a%84%e4%bc%98%e9%9b%85%e5%81%9c%e6%ad%a2%e9%a1%ba%e5%ba%8f">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="在收到sigterm后">
+  在收到SIGTERM后
+  <a class="anchor" href="#%e5%9c%a8%e6%94%b6%e5%88%b0sigterm%e5%90%8e">#</a>
+</h5>
+</li>
+<li>
+<h5 id="服务器停止接受新的链接">
+  服务器停止接受新的链接
+  <a class="anchor" href="#%e6%9c%8d%e5%8a%a1%e5%99%a8%e5%81%9c%e6%ad%a2%e6%8e%a5%e5%8f%97%e6%96%b0%e7%9a%84%e9%93%be%e6%8e%a5">#</a>
+</h5>
+</li>
+<li>
+<h5 id="完成现有所有的请求">
+  完成现有所有的请求
+  <a class="anchor" href="#%e5%ae%8c%e6%88%90%e7%8e%b0%e6%9c%89%e6%89%80%e6%9c%89%e7%9a%84%e8%af%b7%e6%b1%82">#</a>
+</h5>
+</li>
+<li>
+<h5 id="然后杀死所有的keepalive链接">
+  然后杀死所有的keepalive链接
+  <a class="anchor" href="#%e7%84%b6%e5%90%8e%e6%9d%80%e6%ad%bb%e6%89%80%e6%9c%89%e7%9a%84keepalive%e9%93%be%e6%8e%a5">#</a>
+</h5>
+</li>
+<li>
+<h5 id="进程退出">
+  进程退出
+  <a class="anchor" href="#%e8%bf%9b%e7%a8%8b%e9%80%80%e5%87%ba">#</a>
+</h5>
+</li>
+</ul>
+<h5 id="可以利用工具测试test-that-your-app-gracefully-shuts-down-with-this-tool-kube-sigterm-test">
+  可以利用工具测试：test that your app gracefully shuts down with this tool: kube-sigterm-test.
+  <a class="anchor" href="#%e5%8f%af%e4%bb%a5%e5%88%a9%e7%94%a8%e5%b7%a5%e5%85%b7%e6%b5%8b%e8%af%95test-that-your-app-gracefully-shuts-down-with-this-tool-kube-sigterm-test">#</a>
+</h5>
+<h3 id="131-应用程序未通过sigterm信号关闭但它已经终止了链接">
+  1.3.1 应用程序未通过SIGTERM信号关闭，但它已经终止了链接
+  <a class="anchor" href="#131-%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e6%9c%aa%e9%80%9a%e8%bf%87sigterm%e4%bf%a1%e5%8f%b7%e5%85%b3%e9%97%ad%e4%bd%86%e5%ae%83%e5%b7%b2%e7%bb%8f%e7%bb%88%e6%ad%a2%e4%ba%86%e9%93%be%e6%8e%a5">#</a>
+</h3>
+<h5 id="可能需要一些时间才能将诸如kube-proxy或ingress控制器之类的组件通知端点更改">
+  可能需要一些时间才能将诸如kube-proxy或Ingress控制器之类的组件通知端点更改。
+  <a class="anchor" href="#%e5%8f%af%e8%83%bd%e9%9c%80%e8%a6%81%e4%b8%80%e4%ba%9b%e6%97%b6%e9%97%b4%e6%89%8d%e8%83%bd%e5%b0%86%e8%af%b8%e5%a6%82kube-proxy%e6%88%96ingress%e6%8e%a7%e5%88%b6%e5%99%a8%e4%b9%8b%e7%b1%bb%e7%9a%84%e7%bb%84%e4%bb%b6%e9%80%9a%e7%9f%a5%e7%ab%af%e7%82%b9%e6%9b%b4%e6%94%b9">#</a>
+</h5>
+<h5 id="因此尽管标记为已终止但流量仍可能流向pod">
+  因此，尽管标记为已终止，但流量仍可能流向Pod。
+  <a class="anchor" href="#%e5%9b%a0%e6%ad%a4%e5%b0%bd%e7%ae%a1%e6%a0%87%e8%ae%b0%e4%b8%ba%e5%b7%b2%e7%bb%88%e6%ad%a2%e4%bd%86%e6%b5%81%e9%87%8f%e4%bb%8d%e5%8f%af%e8%83%bd%e6%b5%81%e5%90%91pod">#</a>
+</h5>
+<h5 id="该应用程序应停止接受所有剩余连接上的新请求并在耗尽传出队列后将其关闭">
+  该应用程序应停止接受所有剩余连接上的新请求，并在耗尽传出队列后将其关闭。
+  <a class="anchor" href="#%e8%af%a5%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e5%ba%94%e5%81%9c%e6%ad%a2%e6%8e%a5%e5%8f%97%e6%89%80%e6%9c%89%e5%89%a9%e4%bd%99%e8%bf%9e%e6%8e%a5%e4%b8%8a%e7%9a%84%e6%96%b0%e8%af%b7%e6%b1%82%e5%b9%b6%e5%9c%a8%e8%80%97%e5%b0%bd%e4%bc%a0%e5%87%ba%e9%98%9f%e5%88%97%e5%90%8e%e5%b0%86%e5%85%b6%e5%85%b3%e9%97%ad">#</a>
+</h5>
+<h3 id="132-应用程序仍在宽限期处理请求">
+  1.3.2 应用程序仍在宽限期处理请求
+  <a class="anchor" href="#132-%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e4%bb%8d%e5%9c%a8%e5%ae%bd%e9%99%90%e6%9c%9f%e5%a4%84%e7%90%86%e8%af%b7%e6%b1%82">#</a>
+</h3>
+<h5 id="您可能要考虑使用容器生命周期事件例如-the-prestop-handler自定义pod删除之前的动作">
+  您可能要考虑使用容器生命周期事件，例如 the preStop handler自定义pod删除之前的动作
+  <a class="anchor" href="#%e6%82%a8%e5%8f%af%e8%83%bd%e8%a6%81%e8%80%83%e8%99%91%e4%bd%bf%e7%94%a8%e5%ae%b9%e5%99%a8%e7%94%9f%e5%91%bd%e5%91%a8%e6%9c%9f%e4%ba%8b%e4%bb%b6%e4%be%8b%e5%a6%82-the-prestop-handler%e8%87%aa%e5%ae%9a%e4%b9%89pod%e5%88%a0%e9%99%a4%e4%b9%8b%e5%89%8d%e7%9a%84%e5%8a%a8%e4%bd%9c">#</a>
+</h5>
+<h3 id="133-dockerfile中的cmd将sigterm转发到进程">
+  1.3.3 Dockerfile中的CMD将SIGTERM转发到进程
+  <a class="anchor" href="#133-dockerfile%e4%b8%ad%e7%9a%84cmd%e5%b0%86sigterm%e8%bd%ac%e5%8f%91%e5%88%b0%e8%bf%9b%e7%a8%8b">#</a>
+</h3>
+<h5 id="通过在应用中捕获sigterm信号可以在pod即将终止时收到通知">
+  通过在应用中捕获SIGTERM信号，可以在Pod即将终止时收到通知。
+  <a class="anchor" href="#%e9%80%9a%e8%bf%87%e5%9c%a8%e5%ba%94%e7%94%a8%e4%b8%ad%e6%8d%95%e8%8e%b7sigterm%e4%bf%a1%e5%8f%b7%e5%8f%af%e4%bb%a5%e5%9c%a8pod%e5%8d%b3%e5%b0%86%e7%bb%88%e6%ad%a2%e6%97%b6%e6%94%b6%e5%88%b0%e9%80%9a%e7%9f%a5">#</a>
+</h5>
+<h5 id="你应该注意forwarding-the-signal-to-the-right-process-in-your-container">
+  你应该注意：forwarding the signal to the right process in your container.
+  <a class="anchor" href="#%e4%bd%a0%e5%ba%94%e8%af%a5%e6%b3%a8%e6%84%8fforwarding-the-signal-to-the-right-process-in-your-container">#</a>
+</h5>
+<h3 id="134-关闭所有空闲的保持活动套接字">
+  1.3.4 关闭所有空闲的保持活动套接字
+  <a class="anchor" href="#134-%e5%85%b3%e9%97%ad%e6%89%80%e6%9c%89%e7%a9%ba%e9%97%b2%e7%9a%84%e4%bf%9d%e6%8c%81%e6%b4%bb%e5%8a%a8%e5%a5%97%e6%8e%a5%e5%ad%97">#</a>
+</h3>
+<h5 id="如果调用方应用未关闭tcp连接例如使用tcp保持活动状态或连接池它将连接到一个pod而不使用该服务中的其他pod">
+  如果调用方应用未关闭TCP连接（例如使用TCP保持活动状态或连接池），它将连接到一个Pod，而不使用该服务中的其他Pod。
+  <a class="anchor" href="#%e5%a6%82%e6%9e%9c%e8%b0%83%e7%94%a8%e6%96%b9%e5%ba%94%e7%94%a8%e6%9c%aa%e5%85%b3%e9%97%adtcp%e8%bf%9e%e6%8e%a5%e4%be%8b%e5%a6%82%e4%bd%bf%e7%94%a8tcp%e4%bf%9d%e6%8c%81%e6%b4%bb%e5%8a%a8%e7%8a%b6%e6%80%81%e6%88%96%e8%bf%9e%e6%8e%a5%e6%b1%a0%e5%ae%83%e5%b0%86%e8%bf%9e%e6%8e%a5%e5%88%b0%e4%b8%80%e4%b8%aapod%e8%80%8c%e4%b8%8d%e4%bd%bf%e7%94%a8%e8%af%a5%e6%9c%8d%e5%8a%a1%e4%b8%ad%e7%9a%84%e5%85%b6%e4%bb%96pod">#</a>
+</h5>
+<h5 id="当时当pod删除的时候会发生什么呢理想状态请求应该使用其他pod但是调用方应用程序与即将终止的pod的连接寿命很长它将继续使用它">
+  当时当pod删除的时候会发生什么呢，理想状态请求应该使用其他POD，但是，调用方应用程序与即将终止的Pod的连接寿命很长，它将继续使用它。
+  <a class="anchor" href="#%e5%bd%93%e6%97%b6%e5%bd%93pod%e5%88%a0%e9%99%a4%e7%9a%84%e6%97%b6%e5%80%99%e4%bc%9a%e5%8f%91%e7%94%9f%e4%bb%80%e4%b9%88%e5%91%a2%e7%90%86%e6%83%b3%e7%8a%b6%e6%80%81%e8%af%b7%e6%b1%82%e5%ba%94%e8%af%a5%e4%bd%bf%e7%94%a8%e5%85%b6%e4%bb%96pod%e4%bd%86%e6%98%af%e8%b0%83%e7%94%a8%e6%96%b9%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e4%b8%8e%e5%8d%b3%e5%b0%86%e7%bb%88%e6%ad%a2%e7%9a%84pod%e7%9a%84%e8%bf%9e%e6%8e%a5%e5%af%bf%e5%91%bd%e5%be%88%e9%95%bf%e5%ae%83%e5%b0%86%e7%bb%a7%e7%bb%ad%e4%bd%bf%e7%94%a8%e5%ae%83">#</a>
+</h5>
+<h5 id="另一方面你不应该突然终止一个长链接相反您应该先关闭它们然后再关闭应用程序">
+  另一方面，你不应该突然终止一个长链接，相反，您应该先关闭它们，然后再关闭应用程序。
+  <a class="anchor" href="#%e5%8f%a6%e4%b8%80%e6%96%b9%e9%9d%a2%e4%bd%a0%e4%b8%8d%e5%ba%94%e8%af%a5%e7%aa%81%e7%84%b6%e7%bb%88%e6%ad%a2%e4%b8%80%e4%b8%aa%e9%95%bf%e9%93%be%e6%8e%a5%e7%9b%b8%e5%8f%8d%e6%82%a8%e5%ba%94%e8%af%a5%e5%85%88%e5%85%b3%e9%97%ad%e5%ae%83%e4%bb%ac%e7%84%b6%e5%90%8e%e5%86%8d%e5%85%b3%e9%97%ad%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f">#</a>
+</h5>
+<h5 id="您可以在有关以下内容的文章中阅读有关保持活动连接的信息gracefully-shutting-down-a-nodejs-http-server">
+  您可以在有关以下内容的文章中阅读有关保持活动连接的信息：gracefully shutting down a Nodejs HTTP server.
+  <a class="anchor" href="#%e6%82%a8%e5%8f%af%e4%bb%a5%e5%9c%a8%e6%9c%89%e5%85%b3%e4%bb%a5%e4%b8%8b%e5%86%85%e5%ae%b9%e7%9a%84%e6%96%87%e7%ab%a0%e4%b8%ad%e9%98%85%e8%af%bb%e6%9c%89%e5%85%b3%e4%bf%9d%e6%8c%81%e6%b4%bb%e5%8a%a8%e8%bf%9e%e6%8e%a5%e7%9a%84%e4%bf%a1%e6%81%afgracefully-shutting-down-a-nodejs-http-server">#</a>
+</h5>
+<h2 id="14-容错能力">
+  1.4 容错能力
+  <a class="anchor" href="#14-%e5%ae%b9%e9%94%99%e8%83%bd%e5%8a%9b">#</a>
+</h2>
+<ul>
+<li>
+<h5 id="物理机硬件故障">
+  物理机硬件故障
+  <a class="anchor" href="#%e7%89%a9%e7%90%86%e6%9c%ba%e7%a1%ac%e4%bb%b6%e6%95%85%e9%9a%9c">#</a>
+</h5>
+</li>
+<li>
+<h5 id="云供应商或管理程序">
+  云供应商或管理程序
+  <a class="anchor" href="#%e4%ba%91%e4%be%9b%e5%ba%94%e5%95%86%e6%88%96%e7%ae%a1%e7%90%86%e7%a8%8b%e5%ba%8f">#</a>
+</h5>
+</li>
+<li>
+<h5 id="kernel恐慌">
+  kernel恐慌
+  <a class="anchor" href="#kernel%e6%81%90%e6%85%8c">#</a>
+</h5>
+</li>
+</ul>
+<h5 id="pod部署在这些节点上也将丢失">
+  pod部署在这些节点上也将丢失
+  <a class="anchor" href="#pod%e9%83%a8%e7%bd%b2%e5%9c%a8%e8%bf%99%e4%ba%9b%e8%8a%82%e7%82%b9%e4%b8%8a%e4%b9%9f%e5%b0%86%e4%b8%a2%e5%a4%b1">#</a>
+</h5>
+<h5 id="在以下情况下可以删除pod">
+  在以下情况下可以删除pod
+  <a class="anchor" href="#%e5%9c%a8%e4%bb%a5%e4%b8%8b%e6%83%85%e5%86%b5%e4%b8%8b%e5%8f%af%e4%bb%a5%e5%88%a0%e9%99%a4pod">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="直接删除一个pod">
+  直接删除一个pod
+  <a class="anchor" href="#%e7%9b%b4%e6%8e%a5%e5%88%a0%e9%99%a4%e4%b8%80%e4%b8%aapod">#</a>
+</h5>
+</li>
+<li>
+<h5 id="draining一个node">
+  draining一个node
+  <a class="anchor" href="#draining%e4%b8%80%e4%b8%aanode">#</a>
+</h5>
+</li>
+<li>
+<h5 id="从节点上删除pod以允许另一个pod适合该节点">
+  从节点上删除Pod，以允许另一个Pod适合该节点
+  <a class="anchor" href="#%e4%bb%8e%e8%8a%82%e7%82%b9%e4%b8%8a%e5%88%a0%e9%99%a4pod%e4%bb%a5%e5%85%81%e8%ae%b8%e5%8f%a6%e4%b8%80%e4%b8%aapod%e9%80%82%e5%90%88%e8%af%a5%e8%8a%82%e7%82%b9">#</a>
+</h5>
+</li>
+</ul>
+<h5 id="以上任何情况都可能影响您的应用程序的可用性并可能导致停机">
+  以上任何情况都可能影响您的应用程序的可用性，并可能导致停机。
+  <a class="anchor" href="#%e4%bb%a5%e4%b8%8a%e4%bb%bb%e4%bd%95%e6%83%85%e5%86%b5%e9%83%bd%e5%8f%af%e8%83%bd%e5%bd%b1%e5%93%8d%e6%82%a8%e7%9a%84%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e7%9a%84%e5%8f%af%e7%94%a8%e6%80%a7%e5%b9%b6%e5%8f%af%e8%83%bd%e5%af%bc%e8%87%b4%e5%81%9c%e6%9c%ba">#</a>
+</h5>
+<h5 id="您应该避免所有pod都无法使用并且无法提供实时流量的情况">
+  您应该避免所有Pod都无法使用并且无法提供实时流量的情况。
+  <a class="anchor" href="#%e6%82%a8%e5%ba%94%e8%af%a5%e9%81%bf%e5%85%8d%e6%89%80%e6%9c%89pod%e9%83%bd%e6%97%a0%e6%b3%95%e4%bd%bf%e7%94%a8%e5%b9%b6%e4%b8%94%e6%97%a0%e6%b3%95%e6%8f%90%e4%be%9b%e5%ae%9e%e6%97%b6%e6%b5%81%e9%87%8f%e7%9a%84%e6%83%85%e5%86%b5">#</a>
+</h5>
+<h3 id="141-部署运行多个副本">
+  1.4.1 部署运行多个副本
+  <a class="anchor" href="#141-%e9%83%a8%e7%bd%b2%e8%bf%90%e8%a1%8c%e5%a4%9a%e4%b8%aa%e5%89%af%e6%9c%ac">#</a>
+</h3>
+<h5 id="永远不要仅运行一个pod">
+  永远不要仅运行一个pod
+  <a class="anchor" href="#%e6%b0%b8%e8%bf%9c%e4%b8%8d%e8%a6%81%e4%bb%85%e8%bf%90%e8%a1%8c%e4%b8%80%e4%b8%aapod">#</a>
+</h5>
+<h5 id="利用控制器deployment-daemonset-replicaset-or-statefulset来运行pod不应该将应用运行为自主式pod">
+  利用控制器Deployment, DaemonSet, ReplicaSet or StatefulSet.来运行pod，不应该将应用运行为自主式pod
+  <a class="anchor" href="#%e5%88%a9%e7%94%a8%e6%8e%a7%e5%88%b6%e5%99%a8deployment-daemonset-replicaset-or-statefulset%e6%9d%a5%e8%bf%90%e8%a1%8cpod%e4%b8%8d%e5%ba%94%e8%af%a5%e5%b0%86%e5%ba%94%e7%94%a8%e8%bf%90%e8%a1%8c%e4%b8%ba%e8%87%aa%e4%b8%bb%e5%bc%8fpod">#</a>
+</h5>
+<h5 id="可以参考running-more-than-one-instance-your-of-your-pods-guarantees-that-deleting-a-single-pod-wont-cause-downtime">
+  可以参考：Running more than one instance your of your Pods guarantees that deleting a single Pod won’t cause downtime.
+  <a class="anchor" href="#%e5%8f%af%e4%bb%a5%e5%8f%82%e8%80%83running-more-than-one-instance-your-of-your-pods-guarantees-that-deleting-a-single-pod-wont-cause-downtime">#</a>
+</h5>
+<h3 id="142-避免将pod放置在单个节点中">
+  1.4.2 避免将Pod放置在单个节点中
+  <a class="anchor" href="#142-%e9%81%bf%e5%85%8d%e5%b0%86pod%e6%94%be%e7%bd%ae%e5%9c%a8%e5%8d%95%e4%b8%aa%e8%8a%82%e7%82%b9%e4%b8%ad">#</a>
+</h3>
+<h5 id="即使您运行pod的多个副本也无法保证丢失节点不会破坏您的服务">
+  即使您运行Pod的多个副本，也无法保证丢失节点不会破坏您的服务。
+  <a class="anchor" href="#%e5%8d%b3%e4%bd%bf%e6%82%a8%e8%bf%90%e8%a1%8cpod%e7%9a%84%e5%a4%9a%e4%b8%aa%e5%89%af%e6%9c%ac%e4%b9%9f%e6%97%a0%e6%b3%95%e4%bf%9d%e8%af%81%e4%b8%a2%e5%a4%b1%e8%8a%82%e7%82%b9%e4%b8%8d%e4%bc%9a%e7%a0%b4%e5%9d%8f%e6%82%a8%e7%9a%84%e6%9c%8d%e5%8a%a1">#</a>
+</h5>
+<h5 id="如果你在单一node上运行一个11个副本集的pod如果这个node故障这个服务也一样会停机">
+  如果你在单一node上运行一个11个副本集的pod，如果这个node故障，这个服务也一样会停机
+  <a class="anchor" href="#%e5%a6%82%e6%9e%9c%e4%bd%a0%e5%9c%a8%e5%8d%95%e4%b8%80node%e4%b8%8a%e8%bf%90%e8%a1%8c%e4%b8%80%e4%b8%aa11%e4%b8%aa%e5%89%af%e6%9c%ac%e9%9b%86%e7%9a%84pod%e5%a6%82%e6%9e%9c%e8%bf%99%e4%b8%aanode%e6%95%85%e9%9a%9c%e8%bf%99%e4%b8%aa%e6%9c%8d%e5%8a%a1%e4%b9%9f%e4%b8%80%e6%a0%b7%e4%bc%9a%e5%81%9c%e6%9c%ba">#</a>
+</h5>
+<h5 id="运行反亲和性在集群中you-should-apply-anti-affinity-rules-to-your-deployments-so-that-pods-are-spread-in-all-the-nodes-of-your-cluster">
+  运行反亲和性在集群中：You should apply anti-affinity rules to your Deployments so that Pods are spread in all the nodes of your cluster.
+  <a class="anchor" href="#%e8%bf%90%e8%a1%8c%e5%8f%8d%e4%ba%b2%e5%92%8c%e6%80%a7%e5%9c%a8%e9%9b%86%e7%be%a4%e4%b8%adyou-should-apply-anti-affinity-rules-to-your-deployments-so-that-pods-are-spread-in-all-the-nodes-of-your-cluster">#</a>
+</h5>
+<h5 id="详细可以参考inter-pod-affinity-and-anti-affinity">
+  详细可以参考：inter-pod affinity and anti-affinity
+  <a class="anchor" href="#%e8%af%a6%e7%bb%86%e5%8f%af%e4%bb%a5%e5%8f%82%e8%80%83inter-pod-affinity-and-anti-affinity">#</a>
+</h5>
+<h3 id="143-设置pod中断预算">
+  1.4.3 设置Pod中断预算
+  <a class="anchor" href="#143-%e8%ae%be%e7%bd%aepod%e4%b8%ad%e6%96%ad%e9%a2%84%e7%ae%97">#</a>
+</h3>
+<h5 id="当一个node被打上污点pod是要被删除并且重新调度">
+  当一个node被打上污点，pod是要被删除并且重新调度
+  <a class="anchor" href="#%e5%bd%93%e4%b8%80%e4%b8%aanode%e8%a2%ab%e6%89%93%e4%b8%8a%e6%b1%a1%e7%82%b9pod%e6%98%af%e8%a6%81%e8%a2%ab%e5%88%a0%e9%99%a4%e5%b9%b6%e4%b8%94%e9%87%8d%e6%96%b0%e8%b0%83%e5%ba%a6">#</a>
+</h5>
+<h5 id="但是如果你的系统压力很大不能接受丢失50的pod这时候改怎么办呢驱逐pod可能会影响你的服务">
+  但是如果你的系统压力很大，不能接受丢失50%的pod这时候改怎么办呢，驱逐pod可能会影响你的服务
+  <a class="anchor" href="#%e4%bd%86%e6%98%af%e5%a6%82%e6%9e%9c%e4%bd%a0%e7%9a%84%e7%b3%bb%e7%bb%9f%e5%8e%8b%e5%8a%9b%e5%be%88%e5%a4%a7%e4%b8%8d%e8%83%bd%e6%8e%a5%e5%8f%97%e4%b8%a2%e5%a4%b150%e7%9a%84pod%e8%bf%99%e6%97%b6%e5%80%99%e6%94%b9%e6%80%8e%e4%b9%88%e5%8a%9e%e5%91%a2%e9%a9%b1%e9%80%90pod%e5%8f%af%e8%83%bd%e4%bc%9a%e5%bd%b1%e5%93%8d%e4%bd%a0%e7%9a%84%e6%9c%8d%e5%8a%a1">#</a>
+</h5>
+<h5 id="为了保护部署免受可能同时摧毁多个pod的意外事件的影响可以定义pod中断预算">
+  为了保护部署免受可能同时摧毁多个Pod的意外事件的影响，可以定义Pod中断预算。
+  <a class="anchor" href="#%e4%b8%ba%e4%ba%86%e4%bf%9d%e6%8a%a4%e9%83%a8%e7%bd%b2%e5%85%8d%e5%8f%97%e5%8f%af%e8%83%bd%e5%90%8c%e6%97%b6%e6%91%a7%e6%af%81%e5%a4%9a%e4%b8%aapod%e7%9a%84%e6%84%8f%e5%a4%96%e4%ba%8b%e4%bb%b6%e7%9a%84%e5%bd%b1%e5%93%8d%e5%8f%af%e4%bb%a5%e5%ae%9a%e4%b9%89pod%e4%b8%ad%e6%96%ad%e9%a2%84%e7%ae%97">#</a>
+</h5>
+<h5 id="想象一下-kubernetes请确保我的应用始终至少有5个pod在运行">
+  想象一下：“ Kubernetes，请确保我的应用始终至少有5个Pod在运行”。
+  <a class="anchor" href="#%e6%83%b3%e8%b1%a1%e4%b8%80%e4%b8%8b-kubernetes%e8%af%b7%e7%a1%ae%e4%bf%9d%e6%88%91%e7%9a%84%e5%ba%94%e7%94%a8%e5%a7%8b%e7%bb%88%e8%87%b3%e5%b0%91%e6%9c%895%e4%b8%aapod%e5%9c%a8%e8%bf%90%e8%a1%8c">#</a>
+</h5>
+<h5 id="如果最终状态导致该部署的pod少于5个kubernetes将阻止耗尽事件">
+  如果最终状态导致该部署的Pod少于5个，Kubernetes将阻止耗尽事件。
+  <a class="anchor" href="#%e5%a6%82%e6%9e%9c%e6%9c%80%e7%bb%88%e7%8a%b6%e6%80%81%e5%af%bc%e8%87%b4%e8%af%a5%e9%83%a8%e7%bd%b2%e7%9a%84pod%e5%b0%91%e4%ba%8e5%e4%b8%aakubernetes%e5%b0%86%e9%98%bb%e6%ad%a2%e8%80%97%e5%b0%bd%e4%ba%8b%e4%bb%b6">#</a>
+</h5>
+<h5 id="官网参考文档pod-disruption-budgets">
+  官网参考文档：Pod Disruption Budgets.
+  <a class="anchor" href="#%e5%ae%98%e7%bd%91%e5%8f%82%e8%80%83%e6%96%87%e6%a1%a3pod-disruption-budgets">#</a>
+</h5>
+<h2 id="15-资源使用">
+  1.5 资源使用
+  <a class="anchor" href="#15-%e8%b5%84%e6%ba%90%e4%bd%bf%e7%94%a8">#</a>
+</h2>
+<h5 id="为了最大化调度程序的效率您应该与kubernetes共享详细信息例如资源利用工作负载优先级和开销">
+  为了最大化调度程序的效率，您应该与Kubernetes共享详细信息，例如资源利用，工作负载优先级和开销。
+  <a class="anchor" href="#%e4%b8%ba%e4%ba%86%e6%9c%80%e5%a4%a7%e5%8c%96%e8%b0%83%e5%ba%a6%e7%a8%8b%e5%ba%8f%e7%9a%84%e6%95%88%e7%8e%87%e6%82%a8%e5%ba%94%e8%af%a5%e4%b8%8ekubernetes%e5%85%b1%e4%ba%ab%e8%af%a6%e7%bb%86%e4%bf%a1%e6%81%af%e4%be%8b%e5%a6%82%e8%b5%84%e6%ba%90%e5%88%a9%e7%94%a8%e5%b7%a5%e4%bd%9c%e8%b4%9f%e8%bd%bd%e4%bc%98%e5%85%88%e7%ba%a7%e5%92%8c%e5%bc%80%e9%94%80">#</a>
+</h5>
+<h3 id="151-设置所有容器的内存限制和请求">
+  1.5.1 设置所有容器的内存限制和请求
+  <a class="anchor" href="#151-%e8%ae%be%e7%bd%ae%e6%89%80%e6%9c%89%e5%ae%b9%e5%99%a8%e7%9a%84%e5%86%85%e5%ad%98%e9%99%90%e5%88%b6%e5%92%8c%e8%af%b7%e6%b1%82">#</a>
+</h3>
+<h5 id="资源限制用于限制容器可以使用多少cpu和内存并使用containerspec的resources属性设置调度程序将这些用作度量标准之一以确定哪个节点最适合当前pod根据调度程序没有内存限制的容器的内存利用率为零如果可调度在任何节点上的pod数量不受限制则会导致资源超额使用并可能导致节点和kubelet崩溃">
+  资源限制用于限制容器可以使用多少CPU和内存，并使用containerSpec的resources属性设置。调度程序将这些用作度量标准之一，以确定哪个节点最适合当前Pod。根据调度程序，没有内存限制的容器的内存利用率为零。如果可调度在任何节点上的Pod数量不受限制，则会导致资源超额使用，并可能导致节点（和kubelet）崩溃。
+  <a class="anchor" href="#%e8%b5%84%e6%ba%90%e9%99%90%e5%88%b6%e7%94%a8%e4%ba%8e%e9%99%90%e5%88%b6%e5%ae%b9%e5%99%a8%e5%8f%af%e4%bb%a5%e4%bd%bf%e7%94%a8%e5%a4%9a%e5%b0%91cpu%e5%92%8c%e5%86%85%e5%ad%98%e5%b9%b6%e4%bd%bf%e7%94%a8containerspec%e7%9a%84resources%e5%b1%9e%e6%80%a7%e8%ae%be%e7%bd%ae%e8%b0%83%e5%ba%a6%e7%a8%8b%e5%ba%8f%e5%b0%86%e8%bf%99%e4%ba%9b%e7%94%a8%e4%bd%9c%e5%ba%a6%e9%87%8f%e6%a0%87%e5%87%86%e4%b9%8b%e4%b8%80%e4%bb%a5%e7%a1%ae%e5%ae%9a%e5%93%aa%e4%b8%aa%e8%8a%82%e7%82%b9%e6%9c%80%e9%80%82%e5%90%88%e5%bd%93%e5%89%8dpod%e6%a0%b9%e6%8d%ae%e8%b0%83%e5%ba%a6%e7%a8%8b%e5%ba%8f%e6%b2%a1%e6%9c%89%e5%86%85%e5%ad%98%e9%99%90%e5%88%b6%e7%9a%84%e5%ae%b9%e5%99%a8%e7%9a%84%e5%86%85%e5%ad%98%e5%88%a9%e7%94%a8%e7%8e%87%e4%b8%ba%e9%9b%b6%e5%a6%82%e6%9e%9c%e5%8f%af%e8%b0%83%e5%ba%a6%e5%9c%a8%e4%bb%bb%e4%bd%95%e8%8a%82%e7%82%b9%e4%b8%8a%e7%9a%84pod%e6%95%b0%e9%87%8f%e4%b8%8d%e5%8f%97%e9%99%90%e5%88%b6%e5%88%99%e4%bc%9a%e5%af%bc%e8%87%b4%e8%b5%84%e6%ba%90%e8%b6%85%e9%a2%9d%e4%bd%bf%e7%94%a8%e5%b9%b6%e5%8f%af%e8%83%bd%e5%af%bc%e8%87%b4%e8%8a%82%e7%82%b9%e5%92%8ckubelet%e5%b4%a9%e6%ba%83">#</a>
+</h5>
+<h5 id="同用的可以适用于cpu限制">
+  同用的可以适用于CPU限制
+  <a class="anchor" href="#%e5%90%8c%e7%94%a8%e7%9a%84%e5%8f%af%e4%bb%a5%e9%80%82%e7%94%a8%e4%ba%8ecpu%e9%99%90%e5%88%b6">#</a>
+</h5>
+<h5 id="但是您是否应该始终设置内存和cpu的限制和要求">
+  但是，您是否应该始终设置内存和CPU的限制和要求？
+  <a class="anchor" href="#%e4%bd%86%e6%98%af%e6%82%a8%e6%98%af%e5%90%a6%e5%ba%94%e8%af%a5%e5%a7%8b%e7%bb%88%e8%ae%be%e7%bd%ae%e5%86%85%e5%ad%98%e5%92%8ccpu%e7%9a%84%e9%99%90%e5%88%b6%e5%92%8c%e8%a6%81%e6%b1%82">#</a>
+</h5>
+<h5 id="如果您的进程超出内存限制则该进程将终止由于cpu是可压缩的资源因此如果您的容器超出限制则将限制该过程">
+  如果您的进程超出内存限制，则该进程将终止。由于CPU是可压缩的资源，因此如果您的容器超出限制，则将限制该过程。
+  <a class="anchor" href="#%e5%a6%82%e6%9e%9c%e6%82%a8%e7%9a%84%e8%bf%9b%e7%a8%8b%e8%b6%85%e5%87%ba%e5%86%85%e5%ad%98%e9%99%90%e5%88%b6%e5%88%99%e8%af%a5%e8%bf%9b%e7%a8%8b%e5%b0%86%e7%bb%88%e6%ad%a2%e7%94%b1%e4%ba%8ecpu%e6%98%af%e5%8f%af%e5%8e%8b%e7%bc%a9%e7%9a%84%e8%b5%84%e6%ba%90%e5%9b%a0%e6%ad%a4%e5%a6%82%e6%9e%9c%e6%82%a8%e7%9a%84%e5%ae%b9%e5%99%a8%e8%b6%85%e5%87%ba%e9%99%90%e5%88%b6%e5%88%99%e5%b0%86%e9%99%90%e5%88%b6%e8%af%a5%e8%bf%87%e7%a8%8b">#</a>
+</h5>
+<h5 id="如果您想更深入地研究cpu和内存限制则应查看以下文章">
+  如果您想更深入地研究CPU和内存限制，则应查看以下文章：
+  <a class="anchor" href="#%e5%a6%82%e6%9e%9c%e6%82%a8%e6%83%b3%e6%9b%b4%e6%b7%b1%e5%85%a5%e5%9c%b0%e7%a0%94%e7%a9%b6cpu%e5%92%8c%e5%86%85%e5%ad%98%e9%99%90%e5%88%b6%e5%88%99%e5%ba%94%e6%9f%a5%e7%9c%8b%e4%bb%a5%e4%b8%8b%e6%96%87%e7%ab%a0">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="understanding-resource-limits-in-kubernetes-memory">
+  Understanding resource limits in kubernetes: memory
+  <a class="anchor" href="#understanding-resource-limits-in-kubernetes-memory">#</a>
+</h5>
+</li>
+<li>
+<h5 id="understanding-resource-limits-in-kubernetes-cpu-time">
+  Understanding resource limits in kubernetes: cpu time
+  <a class="anchor" href="#understanding-resource-limits-in-kubernetes-cpu-time">#</a>
+</h5>
+</li>
+</ul>
+<h5 id="请注意如果不确定什么是正确的cpu或内存限制则可以在建议模式打开的情况下使用kubernetes中的vertical-pod-autoscaler自动缩放器会分析您的应用并建议限制">
+  请注意，如果不确定什么是正确的CPU或内存限制，则可以在建议模式打开的情况下使用Kubernetes中的Vertical Pod Autoscaler。自动缩放器会分析您的应用并建议限制。
+  <a class="anchor" href="#%e8%af%b7%e6%b3%a8%e6%84%8f%e5%a6%82%e6%9e%9c%e4%b8%8d%e7%a1%ae%e5%ae%9a%e4%bb%80%e4%b9%88%e6%98%af%e6%ad%a3%e7%a1%ae%e7%9a%84cpu%e6%88%96%e5%86%85%e5%ad%98%e9%99%90%e5%88%b6%e5%88%99%e5%8f%af%e4%bb%a5%e5%9c%a8%e5%bb%ba%e8%ae%ae%e6%a8%a1%e5%bc%8f%e6%89%93%e5%bc%80%e7%9a%84%e6%83%85%e5%86%b5%e4%b8%8b%e4%bd%bf%e7%94%a8kubernetes%e4%b8%ad%e7%9a%84vertical-pod-autoscaler%e8%87%aa%e5%8a%a8%e7%bc%a9%e6%94%be%e5%99%a8%e4%bc%9a%e5%88%86%e6%9e%90%e6%82%a8%e7%9a%84%e5%ba%94%e7%94%a8%e5%b9%b6%e5%bb%ba%e8%ae%ae%e9%99%90%e5%88%b6">#</a>
+</h5>
+<h3 id="152-将cpu请求设置为1个cpu或以下">
+  1.5.2 将CPU请求设置为1个CPU或以下
+  <a class="anchor" href="#152-%e5%b0%86cpu%e8%af%b7%e6%b1%82%e8%ae%be%e7%bd%ae%e4%b8%ba1%e4%b8%aacpu%e6%88%96%e4%bb%a5%e4%b8%8b">#</a>
+</h3>
+<h5 id="除非你有计算类型的实例类型job">
+  除非你有计算类型的实例类型job
+  <a class="anchor" href="#%e9%99%a4%e9%9d%9e%e4%bd%a0%e6%9c%89%e8%ae%a1%e7%ae%97%e7%b1%bb%e5%9e%8b%e7%9a%84%e5%ae%9e%e4%be%8b%e7%b1%bb%e5%9e%8bjob">#</a>
+</h5>
+<h5 id="it-is-recommended-to-set-the-request-to-1-cpu-or-below">
+  it is recommended to set the request to 1 CPU or below.
+  <a class="anchor" href="#it-is-recommended-to-set-the-request-to-1-cpu-or-below">#</a>
+</h5>
+<h3 id="153-禁用cpu限制除非您有很好的用例">
+  1.5.3 禁用CPU限制—除非您有很好的用例
+  <a class="anchor" href="#153-%e7%a6%81%e7%94%a8cpu%e9%99%90%e5%88%b6%e9%99%a4%e9%9d%9e%e6%82%a8%e6%9c%89%e5%be%88%e5%a5%bd%e7%9a%84%e7%94%a8%e4%be%8b">#</a>
+</h3>
+<h5 id="cpu以每个时间单位的cpu时间单位来度量">
+  CPU以每个时间单位的CPU时间单位来度量。
+  <a class="anchor" href="#cpu%e4%bb%a5%e6%af%8f%e4%b8%aa%e6%97%b6%e9%97%b4%e5%8d%95%e4%bd%8d%e7%9a%84cpu%e6%97%b6%e9%97%b4%e5%8d%95%e4%bd%8d%e6%9d%a5%e5%ba%a6%e9%87%8f">#</a>
+</h5>
+<h5 id="cpu1表示每秒1个cpu秒">
+  cpu：1表示每秒1个CPU秒。
+  <a class="anchor" href="#cpu1%e8%a1%a8%e7%a4%ba%e6%af%8f%e7%a7%921%e4%b8%aacpu%e7%a7%92">#</a>
+</h5>
+<h5 id="如果您有1个线程则每秒消耗的cpu时间不能超过1秒">
+  如果您有1个线程，则每秒消耗的CPU时间不能超过1秒。
+  <a class="anchor" href="#%e5%a6%82%e6%9e%9c%e6%82%a8%e6%9c%891%e4%b8%aa%e7%ba%bf%e7%a8%8b%e5%88%99%e6%af%8f%e7%a7%92%e6%b6%88%e8%80%97%e7%9a%84cpu%e6%97%b6%e9%97%b4%e4%b8%8d%e8%83%bd%e8%b6%85%e8%bf%871%e7%a7%92">#</a>
+</h5>
+<h5 id="如果您有2个线程则可以在05秒内消耗1个cpu秒">
+  如果您有2个线程，则可以在0.5秒内消耗1个CPU秒。
+  <a class="anchor" href="#%e5%a6%82%e6%9e%9c%e6%82%a8%e6%9c%892%e4%b8%aa%e7%ba%bf%e7%a8%8b%e5%88%99%e5%8f%af%e4%bb%a5%e5%9c%a805%e7%a7%92%e5%86%85%e6%b6%88%e8%80%971%e4%b8%aacpu%e7%a7%92">#</a>
+</h5>
+<h5 id="8个线程可以在0125秒内消耗1个cpu秒之后您的过程将受到限制">
+  8个线程可以在0.125秒内消耗1个CPU秒。之后，您的过程将受到限制。
+  <a class="anchor" href="#8%e4%b8%aa%e7%ba%bf%e7%a8%8b%e5%8f%af%e4%bb%a5%e5%9c%a80125%e7%a7%92%e5%86%85%e6%b6%88%e8%80%971%e4%b8%aacpu%e7%a7%92%e4%b9%8b%e5%90%8e%e6%82%a8%e7%9a%84%e8%bf%87%e7%a8%8b%e5%b0%86%e5%8f%97%e5%88%b0%e9%99%90%e5%88%b6">#</a>
+</h5>
+<h5 id="如果不确定您的应用程序的最佳设置是什么最好不要设置cpu限制">
+  如果不确定您的应用程序的最佳设置是什么，最好不要设置CPU限制。
+  <a class="anchor" href="#%e5%a6%82%e6%9e%9c%e4%b8%8d%e7%a1%ae%e5%ae%9a%e6%82%a8%e7%9a%84%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e7%9a%84%e6%9c%80%e4%bd%b3%e8%ae%be%e7%bd%ae%e6%98%af%e4%bb%80%e4%b9%88%e6%9c%80%e5%a5%bd%e4%b8%8d%e8%a6%81%e8%ae%be%e7%bd%aecpu%e9%99%90%e5%88%b6">#</a>
+</h5>
+<h5 id="深入研究可参考this-article-digs-deeper-in-cpu-requests-and-limits">
+  深入研究可参考：this article digs deeper in CPU requests and limits.
+  <a class="anchor" href="#%e6%b7%b1%e5%85%a5%e7%a0%94%e7%a9%b6%e5%8f%af%e5%8f%82%e8%80%83this-article-digs-deeper-in-cpu-requests-and-limits">#</a>
+</h5>
+<h3 id="154-命名空间具有limitrange">
+  1.5.4 命名空间具有LimitRange
+  <a class="anchor" href="#154-%e5%91%bd%e5%90%8d%e7%a9%ba%e9%97%b4%e5%85%b7%e6%9c%89limitrange">#</a>
+</h3>
+<h5 id="如果您认为可能忘记设置内存和cpu限制则应考虑使用limitrange对象为当前名称空间中部署的容器定义标准大小">
+  如果您认为可能忘记设置内存和CPU限制，则应考虑使用LimitRange对象为当前名称空间中部署的容器定义标准大小。
+  <a class="anchor" href="#%e5%a6%82%e6%9e%9c%e6%82%a8%e8%ae%a4%e4%b8%ba%e5%8f%af%e8%83%bd%e5%bf%98%e8%ae%b0%e8%ae%be%e7%bd%ae%e5%86%85%e5%ad%98%e5%92%8ccpu%e9%99%90%e5%88%b6%e5%88%99%e5%ba%94%e8%80%83%e8%99%91%e4%bd%bf%e7%94%a8limitrange%e5%af%b9%e8%b1%a1%e4%b8%ba%e5%bd%93%e5%89%8d%e5%90%8d%e7%a7%b0%e7%a9%ba%e9%97%b4%e4%b8%ad%e9%83%a8%e7%bd%b2%e7%9a%84%e5%ae%b9%e5%99%a8%e5%ae%9a%e4%b9%89%e6%a0%87%e5%87%86%e5%a4%a7%e5%b0%8f">#</a>
+</h5>
+<h5 id="可参考the-official-documentation-about-limitrange">
+  可参考：The official documentation about LimitRange
+  <a class="anchor" href="#%e5%8f%af%e5%8f%82%e8%80%83the-official-documentation-about-limitrange">#</a>
+</h5>
+<h3 id="155-为pod设置适当的服务质量qos">
+  1.5.5 为Pod设置适当的服务质量（QoS）
+  <a class="anchor" href="#155-%e4%b8%bapod%e8%ae%be%e7%bd%ae%e9%80%82%e5%bd%93%e7%9a%84%e6%9c%8d%e5%8a%a1%e8%b4%a8%e9%87%8fqos">#</a>
+</h3>
+<h5 id="当一个节点进入过量使用状态即使用过多资源时kubernetes试图驱逐该节点中的某些podkubernetes根据定义明确的逻辑对pod进行排名和逐出">
+  当一个节点进入过量使用状态（即使用过多资源）时，Kubernetes试图驱逐该节点中的某些Pod。Kubernetes根据定义明确的逻辑对Pod进行排名和逐出。
+  <a class="anchor" href="#%e5%bd%93%e4%b8%80%e4%b8%aa%e8%8a%82%e7%82%b9%e8%bf%9b%e5%85%a5%e8%bf%87%e9%87%8f%e4%bd%bf%e7%94%a8%e7%8a%b6%e6%80%81%e5%8d%b3%e4%bd%bf%e7%94%a8%e8%bf%87%e5%a4%9a%e8%b5%84%e6%ba%90%e6%97%b6kubernetes%e8%af%95%e5%9b%be%e9%a9%b1%e9%80%90%e8%af%a5%e8%8a%82%e7%82%b9%e4%b8%ad%e7%9a%84%e6%9f%90%e4%ba%9bpodkubernetes%e6%a0%b9%e6%8d%ae%e5%ae%9a%e4%b9%89%e6%98%8e%e7%a1%ae%e7%9a%84%e9%80%bb%e8%be%91%e5%af%b9pod%e8%bf%9b%e8%a1%8c%e6%8e%92%e5%90%8d%e5%92%8c%e9%80%90%e5%87%ba">#</a>
+</h5>
+<h5 id="参考configuring-the-quality-of-service-for-your-pods">
+  参考：configuring the quality of service for your Pods
+  <a class="anchor" href="#%e5%8f%82%e8%80%83configuring-the-quality-of-service-for-your-pods">#</a>
+</h5>
+<h2 id="16-标记资源">
+  1.6 标记资源
+  <a class="anchor" href="#16-%e6%a0%87%e8%ae%b0%e8%b5%84%e6%ba%90">#</a>
+</h2>
+<h3 id="161-资源已定义技术标签">
+  1.6.1 资源已定义技术标签
+  <a class="anchor" href="#161-%e8%b5%84%e6%ba%90%e5%b7%b2%e5%ae%9a%e4%b9%89%e6%8a%80%e6%9c%af%e6%a0%87%e7%ad%be">#</a>
+</h3>
+<h5 id="你能通过以下tag标记pod">
+  你能通过以下tag标记pod
+  <a class="anchor" href="#%e4%bd%a0%e8%83%bd%e9%80%9a%e8%bf%87%e4%bb%a5%e4%b8%8btag%e6%a0%87%e8%ae%b0pod">#</a>
+</h5>
+<h5 id="名称应用程序的名称例如用户api">
+  名称，应用程序的名称，例如“用户API”
+  <a class="anchor" href="#%e5%90%8d%e7%a7%b0%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e7%9a%84%e5%90%8d%e7%a7%b0%e4%be%8b%e5%a6%82%e7%94%a8%e6%88%b7api">#</a>
+</h5>
+<h5 id="实例标识应用程序实例的唯一名称您可以使用容器图像标签">
+  实例，标识应用程序实例的唯一名称（您可以使用容器图像标签）
+  <a class="anchor" href="#%e5%ae%9e%e4%be%8b%e6%a0%87%e8%af%86%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e5%ae%9e%e4%be%8b%e7%9a%84%e5%94%af%e4%b8%80%e5%90%8d%e7%a7%b0%e6%82%a8%e5%8f%af%e4%bb%a5%e4%bd%bf%e7%94%a8%e5%ae%b9%e5%99%a8%e5%9b%be%e5%83%8f%e6%a0%87%e7%ad%be">#</a>
+</h5>
+<h5 id="版本应用程序的当前版本增量计数器">
+  版本，应用程序的当前版本（增量计数器）
+  <a class="anchor" href="#%e7%89%88%e6%9c%ac%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e7%9a%84%e5%bd%93%e5%89%8d%e7%89%88%e6%9c%ac%e5%a2%9e%e9%87%8f%e8%ae%a1%e6%95%b0%e5%99%a8">#</a>
+</h5>
+<h5 id="组件架构中的组件例如-api或数据库">
+  组件，架构中的组件，例如“ API”或“数据库”
+  <a class="anchor" href="#%e7%bb%84%e4%bb%b6%e6%9e%b6%e6%9e%84%e4%b8%ad%e7%9a%84%e7%bb%84%e4%bb%b6%e4%be%8b%e5%a6%82-api%e6%88%96%e6%95%b0%e6%8d%ae%e5%ba%93">#</a>
+</h5>
+<h5 id="部分该应用程序所属的更高级别应用程序的名称例如支付网关由">
+  部分，该应用程序所属的更高级别应用程序的名称，例如“支付网关”由…
+  <a class="anchor" href="#%e9%83%a8%e5%88%86%e8%af%a5%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e6%89%80%e5%b1%9e%e7%9a%84%e6%9b%b4%e9%ab%98%e7%ba%a7%e5%88%ab%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e7%9a%84%e5%90%8d%e7%a7%b0%e4%be%8b%e5%a6%82%e6%94%af%e4%bb%98%e7%bd%91%e5%85%b3%e7%94%b1">#</a>
+</h5>
+<h5 id="管理用于管理应用程序例如-kubectl或-helm的操作的工具">
+  管理，用于管理应用程序（例如“ kubectl”或“ Helm”）的操作的工具
+  <a class="anchor" href="#%e7%ae%a1%e7%90%86%e7%94%a8%e4%ba%8e%e7%ae%a1%e7%90%86%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e4%be%8b%e5%a6%82-kubectl%e6%88%96-helm%e7%9a%84%e6%93%8d%e4%bd%9c%e7%9a%84%e5%b7%a5%e5%85%b7">#</a>
+</h5>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403221001482.png" alt="image-20240322100115414" /></p>
+<h5 id="标签可参考recommended-by-the-official-documentation">
+  标签可参考：recommended by the official documentation.
+  <a class="anchor" href="#%e6%a0%87%e7%ad%be%e5%8f%af%e5%8f%82%e8%80%83recommended-by-the-official-documentation">#</a>
+</h5>
+<h5 id="建议不要标记所有资源">
+  建议不要标记所有资源。
+  <a class="anchor" href="#%e5%bb%ba%e8%ae%ae%e4%b8%8d%e8%a6%81%e6%a0%87%e8%ae%b0%e6%89%80%e6%9c%89%e8%b5%84%e6%ba%90">#</a>
+</h5>
+<h3 id="162-资源已定义业务标签">
+  1.6.2 资源已定义业务标签
+  <a class="anchor" href="#162-%e8%b5%84%e6%ba%90%e5%b7%b2%e5%ae%9a%e4%b9%89%e4%b8%9a%e5%8a%a1%e6%a0%87%e7%ad%be">#</a>
+</h3>
+<h5 id="您可以使用以下标签标记pod">
+  您可以使用以下标签标记Pod：
+  <a class="anchor" href="#%e6%82%a8%e5%8f%af%e4%bb%a5%e4%bd%bf%e7%94%a8%e4%bb%a5%e4%b8%8b%e6%a0%87%e7%ad%be%e6%a0%87%e8%ae%b0pod">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="owner标示改资源的负责人">
+  owner：标示改资源的负责人
+  <a class="anchor" href="#owner%e6%a0%87%e7%a4%ba%e6%94%b9%e8%b5%84%e6%ba%90%e7%9a%84%e8%b4%9f%e8%b4%a3%e4%ba%ba">#</a>
+</h5>
+</li>
+<li>
+<h5 id="project声明资源所属的项目">
+  project：声明资源所属的项目
+  <a class="anchor" href="#project%e5%a3%b0%e6%98%8e%e8%b5%84%e6%ba%90%e6%89%80%e5%b1%9e%e7%9a%84%e9%a1%b9%e7%9b%ae">#</a>
+</h5>
+</li>
+<li>
+<h5 id="business-unit用于标识与资源关联的成本中心或业务部门通常用于成本分配和跟踪">
+  business-unit：用于标识与资源关联的成本中心或业务部门；通常用于成本分配和跟踪
+  <a class="anchor" href="#business-unit%e7%94%a8%e4%ba%8e%e6%a0%87%e8%af%86%e4%b8%8e%e8%b5%84%e6%ba%90%e5%85%b3%e8%81%94%e7%9a%84%e6%88%90%e6%9c%ac%e4%b8%ad%e5%bf%83%e6%88%96%e4%b8%9a%e5%8a%a1%e9%83%a8%e9%97%a8%e9%80%9a%e5%b8%b8%e7%94%a8%e4%ba%8e%e6%88%90%e6%9c%ac%e5%88%86%e9%85%8d%e5%92%8c%e8%b7%9f%e8%b8%aa">#</a>
+</h5>
+</li>
+</ul>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403221001830.png" alt="image-20240322100134771" /></p>
+<h3 id="163-资源定义安全等级标签">
+  1.6.3 资源定义安全等级标签
+  <a class="anchor" href="#163-%e8%b5%84%e6%ba%90%e5%ae%9a%e4%b9%89%e5%ae%89%e5%85%a8%e7%ad%89%e7%ba%a7%e6%a0%87%e7%ad%be">#</a>
+</h3>
+<h5 id="tag-pod通过以下label">
+  tag pod通过以下label
+  <a class="anchor" href="#tag-pod%e9%80%9a%e8%bf%87%e4%bb%a5%e4%b8%8blabel">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="confidentiality资源支持的特定数据保密级别的标识符">
+  confidentiality：资源支持的特定数据保密级别的标识符
+  <a class="anchor" href="#confidentiality%e8%b5%84%e6%ba%90%e6%94%af%e6%8c%81%e7%9a%84%e7%89%b9%e5%ae%9a%e6%95%b0%e6%8d%ae%e4%bf%9d%e5%af%86%e7%ba%a7%e5%88%ab%e7%9a%84%e6%a0%87%e8%af%86%e7%ac%a6">#</a>
+</h5>
+</li>
+<li>
+<h5 id="compliancean-identifier-for-workloads-designed-to-adhere-to-specific-compliance-requirements">
+  compliance：an identifier for workloads designed to adhere to specific compliance requirements
+  <a class="anchor" href="#compliancean-identifier-for-workloads-designed-to-adhere-to-specific-compliance-requirements">#</a>
+</h5>
+</li>
+</ul>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403221001242.png" alt="image-20240322100151184" /></p>
+<h2 id="17-日志">
+  1.7 日志
+  <a class="anchor" href="#17-%e6%97%a5%e5%bf%97">#</a>
+</h2>
+<h5 id="日志对于调试问题和监视应用程序活动特别有用">
+  日志对于调试问题和监视应用程序活动特别有用。
+  <a class="anchor" href="#%e6%97%a5%e5%bf%97%e5%af%b9%e4%ba%8e%e8%b0%83%e8%af%95%e9%97%ae%e9%a2%98%e5%92%8c%e7%9b%91%e8%a7%86%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e6%b4%bb%e5%8a%a8%e7%89%b9%e5%88%ab%e6%9c%89%e7%94%a8">#</a>
+</h5>
+<h3 id="171-应用程序记录到stdout和stderr">
+  1.7.1 应用程序记录到stdout和stderr
+  <a class="anchor" href="#171-%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e8%ae%b0%e5%bd%95%e5%88%b0stdout%e5%92%8cstderr">#</a>
+</h3>
+<h5 id="有两种日志策略主动方式与被动方式">
+  有两种日志策略，主动方式与被动方式
+  <a class="anchor" href="#%e6%9c%89%e4%b8%a4%e7%a7%8d%e6%97%a5%e5%bf%97%e7%ad%96%e7%95%a5%e4%b8%bb%e5%8a%a8%e6%96%b9%e5%bc%8f%e4%b8%8e%e8%a2%ab%e5%8a%a8%e6%96%b9%e5%bc%8f">#</a>
+</h5>
+<h5 id="使用被动方式日志记录的应用程序不需要了解了解日志记录基础结构而是将消息记录到标准输出中">
+  使用被动方式日志记录的应用程序不需要了解了解日志记录基础结构，而是将消息记录到标准输出中。
+  <a class="anchor" href="#%e4%bd%bf%e7%94%a8%e8%a2%ab%e5%8a%a8%e6%96%b9%e5%bc%8f%e6%97%a5%e5%bf%97%e8%ae%b0%e5%bd%95%e7%9a%84%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e4%b8%8d%e9%9c%80%e8%a6%81%e4%ba%86%e8%a7%a3%e4%ba%86%e8%a7%a3%e6%97%a5%e5%bf%97%e8%ae%b0%e5%bd%95%e5%9f%ba%e7%a1%80%e7%bb%93%e6%9e%84%e8%80%8c%e6%98%af%e5%b0%86%e6%b6%88%e6%81%af%e8%ae%b0%e5%bd%95%e5%88%b0%e6%a0%87%e5%87%86%e8%be%93%e5%87%ba%e4%b8%ad">#</a>
+</h5>
+<h5 id="主动方式该应用程序与中间聚合器建立了网络连接将数据发送到第三方日志记录服务或直接写入数据库或索引">
+  主动方式，该应用程序与中间聚合器建立了网络连接，将数据发送到第三方日志记录服务，或直接写入数据库或索引。
+  <a class="anchor" href="#%e4%b8%bb%e5%8a%a8%e6%96%b9%e5%bc%8f%e8%af%a5%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e4%b8%8e%e4%b8%ad%e9%97%b4%e8%81%9a%e5%90%88%e5%99%a8%e5%bb%ba%e7%ab%8b%e4%ba%86%e7%bd%91%e7%bb%9c%e8%bf%9e%e6%8e%a5%e5%b0%86%e6%95%b0%e6%8d%ae%e5%8f%91%e9%80%81%e5%88%b0%e7%ac%ac%e4%b8%89%e6%96%b9%e6%97%a5%e5%bf%97%e8%ae%b0%e5%bd%95%e6%9c%8d%e5%8a%a1%e6%88%96%e7%9b%b4%e6%8e%a5%e5%86%99%e5%85%a5%e6%95%b0%e6%8d%ae%e5%ba%93%e6%88%96%e7%b4%a2%e5%bc%95">#</a>
+</h5>
+<h5 id="最佳实践the-twelve-factor-app">
+  最佳实践：the twelve-factor app.
+  <a class="anchor" href="#%e6%9c%80%e4%bd%b3%e5%ae%9e%e8%b7%b5the-twelve-factor-app">#</a>
+</h5>
+<h3 id="172-避免日志使用sidecars模式">
+  1.7.2 避免日志使用sidecars模式
+  <a class="anchor" href="#172-%e9%81%bf%e5%85%8d%e6%97%a5%e5%bf%97%e4%bd%bf%e7%94%a8sidecars%e6%a8%a1%e5%bc%8f">#</a>
+</h3>
+<h5 id="如果希望将日志转换应用于具有非标准日志事件模型的应用程序则可能需要使用sidecar容器">
+  如果希望将日志转换应用于具有非标准日志事件模型的应用程序，则可能需要使用sidecar容器。
+  <a class="anchor" href="#%e5%a6%82%e6%9e%9c%e5%b8%8c%e6%9c%9b%e5%b0%86%e6%97%a5%e5%bf%97%e8%bd%ac%e6%8d%a2%e5%ba%94%e7%94%a8%e4%ba%8e%e5%85%b7%e6%9c%89%e9%9d%9e%e6%a0%87%e5%87%86%e6%97%a5%e5%bf%97%e4%ba%8b%e4%bb%b6%e6%a8%a1%e5%9e%8b%e7%9a%84%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e5%88%99%e5%8f%af%e8%83%bd%e9%9c%80%e8%a6%81%e4%bd%bf%e7%94%a8sidecar%e5%ae%b9%e5%99%a8">#</a>
+</h5>
+<h5 id="使用sidecar容器您可以在将日志条目运送到其他地方之前对其进行规范化">
+  使用Sidecar容器，您可以在将日志条目运送到其他地方之前对其进行规范化。
+  <a class="anchor" href="#%e4%bd%bf%e7%94%a8sidecar%e5%ae%b9%e5%99%a8%e6%82%a8%e5%8f%af%e4%bb%a5%e5%9c%a8%e5%b0%86%e6%97%a5%e5%bf%97%e6%9d%a1%e7%9b%ae%e8%bf%90%e9%80%81%e5%88%b0%e5%85%b6%e4%bb%96%e5%9c%b0%e6%96%b9%e4%b9%8b%e5%89%8d%e5%af%b9%e5%85%b6%e8%bf%9b%e8%a1%8c%e8%a7%84%e8%8c%83%e5%8c%96">#</a>
+</h5>
+<h5 id="例如您可能需要先将apache日志转换为logstash-json格式然后再将其发送到日志基础结构">
+  例如，您可能需要先将Apache日志转换为Logstash JSON格式，然后再将其发送到日志基础结构。
+  <a class="anchor" href="#%e4%be%8b%e5%a6%82%e6%82%a8%e5%8f%af%e8%83%bd%e9%9c%80%e8%a6%81%e5%85%88%e5%b0%86apache%e6%97%a5%e5%bf%97%e8%bd%ac%e6%8d%a2%e4%b8%balogstash-json%e6%a0%bc%e5%bc%8f%e7%84%b6%e5%90%8e%e5%86%8d%e5%b0%86%e5%85%b6%e5%8f%91%e9%80%81%e5%88%b0%e6%97%a5%e5%bf%97%e5%9f%ba%e7%a1%80%e7%bb%93%e6%9e%84">#</a>
+</h5>
+<h5 id="但是如果您可以控制应用程序则可以从一开始就输出正确的格式">
+  但是，如果您可以控制应用程序，则可以从一开始就输出正确的格式。
+  <a class="anchor" href="#%e4%bd%86%e6%98%af%e5%a6%82%e6%9e%9c%e6%82%a8%e5%8f%af%e4%bb%a5%e6%8e%a7%e5%88%b6%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e5%88%99%e5%8f%af%e4%bb%a5%e4%bb%8e%e4%b8%80%e5%bc%80%e5%a7%8b%e5%b0%b1%e8%be%93%e5%87%ba%e6%ad%a3%e7%a1%ae%e7%9a%84%e6%a0%bc%e5%bc%8f">#</a>
+</h5>
+<h5 id="sidecares启动需要时间您可以节省为群集中的每个pod运行额外的容器的时间">
+  sidecares启动需要时间，您可以节省为群集中的每个Pod运行额外的容器的时间。
+  <a class="anchor" href="#sidecares%e5%90%af%e5%8a%a8%e9%9c%80%e8%a6%81%e6%97%b6%e9%97%b4%e6%82%a8%e5%8f%af%e4%bb%a5%e8%8a%82%e7%9c%81%e4%b8%ba%e7%be%a4%e9%9b%86%e4%b8%ad%e7%9a%84%e6%af%8f%e4%b8%aapod%e8%bf%90%e8%a1%8c%e9%a2%9d%e5%a4%96%e7%9a%84%e5%ae%b9%e5%99%a8%e7%9a%84%e6%97%b6%e9%97%b4">#</a>
+</h5>
+<h2 id="18-伸缩">
+  1.8 伸缩
+  <a class="anchor" href="#18-%e4%bc%b8%e7%bc%a9">#</a>
+</h2>
+<h5 id="容器具有本地文件系统您可能会想使用它来持久化数据">
+  容器具有本地文件系统，您可能会想使用它来持久化数据。
+  <a class="anchor" href="#%e5%ae%b9%e5%99%a8%e5%85%b7%e6%9c%89%e6%9c%ac%e5%9c%b0%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f%e6%82%a8%e5%8f%af%e8%83%bd%e4%bc%9a%e6%83%b3%e4%bd%bf%e7%94%a8%e5%ae%83%e6%9d%a5%e6%8c%81%e4%b9%85%e5%8c%96%e6%95%b0%e6%8d%ae">#</a>
+</h5>
+<h5 id="但是将持久性数据存储在容器的本地文件系统中会阻止包围的pod进行水平缩放即通过添加或删除pod的副本">
+  但是，将持久性数据存储在容器的本地文件系统中会阻止包围的Pod进行水平缩放（即通过添加或删除Pod的副本）。
+  <a class="anchor" href="#%e4%bd%86%e6%98%af%e5%b0%86%e6%8c%81%e4%b9%85%e6%80%a7%e6%95%b0%e6%8d%ae%e5%ad%98%e5%82%a8%e5%9c%a8%e5%ae%b9%e5%99%a8%e7%9a%84%e6%9c%ac%e5%9c%b0%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f%e4%b8%ad%e4%bc%9a%e9%98%bb%e6%ad%a2%e5%8c%85%e5%9b%b4%e7%9a%84pod%e8%bf%9b%e8%a1%8c%e6%b0%b4%e5%b9%b3%e7%bc%a9%e6%94%be%e5%8d%b3%e9%80%9a%e8%bf%87%e6%b7%bb%e5%8a%a0%e6%88%96%e5%88%a0%e9%99%a4pod%e7%9a%84%e5%89%af%e6%9c%ac">#</a>
+</h5>
+<h5 id="这是因为通过使用本地文件系统每个容器都维护自己的状态这意味着pod副本的状态可能会随时间而变化从用户的角度来看这会导致行为不一致例如当请求命中一个pod时特定的用户信息可用但当请求命中另一个pod时则不可用">
+  这是因为，通过使用本地文件系统，每个容器都维护自己的“状态”，这意味着Pod副本的状态可能会随时间而变化。从用户的角度来看，这会导致行为不一致（例如，当请求命中一个Pod时，特定的用户信息可用，但当请求命中另一个Pod时，则不可用）。
+  <a class="anchor" href="#%e8%bf%99%e6%98%af%e5%9b%a0%e4%b8%ba%e9%80%9a%e8%bf%87%e4%bd%bf%e7%94%a8%e6%9c%ac%e5%9c%b0%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f%e6%af%8f%e4%b8%aa%e5%ae%b9%e5%99%a8%e9%83%bd%e7%bb%b4%e6%8a%a4%e8%87%aa%e5%b7%b1%e7%9a%84%e7%8a%b6%e6%80%81%e8%bf%99%e6%84%8f%e5%91%b3%e7%9d%80pod%e5%89%af%e6%9c%ac%e7%9a%84%e7%8a%b6%e6%80%81%e5%8f%af%e8%83%bd%e4%bc%9a%e9%9a%8f%e6%97%b6%e9%97%b4%e8%80%8c%e5%8f%98%e5%8c%96%e4%bb%8e%e7%94%a8%e6%88%b7%e7%9a%84%e8%a7%92%e5%ba%a6%e6%9d%a5%e7%9c%8b%e8%bf%99%e4%bc%9a%e5%af%bc%e8%87%b4%e8%a1%8c%e4%b8%ba%e4%b8%8d%e4%b8%80%e8%87%b4%e4%be%8b%e5%a6%82%e5%bd%93%e8%af%b7%e6%b1%82%e5%91%bd%e4%b8%ad%e4%b8%80%e4%b8%aapod%e6%97%b6%e7%89%b9%e5%ae%9a%e7%9a%84%e7%94%a8%e6%88%b7%e4%bf%a1%e6%81%af%e5%8f%af%e7%94%a8%e4%bd%86%e5%bd%93%e8%af%b7%e6%b1%82%e5%91%bd%e4%b8%ad%e5%8f%a6%e4%b8%80%e4%b8%aapod%e6%97%b6%e5%88%99%e4%b8%8d%e5%8f%af%e7%94%a8">#</a>
+</h5>
+<h5 id="相反任何持久性信息都应保存在pod外部的中央位置例如在集群中的persistentvolume中或者在集群外部的某些存储服务中甚至更好">
+  相反，任何持久性信息都应保存在Pod外部的中央位置。例如，在集群中的PersistentVolume中，或者在集群外部的某些存储服务中甚至更好。
+  <a class="anchor" href="#%e7%9b%b8%e5%8f%8d%e4%bb%bb%e4%bd%95%e6%8c%81%e4%b9%85%e6%80%a7%e4%bf%a1%e6%81%af%e9%83%bd%e5%ba%94%e4%bf%9d%e5%ad%98%e5%9c%a8pod%e5%a4%96%e9%83%a8%e7%9a%84%e4%b8%ad%e5%a4%ae%e4%bd%8d%e7%bd%ae%e4%be%8b%e5%a6%82%e5%9c%a8%e9%9b%86%e7%be%a4%e4%b8%ad%e7%9a%84persistentvolume%e4%b8%ad%e6%88%96%e8%80%85%e5%9c%a8%e9%9b%86%e7%be%a4%e5%a4%96%e9%83%a8%e7%9a%84%e6%9f%90%e4%ba%9b%e5%ad%98%e5%82%a8%e6%9c%8d%e5%8a%a1%e4%b8%ad%e7%94%9a%e8%87%b3%e6%9b%b4%e5%a5%bd">#</a>
+</h5>
+<h3 id="181-容器在其本地文件系统中不存储任何状态">
+  1.8.1 容器在其本地文件系统中不存储任何状态
+  <a class="anchor" href="#181-%e5%ae%b9%e5%99%a8%e5%9c%a8%e5%85%b6%e6%9c%ac%e5%9c%b0%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f%e4%b8%ad%e4%b8%8d%e5%ad%98%e5%82%a8%e4%bb%bb%e4%bd%95%e7%8a%b6%e6%80%81">#</a>
+</h3>
+<h5 id="容器具有本地文件系统您可能会想使用它来持久化数据-1">
+  容器具有本地文件系统，您可能会想使用它来持久化数据。
+  <a class="anchor" href="#%e5%ae%b9%e5%99%a8%e5%85%b7%e6%9c%89%e6%9c%ac%e5%9c%b0%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f%e6%82%a8%e5%8f%af%e8%83%bd%e4%bc%9a%e6%83%b3%e4%bd%bf%e7%94%a8%e5%ae%83%e6%9d%a5%e6%8c%81%e4%b9%85%e5%8c%96%e6%95%b0%e6%8d%ae-1">#</a>
+</h5>
+<h5 id="但是将持久性数据存储在容器的本地文件系统中会阻止包围的pod进行水平缩放即通过添加或删除pod的副本-1">
+  但是，将持久性数据存储在容器的本地文件系统中会阻止包围的Pod进行水平缩放（即通过添加或删除Pod的副本）。
+  <a class="anchor" href="#%e4%bd%86%e6%98%af%e5%b0%86%e6%8c%81%e4%b9%85%e6%80%a7%e6%95%b0%e6%8d%ae%e5%ad%98%e5%82%a8%e5%9c%a8%e5%ae%b9%e5%99%a8%e7%9a%84%e6%9c%ac%e5%9c%b0%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f%e4%b8%ad%e4%bc%9a%e9%98%bb%e6%ad%a2%e5%8c%85%e5%9b%b4%e7%9a%84pod%e8%bf%9b%e8%a1%8c%e6%b0%b4%e5%b9%b3%e7%bc%a9%e6%94%be%e5%8d%b3%e9%80%9a%e8%bf%87%e6%b7%bb%e5%8a%a0%e6%88%96%e5%88%a0%e9%99%a4pod%e7%9a%84%e5%89%af%e6%9c%ac-1">#</a>
+</h5>
+<h5 id="这是因为通过使用本地文件系统每个容器都维护自己的状态这意味着pod副本的状态可能会随时间而变化从用户的角度来看这会导致行为不一致例如当请求命中一个pod时特定的用户信息可用但当请求命中另一个pod时则不可用-1">
+  这是因为，通过使用本地文件系统，每个容器都维护自己的“状态”，这意味着Pod副本的状态可能会随时间而变化。从用户的角度来看，这会导致行为不一致（例如，当请求命中一个Pod时，特定的用户信息可用，但当请求命中另一个Pod时，则不可用）。
+  <a class="anchor" href="#%e8%bf%99%e6%98%af%e5%9b%a0%e4%b8%ba%e9%80%9a%e8%bf%87%e4%bd%bf%e7%94%a8%e6%9c%ac%e5%9c%b0%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f%e6%af%8f%e4%b8%aa%e5%ae%b9%e5%99%a8%e9%83%bd%e7%bb%b4%e6%8a%a4%e8%87%aa%e5%b7%b1%e7%9a%84%e7%8a%b6%e6%80%81%e8%bf%99%e6%84%8f%e5%91%b3%e7%9d%80pod%e5%89%af%e6%9c%ac%e7%9a%84%e7%8a%b6%e6%80%81%e5%8f%af%e8%83%bd%e4%bc%9a%e9%9a%8f%e6%97%b6%e9%97%b4%e8%80%8c%e5%8f%98%e5%8c%96%e4%bb%8e%e7%94%a8%e6%88%b7%e7%9a%84%e8%a7%92%e5%ba%a6%e6%9d%a5%e7%9c%8b%e8%bf%99%e4%bc%9a%e5%af%bc%e8%87%b4%e8%a1%8c%e4%b8%ba%e4%b8%8d%e4%b8%80%e8%87%b4%e4%be%8b%e5%a6%82%e5%bd%93%e8%af%b7%e6%b1%82%e5%91%bd%e4%b8%ad%e4%b8%80%e4%b8%aapod%e6%97%b6%e7%89%b9%e5%ae%9a%e7%9a%84%e7%94%a8%e6%88%b7%e4%bf%a1%e6%81%af%e5%8f%af%e7%94%a8%e4%bd%86%e5%bd%93%e8%af%b7%e6%b1%82%e5%91%bd%e4%b8%ad%e5%8f%a6%e4%b8%80%e4%b8%aapod%e6%97%b6%e5%88%99%e4%b8%8d%e5%8f%af%e7%94%a8-1">#</a>
+</h5>
+<h5 id="相反任何持久性信息都应保存在pod外部的中央位置例如在集群中的persistentvolume中或者在集群外部的某些存储服务中甚至更好-1">
+  相反，任何持久性信息都应保存在Pod外部的中央位置。例如，在集群中的PersistentVolume中，或者在集群外部的某些存储服务中甚至更好。
+  <a class="anchor" href="#%e7%9b%b8%e5%8f%8d%e4%bb%bb%e4%bd%95%e6%8c%81%e4%b9%85%e6%80%a7%e4%bf%a1%e6%81%af%e9%83%bd%e5%ba%94%e4%bf%9d%e5%ad%98%e5%9c%a8pod%e5%a4%96%e9%83%a8%e7%9a%84%e4%b8%ad%e5%a4%ae%e4%bd%8d%e7%bd%ae%e4%be%8b%e5%a6%82%e5%9c%a8%e9%9b%86%e7%be%a4%e4%b8%ad%e7%9a%84persistentvolume%e4%b8%ad%e6%88%96%e8%80%85%e5%9c%a8%e9%9b%86%e7%be%a4%e5%a4%96%e9%83%a8%e7%9a%84%e6%9f%90%e4%ba%9b%e5%ad%98%e5%82%a8%e6%9c%8d%e5%8a%a1%e4%b8%ad%e7%94%9a%e8%87%b3%e6%9b%b4%e5%a5%bd-1">#</a>
+</h5>
+<h3 id="182-对于可变使用模式的应用应该使用hpa">
+  1.8.2 对于可变使用模式的应用应该使用HPA
+  <a class="anchor" href="#182-%e5%af%b9%e4%ba%8e%e5%8f%af%e5%8f%98%e4%bd%bf%e7%94%a8%e6%a8%a1%e5%bc%8f%e7%9a%84%e5%ba%94%e7%94%a8%e5%ba%94%e8%af%a5%e4%bd%bf%e7%94%a8hpa">#</a>
+</h3>
+<h5 id="hpa是kubernetes内置的一个特性它能够监控当前的应用和根据当前的使用率自动添加及删除pod副本">
+  HPA是kubernetes内置的一个特性它能够监控当前的应用和根据当前的使用率自动添加及删除POD副本
+  <a class="anchor" href="#hpa%e6%98%afkubernetes%e5%86%85%e7%bd%ae%e7%9a%84%e4%b8%80%e4%b8%aa%e7%89%b9%e6%80%a7%e5%ae%83%e8%83%bd%e5%a4%9f%e7%9b%91%e6%8e%a7%e5%bd%93%e5%89%8d%e7%9a%84%e5%ba%94%e7%94%a8%e5%92%8c%e6%a0%b9%e6%8d%ae%e5%bd%93%e5%89%8d%e7%9a%84%e4%bd%bf%e7%94%a8%e7%8e%87%e8%87%aa%e5%8a%a8%e6%b7%bb%e5%8a%a0%e5%8f%8a%e5%88%a0%e9%99%a4pod%e5%89%af%e6%9c%ac">#</a>
+</h5>
+<h5 id="通过配置hpa来保障你的应用在任何情况下包括异常流量峰值能够保存可用及正常响应">
+  通过配置HPA来保障你的应用在任何情况下包括（异常流量峰值）能够保存可用及正常响应
+  <a class="anchor" href="#%e9%80%9a%e8%bf%87%e9%85%8d%e7%bd%aehpa%e6%9d%a5%e4%bf%9d%e9%9a%9c%e4%bd%a0%e7%9a%84%e5%ba%94%e7%94%a8%e5%9c%a8%e4%bb%bb%e4%bd%95%e6%83%85%e5%86%b5%e4%b8%8b%e5%8c%85%e6%8b%ac%e5%bc%82%e5%b8%b8%e6%b5%81%e9%87%8f%e5%b3%b0%e5%80%bc%e8%83%bd%e5%a4%9f%e4%bf%9d%e5%ad%98%e5%8f%af%e7%94%a8%e5%8f%8a%e6%ad%a3%e5%b8%b8%e5%93%8d%e5%ba%94">#</a>
+</h5>
+<h5 id="配置hpa自动伸缩你的应用需要去创建一个hpa的资源对象该对象定义了监控你应用的什么指标">
+  配置HPA自动伸缩你的应用，需要去创建一个HPA的资源对象，该对象定义了监控你应用的什么指标
+  <a class="anchor" href="#%e9%85%8d%e7%bd%aehpa%e8%87%aa%e5%8a%a8%e4%bc%b8%e7%bc%a9%e4%bd%a0%e7%9a%84%e5%ba%94%e7%94%a8%e9%9c%80%e8%a6%81%e5%8e%bb%e5%88%9b%e5%bb%ba%e4%b8%80%e4%b8%aahpa%e7%9a%84%e8%b5%84%e6%ba%90%e5%af%b9%e8%b1%a1%e8%af%a5%e5%af%b9%e8%b1%a1%e5%ae%9a%e4%b9%89%e4%ba%86%e7%9b%91%e6%8e%a7%e4%bd%a0%e5%ba%94%e7%94%a8%e7%9a%84%e4%bb%80%e4%b9%88%e6%8c%87%e6%a0%87">#</a>
+</h5>
+<h5 id="hpa也能够健康k8s内置的资源指标pod的cpumem资源使用率或者自定义指标对于自定义指标你需要去收集和暴露这些指标例如你可用使用prometheusprometheus-adapter">
+  HPA也能够健康k8s内置的资源指标（POD的CPU/MEM资源使用率）或者自定义指标，对于自定义指标，你需要去收集和暴露这些指标，例如你可用使用Prometheus/Prometheus Adapter
+  <a class="anchor" href="#hpa%e4%b9%9f%e8%83%bd%e5%a4%9f%e5%81%a5%e5%ba%b7k8s%e5%86%85%e7%bd%ae%e7%9a%84%e8%b5%84%e6%ba%90%e6%8c%87%e6%a0%87pod%e7%9a%84cpumem%e8%b5%84%e6%ba%90%e4%bd%bf%e7%94%a8%e7%8e%87%e6%88%96%e8%80%85%e8%87%aa%e5%ae%9a%e4%b9%89%e6%8c%87%e6%a0%87%e5%af%b9%e4%ba%8e%e8%87%aa%e5%ae%9a%e4%b9%89%e6%8c%87%e6%a0%87%e4%bd%a0%e9%9c%80%e8%a6%81%e5%8e%bb%e6%94%b6%e9%9b%86%e5%92%8c%e6%9a%b4%e9%9c%b2%e8%bf%99%e4%ba%9b%e6%8c%87%e6%a0%87%e4%be%8b%e5%a6%82%e4%bd%a0%e5%8f%af%e7%94%a8%e4%bd%bf%e7%94%a8prometheusprometheus-adapter">#</a>
+</h5>
+<h3 id="183-不要使用vpa因为改特性还在测试中">
+  1.8.3 不要使用VPA，因为改特性还在测试中
+  <a class="anchor" href="#183-%e4%b8%8d%e8%a6%81%e4%bd%bf%e7%94%a8vpa%e5%9b%a0%e4%b8%ba%e6%94%b9%e7%89%b9%e6%80%a7%e8%bf%98%e5%9c%a8%e6%b5%8b%e8%af%95%e4%b8%ad">#</a>
+</h3>
+<h5 id="当pod需要更多资源时vpa能够通过自动的调整你的pod的资源请求和限制">
+  当POD需要更多资源时，VPA能够通过自动的调整你的POD的资源请求和限制，
+  <a class="anchor" href="#%e5%bd%93pod%e9%9c%80%e8%a6%81%e6%9b%b4%e5%a4%9a%e8%b5%84%e6%ba%90%e6%97%b6vpa%e8%83%bd%e5%a4%9f%e9%80%9a%e8%bf%87%e8%87%aa%e5%8a%a8%e7%9a%84%e8%b0%83%e6%95%b4%e4%bd%a0%e7%9a%84pod%e7%9a%84%e8%b5%84%e6%ba%90%e8%af%b7%e6%b1%82%e5%92%8c%e9%99%90%e5%88%b6">#</a>
+</h5>
+<h5 id="vpa非常适用于单体应用无法进行横向副本数的扩张">
+  VPA非常适用于单体应用无法进行横向副本数的扩张
+  <a class="anchor" href="#vpa%e9%9d%9e%e5%b8%b8%e9%80%82%e7%94%a8%e4%ba%8e%e5%8d%95%e4%bd%93%e5%ba%94%e7%94%a8%e6%97%a0%e6%b3%95%e8%bf%9b%e8%a1%8c%e6%a8%aa%e5%90%91%e5%89%af%e6%9c%ac%e6%95%b0%e7%9a%84%e6%89%a9%e5%bc%a0">#</a>
+</h5>
+<h5 id="但是目前vpa仍然处于测试阶段垂直方向调整pod资源需要重启pod">
+  但是目前VPA仍然处于测试阶段，垂直方向调整POD资源需要重启POD
+  <a class="anchor" href="#%e4%bd%86%e6%98%af%e7%9b%ae%e5%89%8dvpa%e4%bb%8d%e7%84%b6%e5%a4%84%e4%ba%8e%e6%b5%8b%e8%af%95%e9%98%b6%e6%ae%b5%e5%9e%82%e7%9b%b4%e6%96%b9%e5%90%91%e8%b0%83%e6%95%b4pod%e8%b5%84%e6%ba%90%e9%9c%80%e8%a6%81%e9%87%8d%e5%90%afpod">#</a>
+</h5>
+<h5 id="考虑到这些限制更多的应用在k8s中可用横行扩张因此不要在生产环境中使用vpa">
+  考虑到这些限制，更多的应用在k8s中可用横行扩张，因此不要在生产环境中使用VPA
+  <a class="anchor" href="#%e8%80%83%e8%99%91%e5%88%b0%e8%bf%99%e4%ba%9b%e9%99%90%e5%88%b6%e6%9b%b4%e5%a4%9a%e7%9a%84%e5%ba%94%e7%94%a8%e5%9c%a8k8s%e4%b8%ad%e5%8f%af%e7%94%a8%e6%a8%aa%e8%a1%8c%e6%89%a9%e5%bc%a0%e5%9b%a0%e6%ad%a4%e4%b8%8d%e8%a6%81%e5%9c%a8%e7%94%9f%e4%ba%a7%e7%8e%af%e5%a2%83%e4%b8%ad%e4%bd%bf%e7%94%a8vpa">#</a>
+</h5>
+<h3 id="184-如果有很高的工作负载可以使用集群自动伸缩">
+  1.8.4 如果有很高的工作负载，可以使用集群自动伸缩
+  <a class="anchor" href="#184-%e5%a6%82%e6%9e%9c%e6%9c%89%e5%be%88%e9%ab%98%e7%9a%84%e5%b7%a5%e4%bd%9c%e8%b4%9f%e8%bd%bd%e5%8f%af%e4%bb%a5%e4%bd%bf%e7%94%a8%e9%9b%86%e7%be%a4%e8%87%aa%e5%8a%a8%e4%bc%b8%e7%bc%a9">#</a>
+</h3>
+<h5 id="集群伸缩是区别于hpavpa的另一种伸缩类型">
+  集群伸缩是区别于（HPA/VPA）的另一种伸缩类型
+  <a class="anchor" href="#%e9%9b%86%e7%be%a4%e4%bc%b8%e7%bc%a9%e6%98%af%e5%8c%ba%e5%88%ab%e4%ba%8ehpavpa%e7%9a%84%e5%8f%a6%e4%b8%80%e7%a7%8d%e4%bc%b8%e7%bc%a9%e7%b1%bb%e5%9e%8b">#</a>
+</h5>
+<h5 id="集群自动伸缩能够通过增加或移除node节点来自动缩放集群的大小">
+  集群自动伸缩能够通过增加或移除node节点来自动缩放集群的大小
+  <a class="anchor" href="#%e9%9b%86%e7%be%a4%e8%87%aa%e5%8a%a8%e4%bc%b8%e7%bc%a9%e8%83%bd%e5%a4%9f%e9%80%9a%e8%bf%87%e5%a2%9e%e5%8a%a0%e6%88%96%e7%a7%bb%e9%99%a4node%e8%8a%82%e7%82%b9%e6%9d%a5%e8%87%aa%e5%8a%a8%e7%bc%a9%e6%94%be%e9%9b%86%e7%be%a4%e7%9a%84%e5%a4%a7%e5%b0%8f">#</a>
+</h5>
+<h5 id="当由于现有一个node节点的资源不足导致pod调度失败时此刻集群会进行扩增操作集群会增加一个work-node来保证pod能够正常调度相似的如果一个worker-node资源使用率低那么集群自动伸缩会先驱逐这个worker-node上面的pod最终去移除此node">
+  当由于现有一个node节点的资源不足导致pod调度失败时，此刻集群会进行扩增操作，集群会增加一个work node来保证pod能够正常调度，相似的，如果一个worker node资源使用率低，那么集群自动伸缩会先驱逐这个worker node上面的pod，最终去移除此node
+  <a class="anchor" href="#%e5%bd%93%e7%94%b1%e4%ba%8e%e7%8e%b0%e6%9c%89%e4%b8%80%e4%b8%aanode%e8%8a%82%e7%82%b9%e7%9a%84%e8%b5%84%e6%ba%90%e4%b8%8d%e8%b6%b3%e5%af%bc%e8%87%b4pod%e8%b0%83%e5%ba%a6%e5%a4%b1%e8%b4%a5%e6%97%b6%e6%ad%a4%e5%88%bb%e9%9b%86%e7%be%a4%e4%bc%9a%e8%bf%9b%e8%a1%8c%e6%89%a9%e5%a2%9e%e6%93%8d%e4%bd%9c%e9%9b%86%e7%be%a4%e4%bc%9a%e5%a2%9e%e5%8a%a0%e4%b8%80%e4%b8%aawork-node%e6%9d%a5%e4%bf%9d%e8%af%81pod%e8%83%bd%e5%a4%9f%e6%ad%a3%e5%b8%b8%e8%b0%83%e5%ba%a6%e7%9b%b8%e4%bc%bc%e7%9a%84%e5%a6%82%e6%9e%9c%e4%b8%80%e4%b8%aaworker-node%e8%b5%84%e6%ba%90%e4%bd%bf%e7%94%a8%e7%8e%87%e4%bd%8e%e9%82%a3%e4%b9%88%e9%9b%86%e7%be%a4%e8%87%aa%e5%8a%a8%e4%bc%b8%e7%bc%a9%e4%bc%9a%e5%85%88%e9%a9%b1%e9%80%90%e8%bf%99%e4%b8%aaworker-node%e4%b8%8a%e9%9d%a2%e7%9a%84pod%e6%9c%80%e7%bb%88%e5%8e%bb%e7%a7%bb%e9%99%a4%e6%ad%a4node">#</a>
+</h5>
+<h5 id="对于集群工作负载很高的应用场景下就去自动伸缩非常有用集群自动缩分可以让你满足需求高峰而不会通过过度陪你走工作节点来浪费资源">
+  对于集群工作负载很高的应用场景下，就去自动伸缩非常有用，集群自动缩分可以让你满足需求高峰，而不会通过过度陪你走工作节点来浪费资源。
+  <a class="anchor" href="#%e5%af%b9%e4%ba%8e%e9%9b%86%e7%be%a4%e5%b7%a5%e4%bd%9c%e8%b4%9f%e8%bd%bd%e5%be%88%e9%ab%98%e7%9a%84%e5%ba%94%e7%94%a8%e5%9c%ba%e6%99%af%e4%b8%8b%e5%b0%b1%e5%8e%bb%e8%87%aa%e5%8a%a8%e4%bc%b8%e7%bc%a9%e9%9d%9e%e5%b8%b8%e6%9c%89%e7%94%a8%e9%9b%86%e7%be%a4%e8%87%aa%e5%8a%a8%e7%bc%a9%e5%88%86%e5%8f%af%e4%bb%a5%e8%ae%a9%e4%bd%a0%e6%bb%a1%e8%b6%b3%e9%9c%80%e6%b1%82%e9%ab%98%e5%b3%b0%e8%80%8c%e4%b8%8d%e4%bc%9a%e9%80%9a%e8%bf%87%e8%bf%87%e5%ba%a6%e9%99%aa%e4%bd%a0%e8%b5%b0%e5%b7%a5%e4%bd%9c%e8%8a%82%e7%82%b9%e6%9d%a5%e6%b5%aa%e8%b4%b9%e8%b5%84%e6%ba%90">#</a>
+</h5>
+<h5 id="对于工作负载不大的应用场景可以不用去设置集群自动伸缩因为可能永远都使用不到改规则如果你的集群工作负载缓慢增长可以通过监控系统来手动添加worker-node">
+  对于工作负载不大的应用场景，可以不用去设置集群自动伸缩，因为可能永远都使用不到改规则，如果你的集群工作负载缓慢增长，可以通过监控系统来手动添加worker node
+  <a class="anchor" href="#%e5%af%b9%e4%ba%8e%e5%b7%a5%e4%bd%9c%e8%b4%9f%e8%bd%bd%e4%b8%8d%e5%a4%a7%e7%9a%84%e5%ba%94%e7%94%a8%e5%9c%ba%e6%99%af%e5%8f%af%e4%bb%a5%e4%b8%8d%e7%94%a8%e5%8e%bb%e8%ae%be%e7%bd%ae%e9%9b%86%e7%be%a4%e8%87%aa%e5%8a%a8%e4%bc%b8%e7%bc%a9%e5%9b%a0%e4%b8%ba%e5%8f%af%e8%83%bd%e6%b0%b8%e8%bf%9c%e9%83%bd%e4%bd%bf%e7%94%a8%e4%b8%8d%e5%88%b0%e6%94%b9%e8%a7%84%e5%88%99%e5%a6%82%e6%9e%9c%e4%bd%a0%e7%9a%84%e9%9b%86%e7%be%a4%e5%b7%a5%e4%bd%9c%e8%b4%9f%e8%bd%bd%e7%bc%93%e6%85%a2%e5%a2%9e%e9%95%bf%e5%8f%af%e4%bb%a5%e9%80%9a%e8%bf%87%e7%9b%91%e6%8e%a7%e7%b3%bb%e7%bb%9f%e6%9d%a5%e6%89%8b%e5%8a%a8%e6%b7%bb%e5%8a%a0worker-node">#</a>
+</h5>
+<h3 id="19-配置和密钥">
+  1.9 配置和密钥
+  <a class="anchor" href="#19-%e9%85%8d%e7%bd%ae%e5%92%8c%e5%af%86%e9%92%a5">#</a>
+</h3>
+<h3 id="191-外部化所有配置">
+  1.9.1 外部化所有配置
+  <a class="anchor" href="#191-%e5%a4%96%e9%83%a8%e5%8c%96%e6%89%80%e6%9c%89%e9%85%8d%e7%bd%ae">#</a>
+</h3>
+<h5 id="配置应该在应用之外的代码维护这有一些好处">
+  配置应该在应用之外的代码维护，这有一些好处
+  <a class="anchor" href="#%e9%85%8d%e7%bd%ae%e5%ba%94%e8%af%a5%e5%9c%a8%e5%ba%94%e7%94%a8%e4%b9%8b%e5%a4%96%e7%9a%84%e4%bb%a3%e7%a0%81%e7%bb%b4%e6%8a%a4%e8%bf%99%e6%9c%89%e4%b8%80%e4%ba%9b%e5%a5%bd%e5%a4%84">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="更改配置不用重新编译代码">
+  更改配置不用重新编译代码
+  <a class="anchor" href="#%e6%9b%b4%e6%94%b9%e9%85%8d%e7%bd%ae%e4%b8%8d%e7%94%a8%e9%87%8d%e6%96%b0%e7%bc%96%e8%af%91%e4%bb%a3%e7%a0%81">#</a>
+</h5>
+</li>
+<li>
+<h5 id="当应用程序正在运行配置文件可以单独被更新">
+  当应用程序正在运行，配置文件可以单独被更新
+  <a class="anchor" href="#%e5%bd%93%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e6%ad%a3%e5%9c%a8%e8%bf%90%e8%a1%8c%e9%85%8d%e7%bd%ae%e6%96%87%e4%bb%b6%e5%8f%af%e4%bb%a5%e5%8d%95%e7%8b%ac%e8%a2%ab%e6%9b%b4%e6%96%b0">#</a>
+</h5>
+</li>
+<li>
+<h5 id="相同的代码能够被用于不同的环境">
+  相同的代码能够被用于不同的环境
+  <a class="anchor" href="#%e7%9b%b8%e5%90%8c%e7%9a%84%e4%bb%a3%e7%a0%81%e8%83%bd%e5%a4%9f%e8%a2%ab%e7%94%a8%e4%ba%8e%e4%b8%8d%e5%90%8c%e7%9a%84%e7%8e%af%e5%a2%83">#</a>
+</h5>
+</li>
+</ul>
+<h5 id="在kubernetes中可以将配置保存在configmaps中然后可以在将卷作为环境变量传入时将其安装到容器中">
+  在Kubernetes中，可以将配置保存在ConfigMaps中，然后可以在将卷作为环境变量传入时将其安装到容器中。
+  <a class="anchor" href="#%e5%9c%a8kubernetes%e4%b8%ad%e5%8f%af%e4%bb%a5%e5%b0%86%e9%85%8d%e7%bd%ae%e4%bf%9d%e5%ad%98%e5%9c%a8configmaps%e4%b8%ad%e7%84%b6%e5%90%8e%e5%8f%af%e4%bb%a5%e5%9c%a8%e5%b0%86%e5%8d%b7%e4%bd%9c%e4%b8%ba%e7%8e%af%e5%a2%83%e5%8f%98%e9%87%8f%e4%bc%a0%e5%85%a5%e6%97%b6%e5%b0%86%e5%85%b6%e5%ae%89%e8%a3%85%e5%88%b0%e5%ae%b9%e5%99%a8%e4%b8%ad">#</a>
+</h5>
+<h5 id="在configmap中仅保存非敏感配置对于敏感信息例如凭据请使用secret资源">
+  在ConfigMap中仅保存非敏感配置。对于敏感信息（例如凭据），请使用Secret资源。
+  <a class="anchor" href="#%e5%9c%a8configmap%e4%b8%ad%e4%bb%85%e4%bf%9d%e5%ad%98%e9%9d%9e%e6%95%8f%e6%84%9f%e9%85%8d%e7%bd%ae%e5%af%b9%e4%ba%8e%e6%95%8f%e6%84%9f%e4%bf%a1%e6%81%af%e4%be%8b%e5%a6%82%e5%87%ad%e6%8d%ae%e8%af%b7%e4%bd%bf%e7%94%a8secret%e8%b5%84%e6%ba%90">#</a>
+</h5>
+<h3 id="192-将secrets作为卷而不是环境变量">
+  1.9.2 将Secrets作为卷而不是环境变量
+  <a class="anchor" href="#192-%e5%b0%86secrets%e4%bd%9c%e4%b8%ba%e5%8d%b7%e8%80%8c%e4%b8%8d%e6%98%af%e7%8e%af%e5%a2%83%e5%8f%98%e9%87%8f">#</a>
+</h3>
+<h5 id="secret资源的内容应作为卷挂载到容器中而不是作为环境变量传递">
+  Secret资源的内容应作为卷挂载到容器中，而不是作为环境变量传递。
+  <a class="anchor" href="#secret%e8%b5%84%e6%ba%90%e7%9a%84%e5%86%85%e5%ae%b9%e5%ba%94%e4%bd%9c%e4%b8%ba%e5%8d%b7%e6%8c%82%e8%bd%bd%e5%88%b0%e5%ae%b9%e5%99%a8%e4%b8%ad%e8%80%8c%e4%b8%8d%e6%98%af%e4%bd%9c%e4%b8%ba%e7%8e%af%e5%a2%83%e5%8f%98%e9%87%8f%e4%bc%a0%e9%80%92">#</a>
+</h5>
+<h5 id="这是为了防止秘密值出现在用于启动容器的命令中该命令可能由不应该访问秘密值的人员检查">
+  这是为了防止秘密值出现在用于启动容器的命令中，该命令可能由不应该访问秘密值的人员检查
+  <a class="anchor" href="#%e8%bf%99%e6%98%af%e4%b8%ba%e4%ba%86%e9%98%b2%e6%ad%a2%e7%a7%98%e5%af%86%e5%80%bc%e5%87%ba%e7%8e%b0%e5%9c%a8%e7%94%a8%e4%ba%8e%e5%90%af%e5%8a%a8%e5%ae%b9%e5%99%a8%e7%9a%84%e5%91%bd%e4%bb%a4%e4%b8%ad%e8%af%a5%e5%91%bd%e4%bb%a4%e5%8f%af%e8%83%bd%e7%94%b1%e4%b8%8d%e5%ba%94%e8%af%a5%e8%ae%bf%e9%97%ae%e7%a7%98%e5%af%86%e5%80%bc%e7%9a%84%e4%ba%ba%e5%91%98%e6%a3%80%e6%9f%a5">#</a>
+</h5>
+<h1 id="二-管治">
+  二 管治
+  <a class="anchor" href="#%e4%ba%8c-%e7%ae%a1%e6%b2%bb">#</a>
+</h1>
+<h2 id="21-名称空间限制">
+  2.1 名称空间限制
+  <a class="anchor" href="#21-%e5%90%8d%e7%a7%b0%e7%a9%ba%e9%97%b4%e9%99%90%e5%88%b6">#</a>
+</h2>
+<h5 id="您不应允许用户使用比您事先同意的资源更多的资源">
+  您不应允许用户使用比您事先同意的资源更多的资源。
+  <a class="anchor" href="#%e6%82%a8%e4%b8%8d%e5%ba%94%e5%85%81%e8%ae%b8%e7%94%a8%e6%88%b7%e4%bd%bf%e7%94%a8%e6%af%94%e6%82%a8%e4%ba%8b%e5%85%88%e5%90%8c%e6%84%8f%e7%9a%84%e8%b5%84%e6%ba%90%e6%9b%b4%e5%a4%9a%e7%9a%84%e8%b5%84%e6%ba%90">#</a>
+</h5>
+<h5 id="群集管理员可以设置约束以使用配额和限制范围限制项目中使用的对象数量或计算资源数量">
+  群集管理员可以设置约束，以使用配额和限制范围限制项目中使用的对象数量或计算资源数量。
+  <a class="anchor" href="#%e7%be%a4%e9%9b%86%e7%ae%a1%e7%90%86%e5%91%98%e5%8f%af%e4%bb%a5%e8%ae%be%e7%bd%ae%e7%ba%a6%e6%9d%9f%e4%bb%a5%e4%bd%bf%e7%94%a8%e9%85%8d%e9%a2%9d%e5%92%8c%e9%99%90%e5%88%b6%e8%8c%83%e5%9b%b4%e9%99%90%e5%88%b6%e9%a1%b9%e7%9b%ae%e4%b8%ad%e4%bd%bf%e7%94%a8%e7%9a%84%e5%af%b9%e8%b1%a1%e6%95%b0%e9%87%8f%e6%88%96%e8%ae%a1%e7%ae%97%e8%b5%84%e6%ba%90%e6%95%b0%e9%87%8f">#</a>
+</h5>
+<h5 id="详细可参考limit-ranges">
+  详细可参考；limit ranges
+  <a class="anchor" href="#%e8%af%a6%e7%bb%86%e5%8f%af%e5%8f%82%e8%80%83limit-ranges">#</a>
+</h5>
+<h3 id="211-名称空间限制范围">
+  2.1.1 名称空间限制范围
+  <a class="anchor" href="#211-%e5%90%8d%e7%a7%b0%e7%a9%ba%e9%97%b4%e9%99%90%e5%88%b6%e8%8c%83%e5%9b%b4">#</a>
+</h3>
+<h5 id="如果为设置容器资源消耗限制那么会出现容器资源争抢导致其他容器异常状况发生">
+  如果为设置容器资源消耗限制，那么会出现容器资源争抢导致其他容器异常状况发生，
+  <a class="anchor" href="#%e5%a6%82%e6%9e%9c%e4%b8%ba%e8%ae%be%e7%bd%ae%e5%ae%b9%e5%99%a8%e8%b5%84%e6%ba%90%e6%b6%88%e8%80%97%e9%99%90%e5%88%b6%e9%82%a3%e4%b9%88%e4%bc%9a%e5%87%ba%e7%8e%b0%e5%ae%b9%e5%99%a8%e8%b5%84%e6%ba%90%e4%ba%89%e6%8a%a2%e5%af%bc%e8%87%b4%e5%85%b6%e4%bb%96%e5%ae%b9%e5%99%a8%e5%bc%82%e5%b8%b8%e7%8a%b6%e5%86%b5%e5%8f%91%e7%94%9f">#</a>
+</h5>
+<h5 id="k8s有两个特性来约束资源使用resourcequota-和-limitrange">
+  k8s有两个特性来约束资源使用：ResourceQuota 和 LimitRange.
+  <a class="anchor" href="#k8s%e6%9c%89%e4%b8%a4%e4%b8%aa%e7%89%b9%e6%80%a7%e6%9d%a5%e7%ba%a6%e6%9d%9f%e8%b5%84%e6%ba%90%e4%bd%bf%e7%94%a8resourcequota-%e5%92%8c-limitrange">#</a>
+</h5>
+<h5 id="使用limitrange对象您可以定义资源请求的默认值和名称空间内单个容器的限制">
+  使用LimitRange对象，您可以定义资源请求的默认值和名称空间内单个容器的限制。
+  <a class="anchor" href="#%e4%bd%bf%e7%94%a8limitrange%e5%af%b9%e8%b1%a1%e6%82%a8%e5%8f%af%e4%bb%a5%e5%ae%9a%e4%b9%89%e8%b5%84%e6%ba%90%e8%af%b7%e6%b1%82%e7%9a%84%e9%bb%98%e8%ae%a4%e5%80%bc%e5%92%8c%e5%90%8d%e7%a7%b0%e7%a9%ba%e9%97%b4%e5%86%85%e5%8d%95%e4%b8%aa%e5%ae%b9%e5%99%a8%e7%9a%84%e9%99%90%e5%88%b6">#</a>
+</h5>
+<h5 id="在该命名空间内创建的任何容器未明确指定请求和限制值都将分配默认值">
+  在该命名空间内创建的任何容器（未明确指定请求和限制值）都将分配默认值。
+  <a class="anchor" href="#%e5%9c%a8%e8%af%a5%e5%91%bd%e5%90%8d%e7%a9%ba%e9%97%b4%e5%86%85%e5%88%9b%e5%bb%ba%e7%9a%84%e4%bb%bb%e4%bd%95%e5%ae%b9%e5%99%a8%e6%9c%aa%e6%98%8e%e7%a1%ae%e6%8c%87%e5%ae%9a%e8%af%b7%e6%b1%82%e5%92%8c%e9%99%90%e5%88%b6%e5%80%bc%e9%83%bd%e5%b0%86%e5%88%86%e9%85%8d%e9%bb%98%e8%ae%a4%e5%80%bc">#</a>
+</h5>
+<h3 id="212-名称控制资源配额">
+  2.1.2 名称控制资源配额
+  <a class="anchor" href="#212-%e5%90%8d%e7%a7%b0%e6%8e%a7%e5%88%b6%e8%b5%84%e6%ba%90%e9%85%8d%e9%a2%9d">#</a>
+</h3>
+<h5 id="你能够在名称空间中通过资源配额限制所有容器资源的总消耗量">
+  你能够在名称空间中通过资源配额限制所有容器资源的总消耗量
+  <a class="anchor" href="#%e4%bd%a0%e8%83%bd%e5%a4%9f%e5%9c%a8%e5%90%8d%e7%a7%b0%e7%a9%ba%e9%97%b4%e4%b8%ad%e9%80%9a%e8%bf%87%e8%b5%84%e6%ba%90%e9%85%8d%e9%a2%9d%e9%99%90%e5%88%b6%e6%89%80%e6%9c%89%e5%ae%b9%e5%99%a8%e8%b5%84%e6%ba%90%e7%9a%84%e6%80%bb%e6%b6%88%e8%80%97%e9%87%8f">#</a>
+</h5>
+<h5 id="定义名称空间的资源配额会限制属于该名称空间的所有容器可以消耗的cpu内存或存储资源的总量">
+  定义名称空间的资源配额会限制属于该名称空间的所有容器可以消耗的CPU，内存或存储资源的总量。
+  <a class="anchor" href="#%e5%ae%9a%e4%b9%89%e5%90%8d%e7%a7%b0%e7%a9%ba%e9%97%b4%e7%9a%84%e8%b5%84%e6%ba%90%e9%85%8d%e9%a2%9d%e4%bc%9a%e9%99%90%e5%88%b6%e5%b1%9e%e4%ba%8e%e8%af%a5%e5%90%8d%e7%a7%b0%e7%a9%ba%e9%97%b4%e7%9a%84%e6%89%80%e6%9c%89%e5%ae%b9%e5%99%a8%e5%8f%af%e4%bb%a5%e6%b6%88%e8%80%97%e7%9a%84cpu%e5%86%85%e5%ad%98%e6%88%96%e5%ad%98%e5%82%a8%e8%b5%84%e6%ba%90%e7%9a%84%e6%80%bb%e9%87%8f">#</a>
+</h5>
+<h5 id="您还可以为其他kubernetes对象设置配额例如当前名称空间中的pod数量">
+  您还可以为其他Kubernetes对象设置配额，例如当前名称空间中的Pod数量。
+  <a class="anchor" href="#%e6%82%a8%e8%bf%98%e5%8f%af%e4%bb%a5%e4%b8%ba%e5%85%b6%e4%bb%96kubernetes%e5%af%b9%e8%b1%a1%e8%ae%be%e7%bd%ae%e9%85%8d%e9%a2%9d%e4%be%8b%e5%a6%82%e5%bd%93%e5%89%8d%e5%90%8d%e7%a7%b0%e7%a9%ba%e9%97%b4%e4%b8%ad%e7%9a%84pod%e6%95%b0%e9%87%8f">#</a>
+</h5>
+<h5 id="如果您认为有人可以利用您的集群并创建20000-configmap则可以使用limitrange来防止这种情况">
+  如果您认为有人可以利用您的集群并创建20000 ConfigMap，则可以使用LimitRange来防止这种情况。
+  <a class="anchor" href="#%e5%a6%82%e6%9e%9c%e6%82%a8%e8%ae%a4%e4%b8%ba%e6%9c%89%e4%ba%ba%e5%8f%af%e4%bb%a5%e5%88%a9%e7%94%a8%e6%82%a8%e7%9a%84%e9%9b%86%e7%be%a4%e5%b9%b6%e5%88%9b%e5%bb%ba20000-configmap%e5%88%99%e5%8f%af%e4%bb%a5%e4%bd%bf%e7%94%a8limitrange%e6%9d%a5%e9%98%b2%e6%ad%a2%e8%bf%99%e7%a7%8d%e6%83%85%e5%86%b5">#</a>
+</h5>
+<h2 id="22-pod安全策略">
+  2.2 POD安全策略
+  <a class="anchor" href="#22-pod%e5%ae%89%e5%85%a8%e7%ad%96%e7%95%a5">#</a>
+</h2>
+<h5 id="遭到破坏的容器">
+  遭到破坏的容器
+  <a class="anchor" href="#%e9%81%ad%e5%88%b0%e7%a0%b4%e5%9d%8f%e7%9a%84%e5%ae%b9%e5%99%a8">#</a>
+</h5>
+<h5 id="容器使用节点上不允许的资源例如进程网络或文件系统">
+  容器使用节点上不允许的资源，例如进程，网络或文件系统
+  <a class="anchor" href="#%e5%ae%b9%e5%99%a8%e4%bd%bf%e7%94%a8%e8%8a%82%e7%82%b9%e4%b8%8a%e4%b8%8d%e5%85%81%e8%ae%b8%e7%9a%84%e8%b5%84%e6%ba%90%e4%be%8b%e5%a6%82%e8%bf%9b%e7%a8%8b%e7%bd%91%e7%bb%9c%e6%88%96%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f">#</a>
+</h5>
+<h5 id="一般来说应该将pod的功能限制在最低限度">
+  一般来说，应该将Pod的功能限制在最低限度。
+  <a class="anchor" href="#%e4%b8%80%e8%88%ac%e6%9d%a5%e8%af%b4%e5%ba%94%e8%af%a5%e5%b0%86pod%e7%9a%84%e5%8a%9f%e8%83%bd%e9%99%90%e5%88%b6%e5%9c%a8%e6%9c%80%e4%bd%8e%e9%99%90%e5%ba%a6">#</a>
+</h5>
+<h3 id="221-启用pod安全策略">
+  2.2.1 启用POD安全策略
+  <a class="anchor" href="#221-%e5%90%af%e7%94%a8pod%e5%ae%89%e5%85%a8%e7%ad%96%e7%95%a5">#</a>
+</h3>
+<h5 id="例如您可以使用kubernetes-pod安全策略来限制">
+  例如，您可以使用Kubernetes Pod安全策略来限制：
+  <a class="anchor" href="#%e4%be%8b%e5%a6%82%e6%82%a8%e5%8f%af%e4%bb%a5%e4%bd%bf%e7%94%a8kubernetes-pod%e5%ae%89%e5%85%a8%e7%ad%96%e7%95%a5%e6%9d%a5%e9%99%90%e5%88%b6">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="访问主机进程或者网络名称空间">
+  访问主机进程或者网络名称空间
+  <a class="anchor" href="#%e8%ae%bf%e9%97%ae%e4%b8%bb%e6%9c%ba%e8%bf%9b%e7%a8%8b%e6%88%96%e8%80%85%e7%bd%91%e7%bb%9c%e5%90%8d%e7%a7%b0%e7%a9%ba%e9%97%b4">#</a>
+</h5>
+</li>
+<li>
+<h5 id="运行授权的容器">
+  运行授权的容器
+  <a class="anchor" href="#%e8%bf%90%e8%a1%8c%e6%8e%88%e6%9d%83%e7%9a%84%e5%ae%b9%e5%99%a8">#</a>
+</h5>
+</li>
+<li>
+<h5 id="容器运行时的用户">
+  容器运行时的用户
+  <a class="anchor" href="#%e5%ae%b9%e5%99%a8%e8%bf%90%e8%a1%8c%e6%97%b6%e7%9a%84%e7%94%a8%e6%88%b7">#</a>
+</h5>
+</li>
+<li>
+<h5 id="访问主机的文件系统">
+  访问主机的文件系统
+  <a class="anchor" href="#%e8%ae%bf%e9%97%ae%e4%b8%bb%e6%9c%ba%e7%9a%84%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f">#</a>
+</h5>
+</li>
+<li>
+<h5 id="linux能力seccomp-or-selinux-profiles">
+  linux能力，Seccomp or SELinux profiles
+  <a class="anchor" href="#linux%e8%83%bd%e5%8a%9bseccomp-or-selinux-profiles">#</a>
+</h5>
+</li>
+</ul>
+<h5 id="选择正确的策略依赖于集群原生的特性可以参考kubernetes-pod-security-policy-best-practices">
+  选择正确的策略依赖于集群原生的特性，可以参考：Kubernetes Pod Security Policy best practices
+  <a class="anchor" href="#%e9%80%89%e6%8b%a9%e6%ad%a3%e7%a1%ae%e7%9a%84%e7%ad%96%e7%95%a5%e4%be%9d%e8%b5%96%e4%ba%8e%e9%9b%86%e7%be%a4%e5%8e%9f%e7%94%9f%e7%9a%84%e7%89%b9%e6%80%a7%e5%8f%af%e4%bb%a5%e5%8f%82%e8%80%83kubernetes-pod-security-policy-best-practices">#</a>
+</h5>
+<h3 id="222-禁用特权容器">
+  2.2.2 禁用特权容器
+  <a class="anchor" href="#222-%e7%a6%81%e7%94%a8%e7%89%b9%e6%9d%83%e5%ae%b9%e5%99%a8">#</a>
+</h3>
+<h5 id="在一个pod中容器能够作为特权模式容器运行来不受限制访问主机系统的资源">
+  在一个POD中，容器能够作为特权模式容器运行来不受限制访问主机系统的资源
+  <a class="anchor" href="#%e5%9c%a8%e4%b8%80%e4%b8%aapod%e4%b8%ad%e5%ae%b9%e5%99%a8%e8%83%bd%e5%a4%9f%e4%bd%9c%e4%b8%ba%e7%89%b9%e6%9d%83%e6%a8%a1%e5%bc%8f%e5%ae%b9%e5%99%a8%e8%bf%90%e8%a1%8c%e6%9d%a5%e4%b8%8d%e5%8f%97%e9%99%90%e5%88%b6%e8%ae%bf%e9%97%ae%e4%b8%bb%e6%9c%ba%e7%b3%bb%e7%bb%9f%e7%9a%84%e8%b5%84%e6%ba%90">#</a>
+</h5>
+<h5 id="通常这样是危险的你应该给有必要的制定容器可以访问的等级">
+  通常这样是危险的，你应该给有必要的制定容器可以访问的等级，
+  <a class="anchor" href="#%e9%80%9a%e5%b8%b8%e8%bf%99%e6%a0%b7%e6%98%af%e5%8d%b1%e9%99%a9%e7%9a%84%e4%bd%a0%e5%ba%94%e8%af%a5%e7%bb%99%e6%9c%89%e5%bf%85%e8%a6%81%e7%9a%84%e5%88%b6%e5%ae%9a%e5%ae%b9%e5%99%a8%e5%8f%af%e4%bb%a5%e8%ae%bf%e9%97%ae%e7%9a%84%e7%ad%89%e7%ba%a7">#</a>
+</h5>
+<h5 id="特权pod的有效使用案例包括在节点上使用硬件例如gpu">
+  特权Pod的有效使用案例包括在节点上使用硬件，例如GPU。
+  <a class="anchor" href="#%e7%89%b9%e6%9d%83pod%e7%9a%84%e6%9c%89%e6%95%88%e4%bd%bf%e7%94%a8%e6%a1%88%e4%be%8b%e5%8c%85%e6%8b%ac%e5%9c%a8%e8%8a%82%e7%82%b9%e4%b8%8a%e4%bd%bf%e7%94%a8%e7%a1%ac%e4%bb%b6%e4%be%8b%e5%a6%82gpu">#</a>
+</h5>
+<h5 id="可以参考learn-more-about-security-contexts-and-privileges-containers-from-this-article">
+  可以参考：learn more about security contexts and privileges containers from this article.
+  <a class="anchor" href="#%e5%8f%af%e4%bb%a5%e5%8f%82%e8%80%83learn-more-about-security-contexts-and-privileges-containers-from-this-article">#</a>
+</h5>
+<h3 id="223-容器使用只读文件系统">
+  2.2.3 容器使用只读文件系统
+  <a class="anchor" href="#223-%e5%ae%b9%e5%99%a8%e4%bd%bf%e7%94%a8%e5%8f%aa%e8%af%bb%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f">#</a>
+</h3>
+<h5 id="容器中使用只读文件系统来强制保障容器的无状态话">
+  容器中使用只读文件系统来强制保障容器的无状态话
+  <a class="anchor" href="#%e5%ae%b9%e5%99%a8%e4%b8%ad%e4%bd%bf%e7%94%a8%e5%8f%aa%e8%af%bb%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f%e6%9d%a5%e5%bc%ba%e5%88%b6%e4%bf%9d%e9%9a%9c%e5%ae%b9%e5%99%a8%e7%9a%84%e6%97%a0%e7%8a%b6%e6%80%81%e8%af%9d">#</a>
+</h5>
+<h5 id="这种方式不仅能减轻风险例如热补丁而且可以避免避免恶意程序在容器内存储或者操作数据的风险">
+  这种方式不仅能减轻风险例如热补丁，而且可以避免避免恶意程序在容器内存储或者操作数据的风险。
+  <a class="anchor" href="#%e8%bf%99%e7%a7%8d%e6%96%b9%e5%bc%8f%e4%b8%8d%e4%bb%85%e8%83%bd%e5%87%8f%e8%bd%bb%e9%a3%8e%e9%99%a9%e4%be%8b%e5%a6%82%e7%83%ad%e8%a1%a5%e4%b8%81%e8%80%8c%e4%b8%94%e5%8f%af%e4%bb%a5%e9%81%bf%e5%85%8d%e9%81%bf%e5%85%8d%e6%81%b6%e6%84%8f%e7%a8%8b%e5%ba%8f%e5%9c%a8%e5%ae%b9%e5%99%a8%e5%86%85%e5%ad%98%e5%82%a8%e6%88%96%e8%80%85%e6%93%8d%e4%bd%9c%e6%95%b0%e6%8d%ae%e7%9a%84%e9%a3%8e%e9%99%a9">#</a>
+</h5>
+<h5 id="使用只读文件系统听起来很简单但是实际还是有一些复杂">
+  使用只读文件系统听起来很简单，但是实际还是有一些复杂
+  <a class="anchor" href="#%e4%bd%bf%e7%94%a8%e5%8f%aa%e8%af%bb%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f%e5%90%ac%e8%b5%b7%e6%9d%a5%e5%be%88%e7%ae%80%e5%8d%95%e4%bd%86%e6%98%af%e5%ae%9e%e9%99%85%e8%bf%98%e6%98%af%e6%9c%89%e4%b8%80%e4%ba%9b%e5%a4%8d%e6%9d%82">#</a>
+</h5>
+<h5 id="如果你需要写日志或者存储一些临时文件在一个临时目录该怎么办呢可以参考running-containers-securely-in-production">
+  如果你需要写日志或者存储一些临时文件在一个临时目录该怎么办呢，可以参考：running containers securely in production.
+  <a class="anchor" href="#%e5%a6%82%e6%9e%9c%e4%bd%a0%e9%9c%80%e8%a6%81%e5%86%99%e6%97%a5%e5%bf%97%e6%88%96%e8%80%85%e5%ad%98%e5%82%a8%e4%b8%80%e4%ba%9b%e4%b8%b4%e6%97%b6%e6%96%87%e4%bb%b6%e5%9c%a8%e4%b8%80%e4%b8%aa%e4%b8%b4%e6%97%b6%e7%9b%ae%e5%bd%95%e8%af%a5%e6%80%8e%e4%b9%88%e5%8a%9e%e5%91%a2%e5%8f%af%e4%bb%a5%e5%8f%82%e8%80%83running-containers-securely-in-production">#</a>
+</h5>
+<h3 id="224-避免利用root用户启动容器">
+  2.2.4 避免利用root用户启动容器
+  <a class="anchor" href="#224-%e9%81%bf%e5%85%8d%e5%88%a9%e7%94%a8root%e7%94%a8%e6%88%b7%e5%90%af%e5%8a%a8%e5%ae%b9%e5%99%a8">#</a>
+</h3>
+<h5 id="在容器中运行一个进程与主机上运行一个进程没有太大区别只不过一些很小的元数据在容器中声明">
+  在容器中运行一个进程与主机上运行一个进程没有太大区别，只不过一些很小的元数据在容器中声明
+  <a class="anchor" href="#%e5%9c%a8%e5%ae%b9%e5%99%a8%e4%b8%ad%e8%bf%90%e8%a1%8c%e4%b8%80%e4%b8%aa%e8%bf%9b%e7%a8%8b%e4%b8%8e%e4%b8%bb%e6%9c%ba%e4%b8%8a%e8%bf%90%e8%a1%8c%e4%b8%80%e4%b8%aa%e8%bf%9b%e7%a8%8b%e6%b2%a1%e6%9c%89%e5%a4%aa%e5%a4%a7%e5%8c%ba%e5%88%ab%e5%8f%aa%e4%b8%8d%e8%bf%87%e4%b8%80%e4%ba%9b%e5%be%88%e5%b0%8f%e7%9a%84%e5%85%83%e6%95%b0%e6%8d%ae%e5%9c%a8%e5%ae%b9%e5%99%a8%e4%b8%ad%e5%a3%b0%e6%98%8e">#</a>
+</h5>
+<h5 id="因此容器中的uid为0的用户与主机上的root用户相同">
+  因此容器中的uid为0的用户与主机上的root用户相同
+  <a class="anchor" href="#%e5%9b%a0%e6%ad%a4%e5%ae%b9%e5%99%a8%e4%b8%ad%e7%9a%84uid%e4%b8%ba0%e7%9a%84%e7%94%a8%e6%88%b7%e4%b8%8e%e4%b8%bb%e6%9c%ba%e4%b8%8a%e7%9a%84root%e7%94%a8%e6%88%b7%e7%9b%b8%e5%90%8c">#</a>
+</h5>
+<h5 id="如果用户设法脱离了以root用户身份在容器中运行的应用程序则他们可以使用同一root用户获得对主机的访问权限">
+  如果用户设法脱离了以root用户身份在容器中运行的应用程序，则他们可以使用同一root用户获得对主机的访问权限。
+  <a class="anchor" href="#%e5%a6%82%e6%9e%9c%e7%94%a8%e6%88%b7%e8%ae%be%e6%b3%95%e8%84%b1%e7%a6%bb%e4%ba%86%e4%bb%a5root%e7%94%a8%e6%88%b7%e8%ba%ab%e4%bb%bd%e5%9c%a8%e5%ae%b9%e5%99%a8%e4%b8%ad%e8%bf%90%e8%a1%8c%e7%9a%84%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e5%88%99%e4%bb%96%e4%bb%ac%e5%8f%af%e4%bb%a5%e4%bd%bf%e7%94%a8%e5%90%8c%e4%b8%80root%e7%94%a8%e6%88%b7%e8%8e%b7%e5%be%97%e5%af%b9%e4%b8%bb%e6%9c%ba%e7%9a%84%e8%ae%bf%e9%97%ae%e6%9d%83%e9%99%90">#</a>
+</h5>
+<h5 id="配置容器以使用非特权用户是防止特权升级攻击的最佳方法">
+  配置容器以使用非特权用户是防止特权升级攻击的最佳方法。
+  <a class="anchor" href="#%e9%85%8d%e7%bd%ae%e5%ae%b9%e5%99%a8%e4%bb%a5%e4%bd%bf%e7%94%a8%e9%9d%9e%e7%89%b9%e6%9d%83%e7%94%a8%e6%88%b7%e6%98%af%e9%98%b2%e6%ad%a2%e7%89%b9%e6%9d%83%e5%8d%87%e7%ba%a7%e6%94%bb%e5%87%bb%e7%9a%84%e6%9c%80%e4%bd%b3%e6%96%b9%e6%b3%95">#</a>
+</h5>
+<h5 id="详细可以参考article-offers-some-detailed-explanation-examples-of-what-happens-when-you-run-your-containers-as-root">
+  详细可以参考：article offers some detailed explanation examples of what happens when you run your containers as root.
+  <a class="anchor" href="#%e8%af%a6%e7%bb%86%e5%8f%af%e4%bb%a5%e5%8f%82%e8%80%83article-offers-some-detailed-explanation-examples-of-what-happens-when-you-run-your-containers-as-root">#</a>
+</h5>
+<h3 id="225-限制能力">
+  2.2.5 限制能力
+  <a class="anchor" href="#225-%e9%99%90%e5%88%b6%e8%83%bd%e5%8a%9b">#</a>
+</h3>
+<h5 id="linux功能使进程能够执行许多特权操作其中只有root用户默认可以执行">
+  Linux功能使进程能够执行许多特权操作，其中只有root用户默认可以执行。
+  <a class="anchor" href="#linux%e5%8a%9f%e8%83%bd%e4%bd%bf%e8%bf%9b%e7%a8%8b%e8%83%bd%e5%a4%9f%e6%89%a7%e8%a1%8c%e8%ae%b8%e5%a4%9a%e7%89%b9%e6%9d%83%e6%93%8d%e4%bd%9c%e5%85%b6%e4%b8%ad%e5%8f%aa%e6%9c%89root%e7%94%a8%e6%88%b7%e9%bb%98%e8%ae%a4%e5%8f%af%e4%bb%a5%e6%89%a7%e8%a1%8c">#</a>
+</h5>
+<h5 id="例如cap_chown允许进程对文件uid和gid进行任意更改">
+  例如，CAP_CHOWN允许进程“对文件UID和GID进行任意更改”。
+  <a class="anchor" href="#%e4%be%8b%e5%a6%82cap_chown%e5%85%81%e8%ae%b8%e8%bf%9b%e7%a8%8b%e5%af%b9%e6%96%87%e4%bb%b6uid%e5%92%8cgid%e8%bf%9b%e8%a1%8c%e4%bb%bb%e6%84%8f%e6%9b%b4%e6%94%b9">#</a>
+</h5>
+<h5 id="即使您的进程不是以root身份运行进程也有可能通过提升特权来使用那些类似root的功能">
+  即使您的进程不是以root身份运行，进程也有可能通过提升特权来使用那些类似root的功能。
+  <a class="anchor" href="#%e5%8d%b3%e4%bd%bf%e6%82%a8%e7%9a%84%e8%bf%9b%e7%a8%8b%e4%b8%8d%e6%98%af%e4%bb%a5root%e8%ba%ab%e4%bb%bd%e8%bf%90%e8%a1%8c%e8%bf%9b%e7%a8%8b%e4%b9%9f%e6%9c%89%e5%8f%af%e8%83%bd%e9%80%9a%e8%bf%87%e6%8f%90%e5%8d%87%e7%89%b9%e6%9d%83%e6%9d%a5%e4%bd%bf%e7%94%a8%e9%82%a3%e4%ba%9b%e7%b1%bb%e4%bc%bcroot%e7%9a%84%e5%8a%9f%e8%83%bd">#</a>
+</h5>
+<h5 id="最佳实践">
+  最佳实践：
+  <a class="anchor" href="#%e6%9c%80%e4%bd%b3%e5%ae%9e%e8%b7%b5">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="linux-capabilities-why-they-exist-and-how-they-work">
+  Linux Capabilities: Why They Exist and How They Work
+  <a class="anchor" href="#linux-capabilities-why-they-exist-and-how-they-work">#</a>
+</h5>
+</li>
+<li>
+<h5 id="linux-capabilities-in-practice">
+  Linux Capabilities In Practice
+  <a class="anchor" href="#linux-capabilities-in-practice">#</a>
+</h5>
+</li>
+</ul>
+<h3 id="226-防止特权升级">
+  2.2.6 防止特权升级
+  <a class="anchor" href="#226-%e9%98%b2%e6%ad%a2%e7%89%b9%e6%9d%83%e5%8d%87%e7%ba%a7">#</a>
+</h3>
+<h5 id="您应该在关闭特权升级的情况下运行容器以防止使用setuid或setgid二进制文件提升特权">
+  您应该在关闭特权升级的情况下运行容器，以防止使用setuid或setgid二进制文件提升特权。
+  <a class="anchor" href="#%e6%82%a8%e5%ba%94%e8%af%a5%e5%9c%a8%e5%85%b3%e9%97%ad%e7%89%b9%e6%9d%83%e5%8d%87%e7%ba%a7%e7%9a%84%e6%83%85%e5%86%b5%e4%b8%8b%e8%bf%90%e8%a1%8c%e5%ae%b9%e5%99%a8%e4%bb%a5%e9%98%b2%e6%ad%a2%e4%bd%bf%e7%94%a8setuid%e6%88%96setgid%e4%ba%8c%e8%bf%9b%e5%88%b6%e6%96%87%e4%bb%b6%e6%8f%90%e5%8d%87%e7%89%b9%e6%9d%83">#</a>
+</h5>
+<h2 id="23-网络策略">
+  2.3 网络策略
+  <a class="anchor" href="#23-%e7%bd%91%e7%bb%9c%e7%ad%96%e7%95%a5">#</a>
+</h2>
+<ul>
+<li>
+<h5 id="容器可以在与其他容器进行网络通讯不需要进行地址转换">
+  容器可以在与其他容器进行网络通讯，不需要进行地址转换
+  <a class="anchor" href="#%e5%ae%b9%e5%99%a8%e5%8f%af%e4%bb%a5%e5%9c%a8%e4%b8%8e%e5%85%b6%e4%bb%96%e5%ae%b9%e5%99%a8%e8%bf%9b%e8%a1%8c%e7%bd%91%e7%bb%9c%e9%80%9a%e8%ae%af%e4%b8%8d%e9%9c%80%e8%a6%81%e8%bf%9b%e8%a1%8c%e5%9c%b0%e5%9d%80%e8%bd%ac%e6%8d%a2">#</a>
+</h5>
+</li>
+<li>
+<h5 id="集群中的node节点可以与其他节点进行网络通讯">
+  集群中的node节点可以与其他节点进行网络通讯
+  <a class="anchor" href="#%e9%9b%86%e7%be%a4%e4%b8%ad%e7%9a%84node%e8%8a%82%e7%82%b9%e5%8f%af%e4%bb%a5%e4%b8%8e%e5%85%b6%e4%bb%96%e8%8a%82%e7%82%b9%e8%bf%9b%e8%a1%8c%e7%bd%91%e7%bb%9c%e9%80%9a%e8%ae%af">#</a>
+</h5>
+</li>
+<li>
+<h5 id="一个容器的ip地址始终是相同的从另一个容器或其本身看时是独立的">
+  一个容器的IP地址始终是相同的，从另一个容器或其本身看时是独立的。
+  <a class="anchor" href="#%e4%b8%80%e4%b8%aa%e5%ae%b9%e5%99%a8%e7%9a%84ip%e5%9c%b0%e5%9d%80%e5%a7%8b%e7%bb%88%e6%98%af%e7%9b%b8%e5%90%8c%e7%9a%84%e4%bb%8e%e5%8f%a6%e4%b8%80%e4%b8%aa%e5%ae%b9%e5%99%a8%e6%88%96%e5%85%b6%e6%9c%ac%e8%ba%ab%e7%9c%8b%e6%97%b6%e6%98%af%e7%8b%ac%e7%ab%8b%e7%9a%84">#</a>
+</h5>
+</li>
+</ul>
+<h5 id="如果您打算将群集分成较小的块并在名称空间之间进行隔离则第一条规则无济于事">
+  如果您打算将群集分成较小的块并在名称空间之间进行隔离，则第一条规则无济于事。
+  <a class="anchor" href="#%e5%a6%82%e6%9e%9c%e6%82%a8%e6%89%93%e7%ae%97%e5%b0%86%e7%be%a4%e9%9b%86%e5%88%86%e6%88%90%e8%be%83%e5%b0%8f%e7%9a%84%e5%9d%97%e5%b9%b6%e5%9c%a8%e5%90%8d%e7%a7%b0%e7%a9%ba%e9%97%b4%e4%b9%8b%e9%97%b4%e8%bf%9b%e8%a1%8c%e9%9a%94%e7%a6%bb%e5%88%99%e7%ac%ac%e4%b8%80%e6%9d%a1%e8%a7%84%e5%88%99%e6%97%a0%e6%b5%8e%e4%ba%8e%e4%ba%8b">#</a>
+</h5>
+<h5 id="想象一下您的集群中的用户是否能够使用集群中的任何其他服务">
+  想象一下您的集群中的用户是否能够使用集群中的任何其他服务。
+  <a class="anchor" href="#%e6%83%b3%e8%b1%a1%e4%b8%80%e4%b8%8b%e6%82%a8%e7%9a%84%e9%9b%86%e7%be%a4%e4%b8%ad%e7%9a%84%e7%94%a8%e6%88%b7%e6%98%af%e5%90%a6%e8%83%bd%e5%a4%9f%e4%bd%bf%e7%94%a8%e9%9b%86%e7%be%a4%e4%b8%ad%e7%9a%84%e4%bb%bb%e4%bd%95%e5%85%b6%e4%bb%96%e6%9c%8d%e5%8a%a1">#</a>
+</h5>
+<h5 id="现在想象一下如果集群中的恶意用户要获得对集群的访问权限他们可以向整个集群发出请求">
+  现在，想象一下如果集群中的恶意用户要获得对集群的访问权限，他们可以向整个集群发出请求。
+  <a class="anchor" href="#%e7%8e%b0%e5%9c%a8%e6%83%b3%e8%b1%a1%e4%b8%80%e4%b8%8b%e5%a6%82%e6%9e%9c%e9%9b%86%e7%be%a4%e4%b8%ad%e7%9a%84%e6%81%b6%e6%84%8f%e7%94%a8%e6%88%b7%e8%a6%81%e8%8e%b7%e5%be%97%e5%af%b9%e9%9b%86%e7%be%a4%e7%9a%84%e8%ae%bf%e9%97%ae%e6%9d%83%e9%99%90%e4%bb%96%e4%bb%ac%e5%8f%af%e4%bb%a5%e5%90%91%e6%95%b4%e4%b8%aa%e9%9b%86%e7%be%a4%e5%8f%91%e5%87%ba%e8%af%b7%e6%b1%82">#</a>
+</h5>
+<h5 id="要解决此问题您可以定义如何使用网络策略允许pods在当前名称空间和跨名称空间中进行通信">
+  要解决此问题，您可以定义如何使用网络策略允许Pods在当前名称空间和跨名称空间中进行通信。
+  <a class="anchor" href="#%e8%a6%81%e8%a7%a3%e5%86%b3%e6%ad%a4%e9%97%ae%e9%a2%98%e6%82%a8%e5%8f%af%e4%bb%a5%e5%ae%9a%e4%b9%89%e5%a6%82%e4%bd%95%e4%bd%bf%e7%94%a8%e7%bd%91%e7%bb%9c%e7%ad%96%e7%95%a5%e5%85%81%e8%ae%b8pods%e5%9c%a8%e5%bd%93%e5%89%8d%e5%90%8d%e7%a7%b0%e7%a9%ba%e9%97%b4%e5%92%8c%e8%b7%a8%e5%90%8d%e7%a7%b0%e7%a9%ba%e9%97%b4%e4%b8%ad%e8%bf%9b%e8%a1%8c%e9%80%9a%e4%bf%a1">#</a>
+</h5>
+<h3 id="231-启用网络策略">
+  2.3.1 启用网络策略
+  <a class="anchor" href="#231-%e5%90%af%e7%94%a8%e7%bd%91%e7%bb%9c%e7%ad%96%e7%95%a5">#</a>
+</h3>
+<h5 id="kubernetes网络策略指定pod组的访问权限就像云中的安全组用于控制对vm实例的访问一样">
+  Kubernetes网络策略指定Pod组的访问权限，就像云中的安全组用于控制对VM实例的访问一样。
+  <a class="anchor" href="#kubernetes%e7%bd%91%e7%bb%9c%e7%ad%96%e7%95%a5%e6%8c%87%e5%ae%9apod%e7%bb%84%e7%9a%84%e8%ae%bf%e9%97%ae%e6%9d%83%e9%99%90%e5%b0%b1%e5%83%8f%e4%ba%91%e4%b8%ad%e7%9a%84%e5%ae%89%e5%85%a8%e7%bb%84%e7%94%a8%e4%ba%8e%e6%8e%a7%e5%88%b6%e5%af%b9vm%e5%ae%9e%e4%be%8b%e7%9a%84%e8%ae%bf%e9%97%ae%e4%b8%80%e6%a0%b7">#</a>
+</h5>
+<h5 id="换句话说它在kubernetes集群上运行的pod之间创建了防火墙">
+  换句话说，它在Kubernetes集群上运行的Pod之间创建了防火墙。
+  <a class="anchor" href="#%e6%8d%a2%e5%8f%a5%e8%af%9d%e8%af%b4%e5%ae%83%e5%9c%a8kubernetes%e9%9b%86%e7%be%a4%e4%b8%8a%e8%bf%90%e8%a1%8c%e7%9a%84pod%e4%b9%8b%e9%97%b4%e5%88%9b%e5%bb%ba%e4%ba%86%e9%98%b2%e7%81%ab%e5%a2%99">#</a>
+</h5>
+<h5 id="可参考securing-kubernetes-cluster-networking">
+  可参考：Securing Kubernetes Cluster Networking.
+  <a class="anchor" href="#%e5%8f%af%e5%8f%82%e8%80%83securing-kubernetes-cluster-networking">#</a>
+</h5>
+<h3 id="232-每个命名空间中都有一个保守的networkpolicy">
+  2.3.2 每个命名空间中都有一个保守的NetworkPolicy
+  <a class="anchor" href="#232-%e6%af%8f%e4%b8%aa%e5%91%bd%e5%90%8d%e7%a9%ba%e9%97%b4%e4%b8%ad%e9%83%bd%e6%9c%89%e4%b8%80%e4%b8%aa%e4%bf%9d%e5%ae%88%e7%9a%84networkpolicy">#</a>
+</h3>
+<h5 id="该存储库包含kubernetes网络策略的各种用例和示例yaml文件以在您的设置中利用如果你想知道">
+  该存储库包含Kubernetes网络策略的各种用例和示例YAML文件，以在您的设置中利用。如果你想知道
+  <a class="anchor" href="#%e8%af%a5%e5%ad%98%e5%82%a8%e5%ba%93%e5%8c%85%e5%90%abkubernetes%e7%bd%91%e7%bb%9c%e7%ad%96%e7%95%a5%e7%9a%84%e5%90%84%e7%a7%8d%e7%94%a8%e4%be%8b%e5%92%8c%e7%a4%ba%e4%be%8byaml%e6%96%87%e4%bb%b6%e4%bb%a5%e5%9c%a8%e6%82%a8%e7%9a%84%e8%ae%be%e7%bd%ae%e4%b8%ad%e5%88%a9%e7%94%a8%e5%a6%82%e6%9e%9c%e4%bd%a0%e6%83%b3%e7%9f%a5%e9%81%93">#</a>
+</h5>
+<h5 id="how-to-droprestrict-traffic-to-applications-running-on-kubernetes">
+  how to drop/restrict traffic to applications running on Kubernetes
+  <a class="anchor" href="#how-to-droprestrict-traffic-to-applications-running-on-kubernetes">#</a>
+</h5>
+<h2 id="24-基于角色的访问控制rbac">
+  2.4 基于角色的访问控制RBAC
+  <a class="anchor" href="#24-%e5%9f%ba%e4%ba%8e%e8%a7%92%e8%89%b2%e7%9a%84%e8%ae%bf%e9%97%ae%e6%8e%a7%e5%88%b6rbac">#</a>
+</h2>
+<h5 id="放弃所需的最小权限是一种常见的做法但是实际操作又如何量化最小权限">
+  放弃所需的最小权限是一种常见的做法，但是实际操作又如何量化最小权限？
+  <a class="anchor" href="#%e6%94%be%e5%bc%83%e6%89%80%e9%9c%80%e7%9a%84%e6%9c%80%e5%b0%8f%e6%9d%83%e9%99%90%e6%98%af%e4%b8%80%e7%a7%8d%e5%b8%b8%e8%a7%81%e7%9a%84%e5%81%9a%e6%b3%95%e4%bd%86%e6%98%af%e5%ae%9e%e9%99%85%e6%93%8d%e4%bd%9c%e5%8f%88%e5%a6%82%e4%bd%95%e9%87%8f%e5%8c%96%e6%9c%80%e5%b0%8f%e6%9d%83%e9%99%90">#</a>
+</h5>
+<h5 id="细粒度的策略提供了更高的安全性但是需要更多的精力来进行管理">
+  细粒度的策略提供了更高的安全性，但是需要更多的精力来进行管理。
+  <a class="anchor" href="#%e7%bb%86%e7%b2%92%e5%ba%a6%e7%9a%84%e7%ad%96%e7%95%a5%e6%8f%90%e4%be%9b%e4%ba%86%e6%9b%b4%e9%ab%98%e7%9a%84%e5%ae%89%e5%85%a8%e6%80%a7%e4%bd%86%e6%98%af%e9%9c%80%e8%a6%81%e6%9b%b4%e5%a4%9a%e7%9a%84%e7%b2%be%e5%8a%9b%e6%9d%a5%e8%bf%9b%e8%a1%8c%e7%ae%a1%e7%90%86">#</a>
+</h5>
+<h5 id="更大范围的授权可以使不必要的api访问服务帐户但更易于控制">
+  更大范围的授权可以使不必要的API访问服务帐户，但更易于控制。
+  <a class="anchor" href="#%e6%9b%b4%e5%a4%a7%e8%8c%83%e5%9b%b4%e7%9a%84%e6%8e%88%e6%9d%83%e5%8f%af%e4%bb%a5%e4%bd%bf%e4%b8%8d%e5%bf%85%e8%a6%81%e7%9a%84api%e8%ae%bf%e9%97%ae%e6%9c%8d%e5%8a%a1%e5%b8%90%e6%88%b7%e4%bd%86%e6%9b%b4%e6%98%93%e4%ba%8e%e6%8e%a7%e5%88%b6">#</a>
+</h5>
+<h3 id="241-禁用默认服务帐户的自动挂载">
+  2.4.1 禁用默认服务帐户的自动挂载
+  <a class="anchor" href="#241-%e7%a6%81%e7%94%a8%e9%bb%98%e8%ae%a4%e6%9c%8d%e5%8a%a1%e5%b8%90%e6%88%b7%e7%9a%84%e8%87%aa%e5%8a%a8%e6%8c%82%e8%bd%bd">#</a>
+</h3>
+<h5 id="请注意默认的serviceaccount将自动安装到所有pod的文件系统中您可能要禁用它并提供更详细的策略">
+  请注意，默认的ServiceAccount将自动安装到所有Pod的文件系统中。您可能要禁用它并提供更详细的策略。
+  <a class="anchor" href="#%e8%af%b7%e6%b3%a8%e6%84%8f%e9%bb%98%e8%ae%a4%e7%9a%84serviceaccount%e5%b0%86%e8%87%aa%e5%8a%a8%e5%ae%89%e8%a3%85%e5%88%b0%e6%89%80%e6%9c%89pod%e7%9a%84%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f%e4%b8%ad%e6%82%a8%e5%8f%af%e8%83%bd%e8%a6%81%e7%a6%81%e7%94%a8%e5%ae%83%e5%b9%b6%e6%8f%90%e4%be%9b%e6%9b%b4%e8%af%a6%e7%bb%86%e7%9a%84%e7%ad%96%e7%95%a5">#</a>
+</h5>
+<h5 id="可以参考the-default-serviceaccount-is-automatically-mounted-into-the-file-system-of-all-pods">
+  可以参考：the default ServiceAccount is automatically mounted into the file system of all Pods.
+  <a class="anchor" href="#%e5%8f%af%e4%bb%a5%e5%8f%82%e8%80%83the-default-serviceaccount-is-automatically-mounted-into-the-file-system-of-all-pods">#</a>
+</h5>
+<h3 id="242-rbac策略设置为所需的最少特权">
+  2.4.2 RBAC策略设置为所需的最少特权
+  <a class="anchor" href="#242-rbac%e7%ad%96%e7%95%a5%e8%ae%be%e7%bd%ae%e4%b8%ba%e6%89%80%e9%9c%80%e7%9a%84%e6%9c%80%e5%b0%91%e7%89%b9%e6%9d%83">#</a>
+</h3>
+<h5 id="寻找有关如何设置rbac规则的好的建议是一项挑战在kubernetes-rbac的3种现实方法中您可以找到三种实用场景和有关如何入门的实用建议">
+  寻找有关如何设置RBAC规则的好的建议是一项挑战。在Kubernetes RBAC的3种现实方法中，您可以找到三种实用场景和有关如何入门的实用建议。
+  <a class="anchor" href="#%e5%af%bb%e6%89%be%e6%9c%89%e5%85%b3%e5%a6%82%e4%bd%95%e8%ae%be%e7%bd%aerbac%e8%a7%84%e5%88%99%e7%9a%84%e5%a5%bd%e7%9a%84%e5%bb%ba%e8%ae%ae%e6%98%af%e4%b8%80%e9%a1%b9%e6%8c%91%e6%88%98%e5%9c%a8kubernetes-rbac%e7%9a%843%e7%a7%8d%e7%8e%b0%e5%ae%9e%e6%96%b9%e6%b3%95%e4%b8%ad%e6%82%a8%e5%8f%af%e4%bb%a5%e6%89%be%e5%88%b0%e4%b8%89%e7%a7%8d%e5%ae%9e%e7%94%a8%e5%9c%ba%e6%99%af%e5%92%8c%e6%9c%89%e5%85%b3%e5%a6%82%e4%bd%95%e5%85%a5%e9%97%a8%e7%9a%84%e5%ae%9e%e7%94%a8%e5%bb%ba%e8%ae%ae">#</a>
+</h5>
+<h5 id="参考3-realistic-approaches-to-kubernetes-rbac">
+  参考；3 realistic approaches to Kubernetes RBAC
+  <a class="anchor" href="#%e5%8f%82%e8%80%833-realistic-approaches-to-kubernetes-rbac">#</a>
+</h5>
+<h3 id="243-rbac策略是精细的不能共享">
+  2.4.3 RBAC策略是精细的，不能共享
+  <a class="anchor" href="#243-rbac%e7%ad%96%e7%95%a5%e6%98%af%e7%b2%be%e7%bb%86%e7%9a%84%e4%b8%8d%e8%83%bd%e5%85%b1%e4%ba%ab">#</a>
+</h3>
+<p>需求：</p>
+<ul>
+<li>
+<h5 id="允许用户可以部署但是不允许去读secrets">
+  允许用户可以部署，但是不允许去读secrets
+  <a class="anchor" href="#%e5%85%81%e8%ae%b8%e7%94%a8%e6%88%b7%e5%8f%af%e4%bb%a5%e9%83%a8%e7%bd%b2%e4%bd%86%e6%98%af%e4%b8%8d%e5%85%81%e8%ae%b8%e5%8e%bb%e8%af%bbsecrets">#</a>
+</h5>
+</li>
+<li>
+<h5 id="admin应该可以访问所有资源">
+  admin应该可以访问所有资源
+  <a class="anchor" href="#admin%e5%ba%94%e8%af%a5%e5%8f%af%e4%bb%a5%e8%ae%bf%e9%97%ae%e6%89%80%e6%9c%89%e8%b5%84%e6%ba%90">#</a>
+</h5>
+</li>
+<li>
+<h5 id="默认情况下应用程序不应获得对kubernetes-api的写访问权限">
+  默认情况下，应用程序不应获得对Kubernetes API的写访问权限
+  <a class="anchor" href="#%e9%bb%98%e8%ae%a4%e6%83%85%e5%86%b5%e4%b8%8b%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e4%b8%8d%e5%ba%94%e8%8e%b7%e5%be%97%e5%af%b9kubernetes-api%e7%9a%84%e5%86%99%e8%ae%bf%e9%97%ae%e6%9d%83%e9%99%90">#</a>
+</h5>
+</li>
+<li>
+<h5 id="对于某些用途应该可以写入kubernetes-api">
+  对于某些用途，应该可以写入Kubernetes API。
+  <a class="anchor" href="#%e5%af%b9%e4%ba%8e%e6%9f%90%e4%ba%9b%e7%94%a8%e9%80%94%e5%ba%94%e8%af%a5%e5%8f%af%e4%bb%a5%e5%86%99%e5%85%a5kubernetes-api">#</a>
+</h5>
+</li>
+</ul>
+<h5 id="四个要求转化为五个单独的角色">
+  四个要求转化为五个单独的角色：
+  <a class="anchor" href="#%e5%9b%9b%e4%b8%aa%e8%a6%81%e6%b1%82%e8%bd%ac%e5%8c%96%e4%b8%ba%e4%ba%94%e4%b8%aa%e5%8d%95%e7%8b%ac%e7%9a%84%e8%a7%92%e8%89%b2">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="readonly">
+  ReadOnly
+  <a class="anchor" href="#readonly">#</a>
+</h5>
+</li>
+<li>
+<h5 id="poweruser">
+  PowerUser
+  <a class="anchor" href="#poweruser">#</a>
+</h5>
+</li>
+<li>
+<h5 id="operator">
+  Operator
+  <a class="anchor" href="#operator">#</a>
+</h5>
+</li>
+<li>
+<h5 id="controller">
+  Controller
+  <a class="anchor" href="#controller">#</a>
+</h5>
+</li>
+<li>
+<h5 id="admin">
+  Admin
+  <a class="anchor" href="#admin">#</a>
+</h5>
+</li>
+</ul>
+<h2 id="25-自定义策略">
+  2.5 自定义策略
+  <a class="anchor" href="#25-%e8%87%aa%e5%ae%9a%e4%b9%89%e7%ad%96%e7%95%a5">#</a>
+</h2>
+<h5 id="例如您可能要避免从公共互联网下载容器而希望首先批准这些容器">
+  例如，您可能要避免从公共互联网下载容器，而希望首先批准这些容器。
+  <a class="anchor" href="#%e4%be%8b%e5%a6%82%e6%82%a8%e5%8f%af%e8%83%bd%e8%a6%81%e9%81%bf%e5%85%8d%e4%bb%8e%e5%85%ac%e5%85%b1%e4%ba%92%e8%81%94%e7%bd%91%e4%b8%8b%e8%bd%bd%e5%ae%b9%e5%99%a8%e8%80%8c%e5%b8%8c%e6%9c%9b%e9%a6%96%e5%85%88%e6%89%b9%e5%87%86%e8%bf%99%e4%ba%9b%e5%ae%b9%e5%99%a8">#</a>
+</h5>
+<h5 id="也许您有一个内部注册表并且只有此注册表中的映像可以部署在您的群集中">
+  也许您有一个内部注册表，并且只有此注册表中的映像可以部署在您的群集中。
+  <a class="anchor" href="#%e4%b9%9f%e8%ae%b8%e6%82%a8%e6%9c%89%e4%b8%80%e4%b8%aa%e5%86%85%e9%83%a8%e6%b3%a8%e5%86%8c%e8%a1%a8%e5%b9%b6%e4%b8%94%e5%8f%aa%e6%9c%89%e6%ad%a4%e6%b3%a8%e5%86%8c%e8%a1%a8%e4%b8%ad%e7%9a%84%e6%98%a0%e5%83%8f%e5%8f%af%e4%bb%a5%e9%83%a8%e7%bd%b2%e5%9c%a8%e6%82%a8%e7%9a%84%e7%be%a4%e9%9b%86%e4%b8%ad">#</a>
+</h5>
+<h5 id="您如何强制只能在群集中部署受信任的容器没有针对此的rbac政策">
+  您如何强制只能在群集中部署受信任的容器？没有针对此的RBAC政策。
+  <a class="anchor" href="#%e6%82%a8%e5%a6%82%e4%bd%95%e5%bc%ba%e5%88%b6%e5%8f%aa%e8%83%bd%e5%9c%a8%e7%be%a4%e9%9b%86%e4%b8%ad%e9%83%a8%e7%bd%b2%e5%8f%97%e4%bf%a1%e4%bb%bb%e7%9a%84%e5%ae%b9%e5%99%a8%e6%b2%a1%e6%9c%89%e9%92%88%e5%af%b9%e6%ad%a4%e7%9a%84rbac%e6%94%bf%e7%ad%96">#</a>
+</h5>
+<h3 id="251-仅允许从已知注册表部署容器">
+  2.5.1 仅允许从已知注册表部署容器
+  <a class="anchor" href="#251-%e4%bb%85%e5%85%81%e8%ae%b8%e4%bb%8e%e5%b7%b2%e7%9f%a5%e6%b3%a8%e5%86%8c%e8%a1%a8%e9%83%a8%e7%bd%b2%e5%ae%b9%e5%99%a8">#</a>
+</h3>
+<h5 id="您可能要考虑的最常见的自定义策略之一是限制可以在群集中部署的映像">
+  您可能要考虑的最常见的自定义策略之一是限制可以在群集中部署的映像。
+  <a class="anchor" href="#%e6%82%a8%e5%8f%af%e8%83%bd%e8%a6%81%e8%80%83%e8%99%91%e7%9a%84%e6%9c%80%e5%b8%b8%e8%a7%81%e7%9a%84%e8%87%aa%e5%ae%9a%e4%b9%89%e7%ad%96%e7%95%a5%e4%b9%8b%e4%b8%80%e6%98%af%e9%99%90%e5%88%b6%e5%8f%af%e4%bb%a5%e5%9c%a8%e7%be%a4%e9%9b%86%e4%b8%ad%e9%83%a8%e7%bd%b2%e7%9a%84%e6%98%a0%e5%83%8f">#</a>
+</h5>
+<h5 id="the-following-tutorial-explains-how-you-can-use-the-open-policy-agent-to-restrict-not-approved-images">
+  The following tutorial explains how you can use the Open Policy Agent to restrict not approved images.
+  <a class="anchor" href="#the-following-tutorial-explains-how-you-can-use-the-open-policy-agent-to-restrict-not-approved-images">#</a>
+</h5>
+<h3 id="252-强制ingress主机名唯一">
+  2.5.2 强制Ingress主机名唯一
+  <a class="anchor" href="#252-%e5%bc%ba%e5%88%b6ingress%e4%b8%bb%e6%9c%ba%e5%90%8d%e5%94%af%e4%b8%80">#</a>
+</h3>
+<h5 id="用户创建ingress清单时可以使用其中的任何主机名">
+  用户创建Ingress清单时，可以使用其中的任何主机名。
+  <a class="anchor" href="#%e7%94%a8%e6%88%b7%e5%88%9b%e5%bb%baingress%e6%b8%85%e5%8d%95%e6%97%b6%e5%8f%af%e4%bb%a5%e4%bd%bf%e7%94%a8%e5%85%b6%e4%b8%ad%e7%9a%84%e4%bb%bb%e4%bd%95%e4%b8%bb%e6%9c%ba%e5%90%8d">#</a>
+</h5>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403221003689.png" alt="image-20240322100337630" /></p>
+<h5 id="但是您可能希望阻止用户多次使用相同的主机名并互相覆盖open-policy-agent的官方文档包含有关如何在验证webhook中检查ingress资源的教程">
+  但是，您可能希望阻止用户多次使用相同的主机名并互相覆盖。Open Policy Agent的官方文档包含有关如何在验证Webhook中检查Ingress资源的教程。
+  <a class="anchor" href="#%e4%bd%86%e6%98%af%e6%82%a8%e5%8f%af%e8%83%bd%e5%b8%8c%e6%9c%9b%e9%98%bb%e6%ad%a2%e7%94%a8%e6%88%b7%e5%a4%9a%e6%ac%a1%e4%bd%bf%e7%94%a8%e7%9b%b8%e5%90%8c%e7%9a%84%e4%b8%bb%e6%9c%ba%e5%90%8d%e5%b9%b6%e4%ba%92%e7%9b%b8%e8%a6%86%e7%9b%96open-policy-agent%e7%9a%84%e5%ae%98%e6%96%b9%e6%96%87%e6%a1%a3%e5%8c%85%e5%90%ab%e6%9c%89%e5%85%b3%e5%a6%82%e4%bd%95%e5%9c%a8%e9%aa%8c%e8%af%81webhook%e4%b8%ad%e6%a3%80%e6%9f%a5ingress%e8%b5%84%e6%ba%90%e7%9a%84%e6%95%99%e7%a8%8b">#</a>
+</h5>
+<h5 id="a-tutorial-on-how-to-check-ingress-resources-as-part-of-the-validation-webhook">
+  a tutorial on how to check Ingress resources as part of the validation webhook.
+  <a class="anchor" href="#a-tutorial-on-how-to-check-ingress-resources-as-part-of-the-validation-webhook">#</a>
+</h5>
+<h3 id="253-仅在ingress主机名中使用批准的域名">
+  2.5.3 仅在Ingress主机名中使用批准的域名
+  <a class="anchor" href="#253-%e4%bb%85%e5%9c%a8ingress%e4%b8%bb%e6%9c%ba%e5%90%8d%e4%b8%ad%e4%bd%bf%e7%94%a8%e6%89%b9%e5%87%86%e7%9a%84%e5%9f%9f%e5%90%8d">#</a>
+</h3>
+<h5 id="用户创建ingress清单时可以使用其中的任何主机名一种">
+  用户创建Ingress清单时，可以使用其中的任何主机名。一种
+  <a class="anchor" href="#%e7%94%a8%e6%88%b7%e5%88%9b%e5%bb%baingress%e6%b8%85%e5%8d%95%e6%97%b6%e5%8f%af%e4%bb%a5%e4%bd%bf%e7%94%a8%e5%85%b6%e4%b8%ad%e7%9a%84%e4%bb%bb%e4%bd%95%e4%b8%bb%e6%9c%ba%e5%90%8d%e4%b8%80%e7%a7%8d">#</a>
+</h5>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403221003063.png" alt="image-20240322100354006" /></p>
+<h5 id="但是您可能希望阻止用户使用无效的主机名open-policy-agent的官方文档包含有关如何在验证webhook中检查ingress资源的教程">
+  但是，您可能希望阻止用户使用无效的主机名。Open Policy Agent的官方文档包含有关如何在验证Webhook中检查Ingress资源的教程。
+  <a class="anchor" href="#%e4%bd%86%e6%98%af%e6%82%a8%e5%8f%af%e8%83%bd%e5%b8%8c%e6%9c%9b%e9%98%bb%e6%ad%a2%e7%94%a8%e6%88%b7%e4%bd%bf%e7%94%a8%e6%97%a0%e6%95%88%e7%9a%84%e4%b8%bb%e6%9c%ba%e5%90%8dopen-policy-agent%e7%9a%84%e5%ae%98%e6%96%b9%e6%96%87%e6%a1%a3%e5%8c%85%e5%90%ab%e6%9c%89%e5%85%b3%e5%a6%82%e4%bd%95%e5%9c%a8%e9%aa%8c%e8%af%81webhook%e4%b8%ad%e6%a3%80%e6%9f%a5ingress%e8%b5%84%e6%ba%90%e7%9a%84%e6%95%99%e7%a8%8b">#</a>
+</h5>
+<h1 id="三-集群配置">
+  三 集群配置
+  <a class="anchor" href="#%e4%b8%89-%e9%9b%86%e7%be%a4%e9%85%8d%e7%bd%ae">#</a>
+</h1>
+<h5 id="最好的选择是将群集与标准参考进行比较">
+  最好的选择是将群集与标准参考进行比较。
+  <a class="anchor" href="#%e6%9c%80%e5%a5%bd%e7%9a%84%e9%80%89%e6%8b%a9%e6%98%af%e5%b0%86%e7%be%a4%e9%9b%86%e4%b8%8e%e6%a0%87%e5%87%86%e5%8f%82%e8%80%83%e8%bf%9b%e8%a1%8c%e6%af%94%e8%be%83">#</a>
+</h5>
+<h5 id="对于kubernetes参考是internet安全中心cis基准">
+  对于Kubernetes，参考是Internet安全中心（CIS）基准。
+  <a class="anchor" href="#%e5%af%b9%e4%ba%8ekubernetes%e5%8f%82%e8%80%83%e6%98%afinternet%e5%ae%89%e5%85%a8%e4%b8%ad%e5%bf%83cis%e5%9f%ba%e5%87%86">#</a>
+</h5>
+<h2 id="31-批准的kubernetes配置">
+  3.1 批准的Kubernetes配置
+  <a class="anchor" href="#31-%e6%89%b9%e5%87%86%e7%9a%84kubernetes%e9%85%8d%e7%bd%ae">#</a>
+</h2>
+<h3 id="311-集群通过cis基准测试">
+  3.1.1 集群通过CIS基准测试
+  <a class="anchor" href="#311-%e9%9b%86%e7%be%a4%e9%80%9a%e8%bf%87cis%e5%9f%ba%e5%87%86%e6%b5%8b%e8%af%95">#</a>
+</h3>
+<h5 id="internet安全中心提供了一些准则和基准测试以确保代码安全的最佳实践">
+  Internet安全中心提供了一些准则和基准测试，以确保代码安全的最佳实践。
+  <a class="anchor" href="#internet%e5%ae%89%e5%85%a8%e4%b8%ad%e5%bf%83%e6%8f%90%e4%be%9b%e4%ba%86%e4%b8%80%e4%ba%9b%e5%87%86%e5%88%99%e5%92%8c%e5%9f%ba%e5%87%86%e6%b5%8b%e8%af%95%e4%bb%a5%e7%a1%ae%e4%bf%9d%e4%bb%a3%e7%a0%81%e5%ae%89%e5%85%a8%e7%9a%84%e6%9c%80%e4%bd%b3%e5%ae%9e%e8%b7%b5">#</a>
+</h5>
+<h5 id="他们还维护了kubernetes的基准您可以download-from-the-official-website">
+  他们还维护了Kubernetes的基准，您可以download from the official website.
+  <a class="anchor" href="#%e4%bb%96%e4%bb%ac%e8%bf%98%e7%bb%b4%e6%8a%a4%e4%ba%86kubernetes%e7%9a%84%e5%9f%ba%e5%87%86%e6%82%a8%e5%8f%af%e4%bb%a5download-from-the-official-website">#</a>
+</h5>
+<h5 id="kube-bench是一种工具用于自动执行cis-kubernetes基准测试并报告集群中的错误配置">
+  kube-bench是一种工具，用于自动执行CIS Kubernetes基准测试并报告集群中的错误配置。
+  <a class="anchor" href="#kube-bench%e6%98%af%e4%b8%80%e7%a7%8d%e5%b7%a5%e5%85%b7%e7%94%a8%e4%ba%8e%e8%87%aa%e5%8a%a8%e6%89%a7%e8%a1%8ccis-kubernetes%e5%9f%ba%e5%87%86%e6%b5%8b%e8%af%95%e5%b9%b6%e6%8a%a5%e5%91%8a%e9%9b%86%e7%be%a4%e4%b8%ad%e7%9a%84%e9%94%99%e8%af%af%e9%85%8d%e7%bd%ae">#</a>
+</h5>
+<pre tabindex="0"><code>[INFO] 1 Master Node Security Configuration
+[INFO] 1.1 API Server
+[WARN] 1.1.1 Ensure that the --anonymous-auth argument is set to false (Not Scored)
+[PASS] 1.1.2 Ensure that the --basic-auth-file argument is not set (Scored)
+[PASS] 1.1.3 Ensure that the --insecure-allow-any-token argument is not set (Not Scored)
+[PASS] 1.1.4 Ensure that the --kubelet-https argument is set to true (Scored)
+[PASS] 1.1.5 Ensure that the --insecure-bind-address argument is not set (Scored)
+[PASS] 1.1.6 Ensure that the --insecure-port argument is set to 0 (Scored)
+[PASS] 1.1.7 Ensure that the --secure-port argument is not set to 0 (Scored)
+[FAIL] 1.1.8 Ensure that the --profiling argument is set to false (Scored)
+</code></pre><p>请注意，无法使用kube-bench检查托管集群（例如GKE，EKS和AKS）的主节点。主节点由云提供商控制。</p>
+<h3 id="312-禁用元数据云提供程序元数据api">
+  3.1.2 禁用元数据云提供程序元数据API
+  <a class="anchor" href="#312-%e7%a6%81%e7%94%a8%e5%85%83%e6%95%b0%e6%8d%ae%e4%ba%91%e6%8f%90%e4%be%9b%e7%a8%8b%e5%ba%8f%e5%85%83%e6%95%b0%e6%8d%aeapi">#</a>
+</h3>
+<h5 id="云平台awsazuregce等通常将本地元数据服务公开给实例">
+  云平台（AWS，Azure，GCE等）通常将本地元数据服务公开给实例。
+  <a class="anchor" href="#%e4%ba%91%e5%b9%b3%e5%8f%b0awsazuregce%e7%ad%89%e9%80%9a%e5%b8%b8%e5%b0%86%e6%9c%ac%e5%9c%b0%e5%85%83%e6%95%b0%e6%8d%ae%e6%9c%8d%e5%8a%a1%e5%85%ac%e5%bc%80%e7%bb%99%e5%ae%9e%e4%be%8b">#</a>
+</h5>
+<h5 id="默认情况下实例上运行的pod可以访问这些api并且可以包含该节点的云凭据或诸如kubelet凭据之类的置备数据">
+  默认情况下，实例上运行的Pod可以访问这些API，并且可以包含该节点的云凭据或诸如kubelet凭据之类的置备数据。
+  <a class="anchor" href="#%e9%bb%98%e8%ae%a4%e6%83%85%e5%86%b5%e4%b8%8b%e5%ae%9e%e4%be%8b%e4%b8%8a%e8%bf%90%e8%a1%8c%e7%9a%84pod%e5%8f%af%e4%bb%a5%e8%ae%bf%e9%97%ae%e8%bf%99%e4%ba%9bapi%e5%b9%b6%e4%b8%94%e5%8f%af%e4%bb%a5%e5%8c%85%e5%90%ab%e8%af%a5%e8%8a%82%e7%82%b9%e7%9a%84%e4%ba%91%e5%87%ad%e6%8d%ae%e6%88%96%e8%af%b8%e5%a6%82kubelet%e5%87%ad%e6%8d%ae%e4%b9%8b%e7%b1%bb%e7%9a%84%e7%bd%ae%e5%a4%87%e6%95%b0%e6%8d%ae">#</a>
+</h5>
+<h5 id="这些凭据可用于在群集内升级或升级到同一帐户下的其他云服务">
+  这些凭据可用于在群集内升级或升级到同一帐户下的其他云服务。
+  <a class="anchor" href="#%e8%bf%99%e4%ba%9b%e5%87%ad%e6%8d%ae%e5%8f%af%e7%94%a8%e4%ba%8e%e5%9c%a8%e7%be%a4%e9%9b%86%e5%86%85%e5%8d%87%e7%ba%a7%e6%88%96%e5%8d%87%e7%ba%a7%e5%88%b0%e5%90%8c%e4%b8%80%e5%b8%90%e6%88%b7%e4%b8%8b%e7%9a%84%e5%85%b6%e4%bb%96%e4%ba%91%e6%9c%8d%e5%8a%a1">#</a>
+</h5>
+<h3 id="313-限制对alpha或beta功能的访问">
+  3.1.3 限制对Alpha或Beta功能的访问
+  <a class="anchor" href="#313-%e9%99%90%e5%88%b6%e5%af%b9alpha%e6%88%96beta%e5%8a%9f%e8%83%bd%e7%9a%84%e8%ae%bf%e9%97%ae">#</a>
+</h3>
+<h5 id="alpha和beta-kubernetes功能正在积极开发中并且可能会存在限制或错误从而导致安全漏洞">
+  Alpha和Beta Kubernetes功能正在积极开发中，并且可能会存在限制或错误，从而导致安全漏洞。
+  <a class="anchor" href="#alpha%e5%92%8cbeta-kubernetes%e5%8a%9f%e8%83%bd%e6%ad%a3%e5%9c%a8%e7%a7%af%e6%9e%81%e5%bc%80%e5%8f%91%e4%b8%ad%e5%b9%b6%e4%b8%94%e5%8f%af%e8%83%bd%e4%bc%9a%e5%ad%98%e5%9c%a8%e9%99%90%e5%88%b6%e6%88%96%e9%94%99%e8%af%af%e4%bb%8e%e8%80%8c%e5%af%bc%e8%87%b4%e5%ae%89%e5%85%a8%e6%bc%8f%e6%b4%9e">#</a>
+</h5>
+<h5 id="始终评估alpha或beta功能可能提供的价值以防对您的安全状况造成潜在风险">
+  始终评估Alpha或Beta功能可能提供的价值，以防对您的安全状况造成潜在风险。
+  <a class="anchor" href="#%e5%a7%8b%e7%bb%88%e8%af%84%e4%bc%b0alpha%e6%88%96beta%e5%8a%9f%e8%83%bd%e5%8f%af%e8%83%bd%e6%8f%90%e4%be%9b%e7%9a%84%e4%bb%b7%e5%80%bc%e4%bb%a5%e9%98%b2%e5%af%b9%e6%82%a8%e7%9a%84%e5%ae%89%e5%85%a8%e7%8a%b6%e5%86%b5%e9%80%a0%e6%88%90%e6%bd%9c%e5%9c%a8%e9%a3%8e%e9%99%a9">#</a>
+</h5>
+<h5 id="如有疑问请禁用不使用的功能">
+  如有疑问，请禁用不使用的功能。
+  <a class="anchor" href="#%e5%a6%82%e6%9c%89%e7%96%91%e9%97%ae%e8%af%b7%e7%a6%81%e7%94%a8%e4%b8%8d%e4%bd%bf%e7%94%a8%e7%9a%84%e5%8a%9f%e8%83%bd">#</a>
+</h5>
+<h2 id="32-认证">
+  3.2 认证
+  <a class="anchor" href="#32-%e8%ae%a4%e8%af%81">#</a>
+</h2>
+<h5 id="kubernetes提供了不同的认证策略">
+  kubernetes提供了不同的认证策略
+  <a class="anchor" href="#kubernetes%e6%8f%90%e4%be%9b%e4%ba%86%e4%b8%8d%e5%90%8c%e7%9a%84%e8%ae%a4%e8%af%81%e7%ad%96%e7%95%a5">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="static-tokens很难使之无效应避免">
+  <strong>Static Tokens</strong>:很难使之无效，应避免
+  <a class="anchor" href="#static-tokens%e5%be%88%e9%9a%be%e4%bd%bf%e4%b9%8b%e6%97%a0%e6%95%88%e5%ba%94%e9%81%bf%e5%85%8d">#</a>
+</h5>
+</li>
+<li>
+<h5 id="bootstrap-tokens与上面的静态令牌相同">
+  <strong>Bootstrap Tokens</strong>：与上面的静态令牌相同
+  <a class="anchor" href="#bootstrap-tokens%e4%b8%8e%e4%b8%8a%e9%9d%a2%e7%9a%84%e9%9d%99%e6%80%81%e4%bb%a4%e7%89%8c%e7%9b%b8%e5%90%8c">#</a>
+</h5>
+</li>
+<li>
+<h5 id="basic-authentication通过网络以明文形式传输凭据">
+  <strong>Basic Authentication</strong>：通过网络以明文形式传输凭据
+  <a class="anchor" href="#basic-authentication%e9%80%9a%e8%bf%87%e7%bd%91%e7%bb%9c%e4%bb%a5%e6%98%8e%e6%96%87%e5%bd%a2%e5%bc%8f%e4%bc%a0%e8%be%93%e5%87%ad%e6%8d%ae">#</a>
+</h5>
+</li>
+<li>
+<h5 id="x509-client-certs需要定期更新和重新分发客户端证书">
+  <strong>X509 client certs</strong>：需要定期更新和重新分发客户端证书
+  <a class="anchor" href="#x509-client-certs%e9%9c%80%e8%a6%81%e5%ae%9a%e6%9c%9f%e6%9b%b4%e6%96%b0%e5%92%8c%e9%87%8d%e6%96%b0%e5%88%86%e5%8f%91%e5%ae%a2%e6%88%b7%e7%ab%af%e8%af%81%e4%b9%a6">#</a>
+</h5>
+</li>
+<li>
+<h5 id="service-account-tokens是集群中运行的应用程序和工作负载的首选身份验证策略">
+  <strong>Service Account Tokens</strong>：是集群中运行的应用程序和工作负载的首选身份验证策略
+  <a class="anchor" href="#service-account-tokens%e6%98%af%e9%9b%86%e7%be%a4%e4%b8%ad%e8%bf%90%e8%a1%8c%e7%9a%84%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e5%92%8c%e5%b7%a5%e4%bd%9c%e8%b4%9f%e8%bd%bd%e7%9a%84%e9%a6%96%e9%80%89%e8%ba%ab%e4%bb%bd%e9%aa%8c%e8%af%81%e7%ad%96%e7%95%a5">#</a>
+</h5>
+</li>
+<li>
+<h5 id="openid-connect-oidc-tokensoidc与您的身份提供商例如adaws-iamgcp-iam等集成后为最终用户提供了最佳的身份验证策略">
+  <strong>OpenID Connect (OIDC) Tokens</strong>：OIDC与您的身份提供商（例如AD，AWS IAM，GCP IAM等）集成后，为最终用户提供了最佳的身份验证策略。
+  <a class="anchor" href="#openid-connect-oidc-tokensoidc%e4%b8%8e%e6%82%a8%e7%9a%84%e8%ba%ab%e4%bb%bd%e6%8f%90%e4%be%9b%e5%95%86%e4%be%8b%e5%a6%82adaws-iamgcp-iam%e7%ad%89%e9%9b%86%e6%88%90%e5%90%8e%e4%b8%ba%e6%9c%80%e7%bb%88%e7%94%a8%e6%88%b7%e6%8f%90%e4%be%9b%e4%ba%86%e6%9c%80%e4%bd%b3%e7%9a%84%e8%ba%ab%e4%bb%bd%e9%aa%8c%e8%af%81%e7%ad%96%e7%95%a5">#</a>
+</h5>
+</li>
+</ul>
+<h5 id="更多详细策略可参考in-the-official-documentation">
+  更多详细策略可参考：in the official documentation.
+  <a class="anchor" href="#%e6%9b%b4%e5%a4%9a%e8%af%a6%e7%bb%86%e7%ad%96%e7%95%a5%e5%8f%af%e5%8f%82%e8%80%83in-the-official-documentation">#</a>
+</h5>
+<h3 id="321-使用openidoidc令牌作为用户身份验证策略">
+  3.2.1 使用OpenID（OIDC）令牌作为用户身份验证策略
+  <a class="anchor" href="#321-%e4%bd%bf%e7%94%a8openidoidc%e4%bb%a4%e7%89%8c%e4%bd%9c%e4%b8%ba%e7%94%a8%e6%88%b7%e8%ba%ab%e4%bb%bd%e9%aa%8c%e8%af%81%e7%ad%96%e7%95%a5">#</a>
+</h3>
+<h5 id="kubernetes支持各种身份验证方法包括openid-connectoidc">
+  Kubernetes支持各种身份验证方法，包括OpenID Connect（OIDC）。
+  <a class="anchor" href="#kubernetes%e6%94%af%e6%8c%81%e5%90%84%e7%a7%8d%e8%ba%ab%e4%bb%bd%e9%aa%8c%e8%af%81%e6%96%b9%e6%b3%95%e5%8c%85%e6%8b%acopenid-connectoidc">#</a>
+</h5>
+<h5 id="openid-connect允许单点登录sso例如您的google身份连接到kubernetes集群和其他开发工具">
+  OpenID Connect允许单点登录（SSO）（例如您的Google身份）连接到Kubernetes集群和其他开发工具。
+  <a class="anchor" href="#openid-connect%e5%85%81%e8%ae%b8%e5%8d%95%e7%82%b9%e7%99%bb%e5%bd%95sso%e4%be%8b%e5%a6%82%e6%82%a8%e7%9a%84google%e8%ba%ab%e4%bb%bd%e8%bf%9e%e6%8e%a5%e5%88%b0kubernetes%e9%9b%86%e7%be%a4%e5%92%8c%e5%85%b6%e4%bb%96%e5%bc%80%e5%8f%91%e5%b7%a5%e5%85%b7">#</a>
+</h5>
+<h5 id="你不用分别取记忆和管理认证您可能有多个群集连接到同一openid提供程序">
+  你不用分别取记忆和管理认证，您可能有多个群集连接到同一OpenID提供程序。
+  <a class="anchor" href="#%e4%bd%a0%e4%b8%8d%e7%94%a8%e5%88%86%e5%88%ab%e5%8f%96%e8%ae%b0%e5%bf%86%e5%92%8c%e7%ae%a1%e7%90%86%e8%ae%a4%e8%af%81%e6%82%a8%e5%8f%af%e8%83%bd%e6%9c%89%e5%a4%9a%e4%b8%aa%e7%be%a4%e9%9b%86%e8%bf%9e%e6%8e%a5%e5%88%b0%e5%90%8c%e4%b8%80openid%e6%8f%90%e4%be%9b%e7%a8%8b%e5%ba%8f">#</a>
+</h5>
+<h5 id="详细可以参考learn-more-about-the-openid-connect-in-kubernetes">
+  详细可以参考：learn more about the OpenID connect in Kubernetes
+  <a class="anchor" href="#%e8%af%a6%e7%bb%86%e5%8f%af%e4%bb%a5%e5%8f%82%e8%80%83learn-more-about-the-openid-connect-in-kubernetes">#</a>
+</h5>
+<h2 id="33-rbac">
+  3.3 RBAC
+  <a class="anchor" href="#33-rbac">#</a>
+</h2>
+<h3 id="331-serviceaccount令牌仅适用于应用程序和控制器">
+  3.3.1 ServiceAccount令牌仅适用于应用程序和控制器
+  <a class="anchor" href="#331-serviceaccount%e4%bb%a4%e7%89%8c%e4%bb%85%e9%80%82%e7%94%a8%e4%ba%8e%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e5%92%8c%e6%8e%a7%e5%88%b6%e5%99%a8">#</a>
+</h3>
+<h5 id="服务帐户令牌不应该用于尝试与kubernetes群集进行交互的最终用户但对于在kubernetes上运行的应用程序和工作负载它们是首选的身份验证策略">
+  服务帐户令牌不应该用于尝试与Kubernetes群集进行交互的最终用户，但对于在Kubernetes上运行的应用程序和工作负载，它们是首选的身份验证策略。
+  <a class="anchor" href="#%e6%9c%8d%e5%8a%a1%e5%b8%90%e6%88%b7%e4%bb%a4%e7%89%8c%e4%b8%8d%e5%ba%94%e8%af%a5%e7%94%a8%e4%ba%8e%e5%b0%9d%e8%af%95%e4%b8%8ekubernetes%e7%be%a4%e9%9b%86%e8%bf%9b%e8%a1%8c%e4%ba%a4%e4%ba%92%e7%9a%84%e6%9c%80%e7%bb%88%e7%94%a8%e6%88%b7%e4%bd%86%e5%af%b9%e4%ba%8e%e5%9c%a8kubernetes%e4%b8%8a%e8%bf%90%e8%a1%8c%e7%9a%84%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e5%92%8c%e5%b7%a5%e4%bd%9c%e8%b4%9f%e8%bd%bd%e5%ae%83%e4%bb%ac%e6%98%af%e9%a6%96%e9%80%89%e7%9a%84%e8%ba%ab%e4%bb%bd%e9%aa%8c%e8%af%81%e7%ad%96%e7%95%a5">#</a>
+</h5>
+<h2 id="34-日志设定">
+  3.4 日志设定
+  <a class="anchor" href="#34-%e6%97%a5%e5%bf%97%e8%ae%be%e5%ae%9a">#</a>
+</h2>
+<h3 id="341-有一个日志保留和归档策略">
+  3.4.1 有一个日志保留和归档策略
+  <a class="anchor" href="#341-%e6%9c%89%e4%b8%80%e4%b8%aa%e6%97%a5%e5%bf%97%e4%bf%9d%e7%95%99%e5%92%8c%e5%bd%92%e6%a1%a3%e7%ad%96%e7%95%a5">#</a>
+</h3>
+<h5 id="您应该保留30-45天的历史日志">
+  您应该保留30-45天的历史日志。
+  <a class="anchor" href="#%e6%82%a8%e5%ba%94%e8%af%a5%e4%bf%9d%e7%95%9930-45%e5%a4%a9%e7%9a%84%e5%8e%86%e5%8f%b2%e6%97%a5%e5%bf%97">#</a>
+</h5>
+<h3 id="342-从节点控制平面审核中收集日志">
+  3.4.2 从节点，控制平面，审核中收集日志
+  <a class="anchor" href="#342-%e4%bb%8e%e8%8a%82%e7%82%b9%e6%8e%a7%e5%88%b6%e5%b9%b3%e9%9d%a2%e5%ae%a1%e6%a0%b8%e4%b8%ad%e6%94%b6%e9%9b%86%e6%97%a5%e5%bf%97">#</a>
+</h3>
+<h5 id="从那收集日志">
+  从那收集日志?
+  <a class="anchor" href="#%e4%bb%8e%e9%82%a3%e6%94%b6%e9%9b%86%e6%97%a5%e5%bf%97">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="nodeskubeletcontainer-runtime">
+  Nodes（kubelet，container runtime）
+  <a class="anchor" href="#nodeskubeletcontainer-runtime">#</a>
+</h5>
+</li>
+<li>
+<h5 id="控制平面api-serverschedulercontroller-manager">
+  控制平面（API server，scheduler，controller manager）
+  <a class="anchor" href="#%e6%8e%a7%e5%88%b6%e5%b9%b3%e9%9d%a2api-serverschedulercontroller-manager">#</a>
+</h5>
+</li>
+<li>
+<h5 id="k8s-审计对api服务器的所有请求">
+  k8s 审计（对API服务器的所有请求）
+  <a class="anchor" href="#k8s-%e5%ae%a1%e8%ae%a1%e5%af%b9api%e6%9c%8d%e5%8a%a1%e5%99%a8%e7%9a%84%e6%89%80%e6%9c%89%e8%af%b7%e6%b1%82">#</a>
+</h5>
+</li>
+</ul>
+<h5 id="应该收集什么">
+  应该收集什么?
+  <a class="anchor" href="#%e5%ba%94%e8%af%a5%e6%94%b6%e9%9b%86%e4%bb%80%e4%b9%88">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="应用名称">
+  应用名称
+  <a class="anchor" href="#%e5%ba%94%e7%94%a8%e5%90%8d%e7%a7%b0">#</a>
+</h5>
+</li>
+<li>
+<h5 id="应用实例">
+  应用实例
+  <a class="anchor" href="#%e5%ba%94%e7%94%a8%e5%ae%9e%e4%be%8b">#</a>
+</h5>
+</li>
+<li>
+<h5 id="应用版本">
+  应用版本
+  <a class="anchor" href="#%e5%ba%94%e7%94%a8%e7%89%88%e6%9c%ac">#</a>
+</h5>
+</li>
+<li>
+<h5 id="集群id">
+  集群ID
+  <a class="anchor" href="#%e9%9b%86%e7%be%a4id">#</a>
+</h5>
+</li>
+<li>
+<h5 id="容器名称">
+  容器名称
+  <a class="anchor" href="#%e5%ae%b9%e5%99%a8%e5%90%8d%e7%a7%b0">#</a>
+</h5>
+</li>
+<li>
+<h5 id="容器运行在集群的那个node节点上">
+  容器运行在集群的那个node节点上
+  <a class="anchor" href="#%e5%ae%b9%e5%99%a8%e8%bf%90%e8%a1%8c%e5%9c%a8%e9%9b%86%e7%be%a4%e7%9a%84%e9%82%a3%e4%b8%aanode%e8%8a%82%e7%82%b9%e4%b8%8a">#</a>
+</h5>
+</li>
+<li>
+<h5 id="容器运行在那个pod内">
+  容器运行在那个pod内
+  <a class="anchor" href="#%e5%ae%b9%e5%99%a8%e8%bf%90%e8%a1%8c%e5%9c%a8%e9%82%a3%e4%b8%aapod%e5%86%85">#</a>
+</h5>
+</li>
+<li>
+<h5 id="名称空间">
+  名称空间
+  <a class="anchor" href="#%e5%90%8d%e7%a7%b0%e7%a9%ba%e9%97%b4">#</a>
+</h5>
+</li>
+</ul>
+<h3 id="343-在每个节点上最好使用守护程序来收集日志而不是在每个中运行sidecars">
+  3.4.3 在每个节点上最好使用守护程序来收集日志，而不是在每个中运行sidecars
+  <a class="anchor" href="#343-%e5%9c%a8%e6%af%8f%e4%b8%aa%e8%8a%82%e7%82%b9%e4%b8%8a%e6%9c%80%e5%a5%bd%e4%bd%bf%e7%94%a8%e5%ae%88%e6%8a%a4%e7%a8%8b%e5%ba%8f%e6%9d%a5%e6%94%b6%e9%9b%86%e6%97%a5%e5%bf%97%e8%80%8c%e4%b8%8d%e6%98%af%e5%9c%a8%e6%af%8f%e4%b8%aa%e4%b8%ad%e8%bf%90%e8%a1%8csidecars">#</a>
+</h3>
+<h5 id="应用程序应该登录到标准输出而不是文件">
+  应用程序应该登录到标准输出，而不是文件。
+  <a class="anchor" href="#%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e5%ba%94%e8%af%a5%e7%99%bb%e5%bd%95%e5%88%b0%e6%a0%87%e5%87%86%e8%be%93%e5%87%ba%e8%80%8c%e4%b8%8d%e6%98%af%e6%96%87%e4%bb%b6">#</a>
+</h5>
+<h5 id="每个节点上的守护程序可以从容器运行时收集日志如果记录到文件则可能需要每个pod的sidecar容器">
+  每个节点上的守护程序可以从容器运行时收集日志（如果记录到文件，则可能需要每个pod的sidecar容器）。
+  <a class="anchor" href="#%e6%af%8f%e4%b8%aa%e8%8a%82%e7%82%b9%e4%b8%8a%e7%9a%84%e5%ae%88%e6%8a%a4%e7%a8%8b%e5%ba%8f%e5%8f%af%e4%bb%a5%e4%bb%8e%e5%ae%b9%e5%99%a8%e8%bf%90%e8%a1%8c%e6%97%b6%e6%94%b6%e9%9b%86%e6%97%a5%e5%bf%97%e5%a6%82%e6%9e%9c%e8%ae%b0%e5%bd%95%e5%88%b0%e6%96%87%e4%bb%b6%e5%88%99%e5%8f%af%e8%83%bd%e9%9c%80%e8%a6%81%e6%af%8f%e4%b8%aapod%e7%9a%84sidecar%e5%ae%b9%e5%99%a8">#</a>
+</h5>
+<h3 id="344-提供日志聚合工具">
+  3.4.4 提供日志聚合工具
+  <a class="anchor" href="#344-%e6%8f%90%e4%be%9b%e6%97%a5%e5%bf%97%e8%81%9a%e5%90%88%e5%b7%a5%e5%85%b7">#</a>
+</h3>
+<h5 id="使用日志聚合工具例如efk堆栈elasticsearchfluentdkibanadatadogsumo-logicsysdiggcp-stackdriverazure-monitoraws-cloudwatch">
+  使用日志聚合工具，例如EFK堆栈（Elasticsearch，Fluentd，Kibana），DataDog，Sumo Logic，Sysdig，GCP Stackdriver，Azure Monitor，AWS CloudWatch。
+  <a class="anchor" href="#%e4%bd%bf%e7%94%a8%e6%97%a5%e5%bf%97%e8%81%9a%e5%90%88%e5%b7%a5%e5%85%b7%e4%be%8b%e5%a6%82efk%e5%a0%86%e6%a0%88elasticsearchfluentdkibanadatadogsumo-logicsysdiggcp-stackdriverazure-monitoraws-cloudwatch">#</a>
+</h5>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#11-健康检查">1.1 健康检查</a>
+      <ul>
+        <li><a href="#111-容器就绪性探针">1.1.1 容器就绪性探针</a></li>
+        <li><a href="#112-发生致命错误时容器崩溃">1.1.2 发生致命错误时容器崩溃</a></li>
+        <li><a href="#113-配置被动的存活性探针">1.1.3 配置被动的存活性探针</a></li>
+        <li><a href="#114-存活性探针与就绪性探针的区别">1.1.4 存活性探针与就绪性探针的区别</a></li>
+      </ul>
+    </li>
+    <li><a href="#12-应用的独立性">1.2 应用的独立性</a>
+      <ul>
+        <li><a href="#121-就绪性探针应该独立">1.2.1 就绪性探针应该独立</a></li>
+        <li><a href="#122-应用程序重连到依赖服务">1.2.2 应用程序重连到依赖服务</a></li>
+        <li><a href="#13-优雅的关机">1.3 优雅的关机</a></li>
+        <li><a href="#131-应用程序未通过sigterm信号关闭但它已经终止了链接">1.3.1 应用程序未通过SIGTERM信号关闭，但它已经终止了链接</a></li>
+        <li><a href="#132-应用程序仍在宽限期处理请求">1.3.2 应用程序仍在宽限期处理请求</a></li>
+        <li><a href="#133-dockerfile中的cmd将sigterm转发到进程">1.3.3 Dockerfile中的CMD将SIGTERM转发到进程</a></li>
+        <li><a href="#134-关闭所有空闲的保持活动套接字">1.3.4 关闭所有空闲的保持活动套接字</a></li>
+      </ul>
+    </li>
+    <li><a href="#14-容错能力">1.4 容错能力</a>
+      <ul>
+        <li></li>
+        <li><a href="#141-部署运行多个副本">1.4.1 部署运行多个副本</a></li>
+        <li><a href="#142-避免将pod放置在单个节点中">1.4.2 避免将Pod放置在单个节点中</a></li>
+        <li><a href="#143-设置pod中断预算">1.4.3 设置Pod中断预算</a></li>
+      </ul>
+    </li>
+    <li><a href="#15-资源使用">1.5 资源使用</a>
+      <ul>
+        <li></li>
+        <li><a href="#151-设置所有容器的内存限制和请求">1.5.1 设置所有容器的内存限制和请求</a></li>
+        <li><a href="#152-将cpu请求设置为1个cpu或以下">1.5.2 将CPU请求设置为1个CPU或以下</a></li>
+        <li><a href="#153-禁用cpu限制除非您有很好的用例">1.5.3 禁用CPU限制—除非您有很好的用例</a></li>
+        <li><a href="#154-命名空间具有limitrange">1.5.4 命名空间具有LimitRange</a></li>
+        <li><a href="#155-为pod设置适当的服务质量qos">1.5.5 为Pod设置适当的服务质量（QoS）</a></li>
+      </ul>
+    </li>
+    <li><a href="#16-标记资源">1.6 标记资源</a>
+      <ul>
+        <li><a href="#161-资源已定义技术标签">1.6.1 资源已定义技术标签</a></li>
+        <li><a href="#162-资源已定义业务标签">1.6.2 资源已定义业务标签</a></li>
+        <li><a href="#163-资源定义安全等级标签">1.6.3 资源定义安全等级标签</a></li>
+      </ul>
+    </li>
+    <li><a href="#17-日志">1.7 日志</a>
+      <ul>
+        <li></li>
+        <li><a href="#171-应用程序记录到stdout和stderr">1.7.1 应用程序记录到stdout和stderr</a></li>
+        <li><a href="#172-避免日志使用sidecars模式">1.7.2 避免日志使用sidecars模式</a></li>
+      </ul>
+    </li>
+    <li><a href="#18-伸缩">1.8 伸缩</a>
+      <ul>
+        <li></li>
+        <li><a href="#181-容器在其本地文件系统中不存储任何状态">1.8.1 容器在其本地文件系统中不存储任何状态</a></li>
+        <li><a href="#182-对于可变使用模式的应用应该使用hpa">1.8.2 对于可变使用模式的应用应该使用HPA</a></li>
+        <li><a href="#183-不要使用vpa因为改特性还在测试中">1.8.3 不要使用VPA，因为改特性还在测试中</a></li>
+        <li><a href="#184-如果有很高的工作负载可以使用集群自动伸缩">1.8.4 如果有很高的工作负载，可以使用集群自动伸缩</a></li>
+        <li><a href="#19-配置和密钥">1.9 配置和密钥</a></li>
+        <li><a href="#191-外部化所有配置">1.9.1 外部化所有配置</a></li>
+        <li><a href="#192-将secrets作为卷而不是环境变量">1.9.2 将Secrets作为卷而不是环境变量</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li><a href="#21-名称空间限制">2.1 名称空间限制</a>
+      <ul>
+        <li></li>
+        <li><a href="#211-名称空间限制范围">2.1.1 名称空间限制范围</a></li>
+        <li><a href="#212-名称控制资源配额">2.1.2 名称控制资源配额</a></li>
+      </ul>
+    </li>
+    <li><a href="#22-pod安全策略">2.2 POD安全策略</a>
+      <ul>
+        <li></li>
+        <li><a href="#221-启用pod安全策略">2.2.1 启用POD安全策略</a></li>
+        <li><a href="#222-禁用特权容器">2.2.2 禁用特权容器</a></li>
+        <li><a href="#223-容器使用只读文件系统">2.2.3 容器使用只读文件系统</a></li>
+        <li><a href="#224-避免利用root用户启动容器">2.2.4 避免利用root用户启动容器</a></li>
+        <li><a href="#225-限制能力">2.2.5 限制能力</a></li>
+        <li><a href="#226-防止特权升级">2.2.6 防止特权升级</a></li>
+      </ul>
+    </li>
+    <li><a href="#23-网络策略">2.3 网络策略</a>
+      <ul>
+        <li></li>
+        <li><a href="#231-启用网络策略">2.3.1 启用网络策略</a></li>
+        <li><a href="#232-每个命名空间中都有一个保守的networkpolicy">2.3.2 每个命名空间中都有一个保守的NetworkPolicy</a></li>
+      </ul>
+    </li>
+    <li><a href="#24-基于角色的访问控制rbac">2.4 基于角色的访问控制RBAC</a>
+      <ul>
+        <li></li>
+        <li><a href="#241-禁用默认服务帐户的自动挂载">2.4.1 禁用默认服务帐户的自动挂载</a></li>
+        <li><a href="#242-rbac策略设置为所需的最少特权">2.4.2 RBAC策略设置为所需的最少特权</a></li>
+        <li><a href="#243-rbac策略是精细的不能共享">2.4.3 RBAC策略是精细的，不能共享</a></li>
+      </ul>
+    </li>
+    <li><a href="#25-自定义策略">2.5 自定义策略</a>
+      <ul>
+        <li></li>
+        <li><a href="#251-仅允许从已知注册表部署容器">2.5.1 仅允许从已知注册表部署容器</a></li>
+        <li><a href="#252-强制ingress主机名唯一">2.5.2 强制Ingress主机名唯一</a></li>
+        <li><a href="#253-仅在ingress主机名中使用批准的域名">2.5.3 仅在Ingress主机名中使用批准的域名</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#31-批准的kubernetes配置">3.1 批准的Kubernetes配置</a>
+      <ul>
+        <li><a href="#311-集群通过cis基准测试">3.1.1 集群通过CIS基准测试</a></li>
+        <li><a href="#312-禁用元数据云提供程序元数据api">3.1.2 禁用元数据云提供程序元数据API</a></li>
+        <li><a href="#313-限制对alpha或beta功能的访问">3.1.3 限制对Alpha或Beta功能的访问</a></li>
+      </ul>
+    </li>
+    <li><a href="#32-认证">3.2 认证</a>
+      <ul>
+        <li></li>
+        <li><a href="#321-使用openidoidc令牌作为用户身份验证策略">3.2.1 使用OpenID（OIDC）令牌作为用户身份验证策略</a></li>
+      </ul>
+    </li>
+    <li><a href="#33-rbac">3.3 RBAC</a>
+      <ul>
+        <li><a href="#331-serviceaccount令牌仅适用于应用程序和控制器">3.3.1 ServiceAccount令牌仅适用于应用程序和控制器</a></li>
+      </ul>
+    </li>
+    <li><a href="#34-日志设定">3.4 日志设定</a>
+      <ul>
+        <li><a href="#341-有一个日志保留和归档策略">3.4.1 有一个日志保留和归档策略</a></li>
+        <li><a href="#342-从节点控制平面审核中收集日志">3.4.2 从节点，控制平面，审核中收集日志</a></li>
+        <li><a href="#343-在每个节点上最好使用守护程序来收集日志而不是在每个中运行sidecars">3.4.3 在每个节点上最好使用守护程序来收集日志，而不是在每个中运行sidecars</a></li>
+        <li><a href="#344-提供日志聚合工具">3.4.4 提供日志聚合工具</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

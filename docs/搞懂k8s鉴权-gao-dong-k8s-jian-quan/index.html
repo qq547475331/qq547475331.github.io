@@ -1,0 +1,2839 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  前言
+  #
+
+本文介绍K8s中的鉴权模块。对其4种鉴权模式都进行了概述讲解。结合例子着重对大家日常中使用最多的RBAC鉴权模式进行了说明。
+
+  鉴权概述
+  #
+
+《搞懂K8s认证》中，我们提到不论是通过kubectl客户端还是REST请求访问K8s集群，最终都需要经过API Server来进行资源的操作并通过Etcd。整个过程如下图1所示，可以分成4个阶段：
+图1 K8s API请求访问过程
+请求发起方进行K8s API请求，经过Authentication（认证）、Authorization（鉴权）、AdmissionControl（准入控制）三个阶段的校验，最后把请求转化为对K8s对象的变更操作持久化至etcd中。
+其中认证主要解决的是请求来源能否访问的问题。即通过了认证，那么可以认为它是一个合法的请求对象。那么如何去决定请求对象能访问哪些资源以及对这些资源能进行哪些操作，便是鉴权所要完成的事情了。
+鉴权的最终目的，是区分请求对象，限定操作的影响范围，让其使用最小的权限完成自己所要进行操作，从而进一步保证安全。权限控制的划分方式有许多种，K8s中提供了4种鉴权模式，分别为Node、ABAC、RBAC和Webhook。
+默认情况下，我们可以从/etc/kubernates/manifests/kube-apiserver.yaml文件中查看apiserver启动时认证模式，片段如图2所示：
+
+图2 kube-apiserver的认证参数
+其中可以使用的参数如表1所示：
+表1 鉴权模块参数标识表
+
+  
+      
+          参数配置
+          含义
+          一般的使用场景
+      
+  
+  
+      
+          &ndash;authorization-mode=ABAC
+          使用基于属性的访问控制(ABAC)
+          根据用户的用户名或者组名来控制其对集群资源的访问权限，适用于较小的组织或开发团队
+      
+      
+          &ndash;authorization-mode=RBAC
+          使用基于角色的访问控制(RBAC)
+          自定义ServiceAccount，绑定资源根据角色来控制资源的访问权限，适用于较大型的组织或者开发运维团队
+      
+      
+          &ndash;authorization-mode=Webhook
+          使用HTTP回调模式，允许你使用远程REST端点管理鉴权
+          将鉴权角色交给外部服务进行处理，根据自身需求，定制和扩展鉴权策略，如自定义Webhook鉴权模块对跨云平台的应用进行集中的的访问控制
+      
+      
+          &ndash;authorization-mode=Node
+          针对kubelet发出的API请求执行鉴权
+          验证节点身份，确保只有经过身份验证且具有所需权限的Node才能连接到K8s集群
+      
+      
+          &ndash;authorization-mode=AlwaysDeny
+          阻止所有请求
+          一般仅用作测试
+      
+      
+          &ndash;authorization-mode=AlwaysAllow
+          允许所有请求
+          不需要API请求进行鉴权的场景
+      
+  
+
+如图2所示，可以同时配置多个鉴权模块（多个模块之间使用逗号分隔），排在靠前的模块优先执行，任何模式允许或拒接请求，则立即返回该决定，并不会与其他鉴权模块协商。
+
+  Node鉴权
+  #
+
+Node鉴权是一种特殊用途的鉴权模式，旨在对kubelet发出API请求进行授权。Node鉴权允许kubelet执行API的操作分成读和写两部分。读取操作控制范围为：services、endpoints、nodes、pods以及绑定到kubelet节点 Pod相关的secret、configmap、pvc和持久卷。写入操作的范围主要是节点和节点状态、Pod和Pod状态以及事件，若要限制kubelet只能修改自己的节点，则还需要在Apiserver启动时，开启NodeRestriction准入插件（见图2第二个红框）。
+开启Node鉴权模块后，kubellet为了获取授权，必须使用一个特定规则的凭据，如图3所示：
+
+图3 kubelet的证书凭据
+从图中我们看到，kubelet使用了一个证书凭据，其中O=system:nodes表示其所在组，CN=system:node:paas-cnp-k8s-kce-01表示其用户名，满足了Node鉴权模块要求的组名必须为system:nodes，用户名必须为system:node:&lt;nodeName&gt;的要求。其中&lt;nodeName&gt;默认由hostname或kubelet --hostname-override选项提供指定，其必须与kubelet提供的主机名称精确匹配。
+system:nodes是K8s的内置用户组，我们可以通过其默认的ClusterRoleBinding，如图4所示：
+
+图4 system:nodes的ClusterRoleBinding内容
+我们可以发现，它指示指向了system:node这个ClusterRole，并没有subjects的内容，即其没有绑定system:node:paas-cnp-k8s-kce-01用户也没有绑定system:nodes组。其正是因为K8s基于 Node鉴权模块来限制kubelet只能读取和修改本节点上的资源，并不是使用 RBAC来鉴权（涉及到部分RBAC的内容，下文会进行详解）。
+
+  ABAC鉴权
+  #
+
+基于属性的访问控制，K8s中可以表述将访问策略授予用户或者组。与RBAC不同的点在于，其策略是由任何类型的属性（用户属性、资源属性、对象、环境等）进行描述。">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="http://192.168.0.139:1313/docs/%E6%90%9E%E6%87%82k8s%E9%89%B4%E6%9D%83-gao-dong-k8s-jian-quan/">
+  <meta property="og:site_name" content="Guichen&#39;s Blog">
+  <meta property="og:title" content="搞懂K8S鉴权 2024-04-03 15:11:54.885">
+  <meta property="og:description" content="前言 # 本文介绍K8s中的鉴权模块。对其4种鉴权模式都进行了概述讲解。结合例子着重对大家日常中使用最多的RBAC鉴权模式进行了说明。
+鉴权概述 # 《搞懂K8s认证》中，我们提到不论是通过kubectl客户端还是REST请求访问K8s集群，最终都需要经过API Server来进行资源的操作并通过Etcd。整个过程如下图1所示，可以分成4个阶段：
+图1 K8s API请求访问过程
+请求发起方进行K8s API请求，经过Authentication（认证）、Authorization（鉴权）、AdmissionControl（准入控制）三个阶段的校验，最后把请求转化为对K8s对象的变更操作持久化至etcd中。
+其中认证主要解决的是请求来源能否访问的问题。即通过了认证，那么可以认为它是一个合法的请求对象。那么如何去决定请求对象能访问哪些资源以及对这些资源能进行哪些操作，便是鉴权所要完成的事情了。
+鉴权的最终目的，是区分请求对象，限定操作的影响范围，让其使用最小的权限完成自己所要进行操作，从而进一步保证安全。权限控制的划分方式有许多种，K8s中提供了4种鉴权模式，分别为Node、ABAC、RBAC和Webhook。
+默认情况下，我们可以从/etc/kubernates/manifests/kube-apiserver.yaml文件中查看apiserver启动时认证模式，片段如图2所示：
+图2 kube-apiserver的认证参数
+其中可以使用的参数如表1所示：
+表1 鉴权模块参数标识表
+参数配置 含义 一般的使用场景 –authorization-mode=ABAC 使用基于属性的访问控制(ABAC) 根据用户的用户名或者组名来控制其对集群资源的访问权限，适用于较小的组织或开发团队 –authorization-mode=RBAC 使用基于角色的访问控制(RBAC) 自定义ServiceAccount，绑定资源根据角色来控制资源的访问权限，适用于较大型的组织或者开发运维团队 –authorization-mode=Webhook 使用HTTP回调模式，允许你使用远程REST端点管理鉴权 将鉴权角色交给外部服务进行处理，根据自身需求，定制和扩展鉴权策略，如自定义Webhook鉴权模块对跨云平台的应用进行集中的的访问控制 –authorization-mode=Node 针对kubelet发出的API请求执行鉴权 验证节点身份，确保只有经过身份验证且具有所需权限的Node才能连接到K8s集群 –authorization-mode=AlwaysDeny 阻止所有请求 一般仅用作测试 –authorization-mode=AlwaysAllow 允许所有请求 不需要API请求进行鉴权的场景 如图2所示，可以同时配置多个鉴权模块（多个模块之间使用逗号分隔），排在靠前的模块优先执行，任何模式允许或拒接请求，则立即返回该决定，并不会与其他鉴权模块协商。
+Node鉴权 # Node鉴权是一种特殊用途的鉴权模式，旨在对kubelet发出API请求进行授权。Node鉴权允许kubelet执行API的操作分成读和写两部分。读取操作控制范围为：services、endpoints、nodes、pods以及绑定到kubelet节点 Pod相关的secret、configmap、pvc和持久卷。写入操作的范围主要是节点和节点状态、Pod和Pod状态以及事件，若要限制kubelet只能修改自己的节点，则还需要在Apiserver启动时，开启NodeRestriction准入插件（见图2第二个红框）。
+开启Node鉴权模块后，kubellet为了获取授权，必须使用一个特定规则的凭据，如图3所示：
+图3 kubelet的证书凭据
+从图中我们看到，kubelet使用了一个证书凭据，其中O=system:nodes表示其所在组，CN=system:node:paas-cnp-k8s-kce-01表示其用户名，满足了Node鉴权模块要求的组名必须为system:nodes，用户名必须为system:node:&lt;nodeName&gt;的要求。其中&lt;nodeName&gt;默认由hostname或kubelet --hostname-override选项提供指定，其必须与kubelet提供的主机名称精确匹配。
+system:nodes是K8s的内置用户组，我们可以通过其默认的ClusterRoleBinding，如图4所示：
+图4 system:nodes的ClusterRoleBinding内容
+我们可以发现，它指示指向了system:node这个ClusterRole，并没有subjects的内容，即其没有绑定system:node:paas-cnp-k8s-kce-01用户也没有绑定system:nodes组。其正是因为K8s基于 Node鉴权模块来限制kubelet只能读取和修改本节点上的资源，并不是使用 RBAC来鉴权（涉及到部分RBAC的内容，下文会进行详解）。
+ABAC鉴权 # 基于属性的访问控制，K8s中可以表述将访问策略授予用户或者组。与RBAC不同的点在于，其策略是由任何类型的属性（用户属性、资源属性、对象、环境等）进行描述。">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+<title>搞懂K8S鉴权 2024-04-03 15:11:54.885 | Guichen&#39;s Blog</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="http://192.168.0.139:1313/docs/%E6%90%9E%E6%87%82k8s%E9%89%B4%E6%9D%83-gao-dong-k8s-jian-quan/">
+<link rel="stylesheet" href="/book.min.6c8b9d2a1fc95075ed7da46ca81060b39add8fff6741ac51259f768929281e2c.css" integrity="sha256-bIudKh/JUHXtfaRsqBBgs5rdj/9nQaxRJZ92iSkoHiw=" crossorigin="anonymous">
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/en.search.min.6f52273b9f5fa65803e3991faf27d1a7b7b8f6b148888237d77b4e841cb030e3.js" integrity="sha256-b1InO59fplgD45kfryfRp7e49rFIiII313tOhBywMOM=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/"><span>Guichen&#39;s Blog</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/00-%E9%9B%86%E7%BE%A4%E8%A7%84%E5%88%92%E5%92%8C%E5%9F%BA%E7%A1%80%E5%8F%82%E6%95%B0%E8%AE%BE%E5%AE%9A-00--ji-qun-gui-hua-he-ji-chu-can-shu-she-ding/" class="">00-集群规划和基础参数设定 2023-09-28 15:19:02.214</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/01-%E5%88%9B%E5%BB%BA%E8%AF%81%E4%B9%A6%E5%92%8C%E7%8E%AF%E5%A2%83%E5%87%86%E5%A4%87-01--chuang-jian-zheng-shu-he-huan-jing-zhun-bei/" class="">01-创建证书和环境准备 2023-09-28 15:22:19.812</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/02-%E5%AE%89%E8%A3%85etcd%E9%9B%86%E7%BE%A4-02--an-zhuang-etcd-ji-qun/" class="">02-安装etcd集群 2023-09-28 15:23:07.363</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E9%9D%A2%E8%AF%950224/" class="">0224面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-26-k8s%E7%9B%B8%E5%85%B3/" class="">0226 k8s题目</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/03-%E5%AE%89%E8%A3%85%E5%AE%B9%E5%99%A8%E8%BF%90%E8%A1%8C%E6%97%B6-03--an-zhuang-rong-qi-yun-xing-shi/" class="">03-安装容器运行时 2023-09-28 15:23:56.241</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/04-%E5%AE%89%E8%A3%85kube_master%E8%8A%82%E7%82%B9-04--an-zhuang-kubemaster-jie-dian/" class="">04-安装kube_master节点 2023-09-28 15:24:21.203</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/05-%E5%AE%89%E8%A3%85kube_node%E8%8A%82%E7%82%B9-05--an-zhuang-kubenode-jie-dian/" class="">05-安装kube_node节点 2023-09-28 15:24:43.201</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85calico%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-calico-wang-luo-zu-jian/" class="">06-安装calico网络组件 2023-09-28 15:34:28.483</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85cilium%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-cilium-wang-luo-zu-jian/" class="">06-安装cilium网络组件 2023-09-28 15:35:23.884</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85flannel%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-flannel-wang-luo-zu-jian/" class="">06-安装flannel网络组件 2023-09-28 15:35:50.039</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85kube-ovn%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-kube-ovn-wang-luo-zu-jian/" class="">06-安装kube-ovn网络组件 2023-09-28 15:36:11.265</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-wang-luo-zu-jian/" class="">06-安装网络组件 2023-09-28 15:25:14.997</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/07-%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4%E4%B8%BB%E8%A6%81%E6%8F%92%E4%BB%B6-07--an-zhuang-ji-qun-zhu-yao-cha-jian/" class="">07-安装集群主要插件 2023-09-28 15:26:42.651</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/08-k8s-%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8--k8s-ji-qun-cun-chu/" class="">08-K8S 集群存储  2023-09-28 15:27:29.454</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/16%E4%B8%AA%E6%A6%82%E5%BF%B5%E5%B8%A6%E4%BD%A0%E5%85%A5%E9%97%A8-kubernetes-16-ge-gai-nian-dai-ni-ru-men-kubernetes/" class="">16个概念带你入门 Kubernetes 2024-04-03 15:09:21.671</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/16%E5%BC%A0%E7%A1%AC%E6%A0%B8%E5%9B%BE%E8%A7%A3k8s%E7%BD%91%E7%BB%9C-16-zhang-ying-he-tu-jie-k8s-wang-luo/" class="">16张硬核图解k8s网络 2024-04-03 15:12:49.601</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-07-microk8s/" class="">2024-12-07 microk8s</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-devstack/" class="">2024-12-08 devstack</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-mutilpass%E6%93%8D%E4%BD%9C/" class="">2024-12-08 mutilpass操作</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-nano%E6%93%8D%E4%BD%9C/" class="">2024-12-08 nano操作</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-openstack%E5%92%8Ckubernetes%E5%8C%BA%E5%88%AB/" class="">2024-12-08 openstack和kubernetes区别</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-openstack%E9%9C%80%E8%A6%81%E5%87%A0%E5%8F%B0%E8%99%9A%E6%8B%9F%E6%9C%BA/" class="">2024-12-08 openstack需要几台虚拟机</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-%E5%9D%97%E5%AD%98%E5%82%A8%E5%92%8C%E5%AF%B9%E8%B1%A1%E5%82%A8%E5%AD%98%E5%8C%BA%E5%88%AB/" class="">2024-12-08 块存储和对象储存区别</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-docker-daemon.json/" class="">2024-12-09 docker daemon.json</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-helmchart-%E9%83%A8%E7%BD%B2flask%E5%BA%94%E7%94%A8/" class="">2024-12-09 helmchart 部署flask应用</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-mutilpass%E9%83%A8%E7%BD%B2openstack/" class="">2024-12-09 mutilpass部署openstack devstack形式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-openstack-ssh%E8%BF%9E%E6%8E%A5/" class="">2024-12-09 openstack ssh连接</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-10-docker-registrry/" class="">2024-12-10 docker registrry</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-22-k8s%E6%9E%B6%E6%9E%84%E5%B8%88%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8/" class="">2024-2-22 k8s架构师面试大全</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-22-k8s%E9%9D%A2%E8%AF%95%E5%AE%9D%E5%85%B8/" class="">2024-2-22 k8s面试宝典</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-26-%E9%9D%A2%E8%AF%95/" class="">2024-2-26 面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-19-%E4%B8%A4%E5%BC%A0%E5%9B%BE%E5%85%A8%E9%9D%A2%E7%90%86%E8%A7%A3k8s%E5%8E%9F%E7%90%86/" class="">2024-3-19 两张图全面理解k8s原理</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-cni%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B/" class="">2024-3-4 CNI剖析演进</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-8-%E9%9D%A2%E8%AF%950308/" class="">2024-3-8 面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-4-17-%E9%9D%A2%E8%AF%95%E6%80%BB%E7%BB%93/" class="">2024-4-17 面试总结</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-kubernetes%E9%9D%A2%E8%AF%95%E9%A2%98/" class="">2024-8-1 k8s面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-%E5%B8%B8%E8%A7%81linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98%E6%89%BE%E5%B7%A5%E4%BD%9C%E7%9A%84%E5%BF%85%E7%9C%8B/" class="">2024-8-1 linux运维面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98/" class="">2024-8-1 linux面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-1-1-%E5%A4%A7%E5%A0%B0%E6%B2%B3-%E6%88%91%E7%9A%84%E4%BF%9D%E5%A7%86/" class="">2025-1-1 大堰河-我的保姆</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-k8s-csi%E5%89%96%E6%9E%90/" class="">2025-1-16 CSI剖析演进</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-1-16-k8s%E5%B8%B8%E8%A7%81%E6%95%85%E9%9A%9C%E6%8C%87%E5%8D%97/" class="">2025-1-16 k8s常见故障指南</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-k8s%E6%B5%81%E9%87%8F%E9%93%BE%E8%B7%AF%E5%89%96%E6%9E%90/" class="">2025-1-16 k8s流量链路剖析</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/33%E6%AC%BEgitops%E4%B8%8Edevops%E4%B8%BB%E6%B5%81%E7%B3%BB%E7%BB%9F-33-kuan-gitops-yu-devops-zhu-liu-xi-tong/" class="">33款gitops与devops主流系统 2024-08-02 17:45:15.709</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/600%E6%9D%A1%E6%9C%80%E5%BC%BAlinux%E5%91%BD%E4%BB%A4%E6%80%BB%E7%BB%93-600-tiao-zui-qiang-linux-ming-ling-zong-jie/" class="">600条最强linux命令总结 2024-04-03 15:12:31.282</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/acme%E8%87%AA%E5%8A%A8%E6%9B%B4%E6%96%B0%E8%AF%81%E4%B9%A6-acme-zi-dong-geng-xin-zheng-shu/" class="">acme自动更新证书 2024-04-03 14:41:44.289</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/calico-%E9%85%8D%E7%BD%AE-bgp-route-reflectors-calico-pei-zhi-bgproutereflectors/" class="">calico 配置 BGP Route Reflectors 2023-09-28 15:34:01.007</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/calico%E7%BD%91%E7%BB%9C%E8%87%AA%E5%AE%9A%E4%B9%89-calico-wang-luo-zi-ding-yi/" class="">Calico网络自定义 2024-04-03 15:08:43.394</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/cicd%E6%80%9D%E8%80%83-cicd-si-kao/" class="">CICD思考 2024-04-03 15:11:24.151</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/client-go-%E5%9B%9B%E7%A7%8D%E5%AE%A2%E6%88%B7%E7%AB%AF-client-go-si-zhong-ke-hu-duan/" class="">Client-go 四种客户端 2024-04-03 14:49:34.32</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/client-go-%E6%9E%B6%E6%9E%84-client-go-jia-gou/" class="">Client-go 架构 2024-04-03 14:48:40.716</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/cni%E6%8F%92%E4%BB%B6%E9%80%89%E5%9E%8B-cni-cha-jian-xuan-xing/" class="">CNI插件选型 2024-04-03 15:01:51.29</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/containerd-%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C-containerd-ji-ben-cao-zuo/" class="">Containerd 基本操作 2024-04-03 14:55:46.786</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/coredns%E4%B9%8B%E5%85%89-coredns-zhi-guang/" class="">COREDNS之光 2024-04-03 14:54:52.059</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/dockerfile%E5%AE%9A%E5%88%B6%E4%B8%93%E5%B1%9E%E9%95%9C%E5%83%8F-dockerfile-ding-zhi-zhuan-shu-jing-xiang/" class="">dockerfile定制专属镜像 2024-08-02 17:44:00.522</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/dockerfile%E7%9A%84copy%E5%92%8Cadd%E7%9A%84%E5%8C%BA%E5%88%AB-dockerfile-de-copy-he-add-de-qu-bie/" class="">dockerfile的copy和add的区别 2024-04-03 15:01:09.565</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/docker%E9%87%8D%E8%A6%81%E7%9A%84%E7%BD%91%E7%BB%9C%E7%9F%A5%E8%AF%86%E7%82%B9-docker-zhong-yao-de-wang-luo-zhi-shi-dian/" class="">Docker重要的网络知识点  2024-04-03 15:12:10.162</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/etcd%E5%A4%87%E4%BB%BD-etcd-bei-fen/" class="">ETCD备份 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/etcd%E7%A8%B3%E5%AE%9A%E6%80%A7%E5%8F%8A%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%AE%9E%E8%B7%B5-etcd-wen-ding-xing-ji-xing-neng-you-hua-shi-jian/" class="">ETCD稳定性及性能优化实践 2024-04-03 15:06:31.141</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ex-lb-%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E9%83%A8%E7%BD%B2-ex-lb-fu-zai-jun-heng-bu-shu/" class="">EX-LB 负载均衡部署 2023-09-28 15:28:51.998</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ezctl-%E5%91%BD%E4%BB%A4%E8%A1%8C%E4%BB%8B%E7%BB%8D-ezctl-ming-ling-xing-jie-shao/" class="">ezctl 命令行介绍 2023-09-28 15:28:00.619</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/flanel%E7%BD%91%E7%BB%9C-flanel-wang-luo/" class="">flanel网络 2024-04-03 15:05:04.16</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/godel-scheduler-godel-scheduler/" class="">godel-scheduler 2024-08-02 17:41:00.668</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/helm-chart%E5%92%8Crepo-helmchart-he-repo/" class="">helm chart和repo 2024-04-03 15:00:43.125</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/istio-ingress-gateway-istio-ingress-gateway/" class="">istio-ingress-gateway 2024-08-02 17:51:54.75</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/istio%E9%83%A8%E7%BD%B2-istio-bu-shu/" class="">istio部署 2024-08-02 17:52:40.721</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-cni%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B-k8scni-pou-xi-yan-jin/" class="">K8S CNI剖析演进 2024-03-04 10:51:33.245</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-csi-openebs%E5%8E%9F%E7%90%86-k8scsiopenebs-yuan-li/" class="">K8S csi openebs原理 2024-04-03 14:44:48.967</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-csi%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B-k8scsi-pou-xi-yan-jin/" class="">K8S CSI剖析演进 2024-03-04 10:52:20.507</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-gpt-k8sgpt/" class="">K8S GPT 2024-04-03 15:02:09.127</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E5%BC%80%E5%8F%91%E5%8F%AF%E4%B8%8D%E6%AD%A2-crud-k8s-kai-fa-ke-bu-zhi-crud/" class="">K8S 开发可不止 CRUD 2024-04-03 14:50:11.765</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E6%8E%A2%E9%92%88%E5%8E%9F%E7%90%86-k8s-tan-zhen-yuan-li/" class="">K8S 探针原理 2024-04-03 14:53:29.429</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E6%B5%81%E9%87%8F%E9%93%BE%E8%B7%AF%E5%89%96%E6%9E%90-k8s-liu-liang-lian-lu-pou-xi/" class="">K8S 流量链路剖析 2024-03-04 10:50:22.991</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E8%B0%83%E5%BA%A6%E5%99%A8-scheduler_onego-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-diao-du-qi-scheduleronego-yuan-ma-jie-du/" class="">K8S 调度器 scheduler_one.go 源码解读 2024-04-09 11:45:28.22</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E4%B9%8Bingress-nginx%E5%8E%9F%E7%90%86%E5%8F%8A%E9%85%8D%E7%BD%AE-k8s-zhi-ingress-nginx-yuan-li-ji-pei-zhi/" class="">K8S之ingress-nginx原理及配置 2024-07-05 18:02:14.243</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E4%B9%8Bkubelet%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-zhi-kubelet-yuan-ma-jie-du/" class="">k8s之kubelet源码解读 2024-03-28 15:30:39.633</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7-k8s-yuan-de-sheng-ji/" class="">K8S原地升级 2024-04-03 15:04:38.125</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%91%BD%E4%BB%A4%E6%8C%87%E5%8D%97-k8s-ming-ling-zhi-nan/" class="">K8S命令指南 2024-04-03 15:14:14.207</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%A6%82%E4%BD%95%E8%8E%B7%E5%BE%97-ip-k8s-ru-he-huo-de-ip/" class="">K8S如何获得 IP 2024-04-16 17:09:59.658</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%BA%94%E7%94%A8%E7%9A%84%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5-k8s-ying-yong-de-zui-jia-shi-jian/" class="">k8s应用的最佳实践 2024-04-03 14:43:16.936</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-deployment_controllergo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-deploymentcontrollergo-yuan-ma-jie-du/" class="">K8S控制器之 deployment_controller.go源码解读 2024-04-09 11:30:03.133</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-progressgo-%E8%BF%9B%E5%BA%A6-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-progressgo-jin-du-yuan-ma-jie-du/" class="">K8S控制器之 progress.go 进度 源码解读 2024-04-09 11:31:08.86</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-rollinggo-%E6%BB%9A%E5%8A%A8%E6%9B%B4%E6%96%B0-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-rollinggo-gun-dong-geng-xin-yuan-ma-jie-du/" class="">K8S控制器之 rolling.go 滚动更新 源码解读 2024-04-09 11:32:58.133</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-schedulergo-%E8%B0%83%E5%BA%A6%E5%99%A8-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-schedulergo-diao-du-qi-yuan-ma-jie-du/" class="">K8S控制器之 scheduler.go 调度器 源码解读 2024-04-09 11:44:25.171</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Brecreatego-%E9%87%8D%E5%BB%BA-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-recreatego-zhong-jian-yuan-ma-jie-du/" class="">K8S控制器之recreate.go 重建 源码解读 2024-04-09 11:31:49.855</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Brollbackgo-%E5%9B%9E%E6%BB%9A-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-rollbackgo-hui-gun-yuan-ma-jie-du/" class="">K8S控制器之rollback.go 回滚 源码解读 2024-04-09 11:32:26.587</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_pod_controlgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulpodcontrolgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_pod_control.go源码解读 2024-04-10 09:42:50.078</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_set_controlgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetcontrolgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_set_control.go源码解读 2024-04-10 09:41:30.316</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_set_status_updatego%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetstatusupdatego-yuan-ma-jie-du/" class="">K8S控制器之stateful_set_status_update.go源码解读 2024-04-10</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_setgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_set.go源码解读 2024-04-10</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bsyncgo-%E5%90%8C%E6%AD%A5-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-syncgo-tong-bu-yuan-ma-jie-du/" class="">K8S控制器之sync.go 同步 源码解读 2024-04-09 11:33:26.356</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E7%9A%84pod%E7%B1%BB%E5%9E%8B-k8s-de-pod-lei-xing/" class="">K8S的POD类型 2024-04-03 14:57:11.072</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E7%9A%84%E6%9C%80%E5%90%8E%E4%B8%80%E5%9D%97%E6%8B%BC%E5%9B%BE-dbpaas-k8s-de-zui-hou-yi-kuai-pin-tu-dbpaas/" class="">K8S的最后一块拼图 dbpaas 2024-08-02 17:48:35.899</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-k8s%E7%BB%84%E4%BB%B6/" class="">k8s组件</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%83%8C%E5%90%8Eservice%E6%98%AF%E5%A6%82%E4%BD%95%E5%B7%A5%E4%BD%9C%E7%9A%84-k8s-bei-hou-service-shi-ru-he-gong-zuo-de/" class="">k8s背后service是如何工作的 2024-08-02 17:49:44.981</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%B0%83%E5%BA%A6%E5%99%A8-extendergo-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-diao-du-qi-extendergo-yuan-ma-jie-du/" class="">K8S调度器 extender.go 源码解读 2024-04-09 11:45:59.666</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%B0%83%E8%AF%95pod-k8s-diao-shi-pod/" class="">K8S调试POD 2024-04-03 14:58:15.293</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%BF%90%E7%BB%B4%E4%B9%8B%E6%B8%85%E7%90%86%E7%A3%81%E7%9B%98-k8s-yun-wei-zhi-qing-li-ci-pan/" class="">k8s运维之清理磁盘 2024-04-03 15:13:57.279</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8-k8s-mian-shi-da-quan/" class="">K8S面试大全 2024-04-03 15:10:54.493</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E5%AE%9D%E5%85%B8-k8s-mian-shi-bao-dian/" class="">K8S面试宝典 2024-04-03 15:11:09.316</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E9%A2%98-k8s-mian-shi-ti/" class="">K8S面试题 2024-08-02 17:50:50.418</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kruise%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7%E8%A7%A3%E6%9E%90-kruise-yuan-de-sheng-ji-jie-xi/" class="">kruise原地升级解析 2024-08-02 17:59:31.689</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kube-router-%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-kube-router-wang-luo-zu-jian/" class="">kube-router 网络组件 2023-09-28 15:33:20.658</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-05-kubeasz%E9%83%A8%E7%BD%B2k8s/" class="">kubeasz部署k8s</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubekey%E6%B7%BB%E5%8A%A0%E6%96%B0%E8%8A%82%E7%82%B9-kubekey-tian-jia-xin-jie-dian/" class="">kubekey添加新节点 2024-04-03 15:36:47.646</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-api-kubernetesapi/" class="">Kubernetes API 2024-04-03 14:47:30.212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E6%BA%90%E7%A0%81%E7%BB%93%E6%9E%84-kubernetes-yuan-ma-jie-gou/" class="">Kubernetes 源码结构 2024-04-03 14:48:05.954</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3%E8%AE%A4%E8%AF%81-kubernetes-zheng-shu-xiang-jie--ren-zheng-/" class="">Kubernetes 证书详解(认证) 2024-04-03 14:52:56.54</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3%E9%89%B4%E6%9D%83-kubernetes-zheng-shu-xiang-jie--jian-quan-/" class="">Kubernetes 证书详解(鉴权) 2024-04-03 14:49:04.385</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubewharf-kubewharf/" class="">kubewharf 2024-08-02 17:41:32.72</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux-awk%E6%96%87%E6%9C%AC%E5%A4%84%E7%90%86%E5%99%A8-8%E4%B8%AA%E6%A1%88%E4%BE%8B-linuxawk-wen-ben-chu-li-qi-8-ge-an-li/" class="">linux awk文本处理器 8个案例 2024-08-02 17:46:53.603</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux-%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%A4%A7%E5%85%A8-linux-xing-neng-you-hua-da-quan/" class="">Linux 性能优化大全 2024-04-03 15:09:06.854</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux%E7%B3%BB%E7%BB%9F%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96-%E4%B8%83%E4%B8%AA%E5%AE%9E%E6%88%98%E7%BB%8F%E9%AA%8C-linux-xi-tong-xing-neng-you-hua-qi-ge-shi-zhan-jing-yan/" class="">linux系统性能优化 七个实战经验 2024-08-02 17:47:26.212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98-linux-yun-wei-gong-cheng-shi-50-ge-chang-jian-mian-shi-ti/" class="">linux运维工程师50个常见面试题 2024-08-02 17:42:12.968</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/metallb-l2-%E5%8E%9F%E7%90%86-metallbl2-yuan-li/" class="">MetalLB L2 原理 2024-04-03 14:52:24.662</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/netctl%E6%A3%80%E6%B5%8B%E9%9B%86%E7%BE%A4pod%E9%97%B4%E8%BF%9E%E9%80%9A%E6%80%A7-netctl-jian-ce-ji-qun-pod-jian-lian-tong-xing/" class="">netctl检测集群pod间连通性 2024-08-02 18:00:36.753</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/network-check-network-check/" class="">network-check 2023-09-28 15:36:33.04</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/nginx%E5%A6%82%E4%BD%95%E8%A7%A3%E5%86%B3%E6%83%8A%E7%BE%A4%E6%95%88%E5%BA%94-nginx-ru-he-jie-jue-jing-qun-xiao-ying/" class="">nginx如何解决惊群效应 2024-08-02 17:45:54.531</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/openkruise%E8%AF%A6%E7%BB%86%E8%A7%A3%E9%87%8A%E4%BB%A5%E5%8F%8A%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7%E5%8F%8A%E5%85%A8%E9%93%BE%E8%B7%AF%E7%81%B0%E5%BA%A6%E5%8F%91%E5%B8%83%E6%96%B9%E6%A1%88-openkruise-xiang-xi-jie-shi-yi-ji-yuan-de-sheng-ji-ji-quan-lian-lu-hui-du-fa-bu-fang-an/" class="">OpenKruise详细解释以及原地升级及全链路灰度发布方案 2024-07-22 11:44:46.892</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/pixie-pixie/" class="">pixie 2024-08-02 17:52:17.843</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-28-prometheus/" class="">prometheus 面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/prometheus-stack-prometheus-stack/" class="">prometheus-stack 2024-08-02 17:55:22.326</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/prometheus%E4%BC%81%E4%B8%9A%E7%BA%A7%E7%9B%91%E6%8E%A7%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93-prometheus-qi-ye-ji-jian-kong-shi-yong-zong-jie/" class="">prometheus企业级监控使用总结 2024-04-03 15:13:11.185</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ssl%E8%AF%81%E4%B9%A6%E8%87%AA%E7%AD%BE%E5%8F%91-ssl-zheng-shu-zi-qian-fa/" class="">ssl证书自签发 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/teg%E4%B8%8Eistio%E9%9B%86%E6%88%90-teg-yu-istio-ji-cheng/" class="">TEG与istio集成 2024-08-02 17:51:20.389</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%B8%A4%E5%BC%A0%E5%9B%BE%E5%85%A8%E9%9D%A2%E7%90%86%E8%A7%A3k8s%E5%8E%9F%E7%90%86-liang-zhang-tu-quan-mian-li-jie-k8s-yuan-li/" class="">两张图全面理解K8S原理 2024-04-03 14:51:27.431</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%B8%AA%E6%80%A7%E5%8C%96%E9%9B%86%E7%BE%A4%E5%8F%82%E6%95%B0%E9%85%8D%E7%BD%AE-ge-xing-hua-ji-qun-can-shu-pei-zhi/" class="">个性化集群参数配置 2023-09-28 15:30:56.072</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E4%B8%AD%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_%E9%A2%98%E7%9B%AE/" class="">中级运维面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BA%8C%E8%BF%9B%E5%88%B6%E9%83%A8%E7%BD%B2k8s%E5%8A%A0%E8%8A%82%E7%82%B9%E6%93%8D%E4%BD%9C-er-jin-zhi-bu-shu-k8s-jia-jie-dian-cao-zuo/" class="">二进制部署K8S加节点操作 2024-04-03 15:08:26.726</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-10-20-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8%E9%9B%86%E7%BE%A4/" class="">使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8-keepalived-%E5%92%8C-haproxy-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8-kubernetes-%E9%9B%86%E7%BE%A4-shi-yong-keepalived-he-haproxy-chuang-jian-gao-ke-yong-kubernetes-ji-qun/" class="">使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群 2023-04-12 04:04:09.458</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8-openfunction-%E5%9C%A8%E4%BB%BB%E4%BD%95%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E4%B8%8A%E8%BF%90%E8%A1%8C%E6%97%A0%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%B7%A5%E4%BD%9C%E8%B4%9F%E8%BD%BD-shi-yong-openfunction-zai-ren-he-ji-chu-she-shi-shang-yun-xing-wu-fu-wu-qi-gong-zuo-fu-zai/" class="">使用 OpenFunction 在任何基础设施上运行无服务器工作负载 2024-01-21 04:02:44.459</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8cloudflarecf%E6%90%AD%E5%BB%BAdockerhub%E4%BB%A3%E7%90%86-shi-yong-cloudflarecf-da-jian-dockerhub-dai-li/" class="">使用cloudflare(CF)搭建dockerhub代理 2024-06-28 14:38:34.339</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8kubernees-leases-%E8%BD%BB%E6%9D%BE%E5%AE%9E%E7%8E%B0leader-election-shi-yong-kuberneesleases-qing-song-shi-xian-leaderelection/" class="">使用kubernees leases 轻松实现leader election 2024-04-03 15:09:46.129</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%85%AC%E6%9C%89%E4%BA%91%E4%B8%8A%E9%83%A8%E7%BD%B2-kubeasz-gong-you-yun-shang-bu-shu-kubeasz/" class="">公有云上部署 kubeasz 2023-09-28 15:31:16.19</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-5-14-%E5%8D%95master%E5%8D%95etcd%E6%94%B9%E9%80%A0/" class="">单master单etcd改造为3master3etcd</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%8F%B2%E4%B8%8A%E6%9C%80%E7%89%9Bjenkins-pipeline%E6%B5%81%E6%B0%B4%E7%BA%BF%E8%AF%A6%E8%A7%A3-shi-shang-zui-niu-jenkinspipeline-liu-shui-xian-xiang-jie/" class="">史上最牛jenkins pipeline流水线详解 2024-08-02</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%9A%E6%9E%B6%E6%9E%84%E6%94%AF%E6%8C%81-duo-jia-gou-zhi-chi/" class="">多架构支持 2023-09-28 15:29:54.111</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%A7%E5%8E%82%E6%80%BB%E7%BB%93nginx%E9%AB%98%E5%B9%B6%E5%8F%91%E4%BC%98%E5%8C%96%E7%AC%94%E8%AE%B0-da-chang-zong-jie-nginx-gao-bing-fa-you-hua-bi-ji/" class="">大厂总结nginx高并发优化笔记 2024-08-02 17:46:19.098</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%A7%E8%A7%84%E6%A8%A1%E5%B9%B6%E5%8F%91%E4%B8%8B%E5%A6%82%E4%BD%95%E5%8A%A0%E5%BF%AB-pod-%E5%90%AF%E5%8A%A8%E9%80%9F%E5%BA%A6-da-gui-mo-bing-fa-xia-ru-he-jia-kuai-pod-qi-dong-su-du/" class="">大规模并发下如何加快 Pod 启动速度 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E4%B8%BAk8s%E4%BF%9D%E9%A9%BE%E6%8A%A4%E8%88%AA-ru-he-wei-k8s-bao-jia-hu-hang/" class="">如何为K8S保驾护航 2024-04-16 17:09:21.962</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8tekton%E5%BF%AB%E9%80%9F%E6%90%AD%E5%BB%BAcicd%E5%B9%B3%E5%8F%B0-ru-he-shi-yong-tekton-kuai-su-da-jian-cicd-ping-tai/" class="">如何使用tekton快速搭建CI/CD平台 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E8%B0%83%E8%AF%95-crash-%E5%AE%B9%E5%99%A8%E7%9A%84%E7%BD%91%E7%BB%9C-ru-he-diao-shi-crash-rong-qi-de-wang-luo/" class="">如何调试 crash 容器的网络 2024-04-03 14:50:51.378</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E4%B8%AD%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E4%BB%A5%E5%8F%8A%E4%B8%8D%E5%90%8Cdnspolicy%E5%AF%B9%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E7%9A%84%E5%BD%B1%E5%93%8D-rong-qi-zhong-yu-ming-jie-xi-yi-ji-bu-tong-dnspolicy-dui-yu-ming-jie-xi-de-ying-xiang/" class="">容器中域名解析以及不同dnspolicy对域名解析的影响 2024-04-03 15:04:09.254</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E5%86%85%E7%9A%84-1-%E5%8F%B7%E8%BF%9B%E7%A8%8B-rong-qi-nei-de-1-hao-jin-cheng/" class="">容器内的 1 号进程 2024-04-03 14:46:29.998</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E5%8E%9F%E7%90%86-rong-qi-yuan-li/" class="">容器原理 2024-04-03 14:45:58.422</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E7%9A%84%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E4%B8%80-overlayfs-%E5%8E%9F%E7%90%86-rong-qi-de-wen-jian-xi-tong--yi-overlayfs-yuan-li/" class="">容器的文件系统 OverlayFS 原理 2024-04-03 14:45:26.893</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C%E5%8E%9F%E7%90%86-rong-qi-wang-luo-yuan-li/" class="">容器网络原理 2024-04-03 14:51:51.962</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%B8%B8%E8%A7%81linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98-chang-jian-linux-yun-wei-mian-shi-ti/" class="">常见linux运维面试题 2024-08-02 17:42:33.873</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BC%80%E5%A7%8B%E4%BD%BF%E7%94%A8-cilium-kai-shi-shi-yong-cilium/" class="">开始使用 cilium 2023-09-28 15:34:49.205</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BD%BB%E6%82%9F%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C-che-wu-rong-qi-wang-luo/" class="">彻悟容器网络 2024-04-07 10:30:11.55</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BF%AB%E9%80%9F%E6%8C%87%E5%8D%97-kuai-su-zhi-nan/" class="">快速指南 2023-09-28 15:28:25.71</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%88%91%E5%8F%AA%E6%83%B3%E5%81%9A%E6%8A%80%E6%9C%AF-%E8%B5%B0%E6%8A%80%E6%9C%AF%E8%B7%AF%E7%BA%BF-wo-zhi-xiang-zuo-ji-shu-zou-ji-shu-lu-xian/" class="">我只想做技术 走技术路线 2024-08-02 17:43:31.897</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%90%9E%E6%87%82k8s%E9%89%B4%E6%9D%83-gao-dong-k8s-jian-quan/" class="active">搞懂K8S鉴权 2024-04-03 15:11:54.885</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%90%AD%E4%B8%AA%E6%97%A5%E5%BF%97%E6%89%8B%E6%9C%BA%E7%B3%BB%E7%BB%9F%E4%B8%8D%E9%A6%99%E5%90%97-da-ge-ri-zhi-shou-ji-xi-tong-bu-xiang-ma/" class="">搭个日志手机系统不香吗 2024-08-02 17:47:58.794</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E8%AF%B4%E6%98%8E-cao-zuo-xi-tong-shuo-ming/" class="">操作系统说明 2023-09-28 15:31:37.694</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%96%87%E5%AD%A6%E7%9A%84%E6%95%85%E4%B9%A1-wen-xue-de-gu-xiang/" class="">文学的故乡 2024-04-03 14:40:45.926</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%98%AF%E6%8A%80%E6%9C%AF%E5%A4%A7%E7%A5%9E%E8%BF%98%E6%98%AF%E5%9F%BA%E7%A1%80%E6%9E%B6%E6%9E%84%E9%83%A8%E7%9A%84%E7%A5%B8%E5%AE%B3-shi-ji-shu-da-shen-hai-shi-ji-chu-jia-gou-bu-de-huo-hai/" class="">是技术大神还是基础架构部的祸害 2024-08-02 17:50:26.139</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9C%89%E8%BF%993%E4%B8%AA%E8%BF%B9%E8%B1%A1%E4%BD%A0%E5%B0%B1%E8%AF%A5%E7%A6%BB%E8%81%8C%E4%BA%86-you-zhe-3-ge-ji-xiang--ni-jiu-gai-li-zhi-le/" class="">有这3个迹象，你就该离职了 2023-09-21 16:00:22.432</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9E%81%E5%A4%A7%E6%8F%90%E9%AB%98%E5%B7%A5%E4%BD%9C%E6%95%88%E7%8E%87%E7%9A%84-linux-%E5%91%BD%E4%BB%A4-ji-da-ti-gao-gong-zuo-xiao-lv-de-linux-ming-ling/" class="">极大提高工作效率的 Linux 命令 2024-04-03 14:42:46.957</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9E%84%E5%BB%BA%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E5%88%A9%E5%99%A8buildkit-gou-jian-rong-qi-jing-xiang-li-qi-buildkit/" class="">构建容器镜像利器buildkit 2024-08-02 17:49:14.916</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B5%81%E9%87%8F%E4%BD%95%E5%A4%84%E6%9D%A5%E4%BD%95%E5%A4%84%E5%8E%BB-liu-liang-he-chu-lai-he-chu-qu/" class="">流量何处来何处去 2024-04-03 14:56:20.089</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B8%85%E7%90%86docker%E9%95%9C%E5%83%8F-qing-li-docker-jing-xiang/" class="">清理docker镜像 2024-08-02 17:54:48.594</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B8%85%E7%90%86%E6%AE%8B%E7%95%99%E7%9A%84calico%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6-qing-li-can-liu-de-calico-wang-luo/" class="">清理残留的calico网络插件 2024-04-03 15:07:38.854</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A3%81%E7%9B%98%E6%95%B0%E6%8D%AE%E6%81%A2%E5%A4%8D-ci-pan-shu-ju-hui-fu/" class="">磁盘数据恢复 2024-04-03 14:59:27.839</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85kubephere-li-xian-an-zhuang-kubephere/" class="">离线安装kubephere 2024-04-03 14:59:59.885</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4-li-xian-an-zhuang-ji-qun/" class="">离线安装集群 2023-09-28 15:29:14.742</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-%E8%AE%A1%E5%88%92/" class="">美国码农薪酬</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-%E8%AE%A1%E5%88%922/" class="">美国码农计划</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E8%87%AA%E5%8A%A8%E5%B1%8F%E8%94%BDip%E6%94%BB%E5%87%BB-zi-dong-ping-bi-ip-gong-ji/" class="">自动屏蔽IP攻击 2024-04-03 14:54:11.783</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-12-%E9%9D%A2%E8%AF%950212/" class="">面试0212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-19-%E9%9D%A2%E8%AF%950219/" class="">面试0219</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-20-%E9%9D%A2%E8%AF%950220/" class="">面试0220</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-26-%E9%9D%A2%E8%AF%950225/" class="">面试0225</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%9D%A2%E8%AF%950308-mian-shi-0308/" class="">面试0308 2024-04-03 14:57:53.576</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-11-%E9%9D%A2%E8%AF%950211/" class="">面试2025-02-11</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-18-%E9%9D%A2%E8%AF%95/" class="">面试2025-0218</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%9D%A2%E8%AF%95%E7%94%A8-golang-%E6%89%8B%E6%92%B8-lru-mian-shi-yong-golang-shou-lu-lru/" class="">面试用 Golang 手撸 LRU 2024-04-03 14:47:00.767</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%A1%B6%E7%BA%A7devops%E5%B7%A5%E5%85%B7%E5%A4%A7%E7%9B%98%E7%82%B9-ding-ji-devops-gong-ju-da-pan-dian/" class="">顶级devops工具大盘点 2024-08-02 17:43:03.661</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E9%AB%98%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_ai_linux%E9%83%A8%E5%88%86/" class="">高级运维面试题-linux部分</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>搞懂K8S鉴权 2024-04-03 15:11:54.885</h3>
+
+  <label for="toc-control">
+    
+    <img src="/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#前言"><strong>前言</strong></a></li>
+    <li><a href="#鉴权概述"><strong>鉴权概述</strong></a></li>
+    <li><a href="#node鉴权"><strong>Node鉴权</strong></a></li>
+    <li><a href="#abac鉴权"><strong>ABAC鉴权</strong></a></li>
+    <li><a href="#rbac鉴权"><strong>RBAC鉴权</strong></a>
+      <ul>
+        <li><a href="#kubectl客户端方式"><strong>Kubectl客户端方式。</strong></a></li>
+        <li><a href="#api资源的方式"><strong>Api资源的方式。</strong></a></li>
+      </ul>
+    </li>
+    <li><a href="#webhook鉴权"><strong>Webhook鉴权</strong></a></li>
+    <li><a href="#总结"><strong>总结</strong></a></li>
+    <li><a href="#参考文献"><strong>参考文献：</strong></a></li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h2 id="前言">
+  <strong>前言</strong>
+  <a class="anchor" href="#%e5%89%8d%e8%a8%80">#</a>
+</h2>
+<p>本文介绍K8s中的鉴权模块。对其4种鉴权模式都进行了概述讲解。结合例子着重对大家日常中使用最多的RBAC鉴权模式进行了说明。</p>
+<h2 id="鉴权概述">
+  <strong>鉴权概述</strong>
+  <a class="anchor" href="#%e9%89%b4%e6%9d%83%e6%a6%82%e8%bf%b0">#</a>
+</h2>
+<p>《搞懂K8s认证》中，我们提到不论是通过kubectl客户端还是REST请求访问K8s集群，最终都需要经过API Server来进行资源的操作并通过Etcd。整个过程如下图1所示，可以分成4个阶段：</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221152527.png" alt="image-20240222115206444" />图1 K8s API请求访问过程</p>
+<p>请求发起方进行K8s API请求，经过<code>Authentication</code>（认证）、<code>Authorization</code>（鉴权）、<code>AdmissionControl</code>（准入控制）三个阶段的校验，最后把请求转化为对K8s对象的变更操作持久化至<code>etcd</code>中。</p>
+<p>其中认证主要解决的是请求来源能否访问的问题。即通过了认证，那么可以认为它是一个合法的请求对象。那么如何去决定请求对象能访问哪些资源以及对这些资源能进行哪些操作，便是鉴权所要完成的事情了。</p>
+<p>鉴权的最终目的，是区分请求对象，限定操作的影响范围，让其使用最小的权限完成自己所要进行操作，从而进一步保证安全。权限控制的划分方式有许多种，K8s中提供了4种鉴权模式，分别为<strong>Node、ABAC、RBAC</strong>和<strong>Webhook</strong>。</p>
+<p>默认情况下，我们可以从<code>/etc/kubernates/manifests/kube-apiserver.yaml</code>文件中查看<code>apiserver</code>启动时认证模式，片段如图2所示：</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221152166.png" alt="image-20240222115225063" /></p>
+<p>图2 kube-apiserver的认证参数</p>
+<p>其中可以使用的参数如表1所示：</p>
+<p>表1 鉴权模块参数标识表</p>
+<table>
+  <thead>
+      <tr>
+          <th style="text-align: left">参数配置</th>
+          <th style="text-align: left">含义</th>
+          <th style="text-align: left">一般的使用场景</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: left">&ndash;authorization-mode=ABAC</td>
+          <td style="text-align: left">使用基于属性的访问控制(ABAC)</td>
+          <td style="text-align: left">根据用户的用户名或者组名来控制其对集群资源的访问权限，适用于较小的组织或开发团队</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">&ndash;authorization-mode=RBAC</td>
+          <td style="text-align: left">使用基于角色的访问控制(RBAC)</td>
+          <td style="text-align: left">自定义ServiceAccount，绑定资源根据角色来控制资源的访问权限，适用于较大型的组织或者开发运维团队</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">&ndash;authorization-mode=Webhook</td>
+          <td style="text-align: left">使用HTTP回调模式，允许你使用远程REST端点管理鉴权</td>
+          <td style="text-align: left">将鉴权角色交给外部服务进行处理，根据自身需求，定制和扩展鉴权策略，如自定义Webhook鉴权模块对跨云平台的应用进行集中的的访问控制</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">&ndash;authorization-mode=Node</td>
+          <td style="text-align: left">针对kubelet发出的API请求执行鉴权</td>
+          <td style="text-align: left">验证节点身份，确保只有经过身份验证且具有所需权限的Node才能连接到K8s集群</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">&ndash;authorization-mode=AlwaysDeny</td>
+          <td style="text-align: left">阻止所有请求</td>
+          <td style="text-align: left">一般仅用作测试</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">&ndash;authorization-mode=AlwaysAllow</td>
+          <td style="text-align: left">允许所有请求</td>
+          <td style="text-align: left">不需要API请求进行鉴权的场景</td>
+      </tr>
+  </tbody>
+</table>
+<p>如图2所示，可以同时配置多个鉴权模块（多个模块之间使用逗号分隔），排在靠前的模块优先执行，任何模式允许或拒接请求，则立即返回该决定，并不会与其他鉴权模块协商。</p>
+<h2 id="node鉴权">
+  <strong>Node鉴权</strong>
+  <a class="anchor" href="#node%e9%89%b4%e6%9d%83">#</a>
+</h2>
+<p>Node鉴权是一种特殊用途的鉴权模式，旨在对<code>kubelet</code>发出API请求进行授权。Node鉴权允许<code>kubelet</code>执行API的操作分成读和写两部分。读取操作控制范围为：<code>services、endpoints、nodes、pods</code>以及绑定到kubelet节点 <code>Pod</code>相关的<code>secret、configmap、pvc</code>和持久卷。写入操作的范围主要是节点和节点状态、Pod和Pod状态以及事件，若要限制<code>kubelet</code>只能修改自己的节点，则还需要在<code>Apiserver</code>启动时，开启<code>NodeRestriction</code>准入插件（见图2第二个红框）。</p>
+<p>开启Node鉴权模块后，<code>kubellet</code>为了获取授权，必须使用一个特定规则的凭据，如图3所示：</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221152052.png" alt="image-20240222115246974" /></p>
+<p>图3 kubelet的证书凭据</p>
+<p>从图中我们看到，<code>kubelet</code>使用了一个证书凭据，其中<code>O=system:nodes</code>表示其所在组，<code>CN=system:node:paas-cnp-k8s-kce-01</code>表示其用户名，满足了Node鉴权模块要求的组名必须为<code>system:nodes</code>，用户名必须为<code>system:node:&lt;nodeName&gt;</code>的要求。其中<code>&lt;nodeName&gt;</code>默认由<code>hostname</code>或<code>kubelet --hostname-override</code>选项提供指定，其必须与<code>kubelet</code>提供的主机名称精确匹配。</p>
+<p><code>system:nodes</code>是K8s的内置用户组，我们可以通过其默认的<code>ClusterRoleBinding</code>，如图4所示：</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221153564.png" alt="image-20240222115305481" /></p>
+<p>图4 system:nodes的ClusterRoleBinding内容</p>
+<p>我们可以发现，它指示指向了<code>system:node</code>这个<code>ClusterRole</code>，并没有subjects的内容，即其没有绑定<code>system:node:paas-cnp-k8s-kce-01</code>用户也没有绑定<code>system:nodes</code>组。其正是因为K8s基于 Node鉴权模块来限制kubelet只能读取和修改本节点上的资源，并不是使用 RBAC来鉴权（涉及到部分RBAC的内容，下文会进行详解）。</p>
+<h2 id="abac鉴权">
+  <strong>ABAC鉴权</strong>
+  <a class="anchor" href="#abac%e9%89%b4%e6%9d%83">#</a>
+</h2>
+<p>基于属性的访问控制，K8s中可以表述将访问策略授予用户或者组。与RBAC不同的点在于，其策略是由任何类型的属性（用户属性、资源属性、对象、环境等）进行描述。</p>
+<p>启用ABAC模式，类似于图2需要在<code>apiserver</code>启动时指定<code>--authorization-mode=ABAC</code>以及<code>--authorization-policy-file=&lt;策略文件路径&gt; </code>。图5是K8s官网给出的一个策略样例文件：</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221153289.png" alt="image-20240222115326205" /></p>
+<p>图5 ABAC策略实例文件内容</p>
+<p>文件中每行都是一个JSON对象，其中版本控制属性<code>&quot;apiVersion&quot;</code>:<code> &quot;abac.authorization.kubernetes.io/v1beta1&quot;</code>和<code>&quot;kind&quot;: &quot;Policy&quot;</code>可以理解成固定写法，是被K8s本身所使用，便于以后进行版本控制和转换。spec部分，其中user，来自于<code>--token-auth-file</code>的用户字符串，其指定的user名称必须与这个文件中的字符串相匹配；group，必须与经过身份验证的用户的一个组匹配， <code>system:authenticated</code> 匹配所有经过身份验证的请求。 <code>system:unauthenticated</code> 匹配所有未经过身份验证的请求。其他的匹配属性，主要描述被访问的访问，分为资源属性和非资源属性（其具体定义可参见官网）。<code>readonly</code>，主要限制是否只允许对资源进行 <code>get、list</code> 和 <code>watch</code> 操作，非资源属性只进行<code>get</code>操作。</p>
+<p>例如：</p>
+<pre tabindex="0"><code>{&#34;apiVersion&#34;: &#34;abac.authorization.kubernetes.io/v1beta1&#34;, &#34;kind&#34;: &#34;Policy&#34;, &#34;spec&#34;: {&#34;user&#34;: &#34;alice&#34;, &#34;namespace&#34;: &#34;*&#34;, &#34;resource&#34;: &#34;*&#34;, &#34;apiGroup&#34;: &#34;*&#34;}}
+</code></pre><p>表示用户alice可以对所有namespace下的所有资源进行任何操作；</p>
+<pre tabindex="0"><code>{&#34;apiVersion&#34;: &#34;abac.authorization.kubernetes.io/v1beta1&#34;, &#34;kind&#34;: &#34;Policy&#34;, &#34;spec&#34;: {&#34;user&#34;: &#34;bob&#34;, &#34;namespace&#34;: &#34;projectCaribou&#34;, &#34;resource&#34;: &#34;pods&#34;, &#34;readonly&#34;: true}}
+</code></pre><p>表示用户bob只能对namespace为<code>projectCaribou</code>的Pod进行list、get和watch操作。</p>
+<p>对于<code>ServiceAccount</code>的ABAC管控。<code>Service Account</code>会自动生成一个ABAC用户名，其格式为：<code>system:serviceaccount:&lt;namespace&gt;:&lt;serviceaccountname&gt;</code>，创建新的命名空间时，K8s会为我们在当前<code>namespace</code>下创建一个名为<code>default</code>的<code>ServiceAccount</code>，如果现在假定我们需要namespace为test名为default的<code>ServiceAccount</code>具有该namespace下的全部权限，则可以添加这样一条规则：</p>
+<pre tabindex="0"><code>{&#34;apiVersion&#34;:&#34;abac.authorization.kubernetes.io/v1beta1&#34;,&#34;kind&#34;:&#34;Policy&#34;,&#34;spec&#34;:{&#34;user&#34;:&#34;system:serviceaccount:test:default&#34;,&#34;namespace&#34;:&#34;test&#34;,&#34;resource&#34;:&#34;*&#34;,&#34;apiGroup&#34;:&#34;*&#34;}}
+</code></pre><p>我们发现，ABAC虽然对用户访问进行了一定的划分，但是如果添加了新的ABAC策略，则需要重启API Server以使其生效，资源的访问权限细粒度也只控制到了是否只读，当用户规模增大时，这是远远不能满足需求的。对于较大组织的团队进行更加细粒度的管控，就需要使用到K8s的RBAC鉴权模块了。</p>
+<h2 id="rbac鉴权">
+  <strong>RBAC鉴权</strong>
+  <a class="anchor" href="#rbac%e9%89%b4%e6%9d%83">#</a>
+</h2>
+<p>启用RBAC鉴权，可以如图2所示，在&ndash;authorization-mode的启动参数中包含RBAC即可。相对于其他访问控制方式，RBAC具有如下优势：</p>
+<ul>
+<li>对集群中的资源和非资源权限均有完整的覆盖。</li>
+<li>RBAC由几个API对象完成。同其他API对象一样，可以用kubectl或API进行操作和调整，不必重新启动ApiServer。</li>
+</ul>
+<p>K8s的RBAC主要阐述解决了主体（subject）是什么角色的问题。其中主体就是K8s中的用户，包含了常规用户（User、Group，平时常用的kubectl命令都是普通用户执行的）和服务账户（ServiceAccount，主要用于集群进程与K8s的API通信）。角色决定了能够对资源进行什么样的操作，RBAC中我们可以定义namespace级别的Role也可以定义集群级别的ClusterRole。最后K8s再通过RoleBinding和ClusterRoleBinding把用户和角色的关系进行关联绑定，其中RoleBinding既可以绑定Role也可以绑定ClusterRole，ClusterRole指定绑定ClusterRole，最终实现了不同用户对不同资源进行特定操作的控制。Role针对特定的命名空间，ClusterRole在整个集群范围内都生效，所以后者访问范围也更大，能够限制访问Node等资源。其关系图如图6所示：</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221153890.png" alt="image-20240222115347817" /></p>
+<p>图6 RBAC整体关系图</p>
+<p>现在假设你所在部门使用名为rbac-team的命名空间工作，现在要为部署流水线创建一个新的ClusterRole名为deployment-clusterrole，且仅允许创建Deployment、StatefulSet、DaemonSet三种资源，同时在rbac-team这个命名空间下创建一个新的ServiceAccount名为cicd-test使用这个ClusterRole。K8s中我们可以使用kubectl客户端或者API资源的方式来实现这个RBAC的功能。</p>
+<h3 id="kubectl客户端方式">
+  <strong>Kubectl客户端方式。</strong>
+  <a class="anchor" href="#kubectl%e5%ae%a2%e6%88%b7%e7%ab%af%e6%96%b9%e5%bc%8f">#</a>
+</h3>
+<ul>
+<li>第一步，我们可以先执行命令：<code>kubectl create clusterrole deployment-clusterrole --verb=create --resource=deployments,statefulsets,daemonsets</code> 创建所需的<code>ClusterRole</code>，其中<code>--verb</code>代表可以执行的操作，<code>--reasource</code>代表授权操作的资源范围；</li>
+<li>第二步，执行命令：<code>kubectl -n rbac-team create serviceaccount cicd-test</code>创建要求的<code>ServiceAccount</code>；</li>
+<li>第三步，限于rbac-test中绑定所需权限，执行命令：<code>kubectl -n rbac-team create rolebinding cicd-rolebinding --clusterrole=deployment-clusterrole --serviceaccount=rbac-team:cicd-test</code>，对新创建的<code>ServiceAccount</code>与我们的<code>ClusterRole</code>进行绑定。</li>
+</ul>
+<h3 id="api资源的方式">
+  <strong>Api资源的方式。</strong>
+  <a class="anchor" href="#api%e8%b5%84%e6%ba%90%e7%9a%84%e6%96%b9%e5%bc%8f">#</a>
+</h3>
+<ul>
+<li>第一步，准备ClusterRole的资源描述，创建名为cr-deployment.yaml的文件，如图7所示：</li>
+</ul>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221154078.png" alt="image-20240222115404009" /></p>
+<p>图7 deployment-clusterrole资源</p>
+<p>其中verbs用于限定可执行的操作，可配置参数有：<code>“get”, “list”, “watch”, “create”, “update”, “patch”, “delete”, “exec”。resources</code>用于限定可访问的资源范围，可配置参数有：<code>“services”, “endpoints”, “pods”,“secrets”,“configmaps”,“crontabs”,“deployments”,“jobs”,“nodes”,“rolebindings”,“clusterroles”,“daemonsets”,“replicasets”,“statefulsets”,“horizontalpodautoscalers”,“replicationcontrollers”,“cronjobs”</code>。<code>apiGroups</code>用于划分访问的资源组，可配置参数有：<code>“”,“apps”, “autoscaling”, “batch”</code>。</p>
+<ul>
+<li>第二步，准备<code>ServiceAccount</code>的资源描述，创建名为<code>sa-cicd.yaml</code>的文件，如图8所示：</li>
+</ul>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221154446.png" alt="image-20240222115420381" /></p>
+<p>图8 sa-cicd资源</p>
+<ul>
+<li>第三步，准备RoleBinding的资源描述，创建名为rb-cicd.yaml的文件，如图9所示：</li>
+</ul>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221154023.png" alt="image-20240222115434970" /></p>
+<p>图9 rolebinding资源</p>
+<p>将前面两步的<code>clusterrole</code>和<code>ServiceAccount</code>进行绑定，其中subjects指明了被授权的主体，当被授权对象是User或者Group时，可以使用类似如下片段subjects即可（Group的话只需要将kind的值改为Group）:</p>
+<pre tabindex="0"><code>- kind: User
+   name: &#34;test-user&#34;
+   apiGroup: rbac.authorization.k8s.io
+</code></pre><ul>
+<li>第四步，使用kubectl -f 分别应用上述资源，完成主体（subject）、角色的创建与绑定。</li>
+</ul>
+<p>当K8s的进程资源需要使用上述身份凭证进行权限划分时，只需要在资源声明文件中进行配置即可，如图9所示：</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221154250.png" alt="image-20240222115452187" /></p>
+<p>图10 pod资源使用ServiceAccount</p>
+<p>为特定应用的<code>Service Account</code>赋权进行权限管控也是最安全的最值得推荐的。</p>
+<p><code>APIServer</code>默认的<code>ClusterRole</code>和<code>ClusterRoleBinding</code>对象，其中很多是以&quot;system:&ldquo;为前缀的，对这些对象的改动可能造成集群故障。例如Node鉴权模块提到的<code>system:node</code>，这个<code>ClusterRole</code>为kubelet定义了权限，如果这个集群角色被改动了，kubelet就会停止工作。</p>
+<p>所有默认的<code>ClusterRole</code>和<code>RoleBinding</code>都会用标签<code>kubernetes.io/bootstrapping: rbac-defaults</code>进行标记。</p>
+<h2 id="webhook鉴权">
+  <strong>Webhook鉴权</strong>
+  <a class="anchor" href="#webhook%e9%89%b4%e6%9d%83">#</a>
+</h2>
+<p>启用Webhook模式的方式与ABAC模式相似，我们需要在apiserver启动时指定<code>--authorization-mode=ABAC</code>以及一个HTTP配置文件用以指定策略吗，可以通过参数<code>--authorization-webhook-config-file=&lt;策略文件路径&gt;</code>，策略文件配置使用的是kubeconfig文件的格式。users部分表示APIServer的webhook，cluster代表着远程服务。图11部分是K8s官网给出的一个示例。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221155731.png" alt="image-20240222115509645" /></p>
+<p>图11 Webhook的策略配置示例</p>
+<p>当进行认证时，API服务器会生成一个JSON对象来描述这个动作，对于一个资源类型的请求，其内容主要包含了需要被访问的资源或请求特征，如图12所示：</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221155730.png" alt="image-20240222115536667" /></p>
+<p>图12 资源类型的Webhook鉴权请求示例</p>
+<p>从图12中我们可以看到，这个请求是User名为jane，Group为group1、gourp2为主体，请求的资源为命名空间为<code>kittensandpoines</code>下的pods资源，资源所属<code>group</code>为<code>unicorn.example.org</code>，请求的执行操作为get这个资源信息。若我们的Webhook服务URL同意了这个请求，则可以返回如图13格式的响应体。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221155677.png" alt="image-20240222115550603" /></p>
+<p>图13 Webhook请求同意响应示例</p>
+<p>从图13中我们可以看出,我们只需要填充SubjectAccessReview的status对象信息的值即可。若要拒绝请求，则可以返回图14或图15的响应。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221156611.png" alt="image-20240222115601550" /></p>
+<p>图14 Webhook请求拒绝响应示例1</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221156492.png" alt="image-20240222115614422" /></p>
+<p>图15 Webhook请求拒绝响应示例2</p>
+<p>图14和图15都是对请求进行拒绝，都给出了拒绝通过的原因，差别在于图14的拒绝响应中增加了<code>denied:true</code>的信息，其表示当我们配置多了多个鉴权模块的时候，当这个响应返回时立即拒绝请求。（默认当存在多个鉴权模块，Webhook拒绝后可以再通过其他模块进行鉴权，只有当其他模块也不通过或者不存在时，才禁止访问）</p>
+<p>对于非资源的路径访问，生成的JSON请求示例如图16所示：</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402221156952.png" alt="image-20240222115626880" /></p>
+<p>图16 非资源的路径请求的Webhook鉴权请求示例</p>
+<h2 id="总结">
+  <strong>总结</strong>
+  <a class="anchor" href="#%e6%80%bb%e7%bb%93">#</a>
+</h2>
+<p>鉴权主要是解决“谁可以对什么资源进行哪些操作”的问题。K8s的鉴权模块主要有4个，发生在鉴权认证阶段的第二阶段。Node模块主要针对kubelet需要访问<code>APIServer</code>的场景；<code>ABAC</code>主要针对<code>User</code>和<code>Group</code>的常规用户，控制力度较粗；RBAC即可以用于常规用户也可以针对<code>ServiceAccount</code>进行管控，且管控力度十分细腻，是常用的K8s鉴权方式；<code>Webhook</code>主要用于定制自定义的鉴权逻辑，可用于跨云的集中式鉴权。</p>
+<h2 id="参考文献">
+  <strong>参考文献：</strong>
+  <a class="anchor" href="#%e5%8f%82%e8%80%83%e6%96%87%e7%8c%ae">#</a>
+</h2>
+<p><a href="https://kubernetes.io/zh-cn/docs/reference/access-authn-authz/node/">https://kubernetes.io/zh-cn/docs/reference/access-authn-authz/node/</a></p>
+<p><a href="https://kubernetes.io/zh-cn/docs/reference/access-authn-authz/abac/">https://kubernetes.io/zh-cn/docs/reference/access-authn-authz/abac/</a></p>
+<p><a href="https://kubernetes.io/zh-cn/docs/reference/access-authn-authz/rbac/">https://kubernetes.io/zh-cn/docs/reference/access-authn-authz/rbac/</a></p>
+<p><a href="https://kubernetes.io/zh-cn/docs/reference/access-authn-authz/webhook/">https://kubernetes.io/zh-cn/docs/reference/access-authn-authz/webhook/</a> <a href="https://www.cnblogs.com/maiblogs/p/16271997.html">https://www.cnblogs.com/maiblogs/p/16271997.html</a></p>
+<p><a href="https://cloud.tencent.com/developer/article/2149852">https://cloud.tencent.com/developer/article/2149852</a></p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#前言"><strong>前言</strong></a></li>
+    <li><a href="#鉴权概述"><strong>鉴权概述</strong></a></li>
+    <li><a href="#node鉴权"><strong>Node鉴权</strong></a></li>
+    <li><a href="#abac鉴权"><strong>ABAC鉴权</strong></a></li>
+    <li><a href="#rbac鉴权"><strong>RBAC鉴权</strong></a>
+      <ul>
+        <li><a href="#kubectl客户端方式"><strong>Kubectl客户端方式。</strong></a></li>
+        <li><a href="#api资源的方式"><strong>Api资源的方式。</strong></a></li>
+      </ul>
+    </li>
+    <li><a href="#webhook鉴权"><strong>Webhook鉴权</strong></a></li>
+    <li><a href="#总结"><strong>总结</strong></a></li>
+    <li><a href="#参考文献"><strong>参考文献：</strong></a></li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

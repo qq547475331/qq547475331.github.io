@@ -1,0 +1,3323 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="本篇文章中将介绍一些能够帮助你实现 DevOps 目标的核心技术类别和具体技术。
+
+  关于 DevOps 及其工具
+  #
+
+关于 DevOps 及其工具，需要记住：
+
+持续改进是目标；
+DevOps 不是花钱买来的；
+分阶段采用工具。
+
+
+  计划工具
+  #
+
+为什么计划工具对于 DevOps 来说很重要？
+
+分享目标；
+透明性；
+赋能。
+
+
+  计划工具示例
+  #
+
+
+  GitLab
+  #
+
+GitLab 是一个基于 Web 的 DevOps 生命周期工具。它提供了一个 Git 仓库管理器，具备 wiki、问题跟踪和 CI/CD 管道功能，采用的是 GitLab 公司的开源许可。
+
+  Tasktop
+  #
+
+Tasktop 允许将所有这些工具添加到敏捷、ALM、PPM 和 ITSM 中，实现了对整个生命周期前所未有的可见性。
+
+  CollabNet VersionOne
+  #
+
+VersionOne 支持 Scrum、看板、XP、SAFe 和混合开发方法，并使跨团队、程序、软件组合和企业的计划、跟踪和报告变得更容易。
+
+  Pivotal Tracker
+  #
+
+敏捷项目管理工具，是开发人员围绕高优先级共享 backlog 进行实时协作的首选工具。
+
+  Trello
+  #
+
+Trello 是一个基于 Web 的看板风格的清单应用程序，是 Atlassian 的子公司。">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="http://192.168.0.139:1313/docs/%E9%A1%B6%E7%BA%A7devops%E5%B7%A5%E5%85%B7%E5%A4%A7%E7%9B%98%E7%82%B9-ding-ji-devops-gong-ju-da-pan-dian/">
+  <meta property="og:site_name" content="Guichen&#39;s Blog">
+  <meta property="og:title" content="顶级devops工具大盘点 2024-08-02 17:43:03.661">
+  <meta property="og:description" content="本篇文章中将介绍一些能够帮助你实现 DevOps 目标的核心技术类别和具体技术。
+关于 DevOps 及其工具 # 关于 DevOps 及其工具，需要记住：
+持续改进是目标； DevOps 不是花钱买来的； 分阶段采用工具。 计划工具 # 为什么计划工具对于 DevOps 来说很重要？
+分享目标； 透明性； 赋能。 计划工具示例 # GitLab # GitLab 是一个基于 Web 的 DevOps 生命周期工具。它提供了一个 Git 仓库管理器，具备 wiki、问题跟踪和 CI/CD 管道功能，采用的是 GitLab 公司的开源许可。
+Tasktop # Tasktop 允许将所有这些工具添加到敏捷、ALM、PPM 和 ITSM 中，实现了对整个生命周期前所未有的可见性。
+CollabNet VersionOne # VersionOne 支持 Scrum、看板、XP、SAFe 和混合开发方法，并使跨团队、程序、软件组合和企业的计划、跟踪和报告变得更容易。
+Pivotal Tracker # 敏捷项目管理工具，是开发人员围绕高优先级共享 backlog 进行实时协作的首选工具。
+Trello # Trello 是一个基于 Web 的看板风格的清单应用程序，是 Atlassian 的子公司。">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+<title>顶级devops工具大盘点 2024-08-02 17:43:03.661 | Guichen&#39;s Blog</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="http://192.168.0.139:1313/docs/%E9%A1%B6%E7%BA%A7devops%E5%B7%A5%E5%85%B7%E5%A4%A7%E7%9B%98%E7%82%B9-ding-ji-devops-gong-ju-da-pan-dian/">
+<link rel="stylesheet" href="/book.min.6c8b9d2a1fc95075ed7da46ca81060b39add8fff6741ac51259f768929281e2c.css" integrity="sha256-bIudKh/JUHXtfaRsqBBgs5rdj/9nQaxRJZ92iSkoHiw=" crossorigin="anonymous">
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/en.search.min.6f52273b9f5fa65803e3991faf27d1a7b7b8f6b148888237d77b4e841cb030e3.js" integrity="sha256-b1InO59fplgD45kfryfRp7e49rFIiII313tOhBywMOM=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/"><span>Guichen&#39;s Blog</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/00-%E9%9B%86%E7%BE%A4%E8%A7%84%E5%88%92%E5%92%8C%E5%9F%BA%E7%A1%80%E5%8F%82%E6%95%B0%E8%AE%BE%E5%AE%9A-00--ji-qun-gui-hua-he-ji-chu-can-shu-she-ding/" class="">00-集群规划和基础参数设定 2023-09-28 15:19:02.214</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/01-%E5%88%9B%E5%BB%BA%E8%AF%81%E4%B9%A6%E5%92%8C%E7%8E%AF%E5%A2%83%E5%87%86%E5%A4%87-01--chuang-jian-zheng-shu-he-huan-jing-zhun-bei/" class="">01-创建证书和环境准备 2023-09-28 15:22:19.812</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/02-%E5%AE%89%E8%A3%85etcd%E9%9B%86%E7%BE%A4-02--an-zhuang-etcd-ji-qun/" class="">02-安装etcd集群 2023-09-28 15:23:07.363</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E9%9D%A2%E8%AF%950224/" class="">0224面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-26-k8s%E7%9B%B8%E5%85%B3/" class="">0226 k8s题目</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/03-%E5%AE%89%E8%A3%85%E5%AE%B9%E5%99%A8%E8%BF%90%E8%A1%8C%E6%97%B6-03--an-zhuang-rong-qi-yun-xing-shi/" class="">03-安装容器运行时 2023-09-28 15:23:56.241</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/04-%E5%AE%89%E8%A3%85kube_master%E8%8A%82%E7%82%B9-04--an-zhuang-kubemaster-jie-dian/" class="">04-安装kube_master节点 2023-09-28 15:24:21.203</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/05-%E5%AE%89%E8%A3%85kube_node%E8%8A%82%E7%82%B9-05--an-zhuang-kubenode-jie-dian/" class="">05-安装kube_node节点 2023-09-28 15:24:43.201</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85calico%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-calico-wang-luo-zu-jian/" class="">06-安装calico网络组件 2023-09-28 15:34:28.483</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85cilium%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-cilium-wang-luo-zu-jian/" class="">06-安装cilium网络组件 2023-09-28 15:35:23.884</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85flannel%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-flannel-wang-luo-zu-jian/" class="">06-安装flannel网络组件 2023-09-28 15:35:50.039</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85kube-ovn%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-kube-ovn-wang-luo-zu-jian/" class="">06-安装kube-ovn网络组件 2023-09-28 15:36:11.265</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-wang-luo-zu-jian/" class="">06-安装网络组件 2023-09-28 15:25:14.997</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/07-%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4%E4%B8%BB%E8%A6%81%E6%8F%92%E4%BB%B6-07--an-zhuang-ji-qun-zhu-yao-cha-jian/" class="">07-安装集群主要插件 2023-09-28 15:26:42.651</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/08-k8s-%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8--k8s-ji-qun-cun-chu/" class="">08-K8S 集群存储  2023-09-28 15:27:29.454</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/16%E4%B8%AA%E6%A6%82%E5%BF%B5%E5%B8%A6%E4%BD%A0%E5%85%A5%E9%97%A8-kubernetes-16-ge-gai-nian-dai-ni-ru-men-kubernetes/" class="">16个概念带你入门 Kubernetes 2024-04-03 15:09:21.671</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/16%E5%BC%A0%E7%A1%AC%E6%A0%B8%E5%9B%BE%E8%A7%A3k8s%E7%BD%91%E7%BB%9C-16-zhang-ying-he-tu-jie-k8s-wang-luo/" class="">16张硬核图解k8s网络 2024-04-03 15:12:49.601</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-07-microk8s/" class="">2024-12-07 microk8s</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-devstack/" class="">2024-12-08 devstack</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-mutilpass%E6%93%8D%E4%BD%9C/" class="">2024-12-08 mutilpass操作</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-nano%E6%93%8D%E4%BD%9C/" class="">2024-12-08 nano操作</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-openstack%E5%92%8Ckubernetes%E5%8C%BA%E5%88%AB/" class="">2024-12-08 openstack和kubernetes区别</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-openstack%E9%9C%80%E8%A6%81%E5%87%A0%E5%8F%B0%E8%99%9A%E6%8B%9F%E6%9C%BA/" class="">2024-12-08 openstack需要几台虚拟机</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-%E5%9D%97%E5%AD%98%E5%82%A8%E5%92%8C%E5%AF%B9%E8%B1%A1%E5%82%A8%E5%AD%98%E5%8C%BA%E5%88%AB/" class="">2024-12-08 块存储和对象储存区别</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-docker-daemon.json/" class="">2024-12-09 docker daemon.json</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-helmchart-%E9%83%A8%E7%BD%B2flask%E5%BA%94%E7%94%A8/" class="">2024-12-09 helmchart 部署flask应用</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-mutilpass%E9%83%A8%E7%BD%B2openstack/" class="">2024-12-09 mutilpass部署openstack devstack形式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-openstack-ssh%E8%BF%9E%E6%8E%A5/" class="">2024-12-09 openstack ssh连接</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-10-docker-registrry/" class="">2024-12-10 docker registrry</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-22-k8s%E6%9E%B6%E6%9E%84%E5%B8%88%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8/" class="">2024-2-22 k8s架构师面试大全</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-22-k8s%E9%9D%A2%E8%AF%95%E5%AE%9D%E5%85%B8/" class="">2024-2-22 k8s面试宝典</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-26-%E9%9D%A2%E8%AF%95/" class="">2024-2-26 面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-19-%E4%B8%A4%E5%BC%A0%E5%9B%BE%E5%85%A8%E9%9D%A2%E7%90%86%E8%A7%A3k8s%E5%8E%9F%E7%90%86/" class="">2024-3-19 两张图全面理解k8s原理</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-cni%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B/" class="">2024-3-4 CNI剖析演进</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-8-%E9%9D%A2%E8%AF%950308/" class="">2024-3-8 面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-4-17-%E9%9D%A2%E8%AF%95%E6%80%BB%E7%BB%93/" class="">2024-4-17 面试总结</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-kubernetes%E9%9D%A2%E8%AF%95%E9%A2%98/" class="">2024-8-1 k8s面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-%E5%B8%B8%E8%A7%81linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98%E6%89%BE%E5%B7%A5%E4%BD%9C%E7%9A%84%E5%BF%85%E7%9C%8B/" class="">2024-8-1 linux运维面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98/" class="">2024-8-1 linux面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-1-1-%E5%A4%A7%E5%A0%B0%E6%B2%B3-%E6%88%91%E7%9A%84%E4%BF%9D%E5%A7%86/" class="">2025-1-1 大堰河-我的保姆</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-k8s-csi%E5%89%96%E6%9E%90/" class="">2025-1-16 CSI剖析演进</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-1-16-k8s%E5%B8%B8%E8%A7%81%E6%95%85%E9%9A%9C%E6%8C%87%E5%8D%97/" class="">2025-1-16 k8s常见故障指南</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-k8s%E6%B5%81%E9%87%8F%E9%93%BE%E8%B7%AF%E5%89%96%E6%9E%90/" class="">2025-1-16 k8s流量链路剖析</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/33%E6%AC%BEgitops%E4%B8%8Edevops%E4%B8%BB%E6%B5%81%E7%B3%BB%E7%BB%9F-33-kuan-gitops-yu-devops-zhu-liu-xi-tong/" class="">33款gitops与devops主流系统 2024-08-02 17:45:15.709</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/600%E6%9D%A1%E6%9C%80%E5%BC%BAlinux%E5%91%BD%E4%BB%A4%E6%80%BB%E7%BB%93-600-tiao-zui-qiang-linux-ming-ling-zong-jie/" class="">600条最强linux命令总结 2024-04-03 15:12:31.282</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/acme%E8%87%AA%E5%8A%A8%E6%9B%B4%E6%96%B0%E8%AF%81%E4%B9%A6-acme-zi-dong-geng-xin-zheng-shu/" class="">acme自动更新证书 2024-04-03 14:41:44.289</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/calico-%E9%85%8D%E7%BD%AE-bgp-route-reflectors-calico-pei-zhi-bgproutereflectors/" class="">calico 配置 BGP Route Reflectors 2023-09-28 15:34:01.007</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/calico%E7%BD%91%E7%BB%9C%E8%87%AA%E5%AE%9A%E4%B9%89-calico-wang-luo-zi-ding-yi/" class="">Calico网络自定义 2024-04-03 15:08:43.394</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/cicd%E6%80%9D%E8%80%83-cicd-si-kao/" class="">CICD思考 2024-04-03 15:11:24.151</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/client-go-%E5%9B%9B%E7%A7%8D%E5%AE%A2%E6%88%B7%E7%AB%AF-client-go-si-zhong-ke-hu-duan/" class="">Client-go 四种客户端 2024-04-03 14:49:34.32</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/client-go-%E6%9E%B6%E6%9E%84-client-go-jia-gou/" class="">Client-go 架构 2024-04-03 14:48:40.716</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/cni%E6%8F%92%E4%BB%B6%E9%80%89%E5%9E%8B-cni-cha-jian-xuan-xing/" class="">CNI插件选型 2024-04-03 15:01:51.29</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/containerd-%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C-containerd-ji-ben-cao-zuo/" class="">Containerd 基本操作 2024-04-03 14:55:46.786</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/coredns%E4%B9%8B%E5%85%89-coredns-zhi-guang/" class="">COREDNS之光 2024-04-03 14:54:52.059</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/dockerfile%E5%AE%9A%E5%88%B6%E4%B8%93%E5%B1%9E%E9%95%9C%E5%83%8F-dockerfile-ding-zhi-zhuan-shu-jing-xiang/" class="">dockerfile定制专属镜像 2024-08-02 17:44:00.522</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/dockerfile%E7%9A%84copy%E5%92%8Cadd%E7%9A%84%E5%8C%BA%E5%88%AB-dockerfile-de-copy-he-add-de-qu-bie/" class="">dockerfile的copy和add的区别 2024-04-03 15:01:09.565</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/docker%E9%87%8D%E8%A6%81%E7%9A%84%E7%BD%91%E7%BB%9C%E7%9F%A5%E8%AF%86%E7%82%B9-docker-zhong-yao-de-wang-luo-zhi-shi-dian/" class="">Docker重要的网络知识点  2024-04-03 15:12:10.162</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/etcd%E5%A4%87%E4%BB%BD-etcd-bei-fen/" class="">ETCD备份 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/etcd%E7%A8%B3%E5%AE%9A%E6%80%A7%E5%8F%8A%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%AE%9E%E8%B7%B5-etcd-wen-ding-xing-ji-xing-neng-you-hua-shi-jian/" class="">ETCD稳定性及性能优化实践 2024-04-03 15:06:31.141</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ex-lb-%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E9%83%A8%E7%BD%B2-ex-lb-fu-zai-jun-heng-bu-shu/" class="">EX-LB 负载均衡部署 2023-09-28 15:28:51.998</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ezctl-%E5%91%BD%E4%BB%A4%E8%A1%8C%E4%BB%8B%E7%BB%8D-ezctl-ming-ling-xing-jie-shao/" class="">ezctl 命令行介绍 2023-09-28 15:28:00.619</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/flanel%E7%BD%91%E7%BB%9C-flanel-wang-luo/" class="">flanel网络 2024-04-03 15:05:04.16</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/godel-scheduler-godel-scheduler/" class="">godel-scheduler 2024-08-02 17:41:00.668</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/helm-chart%E5%92%8Crepo-helmchart-he-repo/" class="">helm chart和repo 2024-04-03 15:00:43.125</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/istio-ingress-gateway-istio-ingress-gateway/" class="">istio-ingress-gateway 2024-08-02 17:51:54.75</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/istio%E9%83%A8%E7%BD%B2-istio-bu-shu/" class="">istio部署 2024-08-02 17:52:40.721</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-cni%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B-k8scni-pou-xi-yan-jin/" class="">K8S CNI剖析演进 2024-03-04 10:51:33.245</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-csi-openebs%E5%8E%9F%E7%90%86-k8scsiopenebs-yuan-li/" class="">K8S csi openebs原理 2024-04-03 14:44:48.967</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-csi%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B-k8scsi-pou-xi-yan-jin/" class="">K8S CSI剖析演进 2024-03-04 10:52:20.507</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-gpt-k8sgpt/" class="">K8S GPT 2024-04-03 15:02:09.127</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E5%BC%80%E5%8F%91%E5%8F%AF%E4%B8%8D%E6%AD%A2-crud-k8s-kai-fa-ke-bu-zhi-crud/" class="">K8S 开发可不止 CRUD 2024-04-03 14:50:11.765</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E6%8E%A2%E9%92%88%E5%8E%9F%E7%90%86-k8s-tan-zhen-yuan-li/" class="">K8S 探针原理 2024-04-03 14:53:29.429</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E6%B5%81%E9%87%8F%E9%93%BE%E8%B7%AF%E5%89%96%E6%9E%90-k8s-liu-liang-lian-lu-pou-xi/" class="">K8S 流量链路剖析 2024-03-04 10:50:22.991</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E8%B0%83%E5%BA%A6%E5%99%A8-scheduler_onego-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-diao-du-qi-scheduleronego-yuan-ma-jie-du/" class="">K8S 调度器 scheduler_one.go 源码解读 2024-04-09 11:45:28.22</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E4%B9%8Bingress-nginx%E5%8E%9F%E7%90%86%E5%8F%8A%E9%85%8D%E7%BD%AE-k8s-zhi-ingress-nginx-yuan-li-ji-pei-zhi/" class="">K8S之ingress-nginx原理及配置 2024-07-05 18:02:14.243</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E4%B9%8Bkubelet%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-zhi-kubelet-yuan-ma-jie-du/" class="">k8s之kubelet源码解读 2024-03-28 15:30:39.633</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7-k8s-yuan-de-sheng-ji/" class="">K8S原地升级 2024-04-03 15:04:38.125</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%91%BD%E4%BB%A4%E6%8C%87%E5%8D%97-k8s-ming-ling-zhi-nan/" class="">K8S命令指南 2024-04-03 15:14:14.207</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%A6%82%E4%BD%95%E8%8E%B7%E5%BE%97-ip-k8s-ru-he-huo-de-ip/" class="">K8S如何获得 IP 2024-04-16 17:09:59.658</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%BA%94%E7%94%A8%E7%9A%84%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5-k8s-ying-yong-de-zui-jia-shi-jian/" class="">k8s应用的最佳实践 2024-04-03 14:43:16.936</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-deployment_controllergo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-deploymentcontrollergo-yuan-ma-jie-du/" class="">K8S控制器之 deployment_controller.go源码解读 2024-04-09 11:30:03.133</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-progressgo-%E8%BF%9B%E5%BA%A6-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-progressgo-jin-du-yuan-ma-jie-du/" class="">K8S控制器之 progress.go 进度 源码解读 2024-04-09 11:31:08.86</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-rollinggo-%E6%BB%9A%E5%8A%A8%E6%9B%B4%E6%96%B0-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-rollinggo-gun-dong-geng-xin-yuan-ma-jie-du/" class="">K8S控制器之 rolling.go 滚动更新 源码解读 2024-04-09 11:32:58.133</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-schedulergo-%E8%B0%83%E5%BA%A6%E5%99%A8-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-schedulergo-diao-du-qi-yuan-ma-jie-du/" class="">K8S控制器之 scheduler.go 调度器 源码解读 2024-04-09 11:44:25.171</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Brecreatego-%E9%87%8D%E5%BB%BA-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-recreatego-zhong-jian-yuan-ma-jie-du/" class="">K8S控制器之recreate.go 重建 源码解读 2024-04-09 11:31:49.855</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Brollbackgo-%E5%9B%9E%E6%BB%9A-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-rollbackgo-hui-gun-yuan-ma-jie-du/" class="">K8S控制器之rollback.go 回滚 源码解读 2024-04-09 11:32:26.587</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_pod_controlgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulpodcontrolgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_pod_control.go源码解读 2024-04-10 09:42:50.078</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_set_controlgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetcontrolgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_set_control.go源码解读 2024-04-10 09:41:30.316</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_set_status_updatego%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetstatusupdatego-yuan-ma-jie-du/" class="">K8S控制器之stateful_set_status_update.go源码解读 2024-04-10</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_setgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_set.go源码解读 2024-04-10</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bsyncgo-%E5%90%8C%E6%AD%A5-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-syncgo-tong-bu-yuan-ma-jie-du/" class="">K8S控制器之sync.go 同步 源码解读 2024-04-09 11:33:26.356</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E7%9A%84pod%E7%B1%BB%E5%9E%8B-k8s-de-pod-lei-xing/" class="">K8S的POD类型 2024-04-03 14:57:11.072</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E7%9A%84%E6%9C%80%E5%90%8E%E4%B8%80%E5%9D%97%E6%8B%BC%E5%9B%BE-dbpaas-k8s-de-zui-hou-yi-kuai-pin-tu-dbpaas/" class="">K8S的最后一块拼图 dbpaas 2024-08-02 17:48:35.899</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-k8s%E7%BB%84%E4%BB%B6/" class="">k8s组件</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%83%8C%E5%90%8Eservice%E6%98%AF%E5%A6%82%E4%BD%95%E5%B7%A5%E4%BD%9C%E7%9A%84-k8s-bei-hou-service-shi-ru-he-gong-zuo-de/" class="">k8s背后service是如何工作的 2024-08-02 17:49:44.981</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%B0%83%E5%BA%A6%E5%99%A8-extendergo-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-diao-du-qi-extendergo-yuan-ma-jie-du/" class="">K8S调度器 extender.go 源码解读 2024-04-09 11:45:59.666</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%B0%83%E8%AF%95pod-k8s-diao-shi-pod/" class="">K8S调试POD 2024-04-03 14:58:15.293</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%BF%90%E7%BB%B4%E4%B9%8B%E6%B8%85%E7%90%86%E7%A3%81%E7%9B%98-k8s-yun-wei-zhi-qing-li-ci-pan/" class="">k8s运维之清理磁盘 2024-04-03 15:13:57.279</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8-k8s-mian-shi-da-quan/" class="">K8S面试大全 2024-04-03 15:10:54.493</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E5%AE%9D%E5%85%B8-k8s-mian-shi-bao-dian/" class="">K8S面试宝典 2024-04-03 15:11:09.316</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E9%A2%98-k8s-mian-shi-ti/" class="">K8S面试题 2024-08-02 17:50:50.418</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kruise%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7%E8%A7%A3%E6%9E%90-kruise-yuan-de-sheng-ji-jie-xi/" class="">kruise原地升级解析 2024-08-02 17:59:31.689</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kube-router-%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-kube-router-wang-luo-zu-jian/" class="">kube-router 网络组件 2023-09-28 15:33:20.658</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-05-kubeasz%E9%83%A8%E7%BD%B2k8s/" class="">kubeasz部署k8s</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubekey%E6%B7%BB%E5%8A%A0%E6%96%B0%E8%8A%82%E7%82%B9-kubekey-tian-jia-xin-jie-dian/" class="">kubekey添加新节点 2024-04-03 15:36:47.646</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-api-kubernetesapi/" class="">Kubernetes API 2024-04-03 14:47:30.212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E6%BA%90%E7%A0%81%E7%BB%93%E6%9E%84-kubernetes-yuan-ma-jie-gou/" class="">Kubernetes 源码结构 2024-04-03 14:48:05.954</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3%E8%AE%A4%E8%AF%81-kubernetes-zheng-shu-xiang-jie--ren-zheng-/" class="">Kubernetes 证书详解(认证) 2024-04-03 14:52:56.54</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3%E9%89%B4%E6%9D%83-kubernetes-zheng-shu-xiang-jie--jian-quan-/" class="">Kubernetes 证书详解(鉴权) 2024-04-03 14:49:04.385</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubewharf-kubewharf/" class="">kubewharf 2024-08-02 17:41:32.72</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux-awk%E6%96%87%E6%9C%AC%E5%A4%84%E7%90%86%E5%99%A8-8%E4%B8%AA%E6%A1%88%E4%BE%8B-linuxawk-wen-ben-chu-li-qi-8-ge-an-li/" class="">linux awk文本处理器 8个案例 2024-08-02 17:46:53.603</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux-%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%A4%A7%E5%85%A8-linux-xing-neng-you-hua-da-quan/" class="">Linux 性能优化大全 2024-04-03 15:09:06.854</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux%E7%B3%BB%E7%BB%9F%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96-%E4%B8%83%E4%B8%AA%E5%AE%9E%E6%88%98%E7%BB%8F%E9%AA%8C-linux-xi-tong-xing-neng-you-hua-qi-ge-shi-zhan-jing-yan/" class="">linux系统性能优化 七个实战经验 2024-08-02 17:47:26.212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98-linux-yun-wei-gong-cheng-shi-50-ge-chang-jian-mian-shi-ti/" class="">linux运维工程师50个常见面试题 2024-08-02 17:42:12.968</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/metallb-l2-%E5%8E%9F%E7%90%86-metallbl2-yuan-li/" class="">MetalLB L2 原理 2024-04-03 14:52:24.662</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/netctl%E6%A3%80%E6%B5%8B%E9%9B%86%E7%BE%A4pod%E9%97%B4%E8%BF%9E%E9%80%9A%E6%80%A7-netctl-jian-ce-ji-qun-pod-jian-lian-tong-xing/" class="">netctl检测集群pod间连通性 2024-08-02 18:00:36.753</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/network-check-network-check/" class="">network-check 2023-09-28 15:36:33.04</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/nginx%E5%A6%82%E4%BD%95%E8%A7%A3%E5%86%B3%E6%83%8A%E7%BE%A4%E6%95%88%E5%BA%94-nginx-ru-he-jie-jue-jing-qun-xiao-ying/" class="">nginx如何解决惊群效应 2024-08-02 17:45:54.531</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/openkruise%E8%AF%A6%E7%BB%86%E8%A7%A3%E9%87%8A%E4%BB%A5%E5%8F%8A%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7%E5%8F%8A%E5%85%A8%E9%93%BE%E8%B7%AF%E7%81%B0%E5%BA%A6%E5%8F%91%E5%B8%83%E6%96%B9%E6%A1%88-openkruise-xiang-xi-jie-shi-yi-ji-yuan-de-sheng-ji-ji-quan-lian-lu-hui-du-fa-bu-fang-an/" class="">OpenKruise详细解释以及原地升级及全链路灰度发布方案 2024-07-22 11:44:46.892</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/pixie-pixie/" class="">pixie 2024-08-02 17:52:17.843</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-28-prometheus/" class="">prometheus 面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/prometheus-stack-prometheus-stack/" class="">prometheus-stack 2024-08-02 17:55:22.326</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/prometheus%E4%BC%81%E4%B8%9A%E7%BA%A7%E7%9B%91%E6%8E%A7%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93-prometheus-qi-ye-ji-jian-kong-shi-yong-zong-jie/" class="">prometheus企业级监控使用总结 2024-04-03 15:13:11.185</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ssl%E8%AF%81%E4%B9%A6%E8%87%AA%E7%AD%BE%E5%8F%91-ssl-zheng-shu-zi-qian-fa/" class="">ssl证书自签发 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/teg%E4%B8%8Eistio%E9%9B%86%E6%88%90-teg-yu-istio-ji-cheng/" class="">TEG与istio集成 2024-08-02 17:51:20.389</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%B8%A4%E5%BC%A0%E5%9B%BE%E5%85%A8%E9%9D%A2%E7%90%86%E8%A7%A3k8s%E5%8E%9F%E7%90%86-liang-zhang-tu-quan-mian-li-jie-k8s-yuan-li/" class="">两张图全面理解K8S原理 2024-04-03 14:51:27.431</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%B8%AA%E6%80%A7%E5%8C%96%E9%9B%86%E7%BE%A4%E5%8F%82%E6%95%B0%E9%85%8D%E7%BD%AE-ge-xing-hua-ji-qun-can-shu-pei-zhi/" class="">个性化集群参数配置 2023-09-28 15:30:56.072</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E4%B8%AD%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_%E9%A2%98%E7%9B%AE/" class="">中级运维面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BA%8C%E8%BF%9B%E5%88%B6%E9%83%A8%E7%BD%B2k8s%E5%8A%A0%E8%8A%82%E7%82%B9%E6%93%8D%E4%BD%9C-er-jin-zhi-bu-shu-k8s-jia-jie-dian-cao-zuo/" class="">二进制部署K8S加节点操作 2024-04-03 15:08:26.726</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-10-20-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8%E9%9B%86%E7%BE%A4/" class="">使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8-keepalived-%E5%92%8C-haproxy-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8-kubernetes-%E9%9B%86%E7%BE%A4-shi-yong-keepalived-he-haproxy-chuang-jian-gao-ke-yong-kubernetes-ji-qun/" class="">使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群 2023-04-12 04:04:09.458</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8-openfunction-%E5%9C%A8%E4%BB%BB%E4%BD%95%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E4%B8%8A%E8%BF%90%E8%A1%8C%E6%97%A0%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%B7%A5%E4%BD%9C%E8%B4%9F%E8%BD%BD-shi-yong-openfunction-zai-ren-he-ji-chu-she-shi-shang-yun-xing-wu-fu-wu-qi-gong-zuo-fu-zai/" class="">使用 OpenFunction 在任何基础设施上运行无服务器工作负载 2024-01-21 04:02:44.459</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8cloudflarecf%E6%90%AD%E5%BB%BAdockerhub%E4%BB%A3%E7%90%86-shi-yong-cloudflarecf-da-jian-dockerhub-dai-li/" class="">使用cloudflare(CF)搭建dockerhub代理 2024-06-28 14:38:34.339</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8kubernees-leases-%E8%BD%BB%E6%9D%BE%E5%AE%9E%E7%8E%B0leader-election-shi-yong-kuberneesleases-qing-song-shi-xian-leaderelection/" class="">使用kubernees leases 轻松实现leader election 2024-04-03 15:09:46.129</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%85%AC%E6%9C%89%E4%BA%91%E4%B8%8A%E9%83%A8%E7%BD%B2-kubeasz-gong-you-yun-shang-bu-shu-kubeasz/" class="">公有云上部署 kubeasz 2023-09-28 15:31:16.19</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-5-14-%E5%8D%95master%E5%8D%95etcd%E6%94%B9%E9%80%A0/" class="">单master单etcd改造为3master3etcd</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%8F%B2%E4%B8%8A%E6%9C%80%E7%89%9Bjenkins-pipeline%E6%B5%81%E6%B0%B4%E7%BA%BF%E8%AF%A6%E8%A7%A3-shi-shang-zui-niu-jenkinspipeline-liu-shui-xian-xiang-jie/" class="">史上最牛jenkins pipeline流水线详解 2024-08-02</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%9A%E6%9E%B6%E6%9E%84%E6%94%AF%E6%8C%81-duo-jia-gou-zhi-chi/" class="">多架构支持 2023-09-28 15:29:54.111</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%A7%E5%8E%82%E6%80%BB%E7%BB%93nginx%E9%AB%98%E5%B9%B6%E5%8F%91%E4%BC%98%E5%8C%96%E7%AC%94%E8%AE%B0-da-chang-zong-jie-nginx-gao-bing-fa-you-hua-bi-ji/" class="">大厂总结nginx高并发优化笔记 2024-08-02 17:46:19.098</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%A7%E8%A7%84%E6%A8%A1%E5%B9%B6%E5%8F%91%E4%B8%8B%E5%A6%82%E4%BD%95%E5%8A%A0%E5%BF%AB-pod-%E5%90%AF%E5%8A%A8%E9%80%9F%E5%BA%A6-da-gui-mo-bing-fa-xia-ru-he-jia-kuai-pod-qi-dong-su-du/" class="">大规模并发下如何加快 Pod 启动速度 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E4%B8%BAk8s%E4%BF%9D%E9%A9%BE%E6%8A%A4%E8%88%AA-ru-he-wei-k8s-bao-jia-hu-hang/" class="">如何为K8S保驾护航 2024-04-16 17:09:21.962</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8tekton%E5%BF%AB%E9%80%9F%E6%90%AD%E5%BB%BAcicd%E5%B9%B3%E5%8F%B0-ru-he-shi-yong-tekton-kuai-su-da-jian-cicd-ping-tai/" class="">如何使用tekton快速搭建CI/CD平台 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E8%B0%83%E8%AF%95-crash-%E5%AE%B9%E5%99%A8%E7%9A%84%E7%BD%91%E7%BB%9C-ru-he-diao-shi-crash-rong-qi-de-wang-luo/" class="">如何调试 crash 容器的网络 2024-04-03 14:50:51.378</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E4%B8%AD%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E4%BB%A5%E5%8F%8A%E4%B8%8D%E5%90%8Cdnspolicy%E5%AF%B9%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E7%9A%84%E5%BD%B1%E5%93%8D-rong-qi-zhong-yu-ming-jie-xi-yi-ji-bu-tong-dnspolicy-dui-yu-ming-jie-xi-de-ying-xiang/" class="">容器中域名解析以及不同dnspolicy对域名解析的影响 2024-04-03 15:04:09.254</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E5%86%85%E7%9A%84-1-%E5%8F%B7%E8%BF%9B%E7%A8%8B-rong-qi-nei-de-1-hao-jin-cheng/" class="">容器内的 1 号进程 2024-04-03 14:46:29.998</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E5%8E%9F%E7%90%86-rong-qi-yuan-li/" class="">容器原理 2024-04-03 14:45:58.422</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E7%9A%84%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E4%B8%80-overlayfs-%E5%8E%9F%E7%90%86-rong-qi-de-wen-jian-xi-tong--yi-overlayfs-yuan-li/" class="">容器的文件系统 OverlayFS 原理 2024-04-03 14:45:26.893</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C%E5%8E%9F%E7%90%86-rong-qi-wang-luo-yuan-li/" class="">容器网络原理 2024-04-03 14:51:51.962</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%B8%B8%E8%A7%81linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98-chang-jian-linux-yun-wei-mian-shi-ti/" class="">常见linux运维面试题 2024-08-02 17:42:33.873</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BC%80%E5%A7%8B%E4%BD%BF%E7%94%A8-cilium-kai-shi-shi-yong-cilium/" class="">开始使用 cilium 2023-09-28 15:34:49.205</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BD%BB%E6%82%9F%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C-che-wu-rong-qi-wang-luo/" class="">彻悟容器网络 2024-04-07 10:30:11.55</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BF%AB%E9%80%9F%E6%8C%87%E5%8D%97-kuai-su-zhi-nan/" class="">快速指南 2023-09-28 15:28:25.71</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%88%91%E5%8F%AA%E6%83%B3%E5%81%9A%E6%8A%80%E6%9C%AF-%E8%B5%B0%E6%8A%80%E6%9C%AF%E8%B7%AF%E7%BA%BF-wo-zhi-xiang-zuo-ji-shu-zou-ji-shu-lu-xian/" class="">我只想做技术 走技术路线 2024-08-02 17:43:31.897</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%90%9E%E6%87%82k8s%E9%89%B4%E6%9D%83-gao-dong-k8s-jian-quan/" class="">搞懂K8S鉴权 2024-04-03 15:11:54.885</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%90%AD%E4%B8%AA%E6%97%A5%E5%BF%97%E6%89%8B%E6%9C%BA%E7%B3%BB%E7%BB%9F%E4%B8%8D%E9%A6%99%E5%90%97-da-ge-ri-zhi-shou-ji-xi-tong-bu-xiang-ma/" class="">搭个日志手机系统不香吗 2024-08-02 17:47:58.794</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E8%AF%B4%E6%98%8E-cao-zuo-xi-tong-shuo-ming/" class="">操作系统说明 2023-09-28 15:31:37.694</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%96%87%E5%AD%A6%E7%9A%84%E6%95%85%E4%B9%A1-wen-xue-de-gu-xiang/" class="">文学的故乡 2024-04-03 14:40:45.926</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%98%AF%E6%8A%80%E6%9C%AF%E5%A4%A7%E7%A5%9E%E8%BF%98%E6%98%AF%E5%9F%BA%E7%A1%80%E6%9E%B6%E6%9E%84%E9%83%A8%E7%9A%84%E7%A5%B8%E5%AE%B3-shi-ji-shu-da-shen-hai-shi-ji-chu-jia-gou-bu-de-huo-hai/" class="">是技术大神还是基础架构部的祸害 2024-08-02 17:50:26.139</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9C%89%E8%BF%993%E4%B8%AA%E8%BF%B9%E8%B1%A1%E4%BD%A0%E5%B0%B1%E8%AF%A5%E7%A6%BB%E8%81%8C%E4%BA%86-you-zhe-3-ge-ji-xiang--ni-jiu-gai-li-zhi-le/" class="">有这3个迹象，你就该离职了 2023-09-21 16:00:22.432</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9E%81%E5%A4%A7%E6%8F%90%E9%AB%98%E5%B7%A5%E4%BD%9C%E6%95%88%E7%8E%87%E7%9A%84-linux-%E5%91%BD%E4%BB%A4-ji-da-ti-gao-gong-zuo-xiao-lv-de-linux-ming-ling/" class="">极大提高工作效率的 Linux 命令 2024-04-03 14:42:46.957</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9E%84%E5%BB%BA%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E5%88%A9%E5%99%A8buildkit-gou-jian-rong-qi-jing-xiang-li-qi-buildkit/" class="">构建容器镜像利器buildkit 2024-08-02 17:49:14.916</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B5%81%E9%87%8F%E4%BD%95%E5%A4%84%E6%9D%A5%E4%BD%95%E5%A4%84%E5%8E%BB-liu-liang-he-chu-lai-he-chu-qu/" class="">流量何处来何处去 2024-04-03 14:56:20.089</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B8%85%E7%90%86docker%E9%95%9C%E5%83%8F-qing-li-docker-jing-xiang/" class="">清理docker镜像 2024-08-02 17:54:48.594</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B8%85%E7%90%86%E6%AE%8B%E7%95%99%E7%9A%84calico%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6-qing-li-can-liu-de-calico-wang-luo/" class="">清理残留的calico网络插件 2024-04-03 15:07:38.854</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A3%81%E7%9B%98%E6%95%B0%E6%8D%AE%E6%81%A2%E5%A4%8D-ci-pan-shu-ju-hui-fu/" class="">磁盘数据恢复 2024-04-03 14:59:27.839</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85kubephere-li-xian-an-zhuang-kubephere/" class="">离线安装kubephere 2024-04-03 14:59:59.885</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4-li-xian-an-zhuang-ji-qun/" class="">离线安装集群 2023-09-28 15:29:14.742</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-%E8%AE%A1%E5%88%92/" class="">美国码农薪酬</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-%E8%AE%A1%E5%88%922/" class="">美国码农计划</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E8%87%AA%E5%8A%A8%E5%B1%8F%E8%94%BDip%E6%94%BB%E5%87%BB-zi-dong-ping-bi-ip-gong-ji/" class="">自动屏蔽IP攻击 2024-04-03 14:54:11.783</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-12-%E9%9D%A2%E8%AF%950212/" class="">面试0212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-19-%E9%9D%A2%E8%AF%950219/" class="">面试0219</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-20-%E9%9D%A2%E8%AF%950220/" class="">面试0220</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-26-%E9%9D%A2%E8%AF%950225/" class="">面试0225</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%9D%A2%E8%AF%950308-mian-shi-0308/" class="">面试0308 2024-04-03 14:57:53.576</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-11-%E9%9D%A2%E8%AF%950211/" class="">面试2025-02-11</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-18-%E9%9D%A2%E8%AF%95/" class="">面试2025-0218</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%9D%A2%E8%AF%95%E7%94%A8-golang-%E6%89%8B%E6%92%B8-lru-mian-shi-yong-golang-shou-lu-lru/" class="">面试用 Golang 手撸 LRU 2024-04-03 14:47:00.767</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%A1%B6%E7%BA%A7devops%E5%B7%A5%E5%85%B7%E5%A4%A7%E7%9B%98%E7%82%B9-ding-ji-devops-gong-ju-da-pan-dian/" class="active">顶级devops工具大盘点 2024-08-02 17:43:03.661</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E9%AB%98%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_ai_linux%E9%83%A8%E5%88%86/" class="">高级运维面试题-linux部分</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>顶级devops工具大盘点 2024-08-02 17:43:03.661</h3>
+
+  <label for="toc-control">
+    
+    <img src="/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#关于-devops-及其工具">关于 DevOps 及其工具</a></li>
+    <li><a href="#计划工具">计划工具</a></li>
+    <li><a href="#计划工具示例">计划工具示例</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#问题跟踪">问题跟踪</a></li>
+    <li><a href="#问题跟踪工具示例">问题跟踪工具示例</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#源码控制">源码控制</a></li>
+    <li><a href="#scm-工具示例">SCM 工具示例</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#构建工具">构建工具</a></li>
+    <li><a href="#构建工具示例">构建工具示例</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#测试工具">测试工具</a></li>
+    <li><a href="#测试工具示例">测试工具示例</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#持续集成ci和持续部署cd">持续集成（CI）和持续部署（CD）</a></li>
+    <li><a href="#ci-工具示例">CI 工具示例</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#cd-工具">CD 工具</a></li>
+    <li><a href="#cd-工具示例">CD 工具示例</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#配置管理工具">配置管理工具</a></li>
+    <li><a href="#配置管理工具示例">配置管理工具示例</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#云平台">云平台</a></li>
+    <li><a href="#云平台示例">云平台示例</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#容器调度器">容器调度器</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#监控和日志工具">监控和日志工具</a></li>
+    <li><a href="#监控和日志工具示例">监控和日志工具示例</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#通信工具">通信工具</a></li>
+    <li><a href="#通信工具示例">通信工具示例</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#知识分享工具">知识分享工具</a></li>
+    <li><a href="#知识分享工具示例">知识分享工具示例</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#总结">总结</a></li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><p>本篇文章中将介绍一些能够帮助你实现 DevOps 目标的核心技术类别和具体技术。</p>
+<h2 id="关于-devops-及其工具">
+  关于 DevOps 及其工具
+  <a class="anchor" href="#%e5%85%b3%e4%ba%8e-devops-%e5%8f%8a%e5%85%b6%e5%b7%a5%e5%85%b7">#</a>
+</h2>
+<p>关于 DevOps 及其工具，需要记住：</p>
+<ul>
+<li>持续改进是目标；</li>
+<li>DevOps 不是花钱买来的；</li>
+<li>分阶段采用工具。</li>
+</ul>
+<h2 id="计划工具">
+  计划工具
+  <a class="anchor" href="#%e8%ae%a1%e5%88%92%e5%b7%a5%e5%85%b7">#</a>
+</h2>
+<p>为什么计划工具对于 DevOps 来说很重要？</p>
+<ul>
+<li>分享目标；</li>
+<li>透明性；</li>
+<li>赋能。</li>
+</ul>
+<h2 id="计划工具示例">
+  计划工具示例
+  <a class="anchor" href="#%e8%ae%a1%e5%88%92%e5%b7%a5%e5%85%b7%e7%a4%ba%e4%be%8b">#</a>
+</h2>
+<h6 id="gitlab">
+  GitLab
+  <a class="anchor" href="#gitlab">#</a>
+</h6>
+<p>GitLab 是一个基于 Web 的 DevOps 生命周期工具。它提供了一个 Git 仓库管理器，具备 wiki、问题跟踪和 CI/CD 管道功能，采用的是 GitLab 公司的开源许可。</p>
+<h6 id="tasktop">
+  Tasktop
+  <a class="anchor" href="#tasktop">#</a>
+</h6>
+<p>Tasktop 允许将所有这些工具添加到敏捷、ALM、PPM 和 ITSM 中，实现了对整个生命周期前所未有的可见性。</p>
+<h6 id="collabnet-versionone">
+  CollabNet VersionOne
+  <a class="anchor" href="#collabnet-versionone">#</a>
+</h6>
+<p>VersionOne 支持 Scrum、看板、XP、SAFe 和混合开发方法，并使跨团队、程序、软件组合和企业的计划、跟踪和报告变得更容易。</p>
+<h6 id="pivotal-tracker">
+  Pivotal Tracker
+  <a class="anchor" href="#pivotal-tracker">#</a>
+</h6>
+<p>敏捷项目管理工具，是开发人员围绕高优先级共享 backlog 进行实时协作的首选工具。</p>
+<h6 id="trello">
+  Trello
+  <a class="anchor" href="#trello">#</a>
+</h6>
+<p>Trello 是一个基于 Web 的看板风格的清单应用程序，是 Atlassian 的子公司。</p>
+<p>很多团队用它来计划各自的工作 sprint。</p>
+<h6 id="azure-boards">
+  Azure Boards
+  <a class="anchor" href="#azure-boards">#</a>
+</h6>
+<p>使用敏捷工具，包括 Scrum、看板和其他敏捷方法仪表板来更好地跟踪软件项目并进行计划。</p>
+<p>这些都是可视化工作、分享计划、跟踪进展、确保朝着目标前进的好方法。</p>
+<h2 id="问题跟踪">
+  问题跟踪
+  <a class="anchor" href="#%e9%97%ae%e9%a2%98%e8%b7%9f%e8%b8%aa">#</a>
+</h2>
+<p>为什么问题跟踪对 DevOps 来说很重要？</p>
+<ul>
+<li>用户响应；</li>
+<li>减少知识损耗；</li>
+<li>反馈闭环。</li>
+</ul>
+<h2 id="问题跟踪工具示例">
+  问题跟踪工具示例
+  <a class="anchor" href="#%e9%97%ae%e9%a2%98%e8%b7%9f%e8%b8%aa%e5%b7%a5%e5%85%b7%e7%a4%ba%e4%be%8b">#</a>
+</h2>
+<h6 id="atlassian-jira">
+  Atlassian Jira
+  <a class="anchor" href="#atlassian-jira">#</a>
+</h6>
+<p>Jira 是由 Atlassian 公司开发的问题跟踪产品，提供了 bug 跟踪和敏捷项目管理功能。</p>
+<h6 id="jetbrains-youtrack">
+  JetBrains YouTrack
+  <a class="anchor" href="#jetbrains-youtrack">#</a>
+</h6>
+<p>YouTrack 是 JetBrains 公司开发的一款基于浏览器的 bug 跟踪、问题跟踪系统和项目管理软件。它支持基于查询的问题搜索——包括自动完成、批量处理问题、定制问题属性集以及创建自定义工作流。</p>
+<h6 id="zendesk">
+  Zendesk
+  <a class="anchor" href="#zendesk">#</a>
+</h6>
+<p>Zendesk 让客户问题跟踪变得更简单，包括优步和 Airbnb 在内的很多公司都使用 Zendesk 作为他们的问题跟踪软件。</p>
+<h2 id="源码控制">
+  源码控制
+  <a class="anchor" href="#%e6%ba%90%e7%a0%81%e6%8e%a7%e5%88%b6">#</a>
+</h2>
+<p>为什么源码控制对 DevOps 来说很重要？</p>
+<ul>
+<li>资产管控；</li>
+<li>减少传输损耗；</li>
+<li>促进团队合作。</li>
+</ul>
+<h2 id="scm-工具示例">
+  SCM 工具示例
+  <a class="anchor" href="#scm-%e5%b7%a5%e5%85%b7%e7%a4%ba%e4%be%8b">#</a>
+</h2>
+<h6 id="git">
+  Git
+  <a class="anchor" href="#git">#</a>
+</h6>
+<p><a href="http://mp.weixin.qq.com/s?__biz=MzI0MDQ4MTM5NQ==&amp;mid=2247506187&amp;idx=2&amp;sn=f9fb8c8378aec674cc30a77270125a7b&amp;chksm=e918bc17de6f35016686105c16329e2a5ea5e67d4a2cf3670520b9b80fac207fccaf12f8ced8&amp;scene=21#wechat_redirect">Git</a> 是一个分布式版本控制系统，用于在软件开发期间跟踪源代码的变更。它是为协调程序员之间的工作而设计的，但它也可用于跟踪文件的变更。它专注于速度、数据完整性和对分布式、非线性工作流的支持。</p>
+<h6 id="github">
+  GitHub
+  <a class="anchor" href="#github">#</a>
+</h6>
+<p>GitHub 提供了 Git 分布式版本控制和源代码管理功能，以及自有的一些特性。</p>
+<h6 id="gitlab-1">
+  GitLab
+  <a class="anchor" href="#gitlab-1">#</a>
+</h6>
+<p>GitLab 的版本控制通过世界级的源代码管理功能帮助你的开发团队共享、协作和最大化他们的生产力。</p>
+<h6 id="bitbucket">
+  Bitbucket
+  <a class="anchor" href="#bitbucket">#</a>
+</h6>
+<p>Bitbucket 是 Atlassian 公司为使用 Mercurial 或 Git 版本控制系统的源代码和开发项目提供的基于 Web 的版本控制代码库托管服务。</p>
+<h6 id="subversion">
+  Subversion
+  <a class="anchor" href="#subversion">#</a>
+</h6>
+<p>Apache Subversion 是一种软件版本控制系统，采用了 Apache 开发源码许可。软件开发人员使用 Subversion 来维护文件的当前和历史版本，例如源代码、Web 页面和文档。</p>
+<h2 id="构建工具">
+  构建工具
+  <a class="anchor" href="#%e6%9e%84%e5%bb%ba%e5%b7%a5%e5%85%b7">#</a>
+</h2>
+<p>为什么构建工具对 DevOps 来说很重要？</p>
+<ul>
+<li>一致的打包效果；</li>
+<li>自动化错误探测；</li>
+<li>尽早发现质量问题。</li>
+</ul>
+<h2 id="构建工具示例">
+  构建工具示例
+  <a class="anchor" href="#%e6%9e%84%e5%bb%ba%e5%b7%a5%e5%85%b7%e7%a4%ba%e4%be%8b">#</a>
+</h2>
+<h6 id="mavengradle">
+  Maven/Gradle
+  <a class="anchor" href="#mavengradle">#</a>
+</h6>
+<p>Maven 是一个主要用于 Java 项目的自动化构建工具。Maven 还可以用来构建和管理用 C#、Ruby、Scala 和其他语言开发的项目。</p>
+<p>Gradle 是一个开源的自动化构建系统，基于 Apache Ant 和 Apache Maven 的概念，引入了一种基于 groovy 的领域特定语言。</p>
+<h6 id="msbuild">
+  MSBuild
+  <a class="anchor" href="#msbuild">#</a>
+</h6>
+<p>Microsoft Build Engine，更广为人知的名字是 MSBuild，是一个开源免费的托管代码和原生 C++ 代码构建工具集，是.Net Framework 的一部分。Visual Studio 就使用 MSBuild 作为构建工具。</p>
+<h6 id="rake">
+  Rake
+  <a class="anchor" href="#rake">#</a>
+</h6>
+<p>Rake 是一个软件任务管理和自动化构建工具。用户可以指定任务和描述依赖关系，还可以对同一个命名空间中的组任务指定和描述依赖关系。</p>
+<h6 id="jfrog-artifactory">
+  JFrog Artifactory
+  <a class="anchor" href="#jfrog-artifactory">#</a>
+</h6>
+<p>JFrog Artifactory 是一种用于保存构建过程所产生的用于发布和部署的二进制文件的工具。Artifactory 提供了多种包格式支持，如 Maven、Debian、npm、Helm、Ruby、Python 和 Docker。</p>
+<p>JFrog 提供了高可用性、复制、灾难恢复、可伸缩性，并可集成很多自有和云存储产品。</p>
+<h6 id="sonatype-nexus">
+  Sonatype Nexus
+  <a class="anchor" href="#sonatype-nexus">#</a>
+</h6>
+<p>Sonatype Nexus 是一个存储库管理器。可用于代理、收集和管理依赖项，这样就不用经常为一堆的 jar 文件感到烦恼。它让软件的发行变得更容易。</p>
+<p>在内部，你可以配置构建工具，把工件发布到 Nexus，然后其他开发人员就可以使用它们了。</p>
+<h6 id="nuget">
+  NuGet
+  <a class="anchor" href="#nuget">#</a>
+</h6>
+<p>NuGet 是.Net 包管理器。NuGet 客户端工具提供了生成和使用包的能力。</p>
+<p>NuGet Gallery 是程序包作者和使用者的中心包仓库。</p>
+<h2 id="测试工具">
+  测试工具
+  <a class="anchor" href="#%e6%b5%8b%e8%af%95%e5%b7%a5%e5%85%b7">#</a>
+</h2>
+<p>为什么测试工具对 DevOps 来说很重要？</p>
+<ul>
+<li>将注意力放在质量上；</li>
+<li>提升产品信心。</li>
+</ul>
+<h2 id="测试工具示例">
+  测试工具示例
+  <a class="anchor" href="#%e6%b5%8b%e8%af%95%e5%b7%a5%e5%85%b7%e7%a4%ba%e4%be%8b">#</a>
+</h2>
+<h6 id="junit">
+  JUnit
+  <a class="anchor" href="#junit">#</a>
+</h6>
+<p>JUnit 是一个用于 Java 的单元测试框架。JUnit 在测试驱动开发当中扮演着非常重要的角色，它是单元测试框架家族 xUnit(源于 SUnit) 的一员。</p>
+<h6 id="xunitnet">
+  xUnit.net
+  <a class="anchor" href="#xunitnet">#</a>
+</h6>
+<p>xUnit.net 是一个用于.Net Framework 的开源单元测试工具，由 NUnit 的原作者开发。</p>
+<h6 id="selenium">
+  Selenium
+  <a class="anchor" href="#selenium">#</a>
+</h6>
+<p>Selenium 是用于测试 Web 应用程序的框架。Selenium 提供了一个回放工具，用于编写功能测试，省去了学习脚本语言的麻烦。</p>
+<h6 id="jasmine">
+  Jasmine
+  <a class="anchor" href="#jasmine">#</a>
+</h6>
+<p>Jasmine 是一个开源的 JavaScript 测试框架。它的目标是可以在任何支持 JavaScript 的平台上运行，不干扰应用程序或 IDE，并具有易于阅读的语法。它深受其他单元测试框架的影响，比如 Screw.Unit、JSSpec、JSpec 和 RSpec。</p>
+<h6 id="cucumber">
+  Cucumber
+  <a class="anchor" href="#cucumber">#</a>
+</h6>
+<p>Cucumber 是一个支持行为驱动开发的工具。Cucumber BDD 方法的核心是一个叫作 Gherkin 的语言解析器，可以用用户能够理解的逻辑语言来指定预期的软件行为。</p>
+<h2 id="持续集成ci和持续部署cd">
+  持续集成（CI）和持续部署（CD）
+  <a class="anchor" href="#%e6%8c%81%e7%bb%ad%e9%9b%86%e6%88%90ci%e5%92%8c%e6%8c%81%e7%bb%ad%e9%83%a8%e7%bd%b2cd">#</a>
+</h2>
+<p>为什么持续集成和部署对 DevOps 来说很重要？</p>
+<ul>
+<li>快速反馈；</li>
+<li>减少缺陷和等待时间。</li>
+</ul>
+<h2 id="ci-工具示例">
+  CI 工具示例
+  <a class="anchor" href="#ci-%e5%b7%a5%e5%85%b7%e7%a4%ba%e4%be%8b">#</a>
+</h2>
+<h6 id="jenkins">
+  Jenkins
+  <a class="anchor" href="#jenkins">#</a>
+</h6>
+<p>Jenkins 是一个免费开源的自动化服务器。Jenkins 帮助自动化软件开发过程中的非人为操作部分。它是一个基于服务器的系统，运行在 Servlet 容器中，比如 Apache Tomcat。</p>
+<h6 id="circleci">
+  CircleCI
+  <a class="anchor" href="#circleci">#</a>
+</h6>
+<p>CircleCI 是全球最大的共享 CI/CD 平台，是代码从想法变成可交付产品的中心枢纽。</p>
+<p>作为最常用的 DevOps 工具之一，CircleCI 每天要处理超过 100 万个构建任务，它可以访问到工程团队协作以及代码运行的数据。Spotify、Coinbase、Stitch Fix 和 BuzzFeed 等公司都使用 CircleCI 来提高工程团队的工作效率，发布更好的产品。</p>
+<h6 id="travis-ci">
+  Travis CI
+  <a class="anchor" href="#travis-ci">#</a>
+</h6>
+<p>Travis CI 是一个托管的 CI 服务，用于构建和测试托管在 GitHub 上的软件项目。Travis CI 为私人项目提供各种付费计划和免费开源计划。TravisPro 部署在客户自己的硬件上，提供专有版本的定制部署。</p>
+<h6 id="concourse">
+  Concourse
+  <a class="anchor" href="#concourse">#</a>
+</h6>
+<p>Concourse 是一个用 Go 开发的自动化系统，最常用于 CI/CD，用于伸缩任何类型 (从简单到复杂的) 的自动化管道。</p>
+<h6 id="aws-codepipeline">
+  AWS CodePipeline
+  <a class="anchor" href="#aws-codepipeline">#</a>
+</h6>
+<p>AWS CodePipeline 是一个全托管的 CD 服务，可以帮助你自动化发布管道，以便快速可靠地更新应用程序和基础设施。</p>
+<p>每当发生代码变更时，CodePipeline 会根据你定义的发布模型自动化发布过程的构建、测试和部署阶段，让你能够快速、可靠地交付特性和更新。</p>
+<p>你可以轻松地将 AWS 代码管道与第三方服务 (如 GitHub) 或自定义插件集成。在使用 AWS CodePipeline 时，你只需要为所使用的内容付费，没有预付费用。</p>
+<h6 id="azure-pipelines">
+  Azure Pipelines
+  <a class="anchor" href="#azure-pipelines">#</a>
+</h6>
+<p>为 Linux、macOS 和 Windows 建立云托管管道。构建 Web、桌面和移动应用程序，并将其部署到云端或本地。</p>
+<p>通过管道自动化构建和部署，减少在具体细节上花费的时间，把更多的时间花在创造性的事情上。</p>
+<h2 id="cd-工具">
+  CD 工具
+  <a class="anchor" href="#cd-%e5%b7%a5%e5%85%b7">#</a>
+</h2>
+<p>为什么 CD 工具对于 DevOps 来说很重要？</p>
+<ul>
+<li>减少预发布库存；</li>
+<li>自动化复杂的管道；</li>
+<li>统一团队为客户创造价值的目标。</li>
+</ul>
+<h2 id="cd-工具示例">
+  CD 工具示例
+  <a class="anchor" href="#cd-%e5%b7%a5%e5%85%b7%e7%a4%ba%e4%be%8b">#</a>
+</h2>
+<h6 id="spinnaker">
+  Spinnaker
+  <a class="anchor" href="#spinnaker">#</a>
+</h6>
+<p>Spinnaker 是一个免费开源的 CD 软件平台，最初由 Netflix 开发，后被谷歌收购，并进行了扩展。</p>
+<p>Spinnaker 是一个多云 CD 平台，用于快速发布软件变更。它将强大而灵活的管道管理系统与主要云提供商的集成结合在了一起。</p>
+<h6 id="octopus-deploy">
+  Octopus Deploy
+  <a class="anchor" href="#octopus-deploy">#</a>
+</h6>
+<p>Octopus Deploy 是一个自动化的部署和发布管理工具，全球领先的 CD 团队都在使用它。</p>
+<p>Octopus 是一个工具集，可以极大简化 DevOps 过程，通过云或虚拟机对大量微服务或应用程序进行持续测试和部署。</p>
+<h6 id="aws-codedeploy">
+  AWS CodeDeploy
+  <a class="anchor" href="#aws-codedeploy">#</a>
+</h6>
+<p>AWS CodeDeploy 是一种全托管的部署服务，可以将软件部署自动化到各种计算服务，如 Amazon EC2、AWS Fargate、AWS Lambda 和本地服务器。</p>
+<p>你可以使用 AWS CodeDeploy 来自动化软件部署，减少容易出错的手动操作。</p>
+<h2 id="配置管理工具">
+  配置管理工具
+  <a class="anchor" href="#%e9%85%8d%e7%bd%ae%e7%ae%a1%e7%90%86%e5%b7%a5%e5%85%b7">#</a>
+</h2>
+<p>配置管理工具为什么对于 DevOps 来说很重要？</p>
+<ul>
+<li>保持一致性；</li>
+<li>基础设施即代码。</li>
+</ul>
+<h2 id="配置管理工具示例">
+  配置管理工具示例
+  <a class="anchor" href="#%e9%85%8d%e7%bd%ae%e7%ae%a1%e7%90%86%e5%b7%a5%e5%85%b7%e7%a4%ba%e4%be%8b">#</a>
+</h2>
+<h6 id="terraform">
+  Terraform
+  <a class="anchor" href="#terraform">#</a>
+</h6>
+<p>Terraform 是 HashiCorp 公司开发的开源基础结构即代码 (IaC) 软件工具。用户可以使用一种高级配置语言 (叫作 Hashicorp 配置语言或 JSON) 来定义和提供数据中心基础设施。</p>
+<h6 id="bosh">
+  BOSH
+  <a class="anchor" href="#bosh">#</a>
+</h6>
+<p>BOSH 是一个将小型和大型云软件的发布工程、部署和生命周期管理结合起来的项目。BOSH 可以基于数百个 VM 配置和部署软件。它还可以执行监空、故障恢复和软件更新，没有停机时间或者停机时间很短。</p>
+<p>虽然开发 BOSH 是为了部署云计算，但它也可以用于部署几乎任何其他软件 (例如 Hadoop)。BOSH 特别适合大型分布式系统。</p>
+<p>此外，BOSH 还支持多种基础设施即服务 (IaaS) 提供商，如 VMware vSphere、谷歌云平台、Amazon Web Services EC2、Microsoft Azure、OpenStack 和阿里巴巴云。BOSH 提供了一个云供应商接口 (CPI)，用户可用它扩展 BOSH，以便支持其他 IaaS 提供商，如 Apache CloudStack 和 VirtualBox。</p>
+<h6 id="chef">
+  Chef
+  <a class="anchor" href="#chef">#</a>
+</h6>
+<p>Chef 是一个配置管理工具，用于处理物理服务器、虚拟机和云端的机器配置。很多公司用 Chef 控制和管理他们的基础设施，如 Facebook、Etsy、Cheezburger 和 Indiegogo。</p>
+<p>Chef 公司是持续自动化软件的领导者、应用自动化的革新者以及 DevOps 运动的发起者之一。Chef 与全球 1000 多家最具创新性的公司合作，提供快速交付软件的实践和平台，以实现他们的数字化转型愿景。</p>
+<h6 id="ansible">
+  Ansible
+  <a class="anchor" href="#ansible">#</a>
+</h6>
+<p>Ansible 是一款开源的软件配置、配置管理和应用程序部署工具。它运行在 Unix 家族系统上，可以配置 Unix 家族系统和 Windows。它可以使用自己的声明性语言来描述系统配置。</p>
+<h6 id="puppet">
+  Puppet
+  <a class="anchor" href="#puppet">#</a>
+</h6>
+<p>Puppet 提供了定义系统需要哪些软件和配置的能力，然后在初始设置之后维护指定的状态。</p>
+<p>Puppet 使用与 Ruby 类似的声明性领域特定语言 (DSL) 为特定环境或基础设施定义配置参数。Puppet 通过使用一个叫作 Facter 的实用程序来发现系统信息，Facter 是在安装 Puppet 软件包时一起安装的。</p>
+<p>Puppet 主节点通过清单来管理它所控制的所有节点的重要配置信息。</p>
+<p>被主节点控制的其他节点安装了 Puppet 并运行 Puppet 代理 (一个守护进程)。代理节点收集的有关节点的配置信息将发送给主节点。主节点根据应该如何配置来编译目录，其他节点使用这些信息来更新自己的配置。</p>
+<p>Puppet 使用了拉取模式，代理节点定时轮询主机，查询特定于站点和特定于节点的配置。在这个基础设施中，Puppet 代理应用程序通常作为后台服务运行在托管节点上。</p>
+<h6 id="谷歌云部署管理器">
+  谷歌云部署管理器
+  <a class="anchor" href="#%e8%b0%b7%e6%ad%8c%e4%ba%91%e9%83%a8%e7%bd%b2%e7%ae%a1%e7%90%86%e5%99%a8">#</a>
+</h6>
+<p>谷歌云部署管理器是一种基础设施管理服务，让谷歌云平台资源的创建、部署和管理变得更简单。</p>
+<h2 id="云平台">
+  云平台
+  <a class="anchor" href="#%e4%ba%91%e5%b9%b3%e5%8f%b0">#</a>
+</h2>
+<p>为什么云平台对 DevOps 来说很重要？</p>
+<ul>
+<li>友好的自动化；</li>
+<li>具有可观察性的运行时。</li>
+</ul>
+<h2 id="云平台示例">
+  云平台示例
+  <a class="anchor" href="#%e4%ba%91%e5%b9%b3%e5%8f%b0%e7%a4%ba%e4%be%8b">#</a>
+</h2>
+<h6 id="amazon-web-service">
+  Amazon Web Service
+  <a class="anchor" href="#amazon-web-service">#</a>
+</h6>
+<p>Amazon Web Service(AWS) 是一个安全的云服务平台，提供计算能力、数据库存储、内容交付和其他帮助企业扩大规模和增长的功能。</p>
+<p>简而言之，<strong>AWS 可以做以下这些事情</strong>：</p>
+<ul>
+<li>在云端运行 Web 和应用服务器，托管动态网站；</li>
+<li>将所有文件安全地存储在云端，这样你就可以从任何地方访问它们；</li>
+<li>使用托管数据库，如 MySQL、PostgreSQL、Oracle 或 SQL Server 来存储信息；</li>
+<li>使用内容分发网络 (CDN) 在世界各地快速交付静态和动态文件；</li>
+<li>批量发送电子邮件给你的客户。</li>
+</ul>
+<h6 id="微软-azure">
+  微软 Azure
+  <a class="anchor" href="#%e5%be%ae%e8%bd%af-azure">#</a>
+</h6>
+<p>微软 Azure 是微软创建的云计算服务，通过微软数据中心构建、测试、部署和管理应用程序和服务。</p>
+<p>微软 Azure，原来叫作 Windows Azure，是微软的公共云计算平台。它提供一系列云服务，包括计算、分析、存储和网络。用户可以选择这些服务来开发和扩展新的应用程序，或者在公共云中运行现有的应用程序。</p>
+<h6 id="谷歌云平台">
+  谷歌云平台
+  <a class="anchor" href="#%e8%b0%b7%e6%ad%8c%e4%ba%91%e5%b9%b3%e5%8f%b0">#</a>
+</h6>
+<p>谷歌云平台由谷歌提供，是一套云计算服务，运行在谷歌用来运行其终端用户产品 (如谷歌搜索、Gmail 和 YouTube) 相同的基础设施上。</p>
+<p>谷歌云平台提供在 web 上部署应用程序所需的计算资源，专注于为个人和企业提供一个构建和运行软件的地方，并通过 Web 连接软件用户。</p>
+<p>你使用谷歌提供的云计算服务来迎接业务方面的挑战，包括数据管理、混合和多云、人工智能和机器学习。</p>
+<h6 id="pivotal-cloud-foundry">
+  Pivotal Cloud Foundry
+  <a class="anchor" href="#pivotal-cloud-foundry">#</a>
+</h6>
+<p>Pivotal Cloud Foundry (PCF) 是一个开源的多云应用平台即服务 (PaaS)，由 501 组织 Cloud Foundry Foundation 负责管理。该软件最初由 VMware 开发，后来转到 Pivotal 软件公司。2019 年底，随着 VMware 收购 Pivotal，又被带回到 VMware。</p>
+<p>PCF 是一个用于部署、管理和持续交付应用程序、容器和功能的多云平台。PCF 允许开发人员快速部署和交付软件，而不需要管理底层基础设施。</p>
+<h6 id="heroku">
+  Heroku
+  <a class="anchor" href="#heroku">#</a>
+</h6>
+<p>Heroku 是一个支持多种编程语言的云 PaaS。作为首批云平台之一，Heroku 从 2007 年 6 月就开始开发，当时它只支持 Ruby 编程语言，但现在支持 Java Node.js、Scala、Clojure、Python、PHP 和 Go。</p>
+<p>Heroku 是一个基于容器的云 PaaS。开发人员使用 Heroku 来部署、管理和扩展现代应用程序。这个平台优雅、灵活、易于使用，为开发人员提供了发布应用程序最简单的途径。</p>
+<h6 id="中国云厂商编者补充">
+  中国云厂商（编者补充）
+  <a class="anchor" href="#%e4%b8%ad%e5%9b%bd%e4%ba%91%e5%8e%82%e5%95%86%e7%bc%96%e8%80%85%e8%a1%a5%e5%85%85">#</a>
+</h6>
+<p>阿里云、腾讯云、华为云、京东云等各类型厂商都是国内用户的可选项。</p>
+<h2 id="容器调度器">
+  容器调度器
+  <a class="anchor" href="#%e5%ae%b9%e5%99%a8%e8%b0%83%e5%ba%a6%e5%99%a8">#</a>
+</h2>
+<p>容器调度程序的主要任务是在最合适的主机上启动容器并将它们连接在一起。它必须通过自动故障转移来处理故障，并且当单个实例有太多数据需要处理 / 计算时，它需要能够扩展容器。</p>
+<p>三个最流行的容器调度器是 Docker Swarm、Apache Mesos 和 Kubernetes。</p>
+<h6 id="docker-swarm">
+  Docker Swarm
+  <a class="anchor" href="#docker-swarm">#</a>
+</h6>
+<p>Docker Swarm 是 Docker 开发的一种容器调度程序。这个集群解决方案提供了一些优势，比如使用标准 Docker API 等。</p>
+<h6 id="apache-mesos">
+  Apache Mesos
+  <a class="anchor" href="#apache-mesos">#</a>
+</h6>
+<p>Mesos 的目的是构建一个可扩展、高效的系统，可以支持大量的框架。这也是一个主要的问题：一些框架，如 Hadoop 和 MPI，是独立开发的——因此不可能在框架之间进行细粒度的共享。</p>
+<p>Mesos 的目的是添加一个薄薄的资源共享层，为框架提供访问集群资源的公共接口。Mesos 将调度控制委托给框架，因为很多框架已经实现了复杂的调度。</p>
+<p>根据集群上运行的作业类型，框架可以分为四种，其中一些框架提供了原生 Docker 支持，比如 Marathon。在 Mesos 0.20.0 中添加了对 Docker 容器的支持。</p>
+<h6 id="kubernetes">
+  Kubernetes
+  <a class="anchor" href="#kubernetes">#</a>
+</h6>
+<p>Kubernetes 是一个用于编配 Docker 容器的系统，它通过标签和 Pod 的概念将容器分为逻辑单元。Pod 是 Kubernetes 和其他两种解决方案之间的主要区别——它们是一组容器集合，形成一起部署和调度的服务。与基于关联性的容器 (如 Swarm 和 Mesos) 调度相比，这种方法简化了集群的管理。</p>
+<p>Kubernetes 调度器的任务是监控带有空 PodSpec 的 Pod。NodeName 指定将容器安排在集群中的某个位置。</p>
+<p>这是与 Swarm 和 Mesos 的不同之处，Kubernetes 允许开发者在运行 Pod 时通过定义 PodSpec.NodeName 来绕过调度器。</p>
+<p>调度器使用谓词和优先级来定义 Pod 应该运行在哪些节点上。我们可以使用新的调度器策略配置覆盖这些默认值。</p>
+<p>我们可以通过命令行标志 policy-config-file 指定一个 JSON 文件，在启动 Kubernetes 时将会使用该文件描述的谓语和优先级，调度器将使用这些定义好的策略。</p>
+<h2 id="监控和日志工具">
+  监控和日志工具
+  <a class="anchor" href="#%e7%9b%91%e6%8e%a7%e5%92%8c%e6%97%a5%e5%bf%97%e5%b7%a5%e5%85%b7">#</a>
+</h2>
+<p>为什么监控和日志工具对于 DevOps 来说很重要？</p>
+<ul>
+<li>快速恢复；</li>
+<li>响应速度；</li>
+<li>透明性；</li>
+<li>发生事故时减少人工干预。</li>
+</ul>
+<h2 id="监控和日志工具示例">
+  监控和日志工具示例
+  <a class="anchor" href="#%e7%9b%91%e6%8e%a7%e5%92%8c%e6%97%a5%e5%bf%97%e5%b7%a5%e5%85%b7%e7%a4%ba%e4%be%8b">#</a>
+</h2>
+<h6 id="elk">
+  ELK
+  <a class="anchor" href="#elk">#</a>
+</h6>
+<p>ELK 是三个开源产品的集合——Elasticsearch、Logstash 和 Kibana。它们都是由 Elastic 公司开发、管理和维护的。</p>
+<ul>
+<li>E 代表 ElasticSearch——用于存储日志；</li>
+<li>L 代表 Logstash——用于传输、处理和存储日志；</li>
+<li>K 代表 Kibana——一个可视化工具 (Web 界面)。</li>
+</ul>
+<h6 id="datadog">
+  Datadog
+  <a class="anchor" href="#datadog">#</a>
+</h6>
+<p>Datadog 是一个针对云规模应用程序的监控服务，通过基于 SaaS 的数据分析平台来监控服务器、数据库、工具和服务。</p>
+<p>Datadog 应用程序性能监控 (APM 或跟踪) 帮助用户深入了解应用程序性能——从自动生成的仪表盘（监控关键指标，如请求量和延迟）到单个请求的详细跟踪信息——与日志和基础设施监控信息并列展示。</p>
+<p>当向应用程序发出请求时，Datadog 可以看到分布式系统的跟踪，并向用户显示关于这个请求的系统数据。</p>
+<h6 id="new-relic">
+  New Relic
+  <a class="anchor" href="#new-relic">#</a>
+</h6>
+<p>New Relic 是一家总部位于加州旧金山的科技公司，它开发基于云的软件，帮助网站和应用程序所有者跟踪服务性能。</p>
+<p>New Relic 的应用程序性能监控软件分析产品 (APM) 提供有关 Web 应用程序性能和最终用户体验满意度的实时和趋势数据。</p>
+<h6 id="prometheus">
+  Prometheus
+  <a class="anchor" href="#prometheus">#</a>
+</h6>
+<p>Prometheus 是一款用于事件监控和警报的免费应用程序。它在时间序列数据库中记录实时指标，基于 HTTP 拉取模型，支持灵活的查询和实时警报。</p>
+<p>Prometheus 服务器的核心原理是抓取——也就是说，调用各个节点暴露出来的指标端点。它定期收集这些指标并将它们存储在本地。</p>
+<h6 id="zipkin">
+  Zipkin
+  <a class="anchor" href="#zipkin">#</a>
+</h6>
+<p>Zipkin 是一个分布式跟踪系统。它用于收集诊断延迟问题所需的时间数据，提供了数据的收集和查找功能。</p>
+<p>如果日志文件中有跟踪 ID，则可以直接跳指定位置。否则的话，你可以基于服务、操作名称、tagsm 和持续时间等属性进行查询。它将为你汇总出一些有趣的数据，例如花费在服务上的时间百分比以及操作是否失败。</p>
+<h6 id="azure-monitor">
+  Azure Monitor
+  <a class="anchor" href="#azure-monitor">#</a>
+</h6>
+<p>Azure Monitor 提供了一个全面的解决方案，用来收集、分析和执行来自云端和本地环境的遥测数据，从而最大化应用程序和服务的可用性和性能。</p>
+<p>它可以帮助你了解应用程序的执行情况，并主动识别影响它们的问题以及它们所依赖的资源。</p>
+<p><strong>几个 Azure Monitor 的使用场景</strong>：</p>
+<ul>
+<li>使用 Application Insights 检测和诊断应用程序和依赖项之间的问题；</li>
+<li>将基础设施问题与用于 VM 的 Azure Monitor 和用于容器的 Azure Monitor 关联起来；</li>
+<li>使用日志分析深入监控数据，进行故障排除和深入诊断；</li>
+<li>通过智能警报和自动运维支持大规模操作；</li>
+<li>使用 Azure 仪表板和工作簿进行可视化。</li>
+</ul>
+<h2 id="通信工具">
+  通信工具
+  <a class="anchor" href="#%e9%80%9a%e4%bf%a1%e5%b7%a5%e5%85%b7">#</a>
+</h2>
+<p>为什么通信工具对于 DevOps 来说很重要？</p>
+<ul>
+<li>连接团队；</li>
+<li>减少等待时间；</li>
+<li>改进团队协作。</li>
+</ul>
+<h2 id="通信工具示例">
+  通信工具示例
+  <a class="anchor" href="#%e9%80%9a%e4%bf%a1%e5%b7%a5%e5%85%b7%e7%a4%ba%e4%be%8b">#</a>
+</h2>
+<h6 id="slack">
+  Slack
+  <a class="anchor" href="#slack">#</a>
+</h6>
+<p>Slack 是由 Slack 公司开发的即时通讯平台。</p>
+<p>Slack 本质上是整个公司的一个聊天室，旨在取代电子邮件成为沟通和分享的主要方式。你可以用频道进行分组讨论，也可以通过私有消息进行信息、文件共享，等等。</p>
+<h6 id="微软-teams">
+  微软 Teams
+  <a class="anchor" href="#%e5%be%ae%e8%bd%af-teams">#</a>
+</h6>
+<p>微软 Teams 是一个统一的通信和协作平台，结合了工作讨论、视频会议、文件存储和应用程序集成。</p>
+<p>Teams 是一种基于聊天的协作工具，它为全球、远程和分布式的团队提供协作能力，并通过公共空间共享信息。你可以使用它提供的一些很酷的功能，比如文档协作、一对一聊天、团队聊天，等等。</p>
+<h6 id="谷歌-hangouts">
+  谷歌 Hangouts
+  <a class="anchor" href="#%e8%b0%b7%e6%ad%8c-hangouts">#</a>
+</h6>
+<p>谷歌 Hangouts 是谷歌开发的一款通讯软件产品。Hangouts 最初是 Google+ 的一个功能，在 2013 年谷歌开始将 Google+ Messenger 和谷歌 Talk 的功能整合到 Hangouts 中，成为了一个独立的产品。</p>
+<p>Hangouts Chat 是进行组织内交流的一种有效方式。你可以与一名或多名同事发送信息，可以创建聊天室进行多人讨论，并使用机器人来进行工作自动化。你可以在电脑浏览器和 Android 或 iOS 手机 App 中使用 Hangouts Chat。</p>
+<h6 id="zoom">
+  Zoom
+  <a class="anchor" href="#zoom">#</a>
+</h6>
+<p>Zoom Video Communications 是一家远程会议服务公司，总部设在加利福尼亚州的圣何塞。它提供了一种远程会议服务，结合了视频会议、在线会议、聊天和移动协作。</p>
+<p>Skype 更适合寻找整体商业解决方案的团队，而 Zoom 更适合频繁进行视频聊天和会议的团队。不过，这两种工具都不是专门为远程工作而构建的。</p>
+<h6 id="中国版本推荐">
+  中国版本推荐
+  <a class="anchor" href="#%e4%b8%ad%e5%9b%bd%e7%89%88%e6%9c%ac%e6%8e%a8%e8%8d%90">#</a>
+</h6>
+<p>腾讯会议、钉钉、飞书、WeLink 等。</p>
+<h2 id="知识分享工具">
+  知识分享工具
+  <a class="anchor" href="#%e7%9f%a5%e8%af%86%e5%88%86%e4%ba%ab%e5%b7%a5%e5%85%b7">#</a>
+</h2>
+<p>知识分享工具为什么对于 DevOps 来说很重要？</p>
+<ul>
+<li>减少知识浪费；</li>
+<li>提高新员工的效率；</li>
+<li>减少犯同样的错误。</li>
+</ul>
+<h2 id="知识分享工具示例">
+  知识分享工具示例
+  <a class="anchor" href="#%e7%9f%a5%e8%af%86%e5%88%86%e4%ba%ab%e5%b7%a5%e5%85%b7%e7%a4%ba%e4%be%8b">#</a>
+</h2>
+<h6 id="github-pages">
+  GitHub Pages
+  <a class="anchor" href="#github-pages">#</a>
+</h6>
+<p>GitHub Pages 是一个静态站点托管服务，直接从 GitHub 上的存储库获取 HTML、CSS 和 JavaScript 文件，可在构建过程中运行这些文件，然后发布网站。你可以在 GitHub Pages 示例集合中看到 GitHub Pages 站点的示例。</p>
+<h6 id="confluence">
+  Confluence
+  <a class="anchor" href="#confluence">#</a>
+</h6>
+<p>Confluence 是一个由 Atlassian 开发并发布的协作程序。Atlassian 用 Java 编程语言开发了 Confluence，并于 2004 年首次发布。</p>
+<p>Confluence 是一个 Wiki 协作工具，用于帮助团队有效地协作和共享知识。你可以用 Confluence 捕获项目需求、将任务分配给特定用户，并用 Team Calendar 插件一次性管理多个日历。</p>
+<h6 id="jekyll">
+  Jekyll
+  <a class="anchor" href="#jekyll">#</a>
+</h6>
+<p>Jekyll 是一个支持博客的静态站点生成器，用于个人、项目或组织站点。它是由 GitHub 联合创始人 Tom Preston-Werner 用 Ruby 开发的，并采用了 MIT 开源许可。</p>
+<p>Jekyll 是一个解析引擎，打包成 Ruby gem，用来基于动态组件构建静态网站。</p>
+<h6 id="谷歌-sites">
+  谷歌 Sites
+  <a class="anchor" href="#%e8%b0%b7%e6%ad%8c-sites">#</a>
+</h6>
+<p>谷歌 Sites 是谷歌提供的一个结构化的 Wiki 和网页制作工具。谷歌 Sites 的目标是让任何人都能够创建支持不同编辑器协作的简单 Web 站点。</p>
+<p>这些站点在每一个屏幕上（从桌面到智能手机）看起来都很棒——做到这些都不需要学习设计或编程。</p>
+<h2 id="总结">
+  总结
+  <a class="anchor" href="#%e6%80%bb%e7%bb%93">#</a>
+</h2>
+<p>这篇文章涵盖的所有类别可以帮助你更好地实施 DevOps。其中任何一种都很有用，而且我认为所有这些都是你需要的，帮助团队以可持续的方式向客户交付价值，并帮助你脱颖而出。</p>
+<p>我提到了 DevOps 工具链，比如规划工具、问题跟踪工具、源代码控制管理、构建和测试代码、持续集成和部署源代码、管理配置、使用云平台，然后是监控和日志，以及沟通和知识共享。</p>
+<p>我希望你能够喜欢这篇文章。DevOps 是一种令人兴奋的工作方式，尽管它不是唯一的方式，甚至不是最好的方式。更好的东西可能会在未来出现，但目前看来，它似乎代表了一种很好的团队协作方式。它让团队共同努力，交付价值，同时也帮助他们专注于客户，而不仅仅是技术或内部的东西，也包括了速度、学习以及公司的未来。</p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#关于-devops-及其工具">关于 DevOps 及其工具</a></li>
+    <li><a href="#计划工具">计划工具</a></li>
+    <li><a href="#计划工具示例">计划工具示例</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#问题跟踪">问题跟踪</a></li>
+    <li><a href="#问题跟踪工具示例">问题跟踪工具示例</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#源码控制">源码控制</a></li>
+    <li><a href="#scm-工具示例">SCM 工具示例</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#构建工具">构建工具</a></li>
+    <li><a href="#构建工具示例">构建工具示例</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#测试工具">测试工具</a></li>
+    <li><a href="#测试工具示例">测试工具示例</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#持续集成ci和持续部署cd">持续集成（CI）和持续部署（CD）</a></li>
+    <li><a href="#ci-工具示例">CI 工具示例</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#cd-工具">CD 工具</a></li>
+    <li><a href="#cd-工具示例">CD 工具示例</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#配置管理工具">配置管理工具</a></li>
+    <li><a href="#配置管理工具示例">配置管理工具示例</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#云平台">云平台</a></li>
+    <li><a href="#云平台示例">云平台示例</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#容器调度器">容器调度器</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#监控和日志工具">监控和日志工具</a></li>
+    <li><a href="#监控和日志工具示例">监控和日志工具示例</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#通信工具">通信工具</a></li>
+    <li><a href="#通信工具示例">通信工具示例</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#知识分享工具">知识分享工具</a></li>
+    <li><a href="#知识分享工具示例">知识分享工具示例</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#总结">总结</a></li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

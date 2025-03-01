@@ -1,0 +1,4868 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  创建 Pod的主要流程?
+  #
+
+
+
+
+  客户端提交 Pod 的配置信息(可以是 yaml 文件定义的信息)到 kube-apiserver.
+  #
+
+
+
+
+  Apiserver 收到指令后,通知 controllr-manager 创建一个资源对象
+  #
+
+
+
+
+  controller-manager 通过 apiserver 将 pod 的配置信息存储到 ETCD 数据中心中
+  #
+
+
+
+
+  kube-scheduler 检查到 pod 信息会开始调度预选,会先过滤不符合 Pod 资源配置要求的节点,然后开始调度调优,主要是挑选出更适合运行的 pod 节点,然后将 pod 的资源配置单发送到 node 节点上的 kubelet 组件上
+  #
+
+
+
+
+  kubelet 根据 scheduler 发来的资源配置单运行 pod,运行成功后,将 pod 的运行的信息返回 scheduler, scheduler 将返回的 pod 运行状况的信息存储到 etcd 数据中心
+  #
+
+
+
+
+  Pod 的重启策略
+  #
+
+
+
+
+  • Pod 重启策略(RestartPolicy)应用于 Pod 内的所有容器,并且仅再 Pod 所处的 Node 上由 Kubelet 进行判断和重启操作.当某个容器异常退出或健康检查失败时,kubele 将根据 RestartPolicy 的设置来进行相应操作
+  #
+
+
+
+
+  • pod 的重启策略包括 Always,OnFaliure 和 Never,默认值为 Always
+  #
+
+
+
+
+
+
+  • Always: 当容器失效时由 kubelet 自动重启该容器
+  #
+
+
+
+
+  • OnFailure:当容器终止运行且退出不为 0 时, 由 kubelet 自动重启该容器
+  #
+
+
+
+
+  • Nerve: 不论容器运行状态如何,kubelet 都不会重启该容器
+  #
+
+
+
+
+
+
+  • 同时 pod 的容器策略与控制方式关联,当前可用于管理 Pod 的控制器包括 RelicatonController
+  #
+
+
+
+
+  Pod 的健康检查方式
+  #
+
+
+
+
+  • LivenessProbe探针：用于判断容器是否存活（running状态），如果LivenessProbe探针探测到容器不健康，则kubelet将杀掉该容器，并根据容器的重启策略做相应处理。若一个容器不包含LivenessProbe探针，kubelet认为该容器的LivenessProbe探针返回值用于是“Success”。
+  #
+
+
+
+
+  • ReadineeProbe探针：用于判断容器是否启动完成（ready状态）。如果ReadinessProbe探针探测到失败，则Pod的状态将被修改。Endpoint Controller将从Service的Endpoint中删除包含该容器所在Pod的Eenpoint。
+  #
+
+
+
+
+  • startupProbe探针：启动检查机制，应用一些启动缓慢的业务，避免业务长时间启动而被上面两类探针kill掉。
+  #
+
+
+
+
+  Pod 探针常见方式
+  #
+
+
+
+
+  • ExecAction：在容器内执行一个命令，若返回码为0，则表明容器健康。
+  #
+
+
+
+
+  • TCPSocketAction：通过容器的IP地址和端口号执行TCP检查，若能建立TCP连接，则表明容器健康。
+  #
+
+
+
+
+  • HTTPGetAction：通过容器的IP地址、端口号及路径调用HTTP Get方法，若响应的状态码大于等于200且小于400，则表明容器健康。
+  #
+
+
+
+
+  Pod 常见的调度方式
+  #
+
+
+
+
+  • Deployment或RC：该调度策略主要功能就是自动部署一个容器应用的多份副本，以及持续监控副本的数量，在集群内始终维持用户指定的副本数量。
+  #
+
+
+
+
+  • NodeSelector：定向调度，当需要手动指定将Pod调度到特定Node上，可以通过Node的标签（Label）和Pod的nodeSelector属性相匹配。
+  #
+
+
+
+
+  • NodeAffinity亲和性调度：亲和性调度机制极大的扩展了Pod的调度能力，目前有两种节点亲和力表达：
+  #
+
+
+
+
+  • requiredDuringSchedulingIgnoredDuringExecution：硬规则，必须满足指定的规则，调度器才可以调度Pod至Node上（类似nodeSelector，语法不同）。
+  #
+
+
+
+
+  • preferredDuringSchedulingIgnoredDuringExecution：软规则，优先调度至满足的Node的节点，但不强求，多个优先级规则还可以设置权重值。
+  #
+
+
+
+
+  • Taints和Tolerations（污点和容忍）：
+  #
+
+
+
+
+
+
+  • Taint：使Node拒绝特定Pod运行；
+  #
+
+
+
+
+  • Toleration：为Pod的属性，表示Pod能容忍（运行）标注了Taint的Node。
+  #
+
+
+
+
+
+
+  deployment升级策略?
+  #
+
+
+
+
+  • 在Deployment的定义中，可以通过spec.strategy指定Pod更新的策略，目前支持两种策略：Recreate（重建）和RollingUpdate（滚动更新），默认值为RollingUpdate。
+  #
+
+
+
+
+  • Recreate：设置spec.strategy.type=Recreate，表示Deployment在更新Pod时，会先杀掉所有正在运行的Pod，然后创建新的Pod。
+  #
+
+
+
+
+  • RollingUpdate：设置spec.strategy.type=RollingUpdate，表示Deployment会以滚动更新的方式来逐个更新Pod。同时，可以通过设置spec.strategy.rollingUpdate下的两个参数（maxUnavailable和maxSurge）来控制滚动更新的过程
+  #
+
+
+
+
+  Kubernetes Service类型?
+  #
+
+
+  通过创建Service，可以为一组具有相同功能的容器应用提供一个统一的入口地址，并且将请求负载分发到后端的各个容器应用上。其主要类型有：
+  #
+
+
+
+
+  • ClusterIP：虚拟的服务IP地址，该地址用于Kubernetes集群内部的Pod访问，在Node上kube-proxy通过设置的iptables规则进行转发；
+  #
+
+
+
+
+  • NodePort：使用宿主机的端口，使能够访问各Node的外部客户端通过Node的IP地址和端口号就能访问服务；
+  #
+
+
+
+
+  • LoadBalancer：使用外接负载均衡器完成到服务的负载分发，需要在spec.status.loadBalancer字段指定外部负载均衡器的IP地址，通常用于公有云。
+  #
+
+
+
+
+  Service分发后端的策略?
+  #
+
+
+  Service负载分发的策略有：RoundRobin和SessionAffinity
+  #
+
+
+
+
+  • RoundRobin：默认为轮询模式，即轮询将请求转发到后端的各个Pod上。
+  #
+
+
+
+
+  • SessionAffinity：基于客户端IP地址进行会话保持的模式，即第1次将某个客户端发起的请求转发到后端的某个Pod上，之后从相同的客户端发起的请求都将被转发到后端相同的Pod上。
+  #
+
+
+
+
+  Kubernetes外部如何访问集群内的服务?
+  #
+
+
+
+
+  • 映射Pod到物理机：将Pod端口号映射到宿主机，即在Pod中采用hostPort方式，以使客户端应用能够通过物理机访问容器应用。
+  #
+
+
+
+
+  • 映射Service到物理机：将Service端口号映射到宿主机，即在Service中采用nodePort方式，以使客户端应用能够通过物理机访问容器应用。
+  #
+
+
+
+
+  • 映射Sercie到LoadBalancer：通过设置LoadBalancer映射到云服务商提供的LoadBalancer地址。这种用法仅用于在公有云服务提供商的云平台上设置Service的场景。
+  #
+
+
+
+
+  Kubernetes ingress?
+  #
+
+
+
+
+  • Kubernetes的Ingress资源对象，用于将不同URL的访问请求转发到后端不同的Service，以实现HTTP层的业务路由机制。
+  #
+
+
+
+
+  • Kubernetes使用了Ingress策略和Ingress Controller，两者结合并实现了一个完整的Ingress负载均衡器。使用Ingress进行负载分发时，Ingress Controller基于Ingress规则将客户端请求直接转发到Service对应的后端Endpoint（Pod）上，从而跳过kube-proxy的转发功能，kube-proxy不再起作用，全过程为：ingress controller &#43; ingress 规则 &mdash;-&gt; services。
+  #
+
+
+
+
+  • 同时当Ingress Controller提供的是对外服务，则实际上实现的是边缘路由器的功能。
+  #
+
+
+
+
+  Kubernetes镜像的下载策略?
+  #
+
+
+  K8s的镜像下载策略有三种：Always、Never、IFNotPresent。
+  #
+
+
+
+
+  • Always：镜像标签为latest时，总是从指定的仓库中获取镜像。
+  #
+
+
+
+
+  • Never：禁止从仓库中下载镜像，也就是说只能使用本地镜像。
+  #
+
+
+
+
+  • IfNotPresent：仅当本地没有对应镜像时，才从目标仓库中下载。
+  #
+
+
+
+
+  默认的镜像下载策略是：当镜像标签是latest时，默认策略是Always；当镜像标签是自定义时（也就是标签不是latest），那么默认策略是IfNotPresent。
+  #
+
+
+  Kubernetes kubelet的作用?
+  #
+
+
+
+
+  • 在Kubernetes集群中，在每个Node（又称Worker）上都会启动一个kubelet服务进程。该进程用于处理Master下发到本节点的任务，管理Pod及Pod中的容器。每个kubelet进程都会在API Server上注册节点自身的信息，定期向Master汇报节点资源的使用情况，并通过cAdvisor监控容器和节点资源。
+  #
+
+
+
+
+  Secret有哪些使用方式?
+  #
+
+
+
+
+  • 创建完secret之后，可通过如下三种方式使用：
+  #
+
+
+
+
+  • 在创建Pod时，通过为Pod指定Service Account来自动使用该Secret。
+  #
+
+
+
+
+  • 通过挂载该Secret到Pod来使用它。
+  #
+
+
+
+
+  • 在Docker镜像下载时使用，通过指定Pod的spc.ImagePullSecrets来引用它。
+  #
+
+
+
+
+  Kubernetes CNI模型?
+  #
+
+
+
+
+  • CNI提供了一种应用容器的插件化网络解决方案，定义对容器网络进行操作和配置的规范，通过插件的形式对CNI接口进行实现。CNI仅关注在创建容器时分配网络资源，和在销毁容器时删除网络资源。在CNI模型中只涉及两个概念：容器和网络。
+  #
+
+
+
+
+  • 容器（Container）：是拥有独立Linux网络命名空间的环境，例如使用Docker或rkt创建的容器。容器需要拥有自己的Linux网络命名空间，这是加入网络的必要条件。
+  #
+
+
+
+
+  • 网络（Network）：表示可以互连的一组实体，这些实体拥有各自独立、唯一的IP地址，可以是容器、物理机或者其他网络设备（比如路由器）等。
+  #
+
+
+
+
+  • 对容器网络的设置和操作都通过插件（Plugin）进行具体实现，CNI插件包括两种类型：CNI Plugin和IPAM（IP Address Management）Plugin。CNI Plugin负责为容器配置网络资源，IPAM Plugin负责对容器的IP地址进行分配和管理。IPAM Plugin作为CNI Plugin的一部分，与CNI Plugin协同工作。
+  #
+
+
+
+
+  Kubernetes PV和PVC?
+  #
+
+
+
+
+  • PV是对底层网络共享存储的抽象，将共享存储定义为一种“资源”。
+  #
+
+
+
+
+  • PVC则是用户对存储资源的一个“申请”。
+  #
+
+
+
+
+  PV生命周期内的阶段?
+  #
+
+
+  某个PV在生命周期中可能处于以下4个阶段（Phaes）之一。
+  #
+
+
+
+
+  • Available：可用状态，还未与某个PVC绑定。
+  #
+
+
+
+
+  • Bound：已与某个PVC绑定。
+  #
+
+
+
+
+  • Released：绑定的PVC已经删除，资源已释放，但没有被集群回收。
+  #
+
+
+
+
+  • Failed：自动资源回收失败。
+  #
+
+
+
+
+  calico 网络模式
+  #
+
+
+  
+      
+          模式
+          数据包封包
+          优点
+          缺点
+      
+  
+  
+      
+          vxlan
+          封包， 在vxlan设备上将pod发来的数据包源、目的mac替换为本机vxlan网卡和对端节点vxlan网卡的mac。外层udp目的ip地址根据路由和对端vxlan的mac查fdb表获取
+          只要k8s节点间三层互通， 可以跨网段， 对主机网关路由没有特殊要求。各个node节点通过vxlan设备实现基于三层的”二层”互通, 三层即vxlan包封装在udp数据包中， 要求udp在k8s节点间三层可达；二层即vxlan封包的源mac地址和目的mac地址是自己的vxlan设备mac和对端vxlan设备mac。
+          需要进行vxlan的数据包封包和解包会存在一定的性能损耗
+      
+      
+          ipip
+          封包，在tunl0设备上将pod发来的数据包的mac层去掉，留下ip层封包。 外层数据包目的ip地址根据路由得到。
+          只要k8s节点间三层互通， 可以跨网段， 对主机网关路由没有特殊要求。
+          需要进行ipip的数据包封包和解包会存在一定的性能损耗
+      
+      
+          bgp
+          不需要进行数据包封包
+          不用封包解包，通过bgp协议可实现pod网络在主机间的三层可达， k8s节点不跨网段时和flannel的host-gw相似；
+          
+      
+      
+          支持跨网段， 满足复杂的网络架构
+          跨网段时，需要主机网关路由也充当BGP Speaker能够学习到pod子网路由并实现pod子网路由的转发
+          
+          
+      
+  
+
+
+  fannel三种模式
+  #
+
+
+  
+      
+          fannel三种模式
+          效率
+          calico 模式
+      
+  
+  
+      
+          UDP
+          性能较差，封包解包涉及到多次用户态和内核态交互
+          类似 IPIP
+      
+      
+          VXLAN
+          性能较好，封包解包在内核态实现，内核转发数据，flanneld负责动态配置ARP和FDB（转发数据库）表项更新
+          类似VXLAN
+      
+      
+          host-gw
+          性能最好，不需要再次封包，正常发包，目的容器所在的主机充当网关
+          
+      
+      
+          flanneld 负责主机上路由表的刷新
+          类似 BGP
+          
+      
+  
+
+
+  你知道的几种CNI网络插件，并详述其工作原理。K8s常用的CNI网络插件 （calico &amp;&amp; flannel），简述一下它们的工作原理和区别。
+  #
+
+
+
+
+  \1. calico根据iptables规则进行路由转发，并没有进行封包，解包的过程，这和flannel比起来效率就会快多 calico包括如下重要组件：Felix，etcd，BGP Client，BGP Route Reflector。下面分别说明一下这些组件。
+  #
+
+
+
+
+  Felix：主要负责路由配置以及ACLS规则的配置以及下发，它存在在每个node节点上。 etcd：分布式键值存储，主要负责网络元数据一致性，确保Calico网络状态的准确性，可以与kubernetes共用； BGPClient(BIRD), 主要负责把 Felix写入 kernel的路由信息分发到当前 Calico网络，确保 workload间的通信的有效性； BGPRoute Reflector(BIRD), 大规模部署时使用，摒弃所有节点互联的mesh模式，通过一个或者多个 BGPRoute Reflector 来完成集中式的路由分发 通过将整个互联网的可扩展 IP网络原则压缩到数据中心级别，Calico在每一个计算节点利用 Linuxkernel 实现了一个高效的 vRouter来负责数据转发，而每个vRouter通过 BGP协议负责把自己上运行的 workload的路由信息向整个Calico网络内传播，小规模部署可以直接互联，大规模下可通过指定的BGProute reflector 来完成。这样保证最终所有的workload之间的数据流量都是通过 IP包的方式完成互联的。
+  #
+
+
+
+
+  \1. Flannel的工作原理： Flannel实质上是一种“覆盖网络(overlay network)”，也就是将TCP数据包装在另一种网络包里面进行路由转发和通信，目前已经支持UDP、VxLAN、AWS VPC和GCE路由等数据转发方式。
+  #
+
+
+
+
+  默认的节点间数据通信方式是UDP转发。 工作原理： 数据从源容器中发出后，经由所在主机的docker0虚拟网卡转发到flannel0虚拟网卡（先可以不经过docker0网卡，使用cni模式），这是个P2P的虚拟网卡，flanneld服务监听在网卡的另外一端。 Flannel通过Etcd服务维护了一张节点间的路由表，详细记录了各节点子网网段 。 源主机的flanneld服务将原本的数据内容UDP封装后根据自己的路由表投递给目的节点的flanneld服务，数据到达以后被解包，然后直接进入目的节点的flannel0虚拟网卡，然后被转发到目的主机的docker0虚拟网卡，最后就像本机容器通信一下的有docker0路由到达目标容器。 flannel在进行路由转发的基础上进行了封包解包的操作，这样浪费了CPU的计算资源。
+  #
+
+
+  Worker节点宕机，简述Pods驱逐流程。
+  #
+
+
+
+
+  \1. 在 Kubernetes 集群中，当节点由于某些原因（网络、宕机等）不能正常工作时会被认定为不可用状态（Unknown 或者 False 状态），当时间超过了 pod-eviction-timeout 值时，那么节点上的所有 Pod 都会被节点控制器计划删除。
+  #
+
+
+
+
+  \2. Kubernetes 集群中有一个节点生命周期控制器：node_lifecycle_controller.go。它会与每一个节点上的 kubelet 进行通信，以收集各个节点已经节点上容器的相关状态信息。当超出一定时间后不能与 kubelet 通信，那么就会标记该节点为 Unknown 状态。并且节点生命周期控制器会自动创建代表状况的污点，用于防止调度器调度 pod 到该节点。
+  #
+
+
+
+
+  \3. 那么 Unknown 状态的节点上已经运行的 pod 会怎么处理呢？节点上的所有 Pod 都会被污点管理器（taint_manager.go）计划删除。而在节点被认定为不可用状态到删除节点上的 Pod 之间是有一段时间的，这段时间被称为容忍度。如果在不配置的情况下，Kubernetes 会自动给 Pod 添加一个 key 为 node.kubernetes.io/not-ready 的容忍度 并配置 tolerationSeconds=300，同样，Kubernetes 会给 Pod 添加一个 key 为 node.kubernetes.io/unreachable 的容忍度 并配置 tolerationSeconds=300。
+  #
+
+
+
+
+  \4. 当到了删除 Pod 时，污点管理器会创建污点标记事件，然后驱逐 pod 。这里需要注意的是由于已经不能与 kubelet 通信，所以该节点上的 Pod 在管理后台看到的是处于灰色标记，但是此时如果去获取 pod 的状态其实还是处于 Running 状态。每种类型的资源都有相应的资源控制器（Controller），例如：deployment_controller.go、stateful_set_control.go。每种控制器都在监听资源变化，从而做出相应的动作执行。deployment 控制器在监听到 Pod 被驱逐后会创建一个新的 Pod 出来，但是 Statefulset 控制器并不会创建出新的 Pod，原因是因为它可能会违反 StatefulSet 固有的至多一个的语义，可能出现具有相同身份的多个成员，这将可能是灾难性的，并且可能导致数据丢失。
+  #
+
+
+
+
+  你知道的K8s中几种Controller控制器，并详述其工作原理
+  #
+
+
+
+
+  \1. deployment：适合无状态的服务部署 适合部署无状态的应用服务，用来管理pod和replicaset，具有上线部署、副本设定、滚动更新、回滚等功能，还可提供声明式更新，例如只更新一个新的Image
+  #
+
+
+
+
+
+
+  • 编写yaml文件，并创建nginx服务pod资源。
+  #
+
+
+
+
+
+
+  \1. StatefullSet：适合有状态的服务部署 适合部署有状态应用，解决Pod的独立生命周期，保持Pod启动顺序和唯一性。
+  #
+
+
+
+
+
+
+  • 稳定，唯一的网络标识符，持久存储（例如：etcd配置文件，节点地址发生变化，将无法使用）
+  #
+
+
+
+
+  • 有序，优雅的部署和扩展、删除和终止（例如：mysql主从关系，先启动主，再启动从）有序，滚动更新
+  #
+
+
+
+
+  • 应用场景：例如数据库
+  #
+
+
+
+
+  无状态服务的特点：
+  #
+
+
+
+
+  • deployment 认为所有的pod都是一样的
+  #
+
+
+
+
+  • 不用考虑顺序的要求
+  #
+
+
+
+
+  • 不用考虑在哪个node节点上运行
+  #
+
+
+
+
+  • 可以随意扩容和缩容
+  #
+
+
+
+
+  有状态服务的特点：
+  #
+
+
+
+
+  • 实例之间有差别，每个实例都有自己的独特性，元数据不同，例如etcd，zookeeper
+  #
+
+
+
+
+  • 实例之间不对等的关系，以及依靠外部存储的应用
+  #
+
+
+
+
+  • 常规的service服务和无头服务的区别
+  #
+
+
+
+
+  • service：一组Pod访问策略，提供cluster-IP群集之间通讯，还提供负载均衡和服务发现
+  #
+
+
+
+
+  • Headless service 无头服务，不需要cluster-IP，直接绑定具体的Pod的IP，无头服务经常用于statefulset的有状态部署
+  #
+
+
+
+
+  • 创建无头服务的service资源和dns资源，由于有状态服务的IP地址是动态的，所以使用无头服务的时候要绑定dns服务
+  #
+
+
+
+
+
+
+  \1. DaemonSet：一次部署，所有的node节点都会部署，例如一些典型的应用场景： 运行集群存储 daemon，例如在每个Node上运行 glusterd、ceph
+  #
+
+
+
+
+
+
+  • 在每个Node上运行日志收集 daemon，例如 fluentd、 logstash
+  #
+
+
+
+
+  • 在每个Node上运行监控 daemon，例如 Prometheus Node Exporter
+  #
+
+
+
+
+  • 在每一个Node上运行一个Pod
+  #
+
+
+
+
+  • 新加入的Node也同样会自动运行一个Pod
+  #
+
+
+
+
+  • 应用场景：监控，分布式存储，日志收集等
+  #
+
+
+
+
+
+
+  \1. Job：一次性的执行任务
+  #
+
+
+
+
+
+
+  • 一次性执行任务，类似Linux中的job
+  #
+
+
+
+
+  • 应用场景：如离线数据处理，视频解码等业务
+  #
+
+
+
+
+
+
+  \1. Cronjob：周期性的执行任务
+  #
+
+
+
+
+
+
+  • 周期性任务，像Linux的Crontab一样
+  #
+
+
+
+
+  • 应用场景：如通知，备份等
+  #
+
+
+
+
+  • 使用cronjob要慎重，用完之后要删掉，不然会占用很多资源
+  #
+
+
+
+
+  ingress-controller的工作机制
+  #
+
+
+  通常情况下，service和pod的IP仅可在集群内部访问
+  #
+
+
+
+
+  • k8s提供了service方式：NodePort 来提供对外的服务，外部的服务可以通过访问Node节点ip&#43;NodePort端口来访问集群内部的资源，外部的请求先到达service所选中的节点上，然后负载均衡到每一个节点上。
+  #
+
+
+
+
+  NodePort虽然提供了对外的方式但也有很大弊端：
+  #
+
+
+
+
+  • 由于service的实现方式：user_space 、iptebles、 3 ipvs、方式这三种方式只支持在4层协议通信，不支持7层协议，因此NodePort不能代理https服务。
+  #
+
+
+
+
+  • NodePort 需要暴露service所属每个node节点上端口，当需求越来越多，端口数量过多，导致维护成本过高，并且集群不好管理。
+  #
+
+
+
+
+  原理
+  #
+
+
+
+
+  • Ingress也是Kubernetes API的标准资源类型之一，它其实就是一组基于DNS名称（host）或URL路径把请求转发到指定的Service资源的规则。用于将集群外部的请求流量转发到集群内部完成的服务发布。我们需要明白的是，Ingress资源自身不能进行“流量穿透”，仅仅是一组规则的集合，这些集合规则还需要其他功能的辅助，比如监听某套接字，然后根据这些规则的匹配进行路由转发，这些能够为Ingress资源监听套接字并将流量转发的组件就是Ingress Controller。
+  #
+
+
+
+
+  • Ingress 控制器不同于Deployment 等pod控制器的是，Ingress控制器不直接运行为kube-controller-manager的一部分，它仅仅是Kubernetes集群的一个附件，类似于CoreDNS，需要在集群上单独部署。
+  #
+
+
+
+
+  • ingress controller通过监视api server获取相关ingress、service、endpoint、secret、node、configmap对象，并在程序内部不断循环监视相关service是否有新的endpoints变化，一旦发生变化则自动更新nginx.conf模板配置并产生新的配置文件进行reload
+  #
+
+
+
+
+  k8s的调度机制
+  #
+
+
+
+
+  \1. Scheduler工作原理： 请求及Scheduler调度步骤：
+  #
+
+
+
+
+
+
+  • 节点预选(Predicate)：排除完全不满足条件的节点，如内存大小，端口等条件不满足。
+  #
+
+
+
+
+  • 节点优先级排序(Priority)：根据优先级选出最佳节点
+  #
+
+
+
+
+  • 节点择优(Select)：根据优先级选定节点
+  #
+
+
+
+
+
+
+  \1. 具体步骤：
+  #
+
+
+
+
+
+
+  • 首先用户通过 Kubernetes 客户端 Kubectl 提交创建 Pod 的 Yaml 的文件，向Kubernetes 系统发起资源请求，该资源请求被提交到
+  #
+
+
+
+
+  • Kubernetes 系统中，用户通过命令行工具 Kubectl 向 Kubernetes 集群即 APIServer 用 的方式发送“POST”请求，即创建 Pod 的请求。
+  #
+
+
+
+
+  • APIServer 接收到请求后把创建 Pod 的信息存储到 Etcd 中，从集群运行那一刻起，资源调度系统 Scheduler 就会定时去监控 APIServer
+  #
+
+
+
+
+  • 通过 APIServer 得到创建 Pod 的信息，Scheduler 采用 watch 机制，一旦 Etcd 存储 Pod 信息成功便会立即通知APIServer，
+  #
+
+
+
+
+  • APIServer会立即把Pod创建的消息通知Scheduler，Scheduler发现 Pod 的属性中 Dest Node 为空时（Dest Node=””）便会立即触发调度流程进行调度。
+  #
+
+
+
+
+  • 而这一个创建Pod对象，在调度的过程当中有3个阶段：节点预选、节点优选、节点选定，从而筛选出最佳的节点
+  #
+
+
+
+
+
+
+  • 节点预选：基于一系列的预选规则对每个节点进行检查，将那些不符合条件的节点过滤，从而完成节点的预选
+  #
+
+
+
+
+  • 节点优选：对预选出的节点进行优先级排序，以便选出最合适运行Pod对象的节点
+  #
+
+
+
+
+  • 节点选定：从优先级排序结果中挑选出优先级最高的节点运行Pod，当这类节点多于1个时，则进行随机选择
+  #
+
+
+
+
+
+
+
+
+  \1. k8s的调用工作方式
+  #
+
+
+
+
+
+
+  • Kubernetes调度器作为集群的大脑，在如何提高集群的资源利用率、保证集群中服务的稳定运行中也会变得越来越重要Kubernetes的资源分为两种属性。
+  #
+
+
+
+
+
+
+  • 可压缩资源（例如CPU循环，Disk I/O带宽）都是可以被限制和被回收的，对于一个Pod来说可以降低这些资源的使用量而不去杀掉Pod。
+  #
+
+
+
+
+  • 不可压缩资源（例如内存、硬盘空间）一般来说不杀掉Pod就没法回收。未来Kubernetes会加入更多资源，如网络带宽，存储IOPS的支持。
+  #
+
+
+
+
+
+
+  kube-proxy的三种工作模式和原理
+  #
+
+
+
+
+  \1. userspace 模式
+  #
+
+
+
+
+
+
+  • 该模式下kube-proxy会为每一个Service创建一个监听端口。发向Cluster IP的请求被Iptables规则重定向到Kube-proxy监听的端口上，Kube-proxy根据LB算法选择一个提供服务的Pod并和其建立链接，以将请求转发到Pod上。
+  #
+
+
+
+
+  • 该模式下，Kube-proxy充当了一个四层Load balancer的角色。由于kube-proxy运行在userspace中，在进行转发处理时会增加两次内核和用户空间之间的数据拷贝，效率较另外两种模式低一些；好处是当后端的Pod不可用时，kube-proxy可以重试其他Pod。
+  #
+
+
+
+
+
+
+  \1. iptables 模式
+  #
+
+
+
+
+
+
+  • 为了避免增加内核和用户空间的数据拷贝操作，提高转发效率，Kube-proxy提供了iptables模式。在该模式下，Kube-proxy为service后端的每个Pod创建对应的iptables规则，直接将发向Cluster IP的请求重定向到一个Pod IP。
+  #
+
+
+
+
+  • 该模式下Kube-proxy不承担四层代理的角色，只负责创建iptables规则。该模式的优点是较userspace模式效率更高，但不能提供灵活的LB策略，当后端Pod不可用时也无法进行重试。
+  #
+
+
+
+
+
+
+  \1. 该模式和iptables类似，kube-proxy监控Pod的变化并创建相应的ipvs rules。ipvs也是在kernel模式下通过netfilter实现的，但采用了hash table来存储规则，因此在规则较多的情况下，Ipvs相对iptables转发效率更高。除此以外，ipvs支持更多的LB算法。如果要设置kube-proxy为ipvs模式，必须在操作系统中安装IPVS内核模块。
+  #
+
+
+">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="http://192.168.0.139:1313/docs/k8s%E9%9D%A2%E8%AF%95%E5%AE%9D%E5%85%B8-k8s-mian-shi-bao-dian/">
+  <meta property="og:site_name" content="Guichen&#39;s Blog">
+  <meta property="og:title" content="K8S面试宝典 2024-04-03 15:11:09.316">
+  <meta property="og:description" content="创建 Pod的主要流程? # 客户端提交 Pod 的配置信息(可以是 yaml 文件定义的信息)到 kube-apiserver. # Apiserver 收到指令后,通知 controllr-manager 创建一个资源对象 # controller-manager 通过 apiserver 将 pod 的配置信息存储到 ETCD 数据中心中 # kube-scheduler 检查到 pod 信息会开始调度预选,会先过滤不符合 Pod 资源配置要求的节点,然后开始调度调优,主要是挑选出更适合运行的 pod 节点,然后将 pod 的资源配置单发送到 node 节点上的 kubelet 组件上 # kubelet 根据 scheduler 发来的资源配置单运行 pod,运行成功后,将 pod 的运行的信息返回 scheduler, scheduler 将返回的 pod 运行状况的信息存储到 etcd 数据中心 # Pod 的重启策略 # • Pod 重启策略(RestartPolicy)应用于 Pod 内的所有容器,并且仅再 Pod 所处的 Node 上由 Kubelet 进行判断和重启操作.当某个容器异常退出或健康检查失败时,kubele 将根据 RestartPolicy 的设置来进行相应操作 # • pod 的重启策略包括 Always,OnFaliure 和 Never,默认值为 Always # • Always: 当容器失效时由 kubelet 自动重启该容器 # • OnFailure:当容器终止运行且退出不为 0 时, 由 kubelet 自动重启该容器 # • Nerve: 不论容器运行状态如何,kubelet 都不会重启该容器 # • 同时 pod 的容器策略与控制方式关联,当前可用于管理 Pod 的控制器包括 RelicatonController # Pod 的健康检查方式 # • LivenessProbe探针：用于判断容器是否存活（running状态），如果LivenessProbe探针探测到容器不健康，则kubelet将杀掉该容器，并根据容器的重启策略做相应处理。若一个容器不包含LivenessProbe探针，kubelet认为该容器的LivenessProbe探针返回值用于是“Success”。 # • ReadineeProbe探针：用于判断容器是否启动完成（ready状态）。如果ReadinessProbe探针探测到失败，则Pod的状态将被修改。Endpoint Controller将从Service的Endpoint中删除包含该容器所在Pod的Eenpoint。 # • startupProbe探针：启动检查机制，应用一些启动缓慢的业务，避免业务长时间启动而被上面两类探针kill掉。 # Pod 探针常见方式 # • ExecAction：在容器内执行一个命令，若返回码为0，则表明容器健康。 # • TCPSocketAction：通过容器的IP地址和端口号执行TCP检查，若能建立TCP连接，则表明容器健康。 # • HTTPGetAction：通过容器的IP地址、端口号及路径调用HTTP Get方法，若响应的状态码大于等于200且小于400，则表明容器健康。 # Pod 常见的调度方式 # • Deployment或RC：该调度策略主要功能就是自动部署一个容器应用的多份副本，以及持续监控副本的数量，在集群内始终维持用户指定的副本数量。 # • NodeSelector：定向调度，当需要手动指定将Pod调度到特定Node上，可以通过Node的标签（Label）和Pod的nodeSelector属性相匹配。 # • NodeAffinity亲和性调度：亲和性调度机制极大的扩展了Pod的调度能力，目前有两种节点亲和力表达： # • requiredDuringSchedulingIgnoredDuringExecution：硬规则，必须满足指定的规则，调度器才可以调度Pod至Node上（类似nodeSelector，语法不同）。 # • preferredDuringSchedulingIgnoredDuringExecution：软规则，优先调度至满足的Node的节点，但不强求，多个优先级规则还可以设置权重值。 # • Taints和Tolerations（污点和容忍）： # • Taint：使Node拒绝特定Pod运行； # • Toleration：为Pod的属性，表示Pod能容忍（运行）标注了Taint的Node。 # deployment升级策略? # • 在Deployment的定义中，可以通过spec.strategy指定Pod更新的策略，目前支持两种策略：Recreate（重建）和RollingUpdate（滚动更新），默认值为RollingUpdate。 # • Recreate：设置spec.strategy.type=Recreate，表示Deployment在更新Pod时，会先杀掉所有正在运行的Pod，然后创建新的Pod。 # • RollingUpdate：设置spec.strategy.type=RollingUpdate，表示Deployment会以滚动更新的方式来逐个更新Pod。同时，可以通过设置spec.strategy.rollingUpdate下的两个参数（maxUnavailable和maxSurge）来控制滚动更新的过程 # Kubernetes Service类型? # 通过创建Service，可以为一组具有相同功能的容器应用提供一个统一的入口地址，并且将请求负载分发到后端的各个容器应用上。其主要类型有： # • ClusterIP：虚拟的服务IP地址，该地址用于Kubernetes集群内部的Pod访问，在Node上kube-proxy通过设置的iptables规则进行转发； # • NodePort：使用宿主机的端口，使能够访问各Node的外部客户端通过Node的IP地址和端口号就能访问服务； # • LoadBalancer：使用外接负载均衡器完成到服务的负载分发，需要在spec.status.loadBalancer字段指定外部负载均衡器的IP地址，通常用于公有云。 # Service分发后端的策略? # Service负载分发的策略有：RoundRobin和SessionAffinity # • RoundRobin：默认为轮询模式，即轮询将请求转发到后端的各个Pod上。 # • SessionAffinity：基于客户端IP地址进行会话保持的模式，即第1次将某个客户端发起的请求转发到后端的某个Pod上，之后从相同的客户端发起的请求都将被转发到后端相同的Pod上。 # Kubernetes外部如何访问集群内的服务? # • 映射Pod到物理机：将Pod端口号映射到宿主机，即在Pod中采用hostPort方式，以使客户端应用能够通过物理机访问容器应用。 # • 映射Service到物理机：将Service端口号映射到宿主机，即在Service中采用nodePort方式，以使客户端应用能够通过物理机访问容器应用。 # • 映射Sercie到LoadBalancer：通过设置LoadBalancer映射到云服务商提供的LoadBalancer地址。这种用法仅用于在公有云服务提供商的云平台上设置Service的场景。 # Kubernetes ingress? # • Kubernetes的Ingress资源对象，用于将不同URL的访问请求转发到后端不同的Service，以实现HTTP层的业务路由机制。 # • Kubernetes使用了Ingress策略和Ingress Controller，两者结合并实现了一个完整的Ingress负载均衡器。使用Ingress进行负载分发时，Ingress Controller基于Ingress规则将客户端请求直接转发到Service对应的后端Endpoint（Pod）上，从而跳过kube-proxy的转发功能，kube-proxy不再起作用，全过程为：ingress controller &#43; ingress 规则 —-&gt; services。 # • 同时当Ingress Controller提供的是对外服务，则实际上实现的是边缘路由器的功能。 # Kubernetes镜像的下载策略? # K8s的镜像下载策略有三种：Always、Never、IFNotPresent。 # • Always：镜像标签为latest时，总是从指定的仓库中获取镜像。 # • Never：禁止从仓库中下载镜像，也就是说只能使用本地镜像。 # • IfNotPresent：仅当本地没有对应镜像时，才从目标仓库中下载。 # 默认的镜像下载策略是：当镜像标签是latest时，默认策略是Always；当镜像标签是自定义时（也就是标签不是latest），那么默认策略是IfNotPresent。 # Kubernetes kubelet的作用? # • 在Kubernetes集群中，在每个Node（又称Worker）上都会启动一个kubelet服务进程。该进程用于处理Master下发到本节点的任务，管理Pod及Pod中的容器。每个kubelet进程都会在API Server上注册节点自身的信息，定期向Master汇报节点资源的使用情况，并通过cAdvisor监控容器和节点资源。 # Secret有哪些使用方式? # • 创建完secret之后，可通过如下三种方式使用： # • 在创建Pod时，通过为Pod指定Service Account来自动使用该Secret。 # • 通过挂载该Secret到Pod来使用它。 # • 在Docker镜像下载时使用，通过指定Pod的spc.ImagePullSecrets来引用它。 # Kubernetes CNI模型? # • CNI提供了一种应用容器的插件化网络解决方案，定义对容器网络进行操作和配置的规范，通过插件的形式对CNI接口进行实现。CNI仅关注在创建容器时分配网络资源，和在销毁容器时删除网络资源。在CNI模型中只涉及两个概念：容器和网络。 # • 容器（Container）：是拥有独立Linux网络命名空间的环境，例如使用Docker或rkt创建的容器。容器需要拥有自己的Linux网络命名空间，这是加入网络的必要条件。 # • 网络（Network）：表示可以互连的一组实体，这些实体拥有各自独立、唯一的IP地址，可以是容器、物理机或者其他网络设备（比如路由器）等。 # • 对容器网络的设置和操作都通过插件（Plugin）进行具体实现，CNI插件包括两种类型：CNI Plugin和IPAM（IP Address Management）Plugin。CNI Plugin负责为容器配置网络资源，IPAM Plugin负责对容器的IP地址进行分配和管理。IPAM Plugin作为CNI Plugin的一部分，与CNI Plugin协同工作。 # Kubernetes PV和PVC? # • PV是对底层网络共享存储的抽象，将共享存储定义为一种“资源”。 # • PVC则是用户对存储资源的一个“申请”。 # PV生命周期内的阶段? # 某个PV在生命周期中可能处于以下4个阶段（Phaes）之一。 # • Available：可用状态，还未与某个PVC绑定。 # • Bound：已与某个PVC绑定。 # • Released：绑定的PVC已经删除，资源已释放，但没有被集群回收。 # • Failed：自动资源回收失败。 # calico 网络模式 # 模式 数据包封包 优点 缺点 vxlan 封包， 在vxlan设备上将pod发来的数据包源、目的mac替换为本机vxlan网卡和对端节点vxlan网卡的mac。外层udp目的ip地址根据路由和对端vxlan的mac查fdb表获取 只要k8s节点间三层互通， 可以跨网段， 对主机网关路由没有特殊要求。各个node节点通过vxlan设备实现基于三层的”二层”互通, 三层即vxlan包封装在udp数据包中， 要求udp在k8s节点间三层可达；二层即vxlan封包的源mac地址和目的mac地址是自己的vxlan设备mac和对端vxlan设备mac。 需要进行vxlan的数据包封包和解包会存在一定的性能损耗 ipip 封包，在tunl0设备上将pod发来的数据包的mac层去掉，留下ip层封包。 外层数据包目的ip地址根据路由得到。 只要k8s节点间三层互通， 可以跨网段， 对主机网关路由没有特殊要求。 需要进行ipip的数据包封包和解包会存在一定的性能损耗 bgp 不需要进行数据包封包 不用封包解包，通过bgp协议可实现pod网络在主机间的三层可达， k8s节点不跨网段时和flannel的host-gw相似； 支持跨网段， 满足复杂的网络架构 跨网段时，需要主机网关路由也充当BGP Speaker能够学习到pod子网路由并实现pod子网路由的转发 fannel三种模式 # fannel三种模式 效率 calico 模式 UDP 性能较差，封包解包涉及到多次用户态和内核态交互 类似 IPIP VXLAN 性能较好，封包解包在内核态实现，内核转发数据，flanneld负责动态配置ARP和FDB（转发数据库）表项更新 类似VXLAN host-gw 性能最好，不需要再次封包，正常发包，目的容器所在的主机充当网关 flanneld 负责主机上路由表的刷新 类似 BGP 你知道的几种CNI网络插件，并详述其工作原理。K8s常用的CNI网络插件 （calico &amp;&amp; flannel），简述一下它们的工作原理和区别。 # \1. calico根据iptables规则进行路由转发，并没有进行封包，解包的过程，这和flannel比起来效率就会快多 calico包括如下重要组件：Felix，etcd，BGP Client，BGP Route Reflector。下面分别说明一下这些组件。 # Felix：主要负责路由配置以及ACLS规则的配置以及下发，它存在在每个node节点上。 etcd：分布式键值存储，主要负责网络元数据一致性，确保Calico网络状态的准确性，可以与kubernetes共用； BGPClient(BIRD), 主要负责把 Felix写入 kernel的路由信息分发到当前 Calico网络，确保 workload间的通信的有效性； BGPRoute Reflector(BIRD), 大规模部署时使用，摒弃所有节点互联的mesh模式，通过一个或者多个 BGPRoute Reflector 来完成集中式的路由分发 通过将整个互联网的可扩展 IP网络原则压缩到数据中心级别，Calico在每一个计算节点利用 Linuxkernel 实现了一个高效的 vRouter来负责数据转发，而每个vRouter通过 BGP协议负责把自己上运行的 workload的路由信息向整个Calico网络内传播，小规模部署可以直接互联，大规模下可通过指定的BGProute reflector 来完成。这样保证最终所有的workload之间的数据流量都是通过 IP包的方式完成互联的。 # \1. Flannel的工作原理： Flannel实质上是一种“覆盖网络(overlay network)”，也就是将TCP数据包装在另一种网络包里面进行路由转发和通信，目前已经支持UDP、VxLAN、AWS VPC和GCE路由等数据转发方式。 # 默认的节点间数据通信方式是UDP转发。 工作原理： 数据从源容器中发出后，经由所在主机的docker0虚拟网卡转发到flannel0虚拟网卡（先可以不经过docker0网卡，使用cni模式），这是个P2P的虚拟网卡，flanneld服务监听在网卡的另外一端。 Flannel通过Etcd服务维护了一张节点间的路由表，详细记录了各节点子网网段 。 源主机的flanneld服务将原本的数据内容UDP封装后根据自己的路由表投递给目的节点的flanneld服务，数据到达以后被解包，然后直接进入目的节点的flannel0虚拟网卡，然后被转发到目的主机的docker0虚拟网卡，最后就像本机容器通信一下的有docker0路由到达目标容器。 flannel在进行路由转发的基础上进行了封包解包的操作，这样浪费了CPU的计算资源。 # Worker节点宕机，简述Pods驱逐流程。 # \1. 在 Kubernetes 集群中，当节点由于某些原因（网络、宕机等）不能正常工作时会被认定为不可用状态（Unknown 或者 False 状态），当时间超过了 pod-eviction-timeout 值时，那么节点上的所有 Pod 都会被节点控制器计划删除。 # \2. Kubernetes 集群中有一个节点生命周期控制器：node_lifecycle_controller.go。它会与每一个节点上的 kubelet 进行通信，以收集各个节点已经节点上容器的相关状态信息。当超出一定时间后不能与 kubelet 通信，那么就会标记该节点为 Unknown 状态。并且节点生命周期控制器会自动创建代表状况的污点，用于防止调度器调度 pod 到该节点。 # \3. 那么 Unknown 状态的节点上已经运行的 pod 会怎么处理呢？节点上的所有 Pod 都会被污点管理器（taint_manager.go）计划删除。而在节点被认定为不可用状态到删除节点上的 Pod 之间是有一段时间的，这段时间被称为容忍度。如果在不配置的情况下，Kubernetes 会自动给 Pod 添加一个 key 为 node.kubernetes.io/not-ready 的容忍度 并配置 tolerationSeconds=300，同样，Kubernetes 会给 Pod 添加一个 key 为 node.kubernetes.io/unreachable 的容忍度 并配置 tolerationSeconds=300。 # \4. 当到了删除 Pod 时，污点管理器会创建污点标记事件，然后驱逐 pod 。这里需要注意的是由于已经不能与 kubelet 通信，所以该节点上的 Pod 在管理后台看到的是处于灰色标记，但是此时如果去获取 pod 的状态其实还是处于 Running 状态。每种类型的资源都有相应的资源控制器（Controller），例如：deployment_controller.go、stateful_set_control.go。每种控制器都在监听资源变化，从而做出相应的动作执行。deployment 控制器在监听到 Pod 被驱逐后会创建一个新的 Pod 出来，但是 Statefulset 控制器并不会创建出新的 Pod，原因是因为它可能会违反 StatefulSet 固有的至多一个的语义，可能出现具有相同身份的多个成员，这将可能是灾难性的，并且可能导致数据丢失。 # 你知道的K8s中几种Controller控制器，并详述其工作原理 # \1. deployment：适合无状态的服务部署 适合部署无状态的应用服务，用来管理pod和replicaset，具有上线部署、副本设定、滚动更新、回滚等功能，还可提供声明式更新，例如只更新一个新的Image # • 编写yaml文件，并创建nginx服务pod资源。 # \1. StatefullSet：适合有状态的服务部署 适合部署有状态应用，解决Pod的独立生命周期，保持Pod启动顺序和唯一性。 # • 稳定，唯一的网络标识符，持久存储（例如：etcd配置文件，节点地址发生变化，将无法使用） # • 有序，优雅的部署和扩展、删除和终止（例如：mysql主从关系，先启动主，再启动从）有序，滚动更新 # • 应用场景：例如数据库 # 无状态服务的特点： # • deployment 认为所有的pod都是一样的 # • 不用考虑顺序的要求 # • 不用考虑在哪个node节点上运行 # • 可以随意扩容和缩容 # 有状态服务的特点： # • 实例之间有差别，每个实例都有自己的独特性，元数据不同，例如etcd，zookeeper # • 实例之间不对等的关系，以及依靠外部存储的应用 # • 常规的service服务和无头服务的区别 # • service：一组Pod访问策略，提供cluster-IP群集之间通讯，还提供负载均衡和服务发现 # • Headless service 无头服务，不需要cluster-IP，直接绑定具体的Pod的IP，无头服务经常用于statefulset的有状态部署 # • 创建无头服务的service资源和dns资源，由于有状态服务的IP地址是动态的，所以使用无头服务的时候要绑定dns服务 # \1. DaemonSet：一次部署，所有的node节点都会部署，例如一些典型的应用场景： 运行集群存储 daemon，例如在每个Node上运行 glusterd、ceph # • 在每个Node上运行日志收集 daemon，例如 fluentd、 logstash # • 在每个Node上运行监控 daemon，例如 Prometheus Node Exporter # • 在每一个Node上运行一个Pod # • 新加入的Node也同样会自动运行一个Pod # • 应用场景：监控，分布式存储，日志收集等 # \1. Job：一次性的执行任务 # • 一次性执行任务，类似Linux中的job # • 应用场景：如离线数据处理，视频解码等业务 # \1. Cronjob：周期性的执行任务 # • 周期性任务，像Linux的Crontab一样 # • 应用场景：如通知，备份等 # • 使用cronjob要慎重，用完之后要删掉，不然会占用很多资源 # ingress-controller的工作机制 # 通常情况下，service和pod的IP仅可在集群内部访问 # • k8s提供了service方式：NodePort 来提供对外的服务，外部的服务可以通过访问Node节点ip&#43;NodePort端口来访问集群内部的资源，外部的请求先到达service所选中的节点上，然后负载均衡到每一个节点上。 # NodePort虽然提供了对外的方式但也有很大弊端： # • 由于service的实现方式：user_space 、iptebles、 3 ipvs、方式这三种方式只支持在4层协议通信，不支持7层协议，因此NodePort不能代理https服务。 # • NodePort 需要暴露service所属每个node节点上端口，当需求越来越多，端口数量过多，导致维护成本过高，并且集群不好管理。 # 原理 # • Ingress也是Kubernetes API的标准资源类型之一，它其实就是一组基于DNS名称（host）或URL路径把请求转发到指定的Service资源的规则。用于将集群外部的请求流量转发到集群内部完成的服务发布。我们需要明白的是，Ingress资源自身不能进行“流量穿透”，仅仅是一组规则的集合，这些集合规则还需要其他功能的辅助，比如监听某套接字，然后根据这些规则的匹配进行路由转发，这些能够为Ingress资源监听套接字并将流量转发的组件就是Ingress Controller。 # • Ingress 控制器不同于Deployment 等pod控制器的是，Ingress控制器不直接运行为kube-controller-manager的一部分，它仅仅是Kubernetes集群的一个附件，类似于CoreDNS，需要在集群上单独部署。 # • ingress controller通过监视api server获取相关ingress、service、endpoint、secret、node、configmap对象，并在程序内部不断循环监视相关service是否有新的endpoints变化，一旦发生变化则自动更新nginx.conf模板配置并产生新的配置文件进行reload # k8s的调度机制 # \1. Scheduler工作原理： 请求及Scheduler调度步骤： # • 节点预选(Predicate)：排除完全不满足条件的节点，如内存大小，端口等条件不满足。 # • 节点优先级排序(Priority)：根据优先级选出最佳节点 # • 节点择优(Select)：根据优先级选定节点 # \1. 具体步骤： # • 首先用户通过 Kubernetes 客户端 Kubectl 提交创建 Pod 的 Yaml 的文件，向Kubernetes 系统发起资源请求，该资源请求被提交到 # • Kubernetes 系统中，用户通过命令行工具 Kubectl 向 Kubernetes 集群即 APIServer 用 的方式发送“POST”请求，即创建 Pod 的请求。 # • APIServer 接收到请求后把创建 Pod 的信息存储到 Etcd 中，从集群运行那一刻起，资源调度系统 Scheduler 就会定时去监控 APIServer # • 通过 APIServer 得到创建 Pod 的信息，Scheduler 采用 watch 机制，一旦 Etcd 存储 Pod 信息成功便会立即通知APIServer， # • APIServer会立即把Pod创建的消息通知Scheduler，Scheduler发现 Pod 的属性中 Dest Node 为空时（Dest Node=””）便会立即触发调度流程进行调度。 # • 而这一个创建Pod对象，在调度的过程当中有3个阶段：节点预选、节点优选、节点选定，从而筛选出最佳的节点 # • 节点预选：基于一系列的预选规则对每个节点进行检查，将那些不符合条件的节点过滤，从而完成节点的预选 # • 节点优选：对预选出的节点进行优先级排序，以便选出最合适运行Pod对象的节点 # • 节点选定：从优先级排序结果中挑选出优先级最高的节点运行Pod，当这类节点多于1个时，则进行随机选择 # \1. k8s的调用工作方式 # • Kubernetes调度器作为集群的大脑，在如何提高集群的资源利用率、保证集群中服务的稳定运行中也会变得越来越重要Kubernetes的资源分为两种属性。 # • 可压缩资源（例如CPU循环，Disk I/O带宽）都是可以被限制和被回收的，对于一个Pod来说可以降低这些资源的使用量而不去杀掉Pod。 # • 不可压缩资源（例如内存、硬盘空间）一般来说不杀掉Pod就没法回收。未来Kubernetes会加入更多资源，如网络带宽，存储IOPS的支持。 # kube-proxy的三种工作模式和原理 # \1. userspace 模式 # • 该模式下kube-proxy会为每一个Service创建一个监听端口。发向Cluster IP的请求被Iptables规则重定向到Kube-proxy监听的端口上，Kube-proxy根据LB算法选择一个提供服务的Pod并和其建立链接，以将请求转发到Pod上。 # • 该模式下，Kube-proxy充当了一个四层Load balancer的角色。由于kube-proxy运行在userspace中，在进行转发处理时会增加两次内核和用户空间之间的数据拷贝，效率较另外两种模式低一些；好处是当后端的Pod不可用时，kube-proxy可以重试其他Pod。 # \1. iptables 模式 # • 为了避免增加内核和用户空间的数据拷贝操作，提高转发效率，Kube-proxy提供了iptables模式。在该模式下，Kube-proxy为service后端的每个Pod创建对应的iptables规则，直接将发向Cluster IP的请求重定向到一个Pod IP。 # • 该模式下Kube-proxy不承担四层代理的角色，只负责创建iptables规则。该模式的优点是较userspace模式效率更高，但不能提供灵活的LB策略，当后端Pod不可用时也无法进行重试。 # \1. 该模式和iptables类似，kube-proxy监控Pod的变化并创建相应的ipvs rules。ipvs也是在kernel模式下通过netfilter实现的，但采用了hash table来存储规则，因此在规则较多的情况下，Ipvs相对iptables转发效率更高。除此以外，ipvs支持更多的LB算法。如果要设置kube-proxy为ipvs模式，必须在操作系统中安装IPVS内核模块。 #">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+<title>K8S面试宝典 2024-04-03 15:11:09.316 | Guichen&#39;s Blog</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="http://192.168.0.139:1313/docs/k8s%E9%9D%A2%E8%AF%95%E5%AE%9D%E5%85%B8-k8s-mian-shi-bao-dian/">
+<link rel="stylesheet" href="/book.min.6c8b9d2a1fc95075ed7da46ca81060b39add8fff6741ac51259f768929281e2c.css" integrity="sha256-bIudKh/JUHXtfaRsqBBgs5rdj/9nQaxRJZ92iSkoHiw=" crossorigin="anonymous">
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/en.search.min.6f52273b9f5fa65803e3991faf27d1a7b7b8f6b148888237d77b4e841cb030e3.js" integrity="sha256-b1InO59fplgD45kfryfRp7e49rFIiII313tOhBywMOM=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/"><span>Guichen&#39;s Blog</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/00-%E9%9B%86%E7%BE%A4%E8%A7%84%E5%88%92%E5%92%8C%E5%9F%BA%E7%A1%80%E5%8F%82%E6%95%B0%E8%AE%BE%E5%AE%9A-00--ji-qun-gui-hua-he-ji-chu-can-shu-she-ding/" class="">00-集群规划和基础参数设定 2023-09-28 15:19:02.214</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/01-%E5%88%9B%E5%BB%BA%E8%AF%81%E4%B9%A6%E5%92%8C%E7%8E%AF%E5%A2%83%E5%87%86%E5%A4%87-01--chuang-jian-zheng-shu-he-huan-jing-zhun-bei/" class="">01-创建证书和环境准备 2023-09-28 15:22:19.812</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/02-%E5%AE%89%E8%A3%85etcd%E9%9B%86%E7%BE%A4-02--an-zhuang-etcd-ji-qun/" class="">02-安装etcd集群 2023-09-28 15:23:07.363</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E9%9D%A2%E8%AF%950224/" class="">0224面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-26-k8s%E7%9B%B8%E5%85%B3/" class="">0226 k8s题目</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/03-%E5%AE%89%E8%A3%85%E5%AE%B9%E5%99%A8%E8%BF%90%E8%A1%8C%E6%97%B6-03--an-zhuang-rong-qi-yun-xing-shi/" class="">03-安装容器运行时 2023-09-28 15:23:56.241</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/04-%E5%AE%89%E8%A3%85kube_master%E8%8A%82%E7%82%B9-04--an-zhuang-kubemaster-jie-dian/" class="">04-安装kube_master节点 2023-09-28 15:24:21.203</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/05-%E5%AE%89%E8%A3%85kube_node%E8%8A%82%E7%82%B9-05--an-zhuang-kubenode-jie-dian/" class="">05-安装kube_node节点 2023-09-28 15:24:43.201</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85calico%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-calico-wang-luo-zu-jian/" class="">06-安装calico网络组件 2023-09-28 15:34:28.483</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85cilium%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-cilium-wang-luo-zu-jian/" class="">06-安装cilium网络组件 2023-09-28 15:35:23.884</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85flannel%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-flannel-wang-luo-zu-jian/" class="">06-安装flannel网络组件 2023-09-28 15:35:50.039</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85kube-ovn%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-kube-ovn-wang-luo-zu-jian/" class="">06-安装kube-ovn网络组件 2023-09-28 15:36:11.265</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-wang-luo-zu-jian/" class="">06-安装网络组件 2023-09-28 15:25:14.997</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/07-%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4%E4%B8%BB%E8%A6%81%E6%8F%92%E4%BB%B6-07--an-zhuang-ji-qun-zhu-yao-cha-jian/" class="">07-安装集群主要插件 2023-09-28 15:26:42.651</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/08-k8s-%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8--k8s-ji-qun-cun-chu/" class="">08-K8S 集群存储  2023-09-28 15:27:29.454</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/16%E4%B8%AA%E6%A6%82%E5%BF%B5%E5%B8%A6%E4%BD%A0%E5%85%A5%E9%97%A8-kubernetes-16-ge-gai-nian-dai-ni-ru-men-kubernetes/" class="">16个概念带你入门 Kubernetes 2024-04-03 15:09:21.671</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/16%E5%BC%A0%E7%A1%AC%E6%A0%B8%E5%9B%BE%E8%A7%A3k8s%E7%BD%91%E7%BB%9C-16-zhang-ying-he-tu-jie-k8s-wang-luo/" class="">16张硬核图解k8s网络 2024-04-03 15:12:49.601</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-07-microk8s/" class="">2024-12-07 microk8s</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-devstack/" class="">2024-12-08 devstack</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-mutilpass%E6%93%8D%E4%BD%9C/" class="">2024-12-08 mutilpass操作</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-nano%E6%93%8D%E4%BD%9C/" class="">2024-12-08 nano操作</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-openstack%E5%92%8Ckubernetes%E5%8C%BA%E5%88%AB/" class="">2024-12-08 openstack和kubernetes区别</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-openstack%E9%9C%80%E8%A6%81%E5%87%A0%E5%8F%B0%E8%99%9A%E6%8B%9F%E6%9C%BA/" class="">2024-12-08 openstack需要几台虚拟机</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-%E5%9D%97%E5%AD%98%E5%82%A8%E5%92%8C%E5%AF%B9%E8%B1%A1%E5%82%A8%E5%AD%98%E5%8C%BA%E5%88%AB/" class="">2024-12-08 块存储和对象储存区别</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-docker-daemon.json/" class="">2024-12-09 docker daemon.json</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-helmchart-%E9%83%A8%E7%BD%B2flask%E5%BA%94%E7%94%A8/" class="">2024-12-09 helmchart 部署flask应用</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-mutilpass%E9%83%A8%E7%BD%B2openstack/" class="">2024-12-09 mutilpass部署openstack devstack形式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-openstack-ssh%E8%BF%9E%E6%8E%A5/" class="">2024-12-09 openstack ssh连接</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-10-docker-registrry/" class="">2024-12-10 docker registrry</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-22-k8s%E6%9E%B6%E6%9E%84%E5%B8%88%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8/" class="">2024-2-22 k8s架构师面试大全</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-22-k8s%E9%9D%A2%E8%AF%95%E5%AE%9D%E5%85%B8/" class="">2024-2-22 k8s面试宝典</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-26-%E9%9D%A2%E8%AF%95/" class="">2024-2-26 面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-19-%E4%B8%A4%E5%BC%A0%E5%9B%BE%E5%85%A8%E9%9D%A2%E7%90%86%E8%A7%A3k8s%E5%8E%9F%E7%90%86/" class="">2024-3-19 两张图全面理解k8s原理</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-cni%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B/" class="">2024-3-4 CNI剖析演进</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-8-%E9%9D%A2%E8%AF%950308/" class="">2024-3-8 面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-4-17-%E9%9D%A2%E8%AF%95%E6%80%BB%E7%BB%93/" class="">2024-4-17 面试总结</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-kubernetes%E9%9D%A2%E8%AF%95%E9%A2%98/" class="">2024-8-1 k8s面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-%E5%B8%B8%E8%A7%81linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98%E6%89%BE%E5%B7%A5%E4%BD%9C%E7%9A%84%E5%BF%85%E7%9C%8B/" class="">2024-8-1 linux运维面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98/" class="">2024-8-1 linux面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-1-1-%E5%A4%A7%E5%A0%B0%E6%B2%B3-%E6%88%91%E7%9A%84%E4%BF%9D%E5%A7%86/" class="">2025-1-1 大堰河-我的保姆</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-k8s-csi%E5%89%96%E6%9E%90/" class="">2025-1-16 CSI剖析演进</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-1-16-k8s%E5%B8%B8%E8%A7%81%E6%95%85%E9%9A%9C%E6%8C%87%E5%8D%97/" class="">2025-1-16 k8s常见故障指南</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-k8s%E6%B5%81%E9%87%8F%E9%93%BE%E8%B7%AF%E5%89%96%E6%9E%90/" class="">2025-1-16 k8s流量链路剖析</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/33%E6%AC%BEgitops%E4%B8%8Edevops%E4%B8%BB%E6%B5%81%E7%B3%BB%E7%BB%9F-33-kuan-gitops-yu-devops-zhu-liu-xi-tong/" class="">33款gitops与devops主流系统 2024-08-02 17:45:15.709</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/600%E6%9D%A1%E6%9C%80%E5%BC%BAlinux%E5%91%BD%E4%BB%A4%E6%80%BB%E7%BB%93-600-tiao-zui-qiang-linux-ming-ling-zong-jie/" class="">600条最强linux命令总结 2024-04-03 15:12:31.282</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/acme%E8%87%AA%E5%8A%A8%E6%9B%B4%E6%96%B0%E8%AF%81%E4%B9%A6-acme-zi-dong-geng-xin-zheng-shu/" class="">acme自动更新证书 2024-04-03 14:41:44.289</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/calico-%E9%85%8D%E7%BD%AE-bgp-route-reflectors-calico-pei-zhi-bgproutereflectors/" class="">calico 配置 BGP Route Reflectors 2023-09-28 15:34:01.007</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/calico%E7%BD%91%E7%BB%9C%E8%87%AA%E5%AE%9A%E4%B9%89-calico-wang-luo-zi-ding-yi/" class="">Calico网络自定义 2024-04-03 15:08:43.394</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/cicd%E6%80%9D%E8%80%83-cicd-si-kao/" class="">CICD思考 2024-04-03 15:11:24.151</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/client-go-%E5%9B%9B%E7%A7%8D%E5%AE%A2%E6%88%B7%E7%AB%AF-client-go-si-zhong-ke-hu-duan/" class="">Client-go 四种客户端 2024-04-03 14:49:34.32</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/client-go-%E6%9E%B6%E6%9E%84-client-go-jia-gou/" class="">Client-go 架构 2024-04-03 14:48:40.716</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/cni%E6%8F%92%E4%BB%B6%E9%80%89%E5%9E%8B-cni-cha-jian-xuan-xing/" class="">CNI插件选型 2024-04-03 15:01:51.29</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/containerd-%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C-containerd-ji-ben-cao-zuo/" class="">Containerd 基本操作 2024-04-03 14:55:46.786</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/coredns%E4%B9%8B%E5%85%89-coredns-zhi-guang/" class="">COREDNS之光 2024-04-03 14:54:52.059</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/dockerfile%E5%AE%9A%E5%88%B6%E4%B8%93%E5%B1%9E%E9%95%9C%E5%83%8F-dockerfile-ding-zhi-zhuan-shu-jing-xiang/" class="">dockerfile定制专属镜像 2024-08-02 17:44:00.522</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/dockerfile%E7%9A%84copy%E5%92%8Cadd%E7%9A%84%E5%8C%BA%E5%88%AB-dockerfile-de-copy-he-add-de-qu-bie/" class="">dockerfile的copy和add的区别 2024-04-03 15:01:09.565</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/docker%E9%87%8D%E8%A6%81%E7%9A%84%E7%BD%91%E7%BB%9C%E7%9F%A5%E8%AF%86%E7%82%B9-docker-zhong-yao-de-wang-luo-zhi-shi-dian/" class="">Docker重要的网络知识点  2024-04-03 15:12:10.162</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/etcd%E5%A4%87%E4%BB%BD-etcd-bei-fen/" class="">ETCD备份 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/etcd%E7%A8%B3%E5%AE%9A%E6%80%A7%E5%8F%8A%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%AE%9E%E8%B7%B5-etcd-wen-ding-xing-ji-xing-neng-you-hua-shi-jian/" class="">ETCD稳定性及性能优化实践 2024-04-03 15:06:31.141</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ex-lb-%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E9%83%A8%E7%BD%B2-ex-lb-fu-zai-jun-heng-bu-shu/" class="">EX-LB 负载均衡部署 2023-09-28 15:28:51.998</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ezctl-%E5%91%BD%E4%BB%A4%E8%A1%8C%E4%BB%8B%E7%BB%8D-ezctl-ming-ling-xing-jie-shao/" class="">ezctl 命令行介绍 2023-09-28 15:28:00.619</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/flanel%E7%BD%91%E7%BB%9C-flanel-wang-luo/" class="">flanel网络 2024-04-03 15:05:04.16</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/godel-scheduler-godel-scheduler/" class="">godel-scheduler 2024-08-02 17:41:00.668</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/helm-chart%E5%92%8Crepo-helmchart-he-repo/" class="">helm chart和repo 2024-04-03 15:00:43.125</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/istio-ingress-gateway-istio-ingress-gateway/" class="">istio-ingress-gateway 2024-08-02 17:51:54.75</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/istio%E9%83%A8%E7%BD%B2-istio-bu-shu/" class="">istio部署 2024-08-02 17:52:40.721</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-cni%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B-k8scni-pou-xi-yan-jin/" class="">K8S CNI剖析演进 2024-03-04 10:51:33.245</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-csi-openebs%E5%8E%9F%E7%90%86-k8scsiopenebs-yuan-li/" class="">K8S csi openebs原理 2024-04-03 14:44:48.967</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-csi%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B-k8scsi-pou-xi-yan-jin/" class="">K8S CSI剖析演进 2024-03-04 10:52:20.507</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-gpt-k8sgpt/" class="">K8S GPT 2024-04-03 15:02:09.127</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E5%BC%80%E5%8F%91%E5%8F%AF%E4%B8%8D%E6%AD%A2-crud-k8s-kai-fa-ke-bu-zhi-crud/" class="">K8S 开发可不止 CRUD 2024-04-03 14:50:11.765</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E6%8E%A2%E9%92%88%E5%8E%9F%E7%90%86-k8s-tan-zhen-yuan-li/" class="">K8S 探针原理 2024-04-03 14:53:29.429</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E6%B5%81%E9%87%8F%E9%93%BE%E8%B7%AF%E5%89%96%E6%9E%90-k8s-liu-liang-lian-lu-pou-xi/" class="">K8S 流量链路剖析 2024-03-04 10:50:22.991</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E8%B0%83%E5%BA%A6%E5%99%A8-scheduler_onego-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-diao-du-qi-scheduleronego-yuan-ma-jie-du/" class="">K8S 调度器 scheduler_one.go 源码解读 2024-04-09 11:45:28.22</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E4%B9%8Bingress-nginx%E5%8E%9F%E7%90%86%E5%8F%8A%E9%85%8D%E7%BD%AE-k8s-zhi-ingress-nginx-yuan-li-ji-pei-zhi/" class="">K8S之ingress-nginx原理及配置 2024-07-05 18:02:14.243</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E4%B9%8Bkubelet%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-zhi-kubelet-yuan-ma-jie-du/" class="">k8s之kubelet源码解读 2024-03-28 15:30:39.633</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7-k8s-yuan-de-sheng-ji/" class="">K8S原地升级 2024-04-03 15:04:38.125</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%91%BD%E4%BB%A4%E6%8C%87%E5%8D%97-k8s-ming-ling-zhi-nan/" class="">K8S命令指南 2024-04-03 15:14:14.207</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%A6%82%E4%BD%95%E8%8E%B7%E5%BE%97-ip-k8s-ru-he-huo-de-ip/" class="">K8S如何获得 IP 2024-04-16 17:09:59.658</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%BA%94%E7%94%A8%E7%9A%84%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5-k8s-ying-yong-de-zui-jia-shi-jian/" class="">k8s应用的最佳实践 2024-04-03 14:43:16.936</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-deployment_controllergo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-deploymentcontrollergo-yuan-ma-jie-du/" class="">K8S控制器之 deployment_controller.go源码解读 2024-04-09 11:30:03.133</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-progressgo-%E8%BF%9B%E5%BA%A6-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-progressgo-jin-du-yuan-ma-jie-du/" class="">K8S控制器之 progress.go 进度 源码解读 2024-04-09 11:31:08.86</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-rollinggo-%E6%BB%9A%E5%8A%A8%E6%9B%B4%E6%96%B0-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-rollinggo-gun-dong-geng-xin-yuan-ma-jie-du/" class="">K8S控制器之 rolling.go 滚动更新 源码解读 2024-04-09 11:32:58.133</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-schedulergo-%E8%B0%83%E5%BA%A6%E5%99%A8-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-schedulergo-diao-du-qi-yuan-ma-jie-du/" class="">K8S控制器之 scheduler.go 调度器 源码解读 2024-04-09 11:44:25.171</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Brecreatego-%E9%87%8D%E5%BB%BA-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-recreatego-zhong-jian-yuan-ma-jie-du/" class="">K8S控制器之recreate.go 重建 源码解读 2024-04-09 11:31:49.855</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Brollbackgo-%E5%9B%9E%E6%BB%9A-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-rollbackgo-hui-gun-yuan-ma-jie-du/" class="">K8S控制器之rollback.go 回滚 源码解读 2024-04-09 11:32:26.587</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_pod_controlgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulpodcontrolgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_pod_control.go源码解读 2024-04-10 09:42:50.078</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_set_controlgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetcontrolgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_set_control.go源码解读 2024-04-10 09:41:30.316</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_set_status_updatego%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetstatusupdatego-yuan-ma-jie-du/" class="">K8S控制器之stateful_set_status_update.go源码解读 2024-04-10</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_setgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_set.go源码解读 2024-04-10</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bsyncgo-%E5%90%8C%E6%AD%A5-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-syncgo-tong-bu-yuan-ma-jie-du/" class="">K8S控制器之sync.go 同步 源码解读 2024-04-09 11:33:26.356</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E7%9A%84pod%E7%B1%BB%E5%9E%8B-k8s-de-pod-lei-xing/" class="">K8S的POD类型 2024-04-03 14:57:11.072</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E7%9A%84%E6%9C%80%E5%90%8E%E4%B8%80%E5%9D%97%E6%8B%BC%E5%9B%BE-dbpaas-k8s-de-zui-hou-yi-kuai-pin-tu-dbpaas/" class="">K8S的最后一块拼图 dbpaas 2024-08-02 17:48:35.899</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-k8s%E7%BB%84%E4%BB%B6/" class="">k8s组件</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%83%8C%E5%90%8Eservice%E6%98%AF%E5%A6%82%E4%BD%95%E5%B7%A5%E4%BD%9C%E7%9A%84-k8s-bei-hou-service-shi-ru-he-gong-zuo-de/" class="">k8s背后service是如何工作的 2024-08-02 17:49:44.981</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%B0%83%E5%BA%A6%E5%99%A8-extendergo-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-diao-du-qi-extendergo-yuan-ma-jie-du/" class="">K8S调度器 extender.go 源码解读 2024-04-09 11:45:59.666</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%B0%83%E8%AF%95pod-k8s-diao-shi-pod/" class="">K8S调试POD 2024-04-03 14:58:15.293</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%BF%90%E7%BB%B4%E4%B9%8B%E6%B8%85%E7%90%86%E7%A3%81%E7%9B%98-k8s-yun-wei-zhi-qing-li-ci-pan/" class="">k8s运维之清理磁盘 2024-04-03 15:13:57.279</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8-k8s-mian-shi-da-quan/" class="">K8S面试大全 2024-04-03 15:10:54.493</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E5%AE%9D%E5%85%B8-k8s-mian-shi-bao-dian/" class="active">K8S面试宝典 2024-04-03 15:11:09.316</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E9%A2%98-k8s-mian-shi-ti/" class="">K8S面试题 2024-08-02 17:50:50.418</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kruise%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7%E8%A7%A3%E6%9E%90-kruise-yuan-de-sheng-ji-jie-xi/" class="">kruise原地升级解析 2024-08-02 17:59:31.689</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kube-router-%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-kube-router-wang-luo-zu-jian/" class="">kube-router 网络组件 2023-09-28 15:33:20.658</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-05-kubeasz%E9%83%A8%E7%BD%B2k8s/" class="">kubeasz部署k8s</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubekey%E6%B7%BB%E5%8A%A0%E6%96%B0%E8%8A%82%E7%82%B9-kubekey-tian-jia-xin-jie-dian/" class="">kubekey添加新节点 2024-04-03 15:36:47.646</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-api-kubernetesapi/" class="">Kubernetes API 2024-04-03 14:47:30.212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E6%BA%90%E7%A0%81%E7%BB%93%E6%9E%84-kubernetes-yuan-ma-jie-gou/" class="">Kubernetes 源码结构 2024-04-03 14:48:05.954</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3%E8%AE%A4%E8%AF%81-kubernetes-zheng-shu-xiang-jie--ren-zheng-/" class="">Kubernetes 证书详解(认证) 2024-04-03 14:52:56.54</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3%E9%89%B4%E6%9D%83-kubernetes-zheng-shu-xiang-jie--jian-quan-/" class="">Kubernetes 证书详解(鉴权) 2024-04-03 14:49:04.385</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubewharf-kubewharf/" class="">kubewharf 2024-08-02 17:41:32.72</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux-awk%E6%96%87%E6%9C%AC%E5%A4%84%E7%90%86%E5%99%A8-8%E4%B8%AA%E6%A1%88%E4%BE%8B-linuxawk-wen-ben-chu-li-qi-8-ge-an-li/" class="">linux awk文本处理器 8个案例 2024-08-02 17:46:53.603</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux-%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%A4%A7%E5%85%A8-linux-xing-neng-you-hua-da-quan/" class="">Linux 性能优化大全 2024-04-03 15:09:06.854</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux%E7%B3%BB%E7%BB%9F%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96-%E4%B8%83%E4%B8%AA%E5%AE%9E%E6%88%98%E7%BB%8F%E9%AA%8C-linux-xi-tong-xing-neng-you-hua-qi-ge-shi-zhan-jing-yan/" class="">linux系统性能优化 七个实战经验 2024-08-02 17:47:26.212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98-linux-yun-wei-gong-cheng-shi-50-ge-chang-jian-mian-shi-ti/" class="">linux运维工程师50个常见面试题 2024-08-02 17:42:12.968</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/metallb-l2-%E5%8E%9F%E7%90%86-metallbl2-yuan-li/" class="">MetalLB L2 原理 2024-04-03 14:52:24.662</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/netctl%E6%A3%80%E6%B5%8B%E9%9B%86%E7%BE%A4pod%E9%97%B4%E8%BF%9E%E9%80%9A%E6%80%A7-netctl-jian-ce-ji-qun-pod-jian-lian-tong-xing/" class="">netctl检测集群pod间连通性 2024-08-02 18:00:36.753</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/network-check-network-check/" class="">network-check 2023-09-28 15:36:33.04</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/nginx%E5%A6%82%E4%BD%95%E8%A7%A3%E5%86%B3%E6%83%8A%E7%BE%A4%E6%95%88%E5%BA%94-nginx-ru-he-jie-jue-jing-qun-xiao-ying/" class="">nginx如何解决惊群效应 2024-08-02 17:45:54.531</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/openkruise%E8%AF%A6%E7%BB%86%E8%A7%A3%E9%87%8A%E4%BB%A5%E5%8F%8A%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7%E5%8F%8A%E5%85%A8%E9%93%BE%E8%B7%AF%E7%81%B0%E5%BA%A6%E5%8F%91%E5%B8%83%E6%96%B9%E6%A1%88-openkruise-xiang-xi-jie-shi-yi-ji-yuan-de-sheng-ji-ji-quan-lian-lu-hui-du-fa-bu-fang-an/" class="">OpenKruise详细解释以及原地升级及全链路灰度发布方案 2024-07-22 11:44:46.892</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/pixie-pixie/" class="">pixie 2024-08-02 17:52:17.843</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-28-prometheus/" class="">prometheus 面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/prometheus-stack-prometheus-stack/" class="">prometheus-stack 2024-08-02 17:55:22.326</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/prometheus%E4%BC%81%E4%B8%9A%E7%BA%A7%E7%9B%91%E6%8E%A7%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93-prometheus-qi-ye-ji-jian-kong-shi-yong-zong-jie/" class="">prometheus企业级监控使用总结 2024-04-03 15:13:11.185</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ssl%E8%AF%81%E4%B9%A6%E8%87%AA%E7%AD%BE%E5%8F%91-ssl-zheng-shu-zi-qian-fa/" class="">ssl证书自签发 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/teg%E4%B8%8Eistio%E9%9B%86%E6%88%90-teg-yu-istio-ji-cheng/" class="">TEG与istio集成 2024-08-02 17:51:20.389</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%B8%A4%E5%BC%A0%E5%9B%BE%E5%85%A8%E9%9D%A2%E7%90%86%E8%A7%A3k8s%E5%8E%9F%E7%90%86-liang-zhang-tu-quan-mian-li-jie-k8s-yuan-li/" class="">两张图全面理解K8S原理 2024-04-03 14:51:27.431</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%B8%AA%E6%80%A7%E5%8C%96%E9%9B%86%E7%BE%A4%E5%8F%82%E6%95%B0%E9%85%8D%E7%BD%AE-ge-xing-hua-ji-qun-can-shu-pei-zhi/" class="">个性化集群参数配置 2023-09-28 15:30:56.072</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E4%B8%AD%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_%E9%A2%98%E7%9B%AE/" class="">中级运维面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BA%8C%E8%BF%9B%E5%88%B6%E9%83%A8%E7%BD%B2k8s%E5%8A%A0%E8%8A%82%E7%82%B9%E6%93%8D%E4%BD%9C-er-jin-zhi-bu-shu-k8s-jia-jie-dian-cao-zuo/" class="">二进制部署K8S加节点操作 2024-04-03 15:08:26.726</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-10-20-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8%E9%9B%86%E7%BE%A4/" class="">使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8-keepalived-%E5%92%8C-haproxy-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8-kubernetes-%E9%9B%86%E7%BE%A4-shi-yong-keepalived-he-haproxy-chuang-jian-gao-ke-yong-kubernetes-ji-qun/" class="">使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群 2023-04-12 04:04:09.458</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8-openfunction-%E5%9C%A8%E4%BB%BB%E4%BD%95%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E4%B8%8A%E8%BF%90%E8%A1%8C%E6%97%A0%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%B7%A5%E4%BD%9C%E8%B4%9F%E8%BD%BD-shi-yong-openfunction-zai-ren-he-ji-chu-she-shi-shang-yun-xing-wu-fu-wu-qi-gong-zuo-fu-zai/" class="">使用 OpenFunction 在任何基础设施上运行无服务器工作负载 2024-01-21 04:02:44.459</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8cloudflarecf%E6%90%AD%E5%BB%BAdockerhub%E4%BB%A3%E7%90%86-shi-yong-cloudflarecf-da-jian-dockerhub-dai-li/" class="">使用cloudflare(CF)搭建dockerhub代理 2024-06-28 14:38:34.339</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8kubernees-leases-%E8%BD%BB%E6%9D%BE%E5%AE%9E%E7%8E%B0leader-election-shi-yong-kuberneesleases-qing-song-shi-xian-leaderelection/" class="">使用kubernees leases 轻松实现leader election 2024-04-03 15:09:46.129</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%85%AC%E6%9C%89%E4%BA%91%E4%B8%8A%E9%83%A8%E7%BD%B2-kubeasz-gong-you-yun-shang-bu-shu-kubeasz/" class="">公有云上部署 kubeasz 2023-09-28 15:31:16.19</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-5-14-%E5%8D%95master%E5%8D%95etcd%E6%94%B9%E9%80%A0/" class="">单master单etcd改造为3master3etcd</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%8F%B2%E4%B8%8A%E6%9C%80%E7%89%9Bjenkins-pipeline%E6%B5%81%E6%B0%B4%E7%BA%BF%E8%AF%A6%E8%A7%A3-shi-shang-zui-niu-jenkinspipeline-liu-shui-xian-xiang-jie/" class="">史上最牛jenkins pipeline流水线详解 2024-08-02</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%9A%E6%9E%B6%E6%9E%84%E6%94%AF%E6%8C%81-duo-jia-gou-zhi-chi/" class="">多架构支持 2023-09-28 15:29:54.111</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%A7%E5%8E%82%E6%80%BB%E7%BB%93nginx%E9%AB%98%E5%B9%B6%E5%8F%91%E4%BC%98%E5%8C%96%E7%AC%94%E8%AE%B0-da-chang-zong-jie-nginx-gao-bing-fa-you-hua-bi-ji/" class="">大厂总结nginx高并发优化笔记 2024-08-02 17:46:19.098</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%A7%E8%A7%84%E6%A8%A1%E5%B9%B6%E5%8F%91%E4%B8%8B%E5%A6%82%E4%BD%95%E5%8A%A0%E5%BF%AB-pod-%E5%90%AF%E5%8A%A8%E9%80%9F%E5%BA%A6-da-gui-mo-bing-fa-xia-ru-he-jia-kuai-pod-qi-dong-su-du/" class="">大规模并发下如何加快 Pod 启动速度 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E4%B8%BAk8s%E4%BF%9D%E9%A9%BE%E6%8A%A4%E8%88%AA-ru-he-wei-k8s-bao-jia-hu-hang/" class="">如何为K8S保驾护航 2024-04-16 17:09:21.962</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8tekton%E5%BF%AB%E9%80%9F%E6%90%AD%E5%BB%BAcicd%E5%B9%B3%E5%8F%B0-ru-he-shi-yong-tekton-kuai-su-da-jian-cicd-ping-tai/" class="">如何使用tekton快速搭建CI/CD平台 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E8%B0%83%E8%AF%95-crash-%E5%AE%B9%E5%99%A8%E7%9A%84%E7%BD%91%E7%BB%9C-ru-he-diao-shi-crash-rong-qi-de-wang-luo/" class="">如何调试 crash 容器的网络 2024-04-03 14:50:51.378</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E4%B8%AD%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E4%BB%A5%E5%8F%8A%E4%B8%8D%E5%90%8Cdnspolicy%E5%AF%B9%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E7%9A%84%E5%BD%B1%E5%93%8D-rong-qi-zhong-yu-ming-jie-xi-yi-ji-bu-tong-dnspolicy-dui-yu-ming-jie-xi-de-ying-xiang/" class="">容器中域名解析以及不同dnspolicy对域名解析的影响 2024-04-03 15:04:09.254</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E5%86%85%E7%9A%84-1-%E5%8F%B7%E8%BF%9B%E7%A8%8B-rong-qi-nei-de-1-hao-jin-cheng/" class="">容器内的 1 号进程 2024-04-03 14:46:29.998</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E5%8E%9F%E7%90%86-rong-qi-yuan-li/" class="">容器原理 2024-04-03 14:45:58.422</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E7%9A%84%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E4%B8%80-overlayfs-%E5%8E%9F%E7%90%86-rong-qi-de-wen-jian-xi-tong--yi-overlayfs-yuan-li/" class="">容器的文件系统 OverlayFS 原理 2024-04-03 14:45:26.893</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C%E5%8E%9F%E7%90%86-rong-qi-wang-luo-yuan-li/" class="">容器网络原理 2024-04-03 14:51:51.962</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%B8%B8%E8%A7%81linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98-chang-jian-linux-yun-wei-mian-shi-ti/" class="">常见linux运维面试题 2024-08-02 17:42:33.873</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BC%80%E5%A7%8B%E4%BD%BF%E7%94%A8-cilium-kai-shi-shi-yong-cilium/" class="">开始使用 cilium 2023-09-28 15:34:49.205</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BD%BB%E6%82%9F%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C-che-wu-rong-qi-wang-luo/" class="">彻悟容器网络 2024-04-07 10:30:11.55</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BF%AB%E9%80%9F%E6%8C%87%E5%8D%97-kuai-su-zhi-nan/" class="">快速指南 2023-09-28 15:28:25.71</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%88%91%E5%8F%AA%E6%83%B3%E5%81%9A%E6%8A%80%E6%9C%AF-%E8%B5%B0%E6%8A%80%E6%9C%AF%E8%B7%AF%E7%BA%BF-wo-zhi-xiang-zuo-ji-shu-zou-ji-shu-lu-xian/" class="">我只想做技术 走技术路线 2024-08-02 17:43:31.897</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%90%9E%E6%87%82k8s%E9%89%B4%E6%9D%83-gao-dong-k8s-jian-quan/" class="">搞懂K8S鉴权 2024-04-03 15:11:54.885</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%90%AD%E4%B8%AA%E6%97%A5%E5%BF%97%E6%89%8B%E6%9C%BA%E7%B3%BB%E7%BB%9F%E4%B8%8D%E9%A6%99%E5%90%97-da-ge-ri-zhi-shou-ji-xi-tong-bu-xiang-ma/" class="">搭个日志手机系统不香吗 2024-08-02 17:47:58.794</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E8%AF%B4%E6%98%8E-cao-zuo-xi-tong-shuo-ming/" class="">操作系统说明 2023-09-28 15:31:37.694</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%96%87%E5%AD%A6%E7%9A%84%E6%95%85%E4%B9%A1-wen-xue-de-gu-xiang/" class="">文学的故乡 2024-04-03 14:40:45.926</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%98%AF%E6%8A%80%E6%9C%AF%E5%A4%A7%E7%A5%9E%E8%BF%98%E6%98%AF%E5%9F%BA%E7%A1%80%E6%9E%B6%E6%9E%84%E9%83%A8%E7%9A%84%E7%A5%B8%E5%AE%B3-shi-ji-shu-da-shen-hai-shi-ji-chu-jia-gou-bu-de-huo-hai/" class="">是技术大神还是基础架构部的祸害 2024-08-02 17:50:26.139</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9C%89%E8%BF%993%E4%B8%AA%E8%BF%B9%E8%B1%A1%E4%BD%A0%E5%B0%B1%E8%AF%A5%E7%A6%BB%E8%81%8C%E4%BA%86-you-zhe-3-ge-ji-xiang--ni-jiu-gai-li-zhi-le/" class="">有这3个迹象，你就该离职了 2023-09-21 16:00:22.432</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9E%81%E5%A4%A7%E6%8F%90%E9%AB%98%E5%B7%A5%E4%BD%9C%E6%95%88%E7%8E%87%E7%9A%84-linux-%E5%91%BD%E4%BB%A4-ji-da-ti-gao-gong-zuo-xiao-lv-de-linux-ming-ling/" class="">极大提高工作效率的 Linux 命令 2024-04-03 14:42:46.957</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9E%84%E5%BB%BA%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E5%88%A9%E5%99%A8buildkit-gou-jian-rong-qi-jing-xiang-li-qi-buildkit/" class="">构建容器镜像利器buildkit 2024-08-02 17:49:14.916</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B5%81%E9%87%8F%E4%BD%95%E5%A4%84%E6%9D%A5%E4%BD%95%E5%A4%84%E5%8E%BB-liu-liang-he-chu-lai-he-chu-qu/" class="">流量何处来何处去 2024-04-03 14:56:20.089</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B8%85%E7%90%86docker%E9%95%9C%E5%83%8F-qing-li-docker-jing-xiang/" class="">清理docker镜像 2024-08-02 17:54:48.594</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B8%85%E7%90%86%E6%AE%8B%E7%95%99%E7%9A%84calico%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6-qing-li-can-liu-de-calico-wang-luo/" class="">清理残留的calico网络插件 2024-04-03 15:07:38.854</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A3%81%E7%9B%98%E6%95%B0%E6%8D%AE%E6%81%A2%E5%A4%8D-ci-pan-shu-ju-hui-fu/" class="">磁盘数据恢复 2024-04-03 14:59:27.839</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85kubephere-li-xian-an-zhuang-kubephere/" class="">离线安装kubephere 2024-04-03 14:59:59.885</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4-li-xian-an-zhuang-ji-qun/" class="">离线安装集群 2023-09-28 15:29:14.742</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-%E8%AE%A1%E5%88%92/" class="">美国码农薪酬</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-%E8%AE%A1%E5%88%922/" class="">美国码农计划</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E8%87%AA%E5%8A%A8%E5%B1%8F%E8%94%BDip%E6%94%BB%E5%87%BB-zi-dong-ping-bi-ip-gong-ji/" class="">自动屏蔽IP攻击 2024-04-03 14:54:11.783</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-12-%E9%9D%A2%E8%AF%950212/" class="">面试0212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-19-%E9%9D%A2%E8%AF%950219/" class="">面试0219</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-20-%E9%9D%A2%E8%AF%950220/" class="">面试0220</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-26-%E9%9D%A2%E8%AF%950225/" class="">面试0225</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%9D%A2%E8%AF%950308-mian-shi-0308/" class="">面试0308 2024-04-03 14:57:53.576</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-11-%E9%9D%A2%E8%AF%950211/" class="">面试2025-02-11</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-18-%E9%9D%A2%E8%AF%95/" class="">面试2025-0218</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%9D%A2%E8%AF%95%E7%94%A8-golang-%E6%89%8B%E6%92%B8-lru-mian-shi-yong-golang-shou-lu-lru/" class="">面试用 Golang 手撸 LRU 2024-04-03 14:47:00.767</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%A1%B6%E7%BA%A7devops%E5%B7%A5%E5%85%B7%E5%A4%A7%E7%9B%98%E7%82%B9-ding-ji-devops-gong-ju-da-pan-dian/" class="">顶级devops工具大盘点 2024-08-02 17:43:03.661</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E9%AB%98%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_ai_linux%E9%83%A8%E5%88%86/" class="">高级运维面试题-linux部分</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>K8S面试宝典 2024-04-03 15:11:09.316</h3>
+
+  <label for="toc-control">
+    
+    <img src="/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#创建-pod的主要流程">创建 Pod的主要流程?</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#pod-的重启策略">Pod 的重启策略</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#pod-的健康检查方式">Pod 的健康检查方式</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#pod-探针常见方式">Pod 探针常见方式</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#pod-常见的调度方式">Pod 常见的调度方式</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#deployment升级策略">deployment升级策略?</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#kubernetes-service类型">Kubernetes Service类型?</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#service分发后端的策略">Service分发后端的策略?</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#kubernetes外部如何访问集群内的服务">Kubernetes外部如何访问集群内的服务?</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#kubernetes-ingress">Kubernetes ingress?</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#kubernetes镜像的下载策略">Kubernetes镜像的下载策略?</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#kubernetes-kubelet的作用">Kubernetes kubelet的作用?</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#secret有哪些使用方式">Secret有哪些使用方式?</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#kubernetes-cni模型">Kubernetes CNI模型?</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#kubernetes-pv和pvc">Kubernetes PV和PVC?</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#pv生命周期内的阶段">PV生命周期内的阶段?</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#calico-网络模式">calico 网络模式</a></li>
+    <li><a href="#fannel三种模式">fannel三种模式</a></li>
+    <li><a href="#你知道的几种cni网络插件并详述其工作原理k8s常用的cni网络插件-calico--flannel简述一下它们的工作原理和区别">你知道的几种CNI网络插件，并详述其工作原理。K8s常用的CNI网络插件 （calico &amp;&amp; flannel），简述一下它们的工作原理和区别。</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#worker节点宕机简述pods驱逐流程">Worker节点宕机，简述Pods驱逐流程。</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#你知道的k8s中几种controller控制器并详述其工作原理">你知道的K8s中几种Controller控制器，并详述其工作原理</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#ingress-controller的工作机制">ingress-controller的工作机制</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#k8s的调度机制">k8s的调度机制</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#kube-proxy的三种工作模式和原理">kube-proxy的三种工作模式和原理</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h2 id="创建-pod的主要流程">
+  创建 Pod的主要流程?
+  <a class="anchor" href="#%e5%88%9b%e5%bb%ba-pod%e7%9a%84%e4%b8%bb%e8%a6%81%e6%b5%81%e7%a8%8b">#</a>
+</h2>
+<ol>
+<li>
+<h5 id="客户端提交-pod-的配置信息可以是-yaml-文件定义的信息到-kube-apiserver">
+  客户端提交 Pod 的配置信息(可以是 yaml 文件定义的信息)到 kube-apiserver.
+  <a class="anchor" href="#%e5%ae%a2%e6%88%b7%e7%ab%af%e6%8f%90%e4%ba%a4-pod-%e7%9a%84%e9%85%8d%e7%bd%ae%e4%bf%a1%e6%81%af%e5%8f%af%e4%bb%a5%e6%98%af-yaml-%e6%96%87%e4%bb%b6%e5%ae%9a%e4%b9%89%e7%9a%84%e4%bf%a1%e6%81%af%e5%88%b0-kube-apiserver">#</a>
+</h5>
+</li>
+<li>
+<h5 id="apiserver-收到指令后通知-controllr-manager-创建一个资源对象">
+  Apiserver 收到指令后,通知 controllr-manager 创建一个资源对象
+  <a class="anchor" href="#apiserver-%e6%94%b6%e5%88%b0%e6%8c%87%e4%bb%a4%e5%90%8e%e9%80%9a%e7%9f%a5-controllr-manager-%e5%88%9b%e5%bb%ba%e4%b8%80%e4%b8%aa%e8%b5%84%e6%ba%90%e5%af%b9%e8%b1%a1">#</a>
+</h5>
+</li>
+<li>
+<h5 id="controller-manager-通过-apiserver-将-pod-的配置信息存储到-etcd-数据中心中">
+  controller-manager 通过 apiserver 将 pod 的配置信息存储到 ETCD 数据中心中
+  <a class="anchor" href="#controller-manager-%e9%80%9a%e8%bf%87-apiserver-%e5%b0%86-pod-%e7%9a%84%e9%85%8d%e7%bd%ae%e4%bf%a1%e6%81%af%e5%ad%98%e5%82%a8%e5%88%b0-etcd-%e6%95%b0%e6%8d%ae%e4%b8%ad%e5%bf%83%e4%b8%ad">#</a>
+</h5>
+</li>
+<li>
+<h5 id="kube-scheduler-检查到-pod-信息会开始调度预选会先过滤不符合-pod-资源配置要求的节点然后开始调度调优主要是挑选出更适合运行的-pod-节点然后将-pod-的资源配置单发送到-node-节点上的-kubelet-组件上">
+  kube-scheduler 检查到 pod 信息会开始调度预选,会先过滤不符合 Pod 资源配置要求的节点,然后开始调度调优,主要是挑选出更适合运行的 pod 节点,然后将 pod 的资源配置单发送到 node 节点上的 kubelet 组件上
+  <a class="anchor" href="#kube-scheduler-%e6%a3%80%e6%9f%a5%e5%88%b0-pod-%e4%bf%a1%e6%81%af%e4%bc%9a%e5%bc%80%e5%a7%8b%e8%b0%83%e5%ba%a6%e9%a2%84%e9%80%89%e4%bc%9a%e5%85%88%e8%bf%87%e6%bb%a4%e4%b8%8d%e7%ac%a6%e5%90%88-pod-%e8%b5%84%e6%ba%90%e9%85%8d%e7%bd%ae%e8%a6%81%e6%b1%82%e7%9a%84%e8%8a%82%e7%82%b9%e7%84%b6%e5%90%8e%e5%bc%80%e5%a7%8b%e8%b0%83%e5%ba%a6%e8%b0%83%e4%bc%98%e4%b8%bb%e8%a6%81%e6%98%af%e6%8c%91%e9%80%89%e5%87%ba%e6%9b%b4%e9%80%82%e5%90%88%e8%bf%90%e8%a1%8c%e7%9a%84-pod-%e8%8a%82%e7%82%b9%e7%84%b6%e5%90%8e%e5%b0%86-pod-%e7%9a%84%e8%b5%84%e6%ba%90%e9%85%8d%e7%bd%ae%e5%8d%95%e5%8f%91%e9%80%81%e5%88%b0-node-%e8%8a%82%e7%82%b9%e4%b8%8a%e7%9a%84-kubelet-%e7%bb%84%e4%bb%b6%e4%b8%8a">#</a>
+</h5>
+</li>
+<li>
+<h5 id="kubelet-根据-scheduler-发来的资源配置单运行-pod运行成功后将-pod-的运行的信息返回-scheduler-scheduler-将返回的-pod-运行状况的信息存储到-etcd-数据中心">
+  kubelet 根据 scheduler 发来的资源配置单运行 pod,运行成功后,将 pod 的运行的信息返回 scheduler, scheduler 将返回的 pod 运行状况的信息存储到 etcd 数据中心
+  <a class="anchor" href="#kubelet-%e6%a0%b9%e6%8d%ae-scheduler-%e5%8f%91%e6%9d%a5%e7%9a%84%e8%b5%84%e6%ba%90%e9%85%8d%e7%bd%ae%e5%8d%95%e8%bf%90%e8%a1%8c-pod%e8%bf%90%e8%a1%8c%e6%88%90%e5%8a%9f%e5%90%8e%e5%b0%86-pod-%e7%9a%84%e8%bf%90%e8%a1%8c%e7%9a%84%e4%bf%a1%e6%81%af%e8%bf%94%e5%9b%9e-scheduler-scheduler-%e5%b0%86%e8%bf%94%e5%9b%9e%e7%9a%84-pod-%e8%bf%90%e8%a1%8c%e7%8a%b6%e5%86%b5%e7%9a%84%e4%bf%a1%e6%81%af%e5%ad%98%e5%82%a8%e5%88%b0-etcd-%e6%95%b0%e6%8d%ae%e4%b8%ad%e5%bf%83">#</a>
+</h5>
+</li>
+</ol>
+<h2 id="pod-的重启策略">
+  Pod 的重启策略
+  <a class="anchor" href="#pod-%e7%9a%84%e9%87%8d%e5%90%af%e7%ad%96%e7%95%a5">#</a>
+</h2>
+<ul>
+<li>
+<h5 id="-pod-重启策略restartpolicy应用于-pod-内的所有容器并且仅再-pod-所处的-node-上由-kubelet-进行判断和重启操作当某个容器异常退出或健康检查失败时kubele-将根据-restartpolicy-的设置来进行相应操作">
+  • Pod 重启策略(RestartPolicy)应用于 Pod 内的所有容器,并且仅再 Pod 所处的 Node 上由 Kubelet 进行判断和重启操作.当某个容器异常退出或健康检查失败时,kubele 将根据 RestartPolicy 的设置来进行相应操作
+  <a class="anchor" href="#-pod-%e9%87%8d%e5%90%af%e7%ad%96%e7%95%a5restartpolicy%e5%ba%94%e7%94%a8%e4%ba%8e-pod-%e5%86%85%e7%9a%84%e6%89%80%e6%9c%89%e5%ae%b9%e5%99%a8%e5%b9%b6%e4%b8%94%e4%bb%85%e5%86%8d-pod-%e6%89%80%e5%a4%84%e7%9a%84-node-%e4%b8%8a%e7%94%b1-kubelet-%e8%bf%9b%e8%a1%8c%e5%88%a4%e6%96%ad%e5%92%8c%e9%87%8d%e5%90%af%e6%93%8d%e4%bd%9c%e5%bd%93%e6%9f%90%e4%b8%aa%e5%ae%b9%e5%99%a8%e5%bc%82%e5%b8%b8%e9%80%80%e5%87%ba%e6%88%96%e5%81%a5%e5%ba%b7%e6%a3%80%e6%9f%a5%e5%a4%b1%e8%b4%a5%e6%97%b6kubele-%e5%b0%86%e6%a0%b9%e6%8d%ae-restartpolicy-%e7%9a%84%e8%ae%be%e7%bd%ae%e6%9d%a5%e8%bf%9b%e8%a1%8c%e7%9b%b8%e5%ba%94%e6%93%8d%e4%bd%9c">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-pod-的重启策略包括-alwaysonfaliure-和-never默认值为-always">
+  • pod 的重启策略包括 Always,OnFaliure 和 Never,默认值为 Always
+  <a class="anchor" href="#-pod-%e7%9a%84%e9%87%8d%e5%90%af%e7%ad%96%e7%95%a5%e5%8c%85%e6%8b%ac-alwaysonfaliure-%e5%92%8c-never%e9%bb%98%e8%ae%a4%e5%80%bc%e4%b8%ba-always">#</a>
+</h5>
+</li>
+<li>
+<ul>
+<li>
+<h5 id="-always-当容器失效时由-kubelet-自动重启该容器">
+  • Always: 当容器失效时由 kubelet 自动重启该容器
+  <a class="anchor" href="#-always-%e5%bd%93%e5%ae%b9%e5%99%a8%e5%a4%b1%e6%95%88%e6%97%b6%e7%94%b1-kubelet-%e8%87%aa%e5%8a%a8%e9%87%8d%e5%90%af%e8%af%a5%e5%ae%b9%e5%99%a8">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-onfailure当容器终止运行且退出不为-0-时-由-kubelet-自动重启该容器">
+  • OnFailure:当容器终止运行且退出不为 0 时, 由 kubelet 自动重启该容器
+  <a class="anchor" href="#-onfailure%e5%bd%93%e5%ae%b9%e5%99%a8%e7%bb%88%e6%ad%a2%e8%bf%90%e8%a1%8c%e4%b8%94%e9%80%80%e5%87%ba%e4%b8%8d%e4%b8%ba-0-%e6%97%b6-%e7%94%b1-kubelet-%e8%87%aa%e5%8a%a8%e9%87%8d%e5%90%af%e8%af%a5%e5%ae%b9%e5%99%a8">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-nerve-不论容器运行状态如何kubelet-都不会重启该容器">
+  • Nerve: 不论容器运行状态如何,kubelet 都不会重启该容器
+  <a class="anchor" href="#-nerve-%e4%b8%8d%e8%ae%ba%e5%ae%b9%e5%99%a8%e8%bf%90%e8%a1%8c%e7%8a%b6%e6%80%81%e5%a6%82%e4%bd%95kubelet-%e9%83%bd%e4%b8%8d%e4%bc%9a%e9%87%8d%e5%90%af%e8%af%a5%e5%ae%b9%e5%99%a8">#</a>
+</h5>
+</li>
+</ul>
+</li>
+<li>
+<h5 id="-同时-pod-的容器策略与控制方式关联当前可用于管理-pod-的控制器包括-relicatoncontroller">
+  • 同时 pod 的容器策略与控制方式关联,当前可用于管理 Pod 的控制器包括 RelicatonController
+  <a class="anchor" href="#-%e5%90%8c%e6%97%b6-pod-%e7%9a%84%e5%ae%b9%e5%99%a8%e7%ad%96%e7%95%a5%e4%b8%8e%e6%8e%a7%e5%88%b6%e6%96%b9%e5%bc%8f%e5%85%b3%e8%81%94%e5%bd%93%e5%89%8d%e5%8f%af%e7%94%a8%e4%ba%8e%e7%ae%a1%e7%90%86-pod-%e7%9a%84%e6%8e%a7%e5%88%b6%e5%99%a8%e5%8c%85%e6%8b%ac-relicatoncontroller">#</a>
+</h5>
+</li>
+</ul>
+<h2 id="pod-的健康检查方式">
+  Pod 的健康检查方式
+  <a class="anchor" href="#pod-%e7%9a%84%e5%81%a5%e5%ba%b7%e6%a3%80%e6%9f%a5%e6%96%b9%e5%bc%8f">#</a>
+</h2>
+<ul>
+<li>
+<h5 id="-livenessprobe探针用于判断容器是否存活running状态如果livenessprobe探针探测到容器不健康则kubelet将杀掉该容器并根据容器的重启策略做相应处理若一个容器不包含livenessprobe探针kubelet认为该容器的livenessprobe探针返回值用于是success">
+  • LivenessProbe探针：用于判断容器是否存活（running状态），如果LivenessProbe探针探测到容器不健康，则kubelet将杀掉该容器，并根据容器的重启策略做相应处理。若一个容器不包含LivenessProbe探针，kubelet认为该容器的LivenessProbe探针返回值用于是“Success”。
+  <a class="anchor" href="#-livenessprobe%e6%8e%a2%e9%92%88%e7%94%a8%e4%ba%8e%e5%88%a4%e6%96%ad%e5%ae%b9%e5%99%a8%e6%98%af%e5%90%a6%e5%ad%98%e6%b4%bbrunning%e7%8a%b6%e6%80%81%e5%a6%82%e6%9e%9clivenessprobe%e6%8e%a2%e9%92%88%e6%8e%a2%e6%b5%8b%e5%88%b0%e5%ae%b9%e5%99%a8%e4%b8%8d%e5%81%a5%e5%ba%b7%e5%88%99kubelet%e5%b0%86%e6%9d%80%e6%8e%89%e8%af%a5%e5%ae%b9%e5%99%a8%e5%b9%b6%e6%a0%b9%e6%8d%ae%e5%ae%b9%e5%99%a8%e7%9a%84%e9%87%8d%e5%90%af%e7%ad%96%e7%95%a5%e5%81%9a%e7%9b%b8%e5%ba%94%e5%a4%84%e7%90%86%e8%8b%a5%e4%b8%80%e4%b8%aa%e5%ae%b9%e5%99%a8%e4%b8%8d%e5%8c%85%e5%90%ablivenessprobe%e6%8e%a2%e9%92%88kubelet%e8%ae%a4%e4%b8%ba%e8%af%a5%e5%ae%b9%e5%99%a8%e7%9a%84livenessprobe%e6%8e%a2%e9%92%88%e8%bf%94%e5%9b%9e%e5%80%bc%e7%94%a8%e4%ba%8e%e6%98%afsuccess">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-readineeprobe探针用于判断容器是否启动完成ready状态如果readinessprobe探针探测到失败则pod的状态将被修改endpoint-controller将从service的endpoint中删除包含该容器所在pod的eenpoint">
+  • ReadineeProbe探针：用于判断容器是否启动完成（ready状态）。如果ReadinessProbe探针探测到失败，则Pod的状态将被修改。Endpoint Controller将从Service的Endpoint中删除包含该容器所在Pod的Eenpoint。
+  <a class="anchor" href="#-readineeprobe%e6%8e%a2%e9%92%88%e7%94%a8%e4%ba%8e%e5%88%a4%e6%96%ad%e5%ae%b9%e5%99%a8%e6%98%af%e5%90%a6%e5%90%af%e5%8a%a8%e5%ae%8c%e6%88%90ready%e7%8a%b6%e6%80%81%e5%a6%82%e6%9e%9creadinessprobe%e6%8e%a2%e9%92%88%e6%8e%a2%e6%b5%8b%e5%88%b0%e5%a4%b1%e8%b4%a5%e5%88%99pod%e7%9a%84%e7%8a%b6%e6%80%81%e5%b0%86%e8%a2%ab%e4%bf%ae%e6%94%b9endpoint-controller%e5%b0%86%e4%bb%8eservice%e7%9a%84endpoint%e4%b8%ad%e5%88%a0%e9%99%a4%e5%8c%85%e5%90%ab%e8%af%a5%e5%ae%b9%e5%99%a8%e6%89%80%e5%9c%a8pod%e7%9a%84eenpoint">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-startupprobe探针启动检查机制应用一些启动缓慢的业务避免业务长时间启动而被上面两类探针kill掉">
+  • startupProbe探针：启动检查机制，应用一些启动缓慢的业务，避免业务长时间启动而被上面两类探针kill掉。
+  <a class="anchor" href="#-startupprobe%e6%8e%a2%e9%92%88%e5%90%af%e5%8a%a8%e6%a3%80%e6%9f%a5%e6%9c%ba%e5%88%b6%e5%ba%94%e7%94%a8%e4%b8%80%e4%ba%9b%e5%90%af%e5%8a%a8%e7%bc%93%e6%85%a2%e7%9a%84%e4%b8%9a%e5%8a%a1%e9%81%bf%e5%85%8d%e4%b8%9a%e5%8a%a1%e9%95%bf%e6%97%b6%e9%97%b4%e5%90%af%e5%8a%a8%e8%80%8c%e8%a2%ab%e4%b8%8a%e9%9d%a2%e4%b8%a4%e7%b1%bb%e6%8e%a2%e9%92%88kill%e6%8e%89">#</a>
+</h5>
+</li>
+</ul>
+<h2 id="pod-探针常见方式">
+  Pod 探针常见方式
+  <a class="anchor" href="#pod-%e6%8e%a2%e9%92%88%e5%b8%b8%e8%a7%81%e6%96%b9%e5%bc%8f">#</a>
+</h2>
+<ul>
+<li>
+<h5 id="-execaction在容器内执行一个命令若返回码为0则表明容器健康">
+  • ExecAction：在容器内执行一个命令，若返回码为0，则表明容器健康。
+  <a class="anchor" href="#-execaction%e5%9c%a8%e5%ae%b9%e5%99%a8%e5%86%85%e6%89%a7%e8%a1%8c%e4%b8%80%e4%b8%aa%e5%91%bd%e4%bb%a4%e8%8b%a5%e8%bf%94%e5%9b%9e%e7%a0%81%e4%b8%ba0%e5%88%99%e8%a1%a8%e6%98%8e%e5%ae%b9%e5%99%a8%e5%81%a5%e5%ba%b7">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-tcpsocketaction通过容器的ip地址和端口号执行tcp检查若能建立tcp连接则表明容器健康">
+  • TCPSocketAction：通过容器的IP地址和端口号执行TCP检查，若能建立TCP连接，则表明容器健康。
+  <a class="anchor" href="#-tcpsocketaction%e9%80%9a%e8%bf%87%e5%ae%b9%e5%99%a8%e7%9a%84ip%e5%9c%b0%e5%9d%80%e5%92%8c%e7%ab%af%e5%8f%a3%e5%8f%b7%e6%89%a7%e8%a1%8ctcp%e6%a3%80%e6%9f%a5%e8%8b%a5%e8%83%bd%e5%bb%ba%e7%ab%8btcp%e8%bf%9e%e6%8e%a5%e5%88%99%e8%a1%a8%e6%98%8e%e5%ae%b9%e5%99%a8%e5%81%a5%e5%ba%b7">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-httpgetaction通过容器的ip地址端口号及路径调用http-get方法若响应的状态码大于等于200且小于400则表明容器健康">
+  • HTTPGetAction：通过容器的IP地址、端口号及路径调用HTTP Get方法，若响应的状态码大于等于200且小于400，则表明容器健康。
+  <a class="anchor" href="#-httpgetaction%e9%80%9a%e8%bf%87%e5%ae%b9%e5%99%a8%e7%9a%84ip%e5%9c%b0%e5%9d%80%e7%ab%af%e5%8f%a3%e5%8f%b7%e5%8f%8a%e8%b7%af%e5%be%84%e8%b0%83%e7%94%a8http-get%e6%96%b9%e6%b3%95%e8%8b%a5%e5%93%8d%e5%ba%94%e7%9a%84%e7%8a%b6%e6%80%81%e7%a0%81%e5%a4%a7%e4%ba%8e%e7%ad%89%e4%ba%8e200%e4%b8%94%e5%b0%8f%e4%ba%8e400%e5%88%99%e8%a1%a8%e6%98%8e%e5%ae%b9%e5%99%a8%e5%81%a5%e5%ba%b7">#</a>
+</h5>
+</li>
+</ul>
+<h2 id="pod-常见的调度方式">
+  Pod 常见的调度方式
+  <a class="anchor" href="#pod-%e5%b8%b8%e8%a7%81%e7%9a%84%e8%b0%83%e5%ba%a6%e6%96%b9%e5%bc%8f">#</a>
+</h2>
+<ul>
+<li>
+<h5 id="-deployment或rc该调度策略主要功能就是自动部署一个容器应用的多份副本以及持续监控副本的数量在集群内始终维持用户指定的副本数量">
+  • Deployment或RC：该调度策略主要功能就是自动部署一个容器应用的多份副本，以及持续监控副本的数量，在集群内始终维持用户指定的副本数量。
+  <a class="anchor" href="#-deployment%e6%88%96rc%e8%af%a5%e8%b0%83%e5%ba%a6%e7%ad%96%e7%95%a5%e4%b8%bb%e8%a6%81%e5%8a%9f%e8%83%bd%e5%b0%b1%e6%98%af%e8%87%aa%e5%8a%a8%e9%83%a8%e7%bd%b2%e4%b8%80%e4%b8%aa%e5%ae%b9%e5%99%a8%e5%ba%94%e7%94%a8%e7%9a%84%e5%a4%9a%e4%bb%bd%e5%89%af%e6%9c%ac%e4%bb%a5%e5%8f%8a%e6%8c%81%e7%bb%ad%e7%9b%91%e6%8e%a7%e5%89%af%e6%9c%ac%e7%9a%84%e6%95%b0%e9%87%8f%e5%9c%a8%e9%9b%86%e7%be%a4%e5%86%85%e5%a7%8b%e7%bb%88%e7%bb%b4%e6%8c%81%e7%94%a8%e6%88%b7%e6%8c%87%e5%ae%9a%e7%9a%84%e5%89%af%e6%9c%ac%e6%95%b0%e9%87%8f">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-nodeselector定向调度当需要手动指定将pod调度到特定node上可以通过node的标签label和pod的nodeselector属性相匹配">
+  • NodeSelector：定向调度，当需要手动指定将Pod调度到特定Node上，可以通过Node的标签（Label）和Pod的nodeSelector属性相匹配。
+  <a class="anchor" href="#-nodeselector%e5%ae%9a%e5%90%91%e8%b0%83%e5%ba%a6%e5%bd%93%e9%9c%80%e8%a6%81%e6%89%8b%e5%8a%a8%e6%8c%87%e5%ae%9a%e5%b0%86pod%e8%b0%83%e5%ba%a6%e5%88%b0%e7%89%b9%e5%ae%9anode%e4%b8%8a%e5%8f%af%e4%bb%a5%e9%80%9a%e8%bf%87node%e7%9a%84%e6%a0%87%e7%ad%belabel%e5%92%8cpod%e7%9a%84nodeselector%e5%b1%9e%e6%80%a7%e7%9b%b8%e5%8c%b9%e9%85%8d">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-nodeaffinity亲和性调度亲和性调度机制极大的扩展了pod的调度能力目前有两种节点亲和力表达">
+  • NodeAffinity亲和性调度：亲和性调度机制极大的扩展了Pod的调度能力，目前有两种节点亲和力表达：
+  <a class="anchor" href="#-nodeaffinity%e4%ba%b2%e5%92%8c%e6%80%a7%e8%b0%83%e5%ba%a6%e4%ba%b2%e5%92%8c%e6%80%a7%e8%b0%83%e5%ba%a6%e6%9c%ba%e5%88%b6%e6%9e%81%e5%a4%a7%e7%9a%84%e6%89%a9%e5%b1%95%e4%ba%86pod%e7%9a%84%e8%b0%83%e5%ba%a6%e8%83%bd%e5%8a%9b%e7%9b%ae%e5%89%8d%e6%9c%89%e4%b8%a4%e7%a7%8d%e8%8a%82%e7%82%b9%e4%ba%b2%e5%92%8c%e5%8a%9b%e8%a1%a8%e8%be%be">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-requiredduringschedulingignoredduringexecution硬规则必须满足指定的规则调度器才可以调度pod至node上类似nodeselector语法不同">
+  • requiredDuringSchedulingIgnoredDuringExecution：硬规则，必须满足指定的规则，调度器才可以调度Pod至Node上（类似nodeSelector，语法不同）。
+  <a class="anchor" href="#-requiredduringschedulingignoredduringexecution%e7%a1%ac%e8%a7%84%e5%88%99%e5%bf%85%e9%a1%bb%e6%bb%a1%e8%b6%b3%e6%8c%87%e5%ae%9a%e7%9a%84%e8%a7%84%e5%88%99%e8%b0%83%e5%ba%a6%e5%99%a8%e6%89%8d%e5%8f%af%e4%bb%a5%e8%b0%83%e5%ba%a6pod%e8%87%b3node%e4%b8%8a%e7%b1%bb%e4%bc%bcnodeselector%e8%af%ad%e6%b3%95%e4%b8%8d%e5%90%8c">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-preferredduringschedulingignoredduringexecution软规则优先调度至满足的node的节点但不强求多个优先级规则还可以设置权重值">
+  • preferredDuringSchedulingIgnoredDuringExecution：软规则，优先调度至满足的Node的节点，但不强求，多个优先级规则还可以设置权重值。
+  <a class="anchor" href="#-preferredduringschedulingignoredduringexecution%e8%bd%af%e8%a7%84%e5%88%99%e4%bc%98%e5%85%88%e8%b0%83%e5%ba%a6%e8%87%b3%e6%bb%a1%e8%b6%b3%e7%9a%84node%e7%9a%84%e8%8a%82%e7%82%b9%e4%bd%86%e4%b8%8d%e5%bc%ba%e6%b1%82%e5%a4%9a%e4%b8%aa%e4%bc%98%e5%85%88%e7%ba%a7%e8%a7%84%e5%88%99%e8%bf%98%e5%8f%af%e4%bb%a5%e8%ae%be%e7%bd%ae%e6%9d%83%e9%87%8d%e5%80%bc">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-taints和tolerations污点和容忍">
+  • Taints和Tolerations（污点和容忍）：
+  <a class="anchor" href="#-taints%e5%92%8ctolerations%e6%b1%a1%e7%82%b9%e5%92%8c%e5%ae%b9%e5%bf%8d">#</a>
+</h5>
+</li>
+<li>
+<ul>
+<li>
+<h5 id="-taint使node拒绝特定pod运行">
+  • Taint：使Node拒绝特定Pod运行；
+  <a class="anchor" href="#-taint%e4%bd%bfnode%e6%8b%92%e7%bb%9d%e7%89%b9%e5%ae%9apod%e8%bf%90%e8%a1%8c">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-toleration为pod的属性表示pod能容忍运行标注了taint的node">
+  • Toleration：为Pod的属性，表示Pod能容忍（运行）标注了Taint的Node。
+  <a class="anchor" href="#-toleration%e4%b8%bapod%e7%9a%84%e5%b1%9e%e6%80%a7%e8%a1%a8%e7%a4%bapod%e8%83%bd%e5%ae%b9%e5%bf%8d%e8%bf%90%e8%a1%8c%e6%a0%87%e6%b3%a8%e4%ba%86taint%e7%9a%84node">#</a>
+</h5>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="deployment升级策略">
+  deployment升级策略?
+  <a class="anchor" href="#deployment%e5%8d%87%e7%ba%a7%e7%ad%96%e7%95%a5">#</a>
+</h2>
+<ul>
+<li>
+<h5 id="-在deployment的定义中可以通过specstrategy指定pod更新的策略目前支持两种策略recreate重建和rollingupdate滚动更新默认值为rollingupdate">
+  • 在Deployment的定义中，可以通过spec.strategy指定Pod更新的策略，目前支持两种策略：Recreate（重建）和RollingUpdate（滚动更新），默认值为RollingUpdate。
+  <a class="anchor" href="#-%e5%9c%a8deployment%e7%9a%84%e5%ae%9a%e4%b9%89%e4%b8%ad%e5%8f%af%e4%bb%a5%e9%80%9a%e8%bf%87specstrategy%e6%8c%87%e5%ae%9apod%e6%9b%b4%e6%96%b0%e7%9a%84%e7%ad%96%e7%95%a5%e7%9b%ae%e5%89%8d%e6%94%af%e6%8c%81%e4%b8%a4%e7%a7%8d%e7%ad%96%e7%95%a5recreate%e9%87%8d%e5%bb%ba%e5%92%8crollingupdate%e6%bb%9a%e5%8a%a8%e6%9b%b4%e6%96%b0%e9%bb%98%e8%ae%a4%e5%80%bc%e4%b8%barollingupdate">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-recreate设置specstrategytyperecreate表示deployment在更新pod时会先杀掉所有正在运行的pod然后创建新的pod">
+  • Recreate：设置spec.strategy.type=Recreate，表示Deployment在更新Pod时，会先杀掉所有正在运行的Pod，然后创建新的Pod。
+  <a class="anchor" href="#-recreate%e8%ae%be%e7%bd%aespecstrategytyperecreate%e8%a1%a8%e7%a4%badeployment%e5%9c%a8%e6%9b%b4%e6%96%b0pod%e6%97%b6%e4%bc%9a%e5%85%88%e6%9d%80%e6%8e%89%e6%89%80%e6%9c%89%e6%ad%a3%e5%9c%a8%e8%bf%90%e8%a1%8c%e7%9a%84pod%e7%84%b6%e5%90%8e%e5%88%9b%e5%bb%ba%e6%96%b0%e7%9a%84pod">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-rollingupdate设置specstrategytyperollingupdate表示deployment会以滚动更新的方式来逐个更新pod同时可以通过设置specstrategyrollingupdate下的两个参数maxunavailable和maxsurge来控制滚动更新的过程">
+  • RollingUpdate：设置spec.strategy.type=RollingUpdate，表示Deployment会以滚动更新的方式来逐个更新Pod。同时，可以通过设置spec.strategy.rollingUpdate下的两个参数（maxUnavailable和maxSurge）来控制滚动更新的过程
+  <a class="anchor" href="#-rollingupdate%e8%ae%be%e7%bd%aespecstrategytyperollingupdate%e8%a1%a8%e7%a4%badeployment%e4%bc%9a%e4%bb%a5%e6%bb%9a%e5%8a%a8%e6%9b%b4%e6%96%b0%e7%9a%84%e6%96%b9%e5%bc%8f%e6%9d%a5%e9%80%90%e4%b8%aa%e6%9b%b4%e6%96%b0pod%e5%90%8c%e6%97%b6%e5%8f%af%e4%bb%a5%e9%80%9a%e8%bf%87%e8%ae%be%e7%bd%aespecstrategyrollingupdate%e4%b8%8b%e7%9a%84%e4%b8%a4%e4%b8%aa%e5%8f%82%e6%95%b0maxunavailable%e5%92%8cmaxsurge%e6%9d%a5%e6%8e%a7%e5%88%b6%e6%bb%9a%e5%8a%a8%e6%9b%b4%e6%96%b0%e7%9a%84%e8%bf%87%e7%a8%8b">#</a>
+</h5>
+</li>
+</ul>
+<h2 id="kubernetes-service类型">
+  Kubernetes Service类型?
+  <a class="anchor" href="#kubernetes-service%e7%b1%bb%e5%9e%8b">#</a>
+</h2>
+<h5 id="通过创建service可以为一组具有相同功能的容器应用提供一个统一的入口地址并且将请求负载分发到后端的各个容器应用上其主要类型有">
+  通过创建Service，可以为一组具有相同功能的容器应用提供一个统一的入口地址，并且将请求负载分发到后端的各个容器应用上。其主要类型有：
+  <a class="anchor" href="#%e9%80%9a%e8%bf%87%e5%88%9b%e5%bb%baservice%e5%8f%af%e4%bb%a5%e4%b8%ba%e4%b8%80%e7%bb%84%e5%85%b7%e6%9c%89%e7%9b%b8%e5%90%8c%e5%8a%9f%e8%83%bd%e7%9a%84%e5%ae%b9%e5%99%a8%e5%ba%94%e7%94%a8%e6%8f%90%e4%be%9b%e4%b8%80%e4%b8%aa%e7%bb%9f%e4%b8%80%e7%9a%84%e5%85%a5%e5%8f%a3%e5%9c%b0%e5%9d%80%e5%b9%b6%e4%b8%94%e5%b0%86%e8%af%b7%e6%b1%82%e8%b4%9f%e8%bd%bd%e5%88%86%e5%8f%91%e5%88%b0%e5%90%8e%e7%ab%af%e7%9a%84%e5%90%84%e4%b8%aa%e5%ae%b9%e5%99%a8%e5%ba%94%e7%94%a8%e4%b8%8a%e5%85%b6%e4%b8%bb%e8%a6%81%e7%b1%bb%e5%9e%8b%e6%9c%89">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="-clusterip虚拟的服务ip地址该地址用于kubernetes集群内部的pod访问在node上kube-proxy通过设置的iptables规则进行转发">
+  • ClusterIP：虚拟的服务IP地址，该地址用于Kubernetes集群内部的Pod访问，在Node上kube-proxy通过设置的iptables规则进行转发；
+  <a class="anchor" href="#-clusterip%e8%99%9a%e6%8b%9f%e7%9a%84%e6%9c%8d%e5%8a%a1ip%e5%9c%b0%e5%9d%80%e8%af%a5%e5%9c%b0%e5%9d%80%e7%94%a8%e4%ba%8ekubernetes%e9%9b%86%e7%be%a4%e5%86%85%e9%83%a8%e7%9a%84pod%e8%ae%bf%e9%97%ae%e5%9c%a8node%e4%b8%8akube-proxy%e9%80%9a%e8%bf%87%e8%ae%be%e7%bd%ae%e7%9a%84iptables%e8%a7%84%e5%88%99%e8%bf%9b%e8%a1%8c%e8%bd%ac%e5%8f%91">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-nodeport使用宿主机的端口使能够访问各node的外部客户端通过node的ip地址和端口号就能访问服务">
+  • NodePort：使用宿主机的端口，使能够访问各Node的外部客户端通过Node的IP地址和端口号就能访问服务；
+  <a class="anchor" href="#-nodeport%e4%bd%bf%e7%94%a8%e5%ae%bf%e4%b8%bb%e6%9c%ba%e7%9a%84%e7%ab%af%e5%8f%a3%e4%bd%bf%e8%83%bd%e5%a4%9f%e8%ae%bf%e9%97%ae%e5%90%84node%e7%9a%84%e5%a4%96%e9%83%a8%e5%ae%a2%e6%88%b7%e7%ab%af%e9%80%9a%e8%bf%87node%e7%9a%84ip%e5%9c%b0%e5%9d%80%e5%92%8c%e7%ab%af%e5%8f%a3%e5%8f%b7%e5%b0%b1%e8%83%bd%e8%ae%bf%e9%97%ae%e6%9c%8d%e5%8a%a1">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-loadbalancer使用外接负载均衡器完成到服务的负载分发需要在specstatusloadbalancer字段指定外部负载均衡器的ip地址通常用于公有云">
+  • LoadBalancer：使用外接负载均衡器完成到服务的负载分发，需要在spec.status.loadBalancer字段指定外部负载均衡器的IP地址，通常用于公有云。
+  <a class="anchor" href="#-loadbalancer%e4%bd%bf%e7%94%a8%e5%a4%96%e6%8e%a5%e8%b4%9f%e8%bd%bd%e5%9d%87%e8%a1%a1%e5%99%a8%e5%ae%8c%e6%88%90%e5%88%b0%e6%9c%8d%e5%8a%a1%e7%9a%84%e8%b4%9f%e8%bd%bd%e5%88%86%e5%8f%91%e9%9c%80%e8%a6%81%e5%9c%a8specstatusloadbalancer%e5%ad%97%e6%ae%b5%e6%8c%87%e5%ae%9a%e5%a4%96%e9%83%a8%e8%b4%9f%e8%bd%bd%e5%9d%87%e8%a1%a1%e5%99%a8%e7%9a%84ip%e5%9c%b0%e5%9d%80%e9%80%9a%e5%b8%b8%e7%94%a8%e4%ba%8e%e5%85%ac%e6%9c%89%e4%ba%91">#</a>
+</h5>
+</li>
+</ul>
+<h2 id="service分发后端的策略">
+  Service分发后端的策略?
+  <a class="anchor" href="#service%e5%88%86%e5%8f%91%e5%90%8e%e7%ab%af%e7%9a%84%e7%ad%96%e7%95%a5">#</a>
+</h2>
+<h5 id="service负载分发的策略有roundrobin和sessionaffinity">
+  Service负载分发的策略有：RoundRobin和SessionAffinity
+  <a class="anchor" href="#service%e8%b4%9f%e8%bd%bd%e5%88%86%e5%8f%91%e7%9a%84%e7%ad%96%e7%95%a5%e6%9c%89roundrobin%e5%92%8csessionaffinity">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="-roundrobin默认为轮询模式即轮询将请求转发到后端的各个pod上">
+  • RoundRobin：默认为轮询模式，即轮询将请求转发到后端的各个Pod上。
+  <a class="anchor" href="#-roundrobin%e9%bb%98%e8%ae%a4%e4%b8%ba%e8%bd%ae%e8%af%a2%e6%a8%a1%e5%bc%8f%e5%8d%b3%e8%bd%ae%e8%af%a2%e5%b0%86%e8%af%b7%e6%b1%82%e8%bd%ac%e5%8f%91%e5%88%b0%e5%90%8e%e7%ab%af%e7%9a%84%e5%90%84%e4%b8%aapod%e4%b8%8a">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-sessionaffinity基于客户端ip地址进行会话保持的模式即第1次将某个客户端发起的请求转发到后端的某个pod上之后从相同的客户端发起的请求都将被转发到后端相同的pod上">
+  • SessionAffinity：基于客户端IP地址进行会话保持的模式，即第1次将某个客户端发起的请求转发到后端的某个Pod上，之后从相同的客户端发起的请求都将被转发到后端相同的Pod上。
+  <a class="anchor" href="#-sessionaffinity%e5%9f%ba%e4%ba%8e%e5%ae%a2%e6%88%b7%e7%ab%afip%e5%9c%b0%e5%9d%80%e8%bf%9b%e8%a1%8c%e4%bc%9a%e8%af%9d%e4%bf%9d%e6%8c%81%e7%9a%84%e6%a8%a1%e5%bc%8f%e5%8d%b3%e7%ac%ac1%e6%ac%a1%e5%b0%86%e6%9f%90%e4%b8%aa%e5%ae%a2%e6%88%b7%e7%ab%af%e5%8f%91%e8%b5%b7%e7%9a%84%e8%af%b7%e6%b1%82%e8%bd%ac%e5%8f%91%e5%88%b0%e5%90%8e%e7%ab%af%e7%9a%84%e6%9f%90%e4%b8%aapod%e4%b8%8a%e4%b9%8b%e5%90%8e%e4%bb%8e%e7%9b%b8%e5%90%8c%e7%9a%84%e5%ae%a2%e6%88%b7%e7%ab%af%e5%8f%91%e8%b5%b7%e7%9a%84%e8%af%b7%e6%b1%82%e9%83%bd%e5%b0%86%e8%a2%ab%e8%bd%ac%e5%8f%91%e5%88%b0%e5%90%8e%e7%ab%af%e7%9b%b8%e5%90%8c%e7%9a%84pod%e4%b8%8a">#</a>
+</h5>
+</li>
+</ul>
+<h2 id="kubernetes外部如何访问集群内的服务">
+  Kubernetes外部如何访问集群内的服务?
+  <a class="anchor" href="#kubernetes%e5%a4%96%e9%83%a8%e5%a6%82%e4%bd%95%e8%ae%bf%e9%97%ae%e9%9b%86%e7%be%a4%e5%86%85%e7%9a%84%e6%9c%8d%e5%8a%a1">#</a>
+</h2>
+<ul>
+<li>
+<h5 id="-映射pod到物理机将pod端口号映射到宿主机即在pod中采用hostport方式以使客户端应用能够通过物理机访问容器应用">
+  • 映射Pod到物理机：将Pod端口号映射到宿主机，即在Pod中采用hostPort方式，以使客户端应用能够通过物理机访问容器应用。
+  <a class="anchor" href="#-%e6%98%a0%e5%b0%84pod%e5%88%b0%e7%89%a9%e7%90%86%e6%9c%ba%e5%b0%86pod%e7%ab%af%e5%8f%a3%e5%8f%b7%e6%98%a0%e5%b0%84%e5%88%b0%e5%ae%bf%e4%b8%bb%e6%9c%ba%e5%8d%b3%e5%9c%a8pod%e4%b8%ad%e9%87%87%e7%94%a8hostport%e6%96%b9%e5%bc%8f%e4%bb%a5%e4%bd%bf%e5%ae%a2%e6%88%b7%e7%ab%af%e5%ba%94%e7%94%a8%e8%83%bd%e5%a4%9f%e9%80%9a%e8%bf%87%e7%89%a9%e7%90%86%e6%9c%ba%e8%ae%bf%e9%97%ae%e5%ae%b9%e5%99%a8%e5%ba%94%e7%94%a8">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-映射service到物理机将service端口号映射到宿主机即在service中采用nodeport方式以使客户端应用能够通过物理机访问容器应用">
+  • 映射Service到物理机：将Service端口号映射到宿主机，即在Service中采用nodePort方式，以使客户端应用能够通过物理机访问容器应用。
+  <a class="anchor" href="#-%e6%98%a0%e5%b0%84service%e5%88%b0%e7%89%a9%e7%90%86%e6%9c%ba%e5%b0%86service%e7%ab%af%e5%8f%a3%e5%8f%b7%e6%98%a0%e5%b0%84%e5%88%b0%e5%ae%bf%e4%b8%bb%e6%9c%ba%e5%8d%b3%e5%9c%a8service%e4%b8%ad%e9%87%87%e7%94%a8nodeport%e6%96%b9%e5%bc%8f%e4%bb%a5%e4%bd%bf%e5%ae%a2%e6%88%b7%e7%ab%af%e5%ba%94%e7%94%a8%e8%83%bd%e5%a4%9f%e9%80%9a%e8%bf%87%e7%89%a9%e7%90%86%e6%9c%ba%e8%ae%bf%e9%97%ae%e5%ae%b9%e5%99%a8%e5%ba%94%e7%94%a8">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-映射sercie到loadbalancer通过设置loadbalancer映射到云服务商提供的loadbalancer地址这种用法仅用于在公有云服务提供商的云平台上设置service的场景">
+  • 映射Sercie到LoadBalancer：通过设置LoadBalancer映射到云服务商提供的LoadBalancer地址。这种用法仅用于在公有云服务提供商的云平台上设置Service的场景。
+  <a class="anchor" href="#-%e6%98%a0%e5%b0%84sercie%e5%88%b0loadbalancer%e9%80%9a%e8%bf%87%e8%ae%be%e7%bd%aeloadbalancer%e6%98%a0%e5%b0%84%e5%88%b0%e4%ba%91%e6%9c%8d%e5%8a%a1%e5%95%86%e6%8f%90%e4%be%9b%e7%9a%84loadbalancer%e5%9c%b0%e5%9d%80%e8%bf%99%e7%a7%8d%e7%94%a8%e6%b3%95%e4%bb%85%e7%94%a8%e4%ba%8e%e5%9c%a8%e5%85%ac%e6%9c%89%e4%ba%91%e6%9c%8d%e5%8a%a1%e6%8f%90%e4%be%9b%e5%95%86%e7%9a%84%e4%ba%91%e5%b9%b3%e5%8f%b0%e4%b8%8a%e8%ae%be%e7%bd%aeservice%e7%9a%84%e5%9c%ba%e6%99%af">#</a>
+</h5>
+</li>
+</ul>
+<h2 id="kubernetes-ingress">
+  Kubernetes ingress?
+  <a class="anchor" href="#kubernetes-ingress">#</a>
+</h2>
+<ul>
+<li>
+<h5 id="-kubernetes的ingress资源对象用于将不同url的访问请求转发到后端不同的service以实现http层的业务路由机制">
+  • Kubernetes的Ingress资源对象，用于将不同URL的访问请求转发到后端不同的Service，以实现HTTP层的业务路由机制。
+  <a class="anchor" href="#-kubernetes%e7%9a%84ingress%e8%b5%84%e6%ba%90%e5%af%b9%e8%b1%a1%e7%94%a8%e4%ba%8e%e5%b0%86%e4%b8%8d%e5%90%8curl%e7%9a%84%e8%ae%bf%e9%97%ae%e8%af%b7%e6%b1%82%e8%bd%ac%e5%8f%91%e5%88%b0%e5%90%8e%e7%ab%af%e4%b8%8d%e5%90%8c%e7%9a%84service%e4%bb%a5%e5%ae%9e%e7%8e%b0http%e5%b1%82%e7%9a%84%e4%b8%9a%e5%8a%a1%e8%b7%af%e7%94%b1%e6%9c%ba%e5%88%b6">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-kubernetes使用了ingress策略和ingress-controller两者结合并实现了一个完整的ingress负载均衡器使用ingress进行负载分发时ingress-controller基于ingress规则将客户端请求直接转发到service对应的后端endpointpod上从而跳过kube-proxy的转发功能kube-proxy不再起作用全过程为ingress-controller--ingress-规则---services">
+  • Kubernetes使用了Ingress策略和Ingress Controller，两者结合并实现了一个完整的Ingress负载均衡器。使用Ingress进行负载分发时，Ingress Controller基于Ingress规则将客户端请求直接转发到Service对应的后端Endpoint（Pod）上，从而跳过kube-proxy的转发功能，kube-proxy不再起作用，全过程为：ingress controller + ingress 规则 &mdash;-&gt; services。
+  <a class="anchor" href="#-kubernetes%e4%bd%bf%e7%94%a8%e4%ba%86ingress%e7%ad%96%e7%95%a5%e5%92%8cingress-controller%e4%b8%a4%e8%80%85%e7%bb%93%e5%90%88%e5%b9%b6%e5%ae%9e%e7%8e%b0%e4%ba%86%e4%b8%80%e4%b8%aa%e5%ae%8c%e6%95%b4%e7%9a%84ingress%e8%b4%9f%e8%bd%bd%e5%9d%87%e8%a1%a1%e5%99%a8%e4%bd%bf%e7%94%a8ingress%e8%bf%9b%e8%a1%8c%e8%b4%9f%e8%bd%bd%e5%88%86%e5%8f%91%e6%97%b6ingress-controller%e5%9f%ba%e4%ba%8eingress%e8%a7%84%e5%88%99%e5%b0%86%e5%ae%a2%e6%88%b7%e7%ab%af%e8%af%b7%e6%b1%82%e7%9b%b4%e6%8e%a5%e8%bd%ac%e5%8f%91%e5%88%b0service%e5%af%b9%e5%ba%94%e7%9a%84%e5%90%8e%e7%ab%afendpointpod%e4%b8%8a%e4%bb%8e%e8%80%8c%e8%b7%b3%e8%bf%87kube-proxy%e7%9a%84%e8%bd%ac%e5%8f%91%e5%8a%9f%e8%83%bdkube-proxy%e4%b8%8d%e5%86%8d%e8%b5%b7%e4%bd%9c%e7%94%a8%e5%85%a8%e8%bf%87%e7%a8%8b%e4%b8%baingress-controller--ingress-%e8%a7%84%e5%88%99---services">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-同时当ingress-controller提供的是对外服务则实际上实现的是边缘路由器的功能">
+  • 同时当Ingress Controller提供的是对外服务，则实际上实现的是边缘路由器的功能。
+  <a class="anchor" href="#-%e5%90%8c%e6%97%b6%e5%bd%93ingress-controller%e6%8f%90%e4%be%9b%e7%9a%84%e6%98%af%e5%af%b9%e5%a4%96%e6%9c%8d%e5%8a%a1%e5%88%99%e5%ae%9e%e9%99%85%e4%b8%8a%e5%ae%9e%e7%8e%b0%e7%9a%84%e6%98%af%e8%be%b9%e7%bc%98%e8%b7%af%e7%94%b1%e5%99%a8%e7%9a%84%e5%8a%9f%e8%83%bd">#</a>
+</h5>
+</li>
+</ul>
+<h2 id="kubernetes镜像的下载策略">
+  Kubernetes镜像的下载策略?
+  <a class="anchor" href="#kubernetes%e9%95%9c%e5%83%8f%e7%9a%84%e4%b8%8b%e8%bd%bd%e7%ad%96%e7%95%a5">#</a>
+</h2>
+<h5 id="k8s的镜像下载策略有三种alwaysneverifnotpresent">
+  K8s的镜像下载策略有三种：Always、Never、IFNotPresent。
+  <a class="anchor" href="#k8s%e7%9a%84%e9%95%9c%e5%83%8f%e4%b8%8b%e8%bd%bd%e7%ad%96%e7%95%a5%e6%9c%89%e4%b8%89%e7%a7%8dalwaysneverifnotpresent">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="-always镜像标签为latest时总是从指定的仓库中获取镜像">
+  • Always：镜像标签为latest时，总是从指定的仓库中获取镜像。
+  <a class="anchor" href="#-always%e9%95%9c%e5%83%8f%e6%a0%87%e7%ad%be%e4%b8%balatest%e6%97%b6%e6%80%bb%e6%98%af%e4%bb%8e%e6%8c%87%e5%ae%9a%e7%9a%84%e4%bb%93%e5%ba%93%e4%b8%ad%e8%8e%b7%e5%8f%96%e9%95%9c%e5%83%8f">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-never禁止从仓库中下载镜像也就是说只能使用本地镜像">
+  • Never：禁止从仓库中下载镜像，也就是说只能使用本地镜像。
+  <a class="anchor" href="#-never%e7%a6%81%e6%ad%a2%e4%bb%8e%e4%bb%93%e5%ba%93%e4%b8%ad%e4%b8%8b%e8%bd%bd%e9%95%9c%e5%83%8f%e4%b9%9f%e5%b0%b1%e6%98%af%e8%af%b4%e5%8f%aa%e8%83%bd%e4%bd%bf%e7%94%a8%e6%9c%ac%e5%9c%b0%e9%95%9c%e5%83%8f">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-ifnotpresent仅当本地没有对应镜像时才从目标仓库中下载">
+  • IfNotPresent：仅当本地没有对应镜像时，才从目标仓库中下载。
+  <a class="anchor" href="#-ifnotpresent%e4%bb%85%e5%bd%93%e6%9c%ac%e5%9c%b0%e6%b2%a1%e6%9c%89%e5%af%b9%e5%ba%94%e9%95%9c%e5%83%8f%e6%97%b6%e6%89%8d%e4%bb%8e%e7%9b%ae%e6%a0%87%e4%bb%93%e5%ba%93%e4%b8%ad%e4%b8%8b%e8%bd%bd">#</a>
+</h5>
+</li>
+</ul>
+<h5 id="默认的镜像下载策略是当镜像标签是latest时默认策略是always当镜像标签是自定义时也就是标签不是latest那么默认策略是ifnotpresent">
+  默认的镜像下载策略是：当镜像标签是latest时，默认策略是Always；当镜像标签是自定义时（也就是标签不是latest），那么默认策略是IfNotPresent。
+  <a class="anchor" href="#%e9%bb%98%e8%ae%a4%e7%9a%84%e9%95%9c%e5%83%8f%e4%b8%8b%e8%bd%bd%e7%ad%96%e7%95%a5%e6%98%af%e5%bd%93%e9%95%9c%e5%83%8f%e6%a0%87%e7%ad%be%e6%98%aflatest%e6%97%b6%e9%bb%98%e8%ae%a4%e7%ad%96%e7%95%a5%e6%98%afalways%e5%bd%93%e9%95%9c%e5%83%8f%e6%a0%87%e7%ad%be%e6%98%af%e8%87%aa%e5%ae%9a%e4%b9%89%e6%97%b6%e4%b9%9f%e5%b0%b1%e6%98%af%e6%a0%87%e7%ad%be%e4%b8%8d%e6%98%aflatest%e9%82%a3%e4%b9%88%e9%bb%98%e8%ae%a4%e7%ad%96%e7%95%a5%e6%98%afifnotpresent">#</a>
+</h5>
+<h2 id="kubernetes-kubelet的作用">
+  Kubernetes kubelet的作用?
+  <a class="anchor" href="#kubernetes-kubelet%e7%9a%84%e4%bd%9c%e7%94%a8">#</a>
+</h2>
+<ul>
+<li>
+<h5 id="-在kubernetes集群中在每个node又称worker上都会启动一个kubelet服务进程该进程用于处理master下发到本节点的任务管理pod及pod中的容器每个kubelet进程都会在api-server上注册节点自身的信息定期向master汇报节点资源的使用情况并通过cadvisor监控容器和节点资源">
+  • 在Kubernetes集群中，在每个Node（又称Worker）上都会启动一个kubelet服务进程。该进程用于处理Master下发到本节点的任务，管理Pod及Pod中的容器。每个kubelet进程都会在API Server上注册节点自身的信息，定期向Master汇报节点资源的使用情况，并通过cAdvisor监控容器和节点资源。
+  <a class="anchor" href="#-%e5%9c%a8kubernetes%e9%9b%86%e7%be%a4%e4%b8%ad%e5%9c%a8%e6%af%8f%e4%b8%aanode%e5%8f%88%e7%a7%b0worker%e4%b8%8a%e9%83%bd%e4%bc%9a%e5%90%af%e5%8a%a8%e4%b8%80%e4%b8%aakubelet%e6%9c%8d%e5%8a%a1%e8%bf%9b%e7%a8%8b%e8%af%a5%e8%bf%9b%e7%a8%8b%e7%94%a8%e4%ba%8e%e5%a4%84%e7%90%86master%e4%b8%8b%e5%8f%91%e5%88%b0%e6%9c%ac%e8%8a%82%e7%82%b9%e7%9a%84%e4%bb%bb%e5%8a%a1%e7%ae%a1%e7%90%86pod%e5%8f%8apod%e4%b8%ad%e7%9a%84%e5%ae%b9%e5%99%a8%e6%af%8f%e4%b8%aakubelet%e8%bf%9b%e7%a8%8b%e9%83%bd%e4%bc%9a%e5%9c%a8api-server%e4%b8%8a%e6%b3%a8%e5%86%8c%e8%8a%82%e7%82%b9%e8%87%aa%e8%ba%ab%e7%9a%84%e4%bf%a1%e6%81%af%e5%ae%9a%e6%9c%9f%e5%90%91master%e6%b1%87%e6%8a%a5%e8%8a%82%e7%82%b9%e8%b5%84%e6%ba%90%e7%9a%84%e4%bd%bf%e7%94%a8%e6%83%85%e5%86%b5%e5%b9%b6%e9%80%9a%e8%bf%87cadvisor%e7%9b%91%e6%8e%a7%e5%ae%b9%e5%99%a8%e5%92%8c%e8%8a%82%e7%82%b9%e8%b5%84%e6%ba%90">#</a>
+</h5>
+</li>
+</ul>
+<h2 id="secret有哪些使用方式">
+  Secret有哪些使用方式?
+  <a class="anchor" href="#secret%e6%9c%89%e5%93%aa%e4%ba%9b%e4%bd%bf%e7%94%a8%e6%96%b9%e5%bc%8f">#</a>
+</h2>
+<ul>
+<li>
+<h5 id="-创建完secret之后可通过如下三种方式使用">
+  • 创建完secret之后，可通过如下三种方式使用：
+  <a class="anchor" href="#-%e5%88%9b%e5%bb%ba%e5%ae%8csecret%e4%b9%8b%e5%90%8e%e5%8f%af%e9%80%9a%e8%bf%87%e5%a6%82%e4%b8%8b%e4%b8%89%e7%a7%8d%e6%96%b9%e5%bc%8f%e4%bd%bf%e7%94%a8">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-在创建pod时通过为pod指定service-account来自动使用该secret">
+  • 在创建Pod时，通过为Pod指定Service Account来自动使用该Secret。
+  <a class="anchor" href="#-%e5%9c%a8%e5%88%9b%e5%bb%bapod%e6%97%b6%e9%80%9a%e8%bf%87%e4%b8%bapod%e6%8c%87%e5%ae%9aservice-account%e6%9d%a5%e8%87%aa%e5%8a%a8%e4%bd%bf%e7%94%a8%e8%af%a5secret">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-通过挂载该secret到pod来使用它">
+  • 通过挂载该Secret到Pod来使用它。
+  <a class="anchor" href="#-%e9%80%9a%e8%bf%87%e6%8c%82%e8%bd%bd%e8%af%a5secret%e5%88%b0pod%e6%9d%a5%e4%bd%bf%e7%94%a8%e5%ae%83">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-在docker镜像下载时使用通过指定pod的spcimagepullsecrets来引用它">
+  • 在Docker镜像下载时使用，通过指定Pod的spc.ImagePullSecrets来引用它。
+  <a class="anchor" href="#-%e5%9c%a8docker%e9%95%9c%e5%83%8f%e4%b8%8b%e8%bd%bd%e6%97%b6%e4%bd%bf%e7%94%a8%e9%80%9a%e8%bf%87%e6%8c%87%e5%ae%9apod%e7%9a%84spcimagepullsecrets%e6%9d%a5%e5%bc%95%e7%94%a8%e5%ae%83">#</a>
+</h5>
+</li>
+</ul>
+<h2 id="kubernetes-cni模型">
+  Kubernetes CNI模型?
+  <a class="anchor" href="#kubernetes-cni%e6%a8%a1%e5%9e%8b">#</a>
+</h2>
+<ul>
+<li>
+<h5 id="-cni提供了一种应用容器的插件化网络解决方案定义对容器网络进行操作和配置的规范通过插件的形式对cni接口进行实现cni仅关注在创建容器时分配网络资源和在销毁容器时删除网络资源在cni模型中只涉及两个概念容器和网络">
+  • CNI提供了一种应用容器的插件化网络解决方案，定义对容器网络进行操作和配置的规范，通过插件的形式对CNI接口进行实现。CNI仅关注在创建容器时分配网络资源，和在销毁容器时删除网络资源。在CNI模型中只涉及两个概念：容器和网络。
+  <a class="anchor" href="#-cni%e6%8f%90%e4%be%9b%e4%ba%86%e4%b8%80%e7%a7%8d%e5%ba%94%e7%94%a8%e5%ae%b9%e5%99%a8%e7%9a%84%e6%8f%92%e4%bb%b6%e5%8c%96%e7%bd%91%e7%bb%9c%e8%a7%a3%e5%86%b3%e6%96%b9%e6%a1%88%e5%ae%9a%e4%b9%89%e5%af%b9%e5%ae%b9%e5%99%a8%e7%bd%91%e7%bb%9c%e8%bf%9b%e8%a1%8c%e6%93%8d%e4%bd%9c%e5%92%8c%e9%85%8d%e7%bd%ae%e7%9a%84%e8%a7%84%e8%8c%83%e9%80%9a%e8%bf%87%e6%8f%92%e4%bb%b6%e7%9a%84%e5%bd%a2%e5%bc%8f%e5%af%b9cni%e6%8e%a5%e5%8f%a3%e8%bf%9b%e8%a1%8c%e5%ae%9e%e7%8e%b0cni%e4%bb%85%e5%85%b3%e6%b3%a8%e5%9c%a8%e5%88%9b%e5%bb%ba%e5%ae%b9%e5%99%a8%e6%97%b6%e5%88%86%e9%85%8d%e7%bd%91%e7%bb%9c%e8%b5%84%e6%ba%90%e5%92%8c%e5%9c%a8%e9%94%80%e6%af%81%e5%ae%b9%e5%99%a8%e6%97%b6%e5%88%a0%e9%99%a4%e7%bd%91%e7%bb%9c%e8%b5%84%e6%ba%90%e5%9c%a8cni%e6%a8%a1%e5%9e%8b%e4%b8%ad%e5%8f%aa%e6%b6%89%e5%8f%8a%e4%b8%a4%e4%b8%aa%e6%a6%82%e5%bf%b5%e5%ae%b9%e5%99%a8%e5%92%8c%e7%bd%91%e7%bb%9c">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-容器container是拥有独立linux网络命名空间的环境例如使用docker或rkt创建的容器容器需要拥有自己的linux网络命名空间这是加入网络的必要条件">
+  • 容器（Container）：是拥有独立Linux网络命名空间的环境，例如使用Docker或rkt创建的容器。容器需要拥有自己的Linux网络命名空间，这是加入网络的必要条件。
+  <a class="anchor" href="#-%e5%ae%b9%e5%99%a8container%e6%98%af%e6%8b%a5%e6%9c%89%e7%8b%ac%e7%ab%8blinux%e7%bd%91%e7%bb%9c%e5%91%bd%e5%90%8d%e7%a9%ba%e9%97%b4%e7%9a%84%e7%8e%af%e5%a2%83%e4%be%8b%e5%a6%82%e4%bd%bf%e7%94%a8docker%e6%88%96rkt%e5%88%9b%e5%bb%ba%e7%9a%84%e5%ae%b9%e5%99%a8%e5%ae%b9%e5%99%a8%e9%9c%80%e8%a6%81%e6%8b%a5%e6%9c%89%e8%87%aa%e5%b7%b1%e7%9a%84linux%e7%bd%91%e7%bb%9c%e5%91%bd%e5%90%8d%e7%a9%ba%e9%97%b4%e8%bf%99%e6%98%af%e5%8a%a0%e5%85%a5%e7%bd%91%e7%bb%9c%e7%9a%84%e5%bf%85%e8%a6%81%e6%9d%a1%e4%bb%b6">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-网络network表示可以互连的一组实体这些实体拥有各自独立唯一的ip地址可以是容器物理机或者其他网络设备比如路由器等">
+  • 网络（Network）：表示可以互连的一组实体，这些实体拥有各自独立、唯一的IP地址，可以是容器、物理机或者其他网络设备（比如路由器）等。
+  <a class="anchor" href="#-%e7%bd%91%e7%bb%9cnetwork%e8%a1%a8%e7%a4%ba%e5%8f%af%e4%bb%a5%e4%ba%92%e8%bf%9e%e7%9a%84%e4%b8%80%e7%bb%84%e5%ae%9e%e4%bd%93%e8%bf%99%e4%ba%9b%e5%ae%9e%e4%bd%93%e6%8b%a5%e6%9c%89%e5%90%84%e8%87%aa%e7%8b%ac%e7%ab%8b%e5%94%af%e4%b8%80%e7%9a%84ip%e5%9c%b0%e5%9d%80%e5%8f%af%e4%bb%a5%e6%98%af%e5%ae%b9%e5%99%a8%e7%89%a9%e7%90%86%e6%9c%ba%e6%88%96%e8%80%85%e5%85%b6%e4%bb%96%e7%bd%91%e7%bb%9c%e8%ae%be%e5%a4%87%e6%af%94%e5%a6%82%e8%b7%af%e7%94%b1%e5%99%a8%e7%ad%89">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-对容器网络的设置和操作都通过插件plugin进行具体实现cni插件包括两种类型cni-plugin和ipamip-address-managementplugincni-plugin负责为容器配置网络资源ipam-plugin负责对容器的ip地址进行分配和管理ipam-plugin作为cni-plugin的一部分与cni-plugin协同工作">
+  • 对容器网络的设置和操作都通过插件（Plugin）进行具体实现，CNI插件包括两种类型：CNI Plugin和IPAM（IP Address Management）Plugin。CNI Plugin负责为容器配置网络资源，IPAM Plugin负责对容器的IP地址进行分配和管理。IPAM Plugin作为CNI Plugin的一部分，与CNI Plugin协同工作。
+  <a class="anchor" href="#-%e5%af%b9%e5%ae%b9%e5%99%a8%e7%bd%91%e7%bb%9c%e7%9a%84%e8%ae%be%e7%bd%ae%e5%92%8c%e6%93%8d%e4%bd%9c%e9%83%bd%e9%80%9a%e8%bf%87%e6%8f%92%e4%bb%b6plugin%e8%bf%9b%e8%a1%8c%e5%85%b7%e4%bd%93%e5%ae%9e%e7%8e%b0cni%e6%8f%92%e4%bb%b6%e5%8c%85%e6%8b%ac%e4%b8%a4%e7%a7%8d%e7%b1%bb%e5%9e%8bcni-plugin%e5%92%8cipamip-address-managementplugincni-plugin%e8%b4%9f%e8%b4%a3%e4%b8%ba%e5%ae%b9%e5%99%a8%e9%85%8d%e7%bd%ae%e7%bd%91%e7%bb%9c%e8%b5%84%e6%ba%90ipam-plugin%e8%b4%9f%e8%b4%a3%e5%af%b9%e5%ae%b9%e5%99%a8%e7%9a%84ip%e5%9c%b0%e5%9d%80%e8%bf%9b%e8%a1%8c%e5%88%86%e9%85%8d%e5%92%8c%e7%ae%a1%e7%90%86ipam-plugin%e4%bd%9c%e4%b8%bacni-plugin%e7%9a%84%e4%b8%80%e9%83%a8%e5%88%86%e4%b8%8ecni-plugin%e5%8d%8f%e5%90%8c%e5%b7%a5%e4%bd%9c">#</a>
+</h5>
+</li>
+</ul>
+<h2 id="kubernetes-pv和pvc">
+  Kubernetes PV和PVC?
+  <a class="anchor" href="#kubernetes-pv%e5%92%8cpvc">#</a>
+</h2>
+<ul>
+<li>
+<h5 id="-pv是对底层网络共享存储的抽象将共享存储定义为一种资源">
+  • PV是对底层网络共享存储的抽象，将共享存储定义为一种“资源”。
+  <a class="anchor" href="#-pv%e6%98%af%e5%af%b9%e5%ba%95%e5%b1%82%e7%bd%91%e7%bb%9c%e5%85%b1%e4%ba%ab%e5%ad%98%e5%82%a8%e7%9a%84%e6%8a%bd%e8%b1%a1%e5%b0%86%e5%85%b1%e4%ba%ab%e5%ad%98%e5%82%a8%e5%ae%9a%e4%b9%89%e4%b8%ba%e4%b8%80%e7%a7%8d%e8%b5%84%e6%ba%90">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-pvc则是用户对存储资源的一个申请">
+  • PVC则是用户对存储资源的一个“申请”。
+  <a class="anchor" href="#-pvc%e5%88%99%e6%98%af%e7%94%a8%e6%88%b7%e5%af%b9%e5%ad%98%e5%82%a8%e8%b5%84%e6%ba%90%e7%9a%84%e4%b8%80%e4%b8%aa%e7%94%b3%e8%af%b7">#</a>
+</h5>
+</li>
+</ul>
+<h2 id="pv生命周期内的阶段">
+  PV生命周期内的阶段?
+  <a class="anchor" href="#pv%e7%94%9f%e5%91%bd%e5%91%a8%e6%9c%9f%e5%86%85%e7%9a%84%e9%98%b6%e6%ae%b5">#</a>
+</h2>
+<h5 id="某个pv在生命周期中可能处于以下4个阶段phaes之一">
+  某个PV在生命周期中可能处于以下4个阶段（Phaes）之一。
+  <a class="anchor" href="#%e6%9f%90%e4%b8%aapv%e5%9c%a8%e7%94%9f%e5%91%bd%e5%91%a8%e6%9c%9f%e4%b8%ad%e5%8f%af%e8%83%bd%e5%a4%84%e4%ba%8e%e4%bb%a5%e4%b8%8b4%e4%b8%aa%e9%98%b6%e6%ae%b5phaes%e4%b9%8b%e4%b8%80">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="-available可用状态还未与某个pvc绑定">
+  • Available：可用状态，还未与某个PVC绑定。
+  <a class="anchor" href="#-available%e5%8f%af%e7%94%a8%e7%8a%b6%e6%80%81%e8%bf%98%e6%9c%aa%e4%b8%8e%e6%9f%90%e4%b8%aapvc%e7%bb%91%e5%ae%9a">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-bound已与某个pvc绑定">
+  • Bound：已与某个PVC绑定。
+  <a class="anchor" href="#-bound%e5%b7%b2%e4%b8%8e%e6%9f%90%e4%b8%aapvc%e7%bb%91%e5%ae%9a">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-released绑定的pvc已经删除资源已释放但没有被集群回收">
+  • Released：绑定的PVC已经删除，资源已释放，但没有被集群回收。
+  <a class="anchor" href="#-released%e7%bb%91%e5%ae%9a%e7%9a%84pvc%e5%b7%b2%e7%bb%8f%e5%88%a0%e9%99%a4%e8%b5%84%e6%ba%90%e5%b7%b2%e9%87%8a%e6%94%be%e4%bd%86%e6%b2%a1%e6%9c%89%e8%a2%ab%e9%9b%86%e7%be%a4%e5%9b%9e%e6%94%b6">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-failed自动资源回收失败">
+  • Failed：自动资源回收失败。
+  <a class="anchor" href="#-failed%e8%87%aa%e5%8a%a8%e8%b5%84%e6%ba%90%e5%9b%9e%e6%94%b6%e5%a4%b1%e8%b4%a5">#</a>
+</h5>
+</li>
+</ul>
+<h2 id="calico-网络模式">
+  calico 网络模式
+  <a class="anchor" href="#calico-%e7%bd%91%e7%bb%9c%e6%a8%a1%e5%bc%8f">#</a>
+</h2>
+<table>
+  <thead>
+      <tr>
+          <th><strong>模式</strong></th>
+          <th><strong>数据包封包</strong></th>
+          <th><strong>优点</strong></th>
+          <th><strong>缺点</strong></th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>vxlan</td>
+          <td>封包， 在vxlan设备上将pod发来的数据包源、目的mac替换为本机vxlan网卡和对端节点vxlan网卡的mac。外层udp目的ip地址根据路由和对端vxlan的mac查fdb表获取</td>
+          <td>只要k8s节点间三层互通， 可以跨网段， 对主机网关路由没有特殊要求。各个node节点通过vxlan设备实现基于三层的”二层”互通, 三层即vxlan包封装在udp数据包中， 要求udp在k8s节点间三层可达；二层即vxlan封包的源mac地址和目的mac地址是自己的vxlan设备mac和对端vxlan设备mac。</td>
+          <td>需要进行vxlan的数据包封包和解包会存在一定的性能损耗</td>
+      </tr>
+      <tr>
+          <td>ipip</td>
+          <td>封包，在tunl0设备上将pod发来的数据包的mac层去掉，留下ip层封包。 外层数据包目的ip地址根据路由得到。</td>
+          <td>只要k8s节点间三层互通， 可以跨网段， 对主机网关路由没有特殊要求。</td>
+          <td>需要进行ipip的数据包封包和解包会存在一定的性能损耗</td>
+      </tr>
+      <tr>
+          <td>bgp</td>
+          <td>不需要进行数据包封包</td>
+          <td>不用封包解包，通过bgp协议可实现pod网络在主机间的三层可达， k8s节点不跨网段时和flannel的host-gw相似；</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td>支持跨网段， 满足复杂的网络架构</td>
+          <td>跨网段时，需要主机网关路由也充当BGP Speaker能够学习到pod子网路由并实现pod子网路由的转发</td>
+          <td></td>
+          <td></td>
+      </tr>
+  </tbody>
+</table>
+<h2 id="fannel三种模式">
+  fannel三种模式
+  <a class="anchor" href="#fannel%e4%b8%89%e7%a7%8d%e6%a8%a1%e5%bc%8f">#</a>
+</h2>
+<table>
+  <thead>
+      <tr>
+          <th><strong>fannel三种模式</strong></th>
+          <th><strong>效率</strong></th>
+          <th><strong>calico 模式</strong></th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>UDP</td>
+          <td>性能较差，封包解包涉及到多次用户态和内核态交互</td>
+          <td>类似 IPIP</td>
+      </tr>
+      <tr>
+          <td>VXLAN</td>
+          <td>性能较好，封包解包在内核态实现，内核转发数据，flanneld负责动态配置ARP和FDB（转发数据库）表项更新</td>
+          <td>类似VXLAN</td>
+      </tr>
+      <tr>
+          <td>host-gw</td>
+          <td>性能最好，不需要再次封包，正常发包，目的容器所在的主机充当网关</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td>flanneld 负责主机上路由表的刷新</td>
+          <td>类似 BGP</td>
+          <td></td>
+      </tr>
+  </tbody>
+</table>
+<h2 id="你知道的几种cni网络插件并详述其工作原理k8s常用的cni网络插件-calico--flannel简述一下它们的工作原理和区别">
+  你知道的几种CNI网络插件，并详述其工作原理。K8s常用的CNI网络插件 （calico &amp;&amp; flannel），简述一下它们的工作原理和区别。
+  <a class="anchor" href="#%e4%bd%a0%e7%9f%a5%e9%81%93%e7%9a%84%e5%87%a0%e7%a7%8dcni%e7%bd%91%e7%bb%9c%e6%8f%92%e4%bb%b6%e5%b9%b6%e8%af%a6%e8%bf%b0%e5%85%b6%e5%b7%a5%e4%bd%9c%e5%8e%9f%e7%90%86k8s%e5%b8%b8%e7%94%a8%e7%9a%84cni%e7%bd%91%e7%bb%9c%e6%8f%92%e4%bb%b6-calico--flannel%e7%ae%80%e8%bf%b0%e4%b8%80%e4%b8%8b%e5%ae%83%e4%bb%ac%e7%9a%84%e5%b7%a5%e4%bd%9c%e5%8e%9f%e7%90%86%e5%92%8c%e5%8c%ba%e5%88%ab">#</a>
+</h2>
+<ol>
+<li>
+<h5 id="1-calico根据iptables规则进行路由转发并没有进行封包解包的过程这和flannel比起来效率就会快多-calico包括如下重要组件felixetcdbgp-clientbgp-route-reflector下面分别说明一下这些组件">
+  \1. calico根据iptables规则进行路由转发，并没有进行封包，解包的过程，这和flannel比起来效率就会快多 calico包括如下重要组件：Felix，etcd，BGP Client，BGP Route Reflector。下面分别说明一下这些组件。
+  <a class="anchor" href="#1-calico%e6%a0%b9%e6%8d%aeiptables%e8%a7%84%e5%88%99%e8%bf%9b%e8%a1%8c%e8%b7%af%e7%94%b1%e8%bd%ac%e5%8f%91%e5%b9%b6%e6%b2%a1%e6%9c%89%e8%bf%9b%e8%a1%8c%e5%b0%81%e5%8c%85%e8%a7%a3%e5%8c%85%e7%9a%84%e8%bf%87%e7%a8%8b%e8%bf%99%e5%92%8cflannel%e6%af%94%e8%b5%b7%e6%9d%a5%e6%95%88%e7%8e%87%e5%b0%b1%e4%bc%9a%e5%bf%ab%e5%a4%9a-calico%e5%8c%85%e6%8b%ac%e5%a6%82%e4%b8%8b%e9%87%8d%e8%a6%81%e7%bb%84%e4%bb%b6felixetcdbgp-clientbgp-route-reflector%e4%b8%8b%e9%9d%a2%e5%88%86%e5%88%ab%e8%af%b4%e6%98%8e%e4%b8%80%e4%b8%8b%e8%bf%99%e4%ba%9b%e7%bb%84%e4%bb%b6">#</a>
+</h5>
+</li>
+</ol>
+<h5 id="felix主要负责路由配置以及acls规则的配置以及下发它存在在每个node节点上-etcd分布式键值存储主要负责网络元数据一致性确保calico网络状态的准确性可以与kubernetes共用-bgpclientbird-主要负责把-felix写入-kernel的路由信息分发到当前-calico网络确保-workload间的通信的有效性-bgproute-reflectorbird-大规模部署时使用摒弃所有节点互联的mesh模式通过一个或者多个-bgproute-reflector-来完成集中式的路由分发-通过将整个互联网的可扩展-ip网络原则压缩到数据中心级别calico在每一个计算节点利用-linuxkernel-实现了一个高效的-vrouter来负责数据转发而每个vrouter通过-bgp协议负责把自己上运行的-workload的路由信息向整个calico网络内传播小规模部署可以直接互联大规模下可通过指定的bgproute-reflector-来完成这样保证最终所有的workload之间的数据流量都是通过-ip包的方式完成互联的">
+  Felix：主要负责路由配置以及ACLS规则的配置以及下发，它存在在每个node节点上。 etcd：分布式键值存储，主要负责网络元数据一致性，确保Calico网络状态的准确性，可以与kubernetes共用； BGPClient(BIRD), 主要负责把 Felix写入 kernel的路由信息分发到当前 Calico网络，确保 workload间的通信的有效性； BGPRoute Reflector(BIRD), 大规模部署时使用，摒弃所有节点互联的mesh模式，通过一个或者多个 BGPRoute Reflector 来完成集中式的路由分发 通过将整个互联网的可扩展 IP网络原则压缩到数据中心级别，Calico在每一个计算节点利用 Linuxkernel 实现了一个高效的 vRouter来负责数据转发，而每个vRouter通过 BGP协议负责把自己上运行的 workload的路由信息向整个Calico网络内传播，小规模部署可以直接互联，大规模下可通过指定的BGProute reflector 来完成。这样保证最终所有的workload之间的数据流量都是通过 IP包的方式完成互联的。
+  <a class="anchor" href="#felix%e4%b8%bb%e8%a6%81%e8%b4%9f%e8%b4%a3%e8%b7%af%e7%94%b1%e9%85%8d%e7%bd%ae%e4%bb%a5%e5%8f%8aacls%e8%a7%84%e5%88%99%e7%9a%84%e9%85%8d%e7%bd%ae%e4%bb%a5%e5%8f%8a%e4%b8%8b%e5%8f%91%e5%ae%83%e5%ad%98%e5%9c%a8%e5%9c%a8%e6%af%8f%e4%b8%aanode%e8%8a%82%e7%82%b9%e4%b8%8a-etcd%e5%88%86%e5%b8%83%e5%bc%8f%e9%94%ae%e5%80%bc%e5%ad%98%e5%82%a8%e4%b8%bb%e8%a6%81%e8%b4%9f%e8%b4%a3%e7%bd%91%e7%bb%9c%e5%85%83%e6%95%b0%e6%8d%ae%e4%b8%80%e8%87%b4%e6%80%a7%e7%a1%ae%e4%bf%9dcalico%e7%bd%91%e7%bb%9c%e7%8a%b6%e6%80%81%e7%9a%84%e5%87%86%e7%a1%ae%e6%80%a7%e5%8f%af%e4%bb%a5%e4%b8%8ekubernetes%e5%85%b1%e7%94%a8-bgpclientbird-%e4%b8%bb%e8%a6%81%e8%b4%9f%e8%b4%a3%e6%8a%8a-felix%e5%86%99%e5%85%a5-kernel%e7%9a%84%e8%b7%af%e7%94%b1%e4%bf%a1%e6%81%af%e5%88%86%e5%8f%91%e5%88%b0%e5%bd%93%e5%89%8d-calico%e7%bd%91%e7%bb%9c%e7%a1%ae%e4%bf%9d-workload%e9%97%b4%e7%9a%84%e9%80%9a%e4%bf%a1%e7%9a%84%e6%9c%89%e6%95%88%e6%80%a7-bgproute-reflectorbird-%e5%a4%a7%e8%a7%84%e6%a8%a1%e9%83%a8%e7%bd%b2%e6%97%b6%e4%bd%bf%e7%94%a8%e6%91%92%e5%bc%83%e6%89%80%e6%9c%89%e8%8a%82%e7%82%b9%e4%ba%92%e8%81%94%e7%9a%84mesh%e6%a8%a1%e5%bc%8f%e9%80%9a%e8%bf%87%e4%b8%80%e4%b8%aa%e6%88%96%e8%80%85%e5%a4%9a%e4%b8%aa-bgproute-reflector-%e6%9d%a5%e5%ae%8c%e6%88%90%e9%9b%86%e4%b8%ad%e5%bc%8f%e7%9a%84%e8%b7%af%e7%94%b1%e5%88%86%e5%8f%91-%e9%80%9a%e8%bf%87%e5%b0%86%e6%95%b4%e4%b8%aa%e4%ba%92%e8%81%94%e7%bd%91%e7%9a%84%e5%8f%af%e6%89%a9%e5%b1%95-ip%e7%bd%91%e7%bb%9c%e5%8e%9f%e5%88%99%e5%8e%8b%e7%bc%a9%e5%88%b0%e6%95%b0%e6%8d%ae%e4%b8%ad%e5%bf%83%e7%ba%a7%e5%88%abcalico%e5%9c%a8%e6%af%8f%e4%b8%80%e4%b8%aa%e8%ae%a1%e7%ae%97%e8%8a%82%e7%82%b9%e5%88%a9%e7%94%a8-linuxkernel-%e5%ae%9e%e7%8e%b0%e4%ba%86%e4%b8%80%e4%b8%aa%e9%ab%98%e6%95%88%e7%9a%84-vrouter%e6%9d%a5%e8%b4%9f%e8%b4%a3%e6%95%b0%e6%8d%ae%e8%bd%ac%e5%8f%91%e8%80%8c%e6%af%8f%e4%b8%aavrouter%e9%80%9a%e8%bf%87-bgp%e5%8d%8f%e8%ae%ae%e8%b4%9f%e8%b4%a3%e6%8a%8a%e8%87%aa%e5%b7%b1%e4%b8%8a%e8%bf%90%e8%a1%8c%e7%9a%84-workload%e7%9a%84%e8%b7%af%e7%94%b1%e4%bf%a1%e6%81%af%e5%90%91%e6%95%b4%e4%b8%aacalico%e7%bd%91%e7%bb%9c%e5%86%85%e4%bc%a0%e6%92%ad%e5%b0%8f%e8%a7%84%e6%a8%a1%e9%83%a8%e7%bd%b2%e5%8f%af%e4%bb%a5%e7%9b%b4%e6%8e%a5%e4%ba%92%e8%81%94%e5%a4%a7%e8%a7%84%e6%a8%a1%e4%b8%8b%e5%8f%af%e9%80%9a%e8%bf%87%e6%8c%87%e5%ae%9a%e7%9a%84bgproute-reflector-%e6%9d%a5%e5%ae%8c%e6%88%90%e8%bf%99%e6%a0%b7%e4%bf%9d%e8%af%81%e6%9c%80%e7%bb%88%e6%89%80%e6%9c%89%e7%9a%84workload%e4%b9%8b%e9%97%b4%e7%9a%84%e6%95%b0%e6%8d%ae%e6%b5%81%e9%87%8f%e9%83%bd%e6%98%af%e9%80%9a%e8%bf%87-ip%e5%8c%85%e7%9a%84%e6%96%b9%e5%bc%8f%e5%ae%8c%e6%88%90%e4%ba%92%e8%81%94%e7%9a%84">#</a>
+</h5>
+<ol>
+<li>
+<h5 id="1-flannel的工作原理-flannel实质上是一种覆盖网络overlay-network也就是将tcp数据包装在另一种网络包里面进行路由转发和通信目前已经支持udpvxlanaws-vpc和gce路由等数据转发方式">
+  \1. Flannel的工作原理： Flannel实质上是一种“覆盖网络(overlay network)”，也就是将TCP数据包装在另一种网络包里面进行路由转发和通信，目前已经支持UDP、VxLAN、AWS VPC和GCE路由等数据转发方式。
+  <a class="anchor" href="#1-flannel%e7%9a%84%e5%b7%a5%e4%bd%9c%e5%8e%9f%e7%90%86-flannel%e5%ae%9e%e8%b4%a8%e4%b8%8a%e6%98%af%e4%b8%80%e7%a7%8d%e8%a6%86%e7%9b%96%e7%bd%91%e7%bb%9coverlay-network%e4%b9%9f%e5%b0%b1%e6%98%af%e5%b0%86tcp%e6%95%b0%e6%8d%ae%e5%8c%85%e8%a3%85%e5%9c%a8%e5%8f%a6%e4%b8%80%e7%a7%8d%e7%bd%91%e7%bb%9c%e5%8c%85%e9%87%8c%e9%9d%a2%e8%bf%9b%e8%a1%8c%e8%b7%af%e7%94%b1%e8%bd%ac%e5%8f%91%e5%92%8c%e9%80%9a%e4%bf%a1%e7%9b%ae%e5%89%8d%e5%b7%b2%e7%bb%8f%e6%94%af%e6%8c%81udpvxlanaws-vpc%e5%92%8cgce%e8%b7%af%e7%94%b1%e7%ad%89%e6%95%b0%e6%8d%ae%e8%bd%ac%e5%8f%91%e6%96%b9%e5%bc%8f">#</a>
+</h5>
+</li>
+</ol>
+<h5 id="默认的节点间数据通信方式是udp转发-工作原理-数据从源容器中发出后经由所在主机的docker0虚拟网卡转发到flannel0虚拟网卡先可以不经过docker0网卡使用cni模式这是个p2p的虚拟网卡flanneld服务监听在网卡的另外一端-flannel通过etcd服务维护了一张节点间的路由表详细记录了各节点子网网段--源主机的flanneld服务将原本的数据内容udp封装后根据自己的路由表投递给目的节点的flanneld服务数据到达以后被解包然后直接进入目的节点的flannel0虚拟网卡然后被转发到目的主机的docker0虚拟网卡最后就像本机容器通信一下的有docker0路由到达目标容器-flannel在进行路由转发的基础上进行了封包解包的操作这样浪费了cpu的计算资源">
+  默认的节点间数据通信方式是UDP转发。 工作原理： 数据从源容器中发出后，经由所在主机的docker0虚拟网卡转发到flannel0虚拟网卡（先可以不经过docker0网卡，使用cni模式），这是个P2P的虚拟网卡，flanneld服务监听在网卡的另外一端。 Flannel通过Etcd服务维护了一张节点间的路由表，详细记录了各节点子网网段 。 源主机的flanneld服务将原本的数据内容UDP封装后根据自己的路由表投递给目的节点的flanneld服务，数据到达以后被解包，然后直接进入目的节点的flannel0虚拟网卡，然后被转发到目的主机的docker0虚拟网卡，最后就像本机容器通信一下的有docker0路由到达目标容器。 flannel在进行路由转发的基础上进行了封包解包的操作，这样浪费了CPU的计算资源。
+  <a class="anchor" href="#%e9%bb%98%e8%ae%a4%e7%9a%84%e8%8a%82%e7%82%b9%e9%97%b4%e6%95%b0%e6%8d%ae%e9%80%9a%e4%bf%a1%e6%96%b9%e5%bc%8f%e6%98%afudp%e8%bd%ac%e5%8f%91-%e5%b7%a5%e4%bd%9c%e5%8e%9f%e7%90%86-%e6%95%b0%e6%8d%ae%e4%bb%8e%e6%ba%90%e5%ae%b9%e5%99%a8%e4%b8%ad%e5%8f%91%e5%87%ba%e5%90%8e%e7%bb%8f%e7%94%b1%e6%89%80%e5%9c%a8%e4%b8%bb%e6%9c%ba%e7%9a%84docker0%e8%99%9a%e6%8b%9f%e7%bd%91%e5%8d%a1%e8%bd%ac%e5%8f%91%e5%88%b0flannel0%e8%99%9a%e6%8b%9f%e7%bd%91%e5%8d%a1%e5%85%88%e5%8f%af%e4%bb%a5%e4%b8%8d%e7%bb%8f%e8%bf%87docker0%e7%bd%91%e5%8d%a1%e4%bd%bf%e7%94%a8cni%e6%a8%a1%e5%bc%8f%e8%bf%99%e6%98%af%e4%b8%aap2p%e7%9a%84%e8%99%9a%e6%8b%9f%e7%bd%91%e5%8d%a1flanneld%e6%9c%8d%e5%8a%a1%e7%9b%91%e5%90%ac%e5%9c%a8%e7%bd%91%e5%8d%a1%e7%9a%84%e5%8f%a6%e5%a4%96%e4%b8%80%e7%ab%af-flannel%e9%80%9a%e8%bf%87etcd%e6%9c%8d%e5%8a%a1%e7%bb%b4%e6%8a%a4%e4%ba%86%e4%b8%80%e5%bc%a0%e8%8a%82%e7%82%b9%e9%97%b4%e7%9a%84%e8%b7%af%e7%94%b1%e8%a1%a8%e8%af%a6%e7%bb%86%e8%ae%b0%e5%bd%95%e4%ba%86%e5%90%84%e8%8a%82%e7%82%b9%e5%ad%90%e7%bd%91%e7%bd%91%e6%ae%b5--%e6%ba%90%e4%b8%bb%e6%9c%ba%e7%9a%84flanneld%e6%9c%8d%e5%8a%a1%e5%b0%86%e5%8e%9f%e6%9c%ac%e7%9a%84%e6%95%b0%e6%8d%ae%e5%86%85%e5%ae%b9udp%e5%b0%81%e8%a3%85%e5%90%8e%e6%a0%b9%e6%8d%ae%e8%87%aa%e5%b7%b1%e7%9a%84%e8%b7%af%e7%94%b1%e8%a1%a8%e6%8a%95%e9%80%92%e7%bb%99%e7%9b%ae%e7%9a%84%e8%8a%82%e7%82%b9%e7%9a%84flanneld%e6%9c%8d%e5%8a%a1%e6%95%b0%e6%8d%ae%e5%88%b0%e8%be%be%e4%bb%a5%e5%90%8e%e8%a2%ab%e8%a7%a3%e5%8c%85%e7%84%b6%e5%90%8e%e7%9b%b4%e6%8e%a5%e8%bf%9b%e5%85%a5%e7%9b%ae%e7%9a%84%e8%8a%82%e7%82%b9%e7%9a%84flannel0%e8%99%9a%e6%8b%9f%e7%bd%91%e5%8d%a1%e7%84%b6%e5%90%8e%e8%a2%ab%e8%bd%ac%e5%8f%91%e5%88%b0%e7%9b%ae%e7%9a%84%e4%b8%bb%e6%9c%ba%e7%9a%84docker0%e8%99%9a%e6%8b%9f%e7%bd%91%e5%8d%a1%e6%9c%80%e5%90%8e%e5%b0%b1%e5%83%8f%e6%9c%ac%e6%9c%ba%e5%ae%b9%e5%99%a8%e9%80%9a%e4%bf%a1%e4%b8%80%e4%b8%8b%e7%9a%84%e6%9c%89docker0%e8%b7%af%e7%94%b1%e5%88%b0%e8%be%be%e7%9b%ae%e6%a0%87%e5%ae%b9%e5%99%a8-flannel%e5%9c%a8%e8%bf%9b%e8%a1%8c%e8%b7%af%e7%94%b1%e8%bd%ac%e5%8f%91%e7%9a%84%e5%9f%ba%e7%a1%80%e4%b8%8a%e8%bf%9b%e8%a1%8c%e4%ba%86%e5%b0%81%e5%8c%85%e8%a7%a3%e5%8c%85%e7%9a%84%e6%93%8d%e4%bd%9c%e8%bf%99%e6%a0%b7%e6%b5%aa%e8%b4%b9%e4%ba%86cpu%e7%9a%84%e8%ae%a1%e7%ae%97%e8%b5%84%e6%ba%90">#</a>
+</h5>
+<h2 id="worker节点宕机简述pods驱逐流程">
+  Worker节点宕机，简述Pods驱逐流程。
+  <a class="anchor" href="#worker%e8%8a%82%e7%82%b9%e5%ae%95%e6%9c%ba%e7%ae%80%e8%bf%b0pods%e9%a9%b1%e9%80%90%e6%b5%81%e7%a8%8b">#</a>
+</h2>
+<ol>
+<li>
+<h5 id="1-在-kubernetes-集群中当节点由于某些原因网络宕机等不能正常工作时会被认定为不可用状态unknown-或者-false-状态当时间超过了-pod-eviction-timeout-值时那么节点上的所有-pod-都会被节点控制器计划删除">
+  \1. 在 Kubernetes 集群中，当节点由于某些原因（网络、宕机等）不能正常工作时会被认定为不可用状态（Unknown 或者 False 状态），当时间超过了 pod-eviction-timeout 值时，那么节点上的所有 Pod 都会被节点控制器计划删除。
+  <a class="anchor" href="#1-%e5%9c%a8-kubernetes-%e9%9b%86%e7%be%a4%e4%b8%ad%e5%bd%93%e8%8a%82%e7%82%b9%e7%94%b1%e4%ba%8e%e6%9f%90%e4%ba%9b%e5%8e%9f%e5%9b%a0%e7%bd%91%e7%bb%9c%e5%ae%95%e6%9c%ba%e7%ad%89%e4%b8%8d%e8%83%bd%e6%ad%a3%e5%b8%b8%e5%b7%a5%e4%bd%9c%e6%97%b6%e4%bc%9a%e8%a2%ab%e8%ae%a4%e5%ae%9a%e4%b8%ba%e4%b8%8d%e5%8f%af%e7%94%a8%e7%8a%b6%e6%80%81unknown-%e6%88%96%e8%80%85-false-%e7%8a%b6%e6%80%81%e5%bd%93%e6%97%b6%e9%97%b4%e8%b6%85%e8%bf%87%e4%ba%86-pod-eviction-timeout-%e5%80%bc%e6%97%b6%e9%82%a3%e4%b9%88%e8%8a%82%e7%82%b9%e4%b8%8a%e7%9a%84%e6%89%80%e6%9c%89-pod-%e9%83%bd%e4%bc%9a%e8%a2%ab%e8%8a%82%e7%82%b9%e6%8e%a7%e5%88%b6%e5%99%a8%e8%ae%a1%e5%88%92%e5%88%a0%e9%99%a4">#</a>
+</h5>
+</li>
+<li>
+<h5 id="2-kubernetes-集群中有一个节点生命周期控制器node_lifecycle_controllergo它会与每一个节点上的-kubelet-进行通信以收集各个节点已经节点上容器的相关状态信息当超出一定时间后不能与-kubelet-通信那么就会标记该节点为-unknown-状态并且节点生命周期控制器会自动创建代表状况的污点用于防止调度器调度-pod-到该节点">
+  \2. Kubernetes 集群中有一个节点生命周期控制器：node_lifecycle_controller.go。它会与每一个节点上的 kubelet 进行通信，以收集各个节点已经节点上容器的相关状态信息。当超出一定时间后不能与 kubelet 通信，那么就会标记该节点为 Unknown 状态。并且节点生命周期控制器会自动创建代表状况的污点，用于防止调度器调度 pod 到该节点。
+  <a class="anchor" href="#2-kubernetes-%e9%9b%86%e7%be%a4%e4%b8%ad%e6%9c%89%e4%b8%80%e4%b8%aa%e8%8a%82%e7%82%b9%e7%94%9f%e5%91%bd%e5%91%a8%e6%9c%9f%e6%8e%a7%e5%88%b6%e5%99%a8node_lifecycle_controllergo%e5%ae%83%e4%bc%9a%e4%b8%8e%e6%af%8f%e4%b8%80%e4%b8%aa%e8%8a%82%e7%82%b9%e4%b8%8a%e7%9a%84-kubelet-%e8%bf%9b%e8%a1%8c%e9%80%9a%e4%bf%a1%e4%bb%a5%e6%94%b6%e9%9b%86%e5%90%84%e4%b8%aa%e8%8a%82%e7%82%b9%e5%b7%b2%e7%bb%8f%e8%8a%82%e7%82%b9%e4%b8%8a%e5%ae%b9%e5%99%a8%e7%9a%84%e7%9b%b8%e5%85%b3%e7%8a%b6%e6%80%81%e4%bf%a1%e6%81%af%e5%bd%93%e8%b6%85%e5%87%ba%e4%b8%80%e5%ae%9a%e6%97%b6%e9%97%b4%e5%90%8e%e4%b8%8d%e8%83%bd%e4%b8%8e-kubelet-%e9%80%9a%e4%bf%a1%e9%82%a3%e4%b9%88%e5%b0%b1%e4%bc%9a%e6%a0%87%e8%ae%b0%e8%af%a5%e8%8a%82%e7%82%b9%e4%b8%ba-unknown-%e7%8a%b6%e6%80%81%e5%b9%b6%e4%b8%94%e8%8a%82%e7%82%b9%e7%94%9f%e5%91%bd%e5%91%a8%e6%9c%9f%e6%8e%a7%e5%88%b6%e5%99%a8%e4%bc%9a%e8%87%aa%e5%8a%a8%e5%88%9b%e5%bb%ba%e4%bb%a3%e8%a1%a8%e7%8a%b6%e5%86%b5%e7%9a%84%e6%b1%a1%e7%82%b9%e7%94%a8%e4%ba%8e%e9%98%b2%e6%ad%a2%e8%b0%83%e5%ba%a6%e5%99%a8%e8%b0%83%e5%ba%a6-pod-%e5%88%b0%e8%af%a5%e8%8a%82%e7%82%b9">#</a>
+</h5>
+</li>
+<li>
+<h5 id="3-那么-unknown-状态的节点上已经运行的-pod-会怎么处理呢节点上的所有-pod-都会被污点管理器taint_managergo计划删除而在节点被认定为不可用状态到删除节点上的-pod-之间是有一段时间的这段时间被称为容忍度如果在不配置的情况下kubernetes-会自动给-pod-添加一个-key-为-nodekubernetesionot-ready-的容忍度-并配置-tolerationseconds300同样kubernetes-会给-pod-添加一个-key-为-nodekubernetesiounreachable-的容忍度-并配置-tolerationseconds300">
+  \3. 那么 Unknown 状态的节点上已经运行的 pod 会怎么处理呢？节点上的所有 Pod 都会被污点管理器（taint_manager.go）计划删除。而在节点被认定为不可用状态到删除节点上的 Pod 之间是有一段时间的，这段时间被称为容忍度。如果在不配置的情况下，Kubernetes 会自动给 Pod 添加一个 key 为 node.kubernetes.io/not-ready 的容忍度 并配置 tolerationSeconds=300，同样，Kubernetes 会给 Pod 添加一个 key 为 node.kubernetes.io/unreachable 的容忍度 并配置 tolerationSeconds=300。
+  <a class="anchor" href="#3-%e9%82%a3%e4%b9%88-unknown-%e7%8a%b6%e6%80%81%e7%9a%84%e8%8a%82%e7%82%b9%e4%b8%8a%e5%b7%b2%e7%bb%8f%e8%bf%90%e8%a1%8c%e7%9a%84-pod-%e4%bc%9a%e6%80%8e%e4%b9%88%e5%a4%84%e7%90%86%e5%91%a2%e8%8a%82%e7%82%b9%e4%b8%8a%e7%9a%84%e6%89%80%e6%9c%89-pod-%e9%83%bd%e4%bc%9a%e8%a2%ab%e6%b1%a1%e7%82%b9%e7%ae%a1%e7%90%86%e5%99%a8taint_managergo%e8%ae%a1%e5%88%92%e5%88%a0%e9%99%a4%e8%80%8c%e5%9c%a8%e8%8a%82%e7%82%b9%e8%a2%ab%e8%ae%a4%e5%ae%9a%e4%b8%ba%e4%b8%8d%e5%8f%af%e7%94%a8%e7%8a%b6%e6%80%81%e5%88%b0%e5%88%a0%e9%99%a4%e8%8a%82%e7%82%b9%e4%b8%8a%e7%9a%84-pod-%e4%b9%8b%e9%97%b4%e6%98%af%e6%9c%89%e4%b8%80%e6%ae%b5%e6%97%b6%e9%97%b4%e7%9a%84%e8%bf%99%e6%ae%b5%e6%97%b6%e9%97%b4%e8%a2%ab%e7%a7%b0%e4%b8%ba%e5%ae%b9%e5%bf%8d%e5%ba%a6%e5%a6%82%e6%9e%9c%e5%9c%a8%e4%b8%8d%e9%85%8d%e7%bd%ae%e7%9a%84%e6%83%85%e5%86%b5%e4%b8%8bkubernetes-%e4%bc%9a%e8%87%aa%e5%8a%a8%e7%bb%99-pod-%e6%b7%bb%e5%8a%a0%e4%b8%80%e4%b8%aa-key-%e4%b8%ba-nodekubernetesionot-ready-%e7%9a%84%e5%ae%b9%e5%bf%8d%e5%ba%a6-%e5%b9%b6%e9%85%8d%e7%bd%ae-tolerationseconds300%e5%90%8c%e6%a0%b7kubernetes-%e4%bc%9a%e7%bb%99-pod-%e6%b7%bb%e5%8a%a0%e4%b8%80%e4%b8%aa-key-%e4%b8%ba-nodekubernetesiounreachable-%e7%9a%84%e5%ae%b9%e5%bf%8d%e5%ba%a6-%e5%b9%b6%e9%85%8d%e7%bd%ae-tolerationseconds300">#</a>
+</h5>
+</li>
+<li>
+<h5 id="4-当到了删除-pod-时污点管理器会创建污点标记事件然后驱逐-pod-这里需要注意的是由于已经不能与-kubelet-通信所以该节点上的-pod-在管理后台看到的是处于灰色标记但是此时如果去获取-pod-的状态其实还是处于-running-状态每种类型的资源都有相应的资源控制器controller例如deployment_controllergostateful_set_controlgo每种控制器都在监听资源变化从而做出相应的动作执行deployment-控制器在监听到-pod-被驱逐后会创建一个新的-pod-出来但是-statefulset-控制器并不会创建出新的-pod原因是因为它可能会违反-statefulset-固有的至多一个的语义可能出现具有相同身份的多个成员这将可能是灾难性的并且可能导致数据丢失">
+  \4. 当到了删除 Pod 时，污点管理器会创建污点标记事件，然后驱逐 pod 。这里需要注意的是由于已经不能与 kubelet 通信，所以该节点上的 Pod 在管理后台看到的是处于灰色标记，但是此时如果去获取 pod 的状态其实还是处于 Running 状态。每种类型的资源都有相应的资源控制器（Controller），例如：deployment_controller.go、stateful_set_control.go。每种控制器都在监听资源变化，从而做出相应的动作执行。deployment 控制器在监听到 Pod 被驱逐后会创建一个新的 Pod 出来，但是 Statefulset 控制器并不会创建出新的 Pod，原因是因为它可能会违反 StatefulSet 固有的至多一个的语义，可能出现具有相同身份的多个成员，这将可能是灾难性的，并且可能导致数据丢失。
+  <a class="anchor" href="#4-%e5%bd%93%e5%88%b0%e4%ba%86%e5%88%a0%e9%99%a4-pod-%e6%97%b6%e6%b1%a1%e7%82%b9%e7%ae%a1%e7%90%86%e5%99%a8%e4%bc%9a%e5%88%9b%e5%bb%ba%e6%b1%a1%e7%82%b9%e6%a0%87%e8%ae%b0%e4%ba%8b%e4%bb%b6%e7%84%b6%e5%90%8e%e9%a9%b1%e9%80%90-pod-%e8%bf%99%e9%87%8c%e9%9c%80%e8%a6%81%e6%b3%a8%e6%84%8f%e7%9a%84%e6%98%af%e7%94%b1%e4%ba%8e%e5%b7%b2%e7%bb%8f%e4%b8%8d%e8%83%bd%e4%b8%8e-kubelet-%e9%80%9a%e4%bf%a1%e6%89%80%e4%bb%a5%e8%af%a5%e8%8a%82%e7%82%b9%e4%b8%8a%e7%9a%84-pod-%e5%9c%a8%e7%ae%a1%e7%90%86%e5%90%8e%e5%8f%b0%e7%9c%8b%e5%88%b0%e7%9a%84%e6%98%af%e5%a4%84%e4%ba%8e%e7%81%b0%e8%89%b2%e6%a0%87%e8%ae%b0%e4%bd%86%e6%98%af%e6%ad%a4%e6%97%b6%e5%a6%82%e6%9e%9c%e5%8e%bb%e8%8e%b7%e5%8f%96-pod-%e7%9a%84%e7%8a%b6%e6%80%81%e5%85%b6%e5%ae%9e%e8%bf%98%e6%98%af%e5%a4%84%e4%ba%8e-running-%e7%8a%b6%e6%80%81%e6%af%8f%e7%a7%8d%e7%b1%bb%e5%9e%8b%e7%9a%84%e8%b5%84%e6%ba%90%e9%83%bd%e6%9c%89%e7%9b%b8%e5%ba%94%e7%9a%84%e8%b5%84%e6%ba%90%e6%8e%a7%e5%88%b6%e5%99%a8controller%e4%be%8b%e5%a6%82deployment_controllergostateful_set_controlgo%e6%af%8f%e7%a7%8d%e6%8e%a7%e5%88%b6%e5%99%a8%e9%83%bd%e5%9c%a8%e7%9b%91%e5%90%ac%e8%b5%84%e6%ba%90%e5%8f%98%e5%8c%96%e4%bb%8e%e8%80%8c%e5%81%9a%e5%87%ba%e7%9b%b8%e5%ba%94%e7%9a%84%e5%8a%a8%e4%bd%9c%e6%89%a7%e8%a1%8cdeployment-%e6%8e%a7%e5%88%b6%e5%99%a8%e5%9c%a8%e7%9b%91%e5%90%ac%e5%88%b0-pod-%e8%a2%ab%e9%a9%b1%e9%80%90%e5%90%8e%e4%bc%9a%e5%88%9b%e5%bb%ba%e4%b8%80%e4%b8%aa%e6%96%b0%e7%9a%84-pod-%e5%87%ba%e6%9d%a5%e4%bd%86%e6%98%af-statefulset-%e6%8e%a7%e5%88%b6%e5%99%a8%e5%b9%b6%e4%b8%8d%e4%bc%9a%e5%88%9b%e5%bb%ba%e5%87%ba%e6%96%b0%e7%9a%84-pod%e5%8e%9f%e5%9b%a0%e6%98%af%e5%9b%a0%e4%b8%ba%e5%ae%83%e5%8f%af%e8%83%bd%e4%bc%9a%e8%bf%9d%e5%8f%8d-statefulset-%e5%9b%ba%e6%9c%89%e7%9a%84%e8%87%b3%e5%a4%9a%e4%b8%80%e4%b8%aa%e7%9a%84%e8%af%ad%e4%b9%89%e5%8f%af%e8%83%bd%e5%87%ba%e7%8e%b0%e5%85%b7%e6%9c%89%e7%9b%b8%e5%90%8c%e8%ba%ab%e4%bb%bd%e7%9a%84%e5%a4%9a%e4%b8%aa%e6%88%90%e5%91%98%e8%bf%99%e5%b0%86%e5%8f%af%e8%83%bd%e6%98%af%e7%81%be%e9%9a%be%e6%80%a7%e7%9a%84%e5%b9%b6%e4%b8%94%e5%8f%af%e8%83%bd%e5%af%bc%e8%87%b4%e6%95%b0%e6%8d%ae%e4%b8%a2%e5%a4%b1">#</a>
+</h5>
+</li>
+</ol>
+<h2 id="你知道的k8s中几种controller控制器并详述其工作原理">
+  你知道的K8s中几种Controller控制器，并详述其工作原理
+  <a class="anchor" href="#%e4%bd%a0%e7%9f%a5%e9%81%93%e7%9a%84k8s%e4%b8%ad%e5%87%a0%e7%a7%8dcontroller%e6%8e%a7%e5%88%b6%e5%99%a8%e5%b9%b6%e8%af%a6%e8%bf%b0%e5%85%b6%e5%b7%a5%e4%bd%9c%e5%8e%9f%e7%90%86">#</a>
+</h2>
+<ol>
+<li>
+<h5 id="1-deployment适合无状态的服务部署-适合部署无状态的应用服务用来管理pod和replicaset具有上线部署副本设定滚动更新回滚等功能还可提供声明式更新例如只更新一个新的image">
+  \1. deployment：适合无状态的服务部署 适合部署无状态的应用服务，用来管理pod和replicaset，具有上线部署、副本设定、滚动更新、回滚等功能，还可提供声明式更新，例如只更新一个新的Image
+  <a class="anchor" href="#1-deployment%e9%80%82%e5%90%88%e6%97%a0%e7%8a%b6%e6%80%81%e7%9a%84%e6%9c%8d%e5%8a%a1%e9%83%a8%e7%bd%b2-%e9%80%82%e5%90%88%e9%83%a8%e7%bd%b2%e6%97%a0%e7%8a%b6%e6%80%81%e7%9a%84%e5%ba%94%e7%94%a8%e6%9c%8d%e5%8a%a1%e7%94%a8%e6%9d%a5%e7%ae%a1%e7%90%86pod%e5%92%8creplicaset%e5%85%b7%e6%9c%89%e4%b8%8a%e7%ba%bf%e9%83%a8%e7%bd%b2%e5%89%af%e6%9c%ac%e8%ae%be%e5%ae%9a%e6%bb%9a%e5%8a%a8%e6%9b%b4%e6%96%b0%e5%9b%9e%e6%bb%9a%e7%ad%89%e5%8a%9f%e8%83%bd%e8%bf%98%e5%8f%af%e6%8f%90%e4%be%9b%e5%a3%b0%e6%98%8e%e5%bc%8f%e6%9b%b4%e6%96%b0%e4%be%8b%e5%a6%82%e5%8f%aa%e6%9b%b4%e6%96%b0%e4%b8%80%e4%b8%aa%e6%96%b0%e7%9a%84image">#</a>
+</h5>
+</li>
+</ol>
+<ul>
+<li>
+<h5 id="-编写yaml文件并创建nginx服务pod资源">
+  • 编写yaml文件，并创建nginx服务pod资源。
+  <a class="anchor" href="#-%e7%bc%96%e5%86%99yaml%e6%96%87%e4%bb%b6%e5%b9%b6%e5%88%9b%e5%bb%banginx%e6%9c%8d%e5%8a%a1pod%e8%b5%84%e6%ba%90">#</a>
+</h5>
+</li>
+</ul>
+<ol>
+<li>
+<h5 id="1-statefullset适合有状态的服务部署-适合部署有状态应用解决pod的独立生命周期保持pod启动顺序和唯一性">
+  \1. StatefullSet：适合有状态的服务部署 适合部署有状态应用，解决Pod的独立生命周期，保持Pod启动顺序和唯一性。
+  <a class="anchor" href="#1-statefullset%e9%80%82%e5%90%88%e6%9c%89%e7%8a%b6%e6%80%81%e7%9a%84%e6%9c%8d%e5%8a%a1%e9%83%a8%e7%bd%b2-%e9%80%82%e5%90%88%e9%83%a8%e7%bd%b2%e6%9c%89%e7%8a%b6%e6%80%81%e5%ba%94%e7%94%a8%e8%a7%a3%e5%86%b3pod%e7%9a%84%e7%8b%ac%e7%ab%8b%e7%94%9f%e5%91%bd%e5%91%a8%e6%9c%9f%e4%bf%9d%e6%8c%81pod%e5%90%af%e5%8a%a8%e9%a1%ba%e5%ba%8f%e5%92%8c%e5%94%af%e4%b8%80%e6%80%a7">#</a>
+</h5>
+</li>
+</ol>
+<ul>
+<li>
+<h5 id="-稳定唯一的网络标识符持久存储例如etcd配置文件节点地址发生变化将无法使用">
+  • 稳定，唯一的网络标识符，持久存储（例如：etcd配置文件，节点地址发生变化，将无法使用）
+  <a class="anchor" href="#-%e7%a8%b3%e5%ae%9a%e5%94%af%e4%b8%80%e7%9a%84%e7%bd%91%e7%bb%9c%e6%a0%87%e8%af%86%e7%ac%a6%e6%8c%81%e4%b9%85%e5%ad%98%e5%82%a8%e4%be%8b%e5%a6%82etcd%e9%85%8d%e7%bd%ae%e6%96%87%e4%bb%b6%e8%8a%82%e7%82%b9%e5%9c%b0%e5%9d%80%e5%8f%91%e7%94%9f%e5%8f%98%e5%8c%96%e5%b0%86%e6%97%a0%e6%b3%95%e4%bd%bf%e7%94%a8">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-有序优雅的部署和扩展删除和终止例如mysql主从关系先启动主再启动从有序滚动更新">
+  • 有序，优雅的部署和扩展、删除和终止（例如：mysql主从关系，先启动主，再启动从）有序，滚动更新
+  <a class="anchor" href="#-%e6%9c%89%e5%ba%8f%e4%bc%98%e9%9b%85%e7%9a%84%e9%83%a8%e7%bd%b2%e5%92%8c%e6%89%a9%e5%b1%95%e5%88%a0%e9%99%a4%e5%92%8c%e7%bb%88%e6%ad%a2%e4%be%8b%e5%a6%82mysql%e4%b8%bb%e4%bb%8e%e5%85%b3%e7%b3%bb%e5%85%88%e5%90%af%e5%8a%a8%e4%b8%bb%e5%86%8d%e5%90%af%e5%8a%a8%e4%bb%8e%e6%9c%89%e5%ba%8f%e6%bb%9a%e5%8a%a8%e6%9b%b4%e6%96%b0">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-应用场景例如数据库">
+  • 应用场景：例如数据库
+  <a class="anchor" href="#-%e5%ba%94%e7%94%a8%e5%9c%ba%e6%99%af%e4%be%8b%e5%a6%82%e6%95%b0%e6%8d%ae%e5%ba%93">#</a>
+</h5>
+</li>
+</ul>
+<h5 id="无状态服务的特点">
+  无状态服务的特点：
+  <a class="anchor" href="#%e6%97%a0%e7%8a%b6%e6%80%81%e6%9c%8d%e5%8a%a1%e7%9a%84%e7%89%b9%e7%82%b9">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="-deployment-认为所有的pod都是一样的">
+  • deployment 认为所有的pod都是一样的
+  <a class="anchor" href="#-deployment-%e8%ae%a4%e4%b8%ba%e6%89%80%e6%9c%89%e7%9a%84pod%e9%83%bd%e6%98%af%e4%b8%80%e6%a0%b7%e7%9a%84">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-不用考虑顺序的要求">
+  • 不用考虑顺序的要求
+  <a class="anchor" href="#-%e4%b8%8d%e7%94%a8%e8%80%83%e8%99%91%e9%a1%ba%e5%ba%8f%e7%9a%84%e8%a6%81%e6%b1%82">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-不用考虑在哪个node节点上运行">
+  • 不用考虑在哪个node节点上运行
+  <a class="anchor" href="#-%e4%b8%8d%e7%94%a8%e8%80%83%e8%99%91%e5%9c%a8%e5%93%aa%e4%b8%aanode%e8%8a%82%e7%82%b9%e4%b8%8a%e8%bf%90%e8%a1%8c">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-可以随意扩容和缩容">
+  • 可以随意扩容和缩容
+  <a class="anchor" href="#-%e5%8f%af%e4%bb%a5%e9%9a%8f%e6%84%8f%e6%89%a9%e5%ae%b9%e5%92%8c%e7%bc%a9%e5%ae%b9">#</a>
+</h5>
+</li>
+</ul>
+<h5 id="有状态服务的特点">
+  有状态服务的特点：
+  <a class="anchor" href="#%e6%9c%89%e7%8a%b6%e6%80%81%e6%9c%8d%e5%8a%a1%e7%9a%84%e7%89%b9%e7%82%b9">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="-实例之间有差别每个实例都有自己的独特性元数据不同例如etcdzookeeper">
+  • 实例之间有差别，每个实例都有自己的独特性，元数据不同，例如etcd，zookeeper
+  <a class="anchor" href="#-%e5%ae%9e%e4%be%8b%e4%b9%8b%e9%97%b4%e6%9c%89%e5%b7%ae%e5%88%ab%e6%af%8f%e4%b8%aa%e5%ae%9e%e4%be%8b%e9%83%bd%e6%9c%89%e8%87%aa%e5%b7%b1%e7%9a%84%e7%8b%ac%e7%89%b9%e6%80%a7%e5%85%83%e6%95%b0%e6%8d%ae%e4%b8%8d%e5%90%8c%e4%be%8b%e5%a6%82etcdzookeeper">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-实例之间不对等的关系以及依靠外部存储的应用">
+  • 实例之间不对等的关系，以及依靠外部存储的应用
+  <a class="anchor" href="#-%e5%ae%9e%e4%be%8b%e4%b9%8b%e9%97%b4%e4%b8%8d%e5%af%b9%e7%ad%89%e7%9a%84%e5%85%b3%e7%b3%bb%e4%bb%a5%e5%8f%8a%e4%be%9d%e9%9d%a0%e5%a4%96%e9%83%a8%e5%ad%98%e5%82%a8%e7%9a%84%e5%ba%94%e7%94%a8">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-常规的service服务和无头服务的区别">
+  • 常规的service服务和无头服务的区别
+  <a class="anchor" href="#-%e5%b8%b8%e8%a7%84%e7%9a%84service%e6%9c%8d%e5%8a%a1%e5%92%8c%e6%97%a0%e5%a4%b4%e6%9c%8d%e5%8a%a1%e7%9a%84%e5%8c%ba%e5%88%ab">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-service一组pod访问策略提供cluster-ip群集之间通讯还提供负载均衡和服务发现">
+  • service：一组Pod访问策略，提供cluster-IP群集之间通讯，还提供负载均衡和服务发现
+  <a class="anchor" href="#-service%e4%b8%80%e7%bb%84pod%e8%ae%bf%e9%97%ae%e7%ad%96%e7%95%a5%e6%8f%90%e4%be%9bcluster-ip%e7%be%a4%e9%9b%86%e4%b9%8b%e9%97%b4%e9%80%9a%e8%ae%af%e8%bf%98%e6%8f%90%e4%be%9b%e8%b4%9f%e8%bd%bd%e5%9d%87%e8%a1%a1%e5%92%8c%e6%9c%8d%e5%8a%a1%e5%8f%91%e7%8e%b0">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-headless-service-无头服务不需要cluster-ip直接绑定具体的pod的ip无头服务经常用于statefulset的有状态部署">
+  • Headless service 无头服务，不需要cluster-IP，直接绑定具体的Pod的IP，无头服务经常用于statefulset的有状态部署
+  <a class="anchor" href="#-headless-service-%e6%97%a0%e5%a4%b4%e6%9c%8d%e5%8a%a1%e4%b8%8d%e9%9c%80%e8%a6%81cluster-ip%e7%9b%b4%e6%8e%a5%e7%bb%91%e5%ae%9a%e5%85%b7%e4%bd%93%e7%9a%84pod%e7%9a%84ip%e6%97%a0%e5%a4%b4%e6%9c%8d%e5%8a%a1%e7%bb%8f%e5%b8%b8%e7%94%a8%e4%ba%8estatefulset%e7%9a%84%e6%9c%89%e7%8a%b6%e6%80%81%e9%83%a8%e7%bd%b2">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-创建无头服务的service资源和dns资源由于有状态服务的ip地址是动态的所以使用无头服务的时候要绑定dns服务">
+  • 创建无头服务的service资源和dns资源，由于有状态服务的IP地址是动态的，所以使用无头服务的时候要绑定dns服务
+  <a class="anchor" href="#-%e5%88%9b%e5%bb%ba%e6%97%a0%e5%a4%b4%e6%9c%8d%e5%8a%a1%e7%9a%84service%e8%b5%84%e6%ba%90%e5%92%8cdns%e8%b5%84%e6%ba%90%e7%94%b1%e4%ba%8e%e6%9c%89%e7%8a%b6%e6%80%81%e6%9c%8d%e5%8a%a1%e7%9a%84ip%e5%9c%b0%e5%9d%80%e6%98%af%e5%8a%a8%e6%80%81%e7%9a%84%e6%89%80%e4%bb%a5%e4%bd%bf%e7%94%a8%e6%97%a0%e5%a4%b4%e6%9c%8d%e5%8a%a1%e7%9a%84%e6%97%b6%e5%80%99%e8%a6%81%e7%bb%91%e5%ae%9adns%e6%9c%8d%e5%8a%a1">#</a>
+</h5>
+</li>
+</ul>
+<ol>
+<li>
+<h5 id="1-daemonset一次部署所有的node节点都会部署例如一些典型的应用场景-运行集群存储-daemon例如在每个node上运行-glusterdceph">
+  \1. DaemonSet：一次部署，所有的node节点都会部署，例如一些典型的应用场景： 运行集群存储 daemon，例如在每个Node上运行 glusterd、ceph
+  <a class="anchor" href="#1-daemonset%e4%b8%80%e6%ac%a1%e9%83%a8%e7%bd%b2%e6%89%80%e6%9c%89%e7%9a%84node%e8%8a%82%e7%82%b9%e9%83%bd%e4%bc%9a%e9%83%a8%e7%bd%b2%e4%be%8b%e5%a6%82%e4%b8%80%e4%ba%9b%e5%85%b8%e5%9e%8b%e7%9a%84%e5%ba%94%e7%94%a8%e5%9c%ba%e6%99%af-%e8%bf%90%e8%a1%8c%e9%9b%86%e7%be%a4%e5%ad%98%e5%82%a8-daemon%e4%be%8b%e5%a6%82%e5%9c%a8%e6%af%8f%e4%b8%aanode%e4%b8%8a%e8%bf%90%e8%a1%8c-glusterdceph">#</a>
+</h5>
+</li>
+</ol>
+<ul>
+<li>
+<h5 id="-在每个node上运行日志收集-daemon例如-fluentd-logstash">
+  • 在每个Node上运行日志收集 daemon，例如 fluentd、 logstash
+  <a class="anchor" href="#-%e5%9c%a8%e6%af%8f%e4%b8%aanode%e4%b8%8a%e8%bf%90%e8%a1%8c%e6%97%a5%e5%bf%97%e6%94%b6%e9%9b%86-daemon%e4%be%8b%e5%a6%82-fluentd-logstash">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-在每个node上运行监控-daemon例如-prometheus-node-exporter">
+  • 在每个Node上运行监控 daemon，例如 Prometheus Node Exporter
+  <a class="anchor" href="#-%e5%9c%a8%e6%af%8f%e4%b8%aanode%e4%b8%8a%e8%bf%90%e8%a1%8c%e7%9b%91%e6%8e%a7-daemon%e4%be%8b%e5%a6%82-prometheus-node-exporter">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-在每一个node上运行一个pod">
+  • 在每一个Node上运行一个Pod
+  <a class="anchor" href="#-%e5%9c%a8%e6%af%8f%e4%b8%80%e4%b8%aanode%e4%b8%8a%e8%bf%90%e8%a1%8c%e4%b8%80%e4%b8%aapod">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-新加入的node也同样会自动运行一个pod">
+  • 新加入的Node也同样会自动运行一个Pod
+  <a class="anchor" href="#-%e6%96%b0%e5%8a%a0%e5%85%a5%e7%9a%84node%e4%b9%9f%e5%90%8c%e6%a0%b7%e4%bc%9a%e8%87%aa%e5%8a%a8%e8%bf%90%e8%a1%8c%e4%b8%80%e4%b8%aapod">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-应用场景监控分布式存储日志收集等">
+  • 应用场景：监控，分布式存储，日志收集等
+  <a class="anchor" href="#-%e5%ba%94%e7%94%a8%e5%9c%ba%e6%99%af%e7%9b%91%e6%8e%a7%e5%88%86%e5%b8%83%e5%bc%8f%e5%ad%98%e5%82%a8%e6%97%a5%e5%bf%97%e6%94%b6%e9%9b%86%e7%ad%89">#</a>
+</h5>
+</li>
+</ul>
+<ol>
+<li>
+<h5 id="1-job一次性的执行任务">
+  \1. Job：一次性的执行任务
+  <a class="anchor" href="#1-job%e4%b8%80%e6%ac%a1%e6%80%a7%e7%9a%84%e6%89%a7%e8%a1%8c%e4%bb%bb%e5%8a%a1">#</a>
+</h5>
+</li>
+</ol>
+<ul>
+<li>
+<h5 id="-一次性执行任务类似linux中的job">
+  • 一次性执行任务，类似Linux中的job
+  <a class="anchor" href="#-%e4%b8%80%e6%ac%a1%e6%80%a7%e6%89%a7%e8%a1%8c%e4%bb%bb%e5%8a%a1%e7%b1%bb%e4%bc%bclinux%e4%b8%ad%e7%9a%84job">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-应用场景如离线数据处理视频解码等业务">
+  • 应用场景：如离线数据处理，视频解码等业务
+  <a class="anchor" href="#-%e5%ba%94%e7%94%a8%e5%9c%ba%e6%99%af%e5%a6%82%e7%a6%bb%e7%ba%bf%e6%95%b0%e6%8d%ae%e5%a4%84%e7%90%86%e8%a7%86%e9%a2%91%e8%a7%a3%e7%a0%81%e7%ad%89%e4%b8%9a%e5%8a%a1">#</a>
+</h5>
+</li>
+</ul>
+<ol>
+<li>
+<h5 id="1-cronjob周期性的执行任务">
+  \1. Cronjob：周期性的执行任务
+  <a class="anchor" href="#1-cronjob%e5%91%a8%e6%9c%9f%e6%80%a7%e7%9a%84%e6%89%a7%e8%a1%8c%e4%bb%bb%e5%8a%a1">#</a>
+</h5>
+</li>
+</ol>
+<ul>
+<li>
+<h5 id="-周期性任务像linux的crontab一样">
+  • 周期性任务，像Linux的Crontab一样
+  <a class="anchor" href="#-%e5%91%a8%e6%9c%9f%e6%80%a7%e4%bb%bb%e5%8a%a1%e5%83%8flinux%e7%9a%84crontab%e4%b8%80%e6%a0%b7">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-应用场景如通知备份等">
+  • 应用场景：如通知，备份等
+  <a class="anchor" href="#-%e5%ba%94%e7%94%a8%e5%9c%ba%e6%99%af%e5%a6%82%e9%80%9a%e7%9f%a5%e5%a4%87%e4%bb%bd%e7%ad%89">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-使用cronjob要慎重用完之后要删掉不然会占用很多资源">
+  • 使用cronjob要慎重，用完之后要删掉，不然会占用很多资源
+  <a class="anchor" href="#-%e4%bd%bf%e7%94%a8cronjob%e8%a6%81%e6%85%8e%e9%87%8d%e7%94%a8%e5%ae%8c%e4%b9%8b%e5%90%8e%e8%a6%81%e5%88%a0%e6%8e%89%e4%b8%8d%e7%84%b6%e4%bc%9a%e5%8d%a0%e7%94%a8%e5%be%88%e5%a4%9a%e8%b5%84%e6%ba%90">#</a>
+</h5>
+</li>
+</ul>
+<h2 id="ingress-controller的工作机制">
+  ingress-controller的工作机制
+  <a class="anchor" href="#ingress-controller%e7%9a%84%e5%b7%a5%e4%bd%9c%e6%9c%ba%e5%88%b6">#</a>
+</h2>
+<h5 id="通常情况下service和pod的ip仅可在集群内部访问">
+  通常情况下，service和pod的IP仅可在集群内部访问
+  <a class="anchor" href="#%e9%80%9a%e5%b8%b8%e6%83%85%e5%86%b5%e4%b8%8bservice%e5%92%8cpod%e7%9a%84ip%e4%bb%85%e5%8f%af%e5%9c%a8%e9%9b%86%e7%be%a4%e5%86%85%e9%83%a8%e8%ae%bf%e9%97%ae">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="-k8s提供了service方式nodeport-来提供对外的服务外部的服务可以通过访问node节点ipnodeport端口来访问集群内部的资源外部的请求先到达service所选中的节点上然后负载均衡到每一个节点上">
+  • k8s提供了service方式：NodePort 来提供对外的服务，外部的服务可以通过访问Node节点ip+NodePort端口来访问集群内部的资源，外部的请求先到达service所选中的节点上，然后负载均衡到每一个节点上。
+  <a class="anchor" href="#-k8s%e6%8f%90%e4%be%9b%e4%ba%86service%e6%96%b9%e5%bc%8fnodeport-%e6%9d%a5%e6%8f%90%e4%be%9b%e5%af%b9%e5%a4%96%e7%9a%84%e6%9c%8d%e5%8a%a1%e5%a4%96%e9%83%a8%e7%9a%84%e6%9c%8d%e5%8a%a1%e5%8f%af%e4%bb%a5%e9%80%9a%e8%bf%87%e8%ae%bf%e9%97%aenode%e8%8a%82%e7%82%b9ipnodeport%e7%ab%af%e5%8f%a3%e6%9d%a5%e8%ae%bf%e9%97%ae%e9%9b%86%e7%be%a4%e5%86%85%e9%83%a8%e7%9a%84%e8%b5%84%e6%ba%90%e5%a4%96%e9%83%a8%e7%9a%84%e8%af%b7%e6%b1%82%e5%85%88%e5%88%b0%e8%be%beservice%e6%89%80%e9%80%89%e4%b8%ad%e7%9a%84%e8%8a%82%e7%82%b9%e4%b8%8a%e7%84%b6%e5%90%8e%e8%b4%9f%e8%bd%bd%e5%9d%87%e8%a1%a1%e5%88%b0%e6%af%8f%e4%b8%80%e4%b8%aa%e8%8a%82%e7%82%b9%e4%b8%8a">#</a>
+</h5>
+</li>
+</ul>
+<h5 id="nodeport虽然提供了对外的方式但也有很大弊端">
+  NodePort虽然提供了对外的方式但也有很大弊端：
+  <a class="anchor" href="#nodeport%e8%99%bd%e7%84%b6%e6%8f%90%e4%be%9b%e4%ba%86%e5%af%b9%e5%a4%96%e7%9a%84%e6%96%b9%e5%bc%8f%e4%bd%86%e4%b9%9f%e6%9c%89%e5%be%88%e5%a4%a7%e5%bc%8a%e7%ab%af">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="-由于service的实现方式user_space-iptebles-3-ipvs方式这三种方式只支持在4层协议通信不支持7层协议因此nodeport不能代理https服务">
+  • 由于service的实现方式：user_space 、iptebles、 3 ipvs、方式这三种方式只支持在4层协议通信，不支持7层协议，因此NodePort不能代理https服务。
+  <a class="anchor" href="#-%e7%94%b1%e4%ba%8eservice%e7%9a%84%e5%ae%9e%e7%8e%b0%e6%96%b9%e5%bc%8fuser_space-iptebles-3-ipvs%e6%96%b9%e5%bc%8f%e8%bf%99%e4%b8%89%e7%a7%8d%e6%96%b9%e5%bc%8f%e5%8f%aa%e6%94%af%e6%8c%81%e5%9c%a84%e5%b1%82%e5%8d%8f%e8%ae%ae%e9%80%9a%e4%bf%a1%e4%b8%8d%e6%94%af%e6%8c%817%e5%b1%82%e5%8d%8f%e8%ae%ae%e5%9b%a0%e6%ad%a4nodeport%e4%b8%8d%e8%83%bd%e4%bb%a3%e7%90%86https%e6%9c%8d%e5%8a%a1">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-nodeport-需要暴露service所属每个node节点上端口当需求越来越多端口数量过多导致维护成本过高并且集群不好管理">
+  • NodePort 需要暴露service所属每个node节点上端口，当需求越来越多，端口数量过多，导致维护成本过高，并且集群不好管理。
+  <a class="anchor" href="#-nodeport-%e9%9c%80%e8%a6%81%e6%9a%b4%e9%9c%b2service%e6%89%80%e5%b1%9e%e6%af%8f%e4%b8%aanode%e8%8a%82%e7%82%b9%e4%b8%8a%e7%ab%af%e5%8f%a3%e5%bd%93%e9%9c%80%e6%b1%82%e8%b6%8a%e6%9d%a5%e8%b6%8a%e5%a4%9a%e7%ab%af%e5%8f%a3%e6%95%b0%e9%87%8f%e8%bf%87%e5%a4%9a%e5%af%bc%e8%87%b4%e7%bb%b4%e6%8a%a4%e6%88%90%e6%9c%ac%e8%bf%87%e9%ab%98%e5%b9%b6%e4%b8%94%e9%9b%86%e7%be%a4%e4%b8%8d%e5%a5%bd%e7%ae%a1%e7%90%86">#</a>
+</h5>
+</li>
+</ul>
+<h5 id="原理">
+  原理
+  <a class="anchor" href="#%e5%8e%9f%e7%90%86">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="-ingress也是kubernetes-api的标准资源类型之一它其实就是一组基于dns名称host或url路径把请求转发到指定的service资源的规则用于将集群外部的请求流量转发到集群内部完成的服务发布我们需要明白的是ingress资源自身不能进行流量穿透仅仅是一组规则的集合这些集合规则还需要其他功能的辅助比如监听某套接字然后根据这些规则的匹配进行路由转发这些能够为ingress资源监听套接字并将流量转发的组件就是ingress-controller">
+  • Ingress也是Kubernetes API的标准资源类型之一，它其实就是一组基于DNS名称（host）或URL路径把请求转发到指定的Service资源的规则。用于将集群外部的请求流量转发到集群内部完成的服务发布。我们需要明白的是，Ingress资源自身不能进行“流量穿透”，仅仅是一组规则的集合，这些集合规则还需要其他功能的辅助，比如监听某套接字，然后根据这些规则的匹配进行路由转发，这些能够为Ingress资源监听套接字并将流量转发的组件就是Ingress Controller。
+  <a class="anchor" href="#-ingress%e4%b9%9f%e6%98%afkubernetes-api%e7%9a%84%e6%a0%87%e5%87%86%e8%b5%84%e6%ba%90%e7%b1%bb%e5%9e%8b%e4%b9%8b%e4%b8%80%e5%ae%83%e5%85%b6%e5%ae%9e%e5%b0%b1%e6%98%af%e4%b8%80%e7%bb%84%e5%9f%ba%e4%ba%8edns%e5%90%8d%e7%a7%b0host%e6%88%96url%e8%b7%af%e5%be%84%e6%8a%8a%e8%af%b7%e6%b1%82%e8%bd%ac%e5%8f%91%e5%88%b0%e6%8c%87%e5%ae%9a%e7%9a%84service%e8%b5%84%e6%ba%90%e7%9a%84%e8%a7%84%e5%88%99%e7%94%a8%e4%ba%8e%e5%b0%86%e9%9b%86%e7%be%a4%e5%a4%96%e9%83%a8%e7%9a%84%e8%af%b7%e6%b1%82%e6%b5%81%e9%87%8f%e8%bd%ac%e5%8f%91%e5%88%b0%e9%9b%86%e7%be%a4%e5%86%85%e9%83%a8%e5%ae%8c%e6%88%90%e7%9a%84%e6%9c%8d%e5%8a%a1%e5%8f%91%e5%b8%83%e6%88%91%e4%bb%ac%e9%9c%80%e8%a6%81%e6%98%8e%e7%99%bd%e7%9a%84%e6%98%afingress%e8%b5%84%e6%ba%90%e8%87%aa%e8%ba%ab%e4%b8%8d%e8%83%bd%e8%bf%9b%e8%a1%8c%e6%b5%81%e9%87%8f%e7%a9%bf%e9%80%8f%e4%bb%85%e4%bb%85%e6%98%af%e4%b8%80%e7%bb%84%e8%a7%84%e5%88%99%e7%9a%84%e9%9b%86%e5%90%88%e8%bf%99%e4%ba%9b%e9%9b%86%e5%90%88%e8%a7%84%e5%88%99%e8%bf%98%e9%9c%80%e8%a6%81%e5%85%b6%e4%bb%96%e5%8a%9f%e8%83%bd%e7%9a%84%e8%be%85%e5%8a%a9%e6%af%94%e5%a6%82%e7%9b%91%e5%90%ac%e6%9f%90%e5%a5%97%e6%8e%a5%e5%ad%97%e7%84%b6%e5%90%8e%e6%a0%b9%e6%8d%ae%e8%bf%99%e4%ba%9b%e8%a7%84%e5%88%99%e7%9a%84%e5%8c%b9%e9%85%8d%e8%bf%9b%e8%a1%8c%e8%b7%af%e7%94%b1%e8%bd%ac%e5%8f%91%e8%bf%99%e4%ba%9b%e8%83%bd%e5%a4%9f%e4%b8%baingress%e8%b5%84%e6%ba%90%e7%9b%91%e5%90%ac%e5%a5%97%e6%8e%a5%e5%ad%97%e5%b9%b6%e5%b0%86%e6%b5%81%e9%87%8f%e8%bd%ac%e5%8f%91%e7%9a%84%e7%bb%84%e4%bb%b6%e5%b0%b1%e6%98%afingress-controller">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-ingress-控制器不同于deployment-等pod控制器的是ingress控制器不直接运行为kube-controller-manager的一部分它仅仅是kubernetes集群的一个附件类似于coredns需要在集群上单独部署">
+  • Ingress 控制器不同于Deployment 等pod控制器的是，Ingress控制器不直接运行为kube-controller-manager的一部分，它仅仅是Kubernetes集群的一个附件，类似于CoreDNS，需要在集群上单独部署。
+  <a class="anchor" href="#-ingress-%e6%8e%a7%e5%88%b6%e5%99%a8%e4%b8%8d%e5%90%8c%e4%ba%8edeployment-%e7%ad%89pod%e6%8e%a7%e5%88%b6%e5%99%a8%e7%9a%84%e6%98%afingress%e6%8e%a7%e5%88%b6%e5%99%a8%e4%b8%8d%e7%9b%b4%e6%8e%a5%e8%bf%90%e8%a1%8c%e4%b8%bakube-controller-manager%e7%9a%84%e4%b8%80%e9%83%a8%e5%88%86%e5%ae%83%e4%bb%85%e4%bb%85%e6%98%afkubernetes%e9%9b%86%e7%be%a4%e7%9a%84%e4%b8%80%e4%b8%aa%e9%99%84%e4%bb%b6%e7%b1%bb%e4%bc%bc%e4%ba%8ecoredns%e9%9c%80%e8%a6%81%e5%9c%a8%e9%9b%86%e7%be%a4%e4%b8%8a%e5%8d%95%e7%8b%ac%e9%83%a8%e7%bd%b2">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-ingress-controller通过监视api-server获取相关ingressserviceendpointsecretnodeconfigmap对象并在程序内部不断循环监视相关service是否有新的endpoints变化一旦发生变化则自动更新nginxconf模板配置并产生新的配置文件进行reload">
+  • ingress controller通过监视api server获取相关ingress、service、endpoint、secret、node、configmap对象，并在程序内部不断循环监视相关service是否有新的endpoints变化，一旦发生变化则自动更新nginx.conf模板配置并产生新的配置文件进行reload
+  <a class="anchor" href="#-ingress-controller%e9%80%9a%e8%bf%87%e7%9b%91%e8%a7%86api-server%e8%8e%b7%e5%8f%96%e7%9b%b8%e5%85%b3ingressserviceendpointsecretnodeconfigmap%e5%af%b9%e8%b1%a1%e5%b9%b6%e5%9c%a8%e7%a8%8b%e5%ba%8f%e5%86%85%e9%83%a8%e4%b8%8d%e6%96%ad%e5%be%aa%e7%8e%af%e7%9b%91%e8%a7%86%e7%9b%b8%e5%85%b3service%e6%98%af%e5%90%a6%e6%9c%89%e6%96%b0%e7%9a%84endpoints%e5%8f%98%e5%8c%96%e4%b8%80%e6%97%a6%e5%8f%91%e7%94%9f%e5%8f%98%e5%8c%96%e5%88%99%e8%87%aa%e5%8a%a8%e6%9b%b4%e6%96%b0nginxconf%e6%a8%a1%e6%9d%bf%e9%85%8d%e7%bd%ae%e5%b9%b6%e4%ba%a7%e7%94%9f%e6%96%b0%e7%9a%84%e9%85%8d%e7%bd%ae%e6%96%87%e4%bb%b6%e8%bf%9b%e8%a1%8creload">#</a>
+</h5>
+</li>
+</ul>
+<h2 id="k8s的调度机制">
+  k8s的调度机制
+  <a class="anchor" href="#k8s%e7%9a%84%e8%b0%83%e5%ba%a6%e6%9c%ba%e5%88%b6">#</a>
+</h2>
+<ol>
+<li>
+<h5 id="1-scheduler工作原理-请求及scheduler调度步骤">
+  \1. Scheduler工作原理： 请求及Scheduler调度步骤：
+  <a class="anchor" href="#1-scheduler%e5%b7%a5%e4%bd%9c%e5%8e%9f%e7%90%86-%e8%af%b7%e6%b1%82%e5%8f%8ascheduler%e8%b0%83%e5%ba%a6%e6%ad%a5%e9%aa%a4">#</a>
+</h5>
+</li>
+</ol>
+<ul>
+<li>
+<h5 id="-节点预选predicate排除完全不满足条件的节点如内存大小端口等条件不满足">
+  • 节点预选(Predicate)：排除完全不满足条件的节点，如内存大小，端口等条件不满足。
+  <a class="anchor" href="#-%e8%8a%82%e7%82%b9%e9%a2%84%e9%80%89predicate%e6%8e%92%e9%99%a4%e5%ae%8c%e5%85%a8%e4%b8%8d%e6%bb%a1%e8%b6%b3%e6%9d%a1%e4%bb%b6%e7%9a%84%e8%8a%82%e7%82%b9%e5%a6%82%e5%86%85%e5%ad%98%e5%a4%a7%e5%b0%8f%e7%ab%af%e5%8f%a3%e7%ad%89%e6%9d%a1%e4%bb%b6%e4%b8%8d%e6%bb%a1%e8%b6%b3">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-节点优先级排序priority根据优先级选出最佳节点">
+  • 节点优先级排序(Priority)：根据优先级选出最佳节点
+  <a class="anchor" href="#-%e8%8a%82%e7%82%b9%e4%bc%98%e5%85%88%e7%ba%a7%e6%8e%92%e5%ba%8fpriority%e6%a0%b9%e6%8d%ae%e4%bc%98%e5%85%88%e7%ba%a7%e9%80%89%e5%87%ba%e6%9c%80%e4%bd%b3%e8%8a%82%e7%82%b9">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-节点择优select根据优先级选定节点">
+  • 节点择优(Select)：根据优先级选定节点
+  <a class="anchor" href="#-%e8%8a%82%e7%82%b9%e6%8b%a9%e4%bc%98select%e6%a0%b9%e6%8d%ae%e4%bc%98%e5%85%88%e7%ba%a7%e9%80%89%e5%ae%9a%e8%8a%82%e7%82%b9">#</a>
+</h5>
+</li>
+</ul>
+<ol>
+<li>
+<h5 id="1-具体步骤">
+  \1. 具体步骤：
+  <a class="anchor" href="#1-%e5%85%b7%e4%bd%93%e6%ad%a5%e9%aa%a4">#</a>
+</h5>
+</li>
+</ol>
+<ul>
+<li>
+<h5 id="-首先用户通过-kubernetes-客户端-kubectl-提交创建-pod-的-yaml-的文件向kubernetes-系统发起资源请求该资源请求被提交到">
+  • 首先用户通过 Kubernetes 客户端 Kubectl 提交创建 Pod 的 Yaml 的文件，向Kubernetes 系统发起资源请求，该资源请求被提交到
+  <a class="anchor" href="#-%e9%a6%96%e5%85%88%e7%94%a8%e6%88%b7%e9%80%9a%e8%bf%87-kubernetes-%e5%ae%a2%e6%88%b7%e7%ab%af-kubectl-%e6%8f%90%e4%ba%a4%e5%88%9b%e5%bb%ba-pod-%e7%9a%84-yaml-%e7%9a%84%e6%96%87%e4%bb%b6%e5%90%91kubernetes-%e7%b3%bb%e7%bb%9f%e5%8f%91%e8%b5%b7%e8%b5%84%e6%ba%90%e8%af%b7%e6%b1%82%e8%af%a5%e8%b5%84%e6%ba%90%e8%af%b7%e6%b1%82%e8%a2%ab%e6%8f%90%e4%ba%a4%e5%88%b0">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-kubernetes-系统中用户通过命令行工具-kubectl-向-kubernetes-集群即-apiserver-用-的方式发送post请求即创建-pod-的请求">
+  • Kubernetes 系统中，用户通过命令行工具 Kubectl 向 Kubernetes 集群即 APIServer 用 的方式发送“POST”请求，即创建 Pod 的请求。
+  <a class="anchor" href="#-kubernetes-%e7%b3%bb%e7%bb%9f%e4%b8%ad%e7%94%a8%e6%88%b7%e9%80%9a%e8%bf%87%e5%91%bd%e4%bb%a4%e8%a1%8c%e5%b7%a5%e5%85%b7-kubectl-%e5%90%91-kubernetes-%e9%9b%86%e7%be%a4%e5%8d%b3-apiserver-%e7%94%a8-%e7%9a%84%e6%96%b9%e5%bc%8f%e5%8f%91%e9%80%81post%e8%af%b7%e6%b1%82%e5%8d%b3%e5%88%9b%e5%bb%ba-pod-%e7%9a%84%e8%af%b7%e6%b1%82">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-apiserver-接收到请求后把创建-pod-的信息存储到-etcd-中从集群运行那一刻起资源调度系统-scheduler-就会定时去监控-apiserver">
+  • APIServer 接收到请求后把创建 Pod 的信息存储到 Etcd 中，从集群运行那一刻起，资源调度系统 Scheduler 就会定时去监控 APIServer
+  <a class="anchor" href="#-apiserver-%e6%8e%a5%e6%94%b6%e5%88%b0%e8%af%b7%e6%b1%82%e5%90%8e%e6%8a%8a%e5%88%9b%e5%bb%ba-pod-%e7%9a%84%e4%bf%a1%e6%81%af%e5%ad%98%e5%82%a8%e5%88%b0-etcd-%e4%b8%ad%e4%bb%8e%e9%9b%86%e7%be%a4%e8%bf%90%e8%a1%8c%e9%82%a3%e4%b8%80%e5%88%bb%e8%b5%b7%e8%b5%84%e6%ba%90%e8%b0%83%e5%ba%a6%e7%b3%bb%e7%bb%9f-scheduler-%e5%b0%b1%e4%bc%9a%e5%ae%9a%e6%97%b6%e5%8e%bb%e7%9b%91%e6%8e%a7-apiserver">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-通过-apiserver-得到创建-pod-的信息scheduler-采用-watch-机制一旦-etcd-存储-pod-信息成功便会立即通知apiserver">
+  • 通过 APIServer 得到创建 Pod 的信息，Scheduler 采用 watch 机制，一旦 Etcd 存储 Pod 信息成功便会立即通知APIServer，
+  <a class="anchor" href="#-%e9%80%9a%e8%bf%87-apiserver-%e5%be%97%e5%88%b0%e5%88%9b%e5%bb%ba-pod-%e7%9a%84%e4%bf%a1%e6%81%afscheduler-%e9%87%87%e7%94%a8-watch-%e6%9c%ba%e5%88%b6%e4%b8%80%e6%97%a6-etcd-%e5%ad%98%e5%82%a8-pod-%e4%bf%a1%e6%81%af%e6%88%90%e5%8a%9f%e4%be%bf%e4%bc%9a%e7%ab%8b%e5%8d%b3%e9%80%9a%e7%9f%a5apiserver">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-apiserver会立即把pod创建的消息通知schedulerscheduler发现-pod-的属性中-dest-node-为空时dest-node便会立即触发调度流程进行调度">
+  • APIServer会立即把Pod创建的消息通知Scheduler，Scheduler发现 Pod 的属性中 Dest Node 为空时（Dest Node=””）便会立即触发调度流程进行调度。
+  <a class="anchor" href="#-apiserver%e4%bc%9a%e7%ab%8b%e5%8d%b3%e6%8a%8apod%e5%88%9b%e5%bb%ba%e7%9a%84%e6%b6%88%e6%81%af%e9%80%9a%e7%9f%a5schedulerscheduler%e5%8f%91%e7%8e%b0-pod-%e7%9a%84%e5%b1%9e%e6%80%a7%e4%b8%ad-dest-node-%e4%b8%ba%e7%a9%ba%e6%97%b6dest-node%e4%be%bf%e4%bc%9a%e7%ab%8b%e5%8d%b3%e8%a7%a6%e5%8f%91%e8%b0%83%e5%ba%a6%e6%b5%81%e7%a8%8b%e8%bf%9b%e8%a1%8c%e8%b0%83%e5%ba%a6">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-而这一个创建pod对象在调度的过程当中有3个阶段节点预选节点优选节点选定从而筛选出最佳的节点">
+  • 而这一个创建Pod对象，在调度的过程当中有3个阶段：节点预选、节点优选、节点选定，从而筛选出最佳的节点
+  <a class="anchor" href="#-%e8%80%8c%e8%bf%99%e4%b8%80%e4%b8%aa%e5%88%9b%e5%bb%bapod%e5%af%b9%e8%b1%a1%e5%9c%a8%e8%b0%83%e5%ba%a6%e7%9a%84%e8%bf%87%e7%a8%8b%e5%bd%93%e4%b8%ad%e6%9c%893%e4%b8%aa%e9%98%b6%e6%ae%b5%e8%8a%82%e7%82%b9%e9%a2%84%e9%80%89%e8%8a%82%e7%82%b9%e4%bc%98%e9%80%89%e8%8a%82%e7%82%b9%e9%80%89%e5%ae%9a%e4%bb%8e%e8%80%8c%e7%ad%9b%e9%80%89%e5%87%ba%e6%9c%80%e4%bd%b3%e7%9a%84%e8%8a%82%e7%82%b9">#</a>
+</h5>
+</li>
+<li>
+<ul>
+<li>
+<h5 id="-节点预选基于一系列的预选规则对每个节点进行检查将那些不符合条件的节点过滤从而完成节点的预选">
+  • 节点预选：基于一系列的预选规则对每个节点进行检查，将那些不符合条件的节点过滤，从而完成节点的预选
+  <a class="anchor" href="#-%e8%8a%82%e7%82%b9%e9%a2%84%e9%80%89%e5%9f%ba%e4%ba%8e%e4%b8%80%e7%b3%bb%e5%88%97%e7%9a%84%e9%a2%84%e9%80%89%e8%a7%84%e5%88%99%e5%af%b9%e6%af%8f%e4%b8%aa%e8%8a%82%e7%82%b9%e8%bf%9b%e8%a1%8c%e6%a3%80%e6%9f%a5%e5%b0%86%e9%82%a3%e4%ba%9b%e4%b8%8d%e7%ac%a6%e5%90%88%e6%9d%a1%e4%bb%b6%e7%9a%84%e8%8a%82%e7%82%b9%e8%bf%87%e6%bb%a4%e4%bb%8e%e8%80%8c%e5%ae%8c%e6%88%90%e8%8a%82%e7%82%b9%e7%9a%84%e9%a2%84%e9%80%89">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-节点优选对预选出的节点进行优先级排序以便选出最合适运行pod对象的节点">
+  • 节点优选：对预选出的节点进行优先级排序，以便选出最合适运行Pod对象的节点
+  <a class="anchor" href="#-%e8%8a%82%e7%82%b9%e4%bc%98%e9%80%89%e5%af%b9%e9%a2%84%e9%80%89%e5%87%ba%e7%9a%84%e8%8a%82%e7%82%b9%e8%bf%9b%e8%a1%8c%e4%bc%98%e5%85%88%e7%ba%a7%e6%8e%92%e5%ba%8f%e4%bb%a5%e4%be%bf%e9%80%89%e5%87%ba%e6%9c%80%e5%90%88%e9%80%82%e8%bf%90%e8%a1%8cpod%e5%af%b9%e8%b1%a1%e7%9a%84%e8%8a%82%e7%82%b9">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-节点选定从优先级排序结果中挑选出优先级最高的节点运行pod当这类节点多于1个时则进行随机选择">
+  • 节点选定：从优先级排序结果中挑选出优先级最高的节点运行Pod，当这类节点多于1个时，则进行随机选择
+  <a class="anchor" href="#-%e8%8a%82%e7%82%b9%e9%80%89%e5%ae%9a%e4%bb%8e%e4%bc%98%e5%85%88%e7%ba%a7%e6%8e%92%e5%ba%8f%e7%bb%93%e6%9e%9c%e4%b8%ad%e6%8c%91%e9%80%89%e5%87%ba%e4%bc%98%e5%85%88%e7%ba%a7%e6%9c%80%e9%ab%98%e7%9a%84%e8%8a%82%e7%82%b9%e8%bf%90%e8%a1%8cpod%e5%bd%93%e8%bf%99%e7%b1%bb%e8%8a%82%e7%82%b9%e5%a4%9a%e4%ba%8e1%e4%b8%aa%e6%97%b6%e5%88%99%e8%bf%9b%e8%a1%8c%e9%9a%8f%e6%9c%ba%e9%80%89%e6%8b%a9">#</a>
+</h5>
+</li>
+</ul>
+</li>
+</ul>
+<ol>
+<li>
+<h5 id="1-k8s的调用工作方式">
+  \1. k8s的调用工作方式
+  <a class="anchor" href="#1-k8s%e7%9a%84%e8%b0%83%e7%94%a8%e5%b7%a5%e4%bd%9c%e6%96%b9%e5%bc%8f">#</a>
+</h5>
+</li>
+</ol>
+<ul>
+<li>
+<h5 id="-kubernetes调度器作为集群的大脑在如何提高集群的资源利用率保证集群中服务的稳定运行中也会变得越来越重要kubernetes的资源分为两种属性">
+  • Kubernetes调度器作为集群的大脑，在如何提高集群的资源利用率、保证集群中服务的稳定运行中也会变得越来越重要Kubernetes的资源分为两种属性。
+  <a class="anchor" href="#-kubernetes%e8%b0%83%e5%ba%a6%e5%99%a8%e4%bd%9c%e4%b8%ba%e9%9b%86%e7%be%a4%e7%9a%84%e5%a4%a7%e8%84%91%e5%9c%a8%e5%a6%82%e4%bd%95%e6%8f%90%e9%ab%98%e9%9b%86%e7%be%a4%e7%9a%84%e8%b5%84%e6%ba%90%e5%88%a9%e7%94%a8%e7%8e%87%e4%bf%9d%e8%af%81%e9%9b%86%e7%be%a4%e4%b8%ad%e6%9c%8d%e5%8a%a1%e7%9a%84%e7%a8%b3%e5%ae%9a%e8%bf%90%e8%a1%8c%e4%b8%ad%e4%b9%9f%e4%bc%9a%e5%8f%98%e5%be%97%e8%b6%8a%e6%9d%a5%e8%b6%8a%e9%87%8d%e8%a6%81kubernetes%e7%9a%84%e8%b5%84%e6%ba%90%e5%88%86%e4%b8%ba%e4%b8%a4%e7%a7%8d%e5%b1%9e%e6%80%a7">#</a>
+</h5>
+</li>
+<li>
+<ul>
+<li>
+<h5 id="-可压缩资源例如cpu循环disk-io带宽都是可以被限制和被回收的对于一个pod来说可以降低这些资源的使用量而不去杀掉pod">
+  • 可压缩资源（例如CPU循环，Disk I/O带宽）都是可以被限制和被回收的，对于一个Pod来说可以降低这些资源的使用量而不去杀掉Pod。
+  <a class="anchor" href="#-%e5%8f%af%e5%8e%8b%e7%bc%a9%e8%b5%84%e6%ba%90%e4%be%8b%e5%a6%82cpu%e5%be%aa%e7%8e%afdisk-io%e5%b8%a6%e5%ae%bd%e9%83%bd%e6%98%af%e5%8f%af%e4%bb%a5%e8%a2%ab%e9%99%90%e5%88%b6%e5%92%8c%e8%a2%ab%e5%9b%9e%e6%94%b6%e7%9a%84%e5%af%b9%e4%ba%8e%e4%b8%80%e4%b8%aapod%e6%9d%a5%e8%af%b4%e5%8f%af%e4%bb%a5%e9%99%8d%e4%bd%8e%e8%bf%99%e4%ba%9b%e8%b5%84%e6%ba%90%e7%9a%84%e4%bd%bf%e7%94%a8%e9%87%8f%e8%80%8c%e4%b8%8d%e5%8e%bb%e6%9d%80%e6%8e%89pod">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-不可压缩资源例如内存硬盘空间一般来说不杀掉pod就没法回收未来kubernetes会加入更多资源如网络带宽存储iops的支持">
+  • 不可压缩资源（例如内存、硬盘空间）一般来说不杀掉Pod就没法回收。未来Kubernetes会加入更多资源，如网络带宽，存储IOPS的支持。
+  <a class="anchor" href="#-%e4%b8%8d%e5%8f%af%e5%8e%8b%e7%bc%a9%e8%b5%84%e6%ba%90%e4%be%8b%e5%a6%82%e5%86%85%e5%ad%98%e7%a1%ac%e7%9b%98%e7%a9%ba%e9%97%b4%e4%b8%80%e8%88%ac%e6%9d%a5%e8%af%b4%e4%b8%8d%e6%9d%80%e6%8e%89pod%e5%b0%b1%e6%b2%a1%e6%b3%95%e5%9b%9e%e6%94%b6%e6%9c%aa%e6%9d%a5kubernetes%e4%bc%9a%e5%8a%a0%e5%85%a5%e6%9b%b4%e5%a4%9a%e8%b5%84%e6%ba%90%e5%a6%82%e7%bd%91%e7%bb%9c%e5%b8%a6%e5%ae%bd%e5%ad%98%e5%82%a8iops%e7%9a%84%e6%94%af%e6%8c%81">#</a>
+</h5>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="kube-proxy的三种工作模式和原理">
+  kube-proxy的三种工作模式和原理
+  <a class="anchor" href="#kube-proxy%e7%9a%84%e4%b8%89%e7%a7%8d%e5%b7%a5%e4%bd%9c%e6%a8%a1%e5%bc%8f%e5%92%8c%e5%8e%9f%e7%90%86">#</a>
+</h2>
+<ol>
+<li>
+<h5 id="1-userspace-模式">
+  \1. userspace 模式
+  <a class="anchor" href="#1-userspace-%e6%a8%a1%e5%bc%8f">#</a>
+</h5>
+</li>
+</ol>
+<ul>
+<li>
+<h5 id="-该模式下kube-proxy会为每一个service创建一个监听端口发向cluster-ip的请求被iptables规则重定向到kube-proxy监听的端口上kube-proxy根据lb算法选择一个提供服务的pod并和其建立链接以将请求转发到pod上">
+  • 该模式下kube-proxy会为每一个Service创建一个监听端口。发向Cluster IP的请求被Iptables规则重定向到Kube-proxy监听的端口上，Kube-proxy根据LB算法选择一个提供服务的Pod并和其建立链接，以将请求转发到Pod上。
+  <a class="anchor" href="#-%e8%af%a5%e6%a8%a1%e5%bc%8f%e4%b8%8bkube-proxy%e4%bc%9a%e4%b8%ba%e6%af%8f%e4%b8%80%e4%b8%aaservice%e5%88%9b%e5%bb%ba%e4%b8%80%e4%b8%aa%e7%9b%91%e5%90%ac%e7%ab%af%e5%8f%a3%e5%8f%91%e5%90%91cluster-ip%e7%9a%84%e8%af%b7%e6%b1%82%e8%a2%abiptables%e8%a7%84%e5%88%99%e9%87%8d%e5%ae%9a%e5%90%91%e5%88%b0kube-proxy%e7%9b%91%e5%90%ac%e7%9a%84%e7%ab%af%e5%8f%a3%e4%b8%8akube-proxy%e6%a0%b9%e6%8d%aelb%e7%ae%97%e6%b3%95%e9%80%89%e6%8b%a9%e4%b8%80%e4%b8%aa%e6%8f%90%e4%be%9b%e6%9c%8d%e5%8a%a1%e7%9a%84pod%e5%b9%b6%e5%92%8c%e5%85%b6%e5%bb%ba%e7%ab%8b%e9%93%be%e6%8e%a5%e4%bb%a5%e5%b0%86%e8%af%b7%e6%b1%82%e8%bd%ac%e5%8f%91%e5%88%b0pod%e4%b8%8a">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-该模式下kube-proxy充当了一个四层load-balancer的角色由于kube-proxy运行在userspace中在进行转发处理时会增加两次内核和用户空间之间的数据拷贝效率较另外两种模式低一些好处是当后端的pod不可用时kube-proxy可以重试其他pod">
+  • 该模式下，Kube-proxy充当了一个四层Load balancer的角色。由于kube-proxy运行在userspace中，在进行转发处理时会增加两次内核和用户空间之间的数据拷贝，效率较另外两种模式低一些；好处是当后端的Pod不可用时，kube-proxy可以重试其他Pod。
+  <a class="anchor" href="#-%e8%af%a5%e6%a8%a1%e5%bc%8f%e4%b8%8bkube-proxy%e5%85%85%e5%bd%93%e4%ba%86%e4%b8%80%e4%b8%aa%e5%9b%9b%e5%b1%82load-balancer%e7%9a%84%e8%a7%92%e8%89%b2%e7%94%b1%e4%ba%8ekube-proxy%e8%bf%90%e8%a1%8c%e5%9c%a8userspace%e4%b8%ad%e5%9c%a8%e8%bf%9b%e8%a1%8c%e8%bd%ac%e5%8f%91%e5%a4%84%e7%90%86%e6%97%b6%e4%bc%9a%e5%a2%9e%e5%8a%a0%e4%b8%a4%e6%ac%a1%e5%86%85%e6%a0%b8%e5%92%8c%e7%94%a8%e6%88%b7%e7%a9%ba%e9%97%b4%e4%b9%8b%e9%97%b4%e7%9a%84%e6%95%b0%e6%8d%ae%e6%8b%b7%e8%b4%9d%e6%95%88%e7%8e%87%e8%be%83%e5%8f%a6%e5%a4%96%e4%b8%a4%e7%a7%8d%e6%a8%a1%e5%bc%8f%e4%bd%8e%e4%b8%80%e4%ba%9b%e5%a5%bd%e5%a4%84%e6%98%af%e5%bd%93%e5%90%8e%e7%ab%af%e7%9a%84pod%e4%b8%8d%e5%8f%af%e7%94%a8%e6%97%b6kube-proxy%e5%8f%af%e4%bb%a5%e9%87%8d%e8%af%95%e5%85%b6%e4%bb%96pod">#</a>
+</h5>
+</li>
+</ul>
+<ol>
+<li>
+<h5 id="1-iptables-模式">
+  \1. iptables 模式
+  <a class="anchor" href="#1-iptables-%e6%a8%a1%e5%bc%8f">#</a>
+</h5>
+</li>
+</ol>
+<ul>
+<li>
+<h5 id="-为了避免增加内核和用户空间的数据拷贝操作提高转发效率kube-proxy提供了iptables模式在该模式下kube-proxy为service后端的每个pod创建对应的iptables规则直接将发向cluster-ip的请求重定向到一个pod-ip">
+  • 为了避免增加内核和用户空间的数据拷贝操作，提高转发效率，Kube-proxy提供了iptables模式。在该模式下，Kube-proxy为service后端的每个Pod创建对应的iptables规则，直接将发向Cluster IP的请求重定向到一个Pod IP。
+  <a class="anchor" href="#-%e4%b8%ba%e4%ba%86%e9%81%bf%e5%85%8d%e5%a2%9e%e5%8a%a0%e5%86%85%e6%a0%b8%e5%92%8c%e7%94%a8%e6%88%b7%e7%a9%ba%e9%97%b4%e7%9a%84%e6%95%b0%e6%8d%ae%e6%8b%b7%e8%b4%9d%e6%93%8d%e4%bd%9c%e6%8f%90%e9%ab%98%e8%bd%ac%e5%8f%91%e6%95%88%e7%8e%87kube-proxy%e6%8f%90%e4%be%9b%e4%ba%86iptables%e6%a8%a1%e5%bc%8f%e5%9c%a8%e8%af%a5%e6%a8%a1%e5%bc%8f%e4%b8%8bkube-proxy%e4%b8%baservice%e5%90%8e%e7%ab%af%e7%9a%84%e6%af%8f%e4%b8%aapod%e5%88%9b%e5%bb%ba%e5%af%b9%e5%ba%94%e7%9a%84iptables%e8%a7%84%e5%88%99%e7%9b%b4%e6%8e%a5%e5%b0%86%e5%8f%91%e5%90%91cluster-ip%e7%9a%84%e8%af%b7%e6%b1%82%e9%87%8d%e5%ae%9a%e5%90%91%e5%88%b0%e4%b8%80%e4%b8%aapod-ip">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-该模式下kube-proxy不承担四层代理的角色只负责创建iptables规则该模式的优点是较userspace模式效率更高但不能提供灵活的lb策略当后端pod不可用时也无法进行重试">
+  • 该模式下Kube-proxy不承担四层代理的角色，只负责创建iptables规则。该模式的优点是较userspace模式效率更高，但不能提供灵活的LB策略，当后端Pod不可用时也无法进行重试。
+  <a class="anchor" href="#-%e8%af%a5%e6%a8%a1%e5%bc%8f%e4%b8%8bkube-proxy%e4%b8%8d%e6%89%bf%e6%8b%85%e5%9b%9b%e5%b1%82%e4%bb%a3%e7%90%86%e7%9a%84%e8%a7%92%e8%89%b2%e5%8f%aa%e8%b4%9f%e8%b4%a3%e5%88%9b%e5%bb%baiptables%e8%a7%84%e5%88%99%e8%af%a5%e6%a8%a1%e5%bc%8f%e7%9a%84%e4%bc%98%e7%82%b9%e6%98%af%e8%be%83userspace%e6%a8%a1%e5%bc%8f%e6%95%88%e7%8e%87%e6%9b%b4%e9%ab%98%e4%bd%86%e4%b8%8d%e8%83%bd%e6%8f%90%e4%be%9b%e7%81%b5%e6%b4%bb%e7%9a%84lb%e7%ad%96%e7%95%a5%e5%bd%93%e5%90%8e%e7%ab%afpod%e4%b8%8d%e5%8f%af%e7%94%a8%e6%97%b6%e4%b9%9f%e6%97%a0%e6%b3%95%e8%bf%9b%e8%a1%8c%e9%87%8d%e8%af%95">#</a>
+</h5>
+</li>
+</ul>
+<ol>
+<li>
+<h5 id="1-该模式和iptables类似kube-proxy监控pod的变化并创建相应的ipvs-rulesipvs也是在kernel模式下通过netfilter实现的但采用了hash-table来存储规则因此在规则较多的情况下ipvs相对iptables转发效率更高除此以外ipvs支持更多的lb算法如果要设置kube-proxy为ipvs模式必须在操作系统中安装ipvs内核模块">
+  \1. 该模式和iptables类似，kube-proxy监控Pod的变化并创建相应的ipvs rules。ipvs也是在kernel模式下通过netfilter实现的，但采用了hash table来存储规则，因此在规则较多的情况下，Ipvs相对iptables转发效率更高。除此以外，ipvs支持更多的LB算法。如果要设置kube-proxy为ipvs模式，必须在操作系统中安装IPVS内核模块。
+  <a class="anchor" href="#1-%e8%af%a5%e6%a8%a1%e5%bc%8f%e5%92%8ciptables%e7%b1%bb%e4%bc%bckube-proxy%e7%9b%91%e6%8e%a7pod%e7%9a%84%e5%8f%98%e5%8c%96%e5%b9%b6%e5%88%9b%e5%bb%ba%e7%9b%b8%e5%ba%94%e7%9a%84ipvs-rulesipvs%e4%b9%9f%e6%98%af%e5%9c%a8kernel%e6%a8%a1%e5%bc%8f%e4%b8%8b%e9%80%9a%e8%bf%87netfilter%e5%ae%9e%e7%8e%b0%e7%9a%84%e4%bd%86%e9%87%87%e7%94%a8%e4%ba%86hash-table%e6%9d%a5%e5%ad%98%e5%82%a8%e8%a7%84%e5%88%99%e5%9b%a0%e6%ad%a4%e5%9c%a8%e8%a7%84%e5%88%99%e8%be%83%e5%a4%9a%e7%9a%84%e6%83%85%e5%86%b5%e4%b8%8bipvs%e7%9b%b8%e5%af%b9iptables%e8%bd%ac%e5%8f%91%e6%95%88%e7%8e%87%e6%9b%b4%e9%ab%98%e9%99%a4%e6%ad%a4%e4%bb%a5%e5%a4%96ipvs%e6%94%af%e6%8c%81%e6%9b%b4%e5%a4%9a%e7%9a%84lb%e7%ae%97%e6%b3%95%e5%a6%82%e6%9e%9c%e8%a6%81%e8%ae%be%e7%bd%aekube-proxy%e4%b8%baipvs%e6%a8%a1%e5%bc%8f%e5%bf%85%e9%a1%bb%e5%9c%a8%e6%93%8d%e4%bd%9c%e7%b3%bb%e7%bb%9f%e4%b8%ad%e5%ae%89%e8%a3%85ipvs%e5%86%85%e6%a0%b8%e6%a8%a1%e5%9d%97">#</a>
+</h5>
+</li>
+</ol>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#创建-pod的主要流程">创建 Pod的主要流程?</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#pod-的重启策略">Pod 的重启策略</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#pod-的健康检查方式">Pod 的健康检查方式</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#pod-探针常见方式">Pod 探针常见方式</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#pod-常见的调度方式">Pod 常见的调度方式</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#deployment升级策略">deployment升级策略?</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#kubernetes-service类型">Kubernetes Service类型?</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#service分发后端的策略">Service分发后端的策略?</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#kubernetes外部如何访问集群内的服务">Kubernetes外部如何访问集群内的服务?</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#kubernetes-ingress">Kubernetes ingress?</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#kubernetes镜像的下载策略">Kubernetes镜像的下载策略?</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#kubernetes-kubelet的作用">Kubernetes kubelet的作用?</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#secret有哪些使用方式">Secret有哪些使用方式?</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#kubernetes-cni模型">Kubernetes CNI模型?</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#kubernetes-pv和pvc">Kubernetes PV和PVC?</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#pv生命周期内的阶段">PV生命周期内的阶段?</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#calico-网络模式">calico 网络模式</a></li>
+    <li><a href="#fannel三种模式">fannel三种模式</a></li>
+    <li><a href="#你知道的几种cni网络插件并详述其工作原理k8s常用的cni网络插件-calico--flannel简述一下它们的工作原理和区别">你知道的几种CNI网络插件，并详述其工作原理。K8s常用的CNI网络插件 （calico &amp;&amp; flannel），简述一下它们的工作原理和区别。</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#worker节点宕机简述pods驱逐流程">Worker节点宕机，简述Pods驱逐流程。</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#你知道的k8s中几种controller控制器并详述其工作原理">你知道的K8s中几种Controller控制器，并详述其工作原理</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#ingress-controller的工作机制">ingress-controller的工作机制</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#k8s的调度机制">k8s的调度机制</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#kube-proxy的三种工作模式和原理">kube-proxy的三种工作模式和原理</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

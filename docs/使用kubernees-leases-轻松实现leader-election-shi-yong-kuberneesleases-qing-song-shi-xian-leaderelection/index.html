@@ -1,0 +1,2912 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  假如你正在创建一个数据复制服务，该服务只需要一个实例来处理数据以保持正确的顺序。或者考虑开发一个多人在线游戏，在这种游戏中，同步所有参与者之间的游戏状态至关重要。这些类型的服务通常需要单个实例专门处理特定任务，并且还需要备用副本在当前实例失败时能够迅速接管工作负载。
+  #
+
+
+
+  解决此类挑战常用的技术之一是 leader election。它通过使组/集群中的节点参与投票或共识过程来选择单个 Leader 实例。然后该Leader 承担需要集中协调的责任。如果选举失败，则其余节点会自动重新运行选举过程以选择新的 Leader，确保系统连续性和容错性。
+  #
+
+
+  实现的复杂性
+  #
+
+
+  在一个组中达成所有节点对 Leader 的共识，对于实现 Leader 选举至关重要。
+  #
+
+
+  基本的实现可以利用锁服务来确定领导权。
+  #
+
+
+
+  在这种情况下，每个实例都尝试获取一个共享锁。锁服务确保只有一个实例在任何给定时间持有该锁，有效地使该实例成为 Leader。其他副本不断尝试获取锁，从而准备好进行无缝故障转移，以防当前的 Leader 变得不可用。
+  #
+
+
+  然而，在某些情况下会出现挑战，例如当领导节点失效和无响应时，并且持有锁一段时间直到该实例被回收。这种情况可能会导致传入请求因超时而失败，并且由于备用副本无法承担领导职责而增加正在进行任务的延迟。为了缓解这个问题，通常建议锁服务在锁上实施过期机制，通常称为基于 TTL 的租约。
+  #
+
+
+  问题1：失效的 Leader 实例
+  #
+
+
+
+  此外，锁服务必须符合一定的健壮性标准。一方面，它不能作为单个实例运行，因为这将使其成为单点故障。另一方面，如果它使用多个实例以提供高可用性，则必须设计能够抵御网络分区问题。否则可能导致一个棘手的情况发生：在不同网络分区中的两个副本都认为自己已经获得了锁，并因此承担领导者角色。
+  #
+
+
+  问题2：脑裂
+  #
+
+
+
+  基于仲裁的系统成为首选解决方案
+  #
+
+
+  为了解决网络分区的核心问题，像 ZooKeeper（被 Kafka 使用）和 etcd（被 Kubernetes 利用）这样的基于仲裁的系统通过内置的 TTL 功能应运而生，将自己确立为领导者选举的最佳解决方案。ZooKeeper 原子广播（ZAB）协议和 etcd 采用的 RAFT 协议都确保只有在大多数节点认可时才会考虑任何操作是有效的。在发生网络分区时，只有一个分区可以包含大多数节点，有效地防止了出现多个领导者的可能性。
+  #
+
+
+  然而，无论是 ZooKeeper 还是 etcd 都不具备成本效益。分布式系统固有复杂性带来了运维挑战。为小规模服务部署这样的集群可能太重，并且额外开销可能超过应用程序本身的运维成本。
+  #
+
+
+  K8s Leases
+  #
+
+
+  由于成本问题，可靠的领导者选举只适用于大规模系统吗？未必，如果你正在使用 Kubernetes 基础设施，则可以通过使用 Kubernetes Leases 来简单地实现 etcd 级别的领导者选举 —— 无需直接与 Etcd API 交互。
+  #
+
+
+  为什么很强大
+  #
+
+
+  Kubernetes Leases 之所以强大，部分原因在于 Kubernetes 本身通常将 etcd 作为其所有 API对象（包括租约）的存储。这意味着 etcd 的高可用性、一致性和容错特性自然地可用于 Kubernetes Leases。但是，Kubernetes API 添加了额外的功能层，比如通过资源版本控制实现乐观并发控制，这也有助于使租约成为在 Kubernetes 环境中进行领导者选举时一个强大的选择。
+  #
+
+
+  工作原理
+  #
+
+
+  在 Kubernetes 中，可以使用 Lease 对象来促进领导者选举。竞争领导权的候选人要么创建要么更新 Lease 对象，并将其标识符设置在 holderIdentity 字段中。领导者持续“续订”该 Lease 以保持其角色。如果领导者未能在 Lease 到期前续订，则其他候选人会尝试获取它。首个成功更新 Lease 的候选人将成为新领导者，确保平稳故障转移。所有候选人都会监视 Lease 对象以跟踪领导变更。
+  #
+
+">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="http://192.168.0.139:1313/docs/%E4%BD%BF%E7%94%A8kubernees-leases-%E8%BD%BB%E6%9D%BE%E5%AE%9E%E7%8E%B0leader-election-shi-yong-kuberneesleases-qing-song-shi-xian-leaderelection/">
+  <meta property="og:site_name" content="Guichen&#39;s Blog">
+  <meta property="og:title" content="使用kubernees leases 轻松实现leader election 2024-04-03 15:09:46.129">
+  <meta property="og:description" content="假如你正在创建一个数据复制服务，该服务只需要一个实例来处理数据以保持正确的顺序。或者考虑开发一个多人在线游戏，在这种游戏中，同步所有参与者之间的游戏状态至关重要。这些类型的服务通常需要单个实例专门处理特定任务，并且还需要备用副本在当前实例失败时能够迅速接管工作负载。 # 解决此类挑战常用的技术之一是 leader election。它通过使组/集群中的节点参与投票或共识过程来选择单个 Leader 实例。然后该Leader 承担需要集中协调的责任。如果选举失败，则其余节点会自动重新运行选举过程以选择新的 Leader，确保系统连续性和容错性。 # 实现的复杂性 # 在一个组中达成所有节点对 Leader 的共识，对于实现 Leader 选举至关重要。 # 基本的实现可以利用锁服务来确定领导权。 # 在这种情况下，每个实例都尝试获取一个共享锁。锁服务确保只有一个实例在任何给定时间持有该锁，有效地使该实例成为 Leader。其他副本不断尝试获取锁，从而准备好进行无缝故障转移，以防当前的 Leader 变得不可用。 # 然而，在某些情况下会出现挑战，例如当领导节点失效和无响应时，并且持有锁一段时间直到该实例被回收。这种情况可能会导致传入请求因超时而失败，并且由于备用副本无法承担领导职责而增加正在进行任务的延迟。为了缓解这个问题，通常建议锁服务在锁上实施过期机制，通常称为基于 TTL 的租约。 # 问题1：失效的 Leader 实例 # 此外，锁服务必须符合一定的健壮性标准。一方面，它不能作为单个实例运行，因为这将使其成为单点故障。另一方面，如果它使用多个实例以提供高可用性，则必须设计能够抵御网络分区问题。否则可能导致一个棘手的情况发生：在不同网络分区中的两个副本都认为自己已经获得了锁，并因此承担领导者角色。 # 问题2：脑裂 # 基于仲裁的系统成为首选解决方案 # 为了解决网络分区的核心问题，像 ZooKeeper（被 Kafka 使用）和 etcd（被 Kubernetes 利用）这样的基于仲裁的系统通过内置的 TTL 功能应运而生，将自己确立为领导者选举的最佳解决方案。ZooKeeper 原子广播（ZAB）协议和 etcd 采用的 RAFT 协议都确保只有在大多数节点认可时才会考虑任何操作是有效的。在发生网络分区时，只有一个分区可以包含大多数节点，有效地防止了出现多个领导者的可能性。 # 然而，无论是 ZooKeeper 还是 etcd 都不具备成本效益。分布式系统固有复杂性带来了运维挑战。为小规模服务部署这样的集群可能太重，并且额外开销可能超过应用程序本身的运维成本。 # K8s Leases # 由于成本问题，可靠的领导者选举只适用于大规模系统吗？未必，如果你正在使用 Kubernetes 基础设施，则可以通过使用 Kubernetes Leases 来简单地实现 etcd 级别的领导者选举 —— 无需直接与 Etcd API 交互。 # 为什么很强大 # Kubernetes Leases 之所以强大，部分原因在于 Kubernetes 本身通常将 etcd 作为其所有 API对象（包括租约）的存储。这意味着 etcd 的高可用性、一致性和容错特性自然地可用于 Kubernetes Leases。但是，Kubernetes API 添加了额外的功能层，比如通过资源版本控制实现乐观并发控制，这也有助于使租约成为在 Kubernetes 环境中进行领导者选举时一个强大的选择。 # 工作原理 # 在 Kubernetes 中，可以使用 Lease 对象来促进领导者选举。竞争领导权的候选人要么创建要么更新 Lease 对象，并将其标识符设置在 holderIdentity 字段中。领导者持续“续订”该 Lease 以保持其角色。如果领导者未能在 Lease 到期前续订，则其他候选人会尝试获取它。首个成功更新 Lease 的候选人将成为新领导者，确保平稳故障转移。所有候选人都会监视 Lease 对象以跟踪领导变更。 #">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+<title>使用kubernees leases 轻松实现leader election 2024-04-03 15:09:46.129 | Guichen&#39;s Blog</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="http://192.168.0.139:1313/docs/%E4%BD%BF%E7%94%A8kubernees-leases-%E8%BD%BB%E6%9D%BE%E5%AE%9E%E7%8E%B0leader-election-shi-yong-kuberneesleases-qing-song-shi-xian-leaderelection/">
+<link rel="stylesheet" href="/book.min.6c8b9d2a1fc95075ed7da46ca81060b39add8fff6741ac51259f768929281e2c.css" integrity="sha256-bIudKh/JUHXtfaRsqBBgs5rdj/9nQaxRJZ92iSkoHiw=" crossorigin="anonymous">
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/en.search.min.6f52273b9f5fa65803e3991faf27d1a7b7b8f6b148888237d77b4e841cb030e3.js" integrity="sha256-b1InO59fplgD45kfryfRp7e49rFIiII313tOhBywMOM=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/"><span>Guichen&#39;s Blog</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/00-%E9%9B%86%E7%BE%A4%E8%A7%84%E5%88%92%E5%92%8C%E5%9F%BA%E7%A1%80%E5%8F%82%E6%95%B0%E8%AE%BE%E5%AE%9A-00--ji-qun-gui-hua-he-ji-chu-can-shu-she-ding/" class="">00-集群规划和基础参数设定 2023-09-28 15:19:02.214</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/01-%E5%88%9B%E5%BB%BA%E8%AF%81%E4%B9%A6%E5%92%8C%E7%8E%AF%E5%A2%83%E5%87%86%E5%A4%87-01--chuang-jian-zheng-shu-he-huan-jing-zhun-bei/" class="">01-创建证书和环境准备 2023-09-28 15:22:19.812</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/02-%E5%AE%89%E8%A3%85etcd%E9%9B%86%E7%BE%A4-02--an-zhuang-etcd-ji-qun/" class="">02-安装etcd集群 2023-09-28 15:23:07.363</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E9%9D%A2%E8%AF%950224/" class="">0224面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-26-k8s%E7%9B%B8%E5%85%B3/" class="">0226 k8s题目</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/03-%E5%AE%89%E8%A3%85%E5%AE%B9%E5%99%A8%E8%BF%90%E8%A1%8C%E6%97%B6-03--an-zhuang-rong-qi-yun-xing-shi/" class="">03-安装容器运行时 2023-09-28 15:23:56.241</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/04-%E5%AE%89%E8%A3%85kube_master%E8%8A%82%E7%82%B9-04--an-zhuang-kubemaster-jie-dian/" class="">04-安装kube_master节点 2023-09-28 15:24:21.203</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/05-%E5%AE%89%E8%A3%85kube_node%E8%8A%82%E7%82%B9-05--an-zhuang-kubenode-jie-dian/" class="">05-安装kube_node节点 2023-09-28 15:24:43.201</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85calico%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-calico-wang-luo-zu-jian/" class="">06-安装calico网络组件 2023-09-28 15:34:28.483</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85cilium%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-cilium-wang-luo-zu-jian/" class="">06-安装cilium网络组件 2023-09-28 15:35:23.884</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85flannel%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-flannel-wang-luo-zu-jian/" class="">06-安装flannel网络组件 2023-09-28 15:35:50.039</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85kube-ovn%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-kube-ovn-wang-luo-zu-jian/" class="">06-安装kube-ovn网络组件 2023-09-28 15:36:11.265</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-wang-luo-zu-jian/" class="">06-安装网络组件 2023-09-28 15:25:14.997</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/07-%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4%E4%B8%BB%E8%A6%81%E6%8F%92%E4%BB%B6-07--an-zhuang-ji-qun-zhu-yao-cha-jian/" class="">07-安装集群主要插件 2023-09-28 15:26:42.651</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/08-k8s-%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8--k8s-ji-qun-cun-chu/" class="">08-K8S 集群存储  2023-09-28 15:27:29.454</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/16%E4%B8%AA%E6%A6%82%E5%BF%B5%E5%B8%A6%E4%BD%A0%E5%85%A5%E9%97%A8-kubernetes-16-ge-gai-nian-dai-ni-ru-men-kubernetes/" class="">16个概念带你入门 Kubernetes 2024-04-03 15:09:21.671</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/16%E5%BC%A0%E7%A1%AC%E6%A0%B8%E5%9B%BE%E8%A7%A3k8s%E7%BD%91%E7%BB%9C-16-zhang-ying-he-tu-jie-k8s-wang-luo/" class="">16张硬核图解k8s网络 2024-04-03 15:12:49.601</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-07-microk8s/" class="">2024-12-07 microk8s</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-devstack/" class="">2024-12-08 devstack</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-mutilpass%E6%93%8D%E4%BD%9C/" class="">2024-12-08 mutilpass操作</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-nano%E6%93%8D%E4%BD%9C/" class="">2024-12-08 nano操作</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-openstack%E5%92%8Ckubernetes%E5%8C%BA%E5%88%AB/" class="">2024-12-08 openstack和kubernetes区别</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-openstack%E9%9C%80%E8%A6%81%E5%87%A0%E5%8F%B0%E8%99%9A%E6%8B%9F%E6%9C%BA/" class="">2024-12-08 openstack需要几台虚拟机</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-%E5%9D%97%E5%AD%98%E5%82%A8%E5%92%8C%E5%AF%B9%E8%B1%A1%E5%82%A8%E5%AD%98%E5%8C%BA%E5%88%AB/" class="">2024-12-08 块存储和对象储存区别</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-docker-daemon.json/" class="">2024-12-09 docker daemon.json</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-helmchart-%E9%83%A8%E7%BD%B2flask%E5%BA%94%E7%94%A8/" class="">2024-12-09 helmchart 部署flask应用</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-mutilpass%E9%83%A8%E7%BD%B2openstack/" class="">2024-12-09 mutilpass部署openstack devstack形式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-openstack-ssh%E8%BF%9E%E6%8E%A5/" class="">2024-12-09 openstack ssh连接</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-10-docker-registrry/" class="">2024-12-10 docker registrry</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-22-k8s%E6%9E%B6%E6%9E%84%E5%B8%88%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8/" class="">2024-2-22 k8s架构师面试大全</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-22-k8s%E9%9D%A2%E8%AF%95%E5%AE%9D%E5%85%B8/" class="">2024-2-22 k8s面试宝典</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-26-%E9%9D%A2%E8%AF%95/" class="">2024-2-26 面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-19-%E4%B8%A4%E5%BC%A0%E5%9B%BE%E5%85%A8%E9%9D%A2%E7%90%86%E8%A7%A3k8s%E5%8E%9F%E7%90%86/" class="">2024-3-19 两张图全面理解k8s原理</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-cni%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B/" class="">2024-3-4 CNI剖析演进</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-8-%E9%9D%A2%E8%AF%950308/" class="">2024-3-8 面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-4-17-%E9%9D%A2%E8%AF%95%E6%80%BB%E7%BB%93/" class="">2024-4-17 面试总结</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-kubernetes%E9%9D%A2%E8%AF%95%E9%A2%98/" class="">2024-8-1 k8s面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-%E5%B8%B8%E8%A7%81linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98%E6%89%BE%E5%B7%A5%E4%BD%9C%E7%9A%84%E5%BF%85%E7%9C%8B/" class="">2024-8-1 linux运维面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98/" class="">2024-8-1 linux面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-1-1-%E5%A4%A7%E5%A0%B0%E6%B2%B3-%E6%88%91%E7%9A%84%E4%BF%9D%E5%A7%86/" class="">2025-1-1 大堰河-我的保姆</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-k8s-csi%E5%89%96%E6%9E%90/" class="">2025-1-16 CSI剖析演进</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-1-16-k8s%E5%B8%B8%E8%A7%81%E6%95%85%E9%9A%9C%E6%8C%87%E5%8D%97/" class="">2025-1-16 k8s常见故障指南</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-k8s%E6%B5%81%E9%87%8F%E9%93%BE%E8%B7%AF%E5%89%96%E6%9E%90/" class="">2025-1-16 k8s流量链路剖析</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/33%E6%AC%BEgitops%E4%B8%8Edevops%E4%B8%BB%E6%B5%81%E7%B3%BB%E7%BB%9F-33-kuan-gitops-yu-devops-zhu-liu-xi-tong/" class="">33款gitops与devops主流系统 2024-08-02 17:45:15.709</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/600%E6%9D%A1%E6%9C%80%E5%BC%BAlinux%E5%91%BD%E4%BB%A4%E6%80%BB%E7%BB%93-600-tiao-zui-qiang-linux-ming-ling-zong-jie/" class="">600条最强linux命令总结 2024-04-03 15:12:31.282</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/acme%E8%87%AA%E5%8A%A8%E6%9B%B4%E6%96%B0%E8%AF%81%E4%B9%A6-acme-zi-dong-geng-xin-zheng-shu/" class="">acme自动更新证书 2024-04-03 14:41:44.289</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/calico-%E9%85%8D%E7%BD%AE-bgp-route-reflectors-calico-pei-zhi-bgproutereflectors/" class="">calico 配置 BGP Route Reflectors 2023-09-28 15:34:01.007</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/calico%E7%BD%91%E7%BB%9C%E8%87%AA%E5%AE%9A%E4%B9%89-calico-wang-luo-zi-ding-yi/" class="">Calico网络自定义 2024-04-03 15:08:43.394</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/cicd%E6%80%9D%E8%80%83-cicd-si-kao/" class="">CICD思考 2024-04-03 15:11:24.151</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/client-go-%E5%9B%9B%E7%A7%8D%E5%AE%A2%E6%88%B7%E7%AB%AF-client-go-si-zhong-ke-hu-duan/" class="">Client-go 四种客户端 2024-04-03 14:49:34.32</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/client-go-%E6%9E%B6%E6%9E%84-client-go-jia-gou/" class="">Client-go 架构 2024-04-03 14:48:40.716</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/cni%E6%8F%92%E4%BB%B6%E9%80%89%E5%9E%8B-cni-cha-jian-xuan-xing/" class="">CNI插件选型 2024-04-03 15:01:51.29</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/containerd-%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C-containerd-ji-ben-cao-zuo/" class="">Containerd 基本操作 2024-04-03 14:55:46.786</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/coredns%E4%B9%8B%E5%85%89-coredns-zhi-guang/" class="">COREDNS之光 2024-04-03 14:54:52.059</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/dockerfile%E5%AE%9A%E5%88%B6%E4%B8%93%E5%B1%9E%E9%95%9C%E5%83%8F-dockerfile-ding-zhi-zhuan-shu-jing-xiang/" class="">dockerfile定制专属镜像 2024-08-02 17:44:00.522</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/dockerfile%E7%9A%84copy%E5%92%8Cadd%E7%9A%84%E5%8C%BA%E5%88%AB-dockerfile-de-copy-he-add-de-qu-bie/" class="">dockerfile的copy和add的区别 2024-04-03 15:01:09.565</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/docker%E9%87%8D%E8%A6%81%E7%9A%84%E7%BD%91%E7%BB%9C%E7%9F%A5%E8%AF%86%E7%82%B9-docker-zhong-yao-de-wang-luo-zhi-shi-dian/" class="">Docker重要的网络知识点  2024-04-03 15:12:10.162</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/etcd%E5%A4%87%E4%BB%BD-etcd-bei-fen/" class="">ETCD备份 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/etcd%E7%A8%B3%E5%AE%9A%E6%80%A7%E5%8F%8A%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%AE%9E%E8%B7%B5-etcd-wen-ding-xing-ji-xing-neng-you-hua-shi-jian/" class="">ETCD稳定性及性能优化实践 2024-04-03 15:06:31.141</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ex-lb-%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E9%83%A8%E7%BD%B2-ex-lb-fu-zai-jun-heng-bu-shu/" class="">EX-LB 负载均衡部署 2023-09-28 15:28:51.998</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ezctl-%E5%91%BD%E4%BB%A4%E8%A1%8C%E4%BB%8B%E7%BB%8D-ezctl-ming-ling-xing-jie-shao/" class="">ezctl 命令行介绍 2023-09-28 15:28:00.619</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/flanel%E7%BD%91%E7%BB%9C-flanel-wang-luo/" class="">flanel网络 2024-04-03 15:05:04.16</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/godel-scheduler-godel-scheduler/" class="">godel-scheduler 2024-08-02 17:41:00.668</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/helm-chart%E5%92%8Crepo-helmchart-he-repo/" class="">helm chart和repo 2024-04-03 15:00:43.125</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/istio-ingress-gateway-istio-ingress-gateway/" class="">istio-ingress-gateway 2024-08-02 17:51:54.75</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/istio%E9%83%A8%E7%BD%B2-istio-bu-shu/" class="">istio部署 2024-08-02 17:52:40.721</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-cni%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B-k8scni-pou-xi-yan-jin/" class="">K8S CNI剖析演进 2024-03-04 10:51:33.245</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-csi-openebs%E5%8E%9F%E7%90%86-k8scsiopenebs-yuan-li/" class="">K8S csi openebs原理 2024-04-03 14:44:48.967</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-csi%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B-k8scsi-pou-xi-yan-jin/" class="">K8S CSI剖析演进 2024-03-04 10:52:20.507</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-gpt-k8sgpt/" class="">K8S GPT 2024-04-03 15:02:09.127</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E5%BC%80%E5%8F%91%E5%8F%AF%E4%B8%8D%E6%AD%A2-crud-k8s-kai-fa-ke-bu-zhi-crud/" class="">K8S 开发可不止 CRUD 2024-04-03 14:50:11.765</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E6%8E%A2%E9%92%88%E5%8E%9F%E7%90%86-k8s-tan-zhen-yuan-li/" class="">K8S 探针原理 2024-04-03 14:53:29.429</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E6%B5%81%E9%87%8F%E9%93%BE%E8%B7%AF%E5%89%96%E6%9E%90-k8s-liu-liang-lian-lu-pou-xi/" class="">K8S 流量链路剖析 2024-03-04 10:50:22.991</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E8%B0%83%E5%BA%A6%E5%99%A8-scheduler_onego-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-diao-du-qi-scheduleronego-yuan-ma-jie-du/" class="">K8S 调度器 scheduler_one.go 源码解读 2024-04-09 11:45:28.22</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E4%B9%8Bingress-nginx%E5%8E%9F%E7%90%86%E5%8F%8A%E9%85%8D%E7%BD%AE-k8s-zhi-ingress-nginx-yuan-li-ji-pei-zhi/" class="">K8S之ingress-nginx原理及配置 2024-07-05 18:02:14.243</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E4%B9%8Bkubelet%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-zhi-kubelet-yuan-ma-jie-du/" class="">k8s之kubelet源码解读 2024-03-28 15:30:39.633</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7-k8s-yuan-de-sheng-ji/" class="">K8S原地升级 2024-04-03 15:04:38.125</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%91%BD%E4%BB%A4%E6%8C%87%E5%8D%97-k8s-ming-ling-zhi-nan/" class="">K8S命令指南 2024-04-03 15:14:14.207</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%A6%82%E4%BD%95%E8%8E%B7%E5%BE%97-ip-k8s-ru-he-huo-de-ip/" class="">K8S如何获得 IP 2024-04-16 17:09:59.658</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%BA%94%E7%94%A8%E7%9A%84%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5-k8s-ying-yong-de-zui-jia-shi-jian/" class="">k8s应用的最佳实践 2024-04-03 14:43:16.936</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-deployment_controllergo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-deploymentcontrollergo-yuan-ma-jie-du/" class="">K8S控制器之 deployment_controller.go源码解读 2024-04-09 11:30:03.133</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-progressgo-%E8%BF%9B%E5%BA%A6-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-progressgo-jin-du-yuan-ma-jie-du/" class="">K8S控制器之 progress.go 进度 源码解读 2024-04-09 11:31:08.86</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-rollinggo-%E6%BB%9A%E5%8A%A8%E6%9B%B4%E6%96%B0-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-rollinggo-gun-dong-geng-xin-yuan-ma-jie-du/" class="">K8S控制器之 rolling.go 滚动更新 源码解读 2024-04-09 11:32:58.133</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-schedulergo-%E8%B0%83%E5%BA%A6%E5%99%A8-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-schedulergo-diao-du-qi-yuan-ma-jie-du/" class="">K8S控制器之 scheduler.go 调度器 源码解读 2024-04-09 11:44:25.171</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Brecreatego-%E9%87%8D%E5%BB%BA-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-recreatego-zhong-jian-yuan-ma-jie-du/" class="">K8S控制器之recreate.go 重建 源码解读 2024-04-09 11:31:49.855</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Brollbackgo-%E5%9B%9E%E6%BB%9A-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-rollbackgo-hui-gun-yuan-ma-jie-du/" class="">K8S控制器之rollback.go 回滚 源码解读 2024-04-09 11:32:26.587</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_pod_controlgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulpodcontrolgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_pod_control.go源码解读 2024-04-10 09:42:50.078</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_set_controlgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetcontrolgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_set_control.go源码解读 2024-04-10 09:41:30.316</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_set_status_updatego%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetstatusupdatego-yuan-ma-jie-du/" class="">K8S控制器之stateful_set_status_update.go源码解读 2024-04-10</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_setgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_set.go源码解读 2024-04-10</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bsyncgo-%E5%90%8C%E6%AD%A5-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-syncgo-tong-bu-yuan-ma-jie-du/" class="">K8S控制器之sync.go 同步 源码解读 2024-04-09 11:33:26.356</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E7%9A%84pod%E7%B1%BB%E5%9E%8B-k8s-de-pod-lei-xing/" class="">K8S的POD类型 2024-04-03 14:57:11.072</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E7%9A%84%E6%9C%80%E5%90%8E%E4%B8%80%E5%9D%97%E6%8B%BC%E5%9B%BE-dbpaas-k8s-de-zui-hou-yi-kuai-pin-tu-dbpaas/" class="">K8S的最后一块拼图 dbpaas 2024-08-02 17:48:35.899</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-k8s%E7%BB%84%E4%BB%B6/" class="">k8s组件</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%83%8C%E5%90%8Eservice%E6%98%AF%E5%A6%82%E4%BD%95%E5%B7%A5%E4%BD%9C%E7%9A%84-k8s-bei-hou-service-shi-ru-he-gong-zuo-de/" class="">k8s背后service是如何工作的 2024-08-02 17:49:44.981</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%B0%83%E5%BA%A6%E5%99%A8-extendergo-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-diao-du-qi-extendergo-yuan-ma-jie-du/" class="">K8S调度器 extender.go 源码解读 2024-04-09 11:45:59.666</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%B0%83%E8%AF%95pod-k8s-diao-shi-pod/" class="">K8S调试POD 2024-04-03 14:58:15.293</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%BF%90%E7%BB%B4%E4%B9%8B%E6%B8%85%E7%90%86%E7%A3%81%E7%9B%98-k8s-yun-wei-zhi-qing-li-ci-pan/" class="">k8s运维之清理磁盘 2024-04-03 15:13:57.279</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8-k8s-mian-shi-da-quan/" class="">K8S面试大全 2024-04-03 15:10:54.493</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E5%AE%9D%E5%85%B8-k8s-mian-shi-bao-dian/" class="">K8S面试宝典 2024-04-03 15:11:09.316</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E9%A2%98-k8s-mian-shi-ti/" class="">K8S面试题 2024-08-02 17:50:50.418</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kruise%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7%E8%A7%A3%E6%9E%90-kruise-yuan-de-sheng-ji-jie-xi/" class="">kruise原地升级解析 2024-08-02 17:59:31.689</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kube-router-%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-kube-router-wang-luo-zu-jian/" class="">kube-router 网络组件 2023-09-28 15:33:20.658</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-05-kubeasz%E9%83%A8%E7%BD%B2k8s/" class="">kubeasz部署k8s</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubekey%E6%B7%BB%E5%8A%A0%E6%96%B0%E8%8A%82%E7%82%B9-kubekey-tian-jia-xin-jie-dian/" class="">kubekey添加新节点 2024-04-03 15:36:47.646</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-api-kubernetesapi/" class="">Kubernetes API 2024-04-03 14:47:30.212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E6%BA%90%E7%A0%81%E7%BB%93%E6%9E%84-kubernetes-yuan-ma-jie-gou/" class="">Kubernetes 源码结构 2024-04-03 14:48:05.954</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3%E8%AE%A4%E8%AF%81-kubernetes-zheng-shu-xiang-jie--ren-zheng-/" class="">Kubernetes 证书详解(认证) 2024-04-03 14:52:56.54</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3%E9%89%B4%E6%9D%83-kubernetes-zheng-shu-xiang-jie--jian-quan-/" class="">Kubernetes 证书详解(鉴权) 2024-04-03 14:49:04.385</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubewharf-kubewharf/" class="">kubewharf 2024-08-02 17:41:32.72</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux-awk%E6%96%87%E6%9C%AC%E5%A4%84%E7%90%86%E5%99%A8-8%E4%B8%AA%E6%A1%88%E4%BE%8B-linuxawk-wen-ben-chu-li-qi-8-ge-an-li/" class="">linux awk文本处理器 8个案例 2024-08-02 17:46:53.603</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux-%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%A4%A7%E5%85%A8-linux-xing-neng-you-hua-da-quan/" class="">Linux 性能优化大全 2024-04-03 15:09:06.854</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux%E7%B3%BB%E7%BB%9F%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96-%E4%B8%83%E4%B8%AA%E5%AE%9E%E6%88%98%E7%BB%8F%E9%AA%8C-linux-xi-tong-xing-neng-you-hua-qi-ge-shi-zhan-jing-yan/" class="">linux系统性能优化 七个实战经验 2024-08-02 17:47:26.212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98-linux-yun-wei-gong-cheng-shi-50-ge-chang-jian-mian-shi-ti/" class="">linux运维工程师50个常见面试题 2024-08-02 17:42:12.968</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/metallb-l2-%E5%8E%9F%E7%90%86-metallbl2-yuan-li/" class="">MetalLB L2 原理 2024-04-03 14:52:24.662</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/netctl%E6%A3%80%E6%B5%8B%E9%9B%86%E7%BE%A4pod%E9%97%B4%E8%BF%9E%E9%80%9A%E6%80%A7-netctl-jian-ce-ji-qun-pod-jian-lian-tong-xing/" class="">netctl检测集群pod间连通性 2024-08-02 18:00:36.753</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/network-check-network-check/" class="">network-check 2023-09-28 15:36:33.04</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/nginx%E5%A6%82%E4%BD%95%E8%A7%A3%E5%86%B3%E6%83%8A%E7%BE%A4%E6%95%88%E5%BA%94-nginx-ru-he-jie-jue-jing-qun-xiao-ying/" class="">nginx如何解决惊群效应 2024-08-02 17:45:54.531</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/openkruise%E8%AF%A6%E7%BB%86%E8%A7%A3%E9%87%8A%E4%BB%A5%E5%8F%8A%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7%E5%8F%8A%E5%85%A8%E9%93%BE%E8%B7%AF%E7%81%B0%E5%BA%A6%E5%8F%91%E5%B8%83%E6%96%B9%E6%A1%88-openkruise-xiang-xi-jie-shi-yi-ji-yuan-de-sheng-ji-ji-quan-lian-lu-hui-du-fa-bu-fang-an/" class="">OpenKruise详细解释以及原地升级及全链路灰度发布方案 2024-07-22 11:44:46.892</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/pixie-pixie/" class="">pixie 2024-08-02 17:52:17.843</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-28-prometheus/" class="">prometheus 面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/prometheus-stack-prometheus-stack/" class="">prometheus-stack 2024-08-02 17:55:22.326</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/prometheus%E4%BC%81%E4%B8%9A%E7%BA%A7%E7%9B%91%E6%8E%A7%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93-prometheus-qi-ye-ji-jian-kong-shi-yong-zong-jie/" class="">prometheus企业级监控使用总结 2024-04-03 15:13:11.185</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ssl%E8%AF%81%E4%B9%A6%E8%87%AA%E7%AD%BE%E5%8F%91-ssl-zheng-shu-zi-qian-fa/" class="">ssl证书自签发 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/teg%E4%B8%8Eistio%E9%9B%86%E6%88%90-teg-yu-istio-ji-cheng/" class="">TEG与istio集成 2024-08-02 17:51:20.389</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%B8%A4%E5%BC%A0%E5%9B%BE%E5%85%A8%E9%9D%A2%E7%90%86%E8%A7%A3k8s%E5%8E%9F%E7%90%86-liang-zhang-tu-quan-mian-li-jie-k8s-yuan-li/" class="">两张图全面理解K8S原理 2024-04-03 14:51:27.431</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%B8%AA%E6%80%A7%E5%8C%96%E9%9B%86%E7%BE%A4%E5%8F%82%E6%95%B0%E9%85%8D%E7%BD%AE-ge-xing-hua-ji-qun-can-shu-pei-zhi/" class="">个性化集群参数配置 2023-09-28 15:30:56.072</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E4%B8%AD%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_%E9%A2%98%E7%9B%AE/" class="">中级运维面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BA%8C%E8%BF%9B%E5%88%B6%E9%83%A8%E7%BD%B2k8s%E5%8A%A0%E8%8A%82%E7%82%B9%E6%93%8D%E4%BD%9C-er-jin-zhi-bu-shu-k8s-jia-jie-dian-cao-zuo/" class="">二进制部署K8S加节点操作 2024-04-03 15:08:26.726</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-10-20-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8%E9%9B%86%E7%BE%A4/" class="">使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8-keepalived-%E5%92%8C-haproxy-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8-kubernetes-%E9%9B%86%E7%BE%A4-shi-yong-keepalived-he-haproxy-chuang-jian-gao-ke-yong-kubernetes-ji-qun/" class="">使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群 2023-04-12 04:04:09.458</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8-openfunction-%E5%9C%A8%E4%BB%BB%E4%BD%95%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E4%B8%8A%E8%BF%90%E8%A1%8C%E6%97%A0%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%B7%A5%E4%BD%9C%E8%B4%9F%E8%BD%BD-shi-yong-openfunction-zai-ren-he-ji-chu-she-shi-shang-yun-xing-wu-fu-wu-qi-gong-zuo-fu-zai/" class="">使用 OpenFunction 在任何基础设施上运行无服务器工作负载 2024-01-21 04:02:44.459</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8cloudflarecf%E6%90%AD%E5%BB%BAdockerhub%E4%BB%A3%E7%90%86-shi-yong-cloudflarecf-da-jian-dockerhub-dai-li/" class="">使用cloudflare(CF)搭建dockerhub代理 2024-06-28 14:38:34.339</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8kubernees-leases-%E8%BD%BB%E6%9D%BE%E5%AE%9E%E7%8E%B0leader-election-shi-yong-kuberneesleases-qing-song-shi-xian-leaderelection/" class="active">使用kubernees leases 轻松实现leader election 2024-04-03 15:09:46.129</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%85%AC%E6%9C%89%E4%BA%91%E4%B8%8A%E9%83%A8%E7%BD%B2-kubeasz-gong-you-yun-shang-bu-shu-kubeasz/" class="">公有云上部署 kubeasz 2023-09-28 15:31:16.19</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-5-14-%E5%8D%95master%E5%8D%95etcd%E6%94%B9%E9%80%A0/" class="">单master单etcd改造为3master3etcd</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%8F%B2%E4%B8%8A%E6%9C%80%E7%89%9Bjenkins-pipeline%E6%B5%81%E6%B0%B4%E7%BA%BF%E8%AF%A6%E8%A7%A3-shi-shang-zui-niu-jenkinspipeline-liu-shui-xian-xiang-jie/" class="">史上最牛jenkins pipeline流水线详解 2024-08-02</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%9A%E6%9E%B6%E6%9E%84%E6%94%AF%E6%8C%81-duo-jia-gou-zhi-chi/" class="">多架构支持 2023-09-28 15:29:54.111</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%A7%E5%8E%82%E6%80%BB%E7%BB%93nginx%E9%AB%98%E5%B9%B6%E5%8F%91%E4%BC%98%E5%8C%96%E7%AC%94%E8%AE%B0-da-chang-zong-jie-nginx-gao-bing-fa-you-hua-bi-ji/" class="">大厂总结nginx高并发优化笔记 2024-08-02 17:46:19.098</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%A7%E8%A7%84%E6%A8%A1%E5%B9%B6%E5%8F%91%E4%B8%8B%E5%A6%82%E4%BD%95%E5%8A%A0%E5%BF%AB-pod-%E5%90%AF%E5%8A%A8%E9%80%9F%E5%BA%A6-da-gui-mo-bing-fa-xia-ru-he-jia-kuai-pod-qi-dong-su-du/" class="">大规模并发下如何加快 Pod 启动速度 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E4%B8%BAk8s%E4%BF%9D%E9%A9%BE%E6%8A%A4%E8%88%AA-ru-he-wei-k8s-bao-jia-hu-hang/" class="">如何为K8S保驾护航 2024-04-16 17:09:21.962</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8tekton%E5%BF%AB%E9%80%9F%E6%90%AD%E5%BB%BAcicd%E5%B9%B3%E5%8F%B0-ru-he-shi-yong-tekton-kuai-su-da-jian-cicd-ping-tai/" class="">如何使用tekton快速搭建CI/CD平台 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E8%B0%83%E8%AF%95-crash-%E5%AE%B9%E5%99%A8%E7%9A%84%E7%BD%91%E7%BB%9C-ru-he-diao-shi-crash-rong-qi-de-wang-luo/" class="">如何调试 crash 容器的网络 2024-04-03 14:50:51.378</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E4%B8%AD%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E4%BB%A5%E5%8F%8A%E4%B8%8D%E5%90%8Cdnspolicy%E5%AF%B9%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E7%9A%84%E5%BD%B1%E5%93%8D-rong-qi-zhong-yu-ming-jie-xi-yi-ji-bu-tong-dnspolicy-dui-yu-ming-jie-xi-de-ying-xiang/" class="">容器中域名解析以及不同dnspolicy对域名解析的影响 2024-04-03 15:04:09.254</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E5%86%85%E7%9A%84-1-%E5%8F%B7%E8%BF%9B%E7%A8%8B-rong-qi-nei-de-1-hao-jin-cheng/" class="">容器内的 1 号进程 2024-04-03 14:46:29.998</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E5%8E%9F%E7%90%86-rong-qi-yuan-li/" class="">容器原理 2024-04-03 14:45:58.422</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E7%9A%84%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E4%B8%80-overlayfs-%E5%8E%9F%E7%90%86-rong-qi-de-wen-jian-xi-tong--yi-overlayfs-yuan-li/" class="">容器的文件系统 OverlayFS 原理 2024-04-03 14:45:26.893</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C%E5%8E%9F%E7%90%86-rong-qi-wang-luo-yuan-li/" class="">容器网络原理 2024-04-03 14:51:51.962</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%B8%B8%E8%A7%81linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98-chang-jian-linux-yun-wei-mian-shi-ti/" class="">常见linux运维面试题 2024-08-02 17:42:33.873</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BC%80%E5%A7%8B%E4%BD%BF%E7%94%A8-cilium-kai-shi-shi-yong-cilium/" class="">开始使用 cilium 2023-09-28 15:34:49.205</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BD%BB%E6%82%9F%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C-che-wu-rong-qi-wang-luo/" class="">彻悟容器网络 2024-04-07 10:30:11.55</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BF%AB%E9%80%9F%E6%8C%87%E5%8D%97-kuai-su-zhi-nan/" class="">快速指南 2023-09-28 15:28:25.71</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%88%91%E5%8F%AA%E6%83%B3%E5%81%9A%E6%8A%80%E6%9C%AF-%E8%B5%B0%E6%8A%80%E6%9C%AF%E8%B7%AF%E7%BA%BF-wo-zhi-xiang-zuo-ji-shu-zou-ji-shu-lu-xian/" class="">我只想做技术 走技术路线 2024-08-02 17:43:31.897</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%90%9E%E6%87%82k8s%E9%89%B4%E6%9D%83-gao-dong-k8s-jian-quan/" class="">搞懂K8S鉴权 2024-04-03 15:11:54.885</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%90%AD%E4%B8%AA%E6%97%A5%E5%BF%97%E6%89%8B%E6%9C%BA%E7%B3%BB%E7%BB%9F%E4%B8%8D%E9%A6%99%E5%90%97-da-ge-ri-zhi-shou-ji-xi-tong-bu-xiang-ma/" class="">搭个日志手机系统不香吗 2024-08-02 17:47:58.794</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E8%AF%B4%E6%98%8E-cao-zuo-xi-tong-shuo-ming/" class="">操作系统说明 2023-09-28 15:31:37.694</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%96%87%E5%AD%A6%E7%9A%84%E6%95%85%E4%B9%A1-wen-xue-de-gu-xiang/" class="">文学的故乡 2024-04-03 14:40:45.926</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%98%AF%E6%8A%80%E6%9C%AF%E5%A4%A7%E7%A5%9E%E8%BF%98%E6%98%AF%E5%9F%BA%E7%A1%80%E6%9E%B6%E6%9E%84%E9%83%A8%E7%9A%84%E7%A5%B8%E5%AE%B3-shi-ji-shu-da-shen-hai-shi-ji-chu-jia-gou-bu-de-huo-hai/" class="">是技术大神还是基础架构部的祸害 2024-08-02 17:50:26.139</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9C%89%E8%BF%993%E4%B8%AA%E8%BF%B9%E8%B1%A1%E4%BD%A0%E5%B0%B1%E8%AF%A5%E7%A6%BB%E8%81%8C%E4%BA%86-you-zhe-3-ge-ji-xiang--ni-jiu-gai-li-zhi-le/" class="">有这3个迹象，你就该离职了 2023-09-21 16:00:22.432</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9E%81%E5%A4%A7%E6%8F%90%E9%AB%98%E5%B7%A5%E4%BD%9C%E6%95%88%E7%8E%87%E7%9A%84-linux-%E5%91%BD%E4%BB%A4-ji-da-ti-gao-gong-zuo-xiao-lv-de-linux-ming-ling/" class="">极大提高工作效率的 Linux 命令 2024-04-03 14:42:46.957</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9E%84%E5%BB%BA%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E5%88%A9%E5%99%A8buildkit-gou-jian-rong-qi-jing-xiang-li-qi-buildkit/" class="">构建容器镜像利器buildkit 2024-08-02 17:49:14.916</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B5%81%E9%87%8F%E4%BD%95%E5%A4%84%E6%9D%A5%E4%BD%95%E5%A4%84%E5%8E%BB-liu-liang-he-chu-lai-he-chu-qu/" class="">流量何处来何处去 2024-04-03 14:56:20.089</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B8%85%E7%90%86docker%E9%95%9C%E5%83%8F-qing-li-docker-jing-xiang/" class="">清理docker镜像 2024-08-02 17:54:48.594</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B8%85%E7%90%86%E6%AE%8B%E7%95%99%E7%9A%84calico%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6-qing-li-can-liu-de-calico-wang-luo/" class="">清理残留的calico网络插件 2024-04-03 15:07:38.854</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A3%81%E7%9B%98%E6%95%B0%E6%8D%AE%E6%81%A2%E5%A4%8D-ci-pan-shu-ju-hui-fu/" class="">磁盘数据恢复 2024-04-03 14:59:27.839</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85kubephere-li-xian-an-zhuang-kubephere/" class="">离线安装kubephere 2024-04-03 14:59:59.885</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4-li-xian-an-zhuang-ji-qun/" class="">离线安装集群 2023-09-28 15:29:14.742</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-%E8%AE%A1%E5%88%92/" class="">美国码农薪酬</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-%E8%AE%A1%E5%88%922/" class="">美国码农计划</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E8%87%AA%E5%8A%A8%E5%B1%8F%E8%94%BDip%E6%94%BB%E5%87%BB-zi-dong-ping-bi-ip-gong-ji/" class="">自动屏蔽IP攻击 2024-04-03 14:54:11.783</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-12-%E9%9D%A2%E8%AF%950212/" class="">面试0212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-19-%E9%9D%A2%E8%AF%950219/" class="">面试0219</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-20-%E9%9D%A2%E8%AF%950220/" class="">面试0220</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-26-%E9%9D%A2%E8%AF%950225/" class="">面试0225</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%9D%A2%E8%AF%950308-mian-shi-0308/" class="">面试0308 2024-04-03 14:57:53.576</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-11-%E9%9D%A2%E8%AF%950211/" class="">面试2025-02-11</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-18-%E9%9D%A2%E8%AF%95/" class="">面试2025-0218</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%9D%A2%E8%AF%95%E7%94%A8-golang-%E6%89%8B%E6%92%B8-lru-mian-shi-yong-golang-shou-lu-lru/" class="">面试用 Golang 手撸 LRU 2024-04-03 14:47:00.767</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%A1%B6%E7%BA%A7devops%E5%B7%A5%E5%85%B7%E5%A4%A7%E7%9B%98%E7%82%B9-ding-ji-devops-gong-ju-da-pan-dian/" class="">顶级devops工具大盘点 2024-08-02 17:43:03.661</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E9%AB%98%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_ai_linux%E9%83%A8%E5%88%86/" class="">高级运维面试题-linux部分</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>使用kubernees leases 轻松实现leader election 2024-04-03 15:09:46.129</h3>
+
+  <label for="toc-control">
+    
+    <img src="/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#实现的复杂性"><strong>实现的复杂性</strong></a>
+      <ul>
+        <li></li>
+        <li><a href="#问题1失效的-leader-实例"><strong>问题1：失效的 Leader 实例</strong></a></li>
+        <li><a href="#问题2脑裂"><strong>问题2：脑裂</strong></a></li>
+      </ul>
+    </li>
+    <li><a href="#基于仲裁的系统成为首选解决方案"><strong>基于仲裁的系统成为首选解决方案</strong></a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#k8s-leases"><strong>K8s Leases</strong></a>
+      <ul>
+        <li></li>
+        <li><a href="#为什么很强大"><strong>为什么很强大</strong></a></li>
+        <li><a href="#工作原理"><strong>工作原理</strong></a></li>
+      </ul>
+    </li>
+    <li><a href="#示例"><strong>示例</strong></a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#总结"><strong>总结</strong></a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h5 id="假如你正在创建一个数据复制服务该服务只需要一个实例来处理数据以保持正确的顺序或者考虑开发一个多人在线游戏在这种游戏中同步所有参与者之间的游戏状态至关重要这些类型的服务通常需要单个实例专门处理特定任务并且还需要备用副本在当前实例失败时能够迅速接管工作负载">
+  假如你正在创建一个数据复制服务，该服务只需要一个实例来处理数据以保持正确的顺序。或者考虑开发一个多人在线游戏，在这种游戏中，同步所有参与者之间的游戏状态至关重要。这些类型的服务通常需要单个实例专门处理特定任务，并且还需要备用副本在当前实例失败时能够迅速接管工作负载。
+  <a class="anchor" href="#%e5%81%87%e5%a6%82%e4%bd%a0%e6%ad%a3%e5%9c%a8%e5%88%9b%e5%bb%ba%e4%b8%80%e4%b8%aa%e6%95%b0%e6%8d%ae%e5%a4%8d%e5%88%b6%e6%9c%8d%e5%8a%a1%e8%af%a5%e6%9c%8d%e5%8a%a1%e5%8f%aa%e9%9c%80%e8%a6%81%e4%b8%80%e4%b8%aa%e5%ae%9e%e4%be%8b%e6%9d%a5%e5%a4%84%e7%90%86%e6%95%b0%e6%8d%ae%e4%bb%a5%e4%bf%9d%e6%8c%81%e6%ad%a3%e7%a1%ae%e7%9a%84%e9%a1%ba%e5%ba%8f%e6%88%96%e8%80%85%e8%80%83%e8%99%91%e5%bc%80%e5%8f%91%e4%b8%80%e4%b8%aa%e5%a4%9a%e4%ba%ba%e5%9c%a8%e7%ba%bf%e6%b8%b8%e6%88%8f%e5%9c%a8%e8%bf%99%e7%a7%8d%e6%b8%b8%e6%88%8f%e4%b8%ad%e5%90%8c%e6%ad%a5%e6%89%80%e6%9c%89%e5%8f%82%e4%b8%8e%e8%80%85%e4%b9%8b%e9%97%b4%e7%9a%84%e6%b8%b8%e6%88%8f%e7%8a%b6%e6%80%81%e8%87%b3%e5%85%b3%e9%87%8d%e8%a6%81%e8%bf%99%e4%ba%9b%e7%b1%bb%e5%9e%8b%e7%9a%84%e6%9c%8d%e5%8a%a1%e9%80%9a%e5%b8%b8%e9%9c%80%e8%a6%81%e5%8d%95%e4%b8%aa%e5%ae%9e%e4%be%8b%e4%b8%93%e9%97%a8%e5%a4%84%e7%90%86%e7%89%b9%e5%ae%9a%e4%bb%bb%e5%8a%a1%e5%b9%b6%e4%b8%94%e8%bf%98%e9%9c%80%e8%a6%81%e5%a4%87%e7%94%a8%e5%89%af%e6%9c%ac%e5%9c%a8%e5%bd%93%e5%89%8d%e5%ae%9e%e4%be%8b%e5%a4%b1%e8%b4%a5%e6%97%b6%e8%83%bd%e5%a4%9f%e8%bf%85%e9%80%9f%e6%8e%a5%e7%ae%a1%e5%b7%a5%e4%bd%9c%e8%b4%9f%e8%bd%bd">#</a>
+</h5>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402261502546.png" alt="image-20240226150259482" /></p>
+<h5 id="解决此类挑战常用的技术之一是-leader-election它通过使组集群中的节点参与投票或共识过程来选择单个-leader-实例然后该leader-承担需要集中协调的责任如果选举失败则其余节点会自动重新运行选举过程以选择新的-leader确保系统连续性和容错性">
+  解决此类挑战常用的技术之一是 <code>leader election</code>。它通过使组/集群中的节点参与投票或共识过程来选择单个 Leader 实例。然后该Leader 承担需要集中协调的责任。如果选举失败，则其余节点会自动重新运行选举过程以选择新的 Leader，确保系统连续性和容错性。
+  <a class="anchor" href="#%e8%a7%a3%e5%86%b3%e6%ad%a4%e7%b1%bb%e6%8c%91%e6%88%98%e5%b8%b8%e7%94%a8%e7%9a%84%e6%8a%80%e6%9c%af%e4%b9%8b%e4%b8%80%e6%98%af-leader-election%e5%ae%83%e9%80%9a%e8%bf%87%e4%bd%bf%e7%bb%84%e9%9b%86%e7%be%a4%e4%b8%ad%e7%9a%84%e8%8a%82%e7%82%b9%e5%8f%82%e4%b8%8e%e6%8a%95%e7%a5%a8%e6%88%96%e5%85%b1%e8%af%86%e8%bf%87%e7%a8%8b%e6%9d%a5%e9%80%89%e6%8b%a9%e5%8d%95%e4%b8%aa-leader-%e5%ae%9e%e4%be%8b%e7%84%b6%e5%90%8e%e8%af%a5leader-%e6%89%bf%e6%8b%85%e9%9c%80%e8%a6%81%e9%9b%86%e4%b8%ad%e5%8d%8f%e8%b0%83%e7%9a%84%e8%b4%a3%e4%bb%bb%e5%a6%82%e6%9e%9c%e9%80%89%e4%b8%be%e5%a4%b1%e8%b4%a5%e5%88%99%e5%85%b6%e4%bd%99%e8%8a%82%e7%82%b9%e4%bc%9a%e8%87%aa%e5%8a%a8%e9%87%8d%e6%96%b0%e8%bf%90%e8%a1%8c%e9%80%89%e4%b8%be%e8%bf%87%e7%a8%8b%e4%bb%a5%e9%80%89%e6%8b%a9%e6%96%b0%e7%9a%84-leader%e7%a1%ae%e4%bf%9d%e7%b3%bb%e7%bb%9f%e8%bf%9e%e7%bb%ad%e6%80%a7%e5%92%8c%e5%ae%b9%e9%94%99%e6%80%a7">#</a>
+</h5>
+<h2 id="实现的复杂性">
+  <strong>实现的复杂性</strong>
+  <a class="anchor" href="#%e5%ae%9e%e7%8e%b0%e7%9a%84%e5%a4%8d%e6%9d%82%e6%80%a7">#</a>
+</h2>
+<h5 id="在一个组中达成所有节点对-leader-的共识对于实现-leader-选举至关重要">
+  在一个组中达成所有节点对 Leader 的共识，对于实现 Leader 选举至关重要。
+  <a class="anchor" href="#%e5%9c%a8%e4%b8%80%e4%b8%aa%e7%bb%84%e4%b8%ad%e8%be%be%e6%88%90%e6%89%80%e6%9c%89%e8%8a%82%e7%82%b9%e5%af%b9-leader-%e7%9a%84%e5%85%b1%e8%af%86%e5%af%b9%e4%ba%8e%e5%ae%9e%e7%8e%b0-leader-%e9%80%89%e4%b8%be%e8%87%b3%e5%85%b3%e9%87%8d%e8%a6%81">#</a>
+</h5>
+<h5 id="基本的实现可以利用锁服务来确定领导权">
+  基本的实现可以利用<strong>锁</strong>服务来确定领导权。
+  <a class="anchor" href="#%e5%9f%ba%e6%9c%ac%e7%9a%84%e5%ae%9e%e7%8e%b0%e5%8f%af%e4%bb%a5%e5%88%a9%e7%94%a8%e9%94%81%e6%9c%8d%e5%8a%a1%e6%9d%a5%e7%a1%ae%e5%ae%9a%e9%a2%86%e5%af%bc%e6%9d%83">#</a>
+</h5>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402261503413.png" alt="image-20240226150312356" /></p>
+<h5 id="在这种情况下每个实例都尝试获取一个共享锁锁服务确保只有一个实例在任何给定时间持有该锁有效地使该实例成为-leader其他副本不断尝试获取锁从而准备好进行无缝故障转移以防当前的-leader-变得不可用">
+  在这种情况下，每个实例都尝试获取一个共享锁。锁服务确保只有一个实例在任何给定时间持有该锁，有效地使该实例成为 Leader。其他副本不断尝试获取锁，从而准备好进行无缝故障转移，以防当前的 Leader 变得不可用。
+  <a class="anchor" href="#%e5%9c%a8%e8%bf%99%e7%a7%8d%e6%83%85%e5%86%b5%e4%b8%8b%e6%af%8f%e4%b8%aa%e5%ae%9e%e4%be%8b%e9%83%bd%e5%b0%9d%e8%af%95%e8%8e%b7%e5%8f%96%e4%b8%80%e4%b8%aa%e5%85%b1%e4%ba%ab%e9%94%81%e9%94%81%e6%9c%8d%e5%8a%a1%e7%a1%ae%e4%bf%9d%e5%8f%aa%e6%9c%89%e4%b8%80%e4%b8%aa%e5%ae%9e%e4%be%8b%e5%9c%a8%e4%bb%bb%e4%bd%95%e7%bb%99%e5%ae%9a%e6%97%b6%e9%97%b4%e6%8c%81%e6%9c%89%e8%af%a5%e9%94%81%e6%9c%89%e6%95%88%e5%9c%b0%e4%bd%bf%e8%af%a5%e5%ae%9e%e4%be%8b%e6%88%90%e4%b8%ba-leader%e5%85%b6%e4%bb%96%e5%89%af%e6%9c%ac%e4%b8%8d%e6%96%ad%e5%b0%9d%e8%af%95%e8%8e%b7%e5%8f%96%e9%94%81%e4%bb%8e%e8%80%8c%e5%87%86%e5%a4%87%e5%a5%bd%e8%bf%9b%e8%a1%8c%e6%97%a0%e7%bc%9d%e6%95%85%e9%9a%9c%e8%bd%ac%e7%a7%bb%e4%bb%a5%e9%98%b2%e5%bd%93%e5%89%8d%e7%9a%84-leader-%e5%8f%98%e5%be%97%e4%b8%8d%e5%8f%af%e7%94%a8">#</a>
+</h5>
+<h5 id="然而在某些情况下会出现挑战例如当领导节点失效和无响应时并且持有锁一段时间直到该实例被回收这种情况可能会导致传入请求因超时而失败并且由于备用副本无法承担领导职责而增加正在进行任务的延迟为了缓解这个问题通常建议锁服务在锁上实施过期机制通常称为基于-ttl-的租约">
+  然而，在某些情况下会出现挑战，例如当领导节点失效和无响应时，并且持有锁一段时间直到该实例被回收。这种情况可能会导致传入请求因超时而失败，并且由于备用副本无法承担领导职责而增加正在进行任务的延迟。为了缓解这个问题，通常建议锁服务在锁上实施过期机制，通常称为基于 TTL 的租约。
+  <a class="anchor" href="#%e7%84%b6%e8%80%8c%e5%9c%a8%e6%9f%90%e4%ba%9b%e6%83%85%e5%86%b5%e4%b8%8b%e4%bc%9a%e5%87%ba%e7%8e%b0%e6%8c%91%e6%88%98%e4%be%8b%e5%a6%82%e5%bd%93%e9%a2%86%e5%af%bc%e8%8a%82%e7%82%b9%e5%a4%b1%e6%95%88%e5%92%8c%e6%97%a0%e5%93%8d%e5%ba%94%e6%97%b6%e5%b9%b6%e4%b8%94%e6%8c%81%e6%9c%89%e9%94%81%e4%b8%80%e6%ae%b5%e6%97%b6%e9%97%b4%e7%9b%b4%e5%88%b0%e8%af%a5%e5%ae%9e%e4%be%8b%e8%a2%ab%e5%9b%9e%e6%94%b6%e8%bf%99%e7%a7%8d%e6%83%85%e5%86%b5%e5%8f%af%e8%83%bd%e4%bc%9a%e5%af%bc%e8%87%b4%e4%bc%a0%e5%85%a5%e8%af%b7%e6%b1%82%e5%9b%a0%e8%b6%85%e6%97%b6%e8%80%8c%e5%a4%b1%e8%b4%a5%e5%b9%b6%e4%b8%94%e7%94%b1%e4%ba%8e%e5%a4%87%e7%94%a8%e5%89%af%e6%9c%ac%e6%97%a0%e6%b3%95%e6%89%bf%e6%8b%85%e9%a2%86%e5%af%bc%e8%81%8c%e8%b4%a3%e8%80%8c%e5%a2%9e%e5%8a%a0%e6%ad%a3%e5%9c%a8%e8%bf%9b%e8%a1%8c%e4%bb%bb%e5%8a%a1%e7%9a%84%e5%bb%b6%e8%bf%9f%e4%b8%ba%e4%ba%86%e7%bc%93%e8%a7%a3%e8%bf%99%e4%b8%aa%e9%97%ae%e9%a2%98%e9%80%9a%e5%b8%b8%e5%bb%ba%e8%ae%ae%e9%94%81%e6%9c%8d%e5%8a%a1%e5%9c%a8%e9%94%81%e4%b8%8a%e5%ae%9e%e6%96%bd%e8%bf%87%e6%9c%9f%e6%9c%ba%e5%88%b6%e9%80%9a%e5%b8%b8%e7%a7%b0%e4%b8%ba%e5%9f%ba%e4%ba%8e-ttl-%e7%9a%84%e7%a7%9f%e7%ba%a6">#</a>
+</h5>
+<h3 id="问题1失效的-leader-实例">
+  <strong>问题1：失效的 Leader 实例</strong>
+  <a class="anchor" href="#%e9%97%ae%e9%a2%981%e5%a4%b1%e6%95%88%e7%9a%84-leader-%e5%ae%9e%e4%be%8b">#</a>
+</h3>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402261503620.png" alt="image-20240226150333561" /></p>
+<h5 id="此外锁服务必须符合一定的健壮性标准一方面它不能作为单个实例运行因为这将使其成为单点故障另一方面如果它使用多个实例以提供高可用性则必须设计能够抵御网络分区问题否则可能导致一个棘手的情况发生在不同网络分区中的两个副本都认为自己已经获得了锁并因此承担领导者角色">
+  此外，锁服务必须符合一定的健壮性标准。一方面，它不能作为单个实例运行，因为这将使其成为单点故障。另一方面，如果它使用多个实例以提供高可用性，则必须设计能够抵御网络分区问题。否则可能导致一个棘手的情况发生：在不同网络分区中的两个副本都认为自己已经获得了锁，并因此承担领导者角色。
+  <a class="anchor" href="#%e6%ad%a4%e5%a4%96%e9%94%81%e6%9c%8d%e5%8a%a1%e5%bf%85%e9%a1%bb%e7%ac%a6%e5%90%88%e4%b8%80%e5%ae%9a%e7%9a%84%e5%81%a5%e5%a3%ae%e6%80%a7%e6%a0%87%e5%87%86%e4%b8%80%e6%96%b9%e9%9d%a2%e5%ae%83%e4%b8%8d%e8%83%bd%e4%bd%9c%e4%b8%ba%e5%8d%95%e4%b8%aa%e5%ae%9e%e4%be%8b%e8%bf%90%e8%a1%8c%e5%9b%a0%e4%b8%ba%e8%bf%99%e5%b0%86%e4%bd%bf%e5%85%b6%e6%88%90%e4%b8%ba%e5%8d%95%e7%82%b9%e6%95%85%e9%9a%9c%e5%8f%a6%e4%b8%80%e6%96%b9%e9%9d%a2%e5%a6%82%e6%9e%9c%e5%ae%83%e4%bd%bf%e7%94%a8%e5%a4%9a%e4%b8%aa%e5%ae%9e%e4%be%8b%e4%bb%a5%e6%8f%90%e4%be%9b%e9%ab%98%e5%8f%af%e7%94%a8%e6%80%a7%e5%88%99%e5%bf%85%e9%a1%bb%e8%ae%be%e8%ae%a1%e8%83%bd%e5%a4%9f%e6%8a%b5%e5%be%a1%e7%bd%91%e7%bb%9c%e5%88%86%e5%8c%ba%e9%97%ae%e9%a2%98%e5%90%a6%e5%88%99%e5%8f%af%e8%83%bd%e5%af%bc%e8%87%b4%e4%b8%80%e4%b8%aa%e6%a3%98%e6%89%8b%e7%9a%84%e6%83%85%e5%86%b5%e5%8f%91%e7%94%9f%e5%9c%a8%e4%b8%8d%e5%90%8c%e7%bd%91%e7%bb%9c%e5%88%86%e5%8c%ba%e4%b8%ad%e7%9a%84%e4%b8%a4%e4%b8%aa%e5%89%af%e6%9c%ac%e9%83%bd%e8%ae%a4%e4%b8%ba%e8%87%aa%e5%b7%b1%e5%b7%b2%e7%bb%8f%e8%8e%b7%e5%be%97%e4%ba%86%e9%94%81%e5%b9%b6%e5%9b%a0%e6%ad%a4%e6%89%bf%e6%8b%85%e9%a2%86%e5%af%bc%e8%80%85%e8%a7%92%e8%89%b2">#</a>
+</h5>
+<h3 id="问题2脑裂">
+  <strong>问题2：脑裂</strong>
+  <a class="anchor" href="#%e9%97%ae%e9%a2%982%e8%84%91%e8%a3%82">#</a>
+</h3>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402261503732.png" alt="image-20240226150349667" /></p>
+<h2 id="基于仲裁的系统成为首选解决方案">
+  <strong>基于仲裁的系统成为首选解决方案</strong>
+  <a class="anchor" href="#%e5%9f%ba%e4%ba%8e%e4%bb%b2%e8%a3%81%e7%9a%84%e7%b3%bb%e7%bb%9f%e6%88%90%e4%b8%ba%e9%a6%96%e9%80%89%e8%a7%a3%e5%86%b3%e6%96%b9%e6%a1%88">#</a>
+</h2>
+<h5 id="为了解决网络分区的核心问题像-zookeeper被-kafka-使用和-etcd被-kubernetes-利用这样的基于仲裁的系统通过内置的-ttl-功能应运而生将自己确立为领导者选举的最佳解决方案zookeeper-原子广播zab协议和-etcd-采用的-raft-协议都确保只有在大多数节点认可时才会考虑任何操作是有效的在发生网络分区时只有一个分区可以包含大多数节点有效地防止了出现多个领导者的可能性">
+  为了解决网络分区的核心问题，像 ZooKeeper（被 Kafka 使用）和 etcd（被 Kubernetes 利用）这样的基于仲裁的系统通过内置的 TTL 功能应运而生，将自己确立为领导者选举的最佳解决方案。ZooKeeper 原子广播（ZAB）协议和 etcd 采用的 RAFT 协议都确保只有在大多数节点认可时才会考虑任何操作是有效的。在发生网络分区时，只有一个分区可以包含大多数节点，有效地防止了出现多个领导者的可能性。
+  <a class="anchor" href="#%e4%b8%ba%e4%ba%86%e8%a7%a3%e5%86%b3%e7%bd%91%e7%bb%9c%e5%88%86%e5%8c%ba%e7%9a%84%e6%a0%b8%e5%bf%83%e9%97%ae%e9%a2%98%e5%83%8f-zookeeper%e8%a2%ab-kafka-%e4%bd%bf%e7%94%a8%e5%92%8c-etcd%e8%a2%ab-kubernetes-%e5%88%a9%e7%94%a8%e8%bf%99%e6%a0%b7%e7%9a%84%e5%9f%ba%e4%ba%8e%e4%bb%b2%e8%a3%81%e7%9a%84%e7%b3%bb%e7%bb%9f%e9%80%9a%e8%bf%87%e5%86%85%e7%bd%ae%e7%9a%84-ttl-%e5%8a%9f%e8%83%bd%e5%ba%94%e8%bf%90%e8%80%8c%e7%94%9f%e5%b0%86%e8%87%aa%e5%b7%b1%e7%a1%ae%e7%ab%8b%e4%b8%ba%e9%a2%86%e5%af%bc%e8%80%85%e9%80%89%e4%b8%be%e7%9a%84%e6%9c%80%e4%bd%b3%e8%a7%a3%e5%86%b3%e6%96%b9%e6%a1%88zookeeper-%e5%8e%9f%e5%ad%90%e5%b9%bf%e6%92%adzab%e5%8d%8f%e8%ae%ae%e5%92%8c-etcd-%e9%87%87%e7%94%a8%e7%9a%84-raft-%e5%8d%8f%e8%ae%ae%e9%83%bd%e7%a1%ae%e4%bf%9d%e5%8f%aa%e6%9c%89%e5%9c%a8%e5%a4%a7%e5%a4%9a%e6%95%b0%e8%8a%82%e7%82%b9%e8%ae%a4%e5%8f%af%e6%97%b6%e6%89%8d%e4%bc%9a%e8%80%83%e8%99%91%e4%bb%bb%e4%bd%95%e6%93%8d%e4%bd%9c%e6%98%af%e6%9c%89%e6%95%88%e7%9a%84%e5%9c%a8%e5%8f%91%e7%94%9f%e7%bd%91%e7%bb%9c%e5%88%86%e5%8c%ba%e6%97%b6%e5%8f%aa%e6%9c%89%e4%b8%80%e4%b8%aa%e5%88%86%e5%8c%ba%e5%8f%af%e4%bb%a5%e5%8c%85%e5%90%ab%e5%a4%a7%e5%a4%9a%e6%95%b0%e8%8a%82%e7%82%b9%e6%9c%89%e6%95%88%e5%9c%b0%e9%98%b2%e6%ad%a2%e4%ba%86%e5%87%ba%e7%8e%b0%e5%a4%9a%e4%b8%aa%e9%a2%86%e5%af%bc%e8%80%85%e7%9a%84%e5%8f%af%e8%83%bd%e6%80%a7">#</a>
+</h5>
+<h5 id="然而无论是-zookeeper-还是-etcd-都不具备成本效益分布式系统固有复杂性带来了运维挑战为小规模服务部署这样的集群可能太重并且额外开销可能超过应用程序本身的运维成本">
+  然而，无论是 ZooKeeper 还是 etcd 都不具备成本效益。分布式系统固有复杂性带来了运维挑战。为小规模服务部署这样的集群可能太重，并且额外开销可能超过应用程序本身的运维成本。
+  <a class="anchor" href="#%e7%84%b6%e8%80%8c%e6%97%a0%e8%ae%ba%e6%98%af-zookeeper-%e8%bf%98%e6%98%af-etcd-%e9%83%bd%e4%b8%8d%e5%85%b7%e5%a4%87%e6%88%90%e6%9c%ac%e6%95%88%e7%9b%8a%e5%88%86%e5%b8%83%e5%bc%8f%e7%b3%bb%e7%bb%9f%e5%9b%ba%e6%9c%89%e5%a4%8d%e6%9d%82%e6%80%a7%e5%b8%a6%e6%9d%a5%e4%ba%86%e8%bf%90%e7%bb%b4%e6%8c%91%e6%88%98%e4%b8%ba%e5%b0%8f%e8%a7%84%e6%a8%a1%e6%9c%8d%e5%8a%a1%e9%83%a8%e7%bd%b2%e8%bf%99%e6%a0%b7%e7%9a%84%e9%9b%86%e7%be%a4%e5%8f%af%e8%83%bd%e5%a4%aa%e9%87%8d%e5%b9%b6%e4%b8%94%e9%a2%9d%e5%a4%96%e5%bc%80%e9%94%80%e5%8f%af%e8%83%bd%e8%b6%85%e8%bf%87%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e6%9c%ac%e8%ba%ab%e7%9a%84%e8%bf%90%e7%bb%b4%e6%88%90%e6%9c%ac">#</a>
+</h5>
+<h2 id="k8s-leases">
+  <strong>K8s Leases</strong>
+  <a class="anchor" href="#k8s-leases">#</a>
+</h2>
+<h5 id="由于成本问题可靠的领导者选举只适用于大规模系统吗未必如果你正在使用-kubernetes-基础设施则可以通过使用-kubernetes-leases-来简单地实现-etcd-级别的领导者选举--无需直接与-etcd-api-交互">
+  由于成本问题，可靠的领导者选举只适用于大规模系统吗？未必，如果你正在使用 Kubernetes 基础设施，则可以通过使用 Kubernetes Leases 来简单地实现 etcd 级别的领导者选举 —— 无需直接与 Etcd API 交互。
+  <a class="anchor" href="#%e7%94%b1%e4%ba%8e%e6%88%90%e6%9c%ac%e9%97%ae%e9%a2%98%e5%8f%af%e9%9d%a0%e7%9a%84%e9%a2%86%e5%af%bc%e8%80%85%e9%80%89%e4%b8%be%e5%8f%aa%e9%80%82%e7%94%a8%e4%ba%8e%e5%a4%a7%e8%a7%84%e6%a8%a1%e7%b3%bb%e7%bb%9f%e5%90%97%e6%9c%aa%e5%bf%85%e5%a6%82%e6%9e%9c%e4%bd%a0%e6%ad%a3%e5%9c%a8%e4%bd%bf%e7%94%a8-kubernetes-%e5%9f%ba%e7%a1%80%e8%ae%be%e6%96%bd%e5%88%99%e5%8f%af%e4%bb%a5%e9%80%9a%e8%bf%87%e4%bd%bf%e7%94%a8-kubernetes-leases-%e6%9d%a5%e7%ae%80%e5%8d%95%e5%9c%b0%e5%ae%9e%e7%8e%b0-etcd-%e7%ba%a7%e5%88%ab%e7%9a%84%e9%a2%86%e5%af%bc%e8%80%85%e9%80%89%e4%b8%be--%e6%97%a0%e9%9c%80%e7%9b%b4%e6%8e%a5%e4%b8%8e-etcd-api-%e4%ba%a4%e4%ba%92">#</a>
+</h5>
+<h3 id="为什么很强大">
+  <strong>为什么很强大</strong>
+  <a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e5%be%88%e5%bc%ba%e5%a4%a7">#</a>
+</h3>
+<h5 id="kubernetes-leases-之所以强大部分原因在于-kubernetes-本身通常将-etcd-作为其所有-api对象包括租约的存储这意味着-etcd-的高可用性一致性和容错特性自然地可用于-kubernetes-leases但是kubernetes-api-添加了额外的功能层比如通过资源版本控制实现乐观并发控制这也有助于使租约成为在-kubernetes-环境中进行领导者选举时一个强大的选择">
+  Kubernetes Leases 之所以强大，部分原因在于 Kubernetes 本身通常将 etcd 作为其所有 API对象（包括租约）的存储。这意味着 etcd 的高可用性、一致性和容错特性自然地可用于 Kubernetes Leases。但是，Kubernetes API 添加了额外的功能层，比如通过资源版本控制实现乐观并发控制，这也有助于使租约成为在 Kubernetes 环境中进行领导者选举时一个强大的选择。
+  <a class="anchor" href="#kubernetes-leases-%e4%b9%8b%e6%89%80%e4%bb%a5%e5%bc%ba%e5%a4%a7%e9%83%a8%e5%88%86%e5%8e%9f%e5%9b%a0%e5%9c%a8%e4%ba%8e-kubernetes-%e6%9c%ac%e8%ba%ab%e9%80%9a%e5%b8%b8%e5%b0%86-etcd-%e4%bd%9c%e4%b8%ba%e5%85%b6%e6%89%80%e6%9c%89-api%e5%af%b9%e8%b1%a1%e5%8c%85%e6%8b%ac%e7%a7%9f%e7%ba%a6%e7%9a%84%e5%ad%98%e5%82%a8%e8%bf%99%e6%84%8f%e5%91%b3%e7%9d%80-etcd-%e7%9a%84%e9%ab%98%e5%8f%af%e7%94%a8%e6%80%a7%e4%b8%80%e8%87%b4%e6%80%a7%e5%92%8c%e5%ae%b9%e9%94%99%e7%89%b9%e6%80%a7%e8%87%aa%e7%84%b6%e5%9c%b0%e5%8f%af%e7%94%a8%e4%ba%8e-kubernetes-leases%e4%bd%86%e6%98%afkubernetes-api-%e6%b7%bb%e5%8a%a0%e4%ba%86%e9%a2%9d%e5%a4%96%e7%9a%84%e5%8a%9f%e8%83%bd%e5%b1%82%e6%af%94%e5%a6%82%e9%80%9a%e8%bf%87%e8%b5%84%e6%ba%90%e7%89%88%e6%9c%ac%e6%8e%a7%e5%88%b6%e5%ae%9e%e7%8e%b0%e4%b9%90%e8%a7%82%e5%b9%b6%e5%8f%91%e6%8e%a7%e5%88%b6%e8%bf%99%e4%b9%9f%e6%9c%89%e5%8a%a9%e4%ba%8e%e4%bd%bf%e7%a7%9f%e7%ba%a6%e6%88%90%e4%b8%ba%e5%9c%a8-kubernetes-%e7%8e%af%e5%a2%83%e4%b8%ad%e8%bf%9b%e8%a1%8c%e9%a2%86%e5%af%bc%e8%80%85%e9%80%89%e4%b8%be%e6%97%b6%e4%b8%80%e4%b8%aa%e5%bc%ba%e5%a4%a7%e7%9a%84%e9%80%89%e6%8b%a9">#</a>
+</h5>
+<h3 id="工作原理">
+  <strong>工作原理</strong>
+  <a class="anchor" href="#%e5%b7%a5%e4%bd%9c%e5%8e%9f%e7%90%86">#</a>
+</h3>
+<h5 id="在-kubernetes-中可以使用-lease-对象来促进领导者选举竞争领导权的候选人要么创建要么更新-lease-对象并将其标识符设置在-holderidentity-字段中领导者持续续订该-lease-以保持其角色如果领导者未能在-lease-到期前续订则其他候选人会尝试获取它首个成功更新-lease-的候选人将成为新领导者确保平稳故障转移所有候选人都会监视-lease-对象以跟踪领导变更">
+  在 Kubernetes 中，可以使用 Lease 对象来促进领导者选举。竞争领导权的候选人要么创建要么更新 Lease 对象，并将其标识符设置在 <code>holderIdentity</code> 字段中。领导者持续“续订”该 Lease 以保持其角色。如果领导者未能在 Lease 到期前续订，则其他候选人会尝试获取它。首个成功更新 Lease 的候选人将成为新领导者，确保平稳故障转移。所有候选人都会监视 Lease 对象以跟踪领导变更。
+  <a class="anchor" href="#%e5%9c%a8-kubernetes-%e4%b8%ad%e5%8f%af%e4%bb%a5%e4%bd%bf%e7%94%a8-lease-%e5%af%b9%e8%b1%a1%e6%9d%a5%e4%bf%83%e8%bf%9b%e9%a2%86%e5%af%bc%e8%80%85%e9%80%89%e4%b8%be%e7%ab%9e%e4%ba%89%e9%a2%86%e5%af%bc%e6%9d%83%e7%9a%84%e5%80%99%e9%80%89%e4%ba%ba%e8%a6%81%e4%b9%88%e5%88%9b%e5%bb%ba%e8%a6%81%e4%b9%88%e6%9b%b4%e6%96%b0-lease-%e5%af%b9%e8%b1%a1%e5%b9%b6%e5%b0%86%e5%85%b6%e6%a0%87%e8%af%86%e7%ac%a6%e8%ae%be%e7%bd%ae%e5%9c%a8-holderidentity-%e5%ad%97%e6%ae%b5%e4%b8%ad%e9%a2%86%e5%af%bc%e8%80%85%e6%8c%81%e7%bb%ad%e7%bb%ad%e8%ae%a2%e8%af%a5-lease-%e4%bb%a5%e4%bf%9d%e6%8c%81%e5%85%b6%e8%a7%92%e8%89%b2%e5%a6%82%e6%9e%9c%e9%a2%86%e5%af%bc%e8%80%85%e6%9c%aa%e8%83%bd%e5%9c%a8-lease-%e5%88%b0%e6%9c%9f%e5%89%8d%e7%bb%ad%e8%ae%a2%e5%88%99%e5%85%b6%e4%bb%96%e5%80%99%e9%80%89%e4%ba%ba%e4%bc%9a%e5%b0%9d%e8%af%95%e8%8e%b7%e5%8f%96%e5%ae%83%e9%a6%96%e4%b8%aa%e6%88%90%e5%8a%9f%e6%9b%b4%e6%96%b0-lease-%e7%9a%84%e5%80%99%e9%80%89%e4%ba%ba%e5%b0%86%e6%88%90%e4%b8%ba%e6%96%b0%e9%a2%86%e5%af%bc%e8%80%85%e7%a1%ae%e4%bf%9d%e5%b9%b3%e7%a8%b3%e6%95%85%e9%9a%9c%e8%bd%ac%e7%a7%bb%e6%89%80%e6%9c%89%e5%80%99%e9%80%89%e4%ba%ba%e9%83%bd%e4%bc%9a%e7%9b%91%e8%a7%86-lease-%e5%af%b9%e8%b1%a1%e4%bb%a5%e8%b7%9f%e8%b8%aa%e9%a2%86%e5%af%bc%e5%8f%98%e6%9b%b4">#</a>
+</h5>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202402261504213.png" alt="image-20240226150408146" /></p>
+<h2 id="示例">
+  <strong>示例</strong>
+  <a class="anchor" href="#%e7%a4%ba%e4%be%8b">#</a>
+</h2>
+<h5 id="让我们通过一个全面的示例来了解下这是如何工作的这里我们通过直接对-k8s-api-进行-http-调用该演示与语言无关">
+  让我们通过一个全面的示例来了解下这是如何工作的。这里我们通过直接对 K8s API 进行 HTTP 调用，该演示与语言无关。
+  <a class="anchor" href="#%e8%ae%a9%e6%88%91%e4%bb%ac%e9%80%9a%e8%bf%87%e4%b8%80%e4%b8%aa%e5%85%a8%e9%9d%a2%e7%9a%84%e7%a4%ba%e4%be%8b%e6%9d%a5%e4%ba%86%e8%a7%a3%e4%b8%8b%e8%bf%99%e6%98%af%e5%a6%82%e4%bd%95%e5%b7%a5%e4%bd%9c%e7%9a%84%e8%bf%99%e9%87%8c%e6%88%91%e4%bb%ac%e9%80%9a%e8%bf%87%e7%9b%b4%e6%8e%a5%e5%af%b9-k8s-api-%e8%bf%9b%e8%a1%8c-http-%e8%b0%83%e7%94%a8%e8%af%a5%e6%bc%94%e7%a4%ba%e4%b8%8e%e8%af%ad%e8%a8%80%e6%97%a0%e5%85%b3">#</a>
+</h5>
+<blockquote>
+<p>需要一个版本大于等于 1.14 的 Kubernetes 集群。需要安装一些基本的工具：<code>kubectl</code>、<code>curl</code>、<code>jq</code> 等等。</p></blockquote>
+<h5 id="首先我们创建一个如下锁是的-json-文件-leasejson用来代表-lease-对象">
+  首先我们创建一个如下锁是的 JSON 文件 <code>lease.json</code>，用来代表 Lease 对象：
+  <a class="anchor" href="#%e9%a6%96%e5%85%88%e6%88%91%e4%bb%ac%e5%88%9b%e5%bb%ba%e4%b8%80%e4%b8%aa%e5%a6%82%e4%b8%8b%e9%94%81%e6%98%af%e7%9a%84-json-%e6%96%87%e4%bb%b6-leasejson%e7%94%a8%e6%9d%a5%e4%bb%a3%e8%a1%a8-lease-%e5%af%b9%e8%b1%a1">#</a>
+</h5>
+<pre tabindex="0"><code>{
+  &#34;apiVersion&#34;: &#34;coordination.k8s.io/v1&#34;,
+  &#34;kind&#34;: &#34;Lease&#34;,
+  &#34;metadata&#34;: {
+    &#34;name&#34;: &#34;example-lease&#34;,
+    &#34;namespace&#34;: &#34;example-lease&#34;
+  },
+  &#34;spec&#34;: {
+    &#34;holderIdentity&#34;: &#34;replica-1&#34;,
+    &#34;leaseDurationSeconds&#34;: 15
+  }
+}
+</code></pre><h5 id="然后我们可以使用下面的-curl-命令来创建该对象">
+  然后我们可以使用下面的 <code>curl</code> 命令来创建该对象：
+  <a class="anchor" href="#%e7%84%b6%e5%90%8e%e6%88%91%e4%bb%ac%e5%8f%af%e4%bb%a5%e4%bd%bf%e7%94%a8%e4%b8%8b%e9%9d%a2%e7%9a%84-curl-%e5%91%bd%e4%bb%a4%e6%9d%a5%e5%88%9b%e5%bb%ba%e8%af%a5%e5%af%b9%e8%b1%a1">#</a>
+</h5>
+<pre tabindex="0"><code>curl -k -X POST -H &#34;Content-Type: application/json&#34; --data @lease.json https://$KUBE_PROXY_URL/apis/coordination.k8s.io/v1/namespaces/example-lease/leases
+</code></pre><h5 id="检查-lease-对象是否创建成功">
+  检查 Lease 对象是否创建成功：
+  <a class="anchor" href="#%e6%a3%80%e6%9f%a5-lease-%e5%af%b9%e8%b1%a1%e6%98%af%e5%90%a6%e5%88%9b%e5%bb%ba%e6%88%90%e5%8a%9f">#</a>
+</h5>
+<pre tabindex="0"><code>kubectl get lease example-lease -n example-lease -o json
+
+#output:
+{
+  &#34;apiVersion&#34;: &#34;coordination.k8s.io/v1&#34;,
+  &#34;kind&#34;: &#34;Lease&#34;,
+  &#34;metadata&#34;: {
+    &#34;name&#34;: &#34;example-lease&#34;,
+    &#34;namespace&#34;: &#34;example-lease&#34;,
+    &#34;resourceVersion&#34;: &#34;123&#34;
+  },
+  &#34;spec&#34;: {
+    &#34;holderIdentity&#34;: &#34;replica-1&#34;,
+    &#34;leaseDurationSeconds&#34;: 15,
+    &#34;acquireTime&#34;: &#34;2023-09-11T20:30:00Z&#34;,
+    &#34;renewTime&#34;: &#34;2023-09-11T20:35:00Z&#34;,
+    &#34;leaseTransitions&#34;: 2
+  }
+}
+</code></pre><h5 id="现在-replica-1-已成功获取租约并将在15秒后到期">
+  现在 <code>replica-1</code> 已成功获取租约，并将在15秒后到期。
+  <a class="anchor" href="#%e7%8e%b0%e5%9c%a8-replica-1-%e5%b7%b2%e6%88%90%e5%8a%9f%e8%8e%b7%e5%8f%96%e7%a7%9f%e7%ba%a6%e5%b9%b6%e5%b0%86%e5%9c%a815%e7%a7%92%e5%90%8e%e5%88%b0%e6%9c%9f">#</a>
+</h5>
+<h5 id="接下来创建创建一个名为-standby_replica-的脚本此任务在每次更新-lease-对象时检查-renewtime-字段以确定当前-leader-是否仍处于活动状态如果-renewtime-比当前时间落后了定义的阈值则假定-leader-处于非活动状态然后该任务尝试通过使用当前-resourceversion-更新来获取租约如果成功运行该任务的-pod-将成为新的-leader并应继续更新-renewtime-以保持其状态">
+  接下来创建创建一个名为 <code>standby_replica</code> 的脚本。此任务在每次更新 Lease 对象时检查 <code>renewTime</code> 字段，以确定当前 leader 是否仍处于活动状态。如果 <code>renewTime</code> 比当前时间落后了定义的阈值，则假定 leader 处于非活动状态。然后，该任务尝试通过使用当前 <code>resourceVersion</code> 更新来获取租约。如果成功，运行该任务的 pod 将成为新的 leader，并应继续更新 <code>renewTime</code> 以保持其状态。
+  <a class="anchor" href="#%e6%8e%a5%e4%b8%8b%e6%9d%a5%e5%88%9b%e5%bb%ba%e5%88%9b%e5%bb%ba%e4%b8%80%e4%b8%aa%e5%90%8d%e4%b8%ba-standby_replica-%e7%9a%84%e8%84%9a%e6%9c%ac%e6%ad%a4%e4%bb%bb%e5%8a%a1%e5%9c%a8%e6%af%8f%e6%ac%a1%e6%9b%b4%e6%96%b0-lease-%e5%af%b9%e8%b1%a1%e6%97%b6%e6%a3%80%e6%9f%a5-renewtime-%e5%ad%97%e6%ae%b5%e4%bb%a5%e7%a1%ae%e5%ae%9a%e5%bd%93%e5%89%8d-leader-%e6%98%af%e5%90%a6%e4%bb%8d%e5%a4%84%e4%ba%8e%e6%b4%bb%e5%8a%a8%e7%8a%b6%e6%80%81%e5%a6%82%e6%9e%9c-renewtime-%e6%af%94%e5%bd%93%e5%89%8d%e6%97%b6%e9%97%b4%e8%90%bd%e5%90%8e%e4%ba%86%e5%ae%9a%e4%b9%89%e7%9a%84%e9%98%88%e5%80%bc%e5%88%99%e5%81%87%e5%ae%9a-leader-%e5%a4%84%e4%ba%8e%e9%9d%9e%e6%b4%bb%e5%8a%a8%e7%8a%b6%e6%80%81%e7%84%b6%e5%90%8e%e8%af%a5%e4%bb%bb%e5%8a%a1%e5%b0%9d%e8%af%95%e9%80%9a%e8%bf%87%e4%bd%bf%e7%94%a8%e5%bd%93%e5%89%8d-resourceversion-%e6%9b%b4%e6%96%b0%e6%9d%a5%e8%8e%b7%e5%8f%96%e7%a7%9f%e7%ba%a6%e5%a6%82%e6%9e%9c%e6%88%90%e5%8a%9f%e8%bf%90%e8%a1%8c%e8%af%a5%e4%bb%bb%e5%8a%a1%e7%9a%84-pod-%e5%b0%86%e6%88%90%e4%b8%ba%e6%96%b0%e7%9a%84-leader%e5%b9%b6%e5%ba%94%e7%bb%a7%e7%bb%ad%e6%9b%b4%e6%96%b0-renewtime-%e4%bb%a5%e4%bf%9d%e6%8c%81%e5%85%b6%e7%8a%b6%e6%80%81">#</a>
+</h5>
+<pre tabindex="0"><code># standby_replica.sh
+#!/bin/bash
+
+LEASE_ENDPOINT=&#34;http://$KUBE_PROXY_URL/apis/coordination.k8s.io/v1/namespaces/NAMESPACE/example-lease/LEASE_NAME&#34;
+REPLICA_NAME=&#34;replica-2&#34;
+# implement watch. Please note that there is a watch endpoint, which is more efficeint when writing production code
+while true; do
+  # Fetch the lease object
+  lease=$(curl -s $LEASE_ENDPOINT)
+
+  # Extract renewTime and resourceVersion
+  renew_time=$(echo $lease | jq -r &#39;.spec.renewTime&#39;)
+  resource_version=$(echo $lease | jq -r &#39;.metadata.resourceVersion&#39;)
+  current_time=$(date -u +&#34;%Y-%m-%dT%H:%M:%SZ&#34;)
+
+  if [[ &#34;$renew_time&#34; &lt; &#34;$current_time&#34; ]]; then
+    updated_lease=$(echo $lease | jq &#34;.metadata.resourceVersion = \&#34;$resource_version\&#34; | .spec.renewTime = \&#34;$current_time\&#34; | .spec.holderIdentity = \&#34;$REPLICA_NAME\&#34;&#34;)
+
+    # Attempt to update the lease
+    update_response=$(curl -s -X PUT --header &#34;Content-Type: application/json&#34; -d &#34;$updated_lease&#34; $LEASE_ENDPOINT)
+
+    if [[ $(echo $update_response | jq -r &#39;.metadata.resourceVersion&#39;) == &#34;$resource_version&#34; ]]; then
+      echo &#34;Successfully acquired the lease.&#34;
+    else
+      echo &#34;Failed to acquire the lease.&#34;
+    fi
+  else
+    echo &#34;Lease is still valid.&#34;
+  fi
+
+  # Wait for 5 seconds before the next iteration
+  sleep 5
+done
+</code></pre><h5 id="如果我们一直去查看对象有对象输出renewtime-会不断更新因此没有发生领导者故障转移应该能够看到输出为">
+  如果我们一直去查看对象，有对象输出，<code>renewTime</code> 会不断更新。因此，没有发生领导者故障转移。应该能够看到输出为：
+  <a class="anchor" href="#%e5%a6%82%e6%9e%9c%e6%88%91%e4%bb%ac%e4%b8%80%e7%9b%b4%e5%8e%bb%e6%9f%a5%e7%9c%8b%e5%af%b9%e8%b1%a1%e6%9c%89%e5%af%b9%e8%b1%a1%e8%be%93%e5%87%barenewtime-%e4%bc%9a%e4%b8%8d%e6%96%ad%e6%9b%b4%e6%96%b0%e5%9b%a0%e6%ad%a4%e6%b2%a1%e6%9c%89%e5%8f%91%e7%94%9f%e9%a2%86%e5%af%bc%e8%80%85%e6%95%85%e9%9a%9c%e8%bd%ac%e7%a7%bb%e5%ba%94%e8%af%a5%e8%83%bd%e5%a4%9f%e7%9c%8b%e5%88%b0%e8%be%93%e5%87%ba%e4%b8%ba">#</a>
+</h5>
+<pre tabindex="0"><code>Lease is still valid.
+Lease is still valid.
+Lease is still valid.
+Lease is still valid.
+Lease is still valid.
+</code></pre><h5 id="当停止更新来自-replica-1-的租约时到期时间将在15秒内到期以便-replica-2-能够接管领导权您应该能够看到输出为">
+  当停止更新来自 <code>replica-1</code> 的租约时，到期时间将在15秒内到期，以便 <code>replica-2</code> 能够接管领导权。您应该能够看到输出为：
+  <a class="anchor" href="#%e5%bd%93%e5%81%9c%e6%ad%a2%e6%9b%b4%e6%96%b0%e6%9d%a5%e8%87%aa-replica-1-%e7%9a%84%e7%a7%9f%e7%ba%a6%e6%97%b6%e5%88%b0%e6%9c%9f%e6%97%b6%e9%97%b4%e5%b0%86%e5%9c%a815%e7%a7%92%e5%86%85%e5%88%b0%e6%9c%9f%e4%bb%a5%e4%be%bf-replica-2-%e8%83%bd%e5%a4%9f%e6%8e%a5%e7%ae%a1%e9%a2%86%e5%af%bc%e6%9d%83%e6%82%a8%e5%ba%94%e8%af%a5%e8%83%bd%e5%a4%9f%e7%9c%8b%e5%88%b0%e8%be%93%e5%87%ba%e4%b8%ba">#</a>
+</h5>
+<pre tabindex="0"><code>Lease is still valid.
+Lease is still valid.
+Successfully acquired the lease.
+
+# And then fetch the example lease again:
+kubectl get lease example-lease -n example-lease -o json
+
+#output:
+{
+  &#34;apiVersion&#34;: &#34;coordination.k8s.io/v1&#34;,
+  &#34;kind&#34;: &#34;Lease&#34;,
+  &#34;metadata&#34;: {
+    &#34;name&#34;: &#34;example-lease&#34;,
+    &#34;namespace&#34;: &#34;example-lease&#34;,
+    &#34;resourceVersion&#34;: &#34;124&#34;
+  },
+  &#34;spec&#34;: {
+    &#34;holderIdentity&#34;: &#34;replica-2&#34;,
+    &#34;leaseDurationSeconds&#34;: 15,
+    &#34;acquireTime&#34;: &#34;2023-09-11T20:36:00Z&#34;,
+    &#34;renewTime&#34;: &#34;2023-09-11T20:51:00Z&#34;,
+    &#34;leaseTransitions&#34;: 3
+  }
+}
+</code></pre><h2 id="总结">
+  <strong>总结</strong>
+  <a class="anchor" href="#%e6%80%bb%e7%bb%93">#</a>
+</h2>
+<h5 id="在-kubernetes-中利用-lease-对象进行领导者选举提供了一种轻量级但强大的替代方案而不是运行像-zookeeper-或-etcd-这样的重型协调服务通过依赖原生-kubernetes-api-对象您可以获得相同级别的容错能力而无需处理维护单独分布式协调服务所带来的运维复杂性和资源开销">
+  在 Kubernetes 中利用 Lease 对象进行领导者选举提供了一种轻量级但强大的替代方案，而不是运行像 ZooKeeper 或 etcd 这样的重型协调服务。通过依赖原生 Kubernetes API 对象，您可以获得相同级别的容错能力，而无需处理维护单独分布式协调服务所带来的运维复杂性和资源开销。
+  <a class="anchor" href="#%e5%9c%a8-kubernetes-%e4%b8%ad%e5%88%a9%e7%94%a8-lease-%e5%af%b9%e8%b1%a1%e8%bf%9b%e8%a1%8c%e9%a2%86%e5%af%bc%e8%80%85%e9%80%89%e4%b8%be%e6%8f%90%e4%be%9b%e4%ba%86%e4%b8%80%e7%a7%8d%e8%bd%bb%e9%87%8f%e7%ba%a7%e4%bd%86%e5%bc%ba%e5%a4%a7%e7%9a%84%e6%9b%bf%e4%bb%a3%e6%96%b9%e6%a1%88%e8%80%8c%e4%b8%8d%e6%98%af%e8%bf%90%e8%a1%8c%e5%83%8f-zookeeper-%e6%88%96-etcd-%e8%bf%99%e6%a0%b7%e7%9a%84%e9%87%8d%e5%9e%8b%e5%8d%8f%e8%b0%83%e6%9c%8d%e5%8a%a1%e9%80%9a%e8%bf%87%e4%be%9d%e8%b5%96%e5%8e%9f%e7%94%9f-kubernetes-api-%e5%af%b9%e8%b1%a1%e6%82%a8%e5%8f%af%e4%bb%a5%e8%8e%b7%e5%be%97%e7%9b%b8%e5%90%8c%e7%ba%a7%e5%88%ab%e7%9a%84%e5%ae%b9%e9%94%99%e8%83%bd%e5%8a%9b%e8%80%8c%e6%97%a0%e9%9c%80%e5%a4%84%e7%90%86%e7%bb%b4%e6%8a%a4%e5%8d%95%e7%8b%ac%e5%88%86%e5%b8%83%e5%bc%8f%e5%8d%8f%e8%b0%83%e6%9c%8d%e5%8a%a1%e6%89%80%e5%b8%a6%e6%9d%a5%e7%9a%84%e8%bf%90%e7%bb%b4%e5%a4%8d%e6%9d%82%e6%80%a7%e5%92%8c%e8%b5%84%e6%ba%90%e5%bc%80%e9%94%80">#</a>
+</h5>
+<h5 id="在实现方面每个-pod-都运行一个后台任务来观察-lease-对象的变化通过检查-renewtime-字段该任务可以确定当前领导者是否仍然可操作如果此时间已过期则表明领导权已经开放重新选举然后-pod-尝试通过使用自己的-holderidentity-和当前-resourceversion-更新-lease-对象来获取或更新租约成功更新-lease-的-pod-承担新领导者角色这种方法为在-kubernetes-环境中实现领导者选举提供了一种简单而有效的方式">
+  在实现方面，每个 Pod 都运行一个后台任务来观察 Lease 对象的变化。通过检查 <code>renewTime</code> 字段，该任务可以确定当前领导者是否仍然可操作。如果此时间已过期，则表明领导权已经开放重新选举。然后 Pod 尝试通过使用自己的 <code>holderIdentity</code> 和当前 <code>resourceVersion</code> 更新 Lease 对象来获取或更新租约。成功更新 Lease 的 Pod 承担新领导者角色。这种方法为在 Kubernetes 环境中实现领导者选举提供了一种简单而有效的方式。
+  <a class="anchor" href="#%e5%9c%a8%e5%ae%9e%e7%8e%b0%e6%96%b9%e9%9d%a2%e6%af%8f%e4%b8%aa-pod-%e9%83%bd%e8%bf%90%e8%a1%8c%e4%b8%80%e4%b8%aa%e5%90%8e%e5%8f%b0%e4%bb%bb%e5%8a%a1%e6%9d%a5%e8%a7%82%e5%af%9f-lease-%e5%af%b9%e8%b1%a1%e7%9a%84%e5%8f%98%e5%8c%96%e9%80%9a%e8%bf%87%e6%a3%80%e6%9f%a5-renewtime-%e5%ad%97%e6%ae%b5%e8%af%a5%e4%bb%bb%e5%8a%a1%e5%8f%af%e4%bb%a5%e7%a1%ae%e5%ae%9a%e5%bd%93%e5%89%8d%e9%a2%86%e5%af%bc%e8%80%85%e6%98%af%e5%90%a6%e4%bb%8d%e7%84%b6%e5%8f%af%e6%93%8d%e4%bd%9c%e5%a6%82%e6%9e%9c%e6%ad%a4%e6%97%b6%e9%97%b4%e5%b7%b2%e8%bf%87%e6%9c%9f%e5%88%99%e8%a1%a8%e6%98%8e%e9%a2%86%e5%af%bc%e6%9d%83%e5%b7%b2%e7%bb%8f%e5%bc%80%e6%94%be%e9%87%8d%e6%96%b0%e9%80%89%e4%b8%be%e7%84%b6%e5%90%8e-pod-%e5%b0%9d%e8%af%95%e9%80%9a%e8%bf%87%e4%bd%bf%e7%94%a8%e8%87%aa%e5%b7%b1%e7%9a%84-holderidentity-%e5%92%8c%e5%bd%93%e5%89%8d-resourceversion-%e6%9b%b4%e6%96%b0-lease-%e5%af%b9%e8%b1%a1%e6%9d%a5%e8%8e%b7%e5%8f%96%e6%88%96%e6%9b%b4%e6%96%b0%e7%a7%9f%e7%ba%a6%e6%88%90%e5%8a%9f%e6%9b%b4%e6%96%b0-lease-%e7%9a%84-pod-%e6%89%bf%e6%8b%85%e6%96%b0%e9%a2%86%e5%af%bc%e8%80%85%e8%a7%92%e8%89%b2%e8%bf%99%e7%a7%8d%e6%96%b9%e6%b3%95%e4%b8%ba%e5%9c%a8-kubernetes-%e7%8e%af%e5%a2%83%e4%b8%ad%e5%ae%9e%e7%8e%b0%e9%a2%86%e5%af%bc%e8%80%85%e9%80%89%e4%b8%be%e6%8f%90%e4%be%9b%e4%ba%86%e4%b8%80%e7%a7%8d%e7%ae%80%e5%8d%95%e8%80%8c%e6%9c%89%e6%95%88%e7%9a%84%e6%96%b9%e5%bc%8f">#</a>
+</h5>
+<h5 id="这使其成为对于在-kubernetes-环境中运行的应用程序更易访问和高效选择">
+  这使其成为对于在 Kubernetes 环境中运行的应用程序更易访问和高效选择。
+  <a class="anchor" href="#%e8%bf%99%e4%bd%bf%e5%85%b6%e6%88%90%e4%b8%ba%e5%af%b9%e4%ba%8e%e5%9c%a8-kubernetes-%e7%8e%af%e5%a2%83%e4%b8%ad%e8%bf%90%e8%a1%8c%e7%9a%84%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e6%9b%b4%e6%98%93%e8%ae%bf%e9%97%ae%e5%92%8c%e9%ab%98%e6%95%88%e9%80%89%e6%8b%a9">#</a>
+</h5>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#实现的复杂性"><strong>实现的复杂性</strong></a>
+      <ul>
+        <li></li>
+        <li><a href="#问题1失效的-leader-实例"><strong>问题1：失效的 Leader 实例</strong></a></li>
+        <li><a href="#问题2脑裂"><strong>问题2：脑裂</strong></a></li>
+      </ul>
+    </li>
+    <li><a href="#基于仲裁的系统成为首选解决方案"><strong>基于仲裁的系统成为首选解决方案</strong></a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#k8s-leases"><strong>K8s Leases</strong></a>
+      <ul>
+        <li></li>
+        <li><a href="#为什么很强大"><strong>为什么很强大</strong></a></li>
+        <li><a href="#工作原理"><strong>工作原理</strong></a></li>
+      </ul>
+    </li>
+    <li><a href="#示例"><strong>示例</strong></a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#总结"><strong>总结</strong></a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

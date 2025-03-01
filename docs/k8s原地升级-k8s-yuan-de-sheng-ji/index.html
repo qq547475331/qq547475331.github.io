@@ -1,0 +1,2984 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="原地升级一词中，**“升级”**不难理解，是将应用实例的版本由旧版替换为新版。那么如何结合 Kubernetes 环境来理解“原地”呢？
+
+  我们先来看看 K8s 原生 workload 的发布方式。这里假设我们需要部署一个应用，包括 foo、bar 两个容器在 Pod 中。其中，foo 容器第一次部署时用的镜像版本是 v1，我们需要将其升级为 v2 版本镜像，该怎么做呢？
+  #
+
+
+
+
+  如果这个应用使用 Deployment 部署，那么升级过程中 Deployment 会触发新版本 ReplicaSet 创建 Pod，并删除旧版本 Pod。如下图所示：
+  #
+
+
+
+
+
+  在本次升级过程中，原 Pod 对象被删除，一个新 Pod 对象被创建。新 Pod 被调度到另一个 Node 上，分配到一个新的 IP，并把 foo、bar 两个容器在这个 Node 上重新拉取镜像、启动容器。
+  #
+
+
+
+
+  如果这个应该使用 StatefulSet 部署，那么升级过程中 StatefulSet 会先删除旧 Pod 对象，等删除完成后用同样的名字在创建一个新的 Pod 对象。如下图所示：
+  #
+
+
+
+
+
+  值得注意的是，尽管新旧两个 Pod 名字都叫 pod-0，但其实是两个完全不同的 Pod 对象（uid也变了）。StatefulSet 等到原先的 pod-0 对象完全从 Kubernetes 集群中被删除后，才会提交创建一个新的 pod-0 对象。而这个新的 Pod 也会被重新调度、分配IP、拉镜像、启动容器。
+  #
+
+
+  -而所谓原地升级模式，就是在应用升级过程中避免将整个 Pod 对象删除、新建，而是基于原有的 Pod 对象升级其中某一个或多个容器的镜像版本：
+  #
+
+">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="http://192.168.0.139:1313/docs/k8s%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7-k8s-yuan-de-sheng-ji/">
+  <meta property="og:site_name" content="Guichen&#39;s Blog">
+  <meta property="og:title" content="K8S原地升级 2024-04-03 15:04:38.125">
+  <meta property="og:description" content="原地升级一词中，**“升级”**不难理解，是将应用实例的版本由旧版替换为新版。那么如何结合 Kubernetes 环境来理解“原地”呢？
+我们先来看看 K8s 原生 workload 的发布方式。这里假设我们需要部署一个应用，包括 foo、bar 两个容器在 Pod 中。其中，foo 容器第一次部署时用的镜像版本是 v1，我们需要将其升级为 v2 版本镜像，该怎么做呢？ # 如果这个应用使用 Deployment 部署，那么升级过程中 Deployment 会触发新版本 ReplicaSet 创建 Pod，并删除旧版本 Pod。如下图所示： # 在本次升级过程中，原 Pod 对象被删除，一个新 Pod 对象被创建。新 Pod 被调度到另一个 Node 上，分配到一个新的 IP，并把 foo、bar 两个容器在这个 Node 上重新拉取镜像、启动容器。 # 如果这个应该使用 StatefulSet 部署，那么升级过程中 StatefulSet 会先删除旧 Pod 对象，等删除完成后用同样的名字在创建一个新的 Pod 对象。如下图所示： # 值得注意的是，尽管新旧两个 Pod 名字都叫 pod-0，但其实是两个完全不同的 Pod 对象（uid也变了）。StatefulSet 等到原先的 pod-0 对象完全从 Kubernetes 集群中被删除后，才会提交创建一个新的 pod-0 对象。而这个新的 Pod 也会被重新调度、分配IP、拉镜像、启动容器。 # -而所谓原地升级模式，就是在应用升级过程中避免将整个 Pod 对象删除、新建，而是基于原有的 Pod 对象升级其中某一个或多个容器的镜像版本： #">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+<title>K8S原地升级 2024-04-03 15:04:38.125 | Guichen&#39;s Blog</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="http://192.168.0.139:1313/docs/k8s%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7-k8s-yuan-de-sheng-ji/">
+<link rel="stylesheet" href="/book.min.6c8b9d2a1fc95075ed7da46ca81060b39add8fff6741ac51259f768929281e2c.css" integrity="sha256-bIudKh/JUHXtfaRsqBBgs5rdj/9nQaxRJZ92iSkoHiw=" crossorigin="anonymous">
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/en.search.min.6f52273b9f5fa65803e3991faf27d1a7b7b8f6b148888237d77b4e841cb030e3.js" integrity="sha256-b1InO59fplgD45kfryfRp7e49rFIiII313tOhBywMOM=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/"><span>Guichen&#39;s Blog</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/00-%E9%9B%86%E7%BE%A4%E8%A7%84%E5%88%92%E5%92%8C%E5%9F%BA%E7%A1%80%E5%8F%82%E6%95%B0%E8%AE%BE%E5%AE%9A-00--ji-qun-gui-hua-he-ji-chu-can-shu-she-ding/" class="">00-集群规划和基础参数设定 2023-09-28 15:19:02.214</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/01-%E5%88%9B%E5%BB%BA%E8%AF%81%E4%B9%A6%E5%92%8C%E7%8E%AF%E5%A2%83%E5%87%86%E5%A4%87-01--chuang-jian-zheng-shu-he-huan-jing-zhun-bei/" class="">01-创建证书和环境准备 2023-09-28 15:22:19.812</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/02-%E5%AE%89%E8%A3%85etcd%E9%9B%86%E7%BE%A4-02--an-zhuang-etcd-ji-qun/" class="">02-安装etcd集群 2023-09-28 15:23:07.363</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E9%9D%A2%E8%AF%950224/" class="">0224面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-26-k8s%E7%9B%B8%E5%85%B3/" class="">0226 k8s题目</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/03-%E5%AE%89%E8%A3%85%E5%AE%B9%E5%99%A8%E8%BF%90%E8%A1%8C%E6%97%B6-03--an-zhuang-rong-qi-yun-xing-shi/" class="">03-安装容器运行时 2023-09-28 15:23:56.241</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/04-%E5%AE%89%E8%A3%85kube_master%E8%8A%82%E7%82%B9-04--an-zhuang-kubemaster-jie-dian/" class="">04-安装kube_master节点 2023-09-28 15:24:21.203</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/05-%E5%AE%89%E8%A3%85kube_node%E8%8A%82%E7%82%B9-05--an-zhuang-kubenode-jie-dian/" class="">05-安装kube_node节点 2023-09-28 15:24:43.201</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85calico%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-calico-wang-luo-zu-jian/" class="">06-安装calico网络组件 2023-09-28 15:34:28.483</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85cilium%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-cilium-wang-luo-zu-jian/" class="">06-安装cilium网络组件 2023-09-28 15:35:23.884</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85flannel%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-flannel-wang-luo-zu-jian/" class="">06-安装flannel网络组件 2023-09-28 15:35:50.039</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85kube-ovn%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-kube-ovn-wang-luo-zu-jian/" class="">06-安装kube-ovn网络组件 2023-09-28 15:36:11.265</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-wang-luo-zu-jian/" class="">06-安装网络组件 2023-09-28 15:25:14.997</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/07-%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4%E4%B8%BB%E8%A6%81%E6%8F%92%E4%BB%B6-07--an-zhuang-ji-qun-zhu-yao-cha-jian/" class="">07-安装集群主要插件 2023-09-28 15:26:42.651</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/08-k8s-%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8--k8s-ji-qun-cun-chu/" class="">08-K8S 集群存储  2023-09-28 15:27:29.454</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/16%E4%B8%AA%E6%A6%82%E5%BF%B5%E5%B8%A6%E4%BD%A0%E5%85%A5%E9%97%A8-kubernetes-16-ge-gai-nian-dai-ni-ru-men-kubernetes/" class="">16个概念带你入门 Kubernetes 2024-04-03 15:09:21.671</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/16%E5%BC%A0%E7%A1%AC%E6%A0%B8%E5%9B%BE%E8%A7%A3k8s%E7%BD%91%E7%BB%9C-16-zhang-ying-he-tu-jie-k8s-wang-luo/" class="">16张硬核图解k8s网络 2024-04-03 15:12:49.601</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-07-microk8s/" class="">2024-12-07 microk8s</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-devstack/" class="">2024-12-08 devstack</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-mutilpass%E6%93%8D%E4%BD%9C/" class="">2024-12-08 mutilpass操作</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-nano%E6%93%8D%E4%BD%9C/" class="">2024-12-08 nano操作</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-openstack%E5%92%8Ckubernetes%E5%8C%BA%E5%88%AB/" class="">2024-12-08 openstack和kubernetes区别</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-openstack%E9%9C%80%E8%A6%81%E5%87%A0%E5%8F%B0%E8%99%9A%E6%8B%9F%E6%9C%BA/" class="">2024-12-08 openstack需要几台虚拟机</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-%E5%9D%97%E5%AD%98%E5%82%A8%E5%92%8C%E5%AF%B9%E8%B1%A1%E5%82%A8%E5%AD%98%E5%8C%BA%E5%88%AB/" class="">2024-12-08 块存储和对象储存区别</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-docker-daemon.json/" class="">2024-12-09 docker daemon.json</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-helmchart-%E9%83%A8%E7%BD%B2flask%E5%BA%94%E7%94%A8/" class="">2024-12-09 helmchart 部署flask应用</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-mutilpass%E9%83%A8%E7%BD%B2openstack/" class="">2024-12-09 mutilpass部署openstack devstack形式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-openstack-ssh%E8%BF%9E%E6%8E%A5/" class="">2024-12-09 openstack ssh连接</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-10-docker-registrry/" class="">2024-12-10 docker registrry</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-22-k8s%E6%9E%B6%E6%9E%84%E5%B8%88%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8/" class="">2024-2-22 k8s架构师面试大全</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-22-k8s%E9%9D%A2%E8%AF%95%E5%AE%9D%E5%85%B8/" class="">2024-2-22 k8s面试宝典</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-26-%E9%9D%A2%E8%AF%95/" class="">2024-2-26 面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-19-%E4%B8%A4%E5%BC%A0%E5%9B%BE%E5%85%A8%E9%9D%A2%E7%90%86%E8%A7%A3k8s%E5%8E%9F%E7%90%86/" class="">2024-3-19 两张图全面理解k8s原理</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-cni%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B/" class="">2024-3-4 CNI剖析演进</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-8-%E9%9D%A2%E8%AF%950308/" class="">2024-3-8 面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-4-17-%E9%9D%A2%E8%AF%95%E6%80%BB%E7%BB%93/" class="">2024-4-17 面试总结</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-kubernetes%E9%9D%A2%E8%AF%95%E9%A2%98/" class="">2024-8-1 k8s面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-%E5%B8%B8%E8%A7%81linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98%E6%89%BE%E5%B7%A5%E4%BD%9C%E7%9A%84%E5%BF%85%E7%9C%8B/" class="">2024-8-1 linux运维面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98/" class="">2024-8-1 linux面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-1-1-%E5%A4%A7%E5%A0%B0%E6%B2%B3-%E6%88%91%E7%9A%84%E4%BF%9D%E5%A7%86/" class="">2025-1-1 大堰河-我的保姆</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-k8s-csi%E5%89%96%E6%9E%90/" class="">2025-1-16 CSI剖析演进</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-1-16-k8s%E5%B8%B8%E8%A7%81%E6%95%85%E9%9A%9C%E6%8C%87%E5%8D%97/" class="">2025-1-16 k8s常见故障指南</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-k8s%E6%B5%81%E9%87%8F%E9%93%BE%E8%B7%AF%E5%89%96%E6%9E%90/" class="">2025-1-16 k8s流量链路剖析</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/33%E6%AC%BEgitops%E4%B8%8Edevops%E4%B8%BB%E6%B5%81%E7%B3%BB%E7%BB%9F-33-kuan-gitops-yu-devops-zhu-liu-xi-tong/" class="">33款gitops与devops主流系统 2024-08-02 17:45:15.709</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/600%E6%9D%A1%E6%9C%80%E5%BC%BAlinux%E5%91%BD%E4%BB%A4%E6%80%BB%E7%BB%93-600-tiao-zui-qiang-linux-ming-ling-zong-jie/" class="">600条最强linux命令总结 2024-04-03 15:12:31.282</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/acme%E8%87%AA%E5%8A%A8%E6%9B%B4%E6%96%B0%E8%AF%81%E4%B9%A6-acme-zi-dong-geng-xin-zheng-shu/" class="">acme自动更新证书 2024-04-03 14:41:44.289</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/calico-%E9%85%8D%E7%BD%AE-bgp-route-reflectors-calico-pei-zhi-bgproutereflectors/" class="">calico 配置 BGP Route Reflectors 2023-09-28 15:34:01.007</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/calico%E7%BD%91%E7%BB%9C%E8%87%AA%E5%AE%9A%E4%B9%89-calico-wang-luo-zi-ding-yi/" class="">Calico网络自定义 2024-04-03 15:08:43.394</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/cicd%E6%80%9D%E8%80%83-cicd-si-kao/" class="">CICD思考 2024-04-03 15:11:24.151</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/client-go-%E5%9B%9B%E7%A7%8D%E5%AE%A2%E6%88%B7%E7%AB%AF-client-go-si-zhong-ke-hu-duan/" class="">Client-go 四种客户端 2024-04-03 14:49:34.32</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/client-go-%E6%9E%B6%E6%9E%84-client-go-jia-gou/" class="">Client-go 架构 2024-04-03 14:48:40.716</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/cni%E6%8F%92%E4%BB%B6%E9%80%89%E5%9E%8B-cni-cha-jian-xuan-xing/" class="">CNI插件选型 2024-04-03 15:01:51.29</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/containerd-%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C-containerd-ji-ben-cao-zuo/" class="">Containerd 基本操作 2024-04-03 14:55:46.786</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/coredns%E4%B9%8B%E5%85%89-coredns-zhi-guang/" class="">COREDNS之光 2024-04-03 14:54:52.059</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/dockerfile%E5%AE%9A%E5%88%B6%E4%B8%93%E5%B1%9E%E9%95%9C%E5%83%8F-dockerfile-ding-zhi-zhuan-shu-jing-xiang/" class="">dockerfile定制专属镜像 2024-08-02 17:44:00.522</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/dockerfile%E7%9A%84copy%E5%92%8Cadd%E7%9A%84%E5%8C%BA%E5%88%AB-dockerfile-de-copy-he-add-de-qu-bie/" class="">dockerfile的copy和add的区别 2024-04-03 15:01:09.565</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/docker%E9%87%8D%E8%A6%81%E7%9A%84%E7%BD%91%E7%BB%9C%E7%9F%A5%E8%AF%86%E7%82%B9-docker-zhong-yao-de-wang-luo-zhi-shi-dian/" class="">Docker重要的网络知识点  2024-04-03 15:12:10.162</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/etcd%E5%A4%87%E4%BB%BD-etcd-bei-fen/" class="">ETCD备份 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/etcd%E7%A8%B3%E5%AE%9A%E6%80%A7%E5%8F%8A%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%AE%9E%E8%B7%B5-etcd-wen-ding-xing-ji-xing-neng-you-hua-shi-jian/" class="">ETCD稳定性及性能优化实践 2024-04-03 15:06:31.141</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ex-lb-%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E9%83%A8%E7%BD%B2-ex-lb-fu-zai-jun-heng-bu-shu/" class="">EX-LB 负载均衡部署 2023-09-28 15:28:51.998</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ezctl-%E5%91%BD%E4%BB%A4%E8%A1%8C%E4%BB%8B%E7%BB%8D-ezctl-ming-ling-xing-jie-shao/" class="">ezctl 命令行介绍 2023-09-28 15:28:00.619</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/flanel%E7%BD%91%E7%BB%9C-flanel-wang-luo/" class="">flanel网络 2024-04-03 15:05:04.16</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/godel-scheduler-godel-scheduler/" class="">godel-scheduler 2024-08-02 17:41:00.668</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/helm-chart%E5%92%8Crepo-helmchart-he-repo/" class="">helm chart和repo 2024-04-03 15:00:43.125</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/istio-ingress-gateway-istio-ingress-gateway/" class="">istio-ingress-gateway 2024-08-02 17:51:54.75</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/istio%E9%83%A8%E7%BD%B2-istio-bu-shu/" class="">istio部署 2024-08-02 17:52:40.721</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-cni%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B-k8scni-pou-xi-yan-jin/" class="">K8S CNI剖析演进 2024-03-04 10:51:33.245</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-csi-openebs%E5%8E%9F%E7%90%86-k8scsiopenebs-yuan-li/" class="">K8S csi openebs原理 2024-04-03 14:44:48.967</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-csi%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B-k8scsi-pou-xi-yan-jin/" class="">K8S CSI剖析演进 2024-03-04 10:52:20.507</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-gpt-k8sgpt/" class="">K8S GPT 2024-04-03 15:02:09.127</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E5%BC%80%E5%8F%91%E5%8F%AF%E4%B8%8D%E6%AD%A2-crud-k8s-kai-fa-ke-bu-zhi-crud/" class="">K8S 开发可不止 CRUD 2024-04-03 14:50:11.765</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E6%8E%A2%E9%92%88%E5%8E%9F%E7%90%86-k8s-tan-zhen-yuan-li/" class="">K8S 探针原理 2024-04-03 14:53:29.429</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E6%B5%81%E9%87%8F%E9%93%BE%E8%B7%AF%E5%89%96%E6%9E%90-k8s-liu-liang-lian-lu-pou-xi/" class="">K8S 流量链路剖析 2024-03-04 10:50:22.991</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E8%B0%83%E5%BA%A6%E5%99%A8-scheduler_onego-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-diao-du-qi-scheduleronego-yuan-ma-jie-du/" class="">K8S 调度器 scheduler_one.go 源码解读 2024-04-09 11:45:28.22</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E4%B9%8Bingress-nginx%E5%8E%9F%E7%90%86%E5%8F%8A%E9%85%8D%E7%BD%AE-k8s-zhi-ingress-nginx-yuan-li-ji-pei-zhi/" class="">K8S之ingress-nginx原理及配置 2024-07-05 18:02:14.243</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E4%B9%8Bkubelet%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-zhi-kubelet-yuan-ma-jie-du/" class="">k8s之kubelet源码解读 2024-03-28 15:30:39.633</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7-k8s-yuan-de-sheng-ji/" class="active">K8S原地升级 2024-04-03 15:04:38.125</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%91%BD%E4%BB%A4%E6%8C%87%E5%8D%97-k8s-ming-ling-zhi-nan/" class="">K8S命令指南 2024-04-03 15:14:14.207</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%A6%82%E4%BD%95%E8%8E%B7%E5%BE%97-ip-k8s-ru-he-huo-de-ip/" class="">K8S如何获得 IP 2024-04-16 17:09:59.658</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%BA%94%E7%94%A8%E7%9A%84%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5-k8s-ying-yong-de-zui-jia-shi-jian/" class="">k8s应用的最佳实践 2024-04-03 14:43:16.936</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-deployment_controllergo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-deploymentcontrollergo-yuan-ma-jie-du/" class="">K8S控制器之 deployment_controller.go源码解读 2024-04-09 11:30:03.133</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-progressgo-%E8%BF%9B%E5%BA%A6-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-progressgo-jin-du-yuan-ma-jie-du/" class="">K8S控制器之 progress.go 进度 源码解读 2024-04-09 11:31:08.86</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-rollinggo-%E6%BB%9A%E5%8A%A8%E6%9B%B4%E6%96%B0-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-rollinggo-gun-dong-geng-xin-yuan-ma-jie-du/" class="">K8S控制器之 rolling.go 滚动更新 源码解读 2024-04-09 11:32:58.133</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-schedulergo-%E8%B0%83%E5%BA%A6%E5%99%A8-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-schedulergo-diao-du-qi-yuan-ma-jie-du/" class="">K8S控制器之 scheduler.go 调度器 源码解读 2024-04-09 11:44:25.171</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Brecreatego-%E9%87%8D%E5%BB%BA-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-recreatego-zhong-jian-yuan-ma-jie-du/" class="">K8S控制器之recreate.go 重建 源码解读 2024-04-09 11:31:49.855</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Brollbackgo-%E5%9B%9E%E6%BB%9A-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-rollbackgo-hui-gun-yuan-ma-jie-du/" class="">K8S控制器之rollback.go 回滚 源码解读 2024-04-09 11:32:26.587</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_pod_controlgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulpodcontrolgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_pod_control.go源码解读 2024-04-10 09:42:50.078</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_set_controlgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetcontrolgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_set_control.go源码解读 2024-04-10 09:41:30.316</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_set_status_updatego%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetstatusupdatego-yuan-ma-jie-du/" class="">K8S控制器之stateful_set_status_update.go源码解读 2024-04-10</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_setgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_set.go源码解读 2024-04-10</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bsyncgo-%E5%90%8C%E6%AD%A5-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-syncgo-tong-bu-yuan-ma-jie-du/" class="">K8S控制器之sync.go 同步 源码解读 2024-04-09 11:33:26.356</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E7%9A%84pod%E7%B1%BB%E5%9E%8B-k8s-de-pod-lei-xing/" class="">K8S的POD类型 2024-04-03 14:57:11.072</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E7%9A%84%E6%9C%80%E5%90%8E%E4%B8%80%E5%9D%97%E6%8B%BC%E5%9B%BE-dbpaas-k8s-de-zui-hou-yi-kuai-pin-tu-dbpaas/" class="">K8S的最后一块拼图 dbpaas 2024-08-02 17:48:35.899</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-k8s%E7%BB%84%E4%BB%B6/" class="">k8s组件</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%83%8C%E5%90%8Eservice%E6%98%AF%E5%A6%82%E4%BD%95%E5%B7%A5%E4%BD%9C%E7%9A%84-k8s-bei-hou-service-shi-ru-he-gong-zuo-de/" class="">k8s背后service是如何工作的 2024-08-02 17:49:44.981</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%B0%83%E5%BA%A6%E5%99%A8-extendergo-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-diao-du-qi-extendergo-yuan-ma-jie-du/" class="">K8S调度器 extender.go 源码解读 2024-04-09 11:45:59.666</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%B0%83%E8%AF%95pod-k8s-diao-shi-pod/" class="">K8S调试POD 2024-04-03 14:58:15.293</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%BF%90%E7%BB%B4%E4%B9%8B%E6%B8%85%E7%90%86%E7%A3%81%E7%9B%98-k8s-yun-wei-zhi-qing-li-ci-pan/" class="">k8s运维之清理磁盘 2024-04-03 15:13:57.279</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8-k8s-mian-shi-da-quan/" class="">K8S面试大全 2024-04-03 15:10:54.493</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E5%AE%9D%E5%85%B8-k8s-mian-shi-bao-dian/" class="">K8S面试宝典 2024-04-03 15:11:09.316</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E9%A2%98-k8s-mian-shi-ti/" class="">K8S面试题 2024-08-02 17:50:50.418</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kruise%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7%E8%A7%A3%E6%9E%90-kruise-yuan-de-sheng-ji-jie-xi/" class="">kruise原地升级解析 2024-08-02 17:59:31.689</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kube-router-%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-kube-router-wang-luo-zu-jian/" class="">kube-router 网络组件 2023-09-28 15:33:20.658</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-05-kubeasz%E9%83%A8%E7%BD%B2k8s/" class="">kubeasz部署k8s</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubekey%E6%B7%BB%E5%8A%A0%E6%96%B0%E8%8A%82%E7%82%B9-kubekey-tian-jia-xin-jie-dian/" class="">kubekey添加新节点 2024-04-03 15:36:47.646</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-api-kubernetesapi/" class="">Kubernetes API 2024-04-03 14:47:30.212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E6%BA%90%E7%A0%81%E7%BB%93%E6%9E%84-kubernetes-yuan-ma-jie-gou/" class="">Kubernetes 源码结构 2024-04-03 14:48:05.954</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3%E8%AE%A4%E8%AF%81-kubernetes-zheng-shu-xiang-jie--ren-zheng-/" class="">Kubernetes 证书详解(认证) 2024-04-03 14:52:56.54</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3%E9%89%B4%E6%9D%83-kubernetes-zheng-shu-xiang-jie--jian-quan-/" class="">Kubernetes 证书详解(鉴权) 2024-04-03 14:49:04.385</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubewharf-kubewharf/" class="">kubewharf 2024-08-02 17:41:32.72</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux-awk%E6%96%87%E6%9C%AC%E5%A4%84%E7%90%86%E5%99%A8-8%E4%B8%AA%E6%A1%88%E4%BE%8B-linuxawk-wen-ben-chu-li-qi-8-ge-an-li/" class="">linux awk文本处理器 8个案例 2024-08-02 17:46:53.603</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux-%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%A4%A7%E5%85%A8-linux-xing-neng-you-hua-da-quan/" class="">Linux 性能优化大全 2024-04-03 15:09:06.854</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux%E7%B3%BB%E7%BB%9F%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96-%E4%B8%83%E4%B8%AA%E5%AE%9E%E6%88%98%E7%BB%8F%E9%AA%8C-linux-xi-tong-xing-neng-you-hua-qi-ge-shi-zhan-jing-yan/" class="">linux系统性能优化 七个实战经验 2024-08-02 17:47:26.212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98-linux-yun-wei-gong-cheng-shi-50-ge-chang-jian-mian-shi-ti/" class="">linux运维工程师50个常见面试题 2024-08-02 17:42:12.968</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/metallb-l2-%E5%8E%9F%E7%90%86-metallbl2-yuan-li/" class="">MetalLB L2 原理 2024-04-03 14:52:24.662</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/netctl%E6%A3%80%E6%B5%8B%E9%9B%86%E7%BE%A4pod%E9%97%B4%E8%BF%9E%E9%80%9A%E6%80%A7-netctl-jian-ce-ji-qun-pod-jian-lian-tong-xing/" class="">netctl检测集群pod间连通性 2024-08-02 18:00:36.753</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/network-check-network-check/" class="">network-check 2023-09-28 15:36:33.04</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/nginx%E5%A6%82%E4%BD%95%E8%A7%A3%E5%86%B3%E6%83%8A%E7%BE%A4%E6%95%88%E5%BA%94-nginx-ru-he-jie-jue-jing-qun-xiao-ying/" class="">nginx如何解决惊群效应 2024-08-02 17:45:54.531</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/openkruise%E8%AF%A6%E7%BB%86%E8%A7%A3%E9%87%8A%E4%BB%A5%E5%8F%8A%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7%E5%8F%8A%E5%85%A8%E9%93%BE%E8%B7%AF%E7%81%B0%E5%BA%A6%E5%8F%91%E5%B8%83%E6%96%B9%E6%A1%88-openkruise-xiang-xi-jie-shi-yi-ji-yuan-de-sheng-ji-ji-quan-lian-lu-hui-du-fa-bu-fang-an/" class="">OpenKruise详细解释以及原地升级及全链路灰度发布方案 2024-07-22 11:44:46.892</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/pixie-pixie/" class="">pixie 2024-08-02 17:52:17.843</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-28-prometheus/" class="">prometheus 面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/prometheus-stack-prometheus-stack/" class="">prometheus-stack 2024-08-02 17:55:22.326</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/prometheus%E4%BC%81%E4%B8%9A%E7%BA%A7%E7%9B%91%E6%8E%A7%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93-prometheus-qi-ye-ji-jian-kong-shi-yong-zong-jie/" class="">prometheus企业级监控使用总结 2024-04-03 15:13:11.185</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ssl%E8%AF%81%E4%B9%A6%E8%87%AA%E7%AD%BE%E5%8F%91-ssl-zheng-shu-zi-qian-fa/" class="">ssl证书自签发 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/teg%E4%B8%8Eistio%E9%9B%86%E6%88%90-teg-yu-istio-ji-cheng/" class="">TEG与istio集成 2024-08-02 17:51:20.389</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%B8%A4%E5%BC%A0%E5%9B%BE%E5%85%A8%E9%9D%A2%E7%90%86%E8%A7%A3k8s%E5%8E%9F%E7%90%86-liang-zhang-tu-quan-mian-li-jie-k8s-yuan-li/" class="">两张图全面理解K8S原理 2024-04-03 14:51:27.431</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%B8%AA%E6%80%A7%E5%8C%96%E9%9B%86%E7%BE%A4%E5%8F%82%E6%95%B0%E9%85%8D%E7%BD%AE-ge-xing-hua-ji-qun-can-shu-pei-zhi/" class="">个性化集群参数配置 2023-09-28 15:30:56.072</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E4%B8%AD%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_%E9%A2%98%E7%9B%AE/" class="">中级运维面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BA%8C%E8%BF%9B%E5%88%B6%E9%83%A8%E7%BD%B2k8s%E5%8A%A0%E8%8A%82%E7%82%B9%E6%93%8D%E4%BD%9C-er-jin-zhi-bu-shu-k8s-jia-jie-dian-cao-zuo/" class="">二进制部署K8S加节点操作 2024-04-03 15:08:26.726</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-10-20-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8%E9%9B%86%E7%BE%A4/" class="">使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8-keepalived-%E5%92%8C-haproxy-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8-kubernetes-%E9%9B%86%E7%BE%A4-shi-yong-keepalived-he-haproxy-chuang-jian-gao-ke-yong-kubernetes-ji-qun/" class="">使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群 2023-04-12 04:04:09.458</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8-openfunction-%E5%9C%A8%E4%BB%BB%E4%BD%95%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E4%B8%8A%E8%BF%90%E8%A1%8C%E6%97%A0%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%B7%A5%E4%BD%9C%E8%B4%9F%E8%BD%BD-shi-yong-openfunction-zai-ren-he-ji-chu-she-shi-shang-yun-xing-wu-fu-wu-qi-gong-zuo-fu-zai/" class="">使用 OpenFunction 在任何基础设施上运行无服务器工作负载 2024-01-21 04:02:44.459</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8cloudflarecf%E6%90%AD%E5%BB%BAdockerhub%E4%BB%A3%E7%90%86-shi-yong-cloudflarecf-da-jian-dockerhub-dai-li/" class="">使用cloudflare(CF)搭建dockerhub代理 2024-06-28 14:38:34.339</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8kubernees-leases-%E8%BD%BB%E6%9D%BE%E5%AE%9E%E7%8E%B0leader-election-shi-yong-kuberneesleases-qing-song-shi-xian-leaderelection/" class="">使用kubernees leases 轻松实现leader election 2024-04-03 15:09:46.129</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%85%AC%E6%9C%89%E4%BA%91%E4%B8%8A%E9%83%A8%E7%BD%B2-kubeasz-gong-you-yun-shang-bu-shu-kubeasz/" class="">公有云上部署 kubeasz 2023-09-28 15:31:16.19</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-5-14-%E5%8D%95master%E5%8D%95etcd%E6%94%B9%E9%80%A0/" class="">单master单etcd改造为3master3etcd</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%8F%B2%E4%B8%8A%E6%9C%80%E7%89%9Bjenkins-pipeline%E6%B5%81%E6%B0%B4%E7%BA%BF%E8%AF%A6%E8%A7%A3-shi-shang-zui-niu-jenkinspipeline-liu-shui-xian-xiang-jie/" class="">史上最牛jenkins pipeline流水线详解 2024-08-02</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%9A%E6%9E%B6%E6%9E%84%E6%94%AF%E6%8C%81-duo-jia-gou-zhi-chi/" class="">多架构支持 2023-09-28 15:29:54.111</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%A7%E5%8E%82%E6%80%BB%E7%BB%93nginx%E9%AB%98%E5%B9%B6%E5%8F%91%E4%BC%98%E5%8C%96%E7%AC%94%E8%AE%B0-da-chang-zong-jie-nginx-gao-bing-fa-you-hua-bi-ji/" class="">大厂总结nginx高并发优化笔记 2024-08-02 17:46:19.098</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%A7%E8%A7%84%E6%A8%A1%E5%B9%B6%E5%8F%91%E4%B8%8B%E5%A6%82%E4%BD%95%E5%8A%A0%E5%BF%AB-pod-%E5%90%AF%E5%8A%A8%E9%80%9F%E5%BA%A6-da-gui-mo-bing-fa-xia-ru-he-jia-kuai-pod-qi-dong-su-du/" class="">大规模并发下如何加快 Pod 启动速度 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E4%B8%BAk8s%E4%BF%9D%E9%A9%BE%E6%8A%A4%E8%88%AA-ru-he-wei-k8s-bao-jia-hu-hang/" class="">如何为K8S保驾护航 2024-04-16 17:09:21.962</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8tekton%E5%BF%AB%E9%80%9F%E6%90%AD%E5%BB%BAcicd%E5%B9%B3%E5%8F%B0-ru-he-shi-yong-tekton-kuai-su-da-jian-cicd-ping-tai/" class="">如何使用tekton快速搭建CI/CD平台 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E8%B0%83%E8%AF%95-crash-%E5%AE%B9%E5%99%A8%E7%9A%84%E7%BD%91%E7%BB%9C-ru-he-diao-shi-crash-rong-qi-de-wang-luo/" class="">如何调试 crash 容器的网络 2024-04-03 14:50:51.378</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E4%B8%AD%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E4%BB%A5%E5%8F%8A%E4%B8%8D%E5%90%8Cdnspolicy%E5%AF%B9%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E7%9A%84%E5%BD%B1%E5%93%8D-rong-qi-zhong-yu-ming-jie-xi-yi-ji-bu-tong-dnspolicy-dui-yu-ming-jie-xi-de-ying-xiang/" class="">容器中域名解析以及不同dnspolicy对域名解析的影响 2024-04-03 15:04:09.254</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E5%86%85%E7%9A%84-1-%E5%8F%B7%E8%BF%9B%E7%A8%8B-rong-qi-nei-de-1-hao-jin-cheng/" class="">容器内的 1 号进程 2024-04-03 14:46:29.998</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E5%8E%9F%E7%90%86-rong-qi-yuan-li/" class="">容器原理 2024-04-03 14:45:58.422</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E7%9A%84%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E4%B8%80-overlayfs-%E5%8E%9F%E7%90%86-rong-qi-de-wen-jian-xi-tong--yi-overlayfs-yuan-li/" class="">容器的文件系统 OverlayFS 原理 2024-04-03 14:45:26.893</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C%E5%8E%9F%E7%90%86-rong-qi-wang-luo-yuan-li/" class="">容器网络原理 2024-04-03 14:51:51.962</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%B8%B8%E8%A7%81linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98-chang-jian-linux-yun-wei-mian-shi-ti/" class="">常见linux运维面试题 2024-08-02 17:42:33.873</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BC%80%E5%A7%8B%E4%BD%BF%E7%94%A8-cilium-kai-shi-shi-yong-cilium/" class="">开始使用 cilium 2023-09-28 15:34:49.205</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BD%BB%E6%82%9F%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C-che-wu-rong-qi-wang-luo/" class="">彻悟容器网络 2024-04-07 10:30:11.55</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BF%AB%E9%80%9F%E6%8C%87%E5%8D%97-kuai-su-zhi-nan/" class="">快速指南 2023-09-28 15:28:25.71</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%88%91%E5%8F%AA%E6%83%B3%E5%81%9A%E6%8A%80%E6%9C%AF-%E8%B5%B0%E6%8A%80%E6%9C%AF%E8%B7%AF%E7%BA%BF-wo-zhi-xiang-zuo-ji-shu-zou-ji-shu-lu-xian/" class="">我只想做技术 走技术路线 2024-08-02 17:43:31.897</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%90%9E%E6%87%82k8s%E9%89%B4%E6%9D%83-gao-dong-k8s-jian-quan/" class="">搞懂K8S鉴权 2024-04-03 15:11:54.885</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%90%AD%E4%B8%AA%E6%97%A5%E5%BF%97%E6%89%8B%E6%9C%BA%E7%B3%BB%E7%BB%9F%E4%B8%8D%E9%A6%99%E5%90%97-da-ge-ri-zhi-shou-ji-xi-tong-bu-xiang-ma/" class="">搭个日志手机系统不香吗 2024-08-02 17:47:58.794</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E8%AF%B4%E6%98%8E-cao-zuo-xi-tong-shuo-ming/" class="">操作系统说明 2023-09-28 15:31:37.694</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%96%87%E5%AD%A6%E7%9A%84%E6%95%85%E4%B9%A1-wen-xue-de-gu-xiang/" class="">文学的故乡 2024-04-03 14:40:45.926</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%98%AF%E6%8A%80%E6%9C%AF%E5%A4%A7%E7%A5%9E%E8%BF%98%E6%98%AF%E5%9F%BA%E7%A1%80%E6%9E%B6%E6%9E%84%E9%83%A8%E7%9A%84%E7%A5%B8%E5%AE%B3-shi-ji-shu-da-shen-hai-shi-ji-chu-jia-gou-bu-de-huo-hai/" class="">是技术大神还是基础架构部的祸害 2024-08-02 17:50:26.139</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9C%89%E8%BF%993%E4%B8%AA%E8%BF%B9%E8%B1%A1%E4%BD%A0%E5%B0%B1%E8%AF%A5%E7%A6%BB%E8%81%8C%E4%BA%86-you-zhe-3-ge-ji-xiang--ni-jiu-gai-li-zhi-le/" class="">有这3个迹象，你就该离职了 2023-09-21 16:00:22.432</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9E%81%E5%A4%A7%E6%8F%90%E9%AB%98%E5%B7%A5%E4%BD%9C%E6%95%88%E7%8E%87%E7%9A%84-linux-%E5%91%BD%E4%BB%A4-ji-da-ti-gao-gong-zuo-xiao-lv-de-linux-ming-ling/" class="">极大提高工作效率的 Linux 命令 2024-04-03 14:42:46.957</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9E%84%E5%BB%BA%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E5%88%A9%E5%99%A8buildkit-gou-jian-rong-qi-jing-xiang-li-qi-buildkit/" class="">构建容器镜像利器buildkit 2024-08-02 17:49:14.916</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B5%81%E9%87%8F%E4%BD%95%E5%A4%84%E6%9D%A5%E4%BD%95%E5%A4%84%E5%8E%BB-liu-liang-he-chu-lai-he-chu-qu/" class="">流量何处来何处去 2024-04-03 14:56:20.089</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B8%85%E7%90%86docker%E9%95%9C%E5%83%8F-qing-li-docker-jing-xiang/" class="">清理docker镜像 2024-08-02 17:54:48.594</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B8%85%E7%90%86%E6%AE%8B%E7%95%99%E7%9A%84calico%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6-qing-li-can-liu-de-calico-wang-luo/" class="">清理残留的calico网络插件 2024-04-03 15:07:38.854</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A3%81%E7%9B%98%E6%95%B0%E6%8D%AE%E6%81%A2%E5%A4%8D-ci-pan-shu-ju-hui-fu/" class="">磁盘数据恢复 2024-04-03 14:59:27.839</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85kubephere-li-xian-an-zhuang-kubephere/" class="">离线安装kubephere 2024-04-03 14:59:59.885</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4-li-xian-an-zhuang-ji-qun/" class="">离线安装集群 2023-09-28 15:29:14.742</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-%E8%AE%A1%E5%88%92/" class="">美国码农薪酬</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-%E8%AE%A1%E5%88%922/" class="">美国码农计划</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E8%87%AA%E5%8A%A8%E5%B1%8F%E8%94%BDip%E6%94%BB%E5%87%BB-zi-dong-ping-bi-ip-gong-ji/" class="">自动屏蔽IP攻击 2024-04-03 14:54:11.783</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-12-%E9%9D%A2%E8%AF%950212/" class="">面试0212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-19-%E9%9D%A2%E8%AF%950219/" class="">面试0219</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-20-%E9%9D%A2%E8%AF%950220/" class="">面试0220</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-26-%E9%9D%A2%E8%AF%950225/" class="">面试0225</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%9D%A2%E8%AF%950308-mian-shi-0308/" class="">面试0308 2024-04-03 14:57:53.576</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-11-%E9%9D%A2%E8%AF%950211/" class="">面试2025-02-11</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-18-%E9%9D%A2%E8%AF%95/" class="">面试2025-0218</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%9D%A2%E8%AF%95%E7%94%A8-golang-%E6%89%8B%E6%92%B8-lru-mian-shi-yong-golang-shou-lu-lru/" class="">面试用 Golang 手撸 LRU 2024-04-03 14:47:00.767</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%A1%B6%E7%BA%A7devops%E5%B7%A5%E5%85%B7%E5%A4%A7%E7%9B%98%E7%82%B9-ding-ji-devops-gong-ju-da-pan-dian/" class="">顶级devops工具大盘点 2024-08-02 17:43:03.661</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E9%AB%98%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_ai_linux%E9%83%A8%E5%88%86/" class="">高级运维面试题-linux部分</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>K8S原地升级 2024-04-03 15:04:38.125</h3>
+
+  <label for="toc-control">
+    
+    <img src="/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#收益分析">收益分析</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#技术背景">技术背景</a>
+      <ul>
+        <li></li>
+        <li><a href="#背景-1kubelet-针对-pod-容器的版本管理">背景 1：Kubelet 针对 Pod 容器的版本管理</a></li>
+        <li><a href="#背景-2pod-更新限制">背景 2：Pod 更新限制</a></li>
+        <li><a href="#背景-3containerstatuses-上报">背景 3：containerStatuses 上报</a></li>
+        <li><a href="#背景-4readinessgate-控制-pod-是否-ready">背景 4：ReadinessGate 控制 Pod 是否 Ready</a></li>
+      </ul>
+    </li>
+    <li><a href="#实现原理">实现原理</a>
+      <ul>
+        <li></li>
+        <li><a href="#1-单个-pod-如何原地升级">1. 单个 Pod 如何原地升级？</a></li>
+        <li><a href="#2-如何判断-pod-原地升级成功">2. 如何判断 Pod 原地升级成功？</a></li>
+        <li><a href="#3-如何确保原地升级过程中流量无损">3. 如何确保原地升级过程中流量无损？</a></li>
+        <li><a href="#4-组合发布策略">4. 组合发布策略</a></li>
+      </ul>
+    </li>
+    <li><a href="#总结">总结</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><p><strong>原地升级</strong>一词中，**“升级”**不难理解，是将应用实例的版本由旧版替换为新版。那么如何结合 Kubernetes 环境来理解“原地”呢？</p>
+<h5 id="我们先来看看-k8s-原生-workload-的发布方式这里假设我们需要部署一个应用包括-foobar-两个容器在-pod-中其中foo-容器第一次部署时用的镜像版本是-v1我们需要将其升级为-v2-版本镜像该怎么做呢">
+  我们先来看看 K8s 原生 workload 的发布方式。这里假设我们需要部署一个应用，包括 foo、bar 两个容器在 Pod 中。其中，foo 容器第一次部署时用的镜像版本是 v1，我们需要将其升级为 v2 版本镜像，该怎么做呢？
+  <a class="anchor" href="#%e6%88%91%e4%bb%ac%e5%85%88%e6%9d%a5%e7%9c%8b%e7%9c%8b-k8s-%e5%8e%9f%e7%94%9f-workload-%e7%9a%84%e5%8f%91%e5%b8%83%e6%96%b9%e5%bc%8f%e8%bf%99%e9%87%8c%e5%81%87%e8%ae%be%e6%88%91%e4%bb%ac%e9%9c%80%e8%a6%81%e9%83%a8%e7%bd%b2%e4%b8%80%e4%b8%aa%e5%ba%94%e7%94%a8%e5%8c%85%e6%8b%ac-foobar-%e4%b8%a4%e4%b8%aa%e5%ae%b9%e5%99%a8%e5%9c%a8-pod-%e4%b8%ad%e5%85%b6%e4%b8%adfoo-%e5%ae%b9%e5%99%a8%e7%ac%ac%e4%b8%80%e6%ac%a1%e9%83%a8%e7%bd%b2%e6%97%b6%e7%94%a8%e7%9a%84%e9%95%9c%e5%83%8f%e7%89%88%e6%9c%ac%e6%98%af-v1%e6%88%91%e4%bb%ac%e9%9c%80%e8%a6%81%e5%b0%86%e5%85%b6%e5%8d%87%e7%ba%a7%e4%b8%ba-v2-%e7%89%88%e6%9c%ac%e9%95%9c%e5%83%8f%e8%af%a5%e6%80%8e%e4%b9%88%e5%81%9a%e5%91%a2">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="如果这个应用使用-deployment-部署那么升级过程中-deployment-会触发新版本-replicaset-创建-pod并删除旧版本-pod如下图所示">
+  如果这个应用使用 Deployment 部署，那么升级过程中 Deployment 会触发新版本 ReplicaSet 创建 Pod，并删除旧版本 Pod。如下图所示：
+  <a class="anchor" href="#%e5%a6%82%e6%9e%9c%e8%bf%99%e4%b8%aa%e5%ba%94%e7%94%a8%e4%bd%bf%e7%94%a8-deployment-%e9%83%a8%e7%bd%b2%e9%82%a3%e4%b9%88%e5%8d%87%e7%ba%a7%e8%bf%87%e7%a8%8b%e4%b8%ad-deployment-%e4%bc%9a%e8%a7%a6%e5%8f%91%e6%96%b0%e7%89%88%e6%9c%ac-replicaset-%e5%88%9b%e5%bb%ba-pod%e5%b9%b6%e5%88%a0%e9%99%a4%e6%97%a7%e7%89%88%e6%9c%ac-pod%e5%a6%82%e4%b8%8b%e5%9b%be%e6%89%80%e7%a4%ba">#</a>
+</h5>
+</li>
+</ul>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011759919.png" alt="image-20240301175921848" /></p>
+<h5 id="在本次升级过程中原-pod-对象被删除一个新-pod-对象被创建新-pod-被调度到另一个-node-上分配到一个新的-ip并把-foobar-两个容器在这个-node-上重新拉取镜像启动容器">
+  在本次升级过程中，原 Pod 对象被删除，一个新 Pod 对象被创建。新 Pod 被调度到另一个 Node 上，分配到一个新的 IP，并把 foo、bar 两个容器在这个 Node 上重新拉取镜像、启动容器。
+  <a class="anchor" href="#%e5%9c%a8%e6%9c%ac%e6%ac%a1%e5%8d%87%e7%ba%a7%e8%bf%87%e7%a8%8b%e4%b8%ad%e5%8e%9f-pod-%e5%af%b9%e8%b1%a1%e8%a2%ab%e5%88%a0%e9%99%a4%e4%b8%80%e4%b8%aa%e6%96%b0-pod-%e5%af%b9%e8%b1%a1%e8%a2%ab%e5%88%9b%e5%bb%ba%e6%96%b0-pod-%e8%a2%ab%e8%b0%83%e5%ba%a6%e5%88%b0%e5%8f%a6%e4%b8%80%e4%b8%aa-node-%e4%b8%8a%e5%88%86%e9%85%8d%e5%88%b0%e4%b8%80%e4%b8%aa%e6%96%b0%e7%9a%84-ip%e5%b9%b6%e6%8a%8a-foobar-%e4%b8%a4%e4%b8%aa%e5%ae%b9%e5%99%a8%e5%9c%a8%e8%bf%99%e4%b8%aa-node-%e4%b8%8a%e9%87%8d%e6%96%b0%e6%8b%89%e5%8f%96%e9%95%9c%e5%83%8f%e5%90%af%e5%8a%a8%e5%ae%b9%e5%99%a8">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="如果这个应该使用-statefulset-部署那么升级过程中-statefulset-会先删除旧-pod-对象等删除完成后用同样的名字在创建一个新的-pod-对象如下图所示">
+  如果这个应该使用 StatefulSet 部署，那么升级过程中 StatefulSet 会先删除旧 Pod 对象，等删除完成后用同样的名字在创建一个新的 Pod 对象。如下图所示：
+  <a class="anchor" href="#%e5%a6%82%e6%9e%9c%e8%bf%99%e4%b8%aa%e5%ba%94%e8%af%a5%e4%bd%bf%e7%94%a8-statefulset-%e9%83%a8%e7%bd%b2%e9%82%a3%e4%b9%88%e5%8d%87%e7%ba%a7%e8%bf%87%e7%a8%8b%e4%b8%ad-statefulset-%e4%bc%9a%e5%85%88%e5%88%a0%e9%99%a4%e6%97%a7-pod-%e5%af%b9%e8%b1%a1%e7%ad%89%e5%88%a0%e9%99%a4%e5%ae%8c%e6%88%90%e5%90%8e%e7%94%a8%e5%90%8c%e6%a0%b7%e7%9a%84%e5%90%8d%e5%ad%97%e5%9c%a8%e5%88%9b%e5%bb%ba%e4%b8%80%e4%b8%aa%e6%96%b0%e7%9a%84-pod-%e5%af%b9%e8%b1%a1%e5%a6%82%e4%b8%8b%e5%9b%be%e6%89%80%e7%a4%ba">#</a>
+</h5>
+</li>
+</ul>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011759434.png" alt="image-20240301175945368" /></p>
+<h5 id="值得注意的是尽管新旧两个-pod-名字都叫-pod-0但其实是两个完全不同的-pod-对象uid也变了statefulset-等到原先的-pod-0-对象完全从-kubernetes-集群中被删除后才会提交创建一个新的-pod-0-对象而这个新的-pod-也会被重新调度分配ip拉镜像启动容器">
+  值得注意的是，尽管新旧两个 Pod 名字都叫 pod-0，但其实是两个完全不同的 Pod 对象（uid也变了）。StatefulSet 等到原先的 pod-0 对象完全从 Kubernetes 集群中被删除后，才会提交创建一个新的 pod-0 对象。而这个新的 Pod 也会被重新调度、分配IP、拉镜像、启动容器。
+  <a class="anchor" href="#%e5%80%bc%e5%be%97%e6%b3%a8%e6%84%8f%e7%9a%84%e6%98%af%e5%b0%bd%e7%ae%a1%e6%96%b0%e6%97%a7%e4%b8%a4%e4%b8%aa-pod-%e5%90%8d%e5%ad%97%e9%83%bd%e5%8f%ab-pod-0%e4%bd%86%e5%85%b6%e5%ae%9e%e6%98%af%e4%b8%a4%e4%b8%aa%e5%ae%8c%e5%85%a8%e4%b8%8d%e5%90%8c%e7%9a%84-pod-%e5%af%b9%e8%b1%a1uid%e4%b9%9f%e5%8f%98%e4%ba%86statefulset-%e7%ad%89%e5%88%b0%e5%8e%9f%e5%85%88%e7%9a%84-pod-0-%e5%af%b9%e8%b1%a1%e5%ae%8c%e5%85%a8%e4%bb%8e-kubernetes-%e9%9b%86%e7%be%a4%e4%b8%ad%e8%a2%ab%e5%88%a0%e9%99%a4%e5%90%8e%e6%89%8d%e4%bc%9a%e6%8f%90%e4%ba%a4%e5%88%9b%e5%bb%ba%e4%b8%80%e4%b8%aa%e6%96%b0%e7%9a%84-pod-0-%e5%af%b9%e8%b1%a1%e8%80%8c%e8%bf%99%e4%b8%aa%e6%96%b0%e7%9a%84-pod-%e4%b9%9f%e4%bc%9a%e8%a2%ab%e9%87%8d%e6%96%b0%e8%b0%83%e5%ba%a6%e5%88%86%e9%85%8dip%e6%8b%89%e9%95%9c%e5%83%8f%e5%90%af%e5%8a%a8%e5%ae%b9%e5%99%a8">#</a>
+</h5>
+<h5 id="-而所谓原地升级模式就是在应用升级过程中避免将整个-pod-对象删除新建而是基于原有的-pod-对象升级其中某一个或多个容器的镜像版本">
+  -而所谓原地升级模式，就是在应用升级过程中避免将整个 Pod 对象删除、新建，而是基于原有的 Pod 对象升级其中某一个或多个容器的镜像版本：
+  <a class="anchor" href="#-%e8%80%8c%e6%89%80%e8%b0%93%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7%e6%a8%a1%e5%bc%8f%e5%b0%b1%e6%98%af%e5%9c%a8%e5%ba%94%e7%94%a8%e5%8d%87%e7%ba%a7%e8%bf%87%e7%a8%8b%e4%b8%ad%e9%81%bf%e5%85%8d%e5%b0%86%e6%95%b4%e4%b8%aa-pod-%e5%af%b9%e8%b1%a1%e5%88%a0%e9%99%a4%e6%96%b0%e5%bb%ba%e8%80%8c%e6%98%af%e5%9f%ba%e4%ba%8e%e5%8e%9f%e6%9c%89%e7%9a%84-pod-%e5%af%b9%e8%b1%a1%e5%8d%87%e7%ba%a7%e5%85%b6%e4%b8%ad%e6%9f%90%e4%b8%80%e4%b8%aa%e6%88%96%e5%a4%9a%e4%b8%aa%e5%ae%b9%e5%99%a8%e7%9a%84%e9%95%9c%e5%83%8f%e7%89%88%e6%9c%ac">#</a>
+</h5>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403011800698.png" alt="image-20240301180014646" /></p>
+<h5 id="在原地升级的过程中我们仅仅更新了原-pod-对象中-foo-容器的-image-字段来触发-foo-容器升级到新版本而不管是-pod-对象还是-nodeip-都没有发生变化甚至-foo-容器升级的过程中-bar-容器还一直处于运行状态">
+  在原地升级的过程中，我们仅仅更新了原 Pod 对象中 foo 容器的 image 字段来触发 foo 容器升级到新版本。而不管是 Pod 对象，还是 Node、IP 都没有发生变化，甚至 foo 容器升级的过程中 bar 容器还一直处于运行状态。
+  <a class="anchor" href="#%e5%9c%a8%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7%e7%9a%84%e8%bf%87%e7%a8%8b%e4%b8%ad%e6%88%91%e4%bb%ac%e4%bb%85%e4%bb%85%e6%9b%b4%e6%96%b0%e4%ba%86%e5%8e%9f-pod-%e5%af%b9%e8%b1%a1%e4%b8%ad-foo-%e5%ae%b9%e5%99%a8%e7%9a%84-image-%e5%ad%97%e6%ae%b5%e6%9d%a5%e8%a7%a6%e5%8f%91-foo-%e5%ae%b9%e5%99%a8%e5%8d%87%e7%ba%a7%e5%88%b0%e6%96%b0%e7%89%88%e6%9c%ac%e8%80%8c%e4%b8%8d%e7%ae%a1%e6%98%af-pod-%e5%af%b9%e8%b1%a1%e8%bf%98%e6%98%af-nodeip-%e9%83%bd%e6%b2%a1%e6%9c%89%e5%8f%91%e7%94%9f%e5%8f%98%e5%8c%96%e7%94%9a%e8%87%b3-foo-%e5%ae%b9%e5%99%a8%e5%8d%87%e7%ba%a7%e7%9a%84%e8%bf%87%e7%a8%8b%e4%b8%ad-bar-%e5%ae%b9%e5%99%a8%e8%bf%98%e4%b8%80%e7%9b%b4%e5%a4%84%e4%ba%8e%e8%bf%90%e8%a1%8c%e7%8a%b6%e6%80%81">#</a>
+</h5>
+<p><strong>总结：这种只更新 Pod 中某一个或多个容器版本、而不影响整个 Pod 对象、其余容器的升级方式，被我们称为 Kubernetes 中的原地升级。</strong></p>
+<h2 id="收益分析">
+  收益分析
+  <a class="anchor" href="#%e6%94%b6%e7%9b%8a%e5%88%86%e6%9e%90">#</a>
+</h2>
+<h4 id="那么我们为什么要在-kubernetes-中引入这种原地升级的理念和设计呢">
+  那么，我们为什么要在 Kubernetes 中引入这种原地升级的理念和设计呢？
+  <a class="anchor" href="#%e9%82%a3%e4%b9%88%e6%88%91%e4%bb%ac%e4%b8%ba%e4%bb%80%e4%b9%88%e8%a6%81%e5%9c%a8-kubernetes-%e4%b8%ad%e5%bc%95%e5%85%a5%e8%bf%99%e7%a7%8d%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7%e7%9a%84%e7%90%86%e5%bf%b5%e5%92%8c%e8%ae%be%e8%ae%a1%e5%91%a2">#</a>
+</h4>
+<h5 id="首先这种原地升级的模式极大地提升了应用发布的效率根据非完全统计数据在阿里环境下原地升级至少比完全重建升级提升了-80-以上的发布速度这其实很容易理解原地升级为发布效率带来了以下优化点">
+  首先，这种原地升级的模式极大地提升了应用发布的效率，根据非完全统计数据，在阿里环境下原地升级至少比完全重建升级提升了 80% 以上的发布速度。这其实很容易理解，原地升级为发布效率带来了以下优化点：
+  <a class="anchor" href="#%e9%a6%96%e5%85%88%e8%bf%99%e7%a7%8d%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7%e7%9a%84%e6%a8%a1%e5%bc%8f%e6%9e%81%e5%a4%a7%e5%9c%b0%e6%8f%90%e5%8d%87%e4%ba%86%e5%ba%94%e7%94%a8%e5%8f%91%e5%b8%83%e7%9a%84%e6%95%88%e7%8e%87%e6%a0%b9%e6%8d%ae%e9%9d%9e%e5%ae%8c%e5%85%a8%e7%bb%9f%e8%ae%a1%e6%95%b0%e6%8d%ae%e5%9c%a8%e9%98%bf%e9%87%8c%e7%8e%af%e5%a2%83%e4%b8%8b%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7%e8%87%b3%e5%b0%91%e6%af%94%e5%ae%8c%e5%85%a8%e9%87%8d%e5%bb%ba%e5%8d%87%e7%ba%a7%e6%8f%90%e5%8d%87%e4%ba%86-80-%e4%bb%a5%e4%b8%8a%e7%9a%84%e5%8f%91%e5%b8%83%e9%80%9f%e5%ba%a6%e8%bf%99%e5%85%b6%e5%ae%9e%e5%be%88%e5%ae%b9%e6%98%93%e7%90%86%e8%a7%a3%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7%e4%b8%ba%e5%8f%91%e5%b8%83%e6%95%88%e7%8e%87%e5%b8%a6%e6%9d%a5%e4%ba%86%e4%bb%a5%e4%b8%8b%e4%bc%98%e5%8c%96%e7%82%b9">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="节省了调度的耗时pod-的位置资源都不发生变化">
+  节省了调度的耗时，Pod 的位置、资源都不发生变化；
+  <a class="anchor" href="#%e8%8a%82%e7%9c%81%e4%ba%86%e8%b0%83%e5%ba%a6%e7%9a%84%e8%80%97%e6%97%b6pod-%e7%9a%84%e4%bd%8d%e7%bd%ae%e8%b5%84%e6%ba%90%e9%83%bd%e4%b8%8d%e5%8f%91%e7%94%9f%e5%8f%98%e5%8c%96">#</a>
+</h5>
+</li>
+<li>
+<h5 id="节省了分配网络的耗时pod-还使用原有的-ip">
+  节省了分配网络的耗时，Pod 还使用原有的 IP；
+  <a class="anchor" href="#%e8%8a%82%e7%9c%81%e4%ba%86%e5%88%86%e9%85%8d%e7%bd%91%e7%bb%9c%e7%9a%84%e8%80%97%e6%97%b6pod-%e8%bf%98%e4%bd%bf%e7%94%a8%e5%8e%9f%e6%9c%89%e7%9a%84-ip">#</a>
+</h5>
+</li>
+<li>
+<h5 id="节省了分配挂载远程盘的耗时pod-还使用原有的-pv且都是已经在-node-上挂载好的">
+  节省了分配、挂载远程盘的耗时，Pod 还使用原有的 PV（且都是已经在 Node 上挂载好的）；
+  <a class="anchor" href="#%e8%8a%82%e7%9c%81%e4%ba%86%e5%88%86%e9%85%8d%e6%8c%82%e8%bd%bd%e8%bf%9c%e7%a8%8b%e7%9b%98%e7%9a%84%e8%80%97%e6%97%b6pod-%e8%bf%98%e4%bd%bf%e7%94%a8%e5%8e%9f%e6%9c%89%e7%9a%84-pv%e4%b8%94%e9%83%bd%e6%98%af%e5%b7%b2%e7%bb%8f%e5%9c%a8-node-%e4%b8%8a%e6%8c%82%e8%bd%bd%e5%a5%bd%e7%9a%84">#</a>
+</h5>
+</li>
+<li>
+<h5 id="节省了大部分拉取镜像的耗时因为-node-上已经存在了应用的旧镜像当拉取新版本镜像时只需要下载很少的几层-layer">
+  节省了大部分拉取镜像的耗时，因为 Node 上已经存在了应用的旧镜像，当拉取新版本镜像时只需要下载很少的几层 layer。
+  <a class="anchor" href="#%e8%8a%82%e7%9c%81%e4%ba%86%e5%a4%a7%e9%83%a8%e5%88%86%e6%8b%89%e5%8f%96%e9%95%9c%e5%83%8f%e7%9a%84%e8%80%97%e6%97%b6%e5%9b%a0%e4%b8%ba-node-%e4%b8%8a%e5%b7%b2%e7%bb%8f%e5%ad%98%e5%9c%a8%e4%ba%86%e5%ba%94%e7%94%a8%e7%9a%84%e6%97%a7%e9%95%9c%e5%83%8f%e5%bd%93%e6%8b%89%e5%8f%96%e6%96%b0%e7%89%88%e6%9c%ac%e9%95%9c%e5%83%8f%e6%97%b6%e5%8f%aa%e9%9c%80%e8%a6%81%e4%b8%8b%e8%bd%bd%e5%be%88%e5%b0%91%e7%9a%84%e5%87%a0%e5%b1%82-layer">#</a>
+</h5>
+</li>
+</ul>
+<h5 id="其次当我们升级-pod-中一些-sidecar-容器如采集日志监控等时其实并不希望干扰到业务容器的运行但面对这种场景deployment-或-statefulset-的升级都会将整个-pod-重建势必会对业务造成一定的影响而容器级别的原地升级变动的范围非常可控只会将需要升级的容器做重建其余容器包括网络挂载盘都不会受到影响">
+  其次，当我们升级 Pod 中一些 sidecar 容器（如采集日志、监控等）时，其实并不希望干扰到业务容器的运行。但面对这种场景，Deployment 或 StatefulSet 的升级都会将整个 Pod 重建，势必会对业务造成一定的影响。而容器级别的原地升级变动的范围非常可控，只会将需要升级的容器做重建，其余容器包括网络、挂载盘都不会受到影响。
+  <a class="anchor" href="#%e5%85%b6%e6%ac%a1%e5%bd%93%e6%88%91%e4%bb%ac%e5%8d%87%e7%ba%a7-pod-%e4%b8%ad%e4%b8%80%e4%ba%9b-sidecar-%e5%ae%b9%e5%99%a8%e5%a6%82%e9%87%87%e9%9b%86%e6%97%a5%e5%bf%97%e7%9b%91%e6%8e%a7%e7%ad%89%e6%97%b6%e5%85%b6%e5%ae%9e%e5%b9%b6%e4%b8%8d%e5%b8%8c%e6%9c%9b%e5%b9%b2%e6%89%b0%e5%88%b0%e4%b8%9a%e5%8a%a1%e5%ae%b9%e5%99%a8%e7%9a%84%e8%bf%90%e8%a1%8c%e4%bd%86%e9%9d%a2%e5%af%b9%e8%bf%99%e7%a7%8d%e5%9c%ba%e6%99%afdeployment-%e6%88%96-statefulset-%e7%9a%84%e5%8d%87%e7%ba%a7%e9%83%bd%e4%bc%9a%e5%b0%86%e6%95%b4%e4%b8%aa-pod-%e9%87%8d%e5%bb%ba%e5%8a%bf%e5%bf%85%e4%bc%9a%e5%af%b9%e4%b8%9a%e5%8a%a1%e9%80%a0%e6%88%90%e4%b8%80%e5%ae%9a%e7%9a%84%e5%bd%b1%e5%93%8d%e8%80%8c%e5%ae%b9%e5%99%a8%e7%ba%a7%e5%88%ab%e7%9a%84%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7%e5%8f%98%e5%8a%a8%e7%9a%84%e8%8c%83%e5%9b%b4%e9%9d%9e%e5%b8%b8%e5%8f%af%e6%8e%a7%e5%8f%aa%e4%bc%9a%e5%b0%86%e9%9c%80%e8%a6%81%e5%8d%87%e7%ba%a7%e7%9a%84%e5%ae%b9%e5%99%a8%e5%81%9a%e9%87%8d%e5%bb%ba%e5%85%b6%e4%bd%99%e5%ae%b9%e5%99%a8%e5%8c%85%e6%8b%ac%e7%bd%91%e7%bb%9c%e6%8c%82%e8%bd%bd%e7%9b%98%e9%83%bd%e4%b8%8d%e4%bc%9a%e5%8f%97%e5%88%b0%e5%bd%b1%e5%93%8d">#</a>
+</h5>
+<h5 id="最后原地升级也为我们带来了集群的稳定性和确定性当一个-kubernetes-集群中大量应用触发重建-pod-升级时可能造成大规模的-pod-飘移以及对-node-上一些低优先级的任务-pod-造成反复的抢占迁移这些大规模的-pod-重建本身会对-apiserverscheduler网络磁盘分配等中心组件造成较大的压力而这些组件的延迟也会给-pod-重建带来恶性循环而采用原地升级后整个升级过程只会涉及到-controller-对-pod-对象的更新操作和-kubelet-重建对应的容器">
+  最后，原地升级也为我们带来了集群的稳定性和确定性。当一个 Kubernetes 集群中大量应用触发重建 Pod 升级时，可能造成大规模的 Pod 飘移，以及对 Node 上一些低优先级的任务 Pod 造成反复的抢占迁移。这些大规模的 Pod 重建，本身会对 apiserver、scheduler、网络/磁盘分配等中心组件造成较大的压力，而这些组件的延迟也会给 Pod 重建带来恶性循环。而采用原地升级后，整个升级过程只会涉及到 controller 对 Pod 对象的更新操作和 kubelet 重建对应的容器。
+  <a class="anchor" href="#%e6%9c%80%e5%90%8e%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7%e4%b9%9f%e4%b8%ba%e6%88%91%e4%bb%ac%e5%b8%a6%e6%9d%a5%e4%ba%86%e9%9b%86%e7%be%a4%e7%9a%84%e7%a8%b3%e5%ae%9a%e6%80%a7%e5%92%8c%e7%a1%ae%e5%ae%9a%e6%80%a7%e5%bd%93%e4%b8%80%e4%b8%aa-kubernetes-%e9%9b%86%e7%be%a4%e4%b8%ad%e5%a4%a7%e9%87%8f%e5%ba%94%e7%94%a8%e8%a7%a6%e5%8f%91%e9%87%8d%e5%bb%ba-pod-%e5%8d%87%e7%ba%a7%e6%97%b6%e5%8f%af%e8%83%bd%e9%80%a0%e6%88%90%e5%a4%a7%e8%a7%84%e6%a8%a1%e7%9a%84-pod-%e9%a3%98%e7%a7%bb%e4%bb%a5%e5%8f%8a%e5%af%b9-node-%e4%b8%8a%e4%b8%80%e4%ba%9b%e4%bd%8e%e4%bc%98%e5%85%88%e7%ba%a7%e7%9a%84%e4%bb%bb%e5%8a%a1-pod-%e9%80%a0%e6%88%90%e5%8f%8d%e5%a4%8d%e7%9a%84%e6%8a%a2%e5%8d%a0%e8%bf%81%e7%a7%bb%e8%bf%99%e4%ba%9b%e5%a4%a7%e8%a7%84%e6%a8%a1%e7%9a%84-pod-%e9%87%8d%e5%bb%ba%e6%9c%ac%e8%ba%ab%e4%bc%9a%e5%af%b9-apiserverscheduler%e7%bd%91%e7%bb%9c%e7%a3%81%e7%9b%98%e5%88%86%e9%85%8d%e7%ad%89%e4%b8%ad%e5%bf%83%e7%bb%84%e4%bb%b6%e9%80%a0%e6%88%90%e8%be%83%e5%a4%a7%e7%9a%84%e5%8e%8b%e5%8a%9b%e8%80%8c%e8%bf%99%e4%ba%9b%e7%bb%84%e4%bb%b6%e7%9a%84%e5%bb%b6%e8%bf%9f%e4%b9%9f%e4%bc%9a%e7%bb%99-pod-%e9%87%8d%e5%bb%ba%e5%b8%a6%e6%9d%a5%e6%81%b6%e6%80%a7%e5%be%aa%e7%8e%af%e8%80%8c%e9%87%87%e7%94%a8%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7%e5%90%8e%e6%95%b4%e4%b8%aa%e5%8d%87%e7%ba%a7%e8%bf%87%e7%a8%8b%e5%8f%aa%e4%bc%9a%e6%b6%89%e5%8f%8a%e5%88%b0-controller-%e5%af%b9-pod-%e5%af%b9%e8%b1%a1%e7%9a%84%e6%9b%b4%e6%96%b0%e6%93%8d%e4%bd%9c%e5%92%8c-kubelet-%e9%87%8d%e5%bb%ba%e5%af%b9%e5%ba%94%e7%9a%84%e5%ae%b9%e5%99%a8">#</a>
+</h5>
+<h2 id="技术背景">
+  技术背景
+  <a class="anchor" href="#%e6%8a%80%e6%9c%af%e8%83%8c%e6%99%af">#</a>
+</h2>
+<h5 id="在阿里巴巴内部绝大部分电商应用在云原生环境都统一用原地升级的方式做发布而这套支持原地升级的控制器就位于-openkruise-开源项目中">
+  在阿里巴巴内部，绝大部分电商应用在云原生环境都统一用原地升级的方式做发布，而这套支持原地升级的控制器就位于 OpenKruise 开源项目中。
+  <a class="anchor" href="#%e5%9c%a8%e9%98%bf%e9%87%8c%e5%b7%b4%e5%b7%b4%e5%86%85%e9%83%a8%e7%bb%9d%e5%a4%a7%e9%83%a8%e5%88%86%e7%94%b5%e5%95%86%e5%ba%94%e7%94%a8%e5%9c%a8%e4%ba%91%e5%8e%9f%e7%94%9f%e7%8e%af%e5%a2%83%e9%83%bd%e7%bb%9f%e4%b8%80%e7%94%a8%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7%e7%9a%84%e6%96%b9%e5%bc%8f%e5%81%9a%e5%8f%91%e5%b8%83%e8%80%8c%e8%bf%99%e5%a5%97%e6%94%af%e6%8c%81%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7%e7%9a%84%e6%8e%a7%e5%88%b6%e5%99%a8%e5%b0%b1%e4%bd%8d%e4%ba%8e-openkruise-%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae%e4%b8%ad">#</a>
+</h5>
+<h5 id="也就是说阿里内部的云原生应用都是统一使用-openkruise-中的扩展-workload-做部署管理的而并没有采用原生-deploymentstatefulset-等">
+  也就是说，阿里内部的云原生应用都是统一使用 OpenKruise 中的扩展 workload 做部署管理的，而并没有采用原生 Deployment/StatefulSet 等。
+  <a class="anchor" href="#%e4%b9%9f%e5%b0%b1%e6%98%af%e8%af%b4%e9%98%bf%e9%87%8c%e5%86%85%e9%83%a8%e7%9a%84%e4%ba%91%e5%8e%9f%e7%94%9f%e5%ba%94%e7%94%a8%e9%83%bd%e6%98%af%e7%bb%9f%e4%b8%80%e4%bd%bf%e7%94%a8-openkruise-%e4%b8%ad%e7%9a%84%e6%89%a9%e5%b1%95-workload-%e5%81%9a%e9%83%a8%e7%bd%b2%e7%ae%a1%e7%90%86%e7%9a%84%e8%80%8c%e5%b9%b6%e6%b2%a1%e6%9c%89%e9%87%87%e7%94%a8%e5%8e%9f%e7%94%9f-deploymentstatefulset-%e7%ad%89">#</a>
+</h5>
+<h5 id="那么-openkruise-是如何实现原地升级能力的呢在介绍原地升级实现原理之前我们先来看一些原地升级功能所依赖的原生-kubernetes-功能">
+  那么 OpenKruise 是如何实现原地升级能力的呢？在介绍原地升级实现原理之前，我们先来看一些原地升级功能所依赖的原生 Kubernetes 功能：
+  <a class="anchor" href="#%e9%82%a3%e4%b9%88-openkruise-%e6%98%af%e5%a6%82%e4%bd%95%e5%ae%9e%e7%8e%b0%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7%e8%83%bd%e5%8a%9b%e7%9a%84%e5%91%a2%e5%9c%a8%e4%bb%8b%e7%bb%8d%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7%e5%ae%9e%e7%8e%b0%e5%8e%9f%e7%90%86%e4%b9%8b%e5%89%8d%e6%88%91%e4%bb%ac%e5%85%88%e6%9d%a5%e7%9c%8b%e4%b8%80%e4%ba%9b%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7%e5%8a%9f%e8%83%bd%e6%89%80%e4%be%9d%e8%b5%96%e7%9a%84%e5%8e%9f%e7%94%9f-kubernetes-%e5%8a%9f%e8%83%bd">#</a>
+</h5>
+<h3 id="背景-1kubelet-针对-pod-容器的版本管理">
+  背景 1：Kubelet 针对 Pod 容器的版本管理
+  <a class="anchor" href="#%e8%83%8c%e6%99%af-1kubelet-%e9%92%88%e5%af%b9-pod-%e5%ae%b9%e5%99%a8%e7%9a%84%e7%89%88%e6%9c%ac%e7%ae%a1%e7%90%86">#</a>
+</h3>
+<h5 id="每个-node-上的-kubelet会针对本机上所有-podspeccontainers-中的每个-container-计算一个-hash-值并记录到实际创建的容器中">
+  每个 Node 上的 Kubelet，会针对本机上所有 Pod.spec.containers 中的每个 container 计算一个 hash 值，并记录到实际创建的容器中。
+  <a class="anchor" href="#%e6%af%8f%e4%b8%aa-node-%e4%b8%8a%e7%9a%84-kubelet%e4%bc%9a%e9%92%88%e5%af%b9%e6%9c%ac%e6%9c%ba%e4%b8%8a%e6%89%80%e6%9c%89-podspeccontainers-%e4%b8%ad%e7%9a%84%e6%af%8f%e4%b8%aa-container-%e8%ae%a1%e7%ae%97%e4%b8%80%e4%b8%aa-hash-%e5%80%bc%e5%b9%b6%e8%ae%b0%e5%bd%95%e5%88%b0%e5%ae%9e%e9%99%85%e5%88%9b%e5%bb%ba%e7%9a%84%e5%ae%b9%e5%99%a8%e4%b8%ad">#</a>
+</h5>
+<h5 id="如果我们修改了-pod-中某个-container-的-image-字段kubelet-会发现-container-的-hash-发生了变化与机器上过去创建的容器-hash-不一致而后-kubelet-就会把旧容器停掉然后根据最新-pod-spec-中的-container-来创建新的容器">
+  如果我们修改了 Pod 中某个 container 的 image 字段，kubelet 会发现 container 的 hash 发生了变化、与机器上过去创建的容器 hash 不一致，而后 kubelet 就会把旧容器停掉，然后根据最新 Pod spec 中的 container 来创建新的容器。
+  <a class="anchor" href="#%e5%a6%82%e6%9e%9c%e6%88%91%e4%bb%ac%e4%bf%ae%e6%94%b9%e4%ba%86-pod-%e4%b8%ad%e6%9f%90%e4%b8%aa-container-%e7%9a%84-image-%e5%ad%97%e6%ae%b5kubelet-%e4%bc%9a%e5%8f%91%e7%8e%b0-container-%e7%9a%84-hash-%e5%8f%91%e7%94%9f%e4%ba%86%e5%8f%98%e5%8c%96%e4%b8%8e%e6%9c%ba%e5%99%a8%e4%b8%8a%e8%bf%87%e5%8e%bb%e5%88%9b%e5%bb%ba%e7%9a%84%e5%ae%b9%e5%99%a8-hash-%e4%b8%8d%e4%b8%80%e8%87%b4%e8%80%8c%e5%90%8e-kubelet-%e5%b0%b1%e4%bc%9a%e6%8a%8a%e6%97%a7%e5%ae%b9%e5%99%a8%e5%81%9c%e6%8e%89%e7%84%b6%e5%90%8e%e6%a0%b9%e6%8d%ae%e6%9c%80%e6%96%b0-pod-spec-%e4%b8%ad%e7%9a%84-container-%e6%9d%a5%e5%88%9b%e5%bb%ba%e6%96%b0%e7%9a%84%e5%ae%b9%e5%99%a8">#</a>
+</h5>
+<p><strong>这个功能，其实就是针对单个 Pod 的原地升级的核心原理。</strong></p>
+<h3 id="背景-2pod-更新限制">
+  背景 2：Pod 更新限制
+  <a class="anchor" href="#%e8%83%8c%e6%99%af-2pod-%e6%9b%b4%e6%96%b0%e9%99%90%e5%88%b6">#</a>
+</h3>
+<h5 id="在原生-kube-apiserver-中对-pod-对象的更新请求有严格的-validation-校验逻辑">
+  在原生 kube-apiserver 中，对 Pod 对象的更新请求有严格的 validation 校验逻辑：
+  <a class="anchor" href="#%e5%9c%a8%e5%8e%9f%e7%94%9f-kube-apiserver-%e4%b8%ad%e5%af%b9-pod-%e5%af%b9%e8%b1%a1%e7%9a%84%e6%9b%b4%e6%96%b0%e8%af%b7%e6%b1%82%e6%9c%89%e4%b8%a5%e6%a0%bc%e7%9a%84-validation-%e6%a0%a1%e9%aa%8c%e9%80%bb%e8%be%91">#</a>
+</h5>
+<pre tabindex="0"><code>// validate updateable fields:
+// 1.  spec.containers[*].image
+// 2.  spec.initContainers[*].image
+// 3.  spec.activeDeadlineSeconds
+</code></pre><h5 id="简单来说对于一个已经创建出来的-pod在-pod-spec-中只允许修改-containersinitcontainers-中的-image-字段以及-activedeadlineseconds-字段对-pod-spec-中所有其他字段的更新都会被-kube-apiserver-拒绝">
+  简单来说，对于一个已经创建出来的 Pod，在 Pod Spec 中只允许修改 containers/initContainers 中的 image 字段，以及 activeDeadlineSeconds 字段。对 Pod Spec 中所有其他字段的更新，都会被 kube-apiserver 拒绝。
+  <a class="anchor" href="#%e7%ae%80%e5%8d%95%e6%9d%a5%e8%af%b4%e5%af%b9%e4%ba%8e%e4%b8%80%e4%b8%aa%e5%b7%b2%e7%bb%8f%e5%88%9b%e5%bb%ba%e5%87%ba%e6%9d%a5%e7%9a%84-pod%e5%9c%a8-pod-spec-%e4%b8%ad%e5%8f%aa%e5%85%81%e8%ae%b8%e4%bf%ae%e6%94%b9-containersinitcontainers-%e4%b8%ad%e7%9a%84-image-%e5%ad%97%e6%ae%b5%e4%bb%a5%e5%8f%8a-activedeadlineseconds-%e5%ad%97%e6%ae%b5%e5%af%b9-pod-spec-%e4%b8%ad%e6%89%80%e6%9c%89%e5%85%b6%e4%bb%96%e5%ad%97%e6%ae%b5%e7%9a%84%e6%9b%b4%e6%96%b0%e9%83%bd%e4%bc%9a%e8%a2%ab-kube-apiserver-%e6%8b%92%e7%bb%9d">#</a>
+</h5>
+<h3 id="背景-3containerstatuses-上报">
+  背景 3：containerStatuses 上报
+  <a class="anchor" href="#%e8%83%8c%e6%99%af-3containerstatuses-%e4%b8%8a%e6%8a%a5">#</a>
+</h3>
+<h5 id="kubelet-会在-podstatus-中上报-containerstatuses对应-pod-中所有容器的实际运行状态">
+  kubelet 会在 pod.status 中上报 containerStatuses，对应 Pod 中所有容器的实际运行状态：
+  <a class="anchor" href="#kubelet-%e4%bc%9a%e5%9c%a8-podstatus-%e4%b8%ad%e4%b8%8a%e6%8a%a5-containerstatuses%e5%af%b9%e5%ba%94-pod-%e4%b8%ad%e6%89%80%e6%9c%89%e5%ae%b9%e5%99%a8%e7%9a%84%e5%ae%9e%e9%99%85%e8%bf%90%e8%a1%8c%e7%8a%b6%e6%80%81">#</a>
+</h5>
+<pre tabindex="0"><code>apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: nginx
+    image: nginx:latest
+status:
+  containerStatuses:
+  - name: nginx
+    image: nginx:mainline
+    imageID: docker-pullable://nginx@sha256:2f68b99bc0d6d25d0c56876b924ec20418544ff28e1fb89a4c27679a40da811b
+</code></pre><h5 id="绝大多数情况下speccontainersximage-与-statuscontainerstatusesximage-两个镜像是一致的">
+  绝大多数情况下，spec.containers[x].image 与 status.containerStatuses[x].image 两个镜像是一致的。
+  <a class="anchor" href="#%e7%bb%9d%e5%a4%a7%e5%a4%9a%e6%95%b0%e6%83%85%e5%86%b5%e4%b8%8bspeccontainersximage-%e4%b8%8e-statuscontainerstatusesximage-%e4%b8%a4%e4%b8%aa%e9%95%9c%e5%83%8f%e6%98%af%e4%b8%80%e8%87%b4%e7%9a%84">#</a>
+</h5>
+<h5 id="但是也有上述这种情况kubelet-上报的与-spec-中的-image-不一致spec-中是-nginxlatest但-status-中上报的是-nginxmainline">
+  但是也有上述这种情况，kubelet 上报的与 spec 中的 image 不一致（spec 中是 nginx:latest，但 status 中上报的是 nginx:mainline）。
+  <a class="anchor" href="#%e4%bd%86%e6%98%af%e4%b9%9f%e6%9c%89%e4%b8%8a%e8%bf%b0%e8%bf%99%e7%a7%8d%e6%83%85%e5%86%b5kubelet-%e4%b8%8a%e6%8a%a5%e7%9a%84%e4%b8%8e-spec-%e4%b8%ad%e7%9a%84-image-%e4%b8%8d%e4%b8%80%e8%87%b4spec-%e4%b8%ad%e6%98%af-nginxlatest%e4%bd%86-status-%e4%b8%ad%e4%b8%8a%e6%8a%a5%e7%9a%84%e6%98%af-nginxmainline">#</a>
+</h5>
+<h5 id="这是因为kubelet-所上报的-image-其实是从-cri-接口中拿到的容器对应的镜像名而如果-node-机器上存在多个镜像对应了一个-imageid那么上报的可能是其中任意一个">
+  这是因为，kubelet 所上报的 image 其实是从 CRI 接口中拿到的容器对应的镜像名。而如果 Node 机器上存在多个镜像对应了一个 imageID，那么上报的可能是其中任意一个：
+  <a class="anchor" href="#%e8%bf%99%e6%98%af%e5%9b%a0%e4%b8%bakubelet-%e6%89%80%e4%b8%8a%e6%8a%a5%e7%9a%84-image-%e5%85%b6%e5%ae%9e%e6%98%af%e4%bb%8e-cri-%e6%8e%a5%e5%8f%a3%e4%b8%ad%e6%8b%bf%e5%88%b0%e7%9a%84%e5%ae%b9%e5%99%a8%e5%af%b9%e5%ba%94%e7%9a%84%e9%95%9c%e5%83%8f%e5%90%8d%e8%80%8c%e5%a6%82%e6%9e%9c-node-%e6%9c%ba%e5%99%a8%e4%b8%8a%e5%ad%98%e5%9c%a8%e5%a4%9a%e4%b8%aa%e9%95%9c%e5%83%8f%e5%af%b9%e5%ba%94%e4%ba%86%e4%b8%80%e4%b8%aa-imageid%e9%82%a3%e4%b9%88%e4%b8%8a%e6%8a%a5%e7%9a%84%e5%8f%af%e8%83%bd%e6%98%af%e5%85%b6%e4%b8%ad%e4%bb%bb%e6%84%8f%e4%b8%80%e4%b8%aa">#</a>
+</h5>
+<pre tabindex="0"><code>$ docker images | grep nginx
+nginx            latest              2622e6cca7eb        2 days ago          132MB
+nginx            mainline            2622e6cca7eb        2 days ago
+</code></pre><h5 id="因此一个-pod-中-spec-和-status-的-image-字段不一致并不意味着宿主机上这个容器运行的镜像版本和期望的不一致">
+  因此，一个 Pod 中 spec 和 status 的 image 字段不一致，并不意味着宿主机上这个容器运行的镜像版本和期望的不一致。
+  <a class="anchor" href="#%e5%9b%a0%e6%ad%a4%e4%b8%80%e4%b8%aa-pod-%e4%b8%ad-spec-%e5%92%8c-status-%e7%9a%84-image-%e5%ad%97%e6%ae%b5%e4%b8%8d%e4%b8%80%e8%87%b4%e5%b9%b6%e4%b8%8d%e6%84%8f%e5%91%b3%e7%9d%80%e5%ae%bf%e4%b8%bb%e6%9c%ba%e4%b8%8a%e8%bf%99%e4%b8%aa%e5%ae%b9%e5%99%a8%e8%bf%90%e8%a1%8c%e7%9a%84%e9%95%9c%e5%83%8f%e7%89%88%e6%9c%ac%e5%92%8c%e6%9c%9f%e6%9c%9b%e7%9a%84%e4%b8%8d%e4%b8%80%e8%87%b4">#</a>
+</h5>
+<h3 id="背景-4readinessgate-控制-pod-是否-ready">
+  背景 4：ReadinessGate 控制 Pod 是否 Ready
+  <a class="anchor" href="#%e8%83%8c%e6%99%af-4readinessgate-%e6%8e%a7%e5%88%b6-pod-%e6%98%af%e5%90%a6-ready">#</a>
+</h3>
+<h5 id="在-kubernetes-112-版本之前一个-pod-是否处于-ready-状态只是由-kubelet-根据容器状态来判定如果-pod-中容器全部-ready那么-pod-就处于-ready-状态">
+  在 Kubernetes 1.12 版本之前，一个 Pod 是否处于 Ready 状态只是由 kubelet 根据容器状态来判定：如果 Pod 中容器全部 ready，那么 Pod 就处于 Ready 状态。
+  <a class="anchor" href="#%e5%9c%a8-kubernetes-112-%e7%89%88%e6%9c%ac%e4%b9%8b%e5%89%8d%e4%b8%80%e4%b8%aa-pod-%e6%98%af%e5%90%a6%e5%a4%84%e4%ba%8e-ready-%e7%8a%b6%e6%80%81%e5%8f%aa%e6%98%af%e7%94%b1-kubelet-%e6%a0%b9%e6%8d%ae%e5%ae%b9%e5%99%a8%e7%8a%b6%e6%80%81%e6%9d%a5%e5%88%a4%e5%ae%9a%e5%a6%82%e6%9e%9c-pod-%e4%b8%ad%e5%ae%b9%e5%99%a8%e5%85%a8%e9%83%a8-ready%e9%82%a3%e4%b9%88-pod-%e5%b0%b1%e5%a4%84%e4%ba%8e-ready-%e7%8a%b6%e6%80%81">#</a>
+</h5>
+<h5 id="但事实上很多时候上层-operator-或用户都需要能控制-pod-是否-ready-的能力因此kubernetes-112-版本之后提供了一个-readinessgates-功能来满足这个场景如下">
+  但事实上，很多时候上层 operator 或用户都需要能控制 Pod 是否 Ready 的能力。因此，Kubernetes 1.12 版本之后提供了一个 readinessGates 功能来满足这个场景。如下：
+  <a class="anchor" href="#%e4%bd%86%e4%ba%8b%e5%ae%9e%e4%b8%8a%e5%be%88%e5%a4%9a%e6%97%b6%e5%80%99%e4%b8%8a%e5%b1%82-operator-%e6%88%96%e7%94%a8%e6%88%b7%e9%83%bd%e9%9c%80%e8%a6%81%e8%83%bd%e6%8e%a7%e5%88%b6-pod-%e6%98%af%e5%90%a6-ready-%e7%9a%84%e8%83%bd%e5%8a%9b%e5%9b%a0%e6%ad%a4kubernetes-112-%e7%89%88%e6%9c%ac%e4%b9%8b%e5%90%8e%e6%8f%90%e4%be%9b%e4%ba%86%e4%b8%80%e4%b8%aa-readinessgates-%e5%8a%9f%e8%83%bd%e6%9d%a5%e6%bb%a1%e8%b6%b3%e8%bf%99%e4%b8%aa%e5%9c%ba%e6%99%af%e5%a6%82%e4%b8%8b">#</a>
+</h5>
+<pre tabindex="0"><code>apiVersion: v1
+kind: Pod
+spec:
+  readinessGates:
+  - conditionType: MyDemo
+status:
+  conditions:
+  - type: MyDemo
+    status: &#34;True&#34;
+  - type: ContainersReady
+    status: &#34;True&#34;
+  - type: Ready
+    status: &#34;True&#34;
+</code></pre><h5 id="目前-kubelet-判定一个-pod-是否-ready-的两个前提条件">
+  目前 kubelet 判定一个 Pod 是否 Ready 的两个前提条件：
+  <a class="anchor" href="#%e7%9b%ae%e5%89%8d-kubelet-%e5%88%a4%e5%ae%9a%e4%b8%80%e4%b8%aa-pod-%e6%98%af%e5%90%a6-ready-%e7%9a%84%e4%b8%a4%e4%b8%aa%e5%89%8d%e6%8f%90%e6%9d%a1%e4%bb%b6">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="pod-中容器全部-ready其实对应了-containersready-condition-为-true">
+  Pod 中容器全部 Ready（其实对应了 ContainersReady condition 为 True）；
+  <a class="anchor" href="#pod-%e4%b8%ad%e5%ae%b9%e5%99%a8%e5%85%a8%e9%83%a8-ready%e5%85%b6%e5%ae%9e%e5%af%b9%e5%ba%94%e4%ba%86-containersready-condition-%e4%b8%ba-true">#</a>
+</h5>
+</li>
+<li>
+<h5 id="如果-podspecreadinessgates-中定义了一个或多个-conditiontype那么需要这些-conditiontype-在-podstatusconditions-中都有对应的-status-true-的状态">
+  如果 pod.spec.readinessGates 中定义了一个或多个 conditionType，那么需要这些 conditionType 在 pod.status.conditions 中都有对应的 status: &ldquo;true&rdquo; 的状态。
+  <a class="anchor" href="#%e5%a6%82%e6%9e%9c-podspecreadinessgates-%e4%b8%ad%e5%ae%9a%e4%b9%89%e4%ba%86%e4%b8%80%e4%b8%aa%e6%88%96%e5%a4%9a%e4%b8%aa-conditiontype%e9%82%a3%e4%b9%88%e9%9c%80%e8%a6%81%e8%bf%99%e4%ba%9b-conditiontype-%e5%9c%a8-podstatusconditions-%e4%b8%ad%e9%83%bd%e6%9c%89%e5%af%b9%e5%ba%94%e7%9a%84-status-true-%e7%9a%84%e7%8a%b6%e6%80%81">#</a>
+</h5>
+</li>
+</ul>
+<h5 id="只有满足上述两个前提kubelet-才会上报-ready-condition-为-true">
+  只有满足上述两个前提，kubelet 才会上报 Ready condition 为 True。
+  <a class="anchor" href="#%e5%8f%aa%e6%9c%89%e6%bb%a1%e8%b6%b3%e4%b8%8a%e8%bf%b0%e4%b8%a4%e4%b8%aa%e5%89%8d%e6%8f%90kubelet-%e6%89%8d%e4%bc%9a%e4%b8%8a%e6%8a%a5-ready-condition-%e4%b8%ba-true">#</a>
+</h5>
+<h2 id="实现原理">
+  实现原理
+  <a class="anchor" href="#%e5%ae%9e%e7%8e%b0%e5%8e%9f%e7%90%86">#</a>
+</h2>
+<h5 id="了解了上面的四个背景之后接下来分析一下-openkruise-是如何在-kubernetes-中实现原地升级的原理">
+  了解了上面的四个背景之后，接下来分析一下 OpenKruise 是如何在 Kubernetes 中实现原地升级的原理。
+  <a class="anchor" href="#%e4%ba%86%e8%a7%a3%e4%ba%86%e4%b8%8a%e9%9d%a2%e7%9a%84%e5%9b%9b%e4%b8%aa%e8%83%8c%e6%99%af%e4%b9%8b%e5%90%8e%e6%8e%a5%e4%b8%8b%e6%9d%a5%e5%88%86%e6%9e%90%e4%b8%80%e4%b8%8b-openkruise-%e6%98%af%e5%a6%82%e4%bd%95%e5%9c%a8-kubernetes-%e4%b8%ad%e5%ae%9e%e7%8e%b0%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7%e7%9a%84%e5%8e%9f%e7%90%86">#</a>
+</h5>
+<h3 id="1-单个-pod-如何原地升级">
+  1. 单个 Pod 如何原地升级？
+  <a class="anchor" href="#1-%e5%8d%95%e4%b8%aa-pod-%e5%a6%82%e4%bd%95%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7">#</a>
+</h3>
+<h5 id="由背景-1可知其实我们对一个存量-pod-的-speccontainersx-中字段做修改kubelet-会感知到这个-container-的-hash-发生了变化随即就会停掉对应的旧容器并用新的-container-来拉镜像创建和启动新容器">
+  由“背景 1”可知，其实我们对一个存量 Pod 的 spec.containers[x] 中字段做修改，kubelet 会感知到这个 container 的 hash 发生了变化，随即就会停掉对应的旧容器，并用新的 container 来拉镜像、创建和启动新容器。
+  <a class="anchor" href="#%e7%94%b1%e8%83%8c%e6%99%af-1%e5%8f%af%e7%9f%a5%e5%85%b6%e5%ae%9e%e6%88%91%e4%bb%ac%e5%af%b9%e4%b8%80%e4%b8%aa%e5%ad%98%e9%87%8f-pod-%e7%9a%84-speccontainersx-%e4%b8%ad%e5%ad%97%e6%ae%b5%e5%81%9a%e4%bf%ae%e6%94%b9kubelet-%e4%bc%9a%e6%84%9f%e7%9f%a5%e5%88%b0%e8%bf%99%e4%b8%aa-container-%e7%9a%84-hash-%e5%8f%91%e7%94%9f%e4%ba%86%e5%8f%98%e5%8c%96%e9%9a%8f%e5%8d%b3%e5%b0%b1%e4%bc%9a%e5%81%9c%e6%8e%89%e5%af%b9%e5%ba%94%e7%9a%84%e6%97%a7%e5%ae%b9%e5%99%a8%e5%b9%b6%e7%94%a8%e6%96%b0%e7%9a%84-container-%e6%9d%a5%e6%8b%89%e9%95%9c%e5%83%8f%e5%88%9b%e5%bb%ba%e5%92%8c%e5%90%af%e5%8a%a8%e6%96%b0%e5%ae%b9%e5%99%a8">#</a>
+</h5>
+<h5 id="由背景-2可知当前我们对一个存量-pod-的-speccontainersx-中的修改仅限于-image-字段">
+  由“背景 2”可知，当前我们对一个存量 Pod 的 spec.containers[x] 中的修改，仅限于 image 字段。
+  <a class="anchor" href="#%e7%94%b1%e8%83%8c%e6%99%af-2%e5%8f%af%e7%9f%a5%e5%bd%93%e5%89%8d%e6%88%91%e4%bb%ac%e5%af%b9%e4%b8%80%e4%b8%aa%e5%ad%98%e9%87%8f-pod-%e7%9a%84-speccontainersx-%e4%b8%ad%e7%9a%84%e4%bf%ae%e6%94%b9%e4%bb%85%e9%99%90%e4%ba%8e-image-%e5%ad%97%e6%ae%b5">#</a>
+</h5>
+<h5 id="因此得出第一个实现原理对于一个现有的-pod-对象我们能且只能修改其中的-speccontainersximage-字段来触发-pod-中对应容器升级到一个新的-image">
+  因此，得出第一个实现原理：**对于一个现有的 Pod 对象，我们能且只能修改其中的 spec.containers[x].image 字段，来触发 Pod 中对应容器升级到一个新的 image。
+  <a class="anchor" href="#%e5%9b%a0%e6%ad%a4%e5%be%97%e5%87%ba%e7%ac%ac%e4%b8%80%e4%b8%aa%e5%ae%9e%e7%8e%b0%e5%8e%9f%e7%90%86%e5%af%b9%e4%ba%8e%e4%b8%80%e4%b8%aa%e7%8e%b0%e6%9c%89%e7%9a%84-pod-%e5%af%b9%e8%b1%a1%e6%88%91%e4%bb%ac%e8%83%bd%e4%b8%94%e5%8f%aa%e8%83%bd%e4%bf%ae%e6%94%b9%e5%85%b6%e4%b8%ad%e7%9a%84-speccontainersximage-%e5%ad%97%e6%ae%b5%e6%9d%a5%e8%a7%a6%e5%8f%91-pod-%e4%b8%ad%e5%af%b9%e5%ba%94%e5%ae%b9%e5%99%a8%e5%8d%87%e7%ba%a7%e5%88%b0%e4%b8%80%e4%b8%aa%e6%96%b0%e7%9a%84-image">#</a>
+</h5>
+<h3 id="2-如何判断-pod-原地升级成功">
+  2. 如何判断 Pod 原地升级成功？
+  <a class="anchor" href="#2-%e5%a6%82%e4%bd%95%e5%88%a4%e6%96%ad-pod-%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7%e6%88%90%e5%8a%9f">#</a>
+</h3>
+<h5 id="接下来的问题是当我们修改了-pod-中的-speccontainersximage-字段后如何判断-kubelet-已经将容器重建成功了呢">
+  接下来的问题是，当我们修改了 Pod 中的 spec.containers[x].image 字段后，如何判断 kubelet 已经将容器重建成功了呢？
+  <a class="anchor" href="#%e6%8e%a5%e4%b8%8b%e6%9d%a5%e7%9a%84%e9%97%ae%e9%a2%98%e6%98%af%e5%bd%93%e6%88%91%e4%bb%ac%e4%bf%ae%e6%94%b9%e4%ba%86-pod-%e4%b8%ad%e7%9a%84-speccontainersximage-%e5%ad%97%e6%ae%b5%e5%90%8e%e5%a6%82%e4%bd%95%e5%88%a4%e6%96%ad-kubelet-%e5%b7%b2%e7%bb%8f%e5%b0%86%e5%ae%b9%e5%99%a8%e9%87%8d%e5%bb%ba%e6%88%90%e5%8a%9f%e4%ba%86%e5%91%a2">#</a>
+</h5>
+<h5 id="由背景-3可知比较-spec-和-status-中的-image-字段是不靠谱的因为很有可能-status-中上报的是-node-上存在的另一个镜像名相同-imageid">
+  由“背景 3”可知，比较 spec 和 status 中的 image 字段是不靠谱的，因为很有可能 status 中上报的是 Node 上存在的另一个镜像名（相同 imageID）。
+  <a class="anchor" href="#%e7%94%b1%e8%83%8c%e6%99%af-3%e5%8f%af%e7%9f%a5%e6%af%94%e8%be%83-spec-%e5%92%8c-status-%e4%b8%ad%e7%9a%84-image-%e5%ad%97%e6%ae%b5%e6%98%af%e4%b8%8d%e9%9d%a0%e8%b0%b1%e7%9a%84%e5%9b%a0%e4%b8%ba%e5%be%88%e6%9c%89%e5%8f%af%e8%83%bd-status-%e4%b8%ad%e4%b8%8a%e6%8a%a5%e7%9a%84%e6%98%af-node-%e4%b8%8a%e5%ad%98%e5%9c%a8%e7%9a%84%e5%8f%a6%e4%b8%80%e4%b8%aa%e9%95%9c%e5%83%8f%e5%90%8d%e7%9b%b8%e5%90%8c-imageid">#</a>
+</h5>
+<p>因此，得出第二个实现原理：<strong>判断 Pod 原地升级是否成功，相对来说比较靠谱的办法，是在原地升级前先将 status.containerStatuses[x].imageID 记录下来。在更新了 spec 镜像之后，如果观察到 Pod 的 status.containerStatuses[x].imageID 变化了，我们就认为原地升级已经重建了容器。</strong></p>
+<h5 id="但这样一来我们对原地升级的-image-也有了一个要求不能用-image-名字tag不同但实际对应同一个-imageid-的镜像来做原地升级否则可能一直都被判断为没有升级成功因为-status-中-imageid-不会变化">
+  但这样一来，我们对原地升级的 image 也有了一个要求：不能用 image 名字（tag）不同、但实际对应同一个 imageID 的镜像来做原地升级，否则可能一直都被判断为没有升级成功（因为 status 中 imageID 不会变化）。
+  <a class="anchor" href="#%e4%bd%86%e8%bf%99%e6%a0%b7%e4%b8%80%e6%9d%a5%e6%88%91%e4%bb%ac%e5%af%b9%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7%e7%9a%84-image-%e4%b9%9f%e6%9c%89%e4%ba%86%e4%b8%80%e4%b8%aa%e8%a6%81%e6%b1%82%e4%b8%8d%e8%83%bd%e7%94%a8-image-%e5%90%8d%e5%ad%97tag%e4%b8%8d%e5%90%8c%e4%bd%86%e5%ae%9e%e9%99%85%e5%af%b9%e5%ba%94%e5%90%8c%e4%b8%80%e4%b8%aa-imageid-%e7%9a%84%e9%95%9c%e5%83%8f%e6%9d%a5%e5%81%9a%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7%e5%90%a6%e5%88%99%e5%8f%af%e8%83%bd%e4%b8%80%e7%9b%b4%e9%83%bd%e8%a2%ab%e5%88%a4%e6%96%ad%e4%b8%ba%e6%b2%a1%e6%9c%89%e5%8d%87%e7%ba%a7%e6%88%90%e5%8a%9f%e5%9b%a0%e4%b8%ba-status-%e4%b8%ad-imageid-%e4%b8%8d%e4%bc%9a%e5%8f%98%e5%8c%96">#</a>
+</h5>
+<h5 id="当然后续我们还可以继续优化openkruise-即将开源镜像预热的能力会通过-daemonset-在每个-node-上部署一个-nodeimage-pod通过-nodeimage-上报我们可以得知-pod-spec-中的-image-所对应的-imageid然后和-pod-status-中的-imageid-比较即可准确判断原地升级是否成功">
+  当然，后续我们还可以继续优化。OpenKruise 即将开源镜像预热的能力，会通过 DaemonSet 在每个 Node 上部署一个 NodeImage Pod。通过 NodeImage 上报我们可以得知 pod spec 中的 image 所对应的 imageID，然后和 pod status 中的 imageID 比较即可准确判断原地升级是否成功。
+  <a class="anchor" href="#%e5%bd%93%e7%84%b6%e5%90%8e%e7%bb%ad%e6%88%91%e4%bb%ac%e8%bf%98%e5%8f%af%e4%bb%a5%e7%bb%a7%e7%bb%ad%e4%bc%98%e5%8c%96openkruise-%e5%8d%b3%e5%b0%86%e5%bc%80%e6%ba%90%e9%95%9c%e5%83%8f%e9%a2%84%e7%83%ad%e7%9a%84%e8%83%bd%e5%8a%9b%e4%bc%9a%e9%80%9a%e8%bf%87-daemonset-%e5%9c%a8%e6%af%8f%e4%b8%aa-node-%e4%b8%8a%e9%83%a8%e7%bd%b2%e4%b8%80%e4%b8%aa-nodeimage-pod%e9%80%9a%e8%bf%87-nodeimage-%e4%b8%8a%e6%8a%a5%e6%88%91%e4%bb%ac%e5%8f%af%e4%bb%a5%e5%be%97%e7%9f%a5-pod-spec-%e4%b8%ad%e7%9a%84-image-%e6%89%80%e5%af%b9%e5%ba%94%e7%9a%84-imageid%e7%84%b6%e5%90%8e%e5%92%8c-pod-status-%e4%b8%ad%e7%9a%84-imageid-%e6%af%94%e8%be%83%e5%8d%b3%e5%8f%af%e5%87%86%e7%a1%ae%e5%88%a4%e6%96%ad%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7%e6%98%af%e5%90%a6%e6%88%90%e5%8a%9f">#</a>
+</h5>
+<h3 id="3-如何确保原地升级过程中流量无损">
+  3. 如何确保原地升级过程中流量无损？
+  <a class="anchor" href="#3-%e5%a6%82%e4%bd%95%e7%a1%ae%e4%bf%9d%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7%e8%bf%87%e7%a8%8b%e4%b8%ad%e6%b5%81%e9%87%8f%e6%97%a0%e6%8d%9f">#</a>
+</h3>
+<h5 id="在-kubernetes-中一个-pod-是否-ready-就代表了它是否可以提供服务因此像-service-这类的流量入口都会通过判断-pod-ready-来选择是否能将这个-pod-加入-endpoints-端点中">
+  在 Kubernetes 中，一个 Pod 是否 Ready 就代表了它是否可以提供服务。因此，像 Service 这类的流量入口都会通过判断 Pod Ready 来选择是否能将这个 Pod 加入 endpoints 端点中。
+  <a class="anchor" href="#%e5%9c%a8-kubernetes-%e4%b8%ad%e4%b8%80%e4%b8%aa-pod-%e6%98%af%e5%90%a6-ready-%e5%b0%b1%e4%bb%a3%e8%a1%a8%e4%ba%86%e5%ae%83%e6%98%af%e5%90%a6%e5%8f%af%e4%bb%a5%e6%8f%90%e4%be%9b%e6%9c%8d%e5%8a%a1%e5%9b%a0%e6%ad%a4%e5%83%8f-service-%e8%bf%99%e7%b1%bb%e7%9a%84%e6%b5%81%e9%87%8f%e5%85%a5%e5%8f%a3%e9%83%bd%e4%bc%9a%e9%80%9a%e8%bf%87%e5%88%a4%e6%96%ad-pod-ready-%e6%9d%a5%e9%80%89%e6%8b%a9%e6%98%af%e5%90%a6%e8%83%bd%e5%b0%86%e8%bf%99%e4%b8%aa-pod-%e5%8a%a0%e5%85%a5-endpoints-%e7%ab%af%e7%82%b9%e4%b8%ad">#</a>
+</h5>
+<h5 id="由背景-4可知从-kubernetes-112-之后operatorcontroller-这些组件也可以通过设置-readinessgates-和更新-podstatusconditions-中的自定义-type-状态来控制-pod-是否可用">
+  由“背景 4”可知，从 Kubernetes 1.12+ 之后，operator/controller 这些组件也可以通过设置 readinessGates 和更新 pod.status.conditions 中的自定义 type 状态，来控制 Pod 是否可用。
+  <a class="anchor" href="#%e7%94%b1%e8%83%8c%e6%99%af-4%e5%8f%af%e7%9f%a5%e4%bb%8e-kubernetes-112-%e4%b9%8b%e5%90%8eoperatorcontroller-%e8%bf%99%e4%ba%9b%e7%bb%84%e4%bb%b6%e4%b9%9f%e5%8f%af%e4%bb%a5%e9%80%9a%e8%bf%87%e8%ae%be%e7%bd%ae-readinessgates-%e5%92%8c%e6%9b%b4%e6%96%b0-podstatusconditions-%e4%b8%ad%e7%9a%84%e8%87%aa%e5%ae%9a%e4%b9%89-type-%e7%8a%b6%e6%80%81%e6%9d%a5%e6%8e%a7%e5%88%b6-pod-%e6%98%af%e5%90%a6%e5%8f%af%e7%94%a8">#</a>
+</h5>
+<h5 id="因此得出第三个实现原理可以在-podspecreadinessgates-中定义一个叫-inplaceupdateready-的-conditiontype">
+  因此，得出第三个实现原理：可以在 pod.spec.readinessGates 中定义一个叫 InPlaceUpdateReady 的 conditionType。
+  <a class="anchor" href="#%e5%9b%a0%e6%ad%a4%e5%be%97%e5%87%ba%e7%ac%ac%e4%b8%89%e4%b8%aa%e5%ae%9e%e7%8e%b0%e5%8e%9f%e7%90%86%e5%8f%af%e4%bb%a5%e5%9c%a8-podspecreadinessgates-%e4%b8%ad%e5%ae%9a%e4%b9%89%e4%b8%80%e4%b8%aa%e5%8f%ab-inplaceupdateready-%e7%9a%84-conditiontype">#</a>
+</h5>
+<h5 id="在原地升级时">
+  在原地升级时：
+  <a class="anchor" href="#%e5%9c%a8%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7%e6%97%b6">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="先将-podstatusconditions-中的-inplaceupdateready-condition-设为-false这样就会触发-kubelet-将-pod-上报为-notready从而使流量组件如-endpoint-controller将这个-pod-从服务端点摘除">
+  先将 pod.status.conditions 中的 InPlaceUpdateReady condition 设为 &ldquo;False&rdquo;，这样就会触发 kubelet 将 Pod 上报为 NotReady，从而使流量组件（如 endpoint controller）将这个 Pod 从服务端点摘除；
+  <a class="anchor" href="#%e5%85%88%e5%b0%86-podstatusconditions-%e4%b8%ad%e7%9a%84-inplaceupdateready-condition-%e8%ae%be%e4%b8%ba-false%e8%bf%99%e6%a0%b7%e5%b0%b1%e4%bc%9a%e8%a7%a6%e5%8f%91-kubelet-%e5%b0%86-pod-%e4%b8%8a%e6%8a%a5%e4%b8%ba-notready%e4%bb%8e%e8%80%8c%e4%bd%bf%e6%b5%81%e9%87%8f%e7%bb%84%e4%bb%b6%e5%a6%82-endpoint-controller%e5%b0%86%e8%bf%99%e4%b8%aa-pod-%e4%bb%8e%e6%9c%8d%e5%8a%a1%e7%ab%af%e7%82%b9%e6%91%98%e9%99%a4">#</a>
+</h5>
+</li>
+<li>
+<h5 id="再更新-pod-spec-中的-image-触发原地升级">
+  再更新 pod spec 中的 image 触发原地升级。
+  <a class="anchor" href="#%e5%86%8d%e6%9b%b4%e6%96%b0-pod-spec-%e4%b8%ad%e7%9a%84-image-%e8%a7%a6%e5%8f%91%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7">#</a>
+</h5>
+</li>
+</ul>
+<p><strong>原地升级结束后，再将 InPlaceUpdateReady condition 设为 &ldquo;True&rdquo;，使 Pod 重新回到 Ready 状态。</strong></p>
+<h5 id="另外在原地升级的两个步骤中第一步将-pod-改为-notready-后流量组件异步-watch-到变化并摘除端点可能是需要一定时间的因此我们也提供优雅原地升级的能力即通过-graceperiodseconds-配置在修改-notready-状态和真正更新-image-触发原地升级两个步骤之间的静默期时间">
+  另外在原地升级的两个步骤中，第一步将 Pod 改为 NotReady 后，流量组件异步 watch 到变化并摘除端点可能是需要一定时间的。因此我们也提供优雅原地升级的能力，即通过 gracePeriodSeconds 配置在修改 NotReady 状态和真正更新 image 触发原地升级两个步骤之间的静默期时间。
+  <a class="anchor" href="#%e5%8f%a6%e5%a4%96%e5%9c%a8%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7%e7%9a%84%e4%b8%a4%e4%b8%aa%e6%ad%a5%e9%aa%a4%e4%b8%ad%e7%ac%ac%e4%b8%80%e6%ad%a5%e5%b0%86-pod-%e6%94%b9%e4%b8%ba-notready-%e5%90%8e%e6%b5%81%e9%87%8f%e7%bb%84%e4%bb%b6%e5%bc%82%e6%ad%a5-watch-%e5%88%b0%e5%8f%98%e5%8c%96%e5%b9%b6%e6%91%98%e9%99%a4%e7%ab%af%e7%82%b9%e5%8f%af%e8%83%bd%e6%98%af%e9%9c%80%e8%a6%81%e4%b8%80%e5%ae%9a%e6%97%b6%e9%97%b4%e7%9a%84%e5%9b%a0%e6%ad%a4%e6%88%91%e4%bb%ac%e4%b9%9f%e6%8f%90%e4%be%9b%e4%bc%98%e9%9b%85%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7%e7%9a%84%e8%83%bd%e5%8a%9b%e5%8d%b3%e9%80%9a%e8%bf%87-graceperiodseconds-%e9%85%8d%e7%bd%ae%e5%9c%a8%e4%bf%ae%e6%94%b9-notready-%e7%8a%b6%e6%80%81%e5%92%8c%e7%9c%9f%e6%ad%a3%e6%9b%b4%e6%96%b0-image-%e8%a7%a6%e5%8f%91%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7%e4%b8%a4%e4%b8%aa%e6%ad%a5%e9%aa%a4%e4%b9%8b%e9%97%b4%e7%9a%84%e9%9d%99%e9%bb%98%e6%9c%9f%e6%97%b6%e9%97%b4">#</a>
+</h5>
+<h3 id="4-组合发布策略">
+  4. 组合发布策略
+  <a class="anchor" href="#4-%e7%bb%84%e5%90%88%e5%8f%91%e5%b8%83%e7%ad%96%e7%95%a5">#</a>
+</h3>
+<h5 id="原地升级和-pod-重建升级一样可以配合各种发布策略来执行">
+  原地升级和 Pod 重建升级一样，可以配合各种发布策略来执行：
+  <a class="anchor" href="#%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7%e5%92%8c-pod-%e9%87%8d%e5%bb%ba%e5%8d%87%e7%ba%a7%e4%b8%80%e6%a0%b7%e5%8f%af%e4%bb%a5%e9%85%8d%e5%90%88%e5%90%84%e7%a7%8d%e5%8f%91%e5%b8%83%e7%ad%96%e7%95%a5%e6%9d%a5%e6%89%a7%e8%a1%8c">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="partition如果配置-partition-做灰度那么只会将-replicas-partition-数量的-pod-做原地升级">
+  partition：如果配置 partition 做灰度，那么只会将 replicas-partition 数量的 Pod 做原地升级；
+  <a class="anchor" href="#partition%e5%a6%82%e6%9e%9c%e9%85%8d%e7%bd%ae-partition-%e5%81%9a%e7%81%b0%e5%ba%a6%e9%82%a3%e4%b9%88%e5%8f%aa%e4%bc%9a%e5%b0%86-replicas-partition-%e6%95%b0%e9%87%8f%e7%9a%84-pod-%e5%81%9a%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7">#</a>
+</h5>
+</li>
+<li>
+<h5 id="maxunavailable如果配置-maxunavailable那么只会将满足-unavailable-数量的-pod-做原地升级">
+  maxUnavailable：如果配置 maxUnavailable，那么只会将满足 unavailable 数量的 Pod 做原地升级；
+  <a class="anchor" href="#maxunavailable%e5%a6%82%e6%9e%9c%e9%85%8d%e7%bd%ae-maxunavailable%e9%82%a3%e4%b9%88%e5%8f%aa%e4%bc%9a%e5%b0%86%e6%bb%a1%e8%b6%b3-unavailable-%e6%95%b0%e9%87%8f%e7%9a%84-pod-%e5%81%9a%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7">#</a>
+</h5>
+</li>
+<li>
+<h5 id="maxsurge如果配置-maxsurge-做弹性那么当先扩出来-maxsurge-数量的-pod-之后存量的-pod-仍然使用原地升级">
+  maxSurge：如果配置 maxSurge 做弹性，那么当先扩出来 maxSurge 数量的 Pod 之后，存量的 Pod 仍然使用原地升级；
+  <a class="anchor" href="#maxsurge%e5%a6%82%e6%9e%9c%e9%85%8d%e7%bd%ae-maxsurge-%e5%81%9a%e5%bc%b9%e6%80%a7%e9%82%a3%e4%b9%88%e5%bd%93%e5%85%88%e6%89%a9%e5%87%ba%e6%9d%a5-maxsurge-%e6%95%b0%e9%87%8f%e7%9a%84-pod-%e4%b9%8b%e5%90%8e%e5%ad%98%e9%87%8f%e7%9a%84-pod-%e4%bb%8d%e7%84%b6%e4%bd%bf%e7%94%a8%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7">#</a>
+</h5>
+</li>
+<li>
+<h5 id="priorityscatter如果配置了发布优先级打散策略会按照策略顺序对-pod-做原地升级">
+  priority/scatter：如果配置了发布优先级/打散策略，会按照策略顺序对 Pod 做原地升级。
+  <a class="anchor" href="#priorityscatter%e5%a6%82%e6%9e%9c%e9%85%8d%e7%bd%ae%e4%ba%86%e5%8f%91%e5%b8%83%e4%bc%98%e5%85%88%e7%ba%a7%e6%89%93%e6%95%a3%e7%ad%96%e7%95%a5%e4%bc%9a%e6%8c%89%e7%85%a7%e7%ad%96%e7%95%a5%e9%a1%ba%e5%ba%8f%e5%af%b9-pod-%e5%81%9a%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7">#</a>
+</h5>
+</li>
+</ul>
+<h2 id="总结">
+  总结
+  <a class="anchor" href="#%e6%80%bb%e7%bb%93">#</a>
+</h2>
+<h5 id="如上文所述openkruise-结合-kubernetes-原生提供的-kubelet-容器版本管理readinessgates-等功能实现了针对-pod-的原地升级能力">
+  如上文所述，OpenKruise 结合 Kubernetes 原生提供的 kubelet 容器版本管理、readinessGates 等功能，实现了针对 Pod 的原地升级能力。
+  <a class="anchor" href="#%e5%a6%82%e4%b8%8a%e6%96%87%e6%89%80%e8%bf%b0openkruise-%e7%bb%93%e5%90%88-kubernetes-%e5%8e%9f%e7%94%9f%e6%8f%90%e4%be%9b%e7%9a%84-kubelet-%e5%ae%b9%e5%99%a8%e7%89%88%e6%9c%ac%e7%ae%a1%e7%90%86readinessgates-%e7%ad%89%e5%8a%9f%e8%83%bd%e5%ae%9e%e7%8e%b0%e4%ba%86%e9%92%88%e5%af%b9-pod-%e7%9a%84%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7%e8%83%bd%e5%8a%9b">#</a>
+</h5>
+<h5 id="而原地升级也为应用发布带来大幅的效率稳定性提升值得关注的是随着集群应用规模的增大这种提升的收益越加明显正是这种原地升级能力在近两年帮助了阿里巴巴超大规模的应用容器平稳迁移到了基于-kubernetes-的云原生环境而原生-deploymentstatefulset-是完全无法在这种体量的环境下铺开使用的">
+  而原地升级也为应用发布带来大幅的效率、稳定性提升。值得关注的是，随着集群、应用规模的增大，这种提升的收益越加明显。正是这种原地升级能力，在近两年帮助了阿里巴巴超大规模的应用容器平稳迁移到了基于 Kubernetes 的云原生环境，而原生 Deployment/StatefulSet 是完全无法在这种体量的环境下铺开使用的。
+  <a class="anchor" href="#%e8%80%8c%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7%e4%b9%9f%e4%b8%ba%e5%ba%94%e7%94%a8%e5%8f%91%e5%b8%83%e5%b8%a6%e6%9d%a5%e5%a4%a7%e5%b9%85%e7%9a%84%e6%95%88%e7%8e%87%e7%a8%b3%e5%ae%9a%e6%80%a7%e6%8f%90%e5%8d%87%e5%80%bc%e5%be%97%e5%85%b3%e6%b3%a8%e7%9a%84%e6%98%af%e9%9a%8f%e7%9d%80%e9%9b%86%e7%be%a4%e5%ba%94%e7%94%a8%e8%a7%84%e6%a8%a1%e7%9a%84%e5%a2%9e%e5%a4%a7%e8%bf%99%e7%a7%8d%e6%8f%90%e5%8d%87%e7%9a%84%e6%94%b6%e7%9b%8a%e8%b6%8a%e5%8a%a0%e6%98%8e%e6%98%be%e6%ad%a3%e6%98%af%e8%bf%99%e7%a7%8d%e5%8e%9f%e5%9c%b0%e5%8d%87%e7%ba%a7%e8%83%bd%e5%8a%9b%e5%9c%a8%e8%bf%91%e4%b8%a4%e5%b9%b4%e5%b8%ae%e5%8a%a9%e4%ba%86%e9%98%bf%e9%87%8c%e5%b7%b4%e5%b7%b4%e8%b6%85%e5%a4%a7%e8%a7%84%e6%a8%a1%e7%9a%84%e5%ba%94%e7%94%a8%e5%ae%b9%e5%99%a8%e5%b9%b3%e7%a8%b3%e8%bf%81%e7%a7%bb%e5%88%b0%e4%ba%86%e5%9f%ba%e4%ba%8e-kubernetes-%e7%9a%84%e4%ba%91%e5%8e%9f%e7%94%9f%e7%8e%af%e5%a2%83%e8%80%8c%e5%8e%9f%e7%94%9f-deploymentstatefulset-%e6%98%af%e5%ae%8c%e5%85%a8%e6%97%a0%e6%b3%95%e5%9c%a8%e8%bf%99%e7%a7%8d%e4%bd%93%e9%87%8f%e7%9a%84%e7%8e%af%e5%a2%83%e4%b8%8b%e9%93%ba%e5%bc%80%e4%bd%bf%e7%94%a8%e7%9a%84">#</a>
+</h5>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#收益分析">收益分析</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#技术背景">技术背景</a>
+      <ul>
+        <li></li>
+        <li><a href="#背景-1kubelet-针对-pod-容器的版本管理">背景 1：Kubelet 针对 Pod 容器的版本管理</a></li>
+        <li><a href="#背景-2pod-更新限制">背景 2：Pod 更新限制</a></li>
+        <li><a href="#背景-3containerstatuses-上报">背景 3：containerStatuses 上报</a></li>
+        <li><a href="#背景-4readinessgate-控制-pod-是否-ready">背景 4：ReadinessGate 控制 Pod 是否 Ready</a></li>
+      </ul>
+    </li>
+    <li><a href="#实现原理">实现原理</a>
+      <ul>
+        <li></li>
+        <li><a href="#1-单个-pod-如何原地升级">1. 单个 Pod 如何原地升级？</a></li>
+        <li><a href="#2-如何判断-pod-原地升级成功">2. 如何判断 Pod 原地升级成功？</a></li>
+        <li><a href="#3-如何确保原地升级过程中流量无损">3. 如何确保原地升级过程中流量无损？</a></li>
+        <li><a href="#4-组合发布策略">4. 组合发布策略</a></li>
+      </ul>
+    </li>
+    <li><a href="#总结">总结</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

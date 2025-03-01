@@ -1,0 +1,3356 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  穷人版 LB &ndash; MetalLB L2 原理
+  #
+
+
+  LB 的作用
+  #
+
+
+  在 Kubernetes 集群中，要想把服务暴露给别人访问，无外乎是使用 Service NodePort 或者 hostNetwork 网络模式。这种方式会使得主机端口随着服务的数量增加而增加，显然不建议使用。
+  #
+
+
+  那么可以使用网关来转发到后端服务，这样只需要开启网关的 Service NodePort 即可，显然网关承载了入口流量，网关就需要实现高可用。一般会在网关前面部署一个 LB ，流量经过 LB 负载到多个网关示例。那么可能又有人会，这个 LB 又怎么高可用？
+  #
+
+
+  公有云厂商直接提供 LB，对于自行搭建的 Kubetnetes 集群，就需要一个乞丐版的 LB 来实现，开源的 LB 也有很多，这里介绍 Metallb[1]，MetalLB 实现了所说的负载均衡功能，同时自身也是高可用的。
+  #
+
+
+  使用 Metallb
+  #
+
+
+  Metallb 提供了自行搭建 Kubernetes 集群负载均衡的功能，类似于公有云一样来体验负载均衡。
+  #
+
+
+  Metallb 提供两种模式：BGP、L2。两种模式各有优缺点，本文主要讲解 L2 模式。
+  #
+
+
+  依赖
+  #
+
+
+  在 Kubernetes 集群中使用 Metallb 需要满足以下需求：
+  #
+
+
+
+
+  • Kubernetes 版本 ≥ v1.13
+  #
+
+
+
+
+  • 提供 IP 地址段或者多个 IP 给 Metallb 分配
+  #
+
+
+
+
+  • 如果使用 L2 模式，主机上需要放行 7946 端口
+  #
+
+
+
+
+  部署
+  #
+
+
+  修改 Kube-proxy 配置
+  #
+
+$ kubectl edit configmap -n kube-system kube-proxy
+
+apiVersion: kubeproxy.config.k8s.io/v1alpha1
+kind: KubeProxyConfiguration
+mode: &#34;ipvs&#34;
+ipvs:
+  strictARP: true
+
+  通过 manifests 安装，当然也可以通过 helm 或者 operator 方式安装，可参考官网[2]
+  #
+
+$ kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.12/config/manifests/metallb-native.yaml
+
+  部署成功后，集群中在 metallb-system namespace 下会存在名为 Controller 的 deployment 和 Speaker 的 daemonSet
+  #
+
+
+
+
+  • metallb-system/controller deployment，该 Controller 用于 watch 集群中使用 LoadBalancer 类型的 service 并为其分配 EXTERNAL-IP
+  #
+
+
+
+
+  • metallb-system/speaker daemonset，该组件在每个节点都会运行，使用 hostNetwork 网络模式，可以保证上面分配的 IP 可访问。
+  #
+
+
+
+$ kubectl get pods -n metallb-system -o wide
+NAME                          READY   STATUS    RESTARTS   AGE   IP              NODE                   NOMINATED NODE   READINESS GATES
+controller-679f6b6cb5-l5k2z   1/1     Running   0          46h   100.80.192.27   node-172-30-91-215     &lt;none&gt;           &lt;none&gt;
+speaker-6qxxj                 1/1     Running   0          46h   172.30.91.17    node-172-30-91-17      &lt;none&gt;           &lt;none&gt;
+speaker-chb8g                 1/1     Running   0          46h   172.30.91.215   node-172-30-91-215     &lt;none&gt;           &lt;none&gt;
+speaker-kw9vd                 1/1     Running   0          46h   172.30.91.166   master-172-30-91-166   &lt;none&gt;           &lt;none&gt;
+
+  配置
+  #
+
+
+  上面只是部署了 Metallb，要想使用 Metallb L2 模式还需要一些配置，才能正常使用。
+  #
+
+
+  上面说到 Metallb 会自动分配 IP 给集群中的 LoadBalancer service，所以就需要提供地址池给 Metallb，通过创建 IPAddressPool CR
+  #
+
+
+  地址池可以支持 IP 网段，也支持 IP 组
+  #
+
+# 地址池配置多个 IP
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: subnet-91
+  namespace: metallb-system
+spec:
+  addresses:
+  - 172.30.91.2/32
+  - 172.30.91.3/32
+  - 172.30.91.4/32
+
+# 地址池配置 IP 网络段
+
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: subnet-91
+  namespace: metallb-system
+spec:
+  addresses:
+  - 172.30.91.0/24
+
+  上面配置创建成功后，可通过命令查看
+  #
+
+$ kubectl get IPAddressPool -n metallb-system
+NAME        AUTO ASSIGN   AVOID BUGGY IPS   ADDRESSES
+subnet-91   true          false             [&#34;172.30.91.2/32&#34;,&#34;172.30.91.3/32&#34;,&#34;172.30.91.4/32&#34;]
+
+1、以上配置的 IP 需要路由可达或者和 K8S 集群节点同属一个网段">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="http://192.168.0.139:1313/docs/metallb-l2-%E5%8E%9F%E7%90%86-metallbl2-yuan-li/">
+  <meta property="og:site_name" content="Guichen&#39;s Blog">
+  <meta property="og:title" content="MetalLB L2 原理 2024-04-03 14:52:24.662">
+  <meta property="og:description" content="穷人版 LB – MetalLB L2 原理 # LB 的作用 # 在 Kubernetes 集群中，要想把服务暴露给别人访问，无外乎是使用 Service NodePort 或者 hostNetwork 网络模式。这种方式会使得主机端口随着服务的数量增加而增加，显然不建议使用。 # 那么可以使用网关来转发到后端服务，这样只需要开启网关的 Service NodePort 即可，显然网关承载了入口流量，网关就需要实现高可用。一般会在网关前面部署一个 LB ，流量经过 LB 负载到多个网关示例。那么可能又有人会，这个 LB 又怎么高可用？ # 公有云厂商直接提供 LB，对于自行搭建的 Kubetnetes 集群，就需要一个乞丐版的 LB 来实现，开源的 LB 也有很多，这里介绍 Metallb[1]，MetalLB 实现了所说的负载均衡功能，同时自身也是高可用的。 # 使用 Metallb # Metallb 提供了自行搭建 Kubernetes 集群负载均衡的功能，类似于公有云一样来体验负载均衡。 # Metallb 提供两种模式：BGP、L2。两种模式各有优缺点，本文主要讲解 L2 模式。 # 依赖 # 在 Kubernetes 集群中使用 Metallb 需要满足以下需求： # • Kubernetes 版本 ≥ v1.13 # • 提供 IP 地址段或者多个 IP 给 Metallb 分配 # • 如果使用 L2 模式，主机上需要放行 7946 端口 # 部署 # 修改 Kube-proxy 配置 # $ kubectl edit configmap -n kube-system kube-proxy apiVersion: kubeproxy.config.k8s.io/v1alpha1 kind: KubeProxyConfiguration mode: &#34;ipvs&#34; ipvs: strictARP: true 通过 manifests 安装，当然也可以通过 helm 或者 operator 方式安装，可参考官网[2] # $ kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.12/config/manifests/metallb-native.yaml 部署成功后，集群中在 metallb-system namespace 下会存在名为 Controller 的 deployment 和 Speaker 的 daemonSet # • metallb-system/controller deployment，该 Controller 用于 watch 集群中使用 LoadBalancer 类型的 service 并为其分配 EXTERNAL-IP # • metallb-system/speaker daemonset，该组件在每个节点都会运行，使用 hostNetwork 网络模式，可以保证上面分配的 IP 可访问。 # $ kubectl get pods -n metallb-system -o wide NAME READY STATUS RESTARTS AGE IP NODE NOMINATED NODE READINESS GATES controller-679f6b6cb5-l5k2z 1/1 Running 0 46h 100.80.192.27 node-172-30-91-215 &lt;none&gt; &lt;none&gt; speaker-6qxxj 1/1 Running 0 46h 172.30.91.17 node-172-30-91-17 &lt;none&gt; &lt;none&gt; speaker-chb8g 1/1 Running 0 46h 172.30.91.215 node-172-30-91-215 &lt;none&gt; &lt;none&gt; speaker-kw9vd 1/1 Running 0 46h 172.30.91.166 master-172-30-91-166 &lt;none&gt; &lt;none&gt; 配置 # 上面只是部署了 Metallb，要想使用 Metallb L2 模式还需要一些配置，才能正常使用。 # 上面说到 Metallb 会自动分配 IP 给集群中的 LoadBalancer service，所以就需要提供地址池给 Metallb，通过创建 IPAddressPool CR # 地址池可以支持 IP 网段，也支持 IP 组 # # 地址池配置多个 IP apiVersion: metallb.io/v1beta1 kind: IPAddressPool metadata: name: subnet-91 namespace: metallb-system spec: addresses: - 172.30.91.2/32 - 172.30.91.3/32 - 172.30.91.4/32 # 地址池配置 IP 网络段 apiVersion: metallb.io/v1beta1 kind: IPAddressPool metadata: name: subnet-91 namespace: metallb-system spec: addresses: - 172.30.91.0/24 上面配置创建成功后，可通过命令查看 # $ kubectl get IPAddressPool -n metallb-system NAME AUTO ASSIGN AVOID BUGGY IPS ADDRESSES subnet-91 true false [&#34;172.30.91.2/32&#34;,&#34;172.30.91.3/32&#34;,&#34;172.30.91.4/32&#34;] 1、以上配置的 IP 需要路由可达或者和 K8S 集群节点同属一个网段">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+<title>MetalLB L2 原理 2024-04-03 14:52:24.662 | Guichen&#39;s Blog</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="http://192.168.0.139:1313/docs/metallb-l2-%E5%8E%9F%E7%90%86-metallbl2-yuan-li/">
+<link rel="stylesheet" href="/book.min.6c8b9d2a1fc95075ed7da46ca81060b39add8fff6741ac51259f768929281e2c.css" integrity="sha256-bIudKh/JUHXtfaRsqBBgs5rdj/9nQaxRJZ92iSkoHiw=" crossorigin="anonymous">
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/en.search.min.6f52273b9f5fa65803e3991faf27d1a7b7b8f6b148888237d77b4e841cb030e3.js" integrity="sha256-b1InO59fplgD45kfryfRp7e49rFIiII313tOhBywMOM=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/"><span>Guichen&#39;s Blog</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/00-%E9%9B%86%E7%BE%A4%E8%A7%84%E5%88%92%E5%92%8C%E5%9F%BA%E7%A1%80%E5%8F%82%E6%95%B0%E8%AE%BE%E5%AE%9A-00--ji-qun-gui-hua-he-ji-chu-can-shu-she-ding/" class="">00-集群规划和基础参数设定 2023-09-28 15:19:02.214</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/01-%E5%88%9B%E5%BB%BA%E8%AF%81%E4%B9%A6%E5%92%8C%E7%8E%AF%E5%A2%83%E5%87%86%E5%A4%87-01--chuang-jian-zheng-shu-he-huan-jing-zhun-bei/" class="">01-创建证书和环境准备 2023-09-28 15:22:19.812</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/02-%E5%AE%89%E8%A3%85etcd%E9%9B%86%E7%BE%A4-02--an-zhuang-etcd-ji-qun/" class="">02-安装etcd集群 2023-09-28 15:23:07.363</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E9%9D%A2%E8%AF%950224/" class="">0224面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-26-k8s%E7%9B%B8%E5%85%B3/" class="">0226 k8s题目</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/03-%E5%AE%89%E8%A3%85%E5%AE%B9%E5%99%A8%E8%BF%90%E8%A1%8C%E6%97%B6-03--an-zhuang-rong-qi-yun-xing-shi/" class="">03-安装容器运行时 2023-09-28 15:23:56.241</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/04-%E5%AE%89%E8%A3%85kube_master%E8%8A%82%E7%82%B9-04--an-zhuang-kubemaster-jie-dian/" class="">04-安装kube_master节点 2023-09-28 15:24:21.203</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/05-%E5%AE%89%E8%A3%85kube_node%E8%8A%82%E7%82%B9-05--an-zhuang-kubenode-jie-dian/" class="">05-安装kube_node节点 2023-09-28 15:24:43.201</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85calico%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-calico-wang-luo-zu-jian/" class="">06-安装calico网络组件 2023-09-28 15:34:28.483</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85cilium%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-cilium-wang-luo-zu-jian/" class="">06-安装cilium网络组件 2023-09-28 15:35:23.884</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85flannel%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-flannel-wang-luo-zu-jian/" class="">06-安装flannel网络组件 2023-09-28 15:35:50.039</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85kube-ovn%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-kube-ovn-wang-luo-zu-jian/" class="">06-安装kube-ovn网络组件 2023-09-28 15:36:11.265</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-wang-luo-zu-jian/" class="">06-安装网络组件 2023-09-28 15:25:14.997</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/07-%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4%E4%B8%BB%E8%A6%81%E6%8F%92%E4%BB%B6-07--an-zhuang-ji-qun-zhu-yao-cha-jian/" class="">07-安装集群主要插件 2023-09-28 15:26:42.651</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/08-k8s-%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8--k8s-ji-qun-cun-chu/" class="">08-K8S 集群存储  2023-09-28 15:27:29.454</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/16%E4%B8%AA%E6%A6%82%E5%BF%B5%E5%B8%A6%E4%BD%A0%E5%85%A5%E9%97%A8-kubernetes-16-ge-gai-nian-dai-ni-ru-men-kubernetes/" class="">16个概念带你入门 Kubernetes 2024-04-03 15:09:21.671</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/16%E5%BC%A0%E7%A1%AC%E6%A0%B8%E5%9B%BE%E8%A7%A3k8s%E7%BD%91%E7%BB%9C-16-zhang-ying-he-tu-jie-k8s-wang-luo/" class="">16张硬核图解k8s网络 2024-04-03 15:12:49.601</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-07-microk8s/" class="">2024-12-07 microk8s</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-devstack/" class="">2024-12-08 devstack</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-mutilpass%E6%93%8D%E4%BD%9C/" class="">2024-12-08 mutilpass操作</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-nano%E6%93%8D%E4%BD%9C/" class="">2024-12-08 nano操作</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-openstack%E5%92%8Ckubernetes%E5%8C%BA%E5%88%AB/" class="">2024-12-08 openstack和kubernetes区别</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-openstack%E9%9C%80%E8%A6%81%E5%87%A0%E5%8F%B0%E8%99%9A%E6%8B%9F%E6%9C%BA/" class="">2024-12-08 openstack需要几台虚拟机</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-%E5%9D%97%E5%AD%98%E5%82%A8%E5%92%8C%E5%AF%B9%E8%B1%A1%E5%82%A8%E5%AD%98%E5%8C%BA%E5%88%AB/" class="">2024-12-08 块存储和对象储存区别</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-docker-daemon.json/" class="">2024-12-09 docker daemon.json</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-helmchart-%E9%83%A8%E7%BD%B2flask%E5%BA%94%E7%94%A8/" class="">2024-12-09 helmchart 部署flask应用</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-mutilpass%E9%83%A8%E7%BD%B2openstack/" class="">2024-12-09 mutilpass部署openstack devstack形式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-openstack-ssh%E8%BF%9E%E6%8E%A5/" class="">2024-12-09 openstack ssh连接</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-10-docker-registrry/" class="">2024-12-10 docker registrry</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-22-k8s%E6%9E%B6%E6%9E%84%E5%B8%88%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8/" class="">2024-2-22 k8s架构师面试大全</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-22-k8s%E9%9D%A2%E8%AF%95%E5%AE%9D%E5%85%B8/" class="">2024-2-22 k8s面试宝典</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-26-%E9%9D%A2%E8%AF%95/" class="">2024-2-26 面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-19-%E4%B8%A4%E5%BC%A0%E5%9B%BE%E5%85%A8%E9%9D%A2%E7%90%86%E8%A7%A3k8s%E5%8E%9F%E7%90%86/" class="">2024-3-19 两张图全面理解k8s原理</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-cni%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B/" class="">2024-3-4 CNI剖析演进</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-8-%E9%9D%A2%E8%AF%950308/" class="">2024-3-8 面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-4-17-%E9%9D%A2%E8%AF%95%E6%80%BB%E7%BB%93/" class="">2024-4-17 面试总结</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-kubernetes%E9%9D%A2%E8%AF%95%E9%A2%98/" class="">2024-8-1 k8s面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-%E5%B8%B8%E8%A7%81linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98%E6%89%BE%E5%B7%A5%E4%BD%9C%E7%9A%84%E5%BF%85%E7%9C%8B/" class="">2024-8-1 linux运维面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98/" class="">2024-8-1 linux面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-1-1-%E5%A4%A7%E5%A0%B0%E6%B2%B3-%E6%88%91%E7%9A%84%E4%BF%9D%E5%A7%86/" class="">2025-1-1 大堰河-我的保姆</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-k8s-csi%E5%89%96%E6%9E%90/" class="">2025-1-16 CSI剖析演进</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-1-16-k8s%E5%B8%B8%E8%A7%81%E6%95%85%E9%9A%9C%E6%8C%87%E5%8D%97/" class="">2025-1-16 k8s常见故障指南</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-k8s%E6%B5%81%E9%87%8F%E9%93%BE%E8%B7%AF%E5%89%96%E6%9E%90/" class="">2025-1-16 k8s流量链路剖析</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/33%E6%AC%BEgitops%E4%B8%8Edevops%E4%B8%BB%E6%B5%81%E7%B3%BB%E7%BB%9F-33-kuan-gitops-yu-devops-zhu-liu-xi-tong/" class="">33款gitops与devops主流系统 2024-08-02 17:45:15.709</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/600%E6%9D%A1%E6%9C%80%E5%BC%BAlinux%E5%91%BD%E4%BB%A4%E6%80%BB%E7%BB%93-600-tiao-zui-qiang-linux-ming-ling-zong-jie/" class="">600条最强linux命令总结 2024-04-03 15:12:31.282</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/acme%E8%87%AA%E5%8A%A8%E6%9B%B4%E6%96%B0%E8%AF%81%E4%B9%A6-acme-zi-dong-geng-xin-zheng-shu/" class="">acme自动更新证书 2024-04-03 14:41:44.289</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/calico-%E9%85%8D%E7%BD%AE-bgp-route-reflectors-calico-pei-zhi-bgproutereflectors/" class="">calico 配置 BGP Route Reflectors 2023-09-28 15:34:01.007</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/calico%E7%BD%91%E7%BB%9C%E8%87%AA%E5%AE%9A%E4%B9%89-calico-wang-luo-zi-ding-yi/" class="">Calico网络自定义 2024-04-03 15:08:43.394</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/cicd%E6%80%9D%E8%80%83-cicd-si-kao/" class="">CICD思考 2024-04-03 15:11:24.151</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/client-go-%E5%9B%9B%E7%A7%8D%E5%AE%A2%E6%88%B7%E7%AB%AF-client-go-si-zhong-ke-hu-duan/" class="">Client-go 四种客户端 2024-04-03 14:49:34.32</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/client-go-%E6%9E%B6%E6%9E%84-client-go-jia-gou/" class="">Client-go 架构 2024-04-03 14:48:40.716</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/cni%E6%8F%92%E4%BB%B6%E9%80%89%E5%9E%8B-cni-cha-jian-xuan-xing/" class="">CNI插件选型 2024-04-03 15:01:51.29</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/containerd-%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C-containerd-ji-ben-cao-zuo/" class="">Containerd 基本操作 2024-04-03 14:55:46.786</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/coredns%E4%B9%8B%E5%85%89-coredns-zhi-guang/" class="">COREDNS之光 2024-04-03 14:54:52.059</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/dockerfile%E5%AE%9A%E5%88%B6%E4%B8%93%E5%B1%9E%E9%95%9C%E5%83%8F-dockerfile-ding-zhi-zhuan-shu-jing-xiang/" class="">dockerfile定制专属镜像 2024-08-02 17:44:00.522</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/dockerfile%E7%9A%84copy%E5%92%8Cadd%E7%9A%84%E5%8C%BA%E5%88%AB-dockerfile-de-copy-he-add-de-qu-bie/" class="">dockerfile的copy和add的区别 2024-04-03 15:01:09.565</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/docker%E9%87%8D%E8%A6%81%E7%9A%84%E7%BD%91%E7%BB%9C%E7%9F%A5%E8%AF%86%E7%82%B9-docker-zhong-yao-de-wang-luo-zhi-shi-dian/" class="">Docker重要的网络知识点  2024-04-03 15:12:10.162</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/etcd%E5%A4%87%E4%BB%BD-etcd-bei-fen/" class="">ETCD备份 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/etcd%E7%A8%B3%E5%AE%9A%E6%80%A7%E5%8F%8A%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%AE%9E%E8%B7%B5-etcd-wen-ding-xing-ji-xing-neng-you-hua-shi-jian/" class="">ETCD稳定性及性能优化实践 2024-04-03 15:06:31.141</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ex-lb-%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E9%83%A8%E7%BD%B2-ex-lb-fu-zai-jun-heng-bu-shu/" class="">EX-LB 负载均衡部署 2023-09-28 15:28:51.998</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ezctl-%E5%91%BD%E4%BB%A4%E8%A1%8C%E4%BB%8B%E7%BB%8D-ezctl-ming-ling-xing-jie-shao/" class="">ezctl 命令行介绍 2023-09-28 15:28:00.619</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/flanel%E7%BD%91%E7%BB%9C-flanel-wang-luo/" class="">flanel网络 2024-04-03 15:05:04.16</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/godel-scheduler-godel-scheduler/" class="">godel-scheduler 2024-08-02 17:41:00.668</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/helm-chart%E5%92%8Crepo-helmchart-he-repo/" class="">helm chart和repo 2024-04-03 15:00:43.125</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/istio-ingress-gateway-istio-ingress-gateway/" class="">istio-ingress-gateway 2024-08-02 17:51:54.75</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/istio%E9%83%A8%E7%BD%B2-istio-bu-shu/" class="">istio部署 2024-08-02 17:52:40.721</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-cni%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B-k8scni-pou-xi-yan-jin/" class="">K8S CNI剖析演进 2024-03-04 10:51:33.245</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-csi-openebs%E5%8E%9F%E7%90%86-k8scsiopenebs-yuan-li/" class="">K8S csi openebs原理 2024-04-03 14:44:48.967</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-csi%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B-k8scsi-pou-xi-yan-jin/" class="">K8S CSI剖析演进 2024-03-04 10:52:20.507</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-gpt-k8sgpt/" class="">K8S GPT 2024-04-03 15:02:09.127</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E5%BC%80%E5%8F%91%E5%8F%AF%E4%B8%8D%E6%AD%A2-crud-k8s-kai-fa-ke-bu-zhi-crud/" class="">K8S 开发可不止 CRUD 2024-04-03 14:50:11.765</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E6%8E%A2%E9%92%88%E5%8E%9F%E7%90%86-k8s-tan-zhen-yuan-li/" class="">K8S 探针原理 2024-04-03 14:53:29.429</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E6%B5%81%E9%87%8F%E9%93%BE%E8%B7%AF%E5%89%96%E6%9E%90-k8s-liu-liang-lian-lu-pou-xi/" class="">K8S 流量链路剖析 2024-03-04 10:50:22.991</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E8%B0%83%E5%BA%A6%E5%99%A8-scheduler_onego-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-diao-du-qi-scheduleronego-yuan-ma-jie-du/" class="">K8S 调度器 scheduler_one.go 源码解读 2024-04-09 11:45:28.22</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E4%B9%8Bingress-nginx%E5%8E%9F%E7%90%86%E5%8F%8A%E9%85%8D%E7%BD%AE-k8s-zhi-ingress-nginx-yuan-li-ji-pei-zhi/" class="">K8S之ingress-nginx原理及配置 2024-07-05 18:02:14.243</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E4%B9%8Bkubelet%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-zhi-kubelet-yuan-ma-jie-du/" class="">k8s之kubelet源码解读 2024-03-28 15:30:39.633</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7-k8s-yuan-de-sheng-ji/" class="">K8S原地升级 2024-04-03 15:04:38.125</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%91%BD%E4%BB%A4%E6%8C%87%E5%8D%97-k8s-ming-ling-zhi-nan/" class="">K8S命令指南 2024-04-03 15:14:14.207</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%A6%82%E4%BD%95%E8%8E%B7%E5%BE%97-ip-k8s-ru-he-huo-de-ip/" class="">K8S如何获得 IP 2024-04-16 17:09:59.658</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%BA%94%E7%94%A8%E7%9A%84%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5-k8s-ying-yong-de-zui-jia-shi-jian/" class="">k8s应用的最佳实践 2024-04-03 14:43:16.936</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-deployment_controllergo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-deploymentcontrollergo-yuan-ma-jie-du/" class="">K8S控制器之 deployment_controller.go源码解读 2024-04-09 11:30:03.133</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-progressgo-%E8%BF%9B%E5%BA%A6-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-progressgo-jin-du-yuan-ma-jie-du/" class="">K8S控制器之 progress.go 进度 源码解读 2024-04-09 11:31:08.86</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-rollinggo-%E6%BB%9A%E5%8A%A8%E6%9B%B4%E6%96%B0-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-rollinggo-gun-dong-geng-xin-yuan-ma-jie-du/" class="">K8S控制器之 rolling.go 滚动更新 源码解读 2024-04-09 11:32:58.133</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-schedulergo-%E8%B0%83%E5%BA%A6%E5%99%A8-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-schedulergo-diao-du-qi-yuan-ma-jie-du/" class="">K8S控制器之 scheduler.go 调度器 源码解读 2024-04-09 11:44:25.171</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Brecreatego-%E9%87%8D%E5%BB%BA-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-recreatego-zhong-jian-yuan-ma-jie-du/" class="">K8S控制器之recreate.go 重建 源码解读 2024-04-09 11:31:49.855</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Brollbackgo-%E5%9B%9E%E6%BB%9A-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-rollbackgo-hui-gun-yuan-ma-jie-du/" class="">K8S控制器之rollback.go 回滚 源码解读 2024-04-09 11:32:26.587</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_pod_controlgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulpodcontrolgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_pod_control.go源码解读 2024-04-10 09:42:50.078</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_set_controlgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetcontrolgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_set_control.go源码解读 2024-04-10 09:41:30.316</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_set_status_updatego%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetstatusupdatego-yuan-ma-jie-du/" class="">K8S控制器之stateful_set_status_update.go源码解读 2024-04-10</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_setgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_set.go源码解读 2024-04-10</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bsyncgo-%E5%90%8C%E6%AD%A5-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-syncgo-tong-bu-yuan-ma-jie-du/" class="">K8S控制器之sync.go 同步 源码解读 2024-04-09 11:33:26.356</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E7%9A%84pod%E7%B1%BB%E5%9E%8B-k8s-de-pod-lei-xing/" class="">K8S的POD类型 2024-04-03 14:57:11.072</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E7%9A%84%E6%9C%80%E5%90%8E%E4%B8%80%E5%9D%97%E6%8B%BC%E5%9B%BE-dbpaas-k8s-de-zui-hou-yi-kuai-pin-tu-dbpaas/" class="">K8S的最后一块拼图 dbpaas 2024-08-02 17:48:35.899</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-k8s%E7%BB%84%E4%BB%B6/" class="">k8s组件</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%83%8C%E5%90%8Eservice%E6%98%AF%E5%A6%82%E4%BD%95%E5%B7%A5%E4%BD%9C%E7%9A%84-k8s-bei-hou-service-shi-ru-he-gong-zuo-de/" class="">k8s背后service是如何工作的 2024-08-02 17:49:44.981</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%B0%83%E5%BA%A6%E5%99%A8-extendergo-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-diao-du-qi-extendergo-yuan-ma-jie-du/" class="">K8S调度器 extender.go 源码解读 2024-04-09 11:45:59.666</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%B0%83%E8%AF%95pod-k8s-diao-shi-pod/" class="">K8S调试POD 2024-04-03 14:58:15.293</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%BF%90%E7%BB%B4%E4%B9%8B%E6%B8%85%E7%90%86%E7%A3%81%E7%9B%98-k8s-yun-wei-zhi-qing-li-ci-pan/" class="">k8s运维之清理磁盘 2024-04-03 15:13:57.279</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8-k8s-mian-shi-da-quan/" class="">K8S面试大全 2024-04-03 15:10:54.493</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E5%AE%9D%E5%85%B8-k8s-mian-shi-bao-dian/" class="">K8S面试宝典 2024-04-03 15:11:09.316</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E9%A2%98-k8s-mian-shi-ti/" class="">K8S面试题 2024-08-02 17:50:50.418</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kruise%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7%E8%A7%A3%E6%9E%90-kruise-yuan-de-sheng-ji-jie-xi/" class="">kruise原地升级解析 2024-08-02 17:59:31.689</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kube-router-%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-kube-router-wang-luo-zu-jian/" class="">kube-router 网络组件 2023-09-28 15:33:20.658</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-05-kubeasz%E9%83%A8%E7%BD%B2k8s/" class="">kubeasz部署k8s</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubekey%E6%B7%BB%E5%8A%A0%E6%96%B0%E8%8A%82%E7%82%B9-kubekey-tian-jia-xin-jie-dian/" class="">kubekey添加新节点 2024-04-03 15:36:47.646</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-api-kubernetesapi/" class="">Kubernetes API 2024-04-03 14:47:30.212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E6%BA%90%E7%A0%81%E7%BB%93%E6%9E%84-kubernetes-yuan-ma-jie-gou/" class="">Kubernetes 源码结构 2024-04-03 14:48:05.954</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3%E8%AE%A4%E8%AF%81-kubernetes-zheng-shu-xiang-jie--ren-zheng-/" class="">Kubernetes 证书详解(认证) 2024-04-03 14:52:56.54</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3%E9%89%B4%E6%9D%83-kubernetes-zheng-shu-xiang-jie--jian-quan-/" class="">Kubernetes 证书详解(鉴权) 2024-04-03 14:49:04.385</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubewharf-kubewharf/" class="">kubewharf 2024-08-02 17:41:32.72</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux-awk%E6%96%87%E6%9C%AC%E5%A4%84%E7%90%86%E5%99%A8-8%E4%B8%AA%E6%A1%88%E4%BE%8B-linuxawk-wen-ben-chu-li-qi-8-ge-an-li/" class="">linux awk文本处理器 8个案例 2024-08-02 17:46:53.603</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux-%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%A4%A7%E5%85%A8-linux-xing-neng-you-hua-da-quan/" class="">Linux 性能优化大全 2024-04-03 15:09:06.854</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux%E7%B3%BB%E7%BB%9F%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96-%E4%B8%83%E4%B8%AA%E5%AE%9E%E6%88%98%E7%BB%8F%E9%AA%8C-linux-xi-tong-xing-neng-you-hua-qi-ge-shi-zhan-jing-yan/" class="">linux系统性能优化 七个实战经验 2024-08-02 17:47:26.212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98-linux-yun-wei-gong-cheng-shi-50-ge-chang-jian-mian-shi-ti/" class="">linux运维工程师50个常见面试题 2024-08-02 17:42:12.968</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/metallb-l2-%E5%8E%9F%E7%90%86-metallbl2-yuan-li/" class="active">MetalLB L2 原理 2024-04-03 14:52:24.662</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/netctl%E6%A3%80%E6%B5%8B%E9%9B%86%E7%BE%A4pod%E9%97%B4%E8%BF%9E%E9%80%9A%E6%80%A7-netctl-jian-ce-ji-qun-pod-jian-lian-tong-xing/" class="">netctl检测集群pod间连通性 2024-08-02 18:00:36.753</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/network-check-network-check/" class="">network-check 2023-09-28 15:36:33.04</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/nginx%E5%A6%82%E4%BD%95%E8%A7%A3%E5%86%B3%E6%83%8A%E7%BE%A4%E6%95%88%E5%BA%94-nginx-ru-he-jie-jue-jing-qun-xiao-ying/" class="">nginx如何解决惊群效应 2024-08-02 17:45:54.531</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/openkruise%E8%AF%A6%E7%BB%86%E8%A7%A3%E9%87%8A%E4%BB%A5%E5%8F%8A%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7%E5%8F%8A%E5%85%A8%E9%93%BE%E8%B7%AF%E7%81%B0%E5%BA%A6%E5%8F%91%E5%B8%83%E6%96%B9%E6%A1%88-openkruise-xiang-xi-jie-shi-yi-ji-yuan-de-sheng-ji-ji-quan-lian-lu-hui-du-fa-bu-fang-an/" class="">OpenKruise详细解释以及原地升级及全链路灰度发布方案 2024-07-22 11:44:46.892</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/pixie-pixie/" class="">pixie 2024-08-02 17:52:17.843</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-28-prometheus/" class="">prometheus 面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/prometheus-stack-prometheus-stack/" class="">prometheus-stack 2024-08-02 17:55:22.326</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/prometheus%E4%BC%81%E4%B8%9A%E7%BA%A7%E7%9B%91%E6%8E%A7%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93-prometheus-qi-ye-ji-jian-kong-shi-yong-zong-jie/" class="">prometheus企业级监控使用总结 2024-04-03 15:13:11.185</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ssl%E8%AF%81%E4%B9%A6%E8%87%AA%E7%AD%BE%E5%8F%91-ssl-zheng-shu-zi-qian-fa/" class="">ssl证书自签发 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/teg%E4%B8%8Eistio%E9%9B%86%E6%88%90-teg-yu-istio-ji-cheng/" class="">TEG与istio集成 2024-08-02 17:51:20.389</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%B8%A4%E5%BC%A0%E5%9B%BE%E5%85%A8%E9%9D%A2%E7%90%86%E8%A7%A3k8s%E5%8E%9F%E7%90%86-liang-zhang-tu-quan-mian-li-jie-k8s-yuan-li/" class="">两张图全面理解K8S原理 2024-04-03 14:51:27.431</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%B8%AA%E6%80%A7%E5%8C%96%E9%9B%86%E7%BE%A4%E5%8F%82%E6%95%B0%E9%85%8D%E7%BD%AE-ge-xing-hua-ji-qun-can-shu-pei-zhi/" class="">个性化集群参数配置 2023-09-28 15:30:56.072</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E4%B8%AD%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_%E9%A2%98%E7%9B%AE/" class="">中级运维面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BA%8C%E8%BF%9B%E5%88%B6%E9%83%A8%E7%BD%B2k8s%E5%8A%A0%E8%8A%82%E7%82%B9%E6%93%8D%E4%BD%9C-er-jin-zhi-bu-shu-k8s-jia-jie-dian-cao-zuo/" class="">二进制部署K8S加节点操作 2024-04-03 15:08:26.726</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-10-20-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8%E9%9B%86%E7%BE%A4/" class="">使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8-keepalived-%E5%92%8C-haproxy-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8-kubernetes-%E9%9B%86%E7%BE%A4-shi-yong-keepalived-he-haproxy-chuang-jian-gao-ke-yong-kubernetes-ji-qun/" class="">使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群 2023-04-12 04:04:09.458</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8-openfunction-%E5%9C%A8%E4%BB%BB%E4%BD%95%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E4%B8%8A%E8%BF%90%E8%A1%8C%E6%97%A0%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%B7%A5%E4%BD%9C%E8%B4%9F%E8%BD%BD-shi-yong-openfunction-zai-ren-he-ji-chu-she-shi-shang-yun-xing-wu-fu-wu-qi-gong-zuo-fu-zai/" class="">使用 OpenFunction 在任何基础设施上运行无服务器工作负载 2024-01-21 04:02:44.459</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8cloudflarecf%E6%90%AD%E5%BB%BAdockerhub%E4%BB%A3%E7%90%86-shi-yong-cloudflarecf-da-jian-dockerhub-dai-li/" class="">使用cloudflare(CF)搭建dockerhub代理 2024-06-28 14:38:34.339</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8kubernees-leases-%E8%BD%BB%E6%9D%BE%E5%AE%9E%E7%8E%B0leader-election-shi-yong-kuberneesleases-qing-song-shi-xian-leaderelection/" class="">使用kubernees leases 轻松实现leader election 2024-04-03 15:09:46.129</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%85%AC%E6%9C%89%E4%BA%91%E4%B8%8A%E9%83%A8%E7%BD%B2-kubeasz-gong-you-yun-shang-bu-shu-kubeasz/" class="">公有云上部署 kubeasz 2023-09-28 15:31:16.19</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-5-14-%E5%8D%95master%E5%8D%95etcd%E6%94%B9%E9%80%A0/" class="">单master单etcd改造为3master3etcd</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%8F%B2%E4%B8%8A%E6%9C%80%E7%89%9Bjenkins-pipeline%E6%B5%81%E6%B0%B4%E7%BA%BF%E8%AF%A6%E8%A7%A3-shi-shang-zui-niu-jenkinspipeline-liu-shui-xian-xiang-jie/" class="">史上最牛jenkins pipeline流水线详解 2024-08-02</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%9A%E6%9E%B6%E6%9E%84%E6%94%AF%E6%8C%81-duo-jia-gou-zhi-chi/" class="">多架构支持 2023-09-28 15:29:54.111</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%A7%E5%8E%82%E6%80%BB%E7%BB%93nginx%E9%AB%98%E5%B9%B6%E5%8F%91%E4%BC%98%E5%8C%96%E7%AC%94%E8%AE%B0-da-chang-zong-jie-nginx-gao-bing-fa-you-hua-bi-ji/" class="">大厂总结nginx高并发优化笔记 2024-08-02 17:46:19.098</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%A7%E8%A7%84%E6%A8%A1%E5%B9%B6%E5%8F%91%E4%B8%8B%E5%A6%82%E4%BD%95%E5%8A%A0%E5%BF%AB-pod-%E5%90%AF%E5%8A%A8%E9%80%9F%E5%BA%A6-da-gui-mo-bing-fa-xia-ru-he-jia-kuai-pod-qi-dong-su-du/" class="">大规模并发下如何加快 Pod 启动速度 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E4%B8%BAk8s%E4%BF%9D%E9%A9%BE%E6%8A%A4%E8%88%AA-ru-he-wei-k8s-bao-jia-hu-hang/" class="">如何为K8S保驾护航 2024-04-16 17:09:21.962</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8tekton%E5%BF%AB%E9%80%9F%E6%90%AD%E5%BB%BAcicd%E5%B9%B3%E5%8F%B0-ru-he-shi-yong-tekton-kuai-su-da-jian-cicd-ping-tai/" class="">如何使用tekton快速搭建CI/CD平台 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E8%B0%83%E8%AF%95-crash-%E5%AE%B9%E5%99%A8%E7%9A%84%E7%BD%91%E7%BB%9C-ru-he-diao-shi-crash-rong-qi-de-wang-luo/" class="">如何调试 crash 容器的网络 2024-04-03 14:50:51.378</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E4%B8%AD%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E4%BB%A5%E5%8F%8A%E4%B8%8D%E5%90%8Cdnspolicy%E5%AF%B9%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E7%9A%84%E5%BD%B1%E5%93%8D-rong-qi-zhong-yu-ming-jie-xi-yi-ji-bu-tong-dnspolicy-dui-yu-ming-jie-xi-de-ying-xiang/" class="">容器中域名解析以及不同dnspolicy对域名解析的影响 2024-04-03 15:04:09.254</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E5%86%85%E7%9A%84-1-%E5%8F%B7%E8%BF%9B%E7%A8%8B-rong-qi-nei-de-1-hao-jin-cheng/" class="">容器内的 1 号进程 2024-04-03 14:46:29.998</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E5%8E%9F%E7%90%86-rong-qi-yuan-li/" class="">容器原理 2024-04-03 14:45:58.422</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E7%9A%84%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E4%B8%80-overlayfs-%E5%8E%9F%E7%90%86-rong-qi-de-wen-jian-xi-tong--yi-overlayfs-yuan-li/" class="">容器的文件系统 OverlayFS 原理 2024-04-03 14:45:26.893</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C%E5%8E%9F%E7%90%86-rong-qi-wang-luo-yuan-li/" class="">容器网络原理 2024-04-03 14:51:51.962</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%B8%B8%E8%A7%81linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98-chang-jian-linux-yun-wei-mian-shi-ti/" class="">常见linux运维面试题 2024-08-02 17:42:33.873</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BC%80%E5%A7%8B%E4%BD%BF%E7%94%A8-cilium-kai-shi-shi-yong-cilium/" class="">开始使用 cilium 2023-09-28 15:34:49.205</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BD%BB%E6%82%9F%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C-che-wu-rong-qi-wang-luo/" class="">彻悟容器网络 2024-04-07 10:30:11.55</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BF%AB%E9%80%9F%E6%8C%87%E5%8D%97-kuai-su-zhi-nan/" class="">快速指南 2023-09-28 15:28:25.71</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%88%91%E5%8F%AA%E6%83%B3%E5%81%9A%E6%8A%80%E6%9C%AF-%E8%B5%B0%E6%8A%80%E6%9C%AF%E8%B7%AF%E7%BA%BF-wo-zhi-xiang-zuo-ji-shu-zou-ji-shu-lu-xian/" class="">我只想做技术 走技术路线 2024-08-02 17:43:31.897</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%90%9E%E6%87%82k8s%E9%89%B4%E6%9D%83-gao-dong-k8s-jian-quan/" class="">搞懂K8S鉴权 2024-04-03 15:11:54.885</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%90%AD%E4%B8%AA%E6%97%A5%E5%BF%97%E6%89%8B%E6%9C%BA%E7%B3%BB%E7%BB%9F%E4%B8%8D%E9%A6%99%E5%90%97-da-ge-ri-zhi-shou-ji-xi-tong-bu-xiang-ma/" class="">搭个日志手机系统不香吗 2024-08-02 17:47:58.794</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E8%AF%B4%E6%98%8E-cao-zuo-xi-tong-shuo-ming/" class="">操作系统说明 2023-09-28 15:31:37.694</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%96%87%E5%AD%A6%E7%9A%84%E6%95%85%E4%B9%A1-wen-xue-de-gu-xiang/" class="">文学的故乡 2024-04-03 14:40:45.926</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%98%AF%E6%8A%80%E6%9C%AF%E5%A4%A7%E7%A5%9E%E8%BF%98%E6%98%AF%E5%9F%BA%E7%A1%80%E6%9E%B6%E6%9E%84%E9%83%A8%E7%9A%84%E7%A5%B8%E5%AE%B3-shi-ji-shu-da-shen-hai-shi-ji-chu-jia-gou-bu-de-huo-hai/" class="">是技术大神还是基础架构部的祸害 2024-08-02 17:50:26.139</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9C%89%E8%BF%993%E4%B8%AA%E8%BF%B9%E8%B1%A1%E4%BD%A0%E5%B0%B1%E8%AF%A5%E7%A6%BB%E8%81%8C%E4%BA%86-you-zhe-3-ge-ji-xiang--ni-jiu-gai-li-zhi-le/" class="">有这3个迹象，你就该离职了 2023-09-21 16:00:22.432</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9E%81%E5%A4%A7%E6%8F%90%E9%AB%98%E5%B7%A5%E4%BD%9C%E6%95%88%E7%8E%87%E7%9A%84-linux-%E5%91%BD%E4%BB%A4-ji-da-ti-gao-gong-zuo-xiao-lv-de-linux-ming-ling/" class="">极大提高工作效率的 Linux 命令 2024-04-03 14:42:46.957</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9E%84%E5%BB%BA%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E5%88%A9%E5%99%A8buildkit-gou-jian-rong-qi-jing-xiang-li-qi-buildkit/" class="">构建容器镜像利器buildkit 2024-08-02 17:49:14.916</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B5%81%E9%87%8F%E4%BD%95%E5%A4%84%E6%9D%A5%E4%BD%95%E5%A4%84%E5%8E%BB-liu-liang-he-chu-lai-he-chu-qu/" class="">流量何处来何处去 2024-04-03 14:56:20.089</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B8%85%E7%90%86docker%E9%95%9C%E5%83%8F-qing-li-docker-jing-xiang/" class="">清理docker镜像 2024-08-02 17:54:48.594</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B8%85%E7%90%86%E6%AE%8B%E7%95%99%E7%9A%84calico%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6-qing-li-can-liu-de-calico-wang-luo/" class="">清理残留的calico网络插件 2024-04-03 15:07:38.854</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A3%81%E7%9B%98%E6%95%B0%E6%8D%AE%E6%81%A2%E5%A4%8D-ci-pan-shu-ju-hui-fu/" class="">磁盘数据恢复 2024-04-03 14:59:27.839</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85kubephere-li-xian-an-zhuang-kubephere/" class="">离线安装kubephere 2024-04-03 14:59:59.885</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4-li-xian-an-zhuang-ji-qun/" class="">离线安装集群 2023-09-28 15:29:14.742</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-%E8%AE%A1%E5%88%92/" class="">美国码农薪酬</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-%E8%AE%A1%E5%88%922/" class="">美国码农计划</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E8%87%AA%E5%8A%A8%E5%B1%8F%E8%94%BDip%E6%94%BB%E5%87%BB-zi-dong-ping-bi-ip-gong-ji/" class="">自动屏蔽IP攻击 2024-04-03 14:54:11.783</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-12-%E9%9D%A2%E8%AF%950212/" class="">面试0212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-19-%E9%9D%A2%E8%AF%950219/" class="">面试0219</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-20-%E9%9D%A2%E8%AF%950220/" class="">面试0220</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-26-%E9%9D%A2%E8%AF%950225/" class="">面试0225</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%9D%A2%E8%AF%950308-mian-shi-0308/" class="">面试0308 2024-04-03 14:57:53.576</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-11-%E9%9D%A2%E8%AF%950211/" class="">面试2025-02-11</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-18-%E9%9D%A2%E8%AF%95/" class="">面试2025-0218</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%9D%A2%E8%AF%95%E7%94%A8-golang-%E6%89%8B%E6%92%B8-lru-mian-shi-yong-golang-shou-lu-lru/" class="">面试用 Golang 手撸 LRU 2024-04-03 14:47:00.767</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%A1%B6%E7%BA%A7devops%E5%B7%A5%E5%85%B7%E5%A4%A7%E7%9B%98%E7%82%B9-ding-ji-devops-gong-ju-da-pan-dian/" class="">顶级devops工具大盘点 2024-08-02 17:43:03.661</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E9%AB%98%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_ai_linux%E9%83%A8%E5%88%86/" class="">高级运维面试题-linux部分</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>MetalLB L2 原理 2024-04-03 14:52:24.662</h3>
+
+  <label for="toc-control">
+    
+    <img src="/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li>
+      <ul>
+        <li></li>
+        <li><a href="#依赖">依赖</a></li>
+        <li><a href="#部署">部署</a></li>
+        <li><a href="#配置">配置</a></li>
+        <li><a href="#示例">示例</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li>
+      <ul>
+        <li></li>
+        <li><a href="#arp-请求">arp 请求</a></li>
+        <li><a href="#负载均衡">负载均衡</a></li>
+        <li><a href="#工作过程">工作过程</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="穷人版-lb--metallb-l2-原理">
+  穷人版 LB &ndash; MetalLB L2 原理
+  <a class="anchor" href="#%e7%a9%b7%e4%ba%ba%e7%89%88-lb--metallb-l2-%e5%8e%9f%e7%90%86">#</a>
+</h1>
+<h1 id="lb-的作用">
+  LB 的作用
+  <a class="anchor" href="#lb-%e7%9a%84%e4%bd%9c%e7%94%a8">#</a>
+</h1>
+<h5 id="在-kubernetes-集群中要想把服务暴露给别人访问无外乎是使用-service-nodeport-或者-hostnetwork-网络模式这种方式会使得主机端口随着服务的数量增加而增加显然不建议使用">
+  在 Kubernetes 集群中，要想把服务暴露给别人访问，无外乎是使用 Service <strong>NodePort</strong> 或者 <strong>hostNetwork</strong> 网络模式。这种方式会使得主机端口随着服务的数量增加而增加，显然不建议使用。
+  <a class="anchor" href="#%e5%9c%a8-kubernetes-%e9%9b%86%e7%be%a4%e4%b8%ad%e8%a6%81%e6%83%b3%e6%8a%8a%e6%9c%8d%e5%8a%a1%e6%9a%b4%e9%9c%b2%e7%bb%99%e5%88%ab%e4%ba%ba%e8%ae%bf%e9%97%ae%e6%97%a0%e5%a4%96%e4%b9%8e%e6%98%af%e4%bd%bf%e7%94%a8-service-nodeport-%e6%88%96%e8%80%85-hostnetwork-%e7%bd%91%e7%bb%9c%e6%a8%a1%e5%bc%8f%e8%bf%99%e7%a7%8d%e6%96%b9%e5%bc%8f%e4%bc%9a%e4%bd%bf%e5%be%97%e4%b8%bb%e6%9c%ba%e7%ab%af%e5%8f%a3%e9%9a%8f%e7%9d%80%e6%9c%8d%e5%8a%a1%e7%9a%84%e6%95%b0%e9%87%8f%e5%a2%9e%e5%8a%a0%e8%80%8c%e5%a2%9e%e5%8a%a0%e6%98%be%e7%84%b6%e4%b8%8d%e5%bb%ba%e8%ae%ae%e4%bd%bf%e7%94%a8">#</a>
+</h5>
+<h5 id="那么可以使用网关来转发到后端服务这样只需要开启网关的-service-nodeport-即可显然网关承载了入口流量网关就需要实现高可用一般会在网关前面部署一个-lb-流量经过-lb-负载到多个网关示例那么可能又有人会这个-lb-又怎么高可用">
+  那么可以使用网关来转发到后端服务，这样只需要开启网关的 Service <strong>NodePort</strong> 即可，显然网关承载了入口流量，网关就需要实现高可用。一般会在网关前面部署一个 LB ，流量经过 LB 负载到多个网关示例。那么可能又有人会，这个 LB 又怎么高可用？
+  <a class="anchor" href="#%e9%82%a3%e4%b9%88%e5%8f%af%e4%bb%a5%e4%bd%bf%e7%94%a8%e7%bd%91%e5%85%b3%e6%9d%a5%e8%bd%ac%e5%8f%91%e5%88%b0%e5%90%8e%e7%ab%af%e6%9c%8d%e5%8a%a1%e8%bf%99%e6%a0%b7%e5%8f%aa%e9%9c%80%e8%a6%81%e5%bc%80%e5%90%af%e7%bd%91%e5%85%b3%e7%9a%84-service-nodeport-%e5%8d%b3%e5%8f%af%e6%98%be%e7%84%b6%e7%bd%91%e5%85%b3%e6%89%bf%e8%bd%bd%e4%ba%86%e5%85%a5%e5%8f%a3%e6%b5%81%e9%87%8f%e7%bd%91%e5%85%b3%e5%b0%b1%e9%9c%80%e8%a6%81%e5%ae%9e%e7%8e%b0%e9%ab%98%e5%8f%af%e7%94%a8%e4%b8%80%e8%88%ac%e4%bc%9a%e5%9c%a8%e7%bd%91%e5%85%b3%e5%89%8d%e9%9d%a2%e9%83%a8%e7%bd%b2%e4%b8%80%e4%b8%aa-lb-%e6%b5%81%e9%87%8f%e7%bb%8f%e8%bf%87-lb-%e8%b4%9f%e8%bd%bd%e5%88%b0%e5%a4%9a%e4%b8%aa%e7%bd%91%e5%85%b3%e7%a4%ba%e4%be%8b%e9%82%a3%e4%b9%88%e5%8f%af%e8%83%bd%e5%8f%88%e6%9c%89%e4%ba%ba%e4%bc%9a%e8%bf%99%e4%b8%aa-lb-%e5%8f%88%e6%80%8e%e4%b9%88%e9%ab%98%e5%8f%af%e7%94%a8">#</a>
+</h5>
+<h5 id="公有云厂商直接提供-lb对于自行搭建的-kubetnetes-集群就需要一个乞丐版的-lb-来实现开源的-lb-也有很多这里介绍-metallb1metallb-实现了所说的负载均衡功能同时自身也是高可用的">
+  公有云厂商直接提供 LB，对于自行搭建的 Kubetnetes 集群，就需要一个乞丐版的 LB 来实现，开源的 LB 也有很多，这里介绍 Metallb[1]，MetalLB 实现了所说的负载均衡功能，同时自身也是高可用的。
+  <a class="anchor" href="#%e5%85%ac%e6%9c%89%e4%ba%91%e5%8e%82%e5%95%86%e7%9b%b4%e6%8e%a5%e6%8f%90%e4%be%9b-lb%e5%af%b9%e4%ba%8e%e8%87%aa%e8%a1%8c%e6%90%ad%e5%bb%ba%e7%9a%84-kubetnetes-%e9%9b%86%e7%be%a4%e5%b0%b1%e9%9c%80%e8%a6%81%e4%b8%80%e4%b8%aa%e4%b9%9e%e4%b8%90%e7%89%88%e7%9a%84-lb-%e6%9d%a5%e5%ae%9e%e7%8e%b0%e5%bc%80%e6%ba%90%e7%9a%84-lb-%e4%b9%9f%e6%9c%89%e5%be%88%e5%a4%9a%e8%bf%99%e9%87%8c%e4%bb%8b%e7%bb%8d-metallb1metallb-%e5%ae%9e%e7%8e%b0%e4%ba%86%e6%89%80%e8%af%b4%e7%9a%84%e8%b4%9f%e8%bd%bd%e5%9d%87%e8%a1%a1%e5%8a%9f%e8%83%bd%e5%90%8c%e6%97%b6%e8%87%aa%e8%ba%ab%e4%b9%9f%e6%98%af%e9%ab%98%e5%8f%af%e7%94%a8%e7%9a%84">#</a>
+</h5>
+<h1 id="使用-metallb">
+  使用 Metallb
+  <a class="anchor" href="#%e4%bd%bf%e7%94%a8-metallb">#</a>
+</h1>
+<h5 id="metallb-提供了自行搭建-kubernetes-集群负载均衡的功能类似于公有云一样来体验负载均衡">
+  Metallb 提供了自行搭建 Kubernetes 集群负载均衡的功能，类似于公有云一样来体验负载均衡。
+  <a class="anchor" href="#metallb-%e6%8f%90%e4%be%9b%e4%ba%86%e8%87%aa%e8%a1%8c%e6%90%ad%e5%bb%ba-kubernetes-%e9%9b%86%e7%be%a4%e8%b4%9f%e8%bd%bd%e5%9d%87%e8%a1%a1%e7%9a%84%e5%8a%9f%e8%83%bd%e7%b1%bb%e4%bc%bc%e4%ba%8e%e5%85%ac%e6%9c%89%e4%ba%91%e4%b8%80%e6%a0%b7%e6%9d%a5%e4%bd%93%e9%aa%8c%e8%b4%9f%e8%bd%bd%e5%9d%87%e8%a1%a1">#</a>
+</h5>
+<h5 id="metallb-提供两种模式bgpl2两种模式各有优缺点本文主要讲解-l2-模式">
+  Metallb 提供两种模式：BGP、L2。两种模式各有优缺点，本文主要讲解 <strong>L2</strong> 模式。
+  <a class="anchor" href="#metallb-%e6%8f%90%e4%be%9b%e4%b8%a4%e7%a7%8d%e6%a8%a1%e5%bc%8fbgpl2%e4%b8%a4%e7%a7%8d%e6%a8%a1%e5%bc%8f%e5%90%84%e6%9c%89%e4%bc%98%e7%bc%ba%e7%82%b9%e6%9c%ac%e6%96%87%e4%b8%bb%e8%a6%81%e8%ae%b2%e8%a7%a3-l2-%e6%a8%a1%e5%bc%8f">#</a>
+</h5>
+<h3 id="依赖">
+  依赖
+  <a class="anchor" href="#%e4%be%9d%e8%b5%96">#</a>
+</h3>
+<h5 id="在-kubernetes-集群中使用-metallb-需要满足以下需求">
+  在 Kubernetes 集群中使用 Metallb 需要满足以下需求：
+  <a class="anchor" href="#%e5%9c%a8-kubernetes-%e9%9b%86%e7%be%a4%e4%b8%ad%e4%bd%bf%e7%94%a8-metallb-%e9%9c%80%e8%a6%81%e6%bb%a1%e8%b6%b3%e4%bb%a5%e4%b8%8b%e9%9c%80%e6%b1%82">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="-kubernetes-版本--v113">
+  • Kubernetes 版本 ≥ <code>v1.13</code>
+  <a class="anchor" href="#-kubernetes-%e7%89%88%e6%9c%ac--v113">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-提供-ip-地址段或者多个-ip-给-metallb-分配">
+  • 提供 IP 地址段或者多个 IP 给 Metallb 分配
+  <a class="anchor" href="#-%e6%8f%90%e4%be%9b-ip-%e5%9c%b0%e5%9d%80%e6%ae%b5%e6%88%96%e8%80%85%e5%a4%9a%e4%b8%aa-ip-%e7%bb%99-metallb-%e5%88%86%e9%85%8d">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-如果使用-l2-模式主机上需要放行-7946-端口">
+  • 如果使用 L2 模式，主机上需要放行 7946 端口
+  <a class="anchor" href="#-%e5%a6%82%e6%9e%9c%e4%bd%bf%e7%94%a8-l2-%e6%a8%a1%e5%bc%8f%e4%b8%bb%e6%9c%ba%e4%b8%8a%e9%9c%80%e8%a6%81%e6%94%be%e8%a1%8c-7946-%e7%ab%af%e5%8f%a3">#</a>
+</h5>
+</li>
+</ul>
+<h3 id="部署">
+  部署
+  <a class="anchor" href="#%e9%83%a8%e7%bd%b2">#</a>
+</h3>
+<h5 id="修改-kube-proxy-配置">
+  修改 <strong>Kube-proxy</strong> 配置
+  <a class="anchor" href="#%e4%bf%ae%e6%94%b9-kube-proxy-%e9%85%8d%e7%bd%ae">#</a>
+</h5>
+<pre tabindex="0"><code>$ kubectl edit configmap -n kube-system kube-proxy
+
+apiVersion: kubeproxy.config.k8s.io/v1alpha1
+kind: KubeProxyConfiguration
+mode: &#34;ipvs&#34;
+ipvs:
+  strictARP: true
+</code></pre><h5 id="通过-manifests-安装当然也可以通过-helm-或者-operator-方式安装可参考官网2">
+  通过 manifests 安装，当然也可以通过 helm 或者 operator 方式安装，可参考官网[2]
+  <a class="anchor" href="#%e9%80%9a%e8%bf%87-manifests-%e5%ae%89%e8%a3%85%e5%bd%93%e7%84%b6%e4%b9%9f%e5%8f%af%e4%bb%a5%e9%80%9a%e8%bf%87-helm-%e6%88%96%e8%80%85-operator-%e6%96%b9%e5%bc%8f%e5%ae%89%e8%a3%85%e5%8f%af%e5%8f%82%e8%80%83%e5%ae%98%e7%bd%912">#</a>
+</h5>
+<pre tabindex="0"><code>$ kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.12/config/manifests/metallb-native.yaml
+</code></pre><h5 id="部署成功后集群中在-metallb-system-namespace-下会存在名为-controller-的-deployment-和-speaker-的-daemonset">
+  部署成功后，集群中在 <code>metallb-system</code> namespace 下会存在名为 <strong>Controller</strong> 的 deployment 和 <strong>Speaker</strong> 的 daemonSet
+  <a class="anchor" href="#%e9%83%a8%e7%bd%b2%e6%88%90%e5%8a%9f%e5%90%8e%e9%9b%86%e7%be%a4%e4%b8%ad%e5%9c%a8-metallb-system-namespace-%e4%b8%8b%e4%bc%9a%e5%ad%98%e5%9c%a8%e5%90%8d%e4%b8%ba-controller-%e7%9a%84-deployment-%e5%92%8c-speaker-%e7%9a%84-daemonset">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="-metallb-systemcontroller-deployment该-controller-用于-watch-集群中使用-loadbalancer-类型的-service-并为其分配-external-ip">
+  • <code>metallb-system/controller</code> deployment，该 Controller 用于 watch 集群中使用 <strong>LoadBalancer</strong> 类型的 service 并为其分配 <code>EXTERNAL-IP</code>
+  <a class="anchor" href="#-metallb-systemcontroller-deployment%e8%af%a5-controller-%e7%94%a8%e4%ba%8e-watch-%e9%9b%86%e7%be%a4%e4%b8%ad%e4%bd%bf%e7%94%a8-loadbalancer-%e7%b1%bb%e5%9e%8b%e7%9a%84-service-%e5%b9%b6%e4%b8%ba%e5%85%b6%e5%88%86%e9%85%8d-external-ip">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-metallb-systemspeaker-daemonset该组件在每个节点都会运行使用-hostnetwork-网络模式可以保证上面分配的-ip-可访问">
+  • <code>metallb-system/speaker</code> daemonset，该组件在每个节点都会运行，使用 <strong>hostNetwork</strong> 网络模式，可以保证上面分配的 IP 可访问。
+  <a class="anchor" href="#-metallb-systemspeaker-daemonset%e8%af%a5%e7%bb%84%e4%bb%b6%e5%9c%a8%e6%af%8f%e4%b8%aa%e8%8a%82%e7%82%b9%e9%83%bd%e4%bc%9a%e8%bf%90%e8%a1%8c%e4%bd%bf%e7%94%a8-hostnetwork-%e7%bd%91%e7%bb%9c%e6%a8%a1%e5%bc%8f%e5%8f%af%e4%bb%a5%e4%bf%9d%e8%af%81%e4%b8%8a%e9%9d%a2%e5%88%86%e9%85%8d%e7%9a%84-ip-%e5%8f%af%e8%ae%bf%e9%97%ae">#</a>
+</h5>
+</li>
+</ul>
+<pre tabindex="0"><code>$ kubectl get pods -n metallb-system -o wide
+NAME                          READY   STATUS    RESTARTS   AGE   IP              NODE                   NOMINATED NODE   READINESS GATES
+controller-679f6b6cb5-l5k2z   1/1     Running   0          46h   100.80.192.27   node-172-30-91-215     &lt;none&gt;           &lt;none&gt;
+speaker-6qxxj                 1/1     Running   0          46h   172.30.91.17    node-172-30-91-17      &lt;none&gt;           &lt;none&gt;
+speaker-chb8g                 1/1     Running   0          46h   172.30.91.215   node-172-30-91-215     &lt;none&gt;           &lt;none&gt;
+speaker-kw9vd                 1/1     Running   0          46h   172.30.91.166   master-172-30-91-166   &lt;none&gt;           &lt;none&gt;
+</code></pre><h3 id="配置">
+  配置
+  <a class="anchor" href="#%e9%85%8d%e7%bd%ae">#</a>
+</h3>
+<h5 id="上面只是部署了-metallb要想使用-metallb-l2-模式还需要一些配置才能正常使用">
+  上面只是部署了 Metallb，要想使用 Metallb L2 模式还需要一些配置，才能正常使用。
+  <a class="anchor" href="#%e4%b8%8a%e9%9d%a2%e5%8f%aa%e6%98%af%e9%83%a8%e7%bd%b2%e4%ba%86-metallb%e8%a6%81%e6%83%b3%e4%bd%bf%e7%94%a8-metallb-l2-%e6%a8%a1%e5%bc%8f%e8%bf%98%e9%9c%80%e8%a6%81%e4%b8%80%e4%ba%9b%e9%85%8d%e7%bd%ae%e6%89%8d%e8%83%bd%e6%ad%a3%e5%b8%b8%e4%bd%bf%e7%94%a8">#</a>
+</h5>
+<h5 id="上面说到-metallb-会自动分配-ip-给集群中的-loadbalancer-service所以就需要提供地址池给-metallb通过创建-ipaddresspool-cr">
+  上面说到 Metallb 会自动分配 IP 给集群中的 <strong>LoadBalancer</strong> service，所以就需要提供地址池给 Metallb，通过创建 <code>IPAddressPool</code> CR
+  <a class="anchor" href="#%e4%b8%8a%e9%9d%a2%e8%af%b4%e5%88%b0-metallb-%e4%bc%9a%e8%87%aa%e5%8a%a8%e5%88%86%e9%85%8d-ip-%e7%bb%99%e9%9b%86%e7%be%a4%e4%b8%ad%e7%9a%84-loadbalancer-service%e6%89%80%e4%bb%a5%e5%b0%b1%e9%9c%80%e8%a6%81%e6%8f%90%e4%be%9b%e5%9c%b0%e5%9d%80%e6%b1%a0%e7%bb%99-metallb%e9%80%9a%e8%bf%87%e5%88%9b%e5%bb%ba-ipaddresspool-cr">#</a>
+</h5>
+<h5 id="地址池可以支持-ip-网段也支持-ip-组">
+  地址池可以支持 IP 网段，也支持 IP 组
+  <a class="anchor" href="#%e5%9c%b0%e5%9d%80%e6%b1%a0%e5%8f%af%e4%bb%a5%e6%94%af%e6%8c%81-ip-%e7%bd%91%e6%ae%b5%e4%b9%9f%e6%94%af%e6%8c%81-ip-%e7%bb%84">#</a>
+</h5>
+<pre tabindex="0"><code># 地址池配置多个 IP
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: subnet-91
+  namespace: metallb-system
+spec:
+  addresses:
+  - 172.30.91.2/32
+  - 172.30.91.3/32
+  - 172.30.91.4/32
+
+# 地址池配置 IP 网络段
+
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: subnet-91
+  namespace: metallb-system
+spec:
+  addresses:
+  - 172.30.91.0/24
+</code></pre><h5 id="上面配置创建成功后可通过命令查看">
+  上面配置创建成功后，可通过命令查看
+  <a class="anchor" href="#%e4%b8%8a%e9%9d%a2%e9%85%8d%e7%bd%ae%e5%88%9b%e5%bb%ba%e6%88%90%e5%8a%9f%e5%90%8e%e5%8f%af%e9%80%9a%e8%bf%87%e5%91%bd%e4%bb%a4%e6%9f%a5%e7%9c%8b">#</a>
+</h5>
+<pre tabindex="0"><code>$ kubectl get IPAddressPool -n metallb-system
+NAME        AUTO ASSIGN   AVOID BUGGY IPS   ADDRESSES
+subnet-91   true          false             [&#34;172.30.91.2/32&#34;,&#34;172.30.91.3/32&#34;,&#34;172.30.91.4/32&#34;]
+</code></pre><blockquote>
+<p>1、以上配置的 IP 需要路由可达或者和 K8S 集群节点同属一个网段</p>
+<p>2、在云平台上可能还需要将 IP 地址池绑定到 K8S 集群节点上</p></blockquote>
+<h5 id="下面创建-l2-模式宣告配置">
+  下面创建 L2 模式宣告配置
+  <a class="anchor" href="#%e4%b8%8b%e9%9d%a2%e5%88%9b%e5%bb%ba-l2-%e6%a8%a1%e5%bc%8f%e5%ae%a3%e5%91%8a%e9%85%8d%e7%bd%ae">#</a>
+</h5>
+<pre tabindex="0"><code>apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: subnet-91
+  namespace: metallb-system
+spec:
+  ipAddressPools:
+  # 上面的 ippooladdress name
+  - subnet-91
+</code></pre><h5 id="同样可通过命令查看">
+  同样可通过命令查看
+  <a class="anchor" href="#%e5%90%8c%e6%a0%b7%e5%8f%af%e9%80%9a%e8%bf%87%e5%91%bd%e4%bb%a4%e6%9f%a5%e7%9c%8b">#</a>
+</h5>
+<pre tabindex="0"><code>$ kubectl get L2Advertisement -n metallb-system
+NAME        IPADDRESSPOOLS   IPADDRESSPOOL SELECTORS   INTERFACES
+subnet-91   [&#34;subnet-91&#34;]
+</code></pre><h3 id="示例">
+  示例
+  <a class="anchor" href="#%e7%a4%ba%e4%be%8b">#</a>
+</h3>
+<h5 id="下面通过创建-nginx-服务并使用-metallb-来访问">
+  下面通过创建 nginx 服务并使用 Metallb 来访问
+  <a class="anchor" href="#%e4%b8%8b%e9%9d%a2%e9%80%9a%e8%bf%87%e5%88%9b%e5%bb%ba-nginx-%e6%9c%8d%e5%8a%a1%e5%b9%b6%e4%bd%bf%e7%94%a8-metallb-%e6%9d%a5%e8%ae%bf%e9%97%ae">#</a>
+</h5>
+<h5 id="通过下面-yaml-来创建-nginx-服务">
+  通过下面 yaml 来创建 nginx 服务
+  <a class="anchor" href="#%e9%80%9a%e8%bf%87%e4%b8%8b%e9%9d%a2-yaml-%e6%9d%a5%e5%88%9b%e5%bb%ba-nginx-%e6%9c%8d%e5%8a%a1">#</a>
+</h5>
+<pre tabindex="0"><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+ 
+ 
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  selector:
+    app: nginx
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+  type: LoadBalancer
+</code></pre><h5 id="创建成功后会发现该-nginx-service-已经自动分配了-external-ip为了方便后面描述后面篇幅看到-vip-可以理解为-external-ip">
+  创建成功后，会发现该 nginx service 已经自动分配了 <code>EXTERNAL-IP</code>为了方便后面描述，后面篇幅看到 VIP 可以理解为 <code>EXTERNAL-IP</code>
+  <a class="anchor" href="#%e5%88%9b%e5%bb%ba%e6%88%90%e5%8a%9f%e5%90%8e%e4%bc%9a%e5%8f%91%e7%8e%b0%e8%af%a5-nginx-service-%e5%b7%b2%e7%bb%8f%e8%87%aa%e5%8a%a8%e5%88%86%e9%85%8d%e4%ba%86-external-ip%e4%b8%ba%e4%ba%86%e6%96%b9%e4%be%bf%e5%90%8e%e9%9d%a2%e6%8f%8f%e8%bf%b0%e5%90%8e%e9%9d%a2%e7%af%87%e5%b9%85%e7%9c%8b%e5%88%b0-vip-%e5%8f%af%e4%bb%a5%e7%90%86%e8%a7%a3%e4%b8%ba-external-ip">#</a>
+</h5>
+<pre tabindex="0"><code>$ kubectl get svc
+NAME                   TYPE           CLUSTER-IP       EXTERNAL-IP    PORT(S)             AGE
+nginx-service          LoadBalancer   10.233.21.231    172.30.91.2   80:32105/TCP        9s
+</code></pre><h5 id="通过-http17230912-和-http172309116632105-访问">
+  通过 <code>http://172.30.91.2</code> 和 <code>http://172.30.91.166:32105</code> 访问
+  <a class="anchor" href="#%e9%80%9a%e8%bf%87-http17230912-%e5%92%8c-http172309116632105-%e8%ae%bf%e9%97%ae">#</a>
+</h5>
+<pre tabindex="0"><code>$ curl http://172.30.91.2
+
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+&lt;title&gt;Welcome to nginx!&lt;/title&gt;
+&lt;style&gt;
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
+font-family: Tahoma, Verdana, Arial, sans-serif; }
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;h1&gt;Welcome to nginx!&lt;/h1&gt;
+&lt;p&gt;If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.&lt;/p&gt;
+
+&lt;p&gt;For online documentation and support please refer to
+&lt;a href=&#34;http://nginx.org/&#34;&gt;nginx.org&lt;/a&gt;.&lt;br/&gt;
+Commercial support is available at
+&lt;a href=&#34;http://nginx.com/&#34;&gt;nginx.com&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;Thank you for using nginx.&lt;/em&gt;&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+
+$ curl http://172.30.91.166:32105
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+&lt;title&gt;Welcome to nginx!&lt;/title&gt;
+&lt;style&gt;
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
+font-family: Tahoma, Verdana, Arial, sans-serif; }
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;h1&gt;Welcome to nginx!&lt;/h1&gt;
+&lt;p&gt;If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.&lt;/p&gt;
+
+&lt;p&gt;For online documentation and support please refer to
+&lt;a href=&#34;http://nginx.org/&#34;&gt;nginx.org&lt;/a&gt;.&lt;br/&gt;
+Commercial support is available at
+&lt;a href=&#34;http://nginx.com/&#34;&gt;nginx.com&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;Thank you for using nginx.&lt;/em&gt;&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre><h5 id="可以发现使用-vip-和-nodeport-最终都是负载到多个-nginx-实例上那岂不是-nodeport-更方便">
+  可以发现使用 <strong>VIP</strong> 和 <strong>NodePort</strong> 最终都是负载到多个 Nginx 实例上，那岂不是 <strong>NodePort</strong> 更方便？
+  <a class="anchor" href="#%e5%8f%af%e4%bb%a5%e5%8f%91%e7%8e%b0%e4%bd%bf%e7%94%a8-vip-%e5%92%8c-nodeport-%e6%9c%80%e7%bb%88%e9%83%bd%e6%98%af%e8%b4%9f%e8%bd%bd%e5%88%b0%e5%a4%9a%e4%b8%aa-nginx-%e5%ae%9e%e4%be%8b%e4%b8%8a%e9%82%a3%e5%b2%82%e4%b8%8d%e6%98%af-nodeport-%e6%9b%b4%e6%96%b9%e4%be%bf">#</a>
+</h5>
+<h5 id="假如某个-node-运行异常节点-ip-无法使用那么客户端就需要切换-node-ip-访问显然没有高可用对于使用-vip-访问metallb-自带高可用属性无需担心节点异常等异常场景下文会讲解高可用是如何实现的">
+  假如某个 Node 运行异常，节点 IP 无法使用，那么客户端就需要切换 Node IP 访问，显然没有高可用；对于使用 VIP 访问，MetalLB 自带高可用属性，无需担心节点异常等异常场景，下文会讲解高可用是如何实现的。
+  <a class="anchor" href="#%e5%81%87%e5%a6%82%e6%9f%90%e4%b8%aa-node-%e8%bf%90%e8%a1%8c%e5%bc%82%e5%b8%b8%e8%8a%82%e7%82%b9-ip-%e6%97%a0%e6%b3%95%e4%bd%bf%e7%94%a8%e9%82%a3%e4%b9%88%e5%ae%a2%e6%88%b7%e7%ab%af%e5%b0%b1%e9%9c%80%e8%a6%81%e5%88%87%e6%8d%a2-node-ip-%e8%ae%bf%e9%97%ae%e6%98%be%e7%84%b6%e6%b2%a1%e6%9c%89%e9%ab%98%e5%8f%af%e7%94%a8%e5%af%b9%e4%ba%8e%e4%bd%bf%e7%94%a8-vip-%e8%ae%bf%e9%97%aemetallb-%e8%87%aa%e5%b8%a6%e9%ab%98%e5%8f%af%e7%94%a8%e5%b1%9e%e6%80%a7%e6%97%a0%e9%9c%80%e6%8b%85%e5%bf%83%e8%8a%82%e7%82%b9%e5%bc%82%e5%b8%b8%e7%ad%89%e5%bc%82%e5%b8%b8%e5%9c%ba%e6%99%af%e4%b8%8b%e6%96%87%e4%bc%9a%e8%ae%b2%e8%a7%a3%e9%ab%98%e5%8f%af%e7%94%a8%e6%98%af%e5%a6%82%e4%bd%95%e5%ae%9e%e7%8e%b0%e7%9a%84">#</a>
+</h5>
+<h1 id="metallb-l2-原理">
+  Metallb L2 原理
+  <a class="anchor" href="#metallb-l2-%e5%8e%9f%e7%90%86">#</a>
+</h1>
+<h5 id="通过上面的示例大家是否会有这两个疑问">
+  通过上面的示例，大家是否会有这两个疑问：
+  <a class="anchor" href="#%e9%80%9a%e8%bf%87%e4%b8%8a%e9%9d%a2%e7%9a%84%e7%a4%ba%e4%be%8b%e5%a4%a7%e5%ae%b6%e6%98%af%e5%90%a6%e4%bc%9a%e6%9c%89%e8%bf%99%e4%b8%a4%e4%b8%aa%e7%96%91%e9%97%ae">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="-vip-没有绑定到服务器的任何一张网卡上为什么这个-ip-可以访问">
+  • VIP 没有绑定到服务器的任何一张网卡上，为什么这个 ip 可以访问？
+  <a class="anchor" href="#-vip-%e6%b2%a1%e6%9c%89%e7%bb%91%e5%ae%9a%e5%88%b0%e6%9c%8d%e5%8a%a1%e5%99%a8%e7%9a%84%e4%bb%bb%e4%bd%95%e4%b8%80%e5%bc%a0%e7%bd%91%e5%8d%a1%e4%b8%8a%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e4%b8%aa-ip-%e5%8f%af%e4%bb%a5%e8%ae%bf%e9%97%ae">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-vip-是如何将流量负载到对应后端服务的">
+  • VIP 是如何将流量负载到对应后端服务的？
+  <a class="anchor" href="#-vip-%e6%98%af%e5%a6%82%e4%bd%95%e5%b0%86%e6%b5%81%e9%87%8f%e8%b4%9f%e8%bd%bd%e5%88%b0%e5%af%b9%e5%ba%94%e5%90%8e%e7%ab%af%e6%9c%8d%e5%8a%a1%e7%9a%84">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-metallb-自身是如何实现高可用">
+  • MetalLB 自身是如何实现高可用？
+  <a class="anchor" href="#-metallb-%e8%87%aa%e8%ba%ab%e6%98%af%e5%a6%82%e4%bd%95%e5%ae%9e%e7%8e%b0%e9%ab%98%e5%8f%af%e7%94%a8">#</a>
+</h5>
+</li>
+</ul>
+<h3 id="arp-请求">
+  arp 请求
+  <a class="anchor" href="#arp-%e8%af%b7%e6%b1%82">#</a>
+</h3>
+<h5 id="先看第一个问题两张网卡通过一根网线连接这是一个最简易的二层组网二层网络是不需要路由转发的只需拿到对端的-mac-地址即可封装报文下面通过实验看看数据包是如何传输的">
+  先看第一个问题，两张网卡通过一根网线连接，这是一个最简易的二层组网。二层网络是不需要路由转发的，只需拿到对端的 <strong>MAC 地址</strong>即可封装报文。下面通过实验看看数据包是如何传输的？
+  <a class="anchor" href="#%e5%85%88%e7%9c%8b%e7%ac%ac%e4%b8%80%e4%b8%aa%e9%97%ae%e9%a2%98%e4%b8%a4%e5%bc%a0%e7%bd%91%e5%8d%a1%e9%80%9a%e8%bf%87%e4%b8%80%e6%a0%b9%e7%bd%91%e7%ba%bf%e8%bf%9e%e6%8e%a5%e8%bf%99%e6%98%af%e4%b8%80%e4%b8%aa%e6%9c%80%e7%ae%80%e6%98%93%e7%9a%84%e4%ba%8c%e5%b1%82%e7%bb%84%e7%bd%91%e4%ba%8c%e5%b1%82%e7%bd%91%e7%bb%9c%e6%98%af%e4%b8%8d%e9%9c%80%e8%a6%81%e8%b7%af%e7%94%b1%e8%bd%ac%e5%8f%91%e7%9a%84%e5%8f%aa%e9%9c%80%e6%8b%bf%e5%88%b0%e5%af%b9%e7%ab%af%e7%9a%84-mac-%e5%9c%b0%e5%9d%80%e5%8d%b3%e5%8f%af%e5%b0%81%e8%a3%85%e6%8a%a5%e6%96%87%e4%b8%8b%e9%9d%a2%e9%80%9a%e8%bf%87%e5%ae%9e%e9%aa%8c%e7%9c%8b%e7%9c%8b%e6%95%b0%e6%8d%ae%e5%8c%85%e6%98%af%e5%a6%82%e4%bd%95%e4%bc%a0%e8%be%93%e7%9a%84">#</a>
+</h5>
+<h5 id="可以利用-linux-虚拟网络技术来模拟上面组网环境linux-虚拟网络技术可参考前文将两个-namespace-通过-veth-pair-连接起来并验证连通性">
+  可以利用 Linux 虚拟网络技术来模拟上面组网环境，Linux 虚拟网络技术可参考前文。将两个 <code>Namespace</code> 通过 <strong>veth pair</strong> 连接起来，并验证连通性。
+  <a class="anchor" href="#%e5%8f%af%e4%bb%a5%e5%88%a9%e7%94%a8-linux-%e8%99%9a%e6%8b%9f%e7%bd%91%e7%bb%9c%e6%8a%80%e6%9c%af%e6%9d%a5%e6%a8%a1%e6%8b%9f%e4%b8%8a%e9%9d%a2%e7%bb%84%e7%bd%91%e7%8e%af%e5%a2%83linux-%e8%99%9a%e6%8b%9f%e7%bd%91%e7%bb%9c%e6%8a%80%e6%9c%af%e5%8f%af%e5%8f%82%e8%80%83%e5%89%8d%e6%96%87%e5%b0%86%e4%b8%a4%e4%b8%aa-namespace-%e9%80%9a%e8%bf%87-veth-pair-%e8%bf%9e%e6%8e%a5%e8%b5%b7%e6%9d%a5%e5%b9%b6%e9%aa%8c%e8%af%81%e8%bf%9e%e9%80%9a%e6%80%a7">#</a>
+</h5>
+<p>创建两个 <code>namespace，ns1、ns2</code></p>
+<pre tabindex="0"><code>$ ip netns add ns1
+$ ip netns add ns2
+</code></pre><h5 id="创建一个-veth-pair">
+  创建一个 <strong>veth pair</strong>
+  <a class="anchor" href="#%e5%88%9b%e5%bb%ba%e4%b8%80%e4%b8%aa-veth-pair">#</a>
+</h5>
+<pre tabindex="0"><code>$ ip link add veth-ns1 type veth peer name veth-ns2
+</code></pre><h5 id="将-veth-pair-一端接入放入-ns1另一端接入-ns2这样就相当于采用网线将两个-network-namespace-连接起来了">
+  将 <strong>veth pair</strong> 一端接入放入 <code>ns1</code>，另一端接入 <code>ns2</code>，这样就相当于采用网线将两个 <code>Network Namespace</code> 连接起来了。
+  <a class="anchor" href="#%e5%b0%86-veth-pair-%e4%b8%80%e7%ab%af%e6%8e%a5%e5%85%a5%e6%94%be%e5%85%a5-ns1%e5%8f%a6%e4%b8%80%e7%ab%af%e6%8e%a5%e5%85%a5-ns2%e8%bf%99%e6%a0%b7%e5%b0%b1%e7%9b%b8%e5%bd%93%e4%ba%8e%e9%87%87%e7%94%a8%e7%bd%91%e7%ba%bf%e5%b0%86%e4%b8%a4%e4%b8%aa-network-namespace-%e8%bf%9e%e6%8e%a5%e8%b5%b7%e6%9d%a5%e4%ba%86">#</a>
+</h5>
+<pre tabindex="0"><code>$ ip link set veth-ns1 netns ns1
+$ ip link set veth-ns2 netns ns2
+</code></pre><h5 id="为两个网卡分别设置-ip-地址这两个网卡的地址位于同一个子网-1921681024-中">
+  为两个网卡分别设置 IP 地址，这两个网卡的地址位于同一个子网 <code>192.168.1.0/24</code> 中。
+  <a class="anchor" href="#%e4%b8%ba%e4%b8%a4%e4%b8%aa%e7%bd%91%e5%8d%a1%e5%88%86%e5%88%ab%e8%ae%be%e7%bd%ae-ip-%e5%9c%b0%e5%9d%80%e8%bf%99%e4%b8%a4%e4%b8%aa%e7%bd%91%e5%8d%a1%e7%9a%84%e5%9c%b0%e5%9d%80%e4%bd%8d%e4%ba%8e%e5%90%8c%e4%b8%80%e4%b8%aa%e5%ad%90%e7%bd%91-1921681024-%e4%b8%ad">#</a>
+</h5>
+<pre tabindex="0"><code>$ ip -n ns1 addr add 192.168.1.1/24 dev veth-ns1
+$ ip -n ns2 addr add 192.168.1.2/24 dev veth-ns2
+</code></pre><h5 id="使用-ip-link-命令设置两张虚拟网卡状态为-up">
+  使用 <code>ip link</code> 命令设置两张虚拟网卡状态为 <code>up</code>。
+  <a class="anchor" href="#%e4%bd%bf%e7%94%a8-ip-link-%e5%91%bd%e4%bb%a4%e8%ae%be%e7%bd%ae%e4%b8%a4%e5%bc%a0%e8%99%9a%e6%8b%9f%e7%bd%91%e5%8d%a1%e7%8a%b6%e6%80%81%e4%b8%ba-up">#</a>
+</h5>
+<pre tabindex="0"><code>$ ip -n ns1 link set veth-ns1 up
+$ ip -n ns2 link set veth-ns2 up
+</code></pre><h5 id="从-ns1-ping-ns2-的-ip测试连通性并在-ns1-里抓包">
+  从 <code>ns1 ping ns2</code> 的 IP，测试连通性，并在 <code>ns1</code> 里抓包。
+  <a class="anchor" href="#%e4%bb%8e-ns1-ping-ns2-%e7%9a%84-ip%e6%b5%8b%e8%af%95%e8%bf%9e%e9%80%9a%e6%80%a7%e5%b9%b6%e5%9c%a8-ns1-%e9%87%8c%e6%8a%93%e5%8c%85">#</a>
+</h5>
+<pre tabindex="0"><code>$ ping 192.168.1.2 -w 3
+PING 192.168.1.2 (192.168.1.2) 56(84) bytes of data.
+64 bytes from 192.168.1.2: icmp_seq=1 ttl=64 time=0.074 ms
+64 bytes from 192.168.1.2: icmp_seq=2 ttl=64 time=0.049 ms
+64 bytes from 192.168.1.2: icmp_seq=3 ttl=64 time=0.040 ms
+
+# 同时在 ns1 抓 arp 包
+$ tcpdump -nn -i veth-ns1 arp
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on veth-ns1, link-type EN10MB (Ethernet), capture size 262144 bytes
+10:47:45.568080 ARP, Request who-has 192.168.1.2 tell 192.168.1.1, length 28
+10:47:45.568104 ARP, Reply 192.168.1.2 is-at 3a:c2:65:ac:c2:fb, length 28
+
+# 查看 ns1 下的 arp 记录，发现存在一条 192.168.1.2 的 arp 记录
+$ arp
+Address                  HWtype  HWaddress           Flags Mask            Iface
+192.168.1.2              ether   3a:c2:65:ac:c2:fb   C                     veth-ns1
+</code></pre><h5 id="可以发现在-ns1-访问-ns2会在这个广播域内发送一个-arp-请求这个请求报文就是为了拿到对端的-mac-地址只有有该-mac-地址的设备才会回复该请求拿到对端的-mac-地址后就可以到达物理层进而到对端完成解包">
+  可以发现在 <code>ns1</code> 访问 <code>ns2</code>，会在这个广播域内发送一个 ARP 请求，这个请求报文就是为了拿到对端的 MAC 地址，只有有该 MAC 地址的设备才会回复该请求。拿到对端的 MAC 地址后就可以到达物理层进而到对端完成解包。
+  <a class="anchor" href="#%e5%8f%af%e4%bb%a5%e5%8f%91%e7%8e%b0%e5%9c%a8-ns1-%e8%ae%bf%e9%97%ae-ns2%e4%bc%9a%e5%9c%a8%e8%bf%99%e4%b8%aa%e5%b9%bf%e6%92%ad%e5%9f%9f%e5%86%85%e5%8f%91%e9%80%81%e4%b8%80%e4%b8%aa-arp-%e8%af%b7%e6%b1%82%e8%bf%99%e4%b8%aa%e8%af%b7%e6%b1%82%e6%8a%a5%e6%96%87%e5%b0%b1%e6%98%af%e4%b8%ba%e4%ba%86%e6%8b%bf%e5%88%b0%e5%af%b9%e7%ab%af%e7%9a%84-mac-%e5%9c%b0%e5%9d%80%e5%8f%aa%e6%9c%89%e6%9c%89%e8%af%a5-mac-%e5%9c%b0%e5%9d%80%e7%9a%84%e8%ae%be%e5%a4%87%e6%89%8d%e4%bc%9a%e5%9b%9e%e5%a4%8d%e8%af%a5%e8%af%b7%e6%b1%82%e6%8b%bf%e5%88%b0%e5%af%b9%e7%ab%af%e7%9a%84-mac-%e5%9c%b0%e5%9d%80%e5%90%8e%e5%b0%b1%e5%8f%af%e4%bb%a5%e5%88%b0%e8%be%be%e7%89%a9%e7%90%86%e5%b1%82%e8%bf%9b%e8%80%8c%e5%88%b0%e5%af%b9%e7%ab%af%e5%ae%8c%e6%88%90%e8%a7%a3%e5%8c%85">#</a>
+</h5>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191445422.png" alt="image-20240319144500341" /></p>
+<h5 id="上面的示例是将-ip-绑定在一个真实的网卡上每张网卡都会有一个独一无二的-mac-地址这样该网卡就会自动回复-arp-请求那么对于一个虚拟-ip它没有绑定任何设备又该如何回复该虚拟-ip-地址的-arp-请求呢">
+  上面的示例，是将 IP 绑定在一个真实的网卡上，每张网卡都会有一个独一无二的 MAC 地址，这样该网卡就会自动回复 ARP 请求。那么对于一个<strong>虚拟 IP</strong>，它没有绑定任何设备，又该如何回复该<strong>虚拟 IP 地址</strong>的 ARP 请求呢？
+  <a class="anchor" href="#%e4%b8%8a%e9%9d%a2%e7%9a%84%e7%a4%ba%e4%be%8b%e6%98%af%e5%b0%86-ip-%e7%bb%91%e5%ae%9a%e5%9c%a8%e4%b8%80%e4%b8%aa%e7%9c%9f%e5%ae%9e%e7%9a%84%e7%bd%91%e5%8d%a1%e4%b8%8a%e6%af%8f%e5%bc%a0%e7%bd%91%e5%8d%a1%e9%83%bd%e4%bc%9a%e6%9c%89%e4%b8%80%e4%b8%aa%e7%8b%ac%e4%b8%80%e6%97%a0%e4%ba%8c%e7%9a%84-mac-%e5%9c%b0%e5%9d%80%e8%bf%99%e6%a0%b7%e8%af%a5%e7%bd%91%e5%8d%a1%e5%b0%b1%e4%bc%9a%e8%87%aa%e5%8a%a8%e5%9b%9e%e5%a4%8d-arp-%e8%af%b7%e6%b1%82%e9%82%a3%e4%b9%88%e5%af%b9%e4%ba%8e%e4%b8%80%e4%b8%aa%e8%99%9a%e6%8b%9f-ip%e5%ae%83%e6%b2%a1%e6%9c%89%e7%bb%91%e5%ae%9a%e4%bb%bb%e4%bd%95%e8%ae%be%e5%a4%87%e5%8f%88%e8%af%a5%e5%a6%82%e4%bd%95%e5%9b%9e%e5%a4%8d%e8%af%a5%e8%99%9a%e6%8b%9f-ip-%e5%9c%b0%e5%9d%80%e7%9a%84-arp-%e8%af%b7%e6%b1%82%e5%91%a2">#</a>
+</h5>
+<h5 id="回到-metallb-中metallb-l2-模式就是通过充当-vip-的物理设备来实现的metallb-的-leader-speaker-组件会不断监听该-vip-的-arp-请求然后把当前-spaeker-所在的-node-主机网卡-mac-地址回复给对端这就是为什么-speaker-为什么使用-hostnetwork-网络模式这样就类似将-vip-绑定在某个-k8s-节点的物理网卡上只不过回复该-vip-的-arp-请求是程序并不是-linux-内核">
+  回到 MetalLB 中，MetalLB L2 模式就是通过充当 VIP 的<strong>物理设备</strong>来实现的，Metallb 的 L<strong>eader Speaker</strong> 组件会不断监听该 VIP 的 ARP 请求，然后把当前 Spaeker <strong>所在的 Node 主机网卡 MAC 地址</strong>回复给对端，这就是为什么 Speaker 为什么使用 <code>hostNetwork</code> 网络模式。这样就类似将 VIP 绑定在某个 K8S 节点的物理网卡上，只不过回复该 VIP 的 ARP 请求是程序并不是 Linux 内核。
+  <a class="anchor" href="#%e5%9b%9e%e5%88%b0-metallb-%e4%b8%admetallb-l2-%e6%a8%a1%e5%bc%8f%e5%b0%b1%e6%98%af%e9%80%9a%e8%bf%87%e5%85%85%e5%bd%93-vip-%e7%9a%84%e7%89%a9%e7%90%86%e8%ae%be%e5%a4%87%e6%9d%a5%e5%ae%9e%e7%8e%b0%e7%9a%84metallb-%e7%9a%84-leader-speaker-%e7%bb%84%e4%bb%b6%e4%bc%9a%e4%b8%8d%e6%96%ad%e7%9b%91%e5%90%ac%e8%af%a5-vip-%e7%9a%84-arp-%e8%af%b7%e6%b1%82%e7%84%b6%e5%90%8e%e6%8a%8a%e5%bd%93%e5%89%8d-spaeker-%e6%89%80%e5%9c%a8%e7%9a%84-node-%e4%b8%bb%e6%9c%ba%e7%bd%91%e5%8d%a1-mac-%e5%9c%b0%e5%9d%80%e5%9b%9e%e5%a4%8d%e7%bb%99%e5%af%b9%e7%ab%af%e8%bf%99%e5%b0%b1%e6%98%af%e4%b8%ba%e4%bb%80%e4%b9%88-speaker-%e4%b8%ba%e4%bb%80%e4%b9%88%e4%bd%bf%e7%94%a8-hostnetwork-%e7%bd%91%e7%bb%9c%e6%a8%a1%e5%bc%8f%e8%bf%99%e6%a0%b7%e5%b0%b1%e7%b1%bb%e4%bc%bc%e5%b0%86-vip-%e7%bb%91%e5%ae%9a%e5%9c%a8%e6%9f%90%e4%b8%aa-k8s-%e8%8a%82%e7%82%b9%e7%9a%84%e7%89%a9%e7%90%86%e7%bd%91%e5%8d%a1%e4%b8%8a%e5%8f%aa%e4%b8%8d%e8%bf%87%e5%9b%9e%e5%a4%8d%e8%af%a5-vip-%e7%9a%84-arp-%e8%af%b7%e6%b1%82%e6%98%af%e7%a8%8b%e5%ba%8f%e5%b9%b6%e4%b8%8d%e6%98%af-linux-%e5%86%85%e6%a0%b8">#</a>
+</h5>
+<h5 id="下面还是通过-nginx-示例演示">
+  下面还是通过 Nginx 示例演示：
+  <a class="anchor" href="#%e4%b8%8b%e9%9d%a2%e8%bf%98%e6%98%af%e9%80%9a%e8%bf%87-nginx-%e7%a4%ba%e4%be%8b%e6%bc%94%e7%a4%ba">#</a>
+</h5>
+<h5 id="环境有三个-k8s-节点且部署一个-nginx-服务使用-metallb-分配-lb">
+  环境有三个 K8S 节点，且部署一个 nginx 服务，使用 MetalLB 分配 LB
+  <a class="anchor" href="#%e7%8e%af%e5%a2%83%e6%9c%89%e4%b8%89%e4%b8%aa-k8s-%e8%8a%82%e7%82%b9%e4%b8%94%e9%83%a8%e7%bd%b2%e4%b8%80%e4%b8%aa-nginx-%e6%9c%8d%e5%8a%a1%e4%bd%bf%e7%94%a8-metallb-%e5%88%86%e9%85%8d-lb">#</a>
+</h5>
+<pre tabindex="0"><code>$ kubectl get node
+NAME                   STATUS   ROLES                  AGE   VERSION
+master-172-30-91-166   Ready    control-plane,master   32d   v1.22.17
+node-172-30-91-17      Ready    &lt;none&gt;                 32d   v1.22.17
+node-172-30-91-215     Ready    &lt;none&gt;                 32d   v1.22.17
+
+$ kubectl get svc
+NAME                   TYPE           CLUSTER-IP       EXTERNAL-IP    PORT(S)             AGE
+nginx-service          LoadBalancer   10.233.69.89     172.30.91.43   80:31729/TCP        18m
+</code></pre><h5 id="在-master-172-30-91-166上向-vip-发-arp-请求发现可以正常回复-mac-地址那么这个-mac-地址是哪个-speaker-响应的">
+  在 <code>master-172-30-91-166</code>上向 VIP 发 ARP 请求，发现可以正常回复 MAC 地址，那么这个 MAC 地址是哪个 <strong>Speaker</strong> 响应的？
+  <a class="anchor" href="#%e5%9c%a8-master-172-30-91-166%e4%b8%8a%e5%90%91-vip-%e5%8f%91-arp-%e8%af%b7%e6%b1%82%e5%8f%91%e7%8e%b0%e5%8f%af%e4%bb%a5%e6%ad%a3%e5%b8%b8%e5%9b%9e%e5%a4%8d-mac-%e5%9c%b0%e5%9d%80%e9%82%a3%e4%b9%88%e8%bf%99%e4%b8%aa-mac-%e5%9c%b0%e5%9d%80%e6%98%af%e5%93%aa%e4%b8%aa-speaker-%e5%93%8d%e5%ba%94%e7%9a%84">#</a>
+</h5>
+<pre tabindex="0"><code>$ arping -c 1 -I eth0 172.30.91.43 
+ARPING 172.30.91.43 from 172.30.91.166 eth0
+Unicast reply from 172.30.91.43 [FA:16:3E:7E:79:C9]  1.062ms
+Unicast reply from 172.30.91.43 [FA:16:3E:7E:79:C9]  1.218ms
+Unicast reply from 172.30.91.43 [FA:16:3E:74:CC:83]  3.298ms
+Sent 1 probes (1 broadcast(s))
+Received 3 response(s)
+</code></pre><h5 id="metallb-speaker-在选举完成后会向对应-service-发送一个-event表明被哪个节点宣告了通过以下命令可以知道该-vip-会被-node-172-30-91-215-上的-speaker-响应">
+  MetalLB Speaker 在选举完成后，会向对应 Service 发送一个 Event，表明被哪个节点宣告了。通过以下命令可以知道该 VIP 会被 <code>node-172-30-91-215</code> 上的 Speaker 响应。
+  <a class="anchor" href="#metallb-speaker-%e5%9c%a8%e9%80%89%e4%b8%be%e5%ae%8c%e6%88%90%e5%90%8e%e4%bc%9a%e5%90%91%e5%af%b9%e5%ba%94-service-%e5%8f%91%e9%80%81%e4%b8%80%e4%b8%aa-event%e8%a1%a8%e6%98%8e%e8%a2%ab%e5%93%aa%e4%b8%aa%e8%8a%82%e7%82%b9%e5%ae%a3%e5%91%8a%e4%ba%86%e9%80%9a%e8%bf%87%e4%bb%a5%e4%b8%8b%e5%91%bd%e4%bb%a4%e5%8f%af%e4%bb%a5%e7%9f%a5%e9%81%93%e8%af%a5-vip-%e4%bc%9a%e8%a2%ab-node-172-30-91-215-%e4%b8%8a%e7%9a%84-speaker-%e5%93%8d%e5%ba%94">#</a>
+</h5>
+<pre tabindex="0"><code>$ kubectl describe svc nginx-service
+Name:                     nginx-service
+Namespace:                default
+Labels:                   &lt;none&gt;
+Annotations:              metallb.universe.tf/ip-allocated-from-pool: subnet-91
+Selector:                 app=nginx
+Type:                     LoadBalancer
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       10.233.69.89
+IPs:                      10.233.69.89
+LoadBalancer Ingress:     172.30.91.43
+Port:                     &lt;unset&gt;  80/TCP
+TargetPort:               80/TCP
+NodePort:                 &lt;unset&gt;  31729/TCP
+Endpoints:                100.76.222.87:80
+Session Affinity:         None
+External Traffic Policy:  Cluster
+Events:
+  Type    Reason        Age   From                Message
+  ----    ------        ----  ----                -------
+  Normal  IPAllocated   21m   metallb-controller  Assigned IP [&#34;172.30.91.43&#34;]
+  Normal  nodeAssigned  21m   metallb-speaker     announcing from node &#34;node-172-30-91-215&#34; with protocol &#34;layer2&#34;
+</code></pre><h5 id="查看对应-speaker-pod-日志可以发现日志详细打印了-arp-请求的源-ip源-mac以及-vip-和-vip-mac-地址该-mac-地址又是属于哪个网卡设备呢">
+  查看对应 Speaker pod 日志，可以发现日志详细打印了 ARP 请求的<strong>源 IP</strong>，<strong>源 MAC</strong>，以及 <strong>VIP</strong> 和 <strong>VIP MAC 地址</strong>。该 MAC 地址又是属于哪个网卡设备呢？
+  <a class="anchor" href="#%e6%9f%a5%e7%9c%8b%e5%af%b9%e5%ba%94-speaker-pod-%e6%97%a5%e5%bf%97%e5%8f%af%e4%bb%a5%e5%8f%91%e7%8e%b0%e6%97%a5%e5%bf%97%e8%af%a6%e7%bb%86%e6%89%93%e5%8d%b0%e4%ba%86-arp-%e8%af%b7%e6%b1%82%e7%9a%84%e6%ba%90-ip%e6%ba%90-mac%e4%bb%a5%e5%8f%8a-vip-%e5%92%8c-vip-mac-%e5%9c%b0%e5%9d%80%e8%af%a5-mac-%e5%9c%b0%e5%9d%80%e5%8f%88%e6%98%af%e5%b1%9e%e4%ba%8e%e5%93%aa%e4%b8%aa%e7%bd%91%e5%8d%a1%e8%ae%be%e5%a4%87%e5%91%a2">#</a>
+</h5>
+<pre tabindex="0"><code>$ kubectl get pods -n metallb-system -o wide | grep node-172-30-91-215
+speaker-r55rn                 1/1     Running   0          6d2h   172.30.91.215   node-172-30-91-215     &lt;none&gt;           &lt;none&gt;
+
+$ kubectl logs -f pods/speaker-r55rn -n metallb-system|grep arp
+{&#34;caller&#34;:&#34;arp.go:110&#34;,&#34;interface&#34;:&#34;eth0&#34;,&#34;ip&#34;:&#34;172.30.91.43&#34;,&#34;level&#34;:&#34;debug&#34;,&#34;msg&#34;:&#34;got ARP request for service IP, sending response&#34;,&#34;responseMAC&#34;:&#34;fa:16:3e:7e:79:c9&#34;,
+&#34;senderIP&#34;:&#34;172.30.91.166&#34;,&#34;senderMAC&#34;:&#34;fa:16:3e:43:bf:71&#34;,&#34;ts&#34;:&#34;2024-01-08T09:36:31Z&#34;}
+</code></pre><h5 id="根据-speaker-原理speaker-会回复其节点上的可通信的物理网卡的-mac-地址">
+  根据 Speaker 原理，Speaker 会回复其节点上的可通信的物理网卡的 MAC 地址
+  <a class="anchor" href="#%e6%a0%b9%e6%8d%ae-speaker-%e5%8e%9f%e7%90%86speaker-%e4%bc%9a%e5%9b%9e%e5%a4%8d%e5%85%b6%e8%8a%82%e7%82%b9%e4%b8%8a%e7%9a%84%e5%8f%af%e9%80%9a%e4%bf%a1%e7%9a%84%e7%89%a9%e7%90%86%e7%bd%91%e5%8d%a1%e7%9a%84-mac-%e5%9c%b0%e5%9d%80">#</a>
+</h5>
+<pre tabindex="0"><code>$ ifconfig eth0
+eth0: flags=4163&lt;UP,BROADCAST,RUNNING,MULTICAST&gt;  mtu 1500
+        inet 172.30.91.215  netmask 255.255.255.0  broadcast 172.30.91.255
+        inet6 fe80::f816:3eff:fe7e:79c9  prefixlen 64  scopeid 0x20&lt;link&gt;
+        ether fa:16:3e:7e:79:c9  txqueuelen 1000  (Ethernet)
+        RX packets 317533468  bytes 165612717123 (154.2 GiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 291439852  bytes 95753527594 (89.1 GiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+</code></pre><h5 id="发现-speaker-回复的就是当前节点的-eth0-mac-地址">
+  发现 Speaker 回复的就是当前节点的 <code>eth0</code> MAC 地址。
+  <a class="anchor" href="#%e5%8f%91%e7%8e%b0-speaker-%e5%9b%9e%e5%a4%8d%e7%9a%84%e5%b0%b1%e6%98%af%e5%bd%93%e5%89%8d%e8%8a%82%e7%82%b9%e7%9a%84-eth0-mac-%e5%9c%b0%e5%9d%80">#</a>
+</h5>
+<h5 id="通过一系列的实验和原理说明网络中一个-ip-没有绑定到某个设备只要该-ip-在网络层是可到达那么只要能够回复该-ip-的-arp-请求就能实现通信metallb-l2-模式也是如此到这基本回答了提出的第一个问题">
+  通过一系列的实验和原理说明，网络中一个 IP 没有绑定到某个设备，只要该 IP 在网络层是可到达，那么只要能够回复该 IP 的 ARP 请求就能实现通信。MetalLB L2 模式也是如此，到这基本回答了提出的第一个问题。
+  <a class="anchor" href="#%e9%80%9a%e8%bf%87%e4%b8%80%e7%b3%bb%e5%88%97%e7%9a%84%e5%ae%9e%e9%aa%8c%e5%92%8c%e5%8e%9f%e7%90%86%e8%af%b4%e6%98%8e%e7%bd%91%e7%bb%9c%e4%b8%ad%e4%b8%80%e4%b8%aa-ip-%e6%b2%a1%e6%9c%89%e7%bb%91%e5%ae%9a%e5%88%b0%e6%9f%90%e4%b8%aa%e8%ae%be%e5%a4%87%e5%8f%aa%e8%a6%81%e8%af%a5-ip-%e5%9c%a8%e7%bd%91%e7%bb%9c%e5%b1%82%e6%98%af%e5%8f%af%e5%88%b0%e8%be%be%e9%82%a3%e4%b9%88%e5%8f%aa%e8%a6%81%e8%83%bd%e5%a4%9f%e5%9b%9e%e5%a4%8d%e8%af%a5-ip-%e7%9a%84-arp-%e8%af%b7%e6%b1%82%e5%b0%b1%e8%83%bd%e5%ae%9e%e7%8e%b0%e9%80%9a%e4%bf%a1metallb-l2-%e6%a8%a1%e5%bc%8f%e4%b9%9f%e6%98%af%e5%a6%82%e6%ad%a4%e5%88%b0%e8%bf%99%e5%9f%ba%e6%9c%ac%e5%9b%9e%e7%ad%94%e4%ba%86%e6%8f%90%e5%87%ba%e7%9a%84%e7%ac%ac%e4%b8%80%e4%b8%aa%e9%97%ae%e9%a2%98">#</a>
+</h5>
+<h3 id="负载均衡">
+  负载均衡
+  <a class="anchor" href="#%e8%b4%9f%e8%bd%bd%e5%9d%87%e8%a1%a1">#</a>
+</h3>
+<h5 id="第二个问题实际上是每个-lb-都需要解决的因为这就是-lb-需要实现的功能将请求的流量负载到所有的后端实例上">
+  第二个问题实际上是每个 LB 都需要解决的，因为这就是 LB 需要实现的功能，将请求的流量负载到所有的后端实例上。
+  <a class="anchor" href="#%e7%ac%ac%e4%ba%8c%e4%b8%aa%e9%97%ae%e9%a2%98%e5%ae%9e%e9%99%85%e4%b8%8a%e6%98%af%e6%af%8f%e4%b8%aa-lb-%e9%83%bd%e9%9c%80%e8%a6%81%e8%a7%a3%e5%86%b3%e7%9a%84%e5%9b%a0%e4%b8%ba%e8%bf%99%e5%b0%b1%e6%98%af-lb-%e9%9c%80%e8%a6%81%e5%ae%9e%e7%8e%b0%e7%9a%84%e5%8a%9f%e8%83%bd%e5%b0%86%e8%af%b7%e6%b1%82%e7%9a%84%e6%b5%81%e9%87%8f%e8%b4%9f%e8%bd%bd%e5%88%b0%e6%89%80%e6%9c%89%e7%9a%84%e5%90%8e%e7%ab%af%e5%ae%9e%e4%be%8b%e4%b8%8a">#</a>
+</h5>
+<h5 id="metallb-的负载均衡实际上是-kube-proxy-实现的metallb-将-ip-更新至-loadbalancer-service-后kube-proxy-会-watch-到-service-的更新操作直接在集群每个节点上创建一条-ipvs-规则该条规则就是将上述-metallb-分配的-ip-负载到该-service-的-endpoint进而实现了负载均衡的功能">
+  MetalLB 的负载均衡实际上是 Kube-proxy 实现的，MetalLB 将 IP 更新至 <code>LoadBalancer</code> Service 后，Kube-proxy 会 Watch 到 Service 的更新操作，直接在集群每个节点上创建一条 IPVS 规则。该条规则就是将上述 MetalLB 分配的 IP 负载到该 Service 的 Endpoint，进而实现了负载均衡的功能。
+  <a class="anchor" href="#metallb-%e7%9a%84%e8%b4%9f%e8%bd%bd%e5%9d%87%e8%a1%a1%e5%ae%9e%e9%99%85%e4%b8%8a%e6%98%af-kube-proxy-%e5%ae%9e%e7%8e%b0%e7%9a%84metallb-%e5%b0%86-ip-%e6%9b%b4%e6%96%b0%e8%87%b3-loadbalancer-service-%e5%90%8ekube-proxy-%e4%bc%9a-watch-%e5%88%b0-service-%e7%9a%84%e6%9b%b4%e6%96%b0%e6%93%8d%e4%bd%9c%e7%9b%b4%e6%8e%a5%e5%9c%a8%e9%9b%86%e7%be%a4%e6%af%8f%e4%b8%aa%e8%8a%82%e7%82%b9%e4%b8%8a%e5%88%9b%e5%bb%ba%e4%b8%80%e6%9d%a1-ipvs-%e8%a7%84%e5%88%99%e8%af%a5%e6%9d%a1%e8%a7%84%e5%88%99%e5%b0%b1%e6%98%af%e5%b0%86%e4%b8%8a%e8%bf%b0-metallb-%e5%88%86%e9%85%8d%e7%9a%84-ip-%e8%b4%9f%e8%bd%bd%e5%88%b0%e8%af%a5-service-%e7%9a%84-endpoint%e8%bf%9b%e8%80%8c%e5%ae%9e%e7%8e%b0%e4%ba%86%e8%b4%9f%e8%bd%bd%e5%9d%87%e8%a1%a1%e7%9a%84%e5%8a%9f%e8%83%bd">#</a>
+</h5>
+<pre tabindex="0"><code>$ ipvsadm -Ln |grep 172.30.91.43 -A3
+TCP  172.30.91.43:80 rr
+  -&gt; 100.76.222.87:80             Masq    1      0          0
+</code></pre><h5 id="这里就回答了第二个问题">
+  这里就回答了第二个问题。
+  <a class="anchor" href="#%e8%bf%99%e9%87%8c%e5%b0%b1%e5%9b%9e%e7%ad%94%e4%ba%86%e7%ac%ac%e4%ba%8c%e4%b8%aa%e9%97%ae%e9%a2%98">#</a>
+</h5>
+<h3 id="工作过程">
+  工作过程
+  <a class="anchor" href="#%e5%b7%a5%e4%bd%9c%e8%bf%87%e7%a8%8b">#</a>
+</h3>
+<h5 id="metallb-分为两部分组成分别是-controller-和-speaker两者的分工如下所示">
+  MetalLB 分为两部分组成，分别是 Controller 和 Speaker。两者的分工如下所示：
+  <a class="anchor" href="#metallb-%e5%88%86%e4%b8%ba%e4%b8%a4%e9%83%a8%e5%88%86%e7%bb%84%e6%88%90%e5%88%86%e5%88%ab%e6%98%af-controller-%e5%92%8c-speaker%e4%b8%a4%e8%80%85%e7%9a%84%e5%88%86%e5%b7%a5%e5%a6%82%e4%b8%8b%e6%89%80%e7%a4%ba">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="-controller-负责监听-service-变化依据对应的-ip-池进行-ip-分配">
+  • Controller 负责监听 Service 变化，依据对应的 IP 池进行 IP 分配。
+  <a class="anchor" href="#-controller-%e8%b4%9f%e8%b4%a3%e7%9b%91%e5%90%ac-service-%e5%8f%98%e5%8c%96%e4%be%9d%e6%8d%ae%e5%af%b9%e5%ba%94%e7%9a%84-ip-%e6%b1%a0%e8%bf%9b%e8%a1%8c-ip-%e5%88%86%e9%85%8d">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-speaker-负责监听-service-的变化并依据具体的协议发起相应的广播或应答节点的-leader-选举">
+  • Speaker 负责监听 Service 的变化，并依据具体的协议发起相应的广播或应答、节点的 Leader 选举。
+  <a class="anchor" href="#-speaker-%e8%b4%9f%e8%b4%a3%e7%9b%91%e5%90%ac-service-%e7%9a%84%e5%8f%98%e5%8c%96%e5%b9%b6%e4%be%9d%e6%8d%ae%e5%85%b7%e4%bd%93%e7%9a%84%e5%8d%8f%e8%ae%ae%e5%8f%91%e8%b5%b7%e7%9b%b8%e5%ba%94%e7%9a%84%e5%b9%bf%e6%92%ad%e6%88%96%e5%ba%94%e7%ad%94%e8%8a%82%e7%82%b9%e7%9a%84-leader-%e9%80%89%e4%b8%be">#</a>
+</h5>
+</li>
+</ul>
+<h5 id="所以说-metallb-的-controller-和-speaker-并没有直接通讯而是依赖于集群中的-loadbalancer-service-间接协作">
+  所以说 MetalLB 的 Controller 和 Speaker 并没有直接通讯，而是依赖于集群中的 <code>LoadBalancer</code> Service 间接协作
+  <a class="anchor" href="#%e6%89%80%e4%bb%a5%e8%af%b4-metallb-%e7%9a%84-controller-%e5%92%8c-speaker-%e5%b9%b6%e6%b2%a1%e6%9c%89%e7%9b%b4%e6%8e%a5%e9%80%9a%e8%ae%af%e8%80%8c%e6%98%af%e4%be%9d%e8%b5%96%e4%ba%8e%e9%9b%86%e7%be%a4%e4%b8%ad%e7%9a%84-loadbalancer-service-%e9%97%b4%e6%8e%a5%e5%8d%8f%e4%bd%9c">#</a>
+</h5>
+<h5 id="下面针对集群中新增一个-loadbalancer-service-阐述-metallb-的工作过程">
+  下面针对集群中新增一个 <code>LoadBalancer</code> Service 阐述 MetalLB 的工作过程：
+  <a class="anchor" href="#%e4%b8%8b%e9%9d%a2%e9%92%88%e5%af%b9%e9%9b%86%e7%be%a4%e4%b8%ad%e6%96%b0%e5%a2%9e%e4%b8%80%e4%b8%aa-loadbalancer-service-%e9%98%90%e8%bf%b0-metallb-%e7%9a%84%e5%b7%a5%e4%bd%9c%e8%bf%87%e7%a8%8b">#</a>
+</h5>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191445126.png" alt="image-20240319144533064" /></p>
+<ul>
+<li>
+<h5 id="-controller-watch-到集群中新增了一个-loadbalancer-service从-ippooladdress-中获取一个-没有被使用的-ip并至该-service-的-statusloadbalancer">
+  • <strong>Controller</strong> Watch 到集群中新增了一个 <code>LoadBalancer</code> Service，从 <code>IpPoolAddress</code> 中获取一个 没有被使用的 IP，并至该 Service 的 <code>status.loadBalancer</code>
+  <a class="anchor" href="#-controller-watch-%e5%88%b0%e9%9b%86%e7%be%a4%e4%b8%ad%e6%96%b0%e5%a2%9e%e4%ba%86%e4%b8%80%e4%b8%aa-loadbalancer-service%e4%bb%8e-ippooladdress-%e4%b8%ad%e8%8e%b7%e5%8f%96%e4%b8%80%e4%b8%aa-%e6%b2%a1%e6%9c%89%e8%a2%ab%e4%bd%bf%e7%94%a8%e7%9a%84-ip%e5%b9%b6%e8%87%b3%e8%af%a5-service-%e7%9a%84-statusloadbalancer">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-kube-proxy-watch-到-service-的更新操作在集群每个节点上创建一条-ipvs-规则该规则就是将上述-metallb-分配的-ip-负载到该-service-的-endpoint">
+  • <strong>Kube-proxy</strong> Watch 到 Service 的更新操作，在集群<strong>每个节点</strong>上创建一条 IPVS 规则，该规则就是将上述 MetalLB 分配的 IP 负载到该 Service 的 Endpoint
+  <a class="anchor" href="#-kube-proxy-watch-%e5%88%b0-service-%e7%9a%84%e6%9b%b4%e6%96%b0%e6%93%8d%e4%bd%9c%e5%9c%a8%e9%9b%86%e7%be%a4%e6%af%8f%e4%b8%aa%e8%8a%82%e7%82%b9%e4%b8%8a%e5%88%9b%e5%bb%ba%e4%b8%80%e6%9d%a1-ipvs-%e8%a7%84%e5%88%99%e8%af%a5%e8%a7%84%e5%88%99%e5%b0%b1%e6%98%af%e5%b0%86%e4%b8%8a%e8%bf%b0-metallb-%e5%88%86%e9%85%8d%e7%9a%84-ip-%e8%b4%9f%e8%bd%bd%e5%88%b0%e8%af%a5-service-%e7%9a%84-endpoint">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-speaker-是-daemonset-类型的工作负载所以每个-k8s-节点都有一个实例上述-controller-和-kube-proxy-工作的同时speaker-也同时-watch-service-的新增首先根据-memberlist3-选举出一个-leader-这里就回答了第三个问题会不断监听该-vip-的-arp-请求然后把当前-spaeker-所在的-node-主机网卡-mac-地址回复给对端">
+  • <strong>Speaker</strong> 是 DaemonSet 类型的工作负载，所以每个 K8S 节点都有一个实例。上述 Controller 和 Kube-proxy 工作的同时，Speaker 也同时 Watch Service 的新增。首先根据 memberlist[3] 选举出一个 Leader (这里就回答了第三个问题)，会不断监听该 VIP 的 ARP 请求，然后把当前 Spaeker 所在的 Node 主机网卡 MAC 地址回复给对端。
+  <a class="anchor" href="#-speaker-%e6%98%af-daemonset-%e7%b1%bb%e5%9e%8b%e7%9a%84%e5%b7%a5%e4%bd%9c%e8%b4%9f%e8%bd%bd%e6%89%80%e4%bb%a5%e6%af%8f%e4%b8%aa-k8s-%e8%8a%82%e7%82%b9%e9%83%bd%e6%9c%89%e4%b8%80%e4%b8%aa%e5%ae%9e%e4%be%8b%e4%b8%8a%e8%bf%b0-controller-%e5%92%8c-kube-proxy-%e5%b7%a5%e4%bd%9c%e7%9a%84%e5%90%8c%e6%97%b6speaker-%e4%b9%9f%e5%90%8c%e6%97%b6-watch-service-%e7%9a%84%e6%96%b0%e5%a2%9e%e9%a6%96%e5%85%88%e6%a0%b9%e6%8d%ae-memberlist3-%e9%80%89%e4%b8%be%e5%87%ba%e4%b8%80%e4%b8%aa-leader-%e8%bf%99%e9%87%8c%e5%b0%b1%e5%9b%9e%e7%ad%94%e4%ba%86%e7%ac%ac%e4%b8%89%e4%b8%aa%e9%97%ae%e9%a2%98%e4%bc%9a%e4%b8%8d%e6%96%ad%e7%9b%91%e5%90%ac%e8%af%a5-vip-%e7%9a%84-arp-%e8%af%b7%e6%b1%82%e7%84%b6%e5%90%8e%e6%8a%8a%e5%bd%93%e5%89%8d-spaeker-%e6%89%80%e5%9c%a8%e7%9a%84-node-%e4%b8%bb%e6%9c%ba%e7%bd%91%e5%8d%a1-mac-%e5%9c%b0%e5%9d%80%e5%9b%9e%e5%a4%8d%e7%bb%99%e5%af%b9%e7%ab%af">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-speaker-会向-service-发送一条-event-记录表明该-service-的-loadbalancer-被该节点承载流量">
+  • Speaker 会向 Service 发送一条 event 记录，表明该 Service 的 LoadBalancer 被该节点承载流量。
+  <a class="anchor" href="#-speaker-%e4%bc%9a%e5%90%91-service-%e5%8f%91%e9%80%81%e4%b8%80%e6%9d%a1-event-%e8%ae%b0%e5%bd%95%e8%a1%a8%e6%98%8e%e8%af%a5-service-%e7%9a%84-loadbalancer-%e8%a2%ab%e8%af%a5%e8%8a%82%e7%82%b9%e6%89%bf%e8%bd%bd%e6%b5%81%e9%87%8f">#</a>
+</h5>
+</li>
+</ul>
+<blockquote>
+<p>根据上面的描述，就是对于一个 LoadBalancer Service 最终只有一个节点承载流量，当前节点出现故障会<strong>立即进行选主</strong>，新的 Leader Speaker 会承载 ARP 请求，显然这种高可用的方式不是很纯粹。</p></blockquote>
+<h5 id="这里说的并不是所有的-service-的流量都被某一个节点承载只是当前-service-的生命周期的流量都在一个节点上因为每个-service-都会通过-memberlist4-选举一个-leader">
+  这里说的并不是所有的 Service 的流量都被某一个节点承载，只是当前 Service 的生命周期的流量都在一个节点上。因为每个 Service 都会通过 memberlist[4] 选举一个 Leader。
+  <a class="anchor" href="#%e8%bf%99%e9%87%8c%e8%af%b4%e7%9a%84%e5%b9%b6%e4%b8%8d%e6%98%af%e6%89%80%e6%9c%89%e7%9a%84-service-%e7%9a%84%e6%b5%81%e9%87%8f%e9%83%bd%e8%a2%ab%e6%9f%90%e4%b8%80%e4%b8%aa%e8%8a%82%e7%82%b9%e6%89%bf%e8%bd%bd%e5%8f%aa%e6%98%af%e5%bd%93%e5%89%8d-service-%e7%9a%84%e7%94%9f%e5%91%bd%e5%91%a8%e6%9c%9f%e7%9a%84%e6%b5%81%e9%87%8f%e9%83%bd%e5%9c%a8%e4%b8%80%e4%b8%aa%e8%8a%82%e7%82%b9%e4%b8%8a%e5%9b%a0%e4%b8%ba%e6%af%8f%e4%b8%aa-service-%e9%83%bd%e4%bc%9a%e9%80%9a%e8%bf%87-memberlist4-%e9%80%89%e4%b8%be%e4%b8%80%e4%b8%aa-leader">#</a>
+</h5>
+<h5 id="这时候通过-172309143-去访问-nginx-服务时整个数据流是什么样的">
+  这时候通过 <code>172.30.91.43</code> 去访问 nginx 服务时，整个数据流是什么样的？
+  <a class="anchor" href="#%e8%bf%99%e6%97%b6%e5%80%99%e9%80%9a%e8%bf%87-172309143-%e5%8e%bb%e8%ae%bf%e9%97%ae-nginx-%e6%9c%8d%e5%8a%a1%e6%97%b6%e6%95%b4%e4%b8%aa%e6%95%b0%e6%8d%ae%e6%b5%81%e6%98%af%e4%bb%80%e4%b9%88%e6%a0%b7%e7%9a%84">#</a>
+</h5>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191445686.png" alt="image-20240319144553597" /></p>
+<ul>
+<li>
+<h5 id="-向-172309143-发起请求时数据包到数据链路层发送-arp-广播请求询问该广播域谁有-172309143-的-mac-地址">
+  • 向 <code>172.30.91.43</code> 发起请求时，数据包到数据链路层发送 ARP 广播请求，询问该广播域谁有 <code>172.30.91.43</code> 的 MAC 地址
+  <a class="anchor" href="#-%e5%90%91-172309143-%e5%8f%91%e8%b5%b7%e8%af%b7%e6%b1%82%e6%97%b6%e6%95%b0%e6%8d%ae%e5%8c%85%e5%88%b0%e6%95%b0%e6%8d%ae%e9%93%be%e8%b7%af%e5%b1%82%e5%8f%91%e9%80%81-arp-%e5%b9%bf%e6%92%ad%e8%af%b7%e6%b1%82%e8%af%a2%e9%97%ae%e8%af%a5%e5%b9%bf%e6%92%ad%e5%9f%9f%e8%b0%81%e6%9c%89-172309143-%e7%9a%84-mac-%e5%9c%b0%e5%9d%80">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-这时候-speaker-leader-会回复该-arp-请求将当前节点的网卡-mac-地址回复给对端">
+  • 这时候 Speaker Leader 会回复该 ARP 请求，将当前节点的网卡 MAC 地址回复给对端
+  <a class="anchor" href="#-%e8%bf%99%e6%97%b6%e5%80%99-speaker-leader-%e4%bc%9a%e5%9b%9e%e5%a4%8d%e8%af%a5-arp-%e8%af%b7%e6%b1%82%e5%b0%86%e5%bd%93%e5%89%8d%e8%8a%82%e7%82%b9%e7%9a%84%e7%bd%91%e5%8d%a1-mac-%e5%9c%b0%e5%9d%80%e5%9b%9e%e5%a4%8d%e7%bb%99%e5%af%b9%e7%ab%af">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-客户端拿到了-mac-地址后数据包继续封装发送成功到达对端也就是-speaker-leader-节点">
+  • 客户端拿到了 MAC 地址后数据包继续封装发送成功到达对端，也就是 Speaker Leader 节点
+  <a class="anchor" href="#-%e5%ae%a2%e6%88%b7%e7%ab%af%e6%8b%bf%e5%88%b0%e4%ba%86-mac-%e5%9c%b0%e5%9d%80%e5%90%8e%e6%95%b0%e6%8d%ae%e5%8c%85%e7%bb%a7%e7%bb%ad%e5%b0%81%e8%a3%85%e5%8f%91%e9%80%81%e6%88%90%e5%8a%9f%e5%88%b0%e8%be%be%e5%af%b9%e7%ab%af%e4%b9%9f%e5%b0%b1%e6%98%af-speaker-leader-%e8%8a%82%e7%82%b9">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-根据上面介绍-kube-proxy-会在-metallb-分配-ip-后在每个节点创建一条-ipvs-转发规则将请求流量负载到后端每个实例所以流量到达-speaker-leader-节点后会被负载到后端多个-nginx-实例上">
+  • 根据上面介绍 Kube-proxy 会在 MetalLB 分配 IP 后在每个节点创建一条 IPVS 转发规则，将请求流量负载到后端每个实例。所以流量到达 Speaker Leader 节点后会被负载到后端多个 nginx 实例上
+  <a class="anchor" href="#-%e6%a0%b9%e6%8d%ae%e4%b8%8a%e9%9d%a2%e4%bb%8b%e7%bb%8d-kube-proxy-%e4%bc%9a%e5%9c%a8-metallb-%e5%88%86%e9%85%8d-ip-%e5%90%8e%e5%9c%a8%e6%af%8f%e4%b8%aa%e8%8a%82%e7%82%b9%e5%88%9b%e5%bb%ba%e4%b8%80%e6%9d%a1-ipvs-%e8%bd%ac%e5%8f%91%e8%a7%84%e5%88%99%e5%b0%86%e8%af%b7%e6%b1%82%e6%b5%81%e9%87%8f%e8%b4%9f%e8%bd%bd%e5%88%b0%e5%90%8e%e7%ab%af%e6%af%8f%e4%b8%aa%e5%ae%9e%e4%be%8b%e6%89%80%e4%bb%a5%e6%b5%81%e9%87%8f%e5%88%b0%e8%be%be-speaker-leader-%e8%8a%82%e7%82%b9%e5%90%8e%e4%bc%9a%e8%a2%ab%e8%b4%9f%e8%bd%bd%e5%88%b0%e5%90%8e%e7%ab%af%e5%a4%9a%e4%b8%aa-nginx-%e5%ae%9e%e4%be%8b%e4%b8%8a">#</a>
+</h5>
+</li>
+</ul>
+<h1 id="总结">
+  总结
+  <a class="anchor" href="#%e6%80%bb%e7%bb%93">#</a>
+</h1>
+<h5 id="本篇文章主要讲解了-metallb-l2-模式的使用和原理其使用非常简洁l2-模式的原理也很简单就是-seeaker-充当-vip-的物理设备回复广播域中的-arp-请求">
+  本篇文章主要讲解了 MetalLB L2 模式的使用和原理，其使用非常简洁。L2 模式的原理也很简单，就是 Seeaker 充当 VIP 的物理设备回复广播域中的 ARP 请求。
+  <a class="anchor" href="#%e6%9c%ac%e7%af%87%e6%96%87%e7%ab%a0%e4%b8%bb%e8%a6%81%e8%ae%b2%e8%a7%a3%e4%ba%86-metallb-l2-%e6%a8%a1%e5%bc%8f%e7%9a%84%e4%bd%bf%e7%94%a8%e5%92%8c%e5%8e%9f%e7%90%86%e5%85%b6%e4%bd%bf%e7%94%a8%e9%9d%9e%e5%b8%b8%e7%ae%80%e6%b4%81l2-%e6%a8%a1%e5%bc%8f%e7%9a%84%e5%8e%9f%e7%90%86%e4%b9%9f%e5%be%88%e7%ae%80%e5%8d%95%e5%b0%b1%e6%98%af-seeaker-%e5%85%85%e5%bd%93-vip-%e7%9a%84%e7%89%a9%e7%90%86%e8%ae%be%e5%a4%87%e5%9b%9e%e5%a4%8d%e5%b9%bf%e6%92%ad%e5%9f%9f%e4%b8%ad%e7%9a%84-arp-%e8%af%b7%e6%b1%82">#</a>
+</h5>
+<h5 id="但是-l2-模式只能将流量引流到集群中的某台主机上从而导致集群对外暴露的流量受限于单台主机的流量限制bgp模式是一种较为理想的实现bgp需要支持bgp路由协议的软路由或者硬件路由器设备而无需定制的负载均衡器对于一些高性能转发的场景建议使用-bgp-模式">
+  但是 L2 模式只能将流量引流到集群中的某台主机上，从而导致集群对外暴露的流量受限于单台主机的流量限制。BGP模式是一种较为理想的实现。BGP需要支持BGP路由协议的软路由或者硬件路由器设备，而无需定制的负载均衡器。对于一些高性能转发的场景，建议使用 BGP 模式。
+  <a class="anchor" href="#%e4%bd%86%e6%98%af-l2-%e6%a8%a1%e5%bc%8f%e5%8f%aa%e8%83%bd%e5%b0%86%e6%b5%81%e9%87%8f%e5%bc%95%e6%b5%81%e5%88%b0%e9%9b%86%e7%be%a4%e4%b8%ad%e7%9a%84%e6%9f%90%e5%8f%b0%e4%b8%bb%e6%9c%ba%e4%b8%8a%e4%bb%8e%e8%80%8c%e5%af%bc%e8%87%b4%e9%9b%86%e7%be%a4%e5%af%b9%e5%a4%96%e6%9a%b4%e9%9c%b2%e7%9a%84%e6%b5%81%e9%87%8f%e5%8f%97%e9%99%90%e4%ba%8e%e5%8d%95%e5%8f%b0%e4%b8%bb%e6%9c%ba%e7%9a%84%e6%b5%81%e9%87%8f%e9%99%90%e5%88%b6bgp%e6%a8%a1%e5%bc%8f%e6%98%af%e4%b8%80%e7%a7%8d%e8%be%83%e4%b8%ba%e7%90%86%e6%83%b3%e7%9a%84%e5%ae%9e%e7%8e%b0bgp%e9%9c%80%e8%a6%81%e6%94%af%e6%8c%81bgp%e8%b7%af%e7%94%b1%e5%8d%8f%e8%ae%ae%e7%9a%84%e8%bd%af%e8%b7%af%e7%94%b1%e6%88%96%e8%80%85%e7%a1%ac%e4%bb%b6%e8%b7%af%e7%94%b1%e5%99%a8%e8%ae%be%e5%a4%87%e8%80%8c%e6%97%a0%e9%9c%80%e5%ae%9a%e5%88%b6%e7%9a%84%e8%b4%9f%e8%bd%bd%e5%9d%87%e8%a1%a1%e5%99%a8%e5%af%b9%e4%ba%8e%e4%b8%80%e4%ba%9b%e9%ab%98%e6%80%a7%e8%83%bd%e8%bd%ac%e5%8f%91%e7%9a%84%e5%9c%ba%e6%99%af%e5%bb%ba%e8%ae%ae%e4%bd%bf%e7%94%a8-bgp-%e6%a8%a1%e5%bc%8f">#</a>
+</h5>
+<hr>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li>
+      <ul>
+        <li></li>
+        <li><a href="#依赖">依赖</a></li>
+        <li><a href="#部署">部署</a></li>
+        <li><a href="#配置">配置</a></li>
+        <li><a href="#示例">示例</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li>
+      <ul>
+        <li></li>
+        <li><a href="#arp-请求">arp 请求</a></li>
+        <li><a href="#负载均衡">负载均衡</a></li>
+        <li><a href="#工作过程">工作过程</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

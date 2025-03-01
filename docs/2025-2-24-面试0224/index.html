@@ -1,0 +1,3909 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  比较好的监控是怎样的 prometheus grafana alertmanager 考虑存储 大规模 2000台机器 考虑告警延迟 考虑长期储存 考虑监控业务的全面性 准确性 告警实时性
+  #
+
+在你的场景中，涉及到大规模的监控部署，2000台机器、长时间的存储、实时告警等多个方面。要构建一个高效、可靠的监控系统，你可以基于 Prometheus、Grafana 和 Alertmanager 这些工具进行设计，但需要优化配置，以满足大规模、低延迟、高可用、长时间存储等需求。
+
+  1. Prometheus 架构设计
+  #
+
+
+水平扩展：单个 Prometheus 实例无法支撑大规模的数据采集和存储，因此需要考虑水平扩展。可以使用多个 Prometheus 实例分担不同的监控目标（例如，按区域或按机器类型分配 Prometheus 实例）。也可以使用 Prometheus Federation（联邦）来将多个 Prometheus 实例的指标数据汇聚到一个主 Prometheus 实例中。
+存储优化：Prometheus 本身的存储是针对短期数据存储优化的，支持时序数据的压缩。但对于长期存储，Prometheus 并不适合将数据保留很长时间。可以使用 Thanos 或 Cortex 来为 Prometheus 提供分布式存储，支持长期数据保留。这样可以跨多个 Prometheus 实例集中存储数据，进行长时间查询。
+数据分片：如果你的监控数据量非常大（如 2000 台机器），你可以通过数据分片（sharding）来分散负载，减少单个 Prometheus 实例的压力。Thanos 和 Cortex 都支持这种分片模型。
+
+
+  2. Grafana 可视化
+  #
+
+
+仪表盘设计：Grafana 适用于展示大规模监控数据。你可以设计多个针对不同层级的仪表盘，例如：硬件监控、应用性能监控、网络流量等。Grafana 允许将数据按需聚合或细分，以帮助从不同维度监控业务指标。
+分布式查询：通过 Thanos 或 Cortex 等分布式存储系统，Grafana 可以访问跨多个 Prometheus 实例的数据，呈现完整的监控视图。
+查询性能优化：随着监控系统规模的扩大，Grafana 查询的数据量增大。你需要优化 Prometheus 的查询性能，避免低效的查询（如不加时间范围的查询），或者使用预计算的聚合数据来减轻查询负担。
+
+
+  3. Alertmanager 告警管理
+  #
+
+
+告警延迟：为了确保告警的实时性，Prometheus 的抓取周期（默认 15 秒）需要优化。如果告警的延迟非常关键，可能需要缩短抓取周期或者增加更多 Prometheus 实例，分担告警流量。
+告警策略设计：针对大规模的监控系统，告警的去重和抑制非常重要，避免过多无效告警。可以根据告警的严重性、关联性进行聚合，避免“告警风暴”。Alertmanager 可以进行告警的抑制和分组，减少重复告警。
+通知渠道：Alertmanager 可以与 Slack、邮件、Webhook 等通知渠道集成，根据告警级别不同，选择不同的通知方式（例如，严重告警通过短信，轻微告警通过邮件）。
+告警灵敏度：在大规模系统中，容易产生很多低优先级的告警。可以通过设置 Prometheus 的告警规则，精细化告警条件，确保告警的准确性和有效性。
+
+
+  4. 存储与长期数据保留
+  #
+
+
+
+长期存储解决方案">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="http://192.168.0.139:1313/docs/2025-2-24-%E9%9D%A2%E8%AF%950224/">
+  <meta property="og:site_name" content="Guichen&#39;s Blog">
+  <meta property="og:title" content="0224面试">
+  <meta property="og:description" content="比较好的监控是怎样的 prometheus grafana alertmanager 考虑存储 大规模 2000台机器 考虑告警延迟 考虑长期储存 考虑监控业务的全面性 准确性 告警实时性 # 在你的场景中，涉及到大规模的监控部署，2000台机器、长时间的存储、实时告警等多个方面。要构建一个高效、可靠的监控系统，你可以基于 Prometheus、Grafana 和 Alertmanager 这些工具进行设计，但需要优化配置，以满足大规模、低延迟、高可用、长时间存储等需求。
+1. Prometheus 架构设计 # 水平扩展：单个 Prometheus 实例无法支撑大规模的数据采集和存储，因此需要考虑水平扩展。可以使用多个 Prometheus 实例分担不同的监控目标（例如，按区域或按机器类型分配 Prometheus 实例）。也可以使用 Prometheus Federation（联邦）来将多个 Prometheus 实例的指标数据汇聚到一个主 Prometheus 实例中。 存储优化：Prometheus 本身的存储是针对短期数据存储优化的，支持时序数据的压缩。但对于长期存储，Prometheus 并不适合将数据保留很长时间。可以使用 Thanos 或 Cortex 来为 Prometheus 提供分布式存储，支持长期数据保留。这样可以跨多个 Prometheus 实例集中存储数据，进行长时间查询。 数据分片：如果你的监控数据量非常大（如 2000 台机器），你可以通过数据分片（sharding）来分散负载，减少单个 Prometheus 实例的压力。Thanos 和 Cortex 都支持这种分片模型。 2. Grafana 可视化 # 仪表盘设计：Grafana 适用于展示大规模监控数据。你可以设计多个针对不同层级的仪表盘，例如：硬件监控、应用性能监控、网络流量等。Grafana 允许将数据按需聚合或细分，以帮助从不同维度监控业务指标。 分布式查询：通过 Thanos 或 Cortex 等分布式存储系统，Grafana 可以访问跨多个 Prometheus 实例的数据，呈现完整的监控视图。 查询性能优化：随着监控系统规模的扩大，Grafana 查询的数据量增大。你需要优化 Prometheus 的查询性能，避免低效的查询（如不加时间范围的查询），或者使用预计算的聚合数据来减轻查询负担。 3. Alertmanager 告警管理 # 告警延迟：为了确保告警的实时性，Prometheus 的抓取周期（默认 15 秒）需要优化。如果告警的延迟非常关键，可能需要缩短抓取周期或者增加更多 Prometheus 实例，分担告警流量。 告警策略设计：针对大规模的监控系统，告警的去重和抑制非常重要，避免过多无效告警。可以根据告警的严重性、关联性进行聚合，避免“告警风暴”。Alertmanager 可以进行告警的抑制和分组，减少重复告警。 通知渠道：Alertmanager 可以与 Slack、邮件、Webhook 等通知渠道集成，根据告警级别不同，选择不同的通知方式（例如，严重告警通过短信，轻微告警通过邮件）。 告警灵敏度：在大规模系统中，容易产生很多低优先级的告警。可以通过设置 Prometheus 的告警规则，精细化告警条件，确保告警的准确性和有效性。 4. 存储与长期数据保留 # 长期存储解决方案">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+<title>0224面试 | Guichen&#39;s Blog</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="http://192.168.0.139:1313/docs/2025-2-24-%E9%9D%A2%E8%AF%950224/">
+<link rel="stylesheet" href="/book.min.6c8b9d2a1fc95075ed7da46ca81060b39add8fff6741ac51259f768929281e2c.css" integrity="sha256-bIudKh/JUHXtfaRsqBBgs5rdj/9nQaxRJZ92iSkoHiw=" crossorigin="anonymous">
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/en.search.min.6f52273b9f5fa65803e3991faf27d1a7b7b8f6b148888237d77b4e841cb030e3.js" integrity="sha256-b1InO59fplgD45kfryfRp7e49rFIiII313tOhBywMOM=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/"><span>Guichen&#39;s Blog</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/00-%E9%9B%86%E7%BE%A4%E8%A7%84%E5%88%92%E5%92%8C%E5%9F%BA%E7%A1%80%E5%8F%82%E6%95%B0%E8%AE%BE%E5%AE%9A-00--ji-qun-gui-hua-he-ji-chu-can-shu-she-ding/" class="">00-集群规划和基础参数设定 2023-09-28 15:19:02.214</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/01-%E5%88%9B%E5%BB%BA%E8%AF%81%E4%B9%A6%E5%92%8C%E7%8E%AF%E5%A2%83%E5%87%86%E5%A4%87-01--chuang-jian-zheng-shu-he-huan-jing-zhun-bei/" class="">01-创建证书和环境准备 2023-09-28 15:22:19.812</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/02-%E5%AE%89%E8%A3%85etcd%E9%9B%86%E7%BE%A4-02--an-zhuang-etcd-ji-qun/" class="">02-安装etcd集群 2023-09-28 15:23:07.363</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E9%9D%A2%E8%AF%950224/" class="active">0224面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-26-k8s%E7%9B%B8%E5%85%B3/" class="">0226 k8s题目</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/03-%E5%AE%89%E8%A3%85%E5%AE%B9%E5%99%A8%E8%BF%90%E8%A1%8C%E6%97%B6-03--an-zhuang-rong-qi-yun-xing-shi/" class="">03-安装容器运行时 2023-09-28 15:23:56.241</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/04-%E5%AE%89%E8%A3%85kube_master%E8%8A%82%E7%82%B9-04--an-zhuang-kubemaster-jie-dian/" class="">04-安装kube_master节点 2023-09-28 15:24:21.203</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/05-%E5%AE%89%E8%A3%85kube_node%E8%8A%82%E7%82%B9-05--an-zhuang-kubenode-jie-dian/" class="">05-安装kube_node节点 2023-09-28 15:24:43.201</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85calico%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-calico-wang-luo-zu-jian/" class="">06-安装calico网络组件 2023-09-28 15:34:28.483</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85cilium%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-cilium-wang-luo-zu-jian/" class="">06-安装cilium网络组件 2023-09-28 15:35:23.884</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85flannel%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-flannel-wang-luo-zu-jian/" class="">06-安装flannel网络组件 2023-09-28 15:35:50.039</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85kube-ovn%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-kube-ovn-wang-luo-zu-jian/" class="">06-安装kube-ovn网络组件 2023-09-28 15:36:11.265</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-wang-luo-zu-jian/" class="">06-安装网络组件 2023-09-28 15:25:14.997</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/07-%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4%E4%B8%BB%E8%A6%81%E6%8F%92%E4%BB%B6-07--an-zhuang-ji-qun-zhu-yao-cha-jian/" class="">07-安装集群主要插件 2023-09-28 15:26:42.651</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/08-k8s-%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8--k8s-ji-qun-cun-chu/" class="">08-K8S 集群存储  2023-09-28 15:27:29.454</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/16%E4%B8%AA%E6%A6%82%E5%BF%B5%E5%B8%A6%E4%BD%A0%E5%85%A5%E9%97%A8-kubernetes-16-ge-gai-nian-dai-ni-ru-men-kubernetes/" class="">16个概念带你入门 Kubernetes 2024-04-03 15:09:21.671</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/16%E5%BC%A0%E7%A1%AC%E6%A0%B8%E5%9B%BE%E8%A7%A3k8s%E7%BD%91%E7%BB%9C-16-zhang-ying-he-tu-jie-k8s-wang-luo/" class="">16张硬核图解k8s网络 2024-04-03 15:12:49.601</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-07-microk8s/" class="">2024-12-07 microk8s</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-devstack/" class="">2024-12-08 devstack</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-mutilpass%E6%93%8D%E4%BD%9C/" class="">2024-12-08 mutilpass操作</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-nano%E6%93%8D%E4%BD%9C/" class="">2024-12-08 nano操作</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-openstack%E5%92%8Ckubernetes%E5%8C%BA%E5%88%AB/" class="">2024-12-08 openstack和kubernetes区别</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-openstack%E9%9C%80%E8%A6%81%E5%87%A0%E5%8F%B0%E8%99%9A%E6%8B%9F%E6%9C%BA/" class="">2024-12-08 openstack需要几台虚拟机</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-%E5%9D%97%E5%AD%98%E5%82%A8%E5%92%8C%E5%AF%B9%E8%B1%A1%E5%82%A8%E5%AD%98%E5%8C%BA%E5%88%AB/" class="">2024-12-08 块存储和对象储存区别</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-docker-daemon.json/" class="">2024-12-09 docker daemon.json</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-helmchart-%E9%83%A8%E7%BD%B2flask%E5%BA%94%E7%94%A8/" class="">2024-12-09 helmchart 部署flask应用</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-mutilpass%E9%83%A8%E7%BD%B2openstack/" class="">2024-12-09 mutilpass部署openstack devstack形式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-openstack-ssh%E8%BF%9E%E6%8E%A5/" class="">2024-12-09 openstack ssh连接</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-10-docker-registrry/" class="">2024-12-10 docker registrry</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-22-k8s%E6%9E%B6%E6%9E%84%E5%B8%88%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8/" class="">2024-2-22 k8s架构师面试大全</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-22-k8s%E9%9D%A2%E8%AF%95%E5%AE%9D%E5%85%B8/" class="">2024-2-22 k8s面试宝典</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-26-%E9%9D%A2%E8%AF%95/" class="">2024-2-26 面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-19-%E4%B8%A4%E5%BC%A0%E5%9B%BE%E5%85%A8%E9%9D%A2%E7%90%86%E8%A7%A3k8s%E5%8E%9F%E7%90%86/" class="">2024-3-19 两张图全面理解k8s原理</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-cni%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B/" class="">2024-3-4 CNI剖析演进</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-8-%E9%9D%A2%E8%AF%950308/" class="">2024-3-8 面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-4-17-%E9%9D%A2%E8%AF%95%E6%80%BB%E7%BB%93/" class="">2024-4-17 面试总结</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-kubernetes%E9%9D%A2%E8%AF%95%E9%A2%98/" class="">2024-8-1 k8s面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-%E5%B8%B8%E8%A7%81linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98%E6%89%BE%E5%B7%A5%E4%BD%9C%E7%9A%84%E5%BF%85%E7%9C%8B/" class="">2024-8-1 linux运维面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98/" class="">2024-8-1 linux面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-1-1-%E5%A4%A7%E5%A0%B0%E6%B2%B3-%E6%88%91%E7%9A%84%E4%BF%9D%E5%A7%86/" class="">2025-1-1 大堰河-我的保姆</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-k8s-csi%E5%89%96%E6%9E%90/" class="">2025-1-16 CSI剖析演进</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-1-16-k8s%E5%B8%B8%E8%A7%81%E6%95%85%E9%9A%9C%E6%8C%87%E5%8D%97/" class="">2025-1-16 k8s常见故障指南</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-k8s%E6%B5%81%E9%87%8F%E9%93%BE%E8%B7%AF%E5%89%96%E6%9E%90/" class="">2025-1-16 k8s流量链路剖析</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/33%E6%AC%BEgitops%E4%B8%8Edevops%E4%B8%BB%E6%B5%81%E7%B3%BB%E7%BB%9F-33-kuan-gitops-yu-devops-zhu-liu-xi-tong/" class="">33款gitops与devops主流系统 2024-08-02 17:45:15.709</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/600%E6%9D%A1%E6%9C%80%E5%BC%BAlinux%E5%91%BD%E4%BB%A4%E6%80%BB%E7%BB%93-600-tiao-zui-qiang-linux-ming-ling-zong-jie/" class="">600条最强linux命令总结 2024-04-03 15:12:31.282</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/acme%E8%87%AA%E5%8A%A8%E6%9B%B4%E6%96%B0%E8%AF%81%E4%B9%A6-acme-zi-dong-geng-xin-zheng-shu/" class="">acme自动更新证书 2024-04-03 14:41:44.289</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/calico-%E9%85%8D%E7%BD%AE-bgp-route-reflectors-calico-pei-zhi-bgproutereflectors/" class="">calico 配置 BGP Route Reflectors 2023-09-28 15:34:01.007</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/calico%E7%BD%91%E7%BB%9C%E8%87%AA%E5%AE%9A%E4%B9%89-calico-wang-luo-zi-ding-yi/" class="">Calico网络自定义 2024-04-03 15:08:43.394</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/cicd%E6%80%9D%E8%80%83-cicd-si-kao/" class="">CICD思考 2024-04-03 15:11:24.151</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/client-go-%E5%9B%9B%E7%A7%8D%E5%AE%A2%E6%88%B7%E7%AB%AF-client-go-si-zhong-ke-hu-duan/" class="">Client-go 四种客户端 2024-04-03 14:49:34.32</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/client-go-%E6%9E%B6%E6%9E%84-client-go-jia-gou/" class="">Client-go 架构 2024-04-03 14:48:40.716</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/cni%E6%8F%92%E4%BB%B6%E9%80%89%E5%9E%8B-cni-cha-jian-xuan-xing/" class="">CNI插件选型 2024-04-03 15:01:51.29</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/containerd-%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C-containerd-ji-ben-cao-zuo/" class="">Containerd 基本操作 2024-04-03 14:55:46.786</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/coredns%E4%B9%8B%E5%85%89-coredns-zhi-guang/" class="">COREDNS之光 2024-04-03 14:54:52.059</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/dockerfile%E5%AE%9A%E5%88%B6%E4%B8%93%E5%B1%9E%E9%95%9C%E5%83%8F-dockerfile-ding-zhi-zhuan-shu-jing-xiang/" class="">dockerfile定制专属镜像 2024-08-02 17:44:00.522</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/dockerfile%E7%9A%84copy%E5%92%8Cadd%E7%9A%84%E5%8C%BA%E5%88%AB-dockerfile-de-copy-he-add-de-qu-bie/" class="">dockerfile的copy和add的区别 2024-04-03 15:01:09.565</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/docker%E9%87%8D%E8%A6%81%E7%9A%84%E7%BD%91%E7%BB%9C%E7%9F%A5%E8%AF%86%E7%82%B9-docker-zhong-yao-de-wang-luo-zhi-shi-dian/" class="">Docker重要的网络知识点  2024-04-03 15:12:10.162</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/etcd%E5%A4%87%E4%BB%BD-etcd-bei-fen/" class="">ETCD备份 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/etcd%E7%A8%B3%E5%AE%9A%E6%80%A7%E5%8F%8A%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%AE%9E%E8%B7%B5-etcd-wen-ding-xing-ji-xing-neng-you-hua-shi-jian/" class="">ETCD稳定性及性能优化实践 2024-04-03 15:06:31.141</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ex-lb-%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E9%83%A8%E7%BD%B2-ex-lb-fu-zai-jun-heng-bu-shu/" class="">EX-LB 负载均衡部署 2023-09-28 15:28:51.998</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ezctl-%E5%91%BD%E4%BB%A4%E8%A1%8C%E4%BB%8B%E7%BB%8D-ezctl-ming-ling-xing-jie-shao/" class="">ezctl 命令行介绍 2023-09-28 15:28:00.619</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/flanel%E7%BD%91%E7%BB%9C-flanel-wang-luo/" class="">flanel网络 2024-04-03 15:05:04.16</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/godel-scheduler-godel-scheduler/" class="">godel-scheduler 2024-08-02 17:41:00.668</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/helm-chart%E5%92%8Crepo-helmchart-he-repo/" class="">helm chart和repo 2024-04-03 15:00:43.125</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/istio-ingress-gateway-istio-ingress-gateway/" class="">istio-ingress-gateway 2024-08-02 17:51:54.75</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/istio%E9%83%A8%E7%BD%B2-istio-bu-shu/" class="">istio部署 2024-08-02 17:52:40.721</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-cni%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B-k8scni-pou-xi-yan-jin/" class="">K8S CNI剖析演进 2024-03-04 10:51:33.245</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-csi-openebs%E5%8E%9F%E7%90%86-k8scsiopenebs-yuan-li/" class="">K8S csi openebs原理 2024-04-03 14:44:48.967</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-csi%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B-k8scsi-pou-xi-yan-jin/" class="">K8S CSI剖析演进 2024-03-04 10:52:20.507</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-gpt-k8sgpt/" class="">K8S GPT 2024-04-03 15:02:09.127</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E5%BC%80%E5%8F%91%E5%8F%AF%E4%B8%8D%E6%AD%A2-crud-k8s-kai-fa-ke-bu-zhi-crud/" class="">K8S 开发可不止 CRUD 2024-04-03 14:50:11.765</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E6%8E%A2%E9%92%88%E5%8E%9F%E7%90%86-k8s-tan-zhen-yuan-li/" class="">K8S 探针原理 2024-04-03 14:53:29.429</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E6%B5%81%E9%87%8F%E9%93%BE%E8%B7%AF%E5%89%96%E6%9E%90-k8s-liu-liang-lian-lu-pou-xi/" class="">K8S 流量链路剖析 2024-03-04 10:50:22.991</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E8%B0%83%E5%BA%A6%E5%99%A8-scheduler_onego-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-diao-du-qi-scheduleronego-yuan-ma-jie-du/" class="">K8S 调度器 scheduler_one.go 源码解读 2024-04-09 11:45:28.22</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E4%B9%8Bingress-nginx%E5%8E%9F%E7%90%86%E5%8F%8A%E9%85%8D%E7%BD%AE-k8s-zhi-ingress-nginx-yuan-li-ji-pei-zhi/" class="">K8S之ingress-nginx原理及配置 2024-07-05 18:02:14.243</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E4%B9%8Bkubelet%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-zhi-kubelet-yuan-ma-jie-du/" class="">k8s之kubelet源码解读 2024-03-28 15:30:39.633</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7-k8s-yuan-de-sheng-ji/" class="">K8S原地升级 2024-04-03 15:04:38.125</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%91%BD%E4%BB%A4%E6%8C%87%E5%8D%97-k8s-ming-ling-zhi-nan/" class="">K8S命令指南 2024-04-03 15:14:14.207</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%A6%82%E4%BD%95%E8%8E%B7%E5%BE%97-ip-k8s-ru-he-huo-de-ip/" class="">K8S如何获得 IP 2024-04-16 17:09:59.658</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%BA%94%E7%94%A8%E7%9A%84%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5-k8s-ying-yong-de-zui-jia-shi-jian/" class="">k8s应用的最佳实践 2024-04-03 14:43:16.936</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-deployment_controllergo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-deploymentcontrollergo-yuan-ma-jie-du/" class="">K8S控制器之 deployment_controller.go源码解读 2024-04-09 11:30:03.133</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-progressgo-%E8%BF%9B%E5%BA%A6-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-progressgo-jin-du-yuan-ma-jie-du/" class="">K8S控制器之 progress.go 进度 源码解读 2024-04-09 11:31:08.86</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-rollinggo-%E6%BB%9A%E5%8A%A8%E6%9B%B4%E6%96%B0-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-rollinggo-gun-dong-geng-xin-yuan-ma-jie-du/" class="">K8S控制器之 rolling.go 滚动更新 源码解读 2024-04-09 11:32:58.133</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-schedulergo-%E8%B0%83%E5%BA%A6%E5%99%A8-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-schedulergo-diao-du-qi-yuan-ma-jie-du/" class="">K8S控制器之 scheduler.go 调度器 源码解读 2024-04-09 11:44:25.171</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Brecreatego-%E9%87%8D%E5%BB%BA-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-recreatego-zhong-jian-yuan-ma-jie-du/" class="">K8S控制器之recreate.go 重建 源码解读 2024-04-09 11:31:49.855</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Brollbackgo-%E5%9B%9E%E6%BB%9A-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-rollbackgo-hui-gun-yuan-ma-jie-du/" class="">K8S控制器之rollback.go 回滚 源码解读 2024-04-09 11:32:26.587</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_pod_controlgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulpodcontrolgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_pod_control.go源码解读 2024-04-10 09:42:50.078</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_set_controlgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetcontrolgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_set_control.go源码解读 2024-04-10 09:41:30.316</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_set_status_updatego%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetstatusupdatego-yuan-ma-jie-du/" class="">K8S控制器之stateful_set_status_update.go源码解读 2024-04-10</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_setgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_set.go源码解读 2024-04-10</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bsyncgo-%E5%90%8C%E6%AD%A5-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-syncgo-tong-bu-yuan-ma-jie-du/" class="">K8S控制器之sync.go 同步 源码解读 2024-04-09 11:33:26.356</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E7%9A%84pod%E7%B1%BB%E5%9E%8B-k8s-de-pod-lei-xing/" class="">K8S的POD类型 2024-04-03 14:57:11.072</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E7%9A%84%E6%9C%80%E5%90%8E%E4%B8%80%E5%9D%97%E6%8B%BC%E5%9B%BE-dbpaas-k8s-de-zui-hou-yi-kuai-pin-tu-dbpaas/" class="">K8S的最后一块拼图 dbpaas 2024-08-02 17:48:35.899</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-k8s%E7%BB%84%E4%BB%B6/" class="">k8s组件</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%83%8C%E5%90%8Eservice%E6%98%AF%E5%A6%82%E4%BD%95%E5%B7%A5%E4%BD%9C%E7%9A%84-k8s-bei-hou-service-shi-ru-he-gong-zuo-de/" class="">k8s背后service是如何工作的 2024-08-02 17:49:44.981</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%B0%83%E5%BA%A6%E5%99%A8-extendergo-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-diao-du-qi-extendergo-yuan-ma-jie-du/" class="">K8S调度器 extender.go 源码解读 2024-04-09 11:45:59.666</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%B0%83%E8%AF%95pod-k8s-diao-shi-pod/" class="">K8S调试POD 2024-04-03 14:58:15.293</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%BF%90%E7%BB%B4%E4%B9%8B%E6%B8%85%E7%90%86%E7%A3%81%E7%9B%98-k8s-yun-wei-zhi-qing-li-ci-pan/" class="">k8s运维之清理磁盘 2024-04-03 15:13:57.279</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8-k8s-mian-shi-da-quan/" class="">K8S面试大全 2024-04-03 15:10:54.493</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E5%AE%9D%E5%85%B8-k8s-mian-shi-bao-dian/" class="">K8S面试宝典 2024-04-03 15:11:09.316</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E9%A2%98-k8s-mian-shi-ti/" class="">K8S面试题 2024-08-02 17:50:50.418</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kruise%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7%E8%A7%A3%E6%9E%90-kruise-yuan-de-sheng-ji-jie-xi/" class="">kruise原地升级解析 2024-08-02 17:59:31.689</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kube-router-%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-kube-router-wang-luo-zu-jian/" class="">kube-router 网络组件 2023-09-28 15:33:20.658</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-05-kubeasz%E9%83%A8%E7%BD%B2k8s/" class="">kubeasz部署k8s</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubekey%E6%B7%BB%E5%8A%A0%E6%96%B0%E8%8A%82%E7%82%B9-kubekey-tian-jia-xin-jie-dian/" class="">kubekey添加新节点 2024-04-03 15:36:47.646</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-api-kubernetesapi/" class="">Kubernetes API 2024-04-03 14:47:30.212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E6%BA%90%E7%A0%81%E7%BB%93%E6%9E%84-kubernetes-yuan-ma-jie-gou/" class="">Kubernetes 源码结构 2024-04-03 14:48:05.954</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3%E8%AE%A4%E8%AF%81-kubernetes-zheng-shu-xiang-jie--ren-zheng-/" class="">Kubernetes 证书详解(认证) 2024-04-03 14:52:56.54</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3%E9%89%B4%E6%9D%83-kubernetes-zheng-shu-xiang-jie--jian-quan-/" class="">Kubernetes 证书详解(鉴权) 2024-04-03 14:49:04.385</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubewharf-kubewharf/" class="">kubewharf 2024-08-02 17:41:32.72</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux-awk%E6%96%87%E6%9C%AC%E5%A4%84%E7%90%86%E5%99%A8-8%E4%B8%AA%E6%A1%88%E4%BE%8B-linuxawk-wen-ben-chu-li-qi-8-ge-an-li/" class="">linux awk文本处理器 8个案例 2024-08-02 17:46:53.603</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux-%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%A4%A7%E5%85%A8-linux-xing-neng-you-hua-da-quan/" class="">Linux 性能优化大全 2024-04-03 15:09:06.854</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux%E7%B3%BB%E7%BB%9F%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96-%E4%B8%83%E4%B8%AA%E5%AE%9E%E6%88%98%E7%BB%8F%E9%AA%8C-linux-xi-tong-xing-neng-you-hua-qi-ge-shi-zhan-jing-yan/" class="">linux系统性能优化 七个实战经验 2024-08-02 17:47:26.212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98-linux-yun-wei-gong-cheng-shi-50-ge-chang-jian-mian-shi-ti/" class="">linux运维工程师50个常见面试题 2024-08-02 17:42:12.968</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/metallb-l2-%E5%8E%9F%E7%90%86-metallbl2-yuan-li/" class="">MetalLB L2 原理 2024-04-03 14:52:24.662</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/netctl%E6%A3%80%E6%B5%8B%E9%9B%86%E7%BE%A4pod%E9%97%B4%E8%BF%9E%E9%80%9A%E6%80%A7-netctl-jian-ce-ji-qun-pod-jian-lian-tong-xing/" class="">netctl检测集群pod间连通性 2024-08-02 18:00:36.753</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/network-check-network-check/" class="">network-check 2023-09-28 15:36:33.04</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/nginx%E5%A6%82%E4%BD%95%E8%A7%A3%E5%86%B3%E6%83%8A%E7%BE%A4%E6%95%88%E5%BA%94-nginx-ru-he-jie-jue-jing-qun-xiao-ying/" class="">nginx如何解决惊群效应 2024-08-02 17:45:54.531</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/openkruise%E8%AF%A6%E7%BB%86%E8%A7%A3%E9%87%8A%E4%BB%A5%E5%8F%8A%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7%E5%8F%8A%E5%85%A8%E9%93%BE%E8%B7%AF%E7%81%B0%E5%BA%A6%E5%8F%91%E5%B8%83%E6%96%B9%E6%A1%88-openkruise-xiang-xi-jie-shi-yi-ji-yuan-de-sheng-ji-ji-quan-lian-lu-hui-du-fa-bu-fang-an/" class="">OpenKruise详细解释以及原地升级及全链路灰度发布方案 2024-07-22 11:44:46.892</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/pixie-pixie/" class="">pixie 2024-08-02 17:52:17.843</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-28-prometheus/" class="">prometheus 面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/prometheus-stack-prometheus-stack/" class="">prometheus-stack 2024-08-02 17:55:22.326</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/prometheus%E4%BC%81%E4%B8%9A%E7%BA%A7%E7%9B%91%E6%8E%A7%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93-prometheus-qi-ye-ji-jian-kong-shi-yong-zong-jie/" class="">prometheus企业级监控使用总结 2024-04-03 15:13:11.185</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ssl%E8%AF%81%E4%B9%A6%E8%87%AA%E7%AD%BE%E5%8F%91-ssl-zheng-shu-zi-qian-fa/" class="">ssl证书自签发 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/teg%E4%B8%8Eistio%E9%9B%86%E6%88%90-teg-yu-istio-ji-cheng/" class="">TEG与istio集成 2024-08-02 17:51:20.389</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%B8%A4%E5%BC%A0%E5%9B%BE%E5%85%A8%E9%9D%A2%E7%90%86%E8%A7%A3k8s%E5%8E%9F%E7%90%86-liang-zhang-tu-quan-mian-li-jie-k8s-yuan-li/" class="">两张图全面理解K8S原理 2024-04-03 14:51:27.431</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%B8%AA%E6%80%A7%E5%8C%96%E9%9B%86%E7%BE%A4%E5%8F%82%E6%95%B0%E9%85%8D%E7%BD%AE-ge-xing-hua-ji-qun-can-shu-pei-zhi/" class="">个性化集群参数配置 2023-09-28 15:30:56.072</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E4%B8%AD%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_%E9%A2%98%E7%9B%AE/" class="">中级运维面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BA%8C%E8%BF%9B%E5%88%B6%E9%83%A8%E7%BD%B2k8s%E5%8A%A0%E8%8A%82%E7%82%B9%E6%93%8D%E4%BD%9C-er-jin-zhi-bu-shu-k8s-jia-jie-dian-cao-zuo/" class="">二进制部署K8S加节点操作 2024-04-03 15:08:26.726</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-10-20-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8%E9%9B%86%E7%BE%A4/" class="">使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8-keepalived-%E5%92%8C-haproxy-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8-kubernetes-%E9%9B%86%E7%BE%A4-shi-yong-keepalived-he-haproxy-chuang-jian-gao-ke-yong-kubernetes-ji-qun/" class="">使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群 2023-04-12 04:04:09.458</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8-openfunction-%E5%9C%A8%E4%BB%BB%E4%BD%95%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E4%B8%8A%E8%BF%90%E8%A1%8C%E6%97%A0%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%B7%A5%E4%BD%9C%E8%B4%9F%E8%BD%BD-shi-yong-openfunction-zai-ren-he-ji-chu-she-shi-shang-yun-xing-wu-fu-wu-qi-gong-zuo-fu-zai/" class="">使用 OpenFunction 在任何基础设施上运行无服务器工作负载 2024-01-21 04:02:44.459</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8cloudflarecf%E6%90%AD%E5%BB%BAdockerhub%E4%BB%A3%E7%90%86-shi-yong-cloudflarecf-da-jian-dockerhub-dai-li/" class="">使用cloudflare(CF)搭建dockerhub代理 2024-06-28 14:38:34.339</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8kubernees-leases-%E8%BD%BB%E6%9D%BE%E5%AE%9E%E7%8E%B0leader-election-shi-yong-kuberneesleases-qing-song-shi-xian-leaderelection/" class="">使用kubernees leases 轻松实现leader election 2024-04-03 15:09:46.129</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%85%AC%E6%9C%89%E4%BA%91%E4%B8%8A%E9%83%A8%E7%BD%B2-kubeasz-gong-you-yun-shang-bu-shu-kubeasz/" class="">公有云上部署 kubeasz 2023-09-28 15:31:16.19</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-5-14-%E5%8D%95master%E5%8D%95etcd%E6%94%B9%E9%80%A0/" class="">单master单etcd改造为3master3etcd</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%8F%B2%E4%B8%8A%E6%9C%80%E7%89%9Bjenkins-pipeline%E6%B5%81%E6%B0%B4%E7%BA%BF%E8%AF%A6%E8%A7%A3-shi-shang-zui-niu-jenkinspipeline-liu-shui-xian-xiang-jie/" class="">史上最牛jenkins pipeline流水线详解 2024-08-02</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%9A%E6%9E%B6%E6%9E%84%E6%94%AF%E6%8C%81-duo-jia-gou-zhi-chi/" class="">多架构支持 2023-09-28 15:29:54.111</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%A7%E5%8E%82%E6%80%BB%E7%BB%93nginx%E9%AB%98%E5%B9%B6%E5%8F%91%E4%BC%98%E5%8C%96%E7%AC%94%E8%AE%B0-da-chang-zong-jie-nginx-gao-bing-fa-you-hua-bi-ji/" class="">大厂总结nginx高并发优化笔记 2024-08-02 17:46:19.098</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%A7%E8%A7%84%E6%A8%A1%E5%B9%B6%E5%8F%91%E4%B8%8B%E5%A6%82%E4%BD%95%E5%8A%A0%E5%BF%AB-pod-%E5%90%AF%E5%8A%A8%E9%80%9F%E5%BA%A6-da-gui-mo-bing-fa-xia-ru-he-jia-kuai-pod-qi-dong-su-du/" class="">大规模并发下如何加快 Pod 启动速度 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E4%B8%BAk8s%E4%BF%9D%E9%A9%BE%E6%8A%A4%E8%88%AA-ru-he-wei-k8s-bao-jia-hu-hang/" class="">如何为K8S保驾护航 2024-04-16 17:09:21.962</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8tekton%E5%BF%AB%E9%80%9F%E6%90%AD%E5%BB%BAcicd%E5%B9%B3%E5%8F%B0-ru-he-shi-yong-tekton-kuai-su-da-jian-cicd-ping-tai/" class="">如何使用tekton快速搭建CI/CD平台 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E8%B0%83%E8%AF%95-crash-%E5%AE%B9%E5%99%A8%E7%9A%84%E7%BD%91%E7%BB%9C-ru-he-diao-shi-crash-rong-qi-de-wang-luo/" class="">如何调试 crash 容器的网络 2024-04-03 14:50:51.378</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E4%B8%AD%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E4%BB%A5%E5%8F%8A%E4%B8%8D%E5%90%8Cdnspolicy%E5%AF%B9%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E7%9A%84%E5%BD%B1%E5%93%8D-rong-qi-zhong-yu-ming-jie-xi-yi-ji-bu-tong-dnspolicy-dui-yu-ming-jie-xi-de-ying-xiang/" class="">容器中域名解析以及不同dnspolicy对域名解析的影响 2024-04-03 15:04:09.254</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E5%86%85%E7%9A%84-1-%E5%8F%B7%E8%BF%9B%E7%A8%8B-rong-qi-nei-de-1-hao-jin-cheng/" class="">容器内的 1 号进程 2024-04-03 14:46:29.998</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E5%8E%9F%E7%90%86-rong-qi-yuan-li/" class="">容器原理 2024-04-03 14:45:58.422</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E7%9A%84%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E4%B8%80-overlayfs-%E5%8E%9F%E7%90%86-rong-qi-de-wen-jian-xi-tong--yi-overlayfs-yuan-li/" class="">容器的文件系统 OverlayFS 原理 2024-04-03 14:45:26.893</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C%E5%8E%9F%E7%90%86-rong-qi-wang-luo-yuan-li/" class="">容器网络原理 2024-04-03 14:51:51.962</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%B8%B8%E8%A7%81linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98-chang-jian-linux-yun-wei-mian-shi-ti/" class="">常见linux运维面试题 2024-08-02 17:42:33.873</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BC%80%E5%A7%8B%E4%BD%BF%E7%94%A8-cilium-kai-shi-shi-yong-cilium/" class="">开始使用 cilium 2023-09-28 15:34:49.205</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BD%BB%E6%82%9F%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C-che-wu-rong-qi-wang-luo/" class="">彻悟容器网络 2024-04-07 10:30:11.55</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BF%AB%E9%80%9F%E6%8C%87%E5%8D%97-kuai-su-zhi-nan/" class="">快速指南 2023-09-28 15:28:25.71</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%88%91%E5%8F%AA%E6%83%B3%E5%81%9A%E6%8A%80%E6%9C%AF-%E8%B5%B0%E6%8A%80%E6%9C%AF%E8%B7%AF%E7%BA%BF-wo-zhi-xiang-zuo-ji-shu-zou-ji-shu-lu-xian/" class="">我只想做技术 走技术路线 2024-08-02 17:43:31.897</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%90%9E%E6%87%82k8s%E9%89%B4%E6%9D%83-gao-dong-k8s-jian-quan/" class="">搞懂K8S鉴权 2024-04-03 15:11:54.885</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%90%AD%E4%B8%AA%E6%97%A5%E5%BF%97%E6%89%8B%E6%9C%BA%E7%B3%BB%E7%BB%9F%E4%B8%8D%E9%A6%99%E5%90%97-da-ge-ri-zhi-shou-ji-xi-tong-bu-xiang-ma/" class="">搭个日志手机系统不香吗 2024-08-02 17:47:58.794</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E8%AF%B4%E6%98%8E-cao-zuo-xi-tong-shuo-ming/" class="">操作系统说明 2023-09-28 15:31:37.694</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%96%87%E5%AD%A6%E7%9A%84%E6%95%85%E4%B9%A1-wen-xue-de-gu-xiang/" class="">文学的故乡 2024-04-03 14:40:45.926</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%98%AF%E6%8A%80%E6%9C%AF%E5%A4%A7%E7%A5%9E%E8%BF%98%E6%98%AF%E5%9F%BA%E7%A1%80%E6%9E%B6%E6%9E%84%E9%83%A8%E7%9A%84%E7%A5%B8%E5%AE%B3-shi-ji-shu-da-shen-hai-shi-ji-chu-jia-gou-bu-de-huo-hai/" class="">是技术大神还是基础架构部的祸害 2024-08-02 17:50:26.139</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9C%89%E8%BF%993%E4%B8%AA%E8%BF%B9%E8%B1%A1%E4%BD%A0%E5%B0%B1%E8%AF%A5%E7%A6%BB%E8%81%8C%E4%BA%86-you-zhe-3-ge-ji-xiang--ni-jiu-gai-li-zhi-le/" class="">有这3个迹象，你就该离职了 2023-09-21 16:00:22.432</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9E%81%E5%A4%A7%E6%8F%90%E9%AB%98%E5%B7%A5%E4%BD%9C%E6%95%88%E7%8E%87%E7%9A%84-linux-%E5%91%BD%E4%BB%A4-ji-da-ti-gao-gong-zuo-xiao-lv-de-linux-ming-ling/" class="">极大提高工作效率的 Linux 命令 2024-04-03 14:42:46.957</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9E%84%E5%BB%BA%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E5%88%A9%E5%99%A8buildkit-gou-jian-rong-qi-jing-xiang-li-qi-buildkit/" class="">构建容器镜像利器buildkit 2024-08-02 17:49:14.916</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B5%81%E9%87%8F%E4%BD%95%E5%A4%84%E6%9D%A5%E4%BD%95%E5%A4%84%E5%8E%BB-liu-liang-he-chu-lai-he-chu-qu/" class="">流量何处来何处去 2024-04-03 14:56:20.089</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B8%85%E7%90%86docker%E9%95%9C%E5%83%8F-qing-li-docker-jing-xiang/" class="">清理docker镜像 2024-08-02 17:54:48.594</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B8%85%E7%90%86%E6%AE%8B%E7%95%99%E7%9A%84calico%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6-qing-li-can-liu-de-calico-wang-luo/" class="">清理残留的calico网络插件 2024-04-03 15:07:38.854</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A3%81%E7%9B%98%E6%95%B0%E6%8D%AE%E6%81%A2%E5%A4%8D-ci-pan-shu-ju-hui-fu/" class="">磁盘数据恢复 2024-04-03 14:59:27.839</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85kubephere-li-xian-an-zhuang-kubephere/" class="">离线安装kubephere 2024-04-03 14:59:59.885</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4-li-xian-an-zhuang-ji-qun/" class="">离线安装集群 2023-09-28 15:29:14.742</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-%E8%AE%A1%E5%88%92/" class="">美国码农薪酬</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-%E8%AE%A1%E5%88%922/" class="">美国码农计划</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E8%87%AA%E5%8A%A8%E5%B1%8F%E8%94%BDip%E6%94%BB%E5%87%BB-zi-dong-ping-bi-ip-gong-ji/" class="">自动屏蔽IP攻击 2024-04-03 14:54:11.783</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-12-%E9%9D%A2%E8%AF%950212/" class="">面试0212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-19-%E9%9D%A2%E8%AF%950219/" class="">面试0219</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-20-%E9%9D%A2%E8%AF%950220/" class="">面试0220</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-26-%E9%9D%A2%E8%AF%950225/" class="">面试0225</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%9D%A2%E8%AF%950308-mian-shi-0308/" class="">面试0308 2024-04-03 14:57:53.576</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-11-%E9%9D%A2%E8%AF%950211/" class="">面试2025-02-11</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-18-%E9%9D%A2%E8%AF%95/" class="">面试2025-0218</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%9D%A2%E8%AF%95%E7%94%A8-golang-%E6%89%8B%E6%92%B8-lru-mian-shi-yong-golang-shou-lu-lru/" class="">面试用 Golang 手撸 LRU 2024-04-03 14:47:00.767</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%A1%B6%E7%BA%A7devops%E5%B7%A5%E5%85%B7%E5%A4%A7%E7%9B%98%E7%82%B9-ding-ji-devops-gong-ju-da-pan-dian/" class="">顶级devops工具大盘点 2024-08-02 17:43:03.661</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E9%AB%98%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_ai_linux%E9%83%A8%E5%88%86/" class="">高级运维面试题-linux部分</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>0224面试</h3>
+
+  <label for="toc-control">
+    
+    <img src="/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#1-prometheus-架构设计">1. <strong>Prometheus 架构设计</strong></a></li>
+        <li><a href="#2-grafana-可视化">2. <strong>Grafana 可视化</strong></a></li>
+        <li><a href="#3-alertmanager-告警管理">3. <strong>Alertmanager 告警管理</strong></a></li>
+        <li><a href="#4-存储与长期数据保留">4. <strong>存储与长期数据保留</strong></a></li>
+        <li><a href="#5-业务全面性和准确性">5. <strong>业务全面性和准确性</strong></a></li>
+        <li><a href="#6-监控系统的高可用性">6. <strong>监控系统的高可用性</strong></a></li>
+        <li><a href="#总结">总结</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#1-主从复制-master-slave-replication">1. <strong>主从复制 (Master-Slave Replication)</strong></a></li>
+        <li><a href="#2-双主复制-master-master-replication">2. <strong>双主复制 (Master-Master Replication)</strong></a></li>
+        <li><a href="#3-数据库集群-database-clustering">3. <strong>数据库集群 (Database Clustering)</strong></a></li>
+        <li><a href="#4-故障转移与负载均衡-failover-and-load-balancing">4. <strong>故障转移与负载均衡 (Failover and Load Balancing)</strong></a></li>
+        <li><a href="#5-同步与异步复制">5. <strong>同步与异步复制</strong></a></li>
+        <li><a href="#6-备份与恢复-backup-and-restore">6. <strong>备份与恢复 (Backup and Restore)</strong></a></li>
+        <li><a href="#7-云原生数据库高可用设计">7. <strong>云原生数据库高可用设计</strong></a></li>
+        <li><a href="#总结高可用数据库设计的考虑要点">总结：高可用数据库设计的考虑要点</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#业务监控设计的关键步骤">业务监控设计的关键步骤：</a></li>
+        <li><a href="#1-定义关键业务指标-kpi">1. <strong>定义关键业务指标 (KPI)</strong></a></li>
+        <li><a href="#2-选择合适的监控工具">2. <strong>选择合适的监控工具</strong></a></li>
+        <li><a href="#3-设置告警与响应机制">3. <strong>设置告警与响应机制</strong></a></li>
+        <li><a href="#4-实时监控与数据分析">4. <strong>实时监控与数据分析</strong></a></li>
+        <li><a href="#5-监控系统的维护与优化">5. <strong>监控系统的维护与优化</strong></a></li>
+        <li><a href="#总结-1">总结</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#1-监控指标">1. <strong>监控指标</strong></a></li>
+        <li><a href="#2-常见告警规则设计">2. <strong>常见告警规则设计</strong></a></li>
+        <li><a href="#3-告警规则设置中的注意事项">3. <strong>告警规则设置中的注意事项</strong></a></li>
+        <li><a href="#4-告警通知与响应">4. <strong>告警通知与响应</strong></a></li>
+        <li><a href="#总结-2">总结</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#1-黑盒探针black-box-probing">1. <strong>黑盒探针（Black-box Probing）</strong></a></li>
+        <li><a href="#2-接口健康检查endpoint-health-check">2. <strong>接口健康检查（Endpoint Health Check）</strong></a></li>
+        <li><a href="#3-健康检查和探针常见的设计考虑">3. <strong>健康检查和探针常见的设计考虑</strong></a></li>
+        <li><a href="#4-综合应用健康检查与告警">4. <strong>综合应用健康检查与告警</strong></a></li>
+        <li><a href="#总结-3">总结：</a></li>
+      </ul>
+    </li>
+    <li><a href="#外部的流量进入到k8s集群内部的过程">外部的流量进入到k8s集群内部的过程</a>
+      <ul>
+        <li><a href="#1-外部流量的入口">1. <strong>外部流量的入口：</strong></a></li>
+        <li><a href="#2-通过-loadbalancer云环境">2. <strong>通过 LoadBalancer（云环境）</strong></a></li>
+        <li><a href="#3-通过-ingresshttphttps-路由">3. <strong>通过 Ingress（HTTP/HTTPS 路由）</strong></a></li>
+        <li><a href="#4-ingress-资源配置">4. <strong>Ingress 资源配置</strong></a></li>
+        <li><a href="#5-ingress-controller-配置与实现">5. <strong>Ingress Controller 配置与实现</strong></a></li>
+        <li><a href="#6-nodeport">6. <strong>NodePort</strong></a></li>
+        <li><a href="#7-总结">7. <strong>总结：</strong></a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#1-关于公司文化和团队氛围">1. <strong>关于公司文化和团队氛围</strong></a></li>
+        <li><a href="#2-关于职位本身和日常工作">2. <strong>关于职位本身和日常工作</strong></a></li>
+        <li><a href="#3-关于项目和技术">3. <strong>关于项目和技术</strong></a></li>
+        <li><a href="#4-关于公司前景和行业">4. <strong>关于公司前景和行业</strong></a></li>
+        <li><a href="#5-关于领导和管理风格">5. <strong>关于领导和管理风格</strong></a></li>
+        <li><a href="#6-关于工作与生活的平衡">6. <strong>关于工作与生活的平衡</strong></a></li>
+        <li><a href="#7-关于绩效评估与反馈">7. <strong>关于绩效评估与反馈</strong></a></li>
+        <li><a href="#8-关于公司的一些具体问题">8. <strong>关于公司的一些具体问题</strong></a></li>
+        <li><a href="#9-关于后续流程">9. <strong>关于后续流程</strong></a></li>
+        <li><a href="#小贴士">小贴士：</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#1-多可用区multi-az高可用架构">1. <strong>多可用区（Multi-AZ）高可用架构</strong></a></li>
+        <li><a href="#2-跨机房容灾">2. <strong>跨机房容灾</strong></a></li>
+        <li><a href="#3-跨地域容灾cross-region-disaster-recovery">3. <strong>跨地域容灾（Cross-Region Disaster Recovery）</strong></a></li>
+        <li><a href="#4-双平面容灾dual-plane-disaster-recovery">4. <strong>双平面容灾（Dual-plane Disaster Recovery）</strong></a></li>
+        <li><a href="#总结-4">总结</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="比较好的监控是怎样的-prometheus-grafana-alertmanager-考虑存储-大规模-2000台机器-考虑告警延迟-考虑长期储存-考虑监控业务的全面性-准确性-告警实时性">
+  比较好的监控是怎样的 prometheus grafana alertmanager 考虑存储 大规模 2000台机器 考虑告警延迟 考虑长期储存 考虑监控业务的全面性 准确性 告警实时性
+  <a class="anchor" href="#%e6%af%94%e8%be%83%e5%a5%bd%e7%9a%84%e7%9b%91%e6%8e%a7%e6%98%af%e6%80%8e%e6%a0%b7%e7%9a%84-prometheus-grafana-alertmanager-%e8%80%83%e8%99%91%e5%ad%98%e5%82%a8-%e5%a4%a7%e8%a7%84%e6%a8%a1-2000%e5%8f%b0%e6%9c%ba%e5%99%a8-%e8%80%83%e8%99%91%e5%91%8a%e8%ad%a6%e5%bb%b6%e8%bf%9f-%e8%80%83%e8%99%91%e9%95%bf%e6%9c%9f%e5%82%a8%e5%ad%98-%e8%80%83%e8%99%91%e7%9b%91%e6%8e%a7%e4%b8%9a%e5%8a%a1%e7%9a%84%e5%85%a8%e9%9d%a2%e6%80%a7-%e5%87%86%e7%a1%ae%e6%80%a7-%e5%91%8a%e8%ad%a6%e5%ae%9e%e6%97%b6%e6%80%a7">#</a>
+</h1>
+<p>在你的场景中，涉及到大规模的监控部署，2000台机器、长时间的存储、实时告警等多个方面。要构建一个高效、可靠的监控系统，你可以基于 <strong>Prometheus</strong>、<strong>Grafana</strong> 和 <strong>Alertmanager</strong> 这些工具进行设计，但需要优化配置，以满足大规模、低延迟、高可用、长时间存储等需求。</p>
+<h3 id="1-prometheus-架构设计">
+  1. <strong>Prometheus 架构设计</strong>
+  <a class="anchor" href="#1-prometheus-%e6%9e%b6%e6%9e%84%e8%ae%be%e8%ae%a1">#</a>
+</h3>
+<ul>
+<li><strong>水平扩展</strong>：单个 Prometheus 实例无法支撑大规模的数据采集和存储，因此需要考虑<strong>水平扩展</strong>。可以使用多个 Prometheus 实例分担不同的监控目标（例如，按区域或按机器类型分配 Prometheus 实例）。也可以使用 <strong>Prometheus Federation</strong>（联邦）来将多个 Prometheus 实例的指标数据汇聚到一个主 Prometheus 实例中。</li>
+<li><strong>存储优化</strong>：Prometheus 本身的存储是针对短期数据存储优化的，支持时序数据的压缩。但对于长期存储，Prometheus 并不适合将数据保留很长时间。可以使用 <strong>Thanos</strong> 或 <strong>Cortex</strong> 来为 Prometheus 提供分布式存储，支持长期数据保留。这样可以跨多个 Prometheus 实例集中存储数据，进行长时间查询。</li>
+<li><strong>数据分片</strong>：如果你的监控数据量非常大（如 2000 台机器），你可以通过数据分片（sharding）来分散负载，减少单个 Prometheus 实例的压力。Thanos 和 Cortex 都支持这种分片模型。</li>
+</ul>
+<h3 id="2-grafana-可视化">
+  2. <strong>Grafana 可视化</strong>
+  <a class="anchor" href="#2-grafana-%e5%8f%af%e8%a7%86%e5%8c%96">#</a>
+</h3>
+<ul>
+<li><strong>仪表盘设计</strong>：Grafana 适用于展示大规模监控数据。你可以设计多个针对不同层级的仪表盘，例如：硬件监控、应用性能监控、网络流量等。Grafana 允许将数据按需聚合或细分，以帮助从不同维度监控业务指标。</li>
+<li><strong>分布式查询</strong>：通过 <strong>Thanos</strong> 或 <strong>Cortex</strong> 等分布式存储系统，Grafana 可以访问跨多个 Prometheus 实例的数据，呈现完整的监控视图。</li>
+<li><strong>查询性能优化</strong>：随着监控系统规模的扩大，Grafana 查询的数据量增大。你需要优化 Prometheus 的查询性能，避免低效的查询（如不加时间范围的查询），或者使用预计算的聚合数据来减轻查询负担。</li>
+</ul>
+<h3 id="3-alertmanager-告警管理">
+  3. <strong>Alertmanager 告警管理</strong>
+  <a class="anchor" href="#3-alertmanager-%e5%91%8a%e8%ad%a6%e7%ae%a1%e7%90%86">#</a>
+</h3>
+<ul>
+<li><strong>告警延迟</strong>：为了确保告警的实时性，Prometheus 的抓取周期（默认 15 秒）需要优化。如果告警的延迟非常关键，可能需要缩短抓取周期或者增加更多 Prometheus 实例，分担告警流量。</li>
+<li><strong>告警策略设计</strong>：针对大规模的监控系统，告警的<strong>去重和抑制</strong>非常重要，避免过多无效告警。可以根据告警的严重性、关联性进行聚合，避免“告警风暴”。Alertmanager 可以进行告警的抑制和分组，减少重复告警。</li>
+<li><strong>通知渠道</strong>：Alertmanager 可以与 Slack、邮件、Webhook 等通知渠道集成，根据告警级别不同，选择不同的通知方式（例如，严重告警通过短信，轻微告警通过邮件）。</li>
+<li><strong>告警灵敏度</strong>：在大规模系统中，容易产生很多低优先级的告警。可以通过设置 <strong>Prometheus</strong> 的告警规则，精细化告警条件，确保告警的准确性和有效性。</li>
+</ul>
+<h3 id="4-存储与长期数据保留">
+  4. <strong>存储与长期数据保留</strong>
+  <a class="anchor" href="#4-%e5%ad%98%e5%82%a8%e4%b8%8e%e9%95%bf%e6%9c%9f%e6%95%b0%e6%8d%ae%e4%bf%9d%e7%95%99">#</a>
+</h3>
+<ul>
+<li>
+<p>长期存储解决方案</p>
+<p>：Prometheus 默认的数据存储只适合短期使用。对于长期存储，可以引入</p>
+<p>Thanos</p>
+<p>或</p>
+<p>Cortex</p>
+<p>，这些工具可以将数据长期存储，并且提供跨 Prometheus 实例的查询功能。</p>
+<ul>
+<li><strong>Thanos</strong>：Thanos 提供了一种基于对象存储的分布式存储解决方案，可以将数据从本地存储推送到云端或分布式对象存储（如 AWS S3），并且支持数据的压缩与索引。</li>
+<li><strong>Cortex</strong>：Cortex 是另一个用于分布式时序数据存储的开源项目，它提供水平扩展、长期存储等特性，适合大规模监控部署。</li>
+</ul>
+</li>
+<li>
+<p><strong>Cold Storage</strong>：对于不经常访问的数据，可以将较老的时序数据存储到 <strong>Cold Storage</strong> 中，减少对存储性能的影响。</p>
+</li>
+</ul>
+<h3 id="5-业务全面性和准确性">
+  5. <strong>业务全面性和准确性</strong>
+  <a class="anchor" href="#5-%e4%b8%9a%e5%8a%a1%e5%85%a8%e9%9d%a2%e6%80%a7%e5%92%8c%e5%87%86%e7%a1%ae%e6%80%a7">#</a>
+</h3>
+<ul>
+<li><strong>指标覆盖全面</strong>：确保监控覆盖所有业务的关键指标，除了常规的硬件、网络、应用性能指标外，还要考虑业务指标（如用户行为、支付订单量等）。可以使用 <strong>Prometheus Exporter</strong> 来收集更多应用特定的指标。</li>
+<li><strong>PromQL 查询优化</strong>：为了确保监控数据的准确性和高效性，使用 PromQL 时需要优化查询，避免过度聚合和计算。例如，可以使用汇总（<code>rate</code>、<code>avg</code>）等函数在 Prometheus 采集数据时进行计算，减少数据量，提高查询效率。</li>
+</ul>
+<h3 id="6-监控系统的高可用性">
+  6. <strong>监控系统的高可用性</strong>
+  <a class="anchor" href="#6-%e7%9b%91%e6%8e%a7%e7%b3%bb%e7%bb%9f%e7%9a%84%e9%ab%98%e5%8f%af%e7%94%a8%e6%80%a7">#</a>
+</h3>
+<ul>
+<li><strong>Prometheus 高可用性</strong>：可以通过 <strong>Prometheus HA</strong> 部署多个 Prometheus 实例来保证高可用性。例如，主 Prometheus 实例失效时，副本可以接管工作。</li>
+<li><strong>Alertmanager 高可用性</strong>：Alertmanager 也需要做高可用部署，可以通过 <strong>Alertmanager 集群</strong> 来实现。</li>
+<li><strong>冗余存储</strong>：通过 Thanos 或 Cortex 等解决方案提供冗余存储，以确保数据不丢失。</li>
+</ul>
+<h3 id="总结">
+  总结
+  <a class="anchor" href="#%e6%80%bb%e7%bb%93">#</a>
+</h3>
+<p>对于大规模监控系统（如 2000 台机器），你需要：</p>
+<ul>
+<li><strong>分布式 Prometheus 架构</strong>：使用多个 Prometheus 实例，并结合 Thanos 或 Cortex 等分布式存储解决方案进行长期数据存储。</li>
+<li><strong>高效的告警策略</strong>：优化告警规则，使用告警去重和抑制，确保告警的实时性和准确性。</li>
+<li><strong>灵活的可视化设计</strong>：使用 Grafana 来设计分层、灵活的仪表盘，确保监控的全面性。</li>
+<li><strong>优化存储和查询</strong>：通过压缩、分片、冷存储等手段降低存储成本并提高查询性能。</li>
+</ul>
+<p>通过这些优化，你可以确保监控系统不仅能够处理大规模的环境，还能保证告警和数据查询的实时性和准确性。你有具体的部署需求或技术栈细节吗？</p>
+<h1 id="数据库的高可用的设计">
+  数据库的高可用的设计
+  <a class="anchor" href="#%e6%95%b0%e6%8d%ae%e5%ba%93%e7%9a%84%e9%ab%98%e5%8f%af%e7%94%a8%e7%9a%84%e8%ae%be%e8%ae%a1">#</a>
+</h1>
+<p>数据库的高可用性设计是确保数据库服务在出现故障时，能够自动恢复并保持最小的停机时间，以确保系统的连续性和可靠性。为了实现高可用性，通常会涉及到数据复制、故障转移、负载均衡、备份策略等多个方面。</p>
+<p>下面是几种常见的数据库高可用设计方案：</p>
+<h3 id="1-主从复制-master-slave-replication">
+  1. <strong>主从复制 (Master-Slave Replication)</strong>
+  <a class="anchor" href="#1-%e4%b8%bb%e4%bb%8e%e5%a4%8d%e5%88%b6-master-slave-replication">#</a>
+</h3>
+<p>主从复制是数据库高可用性的经典设计，主数据库处理写操作，从数据库负责读取操作。这种设计可以通过从数据库来分担读取负载，同时在主数据库故障时，能够将从数据库提升为新的主数据库。</p>
+<h4 id="特点">
+  特点：
+  <a class="anchor" href="#%e7%89%b9%e7%82%b9">#</a>
+</h4>
+<ul>
+<li><strong>主数据库</strong>：负责处理所有写操作。</li>
+<li><strong>从数据库</strong>：通过同步复制，接收主数据库的变更，处理读取操作。</li>
+<li><strong>故障转移</strong>：如果主数据库不可用，从数据库可以通过自动或手动的方式提升为主数据库。</li>
+</ul>
+<h4 id="缺点">
+  缺点：
+  <a class="anchor" href="#%e7%bc%ba%e7%82%b9">#</a>
+</h4>
+<ul>
+<li>主从复制通常是异步的，这意味着如果主数据库发生故障，从数据库可能会丢失一些未同步的数据。</li>
+</ul>
+<h4 id="实现">
+  实现：
+  <a class="anchor" href="#%e5%ae%9e%e7%8e%b0">#</a>
+</h4>
+<ul>
+<li><strong>MySQL</strong> 和 <strong>PostgreSQL</strong> 都支持主从复制。</li>
+<li><strong>MySQL Group Replication</strong> 或 <strong>PostgreSQL Streaming Replication</strong> 可提供更强的复制和故障转移能力。</li>
+</ul>
+<h3 id="2-双主复制-master-master-replication">
+  2. <strong>双主复制 (Master-Master Replication)</strong>
+  <a class="anchor" href="#2-%e5%8f%8c%e4%b8%bb%e5%a4%8d%e5%88%b6-master-master-replication">#</a>
+</h3>
+<p>双主复制通过让两个数据库实例互相作为主数据库来实现高可用性。这种方案允许数据库之间相互复制，且两个数据库都可以进行写操作。</p>
+<h4 id="特点-1">
+  特点：
+  <a class="anchor" href="#%e7%89%b9%e7%82%b9-1">#</a>
+</h4>
+<ul>
+<li>双主复制使得两个数据库实例可以同时进行读写操作。</li>
+<li>当一个数据库实例发生故障时，另一个实例仍然可以提供服务。</li>
+<li>比主从复制的负载分担能力更强。</li>
+</ul>
+<h4 id="缺点-1">
+  缺点：
+  <a class="anchor" href="#%e7%bc%ba%e7%82%b9-1">#</a>
+</h4>
+<ul>
+<li>数据冲突：如果两个主数据库同时进行写操作，可能会发生数据冲突。需要通过解决冲突的机制（如版本控制或冲突解决策略）来避免这种情况。</li>
+<li>相较于主从复制，双主复制的实现更复杂，特别是在数据库的写冲突管理上。</li>
+</ul>
+<h4 id="实现-1">
+  实现：
+  <a class="anchor" href="#%e5%ae%9e%e7%8e%b0-1">#</a>
+</h4>
+<ul>
+<li><strong>MySQL</strong> 的 <strong>Group Replication</strong> 或 <strong>Galera Cluster</strong>。</li>
+<li><strong>PostgreSQL</strong> 使用 <strong>Bucardo</strong> 或 <strong>PgPool-II</strong>。</li>
+</ul>
+<h3 id="3-数据库集群-database-clustering">
+  3. <strong>数据库集群 (Database Clustering)</strong>
+  <a class="anchor" href="#3-%e6%95%b0%e6%8d%ae%e5%ba%93%e9%9b%86%e7%be%a4-database-clustering">#</a>
+</h3>
+<p>数据库集群将多个数据库节点组成一个集群，通常集群中的每个节点都有相同的数据副本，并通过一致性协议来保证数据的一致性。集群模式通常能提供更高的可用性和更强的数据冗余能力。</p>
+<h4 id="特点-2">
+  特点：
+  <a class="anchor" href="#%e7%89%b9%e7%82%b9-2">#</a>
+</h4>
+<ul>
+<li>集群中的每个节点都存储数据副本，并具有读写能力。</li>
+<li>提供自动故障转移和负载均衡。</li>
+<li>数据一致性通常使用分布式协议（如 <strong>Paxos</strong> 或 <strong>Raft</strong>）来确保。</li>
+</ul>
+<h4 id="实现-2">
+  实现：
+  <a class="anchor" href="#%e5%ae%9e%e7%8e%b0-2">#</a>
+</h4>
+<ul>
+<li><strong>MySQL Cluster</strong>：基于 NDB (Network Database) 存储引擎，支持高可用性、自动分区和自动故障转移。</li>
+<li><strong>PostgreSQL</strong>：通过 <strong>Citus</strong> 扩展实现分布式数据库集群。</li>
+<li><strong>Cassandra</strong> 和 <strong>MongoDB</strong>：本身是分布式数据库，原生支持高可用性和分布式存储。</li>
+</ul>
+<h3 id="4-故障转移与负载均衡-failover-and-load-balancing">
+  4. <strong>故障转移与负载均衡 (Failover and Load Balancing)</strong>
+  <a class="anchor" href="#4-%e6%95%85%e9%9a%9c%e8%bd%ac%e7%a7%bb%e4%b8%8e%e8%b4%9f%e8%bd%bd%e5%9d%87%e8%a1%a1-failover-and-load-balancing">#</a>
+</h3>
+<p>故障转移是指在主数据库节点发生故障时，自动切换到一个备份数据库（从数据库或复制节点），保持服务可用。而负载均衡则用于在多个数据库节点之间分配读写请求。</p>
+<h4 id="实现-3">
+  实现：
+  <a class="anchor" href="#%e5%ae%9e%e7%8e%b0-3">#</a>
+</h4>
+<ul>
+<li><strong>故障转移管理工具</strong>：例如 <strong>MHA (Master High Availability)</strong> 或 <strong>Orchestrator</strong>，可以用于自动监控数据库实例，发生故障时自动将流量切换到健康的节点。</li>
+<li><strong>负载均衡器</strong>：可以使用负载均衡器（如 <strong>HAProxy</strong>、<strong>ProxySQL</strong> 或 <strong>PgBouncer</strong>）来将请求分配到多个数据库实例，从而实现负载均衡。</li>
+</ul>
+<h3 id="5-同步与异步复制">
+  5. <strong>同步与异步复制</strong>
+  <a class="anchor" href="#5-%e5%90%8c%e6%ad%a5%e4%b8%8e%e5%bc%82%e6%ad%a5%e5%a4%8d%e5%88%b6">#</a>
+</h3>
+<ul>
+<li><strong>同步复制</strong>：所有数据库节点都保持一致性，所有写操作必须在所有节点上成功才能完成。这种方法提供更强的一致性，但会影响性能，特别是在远程节点时延较大的情况下。</li>
+<li><strong>异步复制</strong>：主数据库先提交写操作，数据随后异步同步到从节点。这种方法更注重性能，能够提高系统吞吐量，但在主数据库故障时可能会丢失一些未同步的数据。</li>
+</ul>
+<h4 id="实现-4">
+  实现：
+  <a class="anchor" href="#%e5%ae%9e%e7%8e%b0-4">#</a>
+</h4>
+<ul>
+<li><strong>MySQL</strong> 支持同步复制（通过 <strong>GTID</strong> 或 <strong>Semi-Synchronous Replication</strong>）。</li>
+<li><strong>PostgreSQL</strong> 支持流式复制，可以通过配置不同的同步复制策略来实现。</li>
+</ul>
+<h3 id="6-备份与恢复-backup-and-restore">
+  6. <strong>备份与恢复 (Backup and Restore)</strong>
+  <a class="anchor" href="#6-%e5%a4%87%e4%bb%bd%e4%b8%8e%e6%81%a2%e5%a4%8d-backup-and-restore">#</a>
+</h3>
+<p>定期备份数据库是确保数据安全和可恢复性的基础。数据库的高可用性不仅仅依赖于实时的故障转移，还需要有健全的备份策略。</p>
+<h4 id="特点-3">
+  特点：
+  <a class="anchor" href="#%e7%89%b9%e7%82%b9-3">#</a>
+</h4>
+<ul>
+<li>定期备份数据。</li>
+<li><strong>增量备份</strong>：只备份发生变化的数据，减少备份时间和存储空间。</li>
+<li><strong>异地备份</strong>：将备份存储到不同地理位置，以防止由于自然灾害等因素导致的数据丢失。</li>
+</ul>
+<h4 id="实现-5">
+  实现：
+  <a class="anchor" href="#%e5%ae%9e%e7%8e%b0-5">#</a>
+</h4>
+<ul>
+<li>使用数据库的内建工具，如 <strong>mysqldump</strong>、<strong>pg_dump</strong>、<strong>Percona XtraBackup</strong> 等，结合脚本定期备份。</li>
+<li>数据备份需要确保备份文件的存储与恢复高效性，尽量避免因备份过程导致的性能瓶颈。</li>
+</ul>
+<h3 id="7-云原生数据库高可用设计">
+  7. <strong>云原生数据库高可用设计</strong>
+  <a class="anchor" href="#7-%e4%ba%91%e5%8e%9f%e7%94%9f%e6%95%b0%e6%8d%ae%e5%ba%93%e9%ab%98%e5%8f%af%e7%94%a8%e8%ae%be%e8%ae%a1">#</a>
+</h3>
+<p>如果部署在云环境中（如 AWS、Azure 或 Google Cloud），云平台通常提供数据库的高可用性功能，如自动备份、自动故障转移、多区域部署等。</p>
+<h4 id="特点-4">
+  特点：
+  <a class="anchor" href="#%e7%89%b9%e7%82%b9-4">#</a>
+</h4>
+<ul>
+<li><strong>自动故障转移</strong>：云平台可提供跨可用区的自动故障转移。</li>
+<li><strong>分布式存储</strong>：数据可以分布在多个区域，提高容灾能力。</li>
+<li><strong>弹性扩展</strong>：根据负载需求自动扩展计算和存储资源。</li>
+</ul>
+<h4 id="实现-6">
+  实现：
+  <a class="anchor" href="#%e5%ae%9e%e7%8e%b0-6">#</a>
+</h4>
+<ul>
+<li><strong>Amazon RDS</strong> 和 <strong>Aurora</strong>：提供数据库自动备份、故障转移和多区域部署功能。</li>
+<li><strong>Google Cloud SQL</strong> 和 <strong>Azure Database</strong>：提供高可用性和自动扩展功能。</li>
+</ul>
+<hr>
+<h3 id="总结高可用数据库设计的考虑要点">
+  总结：高可用数据库设计的考虑要点
+  <a class="anchor" href="#%e6%80%bb%e7%bb%93%e9%ab%98%e5%8f%af%e7%94%a8%e6%95%b0%e6%8d%ae%e5%ba%93%e8%ae%be%e8%ae%a1%e7%9a%84%e8%80%83%e8%99%91%e8%a6%81%e7%82%b9">#</a>
+</h3>
+<ol>
+<li><strong>冗余和数据复制</strong>：通过主从、双主或集群复制来保证数据的冗余。</li>
+<li><strong>故障转移与恢复</strong>：自动化故障转移机制，最小化系统的停机时间。</li>
+<li><strong>负载均衡</strong>：通过负载均衡器分担读写请求，提高吞吐量。</li>
+<li><strong>备份策略</strong>：定期备份数据库，并确保可以在灾难发生时快速恢复。</li>
+<li><strong>监控和告警</strong>：实时监控数据库健康状态，设置合理的告警策略，确保在出现故障时能够及时响应。</li>
+</ol>
+<p>你是否有特定的数据库类型或架构部署需求，或者是否涉及到云平台或自建环境的高可用设计？这样可以更有针对性地给出建议。</p>
+<h1 id="业务监控怎么做的">
+  业务监控怎么做的？
+  <a class="anchor" href="#%e4%b8%9a%e5%8a%a1%e7%9b%91%e6%8e%a7%e6%80%8e%e4%b9%88%e5%81%9a%e7%9a%84">#</a>
+</h1>
+<p>业务监控是确保业务系统（无论是网站、应用还是其他类型的服务）健康、稳定、可靠的关键环节。它不仅关注系统层面的性能指标（如 CPU、内存、网络带宽等），还关注业务本身的指标，如用户行为、订单量、收入、转化率等。有效的业务监控帮助团队及时发现问题、分析瓶颈、优化流程，并做出更好的决策。</p>
+<h3 id="业务监控设计的关键步骤">
+  业务监控设计的关键步骤：
+  <a class="anchor" href="#%e4%b8%9a%e5%8a%a1%e7%9b%91%e6%8e%a7%e8%ae%be%e8%ae%a1%e7%9a%84%e5%85%b3%e9%94%ae%e6%ad%a5%e9%aa%a4">#</a>
+</h3>
+<ol>
+<li><strong>定义关键业务指标 (KPI)</strong></li>
+<li><strong>选择合适的监控工具</strong></li>
+<li><strong>设置告警与响应机制</strong></li>
+<li><strong>实时监控与数据分析</strong></li>
+<li><strong>监控系统的维护与优化</strong></li>
+</ol>
+<h3 id="1-定义关键业务指标-kpi">
+  1. <strong>定义关键业务指标 (KPI)</strong>
+  <a class="anchor" href="#1-%e5%ae%9a%e4%b9%89%e5%85%b3%e9%94%ae%e4%b8%9a%e5%8a%a1%e6%8c%87%e6%a0%87-kpi">#</a>
+</h3>
+<p>首先，确定需要监控的<strong>业务指标</strong>是关键步骤。不同的业务场景，监控的指标也会有所不同。以下是一些常见的业务监控指标：</p>
+<h4 id="常见业务监控指标">
+  常见业务监控指标：
+  <a class="anchor" href="#%e5%b8%b8%e8%a7%81%e4%b8%9a%e5%8a%a1%e7%9b%91%e6%8e%a7%e6%8c%87%e6%a0%87">#</a>
+</h4>
+<ul>
+<li>
+<p>用户相关指标</p>
+<p>：</p>
+<ul>
+<li><strong>活跃用户数 (DAU/MAU)</strong>：日活跃用户数和月活跃用户数，反映用户参与度。</li>
+<li><strong>用户留存率</strong>：例如第1天、第7天、第30天的留存率，衡量用户粘性。</li>
+<li><strong>用户转化率</strong>：如从注册到购买的转化率，帮助分析用户行为路径。</li>
+</ul>
+</li>
+<li>
+<p>业务行为指标</p>
+<p>：</p>
+<ul>
+<li><strong>订单量、销售额</strong>：直接衡量业务收入。</li>
+<li><strong>用户行为路径</strong>：用户从浏览、加入购物车到最终购买的转化路径。</li>
+<li><strong>支付成功率</strong>：反映支付环节的顺畅度。</li>
+</ul>
+</li>
+<li>
+<p>系统健康指标</p>
+<p>：</p>
+<ul>
+<li><strong>响应时间</strong>：业务接口或页面的响应时间，过长可能影响用户体验。</li>
+<li><strong>错误率</strong>：如HTTP 5xx 错误，API 错误，监控是否存在服务故障。</li>
+<li><strong>系统负载</strong>：监控服务器、数据库的负载情况，防止过载。</li>
+</ul>
+</li>
+</ul>
+<h4 id="业务指标示例">
+  业务指标示例：
+  <a class="anchor" href="#%e4%b8%9a%e5%8a%a1%e6%8c%87%e6%a0%87%e7%a4%ba%e4%be%8b">#</a>
+</h4>
+<ul>
+<li>电商平台：订单量、购物车放弃率、支付成功率、转化率、退款率。</li>
+<li>SaaS 平台：用户注册数、付费用户数、功能使用频率、续费率。</li>
+<li>社交平台：用户活跃度、评论数、分享数。</li>
+</ul>
+<h3 id="2-选择合适的监控工具">
+  2. <strong>选择合适的监控工具</strong>
+  <a class="anchor" href="#2-%e9%80%89%e6%8b%a9%e5%90%88%e9%80%82%e7%9a%84%e7%9b%91%e6%8e%a7%e5%b7%a5%e5%85%b7">#</a>
+</h3>
+<p>为了有效地监控业务，你可以选择合适的监控工具。根据需求，监控工具可以分为 <strong>系统层级监控</strong> 和 <strong>业务层级监控</strong>。</p>
+<h4 id="系统层级监控工具">
+  系统层级监控工具：
+  <a class="anchor" href="#%e7%b3%bb%e7%bb%9f%e5%b1%82%e7%ba%a7%e7%9b%91%e6%8e%a7%e5%b7%a5%e5%85%b7">#</a>
+</h4>
+<ul>
+<li><strong>Prometheus + Grafana</strong>：用于监控系统性能指标（如 CPU 使用率、内存、硬盘、网络流量等）并将其可视化，提供详细的图表和报警功能。</li>
+<li><strong>Datadog</strong>：综合性能监控工具，支持云、容器、应用程序等的全栈监控，适合大规模微服务环境。</li>
+<li><strong>Zabbix、Nagios</strong>：传统的监控工具，用于监控主机、网络设备、应用程序等。</li>
+</ul>
+<h4 id="业务层级监控工具">
+  业务层级监控工具：
+  <a class="anchor" href="#%e4%b8%9a%e5%8a%a1%e5%b1%82%e7%ba%a7%e7%9b%91%e6%8e%a7%e5%b7%a5%e5%85%b7">#</a>
+</h4>
+<ul>
+<li><strong>Google Analytics、Mixpanel、Amplitude</strong>：这些工具可以帮助你收集用户行为数据，分析用户的使用模式、转化率、留存等业务数据。</li>
+<li><strong>Prometheus + 自定义 Metrics Exporter</strong>：通过将业务指标暴露为 Prometheus 监控的形式，可以对业务指标进行自定义监控和告警设置。</li>
+<li><strong>Elasticsearch + Kibana (ELK Stack)</strong>：用于日志分析，可以挖掘出用户行为数据、业务异常等信息。</li>
+<li><strong>Grafana + InfluxDB</strong>：适合高频率的时序数据监控，常用于监控业务系统的实时数据。</li>
+</ul>
+<h3 id="3-设置告警与响应机制">
+  3. <strong>设置告警与响应机制</strong>
+  <a class="anchor" href="#3-%e8%ae%be%e7%bd%ae%e5%91%8a%e8%ad%a6%e4%b8%8e%e5%93%8d%e5%ba%94%e6%9c%ba%e5%88%b6">#</a>
+</h3>
+<p>业务监控的核心之一是<strong>告警系统</strong>，确保你能够及时发现问题并采取行动。告警设计不仅仅要监控系统崩溃或性能瓶颈，还要能够对<strong>业务异常</strong>做出反应。</p>
+<h4 id="告警策略">
+  告警策略：
+  <a class="anchor" href="#%e5%91%8a%e8%ad%a6%e7%ad%96%e7%95%a5">#</a>
+</h4>
+<ul>
+<li><strong>阈值告警</strong>：当某个指标超过或低于预定的阈值时触发告警。例如，订单量异常波动、支付成功率过低、错误率过高等。</li>
+<li><strong>趋势告警</strong>：监控指标的增长趋势或衰退趋势，例如用户活跃度下降、订单数量连续数小时下降等。</li>
+<li><strong>异常检测</strong>：一些先进的监控系统（如 Datadog、Prometheus）可以根据历史数据和模式分析，自动发现异常变化，自动触发告警。</li>
+</ul>
+<h4 id="告警渠道">
+  告警渠道：
+  <a class="anchor" href="#%e5%91%8a%e8%ad%a6%e6%b8%a0%e9%81%93">#</a>
+</h4>
+<ul>
+<li><strong>Slack、微信、钉钉</strong>：将告警信息推送到团队沟通工具，确保团队可以及时响应。</li>
+<li><strong>邮件、短信、电话</strong>：对于严重故障，可能需要通过电话、短信等方式告知相关人员。</li>
+<li><strong>自动化响应</strong>：通过集成自动化工具（如 <strong>Runbook</strong>），在发生常见问题时可以自动触发修复流程。</li>
+</ul>
+<h3 id="4-实时监控与数据分析">
+  4. <strong>实时监控与数据分析</strong>
+  <a class="anchor" href="#4-%e5%ae%9e%e6%97%b6%e7%9b%91%e6%8e%a7%e4%b8%8e%e6%95%b0%e6%8d%ae%e5%88%86%e6%9e%90">#</a>
+</h3>
+<p>实时监控是确保业务持续健康运营的核心。除了实时监控的核心业务指标外，还需要综合分析，识别潜在的问题。</p>
+<h4 id="关键实时数据">
+  关键实时数据：
+  <a class="anchor" href="#%e5%85%b3%e9%94%ae%e5%ae%9e%e6%97%b6%e6%95%b0%e6%8d%ae">#</a>
+</h4>
+<ul>
+<li><strong>数据仪表盘</strong>：在 <strong>Grafana</strong>、<strong>Datadog</strong> 或 <strong>Kibana</strong> 上创建实时仪表盘，展示核心业务指标（如活跃用户、转化率、订单量等）。</li>
+<li><strong>追踪用户行为</strong>：集成用户行为分析工具，如 <strong>Google Analytics</strong>、<strong>Mixpanel</strong>，监控用户在系统中的路径和关键行为，识别潜在的用户流失或问题区域。</li>
+</ul>
+<h4 id="数据分析">
+  数据分析：
+  <a class="anchor" href="#%e6%95%b0%e6%8d%ae%e5%88%86%e6%9e%90">#</a>
+</h4>
+<ul>
+<li><strong>回归分析</strong>：基于历史数据分析出业务的季节性变化、周期性波动，预测未来的趋势和需求。</li>
+<li><strong>A/B 测试</strong>：在业务上做出更改时（例如修改用户界面、调整流程等），可以使用 A/B 测试来验证新变化是否提高了业务指标。</li>
+</ul>
+<h3 id="5-监控系统的维护与优化">
+  5. <strong>监控系统的维护与优化</strong>
+  <a class="anchor" href="#5-%e7%9b%91%e6%8e%a7%e7%b3%bb%e7%bb%9f%e7%9a%84%e7%bb%b4%e6%8a%a4%e4%b8%8e%e4%bc%98%e5%8c%96">#</a>
+</h3>
+<p>随着业务的发展和系统的变化，业务监控也需要不断地维护和优化。定期评估和调整监控策略是非常重要的。</p>
+<h4 id="维护工作">
+  维护工作：
+  <a class="anchor" href="#%e7%bb%b4%e6%8a%a4%e5%b7%a5%e4%bd%9c">#</a>
+</h4>
+<ul>
+<li><strong>定期回顾监控指标</strong>：确保业务监控覆盖了所有重要的业务指标，及时更新和优化监控内容。</li>
+<li><strong>优化告警设置</strong>：告警的频率和内容需要根据实际情况进行调整，避免“告警疲劳”，同时确保高优先级告警不会被遗漏。</li>
+<li><strong>性能优化</strong>：优化监控系统的性能，避免监控本身对生产环境造成额外的压力。</li>
+</ul>
+<h4 id="高效的报警管理">
+  高效的报警管理：
+  <a class="anchor" href="#%e9%ab%98%e6%95%88%e7%9a%84%e6%8a%a5%e8%ad%a6%e7%ae%a1%e7%90%86">#</a>
+</h4>
+<ul>
+<li><strong>告警去重和合并</strong>：避免相同问题引发多个告警。使用合并、去重等策略，将相似的告警合并为一个事件进行处理。</li>
+</ul>
+<h3 id="总结-1">
+  总结
+  <a class="anchor" href="#%e6%80%bb%e7%bb%93-1">#</a>
+</h3>
+<p>业务监控的核心目标是确保业务运行的健康和可持续性。有效的业务监控不仅帮助你确保系统正常运作，还能帮助你识别潜在的业务瓶颈、改进用户体验、优化业务流程。设计业务监控时，要：</p>
+<ol>
+<li>确定并定义关键业务指标（KPI）。</li>
+<li>使用合适的工具收集和分析业务数据。</li>
+<li>配置实时监控和告警系统，确保能够快速响应。</li>
+<li>定期优化监控和告警策略，确保监控系统高效稳定。</li>
+</ol>
+<p>如果你有特定的业务场景或者需要更详细的实现建议，我可以提供更具体的指导！</p>
+<h1 id="业务pod告警规则设计和例子">
+  业务pod告警规则设计和例子
+  <a class="anchor" href="#%e4%b8%9a%e5%8a%a1pod%e5%91%8a%e8%ad%a6%e8%a7%84%e5%88%99%e8%ae%be%e8%ae%a1%e5%92%8c%e4%be%8b%e5%ad%90">#</a>
+</h1>
+<p>在 Kubernetes 环境中，使用 <strong>Prometheus</strong> 和 <strong>Alertmanager</strong> 结合 <strong>Pod</strong> 监控和告警是非常常见的做法。以下是一些设计业务 Pod 的告警规则的常见场景，以及具体的告警规则示例。</p>
+<h3 id="1-监控指标">
+  1. <strong>监控指标</strong>
+  <a class="anchor" href="#1-%e7%9b%91%e6%8e%a7%e6%8c%87%e6%a0%87">#</a>
+</h3>
+<p>首先，确保你已经在 Kubernetes 中通过 <strong>Prometheus Operator</strong> 或者 <strong>Kube-Prometheus</strong> 等工具集成了 Prometheus 监控，并能够收集到以下指标：</p>
+<ul>
+<li><strong>Pod CPU 使用率</strong>：<code>container_cpu_usage_seconds_total</code></li>
+<li><strong>Pod 内存使用率</strong>：<code>container_memory_usage_bytes</code></li>
+<li><strong>Pod 网络流量</strong>：<code>container_network_receive_bytes_total</code>、<code>container_network_transmit_bytes_total</code></li>
+<li><strong>Pod 磁盘 I/O</strong>：<code>container_fs_usage_bytes</code></li>
+<li><strong>Pod 重启次数</strong>：<code>kube_pod_container_status_restarts_total</code></li>
+<li><strong>Pod 状态</strong>：<code>kube_pod_status_phase</code>（如 Pending、Running、Succeeded、Failed 等）</li>
+<li><strong>Pod 健康检查</strong>：<code>kube_pod_container_status_ready</code></li>
+</ul>
+<h3 id="2-常见告警规则设计">
+  2. <strong>常见告警规则设计</strong>
+  <a class="anchor" href="#2-%e5%b8%b8%e8%a7%81%e5%91%8a%e8%ad%a6%e8%a7%84%e5%88%99%e8%ae%be%e8%ae%a1">#</a>
+</h3>
+<p>业务 Pod 的告警规则需要涵盖以下几个方面：</p>
+<h4 id="a-资源使用告警cpu内存等">
+  a. <strong>资源使用告警（CPU、内存等）</strong>
+  <a class="anchor" href="#a-%e8%b5%84%e6%ba%90%e4%bd%bf%e7%94%a8%e5%91%8a%e8%ad%a6cpu%e5%86%85%e5%ad%98%e7%ad%89">#</a>
+</h4>
+<p>这些告警规则主要是帮助你及时发现资源瓶颈或者不正常的资源消耗。过高的 CPU 或内存使用率可能会导致 Pod 变慢或者重启。</p>
+<p><strong>CPU 使用率告警：</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span>- <span style="color:#f92672">alert</span>: <span style="color:#ae81ff">PodHighCPUUsage</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">expr</span>: <span style="color:#ae81ff">rate(container_cpu_usage_seconds_total{container!=&#34;&#34;,pod=~&#34;.*&#34;}[5m]) &gt; 0.9</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">for</span>: <span style="color:#ae81ff">1m</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">labels</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">severity</span>: <span style="color:#ae81ff">critical</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">annotations</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">summary</span>: <span style="color:#e6db74">&#34;Pod {{ $labels.pod }} is using too much CPU ({{ $value }} cores)&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">description</span>: <span style="color:#e6db74">&#34;Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is consuming too much CPU.&#34;</span>
+</span></span></code></pre></div><p><strong>说明：</strong> 这个规则表示如果 Pod 的 CPU 使用率超过 90%（1 核 CPU），并且持续时间达到 1 分钟，则触发告警。</p>
+<p><strong>内存使用率告警：</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span>- <span style="color:#f92672">alert</span>: <span style="color:#ae81ff">PodHighMemoryUsage</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">expr</span>: <span style="color:#ae81ff">container_memory_usage_bytes{container!=&#34;&#34;,pod=~&#34;.*&#34;} / container_spec_memory_limit_bytes{container!=&#34;&#34;,pod=~&#34;.*&#34;} &gt; 0.9</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">for</span>: <span style="color:#ae81ff">1m</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">labels</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">severity</span>: <span style="color:#ae81ff">critical</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">annotations</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">summary</span>: <span style="color:#e6db74">&#34;Pod {{ $labels.pod }} is using too much memory ({{ $value }} bytes)&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">description</span>: <span style="color:#e6db74">&#34;Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is consuming too much memory.&#34;</span>
+</span></span></code></pre></div><p><strong>说明：</strong> 如果 Pod 的内存使用超过 90%（<code>container_spec_memory_limit_bytes</code>），并且持续时间超过 1 分钟，则触发告警。</p>
+<h4 id="b-pod-重启次数告警">
+  b. <strong>Pod 重启次数告警</strong>
+  <a class="anchor" href="#b-pod-%e9%87%8d%e5%90%af%e6%ac%a1%e6%95%b0%e5%91%8a%e8%ad%a6">#</a>
+</h4>
+<p>Pod 重启次数过多通常表示应用程序存在不稳定性。你可以使用此告警规则检测 Pod 重启情况。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span>- <span style="color:#f92672">alert</span>: <span style="color:#ae81ff">PodRestartingTooManyTimes</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">expr</span>: <span style="color:#ae81ff">kube_pod_container_status_restarts_total{container!=&#34;&#34;,pod=~&#34;.*&#34;} &gt; 5</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">for</span>: <span style="color:#ae81ff">5m</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">labels</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">severity</span>: <span style="color:#ae81ff">critical</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">annotations</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">summary</span>: <span style="color:#e6db74">&#34;Pod {{ $labels.pod }} has restarted more than 5 times in the last 5 minutes&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">description</span>: <span style="color:#e6db74">&#34;Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has restarted {{ $value }} times in the last 5 minutes.&#34;</span>
+</span></span></code></pre></div><p><strong>说明：</strong> 如果某个 Pod 在 5 分钟内重启次数超过 5 次，则触发告警。</p>
+<h4 id="c-pod-健康检查失败告警">
+  c. <strong>Pod 健康检查失败告警</strong>
+  <a class="anchor" href="#c-pod-%e5%81%a5%e5%ba%b7%e6%a3%80%e6%9f%a5%e5%a4%b1%e8%b4%a5%e5%91%8a%e8%ad%a6">#</a>
+</h4>
+<p>如果 Pod 无法通过健康检查，通常是应用程序出现问题。这类告警可以帮助你及时发现应用不健康的状态。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span>- <span style="color:#f92672">alert</span>: <span style="color:#ae81ff">PodUnhealthy</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">expr</span>: <span style="color:#ae81ff">kube_pod_container_status_ready{container!=&#34;&#34;,pod=~&#34;.*&#34;} == 0</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">for</span>: <span style="color:#ae81ff">2m</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">labels</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">severity</span>: <span style="color:#ae81ff">critical</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">annotations</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">summary</span>: <span style="color:#e6db74">&#34;Pod {{ $labels.pod }} is not ready&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">description</span>: <span style="color:#e6db74">&#34;Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has failed the readiness check for more than 2 minutes.&#34;</span>
+</span></span></code></pre></div><p><strong>说明：</strong> 如果 Pod 在 2 分钟内无法通过准备就绪检查（<code>container_status_ready == 0</code>），则触发告警。</p>
+<h4 id="d-pod-启动延迟告警">
+  d. <strong>Pod 启动延迟告警</strong>
+  <a class="anchor" href="#d-pod-%e5%90%af%e5%8a%a8%e5%bb%b6%e8%bf%9f%e5%91%8a%e8%ad%a6">#</a>
+</h4>
+<p>如果 Pod 启动时间过长，可能是应用或环境存在问题。通过监控 Pod 的启动时间，可以提前发现潜在问题。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span>- <span style="color:#f92672">alert</span>: <span style="color:#ae81ff">PodStartupDelay</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">expr</span>: <span style="color:#ae81ff">time() - kube_pod_start_time{pod=~&#34;.*&#34;} &gt; 600</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">labels</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">severity</span>: <span style="color:#ae81ff">high</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">annotations</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">summary</span>: <span style="color:#e6db74">&#34;Pod {{ $labels.pod }} is taking too long to start&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">description</span>: <span style="color:#e6db74">&#34;Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has not started within 10 minutes.&#34;</span>
+</span></span></code></pre></div><p><strong>说明：</strong> 如果 Pod 启动时间超过 10 分钟，则触发告警。</p>
+<h4 id="e-pod-状态异常告警">
+  e. <strong>Pod 状态异常告警</strong>
+  <a class="anchor" href="#e-pod-%e7%8a%b6%e6%80%81%e5%bc%82%e5%b8%b8%e5%91%8a%e8%ad%a6">#</a>
+</h4>
+<p>Pod 的状态异常（如进入 <code>CrashLoopBackOff</code>、<code>Pending</code> 等）也需要进行监控。这些告警有助于检测 Pods 是否发生了故障或无法调度。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span>- <span style="color:#f92672">alert</span>: <span style="color:#ae81ff">PodStatusFailed</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">expr</span>: <span style="color:#ae81ff">kube_pod_status_phase{phase=&#34;Failed&#34;,pod=~&#34;.*&#34;} &gt; 0</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">for</span>: <span style="color:#ae81ff">5m</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">labels</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">severity</span>: <span style="color:#ae81ff">critical</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">annotations</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">summary</span>: <span style="color:#e6db74">&#34;Pod {{ $labels.pod }} has failed&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">description</span>: <span style="color:#e6db74">&#34;Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has been in the Failed state for more than 5 minutes.&#34;</span>
+</span></span></code></pre></div><p><strong>说明：</strong> 如果 Pod 处于 <code>Failed</code> 状态超过 5 分钟，则触发告警。</p>
+<h4 id="f-网络流量告警">
+  f. <strong>网络流量告警</strong>
+  <a class="anchor" href="#f-%e7%bd%91%e7%bb%9c%e6%b5%81%e9%87%8f%e5%91%8a%e8%ad%a6">#</a>
+</h4>
+<p>监控 Pod 的网络流量（入站和出站流量）可以帮助你识别潜在的网络瓶颈或滥用。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span>- <span style="color:#f92672">alert</span>: <span style="color:#ae81ff">PodHighNetworkUsage</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">expr</span>: <span style="color:#ae81ff">(rate(container_network_receive_bytes_total{pod=~&#34;.*&#34;}[5m]) + rate(container_network_transmit_bytes_total{pod=~&#34;.*&#34;}[5m])) &gt; 100000000</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">for</span>: <span style="color:#ae81ff">5m</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">labels</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">severity</span>: <span style="color:#ae81ff">medium</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">annotations</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">summary</span>: <span style="color:#e6db74">&#34;Pod {{ $labels.pod }} is using too much network bandwidth&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">description</span>: <span style="color:#e6db74">&#34;Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is using more than 100 MB of network bandwidth in the last 5 minutes.&#34;</span>
+</span></span></code></pre></div><p><strong>说明：</strong> 如果某个 Pod 在过去 5 分钟内的网络流量超过 100 MB，则触发告警。</p>
+<h3 id="3-告警规则设置中的注意事项">
+  3. <strong>告警规则设置中的注意事项</strong>
+  <a class="anchor" href="#3-%e5%91%8a%e8%ad%a6%e8%a7%84%e5%88%99%e8%ae%be%e7%bd%ae%e4%b8%ad%e7%9a%84%e6%b3%a8%e6%84%8f%e4%ba%8b%e9%a1%b9">#</a>
+</h3>
+<ul>
+<li><strong><code>for</code> 参数</strong>：防止瞬时的波动导致频繁触发告警。通常会设置一定的时间阈值，只有当条件持续一段时间时才会触发告警。</li>
+<li><strong><code>severity</code> 标签</strong>：根据不同的告警严重性（如 <code>critical</code>、<code>warning</code>、<code>info</code> 等）来分配优先级，有助于团队更好地响应告警。</li>
+<li><strong>告警延迟和去重</strong>：避免同一问题频繁发送告警，通过告警去重、合并等机制减少告警噪音。</li>
+</ul>
+<h3 id="4-告警通知与响应">
+  4. <strong>告警通知与响应</strong>
+  <a class="anchor" href="#4-%e5%91%8a%e8%ad%a6%e9%80%9a%e7%9f%a5%e4%b8%8e%e5%93%8d%e5%ba%94">#</a>
+</h3>
+<ul>
+<li><strong>Alertmanager</strong>：可以将这些告警集成到 <strong>Alertmanager</strong> 中，并根据告警的严重性将告警通过 Slack、邮件、钉钉等渠道通知给相关团队。</li>
+<li><strong>自动化响应</strong>：例如，可以设置自动化的脚本，触发某些操作来解决常见问题（如重新启动 Pod，或者重新调度 Pod 到健康节点）。</li>
+</ul>
+<h3 id="总结-2">
+  总结
+  <a class="anchor" href="#%e6%80%bb%e7%bb%93-2">#</a>
+</h3>
+<p>业务 Pod 的告警规则设计需要根据业务需求来定制，关注应用的稳定性、性能瓶颈以及潜在的故障。通过合理的告警规则，可以确保及时发现问题并采取必要的修复措施，提高业务系统的可用性和稳定性。</p>
+<h1 id="还有吗比如黑盒探针检测--借口探活">
+  还有吗？比如黑盒探针检测  借口探活
+  <a class="anchor" href="#%e8%bf%98%e6%9c%89%e5%90%97%e6%af%94%e5%a6%82%e9%bb%91%e7%9b%92%e6%8e%a2%e9%92%88%e6%a3%80%e6%b5%8b--%e5%80%9f%e5%8f%a3%e6%8e%a2%e6%b4%bb">#</a>
+</h1>
+<p>当然，除了直接监控资源使用、Pod 重启等指标，**黑盒探针（Black-box Probing）<strong>和</strong>接口健康检查（Endpoint Health Checks）**也是业务监控和告警中非常重要的一部分，尤其是在微服务架构中，确保每个服务或组件是否健康、正常运行。</p>
+<h3 id="1-黑盒探针black-box-probing">
+  1. <strong>黑盒探针（Black-box Probing）</strong>
+  <a class="anchor" href="#1-%e9%bb%91%e7%9b%92%e6%8e%a2%e9%92%88black-box-probing">#</a>
+</h3>
+<p>黑盒探针是从外部检测应用服务的健康状况，而不需要访问服务内部的状态。常见的黑盒探针通常是通过 HTTP 请求、TCP 连接或者其他协议来模拟用户请求，确认服务是否能够正常响应。这种方式特别适用于无法直接访问内部状态的场景。</p>
+<h4 id="a-http-探针http-probe">
+  a. <strong>HTTP 探针（HTTP Probe）</strong>
+  <a class="anchor" href="#a-http-%e6%8e%a2%e9%92%88http-probe">#</a>
+</h4>
+<p>通常应用程序会暴露一个 HTTP 健康检查接口（例如 <code>/health</code> 或 <code>/status</code>），黑盒探针可以通过定期访问该接口来检测服务的健康状况。</p>
+<p><strong>健康检查规则示例：</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span>- <span style="color:#f92672">alert</span>: <span style="color:#ae81ff">HTTPHealthCheckFailed</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">expr</span>: <span style="color:#ae81ff">http_requests_total{job=&#34;your-service&#34;, status=&#34;5xx&#34;} &gt; 10</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">for</span>: <span style="color:#ae81ff">5m</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">labels</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">severity</span>: <span style="color:#ae81ff">critical</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">annotations</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">summary</span>: <span style="color:#e6db74">&#34;Your service has returned 5xx errors more than 10 times in the last 5 minutes&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">description</span>: <span style="color:#e6db74">&#34;The health check endpoint for your service has failed and returned 5xx errors.&#34;</span>
+</span></span></code></pre></div><p><strong>说明：</strong> 如果健康检查的 HTTP 请求在 5 分钟内返回了超过 10 次的 5xx 错误，说明服务出现了问题，触发告警。</p>
+<h4 id="b-tcp-探针">
+  b. <strong>TCP 探针</strong>
+  <a class="anchor" href="#b-tcp-%e6%8e%a2%e9%92%88">#</a>
+</h4>
+<p>如果你的应用服务不提供 HTTP 接口，你可以通过 TCP 探针进行监控，验证服务端口是否可用。这通常适用于数据库、消息队列等服务。</p>
+<p><strong>TCP 探针示例：</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span>- <span style="color:#f92672">alert</span>: <span style="color:#ae81ff">TCPConnectionFailed</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">expr</span>: <span style="color:#ae81ff">increase(tcp_connections_failed_total{job=&#34;your-service&#34;, port=&#34;your-port&#34;}[5m]) &gt; 0</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">for</span>: <span style="color:#ae81ff">5m</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">labels</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">severity</span>: <span style="color:#ae81ff">critical</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">annotations</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">summary</span>: <span style="color:#e6db74">&#34;TCP connection to your service failed&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">description</span>: <span style="color:#e6db74">&#34;There have been failed TCP connections to your service on port {{ $labels.port }} in the last 5 minutes.&#34;</span>
+</span></span></code></pre></div><p><strong>说明：</strong> 如果在 5 分钟内某个服务的 TCP 连接失败次数大于 0 次，触发告警。</p>
+<h4 id="c-dns-查询探针">
+  c. <strong>DNS 查询探针</strong>
+  <a class="anchor" href="#c-dns-%e6%9f%a5%e8%af%a2%e6%8e%a2%e9%92%88">#</a>
+</h4>
+<p>你还可以通过 DNS 查询来检测域名解析的健康状况，尤其在使用云服务或容器化服务时，可能需要确保 DNS 服务能够正确解析。</p>
+<p><strong>DNS 探针示例：</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span>- <span style="color:#f92672">alert</span>: <span style="color:#ae81ff">DNSResolutionFailed</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">expr</span>: <span style="color:#ae81ff">increase(dns_lookup_failure_total{job=&#34;your-dns-probe&#34;}[5m]) &gt; 0</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">for</span>: <span style="color:#ae81ff">5m</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">labels</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">severity</span>: <span style="color:#ae81ff">high</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">annotations</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">summary</span>: <span style="color:#e6db74">&#34;DNS resolution failure detected&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">description</span>: <span style="color:#e6db74">&#34;DNS resolution failure detected for domain {{ $labels.domain }}.&#34;</span>
+</span></span></code></pre></div><p><strong>说明：</strong> 如果某个 DNS 查询在过去 5 分钟内失败，触发告警。</p>
+<h3 id="2-接口健康检查endpoint-health-check">
+  2. <strong>接口健康检查（Endpoint Health Check）</strong>
+  <a class="anchor" href="#2-%e6%8e%a5%e5%8f%a3%e5%81%a5%e5%ba%b7%e6%a3%80%e6%9f%a5endpoint-health-check">#</a>
+</h3>
+<p>接口健康检查是在应用服务中定义的专门的健康检查端点，这些端点暴露了服务自身的一些基本健康状态和资源依赖状态。例如，数据库连接、缓存系统、外部 API 的连接状态等。通过定期访问这些健康检查端点，可以确保业务的各项依赖是否正常。</p>
+<h4 id="a-web-服务健康检查端点">
+  a. <strong>Web 服务健康检查端点</strong>
+  <a class="anchor" href="#a-web-%e6%9c%8d%e5%8a%a1%e5%81%a5%e5%ba%b7%e6%a3%80%e6%9f%a5%e7%ab%af%e7%82%b9">#</a>
+</h4>
+<p>应用程序通常会暴露一个 HTTP 服务健康检查端点（如 <code>/healthz</code>），用于返回服务是否健康。这些端点通常会检查数据库连接、队列服务、外部依赖等。</p>
+<p><strong>接口健康检查告警规则：</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span>- <span style="color:#f92672">alert</span>: <span style="color:#ae81ff">WebServiceHealthCheckFailed</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">expr</span>: <span style="color:#ae81ff">kube_pod_container_status_restarts_total{container=&#34;your-container&#34;, pod=~&#34;your-service-pod.*&#34;, container=&#34;your-container&#34;} &gt; 0</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">for</span>: <span style="color:#ae81ff">5m</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">labels</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">severity</span>: <span style="color:#ae81ff">critical</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">annotations</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">summary</span>: <span style="color:#e6db74">&#34;Health check failed for web service&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">description</span>: <span style="color:#e6db74">&#34;The web service has failed the health check for more than 5 minutes.&#34;</span>
+</span></span></code></pre></div><p><strong>说明：</strong> 如果 Web 服务的健康检查端点无法访问，且服务重启次数增加，触发告警。</p>
+<h4 id="b-外部-api-接口健康检查">
+  b. <strong>外部 API 接口健康检查</strong>
+  <a class="anchor" href="#b-%e5%a4%96%e9%83%a8-api-%e6%8e%a5%e5%8f%a3%e5%81%a5%e5%ba%b7%e6%a3%80%e6%9f%a5">#</a>
+</h4>
+<p>如果你的业务依赖外部的 API 服务，监控这些外部 API 的可用性也是非常重要的。你可以为外部 API 设置接口探活，并监控它们的响应时间和返回码。</p>
+<p><strong>外部 API 健康检查规则：</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span>- <span style="color:#f92672">alert</span>: <span style="color:#ae81ff">ExternalAPIHealthCheckFailed</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">expr</span>: <span style="color:#ae81ff">http_requests_total{job=&#34;external-api&#34;, status=&#34;5xx&#34;} &gt; 5</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">for</span>: <span style="color:#ae81ff">5m</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">labels</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">severity</span>: <span style="color:#ae81ff">high</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">annotations</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">summary</span>: <span style="color:#e6db74">&#34;External API returned 5xx error&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">description</span>: <span style="color:#e6db74">&#34;The external API is returning 5xx errors, which may affect your service.&#34;</span>
+</span></span></code></pre></div><p><strong>说明：</strong> 如果外部 API 接口在 5 分钟内返回超过 5 次的 5xx 错误，说明外部 API 服务异常，触发告警。</p>
+<h4 id="c-数据库连接健康检查">
+  c. <strong>数据库连接健康检查</strong>
+  <a class="anchor" href="#c-%e6%95%b0%e6%8d%ae%e5%ba%93%e8%bf%9e%e6%8e%a5%e5%81%a5%e5%ba%b7%e6%a3%80%e6%9f%a5">#</a>
+</h4>
+<p>如果应用依赖数据库，数据库的健康检查也非常重要。通过检查数据库的连接池状态、查询响应时间等，可以确保数据库服务正常。</p>
+<p><strong>数据库连接健康检查规则：</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span>- <span style="color:#f92672">alert</span>: <span style="color:#ae81ff">DatabaseConnectionFailed</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">expr</span>: <span style="color:#ae81ff">rate(database_connection_failures_total{database=&#34;your-database&#34;}[5m]) &gt; 0</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">for</span>: <span style="color:#ae81ff">5m</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">labels</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">severity</span>: <span style="color:#ae81ff">critical</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">annotations</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">summary</span>: <span style="color:#e6db74">&#34;Database connection failed&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">description</span>: <span style="color:#e6db74">&#34;There have been failed connections to your database in the last 5 minutes.&#34;</span>
+</span></span></code></pre></div><p><strong>说明：</strong> 如果数据库连接失败的次数超过了设定的阈值（这里是 5 次），并且持续超过 5 分钟，则触发告警。</p>
+<h3 id="3-健康检查和探针常见的设计考虑">
+  3. <strong>健康检查和探针常见的设计考虑</strong>
+  <a class="anchor" href="#3-%e5%81%a5%e5%ba%b7%e6%a3%80%e6%9f%a5%e5%92%8c%e6%8e%a2%e9%92%88%e5%b8%b8%e8%a7%81%e7%9a%84%e8%ae%be%e8%ae%a1%e8%80%83%e8%99%91">#</a>
+</h3>
+<ul>
+<li><strong>探针的频率和延迟</strong>：不要过于频繁地发送健康检查请求，这样可能会导致额外的负担，尤其在负载较大的生产环境中。通常每 30 秒到 1 分钟进行一次探测。</li>
+<li><strong>探针的可靠性</strong>：确保健康检查端点返回的状态能够真实反映服务健康。如果你的健康检查端点依赖其他资源（如数据库），则健康检查的定义需要特别小心，避免因外部依赖故障而错误地判定服务不健康。</li>
+<li><strong>状态码的配置</strong>：健康检查通常会返回 HTTP 状态码（如 200 表示正常，500 表示异常）。可以根据不同的错误码设置不同级别的告警。</li>
+</ul>
+<h3 id="4-综合应用健康检查与告警">
+  4. <strong>综合应用健康检查与告警</strong>
+  <a class="anchor" href="#4-%e7%bb%bc%e5%90%88%e5%ba%94%e7%94%a8%e5%81%a5%e5%ba%b7%e6%a3%80%e6%9f%a5%e4%b8%8e%e5%91%8a%e8%ad%a6">#</a>
+</h3>
+<p>通常情况下，可以将多种健康检查结合起来，形成多层次的监控：</p>
+<ul>
+<li><strong>黑盒探针</strong>：检测服务本身是否可访问。</li>
+<li><strong>接口健康检查</strong>：检查服务内部依赖的各个组件（如数据库、缓存等）是否健康。</li>
+<li><strong>应用日志监控</strong>：通过分析日志进一步验证服务的业务健康性。</li>
+</ul>
+<h3 id="总结-3">
+  总结：
+  <a class="anchor" href="#%e6%80%bb%e7%bb%93-3">#</a>
+</h3>
+<p>黑盒探针和接口健康检查是微服务架构中非常重要的监控手段，能够帮助你检测服务是否能正常对外提供功能，及时发现服务中断、依赖故障等问题。通过合理设计健康检查端点和探针规则，并结合告警系统，可以及时响应系统故障、提高业务系统的可靠性和可用性。</p>
+<h2 id="外部的流量进入到k8s集群内部的过程">
+  外部的流量进入到k8s集群内部的过程
+  <a class="anchor" href="#%e5%a4%96%e9%83%a8%e7%9a%84%e6%b5%81%e9%87%8f%e8%bf%9b%e5%85%a5%e5%88%b0k8s%e9%9b%86%e7%be%a4%e5%86%85%e9%83%a8%e7%9a%84%e8%bf%87%e7%a8%8b">#</a>
+</h2>
+<p>外部流量进入 Kubernetes 集群的过程涉及多个组件和配置，主要依赖于 Kubernetes 的<strong>Ingress</strong>、<strong>Service</strong>、<strong>Ingress Controller</strong> 等功能。这些组件共同工作，将外部流量引导到集群内部的合适服务。以下是一个完整的外部流量进入 Kubernetes 集群的流程：</p>
+<h3 id="1-外部流量的入口">
+  1. <strong>外部流量的入口：</strong>
+  <a class="anchor" href="#1-%e5%a4%96%e9%83%a8%e6%b5%81%e9%87%8f%e7%9a%84%e5%85%a5%e5%8f%a3">#</a>
+</h3>
+<p>外部流量通常是从外部世界（例如用户的浏览器、客户端应用等）通过互联网发送的 HTTP/HTTPS 请求。这些流量需要通过特定的入口进入 Kubernetes 集群。</p>
+<h4 id="a-外部访问的入口点">
+  a. <strong>外部访问的入口点</strong>
+  <a class="anchor" href="#a-%e5%a4%96%e9%83%a8%e8%ae%bf%e9%97%ae%e7%9a%84%e5%85%a5%e5%8f%a3%e7%82%b9">#</a>
+</h4>
+<p>在 Kubernetes 中，外部流量通常会通过以下几种方式进入集群：</p>
+<ul>
+<li><strong>LoadBalancer</strong>：在云环境中使用负载均衡器（例如 AWS ELB、Azure Load Balancer、GCP Load Balancer）暴露服务。</li>
+<li><strong>Ingress Controller</strong>：通过 Ingress 控制器将流量路由到内部服务。</li>
+<li><strong>NodePort</strong>：通过 Kubernetes 集群节点的 IP 和端口暴露服务，通常用于调试或小规模应用。</li>
+<li><strong>ClusterIP</strong>：通过内网服务，通常与其他集群内部组件通信，较少用于外部访问。</li>
+</ul>
+<h3 id="2-通过-loadbalancer云环境">
+  2. <strong>通过 LoadBalancer（云环境）</strong>
+  <a class="anchor" href="#2-%e9%80%9a%e8%bf%87-loadbalancer%e4%ba%91%e7%8e%af%e5%a2%83">#</a>
+</h3>
+<p>在云环境中，通常使用 <strong>LoadBalancer</strong> 类型的 Service 将外部流量引导到集群内部的服务。</p>
+<h4 id="流程">
+  流程：
+  <a class="anchor" href="#%e6%b5%81%e7%a8%8b">#</a>
+</h4>
+<ol>
+<li><strong>用户请求</strong>：外部流量（如 HTTP 请求）通过 DNS 或 IP 地址访问集群。</li>
+<li><strong>云负载均衡器</strong>：请求首先到达云负载均衡器（如 AWS ELB）。此负载均衡器将流量转发到 Kubernetes 集群中的节点。</li>
+<li><strong>Kubernetes NodePort</strong>：负载均衡器会将流量转发到 Kubernetes 集群的每个节点上的某个端口（NodePort）。NodePort 是 Kubernetes 服务的一部分，它为每个节点开放一个固定端口，将流量转发到相应的 Pod。</li>
+<li><strong>Pod 选择与转发</strong>：NodePort 服务将流量路由到相应的 Pod 上，最终到达应用。</li>
+</ol>
+<h3 id="3-通过-ingresshttphttps-路由">
+  3. <strong>通过 Ingress（HTTP/HTTPS 路由）</strong>
+  <a class="anchor" href="#3-%e9%80%9a%e8%bf%87-ingresshttphttps-%e8%b7%af%e7%94%b1">#</a>
+</h3>
+<p>Ingress 是 Kubernetes 中一种高效的流量路由机制，能够将外部 HTTP/HTTPS 请求根据规则路由到集群内部的服务。Ingress 控制器处理所有的流量路由和规则。</p>
+<h4 id="流程-1">
+  流程：
+  <a class="anchor" href="#%e6%b5%81%e7%a8%8b-1">#</a>
+</h4>
+<ol>
+<li>
+<p><strong>用户请求</strong>：外部用户通过浏览器或客户端发送 HTTP 或 HTTPS 请求到集群外部的 Ingress Controller（通常通过域名，如 <code>www.example.com</code>）。</p>
+</li>
+<li>
+<p>Ingress Controller</p>
+<p>：Ingress Controller 是一个负责接受外部 HTTP/HTTPS 请求并根据 Ingress 资源定义的规则进行路由的组件。Ingress Controller 通常由 NGINX、Traefik 等开源工具实现。</p>
+<ul>
+<li>例如，NGINX Ingress Controller 作为反向代理，接收外部请求。</li>
+</ul>
+</li>
+<li>
+<p>路由规则匹配</p>
+<p>：Ingress Controller 根据配置的 Ingress 规则来决定将流量转发到哪个服务。这些规则可以基于路径、主机名等进行路由，例如：</p>
+<ul>
+<li>请求 <code>/api/*</code> 可能被路由到 <code>api-service</code> 服务。</li>
+<li>请求 <code>/web/*</code> 可能被路由到 <code>web-service</code> 服务。</li>
+</ul>
+</li>
+<li>
+<p><strong>服务转发</strong>：Ingress Controller 将流量转发到 Kubernetes 内部的相应服务（Service）。这些服务会将请求进一步转发到后端的 Pod。</p>
+</li>
+</ol>
+<h3 id="4-ingress-资源配置">
+  4. <strong>Ingress 资源配置</strong>
+  <a class="anchor" href="#4-ingress-%e8%b5%84%e6%ba%90%e9%85%8d%e7%bd%ae">#</a>
+</h3>
+<p>Ingress 是 Kubernetes 中的一个 API 资源，它定义了如何路由外部 HTTP(S) 流量到集群内的服务。Ingress 资源通常需要结合 Ingress Controller 使用。</p>
+<p><strong>Ingress 资源配置示例：</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">networking.k8s.io/v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">Ingress</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">my-ingress</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">namespace</span>: <span style="color:#ae81ff">default</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spec</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">rules</span>:
+</span></span><span style="display:flex;"><span>  - <span style="color:#f92672">host</span>: <span style="color:#ae81ff">myapp.example.com</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">http</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">paths</span>:
+</span></span><span style="display:flex;"><span>      - <span style="color:#f92672">path</span>: <span style="color:#ae81ff">/api</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">pathType</span>: <span style="color:#ae81ff">Prefix</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">backend</span>:
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">service</span>:
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">name</span>: <span style="color:#ae81ff">api-service</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">port</span>:
+</span></span><span style="display:flex;"><span>              <span style="color:#f92672">number</span>: <span style="color:#ae81ff">80</span>
+</span></span><span style="display:flex;"><span>      - <span style="color:#f92672">path</span>: <span style="color:#ae81ff">/web</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">pathType</span>: <span style="color:#ae81ff">Prefix</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">backend</span>:
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">service</span>:
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">name</span>: <span style="color:#ae81ff">web-service</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">port</span>:
+</span></span><span style="display:flex;"><span>              <span style="color:#f92672">number</span>: <span style="color:#ae81ff">80</span>
+</span></span></code></pre></div><p><strong>说明：</strong></p>
+<ul>
+<li><code>host: myapp.example.com</code> 表示该规则适用于域名 <code>myapp.example.com</code>。</li>
+<li>请求路径为 <code>/api</code> 会被转发到 <code>api-service</code> 服务的 80 端口。</li>
+<li>请求路径为 <code>/web</code> 会被转发到 <code>web-service</code> 服务的 80 端口。</li>
+</ul>
+<h3 id="5-ingress-controller-配置与实现">
+  5. <strong>Ingress Controller 配置与实现</strong>
+  <a class="anchor" href="#5-ingress-controller-%e9%85%8d%e7%bd%ae%e4%b8%8e%e5%ae%9e%e7%8e%b0">#</a>
+</h3>
+<p>Ingress Controller 是实现 Ingress 资源规则的实际组件，它负责接收流量并根据 Ingress 资源的定义进行路由。常见的 Ingress Controller 有：</p>
+<ul>
+<li><strong>NGINX Ingress Controller</strong>：一个常用的、功能强大的 Ingress Controller。</li>
+<li><strong>Traefik</strong>：一个动态反向代理，支持自动发现服务并创建路由规则。</li>
+<li><strong>HAProxy</strong>：另一种流行的反向代理和负载均衡器。</li>
+</ul>
+<p>Ingress Controller 一般通过一个 <code>LoadBalancer</code> 或 <code>NodePort</code> 类型的 Service 将外部流量引入 Kubernetes 集群内部。</p>
+<h4 id="例如使用-nginx-ingress-controller">
+  例如，使用 NGINX Ingress Controller：
+  <a class="anchor" href="#%e4%be%8b%e5%a6%82%e4%bd%bf%e7%94%a8-nginx-ingress-controller">#</a>
+</h4>
+<ol>
+<li><strong>安装 NGINX Ingress Controller</strong>：通常使用 Helm 来安装。</li>
+<li><strong>配置 Ingress 资源</strong>：为每个需要暴露的服务配置 Ingress 资源，并为它们配置路由规则。</li>
+<li><strong>外部流量进入</strong>：外部请求通过配置好的域名进入 LoadBalancer 或 NodePort，最终通过 Ingress Controller 路由到内部服务。</li>
+</ol>
+<h3 id="6-nodeport">
+  6. <strong>NodePort</strong>
+  <a class="anchor" href="#6-nodeport">#</a>
+</h3>
+<p>在一些非生产环境或小规模集群中，<strong>NodePort</strong> 也是一个常见的将外部流量引导到集群内部的方式。</p>
+<h4 id="流程-2">
+  流程：
+  <a class="anchor" href="#%e6%b5%81%e7%a8%8b-2">#</a>
+</h4>
+<ol>
+<li><strong>用户请求</strong>：外部请求会通过集群节点的公共 IP 和 <code>NodePort</code>（例如 30000 端口）访问。</li>
+<li><strong>集群节点接收流量</strong>：每个 Kubernetes 节点都会在指定的 <code>NodePort</code> 上开放端口，接收到流量后，它会将流量转发到集群内部的 Service。</li>
+<li><strong>服务转发到 Pod</strong>：服务通过 Kubernetes 的 Service 机制，将流量路由到相应的 Pod。</li>
+</ol>
+<h4 id="nodeport-示例">
+  NodePort 示例：
+  <a class="anchor" href="#nodeport-%e7%a4%ba%e4%be%8b">#</a>
+</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">Service</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">my-service</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spec</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">type</span>: <span style="color:#ae81ff">NodePort</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">selector</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">app</span>: <span style="color:#ae81ff">myapp</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">ports</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#f92672">port</span>: <span style="color:#ae81ff">80</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">targetPort</span>: <span style="color:#ae81ff">8080</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">nodePort</span>: <span style="color:#ae81ff">30000</span>
+</span></span></code></pre></div><p><strong>说明：</strong></p>
+<ul>
+<li><code>NodePort</code> 类型的 Service 会在所有节点的 30000 端口上监听流量，并将流量转发到目标端口（这里是 8080）。</li>
+</ul>
+<h3 id="7-总结">
+  7. <strong>总结：</strong>
+  <a class="anchor" href="#7-%e6%80%bb%e7%bb%93">#</a>
+</h3>
+<p>外部流量进入 Kubernetes 集群的过程通常涉及以下步骤：</p>
+<ol>
+<li><strong>流量入口</strong>：外部流量通过负载均衡器、Ingress 或 NodePort 进入 Kubernetes 集群。</li>
+<li><strong>Ingress Controller</strong>：Ingress Controller 接收 HTTP/HTTPS 请求，并根据定义的路由规则（在 Ingress 资源中配置）将流量转发到合适的 Service。</li>
+<li><strong>Service 路由到 Pod</strong>：Kubernetes Service 负责根据选择器将流量分发到后端的 Pod。</li>
+</ol>
+<p>这种多层的架构提供了强大的路由能力，灵活的负载均衡和自动化的流量管理，使得 Kubernetes 在处理大规模、分布式系统的流量时非常高效。</p>
+<h1 id="反问面试官-问啥">
+  反问面试官 问啥
+  <a class="anchor" href="#%e5%8f%8d%e9%97%ae%e9%9d%a2%e8%af%95%e5%ae%98-%e9%97%ae%e5%95%a5">#</a>
+</h1>
+<p>在面试中，反问面试官不仅能帮助你更好地了解公司和职位，也能展示出你对该职位的兴趣和职业规划的思考。以下是一些适合在面试时反问面试官的问题，可以根据面试的具体内容进行选择：</p>
+<h3 id="1-关于公司文化和团队氛围">
+  1. <strong>关于公司文化和团队氛围</strong>
+  <a class="anchor" href="#1-%e5%85%b3%e4%ba%8e%e5%85%ac%e5%8f%b8%e6%96%87%e5%8c%96%e5%92%8c%e5%9b%a2%e9%98%9f%e6%b0%9b%e5%9b%b4">#</a>
+</h3>
+<ul>
+<li><strong>&ldquo;贵公司最看重团队合作的哪一方面？你能描述一下团队的工作氛围吗？&rdquo;</strong> 这个问题能帮助你了解公司文化、团队合作的方式以及公司是否注重个人成长和支持团队协作。</li>
+<li><strong>&ldquo;公司有哪些方式支持员工的成长和职业发展？&rdquo;</strong> 这问题能帮助你了解公司是否提供培训、晋升机会、以及支持员工技能提升的资源。</li>
+</ul>
+<h3 id="2-关于职位本身和日常工作">
+  2. <strong>关于职位本身和日常工作</strong>
+  <a class="anchor" href="#2-%e5%85%b3%e4%ba%8e%e8%81%8c%e4%bd%8d%e6%9c%ac%e8%ba%ab%e5%92%8c%e6%97%a5%e5%b8%b8%e5%b7%a5%e4%bd%9c">#</a>
+</h3>
+<ul>
+<li><strong>&ldquo;这个职位的日常工作内容和挑战主要有哪些？&rdquo;</strong> 通过这个问题，你可以了解具体工作职责是否符合你的预期。</li>
+<li><strong>&ldquo;这个岗位对一个新人来说，最大的挑战通常是什么？&rdquo;</strong> 这样的问题可以让你了解入职初期的挑战，帮助你做出更好的准备。</li>
+<li><strong>&ldquo;对于这个岗位，团队的优先目标是什么？在接下来的几个月内，团队最关注的事情会是什么？&rdquo;</strong> 你可以了解团队当前的目标和未来计划，从而判断你是否能在这个团队中发挥重要作用。</li>
+</ul>
+<h3 id="3-关于项目和技术">
+  3. <strong>关于项目和技术</strong>
+  <a class="anchor" href="#3-%e5%85%b3%e4%ba%8e%e9%a1%b9%e7%9b%ae%e5%92%8c%e6%8a%80%e6%9c%af">#</a>
+</h3>
+<ul>
+<li><strong>&ldquo;目前团队正在进行的最大项目是什么？我在这个岗位上的工作会如何参与其中？&rdquo;</strong> 这个问题能够帮助你理解你未来会参与哪些项目，团队的工作重点是什么。</li>
+<li><strong>&ldquo;团队目前使用的技术栈是怎样的？未来是否有技术更新或升级的计划？&rdquo;</strong> 了解技术栈能帮助你评估是否符合你的技术背景，以及团队的技术发展方向。</li>
+<li><strong>&ldquo;这个岗位在跨部门协作中扮演什么角色？是否会和其他团队密切合作？&rdquo;</strong> 如果这个岗位涉及到跨团队合作，了解这些细节能帮助你更好地适应工作环境。</li>
+</ul>
+<h3 id="4-关于公司前景和行业">
+  4. <strong>关于公司前景和行业</strong>
+  <a class="anchor" href="#4-%e5%85%b3%e4%ba%8e%e5%85%ac%e5%8f%b8%e5%89%8d%e6%99%af%e5%92%8c%e8%a1%8c%e4%b8%9a">#</a>
+</h3>
+<ul>
+<li><strong>&ldquo;公司在未来几年的战略目标是什么？如何看待行业的变化与发展？&rdquo;</strong> 这个问题能帮助你了解公司对未来的规划，是否具备良好的发展前景，及公司如何应对行业变化。</li>
+<li><strong>&ldquo;你如何看待公司在未来几年内的增长潜力和挑战？&rdquo;</strong> 这个问题能帮助你判断公司是否在行业中有竞争力，以及未来可能面临的挑战。</li>
+</ul>
+<h3 id="5-关于领导和管理风格">
+  5. <strong>关于领导和管理风格</strong>
+  <a class="anchor" href="#5-%e5%85%b3%e4%ba%8e%e9%a2%86%e5%af%bc%e5%92%8c%e7%ae%a1%e7%90%86%e9%a3%8e%e6%a0%bc">#</a>
+</h3>
+<ul>
+<li><strong>&ldquo;您能描述一下您的管理风格吗？&rdquo;</strong> 通过了解面试官的管理风格，你可以判断你是否适应他们的工作方式和沟通模式。</li>
+<li><strong>&ldquo;在您的团队中，成功的员工通常具备哪些特质？&rdquo;</strong> 这个问题可以帮助你了解团队对员工的期望，以及哪些行为和表现会被视为成功。</li>
+</ul>
+<h3 id="6-关于工作与生活的平衡">
+  6. <strong>关于工作与生活的平衡</strong>
+  <a class="anchor" href="#6-%e5%85%b3%e4%ba%8e%e5%b7%a5%e4%bd%9c%e4%b8%8e%e7%94%9f%e6%b4%bb%e7%9a%84%e5%b9%b3%e8%a1%a1">#</a>
+</h3>
+<ul>
+<li><strong>&ldquo;公司如何支持员工保持良好的工作与生活平衡？&rdquo;</strong> 如果你重视工作与生活的平衡，这个问题能够帮助你了解公司的工作强度和弹性。</li>
+<li><strong>&ldquo;公司对远程工作或灵活办公的政策是什么？&rdquo;</strong> 这个问题特别适合现在工作环境发生变化的公司，尤其在疫情后，很多公司开始提供更灵活的工作安排。</li>
+</ul>
+<h3 id="7-关于绩效评估与反馈">
+  7. <strong>关于绩效评估与反馈</strong>
+  <a class="anchor" href="#7-%e5%85%b3%e4%ba%8e%e7%bb%a9%e6%95%88%e8%af%84%e4%bc%b0%e4%b8%8e%e5%8f%8d%e9%a6%88">#</a>
+</h3>
+<ul>
+<li><strong>&ldquo;公司如何进行员工绩效评估？有没有定期的反馈机制？&rdquo;</strong> 这个问题可以让你了解公司是否有明确的绩效评估标准，以及你如何获得反馈和成长。</li>
+<li><strong>&ldquo;在过去的员工中，成功晋升的典型案例是怎样的？&rdquo;</strong> 这个问题可以帮助你了解公司晋升机制和员工的职业发展轨迹。</li>
+</ul>
+<h3 id="8-关于公司的一些具体问题">
+  8. <strong>关于公司的一些具体问题</strong>
+  <a class="anchor" href="#8-%e5%85%b3%e4%ba%8e%e5%85%ac%e5%8f%b8%e7%9a%84%e4%b8%80%e4%ba%9b%e5%85%b7%e4%bd%93%e9%97%ae%e9%a2%98">#</a>
+</h3>
+<ul>
+<li><strong>&ldquo;公司最近有没有在技术或业务上做出过重要的变动或调整？&rdquo;</strong> 通过这个问题，你可以了解公司最近的变化或新的战略，帮助你评估公司是否在进行转型或升级。</li>
+<li><strong>&ldquo;公司如何处理技术债务或解决技术挑战？是否有相关的改进计划？&rdquo;</strong> 如果你对技术深度比较感兴趣，这个问题能帮助你了解公司如何应对技术上的难题，是否有计划去优化现有的系统。</li>
+</ul>
+<h3 id="9-关于后续流程">
+  9. <strong>关于后续流程</strong>
+  <a class="anchor" href="#9-%e5%85%b3%e4%ba%8e%e5%90%8e%e7%bb%ad%e6%b5%81%e7%a8%8b">#</a>
+</h3>
+<ul>
+<li><strong>&ldquo;接下来的面试流程是什么样的？&rdquo;</strong> 通过了解后续的面试流程，你可以做好准备，了解是否还需要技术测试、团队面试等。</li>
+<li><strong>&ldquo;您认为我在这次面试中有哪些方面表现得特别好或需要改进的地方？&rdquo;</strong> 这个问题可以帮助你得到即时反馈，同时也能显示出你对自我改进的积极态度。</li>
+</ul>
+<hr>
+<h3 id="小贴士">
+  小贴士：
+  <a class="anchor" href="#%e5%b0%8f%e8%b4%b4%e5%a3%ab">#</a>
+</h3>
+<ul>
+<li><strong>根据面试进展提问</strong>：有时面试官会在面试过程中主动提供公司情况或者职位的相关信息。如果在某些方面已经了解，可以避免重复提问，而是根据对方提供的信息做深入反问。</li>
+<li><strong>提问要有重点</strong>：选择你真正感兴趣的领域提问，而不是仅仅为了提问而提问，这样能够让面试官感受到你的诚意。</li>
+<li><strong>避免问薪资福利问题</strong>：虽然薪资福利是非常重要的，但在第一次面试中，过早提及这些话题可能让面试官觉得你对职位的兴趣不够强烈。可以等到面试后期或面试官主动提出时再谈。</li>
+</ul>
+<p>通过精心准备和有针对性的反问，你可以更好地展现自己的兴趣和能力，同时也能帮助你做出是否接受该职位的决策。</p>
+<h1 id="高可用做么做多az跨机房容灾跨地域容灾双平面容灾">
+  高可用做么做？多AZ?跨机房容灾，跨地域容灾，双平面容灾
+  <a class="anchor" href="#%e9%ab%98%e5%8f%af%e7%94%a8%e5%81%9a%e4%b9%88%e5%81%9a%e5%a4%9aaz%e8%b7%a8%e6%9c%ba%e6%88%bf%e5%ae%b9%e7%81%be%e8%b7%a8%e5%9c%b0%e5%9f%9f%e5%ae%b9%e7%81%be%e5%8f%8c%e5%b9%b3%e9%9d%a2%e5%ae%b9%e7%81%be">#</a>
+</h1>
+<p>在设计高可用（High Availability, HA）架构时，目的是确保在面对硬件故障、网络中断、数据中心宕机等意外事件时，系统仍然能够保持连续服务，不会影响用户的正常使用。不同的高可用策略有不同的实现方式，下面我们会介绍一些常见的高可用设计方法，包括多可用区（Multi-AZ）、跨机房容灾、跨地域容灾以及双平面容灾等。</p>
+<h3 id="1-多可用区multi-az高可用架构">
+  1. <strong>多可用区（Multi-AZ）高可用架构</strong>
+  <a class="anchor" href="#1-%e5%a4%9a%e5%8f%af%e7%94%a8%e5%8c%bamulti-az%e9%ab%98%e5%8f%af%e7%94%a8%e6%9e%b6%e6%9e%84">#</a>
+</h3>
+<p>多可用区是指将应用和服务部署在同一地域的多个独立的可用区（Availability Zone，AZ）中。可用区是云提供商（如 AWS、GCP、Azure 等）提供的多个物理隔离的区域，它们在同一个地理区域内，但物理上完全独立，因此可以承受局部的硬件或网络故障。</p>
+<h4 id="关键点">
+  关键点：
+  <a class="anchor" href="#%e5%85%b3%e9%94%ae%e7%82%b9">#</a>
+</h4>
+<ul>
+<li><strong>负载均衡</strong>：使用负载均衡器（如 AWS Elastic Load Balancer，Azure Load Balancer）将请求分发到不同可用区的实例。</li>
+<li><strong>跨 AZ 数据同步</strong>：例如，使用数据库的主从复制、分布式存储等，确保数据在不同 AZ 之间同步。</li>
+<li><strong>冗余和备份</strong>：部署冗余实例，确保即使某个 AZ 故障，其他 AZ 中的实例可以继续提供服务。</li>
+</ul>
+<h4 id="示例">
+  示例：
+  <a class="anchor" href="#%e7%a4%ba%e4%be%8b">#</a>
+</h4>
+<ul>
+<li><strong>Web 应用</strong>：在多可用区中部署 Web 应用实例，通过负载均衡器将流量分发到各个实例上。</li>
+<li><strong>数据库</strong>：数据库采用主从复制或集群方式，数据实时同步到多个 AZ。</li>
+</ul>
+<h4 id="优点">
+  优点：
+  <a class="anchor" href="#%e4%bc%98%e7%82%b9">#</a>
+</h4>
+<ul>
+<li>高可用性：保证单个 AZ 故障时，其他 AZ 能继续提供服务。</li>
+<li>成本较低：相比于跨地域和跨机房，成本较为经济。</li>
+</ul>
+<h4 id="缺点-2">
+  缺点：
+  <a class="anchor" href="#%e7%bc%ba%e7%82%b9-2">#</a>
+</h4>
+<ul>
+<li><strong>单地域故障</strong>：如果整个地域发生灾难（如地域级别的故障），可能无法提供服务。</li>
+</ul>
+<hr>
+<h3 id="2-跨机房容灾">
+  2. <strong>跨机房容灾</strong>
+  <a class="anchor" href="#2-%e8%b7%a8%e6%9c%ba%e6%88%bf%e5%ae%b9%e7%81%be">#</a>
+</h3>
+<p>跨机房容灾是指将应用和数据部署在不同的物理机房内，通常是同一个城市或区域内的多个机房。每个机房可以看作是一个独立的灾难域，机房之间通过专用的网络连接，保障数据和服务的高可用性。</p>
+<h4 id="关键点-1">
+  关键点：
+  <a class="anchor" href="#%e5%85%b3%e9%94%ae%e7%82%b9-1">#</a>
+</h4>
+<ul>
+<li><strong>异地备份和同步</strong>：各个机房之间需要通过专用网络或者公网进行数据同步和备份，常见的技术有主从复制、分布式数据库、对象存储同步等。</li>
+<li><strong>故障切换</strong>：在一个机房发生故障时，应用可以自动切换到另一个机房。通常，使用<strong>DNS 切换</strong>或<strong>负载均衡器</strong>来实现。</li>
+</ul>
+<h4 id="示例-1">
+  示例：
+  <a class="anchor" href="#%e7%a4%ba%e4%be%8b-1">#</a>
+</h4>
+<ul>
+<li><strong>Web 应用</strong>：在不同的机房部署 Web 服务，当一个机房出现故障时，流量可以切换到另一个机房的服务实例。</li>
+<li><strong>数据库</strong>：使用数据库的跨机房复制，确保数据实时同步，机房间的数据一致性。</li>
+</ul>
+<h4 id="优点-1">
+  优点：
+  <a class="anchor" href="#%e4%bc%98%e7%82%b9-1">#</a>
+</h4>
+<ul>
+<li><strong>容灾能力强</strong>：即使某个机房发生灾难，其他机房可以接管服务。</li>
+<li><strong>灵活性</strong>：可以根据需求扩展至更多机房。</li>
+</ul>
+<h4 id="缺点-3">
+  缺点：
+  <a class="anchor" href="#%e7%bc%ba%e7%82%b9-3">#</a>
+</h4>
+<ul>
+<li><strong>成本高</strong>：跨机房的网络和存储同步成本较高。</li>
+<li><strong>网络延迟</strong>：不同机房间的延迟可能较大，尤其是跨区域或跨城市的情况下。</li>
+</ul>
+<hr>
+<h3 id="3-跨地域容灾cross-region-disaster-recovery">
+  3. <strong>跨地域容灾（Cross-Region Disaster Recovery）</strong>
+  <a class="anchor" href="#3-%e8%b7%a8%e5%9c%b0%e5%9f%9f%e5%ae%b9%e7%81%becross-region-disaster-recovery">#</a>
+</h3>
+<p>跨地域容灾是指将系统的多个副本分布在不同的地理区域，通常是不同的城市或国家。这样可以有效应对某个地区发生灾难（如自然灾害、大规模网络中断等）导致的故障。</p>
+<h4 id="关键点-2">
+  关键点：
+  <a class="anchor" href="#%e5%85%b3%e9%94%ae%e7%82%b9-2">#</a>
+</h4>
+<ul>
+<li><strong>数据同步和备份</strong>：使用跨地域的数据库复制、文件存储同步、数据备份等手段确保数据在不同区域间的高可用。</li>
+<li><strong>自动故障切换</strong>：通过 DNS 或负载均衡器等技术，在灾难发生时，自动将流量引导到健康的区域。</li>
+<li><strong>低延迟访问</strong>：通过智能路由和流量引导，确保用户的请求能够尽可能地被就近的地域处理，减少延迟。</li>
+</ul>
+<h4 id="示例-2">
+  示例：
+  <a class="anchor" href="#%e7%a4%ba%e4%be%8b-2">#</a>
+</h4>
+<ul>
+<li><strong>Web 应用</strong>：通过跨地域的负载均衡器和流量路由，将流量分发到不同区域的服务实例。</li>
+<li><strong>数据库</strong>：使用跨地域的数据库同步和灾难恢复策略，保证主数据中心失效时，数据不会丢失，且能在备份地区恢复。</li>
+</ul>
+<h4 id="优点-2">
+  优点：
+  <a class="anchor" href="#%e4%bc%98%e7%82%b9-2">#</a>
+</h4>
+<ul>
+<li><strong>地域灾难容忍</strong>：能够应对大范围的地理灾难，保证全局服务的可用性。</li>
+<li><strong>用户体验优化</strong>：将用户请求路由到最近的地域，减少延迟，提高性能。</li>
+</ul>
+<h4 id="缺点-4">
+  缺点：
+  <a class="anchor" href="#%e7%bc%ba%e7%82%b9-4">#</a>
+</h4>
+<ul>
+<li><strong>成本高</strong>：跨地域的数据同步、备份以及负载均衡的成本较高。</li>
+<li><strong>延迟问题</strong>：跨地域的数据同步可能会受到网络延迟和带宽限制的影响。</li>
+</ul>
+<hr>
+<h3 id="4-双平面容灾dual-plane-disaster-recovery">
+  4. <strong>双平面容灾（Dual-plane Disaster Recovery）</strong>
+  <a class="anchor" href="#4-%e5%8f%8c%e5%b9%b3%e9%9d%a2%e5%ae%b9%e7%81%bedual-plane-disaster-recovery">#</a>
+</h3>
+<p>双平面容灾通常指的是在同一应用系统中实现两个独立的运维平面，一个负责<strong>生产环境</strong>，另一个负责<strong>灾难恢复环境</strong>。生产环境和灾难恢复环境之间存在完全的隔离和自动化切换机制，以确保高可用性。</p>
+<h4 id="关键点-3">
+  关键点：
+  <a class="anchor" href="#%e5%85%b3%e9%94%ae%e7%82%b9-3">#</a>
+</h4>
+<ul>
+<li><strong>双活架构</strong>：两个环境通常是双活的，即两个平面都能承载流量。通过负载均衡或者 DNS 切换，在发生故障时实现平滑切换。</li>
+<li><strong>自动化切换</strong>：当生产环境出现问题时，灾难恢复环境可以无缝接管业务，确保业务不中断。</li>
+<li><strong>数据同步</strong>：生产环境和灾难恢复环境之间需要实时同步数据，确保切换时数据一致性。</li>
+</ul>
+<h4 id="示例-3">
+  示例：
+  <a class="anchor" href="#%e7%a4%ba%e4%be%8b-3">#</a>
+</h4>
+<ul>
+<li><strong>Web 服务</strong>：两个平面分别部署在不同的可用区、不同的机房或不同的地域中，保证任意一方出现故障时，另一方可以继续服务。</li>
+<li><strong>数据库同步</strong>：生产数据库和灾难恢复数据库保持同步，灾难恢复数据库在平时处于冷备状态，发生故障时启用。</li>
+</ul>
+<h4 id="优点-3">
+  优点：
+  <a class="anchor" href="#%e4%bc%98%e7%82%b9-3">#</a>
+</h4>
+<ul>
+<li><strong>无缝切换</strong>：当发生灾难时，切换平面几乎没有中断。</li>
+<li><strong>高可靠性</strong>：确保服务的零停机时间，能够承受硬件故障、区域灾难等。</li>
+</ul>
+<h4 id="缺点-5">
+  缺点：
+  <a class="anchor" href="#%e7%bc%ba%e7%82%b9-5">#</a>
+</h4>
+<ul>
+<li><strong>实现复杂</strong>：双平面架构需要较高的自动化水平和技术能力来维持两边环境的一致性和同步。</li>
+<li><strong>成本高</strong>：保持两个独立且活跃的平面需要较高的基础设施和运维成本。</li>
+</ul>
+<hr>
+<h3 id="总结-4">
+  总结
+  <a class="anchor" href="#%e6%80%bb%e7%bb%93-4">#</a>
+</h3>
+<p>高可用架构设计需要根据具体的需求、预算、容灾目标以及服务重要性来决定。以下是几种常见的高可用策略的总结：</p>
+<ol>
+<li><strong>多可用区（Multi-AZ）</strong>：适用于单地域内的高可用架构，通过多个 AZ 部署服务，保证单个 AZ 故障时，其他 AZ 仍然可以提供服务。</li>
+<li><strong>跨机房容灾</strong>：适用于同一地区内的多个机房，通过机房间的数据同步和冗余部署，确保一个机房宕机时业务不受影响。</li>
+<li><strong>跨地域容灾</strong>：适用于应对大规模地域灾难，能够在不同地理位置的灾难恢复环境中保证服务的持续性。</li>
+<li><strong>双平面容灾</strong>：适用于需要零停机时间的业务，通过双活架构保证在任一平面发生故障时，另一平面能够无缝接管服务。</li>
+</ol>
+<p>每种策略都有不同的优缺点，可以根据公司的具体需求进行选择和结合，打造灵活可靠的高可用架构。</p>
+<h1 id="你遇到的棘手的问题怎么解决的">
+  你遇到的棘手的问题？怎么解决的？
+  <a class="anchor" href="#%e4%bd%a0%e9%81%87%e5%88%b0%e7%9a%84%e6%a3%98%e6%89%8b%e7%9a%84%e9%97%ae%e9%a2%98%e6%80%8e%e4%b9%88%e8%a7%a3%e5%86%b3%e7%9a%84">#</a>
+</h1>
+<p>单master改造为3master，3etcd</p>
+<p><a href="https://qq547475331.github.io/2025/02/19/2024-5-14%20%E5%8D%95master%E5%8D%95etcd%E6%94%B9%E9%80%A0/">单master改造</a></p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#1-prometheus-架构设计">1. <strong>Prometheus 架构设计</strong></a></li>
+        <li><a href="#2-grafana-可视化">2. <strong>Grafana 可视化</strong></a></li>
+        <li><a href="#3-alertmanager-告警管理">3. <strong>Alertmanager 告警管理</strong></a></li>
+        <li><a href="#4-存储与长期数据保留">4. <strong>存储与长期数据保留</strong></a></li>
+        <li><a href="#5-业务全面性和准确性">5. <strong>业务全面性和准确性</strong></a></li>
+        <li><a href="#6-监控系统的高可用性">6. <strong>监控系统的高可用性</strong></a></li>
+        <li><a href="#总结">总结</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#1-主从复制-master-slave-replication">1. <strong>主从复制 (Master-Slave Replication)</strong></a></li>
+        <li><a href="#2-双主复制-master-master-replication">2. <strong>双主复制 (Master-Master Replication)</strong></a></li>
+        <li><a href="#3-数据库集群-database-clustering">3. <strong>数据库集群 (Database Clustering)</strong></a></li>
+        <li><a href="#4-故障转移与负载均衡-failover-and-load-balancing">4. <strong>故障转移与负载均衡 (Failover and Load Balancing)</strong></a></li>
+        <li><a href="#5-同步与异步复制">5. <strong>同步与异步复制</strong></a></li>
+        <li><a href="#6-备份与恢复-backup-and-restore">6. <strong>备份与恢复 (Backup and Restore)</strong></a></li>
+        <li><a href="#7-云原生数据库高可用设计">7. <strong>云原生数据库高可用设计</strong></a></li>
+        <li><a href="#总结高可用数据库设计的考虑要点">总结：高可用数据库设计的考虑要点</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#业务监控设计的关键步骤">业务监控设计的关键步骤：</a></li>
+        <li><a href="#1-定义关键业务指标-kpi">1. <strong>定义关键业务指标 (KPI)</strong></a></li>
+        <li><a href="#2-选择合适的监控工具">2. <strong>选择合适的监控工具</strong></a></li>
+        <li><a href="#3-设置告警与响应机制">3. <strong>设置告警与响应机制</strong></a></li>
+        <li><a href="#4-实时监控与数据分析">4. <strong>实时监控与数据分析</strong></a></li>
+        <li><a href="#5-监控系统的维护与优化">5. <strong>监控系统的维护与优化</strong></a></li>
+        <li><a href="#总结-1">总结</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#1-监控指标">1. <strong>监控指标</strong></a></li>
+        <li><a href="#2-常见告警规则设计">2. <strong>常见告警规则设计</strong></a></li>
+        <li><a href="#3-告警规则设置中的注意事项">3. <strong>告警规则设置中的注意事项</strong></a></li>
+        <li><a href="#4-告警通知与响应">4. <strong>告警通知与响应</strong></a></li>
+        <li><a href="#总结-2">总结</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#1-黑盒探针black-box-probing">1. <strong>黑盒探针（Black-box Probing）</strong></a></li>
+        <li><a href="#2-接口健康检查endpoint-health-check">2. <strong>接口健康检查（Endpoint Health Check）</strong></a></li>
+        <li><a href="#3-健康检查和探针常见的设计考虑">3. <strong>健康检查和探针常见的设计考虑</strong></a></li>
+        <li><a href="#4-综合应用健康检查与告警">4. <strong>综合应用健康检查与告警</strong></a></li>
+        <li><a href="#总结-3">总结：</a></li>
+      </ul>
+    </li>
+    <li><a href="#外部的流量进入到k8s集群内部的过程">外部的流量进入到k8s集群内部的过程</a>
+      <ul>
+        <li><a href="#1-外部流量的入口">1. <strong>外部流量的入口：</strong></a></li>
+        <li><a href="#2-通过-loadbalancer云环境">2. <strong>通过 LoadBalancer（云环境）</strong></a></li>
+        <li><a href="#3-通过-ingresshttphttps-路由">3. <strong>通过 Ingress（HTTP/HTTPS 路由）</strong></a></li>
+        <li><a href="#4-ingress-资源配置">4. <strong>Ingress 资源配置</strong></a></li>
+        <li><a href="#5-ingress-controller-配置与实现">5. <strong>Ingress Controller 配置与实现</strong></a></li>
+        <li><a href="#6-nodeport">6. <strong>NodePort</strong></a></li>
+        <li><a href="#7-总结">7. <strong>总结：</strong></a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#1-关于公司文化和团队氛围">1. <strong>关于公司文化和团队氛围</strong></a></li>
+        <li><a href="#2-关于职位本身和日常工作">2. <strong>关于职位本身和日常工作</strong></a></li>
+        <li><a href="#3-关于项目和技术">3. <strong>关于项目和技术</strong></a></li>
+        <li><a href="#4-关于公司前景和行业">4. <strong>关于公司前景和行业</strong></a></li>
+        <li><a href="#5-关于领导和管理风格">5. <strong>关于领导和管理风格</strong></a></li>
+        <li><a href="#6-关于工作与生活的平衡">6. <strong>关于工作与生活的平衡</strong></a></li>
+        <li><a href="#7-关于绩效评估与反馈">7. <strong>关于绩效评估与反馈</strong></a></li>
+        <li><a href="#8-关于公司的一些具体问题">8. <strong>关于公司的一些具体问题</strong></a></li>
+        <li><a href="#9-关于后续流程">9. <strong>关于后续流程</strong></a></li>
+        <li><a href="#小贴士">小贴士：</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#1-多可用区multi-az高可用架构">1. <strong>多可用区（Multi-AZ）高可用架构</strong></a></li>
+        <li><a href="#2-跨机房容灾">2. <strong>跨机房容灾</strong></a></li>
+        <li><a href="#3-跨地域容灾cross-region-disaster-recovery">3. <strong>跨地域容灾（Cross-Region Disaster Recovery）</strong></a></li>
+        <li><a href="#4-双平面容灾dual-plane-disaster-recovery">4. <strong>双平面容灾（Dual-plane Disaster Recovery）</strong></a></li>
+        <li><a href="#总结-4">总结</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

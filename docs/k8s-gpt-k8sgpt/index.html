@@ -1,0 +1,3071 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  当你使用 Kubernetes 时，迟早会遇到集群中的问题，需要进行调试和修复，以便你的 Pod 和服务能够按预期运行。无论你是刚刚开始使用 Kubernetes 还是正在处理大规模且更复杂的环境，调试集群内进程并不总是那么简单，而且可能会成为一项耗时且困难的任务。
+  #
+
+
+  云原生环境中有多种可用的调试解决方案，可帮助你访问集群内信息。然而，其中大多数不提供上下文信息。
+  #
+
+
+  在这篇博文中，我将向你介绍K8sGPT，这个项目旨在为所有人提供 Kubernetes 的超能力。
+  #
+
+
+  K8sGPT 的应用场景
+  #
+
+
+  概述
+  #
+
+
+  K8sGPT于2023年4月由一群云原生生态系统中经验丰富的工程师启动。它是一个完全开源的项目。K8sGPT 背后的主要思想是利用 AI 模型提供 Kubernetes 错误消息以及其他集群见解的详细且情境化的解释。
+  #
+
+
+
+
+  此外，该项目已被两个组织在生产中使用，并已申请成为 CNCF 沙箱项目。从长远来看，该项目的目标是为 Kubernetes 构建面向任务的机器学习模型。
+  #
+
+
+  该项目已经支持多种安装选项和不同的人工智能后端。在这篇博文中，我将向你展示如何安装和开始使用 K8sGPT、CLI 工具和 Operator，以及 K8sGPT 如何支持其他集成。
+  #
+
+
+  安装
+  #
+
+
+  根据你的偏好和操作系统，有多种安装选项可用。你可以在K8sGPT文档的安装部分找到不同的选项。
+  #
+
+
+  如下所述安装 K8sGPT 的先决条件是在 Mac 上安装Homebrew或在 Windows 计算机上安装 WSL。
+  #
+
+
+  接下来，你可以运行以下命令：
+  #
+
+brew tap k8sgpt-ai/k8sgpt
+brew install k8sgpt
+
+  其他安装选项
+  #
+
+
+  基于 RPM 的安装 (RedHat/CentOS/Fedora)
+  #
+
+
+  32位：
+  #
+
+curl -LO https://github.com/k8sgpt-ai/k8sgpt/releases/download/v0.3.6/k8sgpt_386.rpm
+sudo rpm -ivh k8sgpt_386.rpm
+
+  64 位：
+  #
+
+curl -LO https://github.com/k8sgpt-ai/k8sgpt/releases/download/v0.3.6/k8sgpt_amd64.rpm
+sudo rpm -ivh -i k8sgpt_amd64.rpm
+
+  基于 DEB 的安装 (Ubuntu/Debian)
+  #
+
+
+  32位：
+  #
+
+curl -LO https://github.com/k8sgpt-ai/k8sgpt/releases/download/v0.3.6/k8sgpt_386.deb
+sudo dpkg -i k8sgpt_386.deb
+
+  64 位：
+  #
+
+curl -LO https://github.com/k8sgpt-ai/k8sgpt/releases/download/v0.3.6/k8sgpt_amd64.deb
+sudo dpkg -i k8sgpt_amd64.deb
+要验证 K8sGPT 是否安装正确，你可以检查安装的版本：">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="http://192.168.0.139:1313/docs/k8s-gpt-k8sgpt/">
+  <meta property="og:site_name" content="Guichen&#39;s Blog">
+  <meta property="og:title" content="K8S GPT 2024-04-03 15:02:09.127">
+  <meta property="og:description" content="当你使用 Kubernetes 时，迟早会遇到集群中的问题，需要进行调试和修复，以便你的 Pod 和服务能够按预期运行。无论你是刚刚开始使用 Kubernetes 还是正在处理大规模且更复杂的环境，调试集群内进程并不总是那么简单，而且可能会成为一项耗时且困难的任务。 # 云原生环境中有多种可用的调试解决方案，可帮助你访问集群内信息。然而，其中大多数不提供上下文信息。 # 在这篇博文中，我将向你介绍K8sGPT，这个项目旨在为所有人提供 Kubernetes 的超能力。 # K8sGPT 的应用场景 # 概述 # K8sGPT于2023年4月由一群云原生生态系统中经验丰富的工程师启动。它是一个完全开源的项目。K8sGPT 背后的主要思想是利用 AI 模型提供 Kubernetes 错误消息以及其他集群见解的详细且情境化的解释。 # 此外，该项目已被两个组织在生产中使用，并已申请成为 CNCF 沙箱项目。从长远来看，该项目的目标是为 Kubernetes 构建面向任务的机器学习模型。 # 该项目已经支持多种安装选项和不同的人工智能后端。在这篇博文中，我将向你展示如何安装和开始使用 K8sGPT、CLI 工具和 Operator，以及 K8sGPT 如何支持其他集成。 # 安装 # 根据你的偏好和操作系统，有多种安装选项可用。你可以在K8sGPT文档的安装部分找到不同的选项。 # 如下所述安装 K8sGPT 的先决条件是在 Mac 上安装Homebrew或在 Windows 计算机上安装 WSL。 # 接下来，你可以运行以下命令： # brew tap k8sgpt-ai/k8sgpt brew install k8sgpt 其他安装选项 # 基于 RPM 的安装 (RedHat/CentOS/Fedora) # 32位： # curl -LO https://github.com/k8sgpt-ai/k8sgpt/releases/download/v0.3.6/k8sgpt_386.rpm sudo rpm -ivh k8sgpt_386.rpm 64 位： # curl -LO https://github.com/k8sgpt-ai/k8sgpt/releases/download/v0.3.6/k8sgpt_amd64.rpm sudo rpm -ivh -i k8sgpt_amd64.rpm 基于 DEB 的安装 (Ubuntu/Debian) # 32位： # curl -LO https://github.com/k8sgpt-ai/k8sgpt/releases/download/v0.3.6/k8sgpt_386.deb sudo dpkg -i k8sgpt_386.deb 64 位： # curl -LO https://github.com/k8sgpt-ai/k8sgpt/releases/download/v0.3.6/k8sgpt_amd64.deb sudo dpkg -i k8sgpt_amd64.deb 要验证 K8sGPT 是否安装正确，你可以检查安装的版本：">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+<title>K8S GPT 2024-04-03 15:02:09.127 | Guichen&#39;s Blog</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="http://192.168.0.139:1313/docs/k8s-gpt-k8sgpt/">
+<link rel="stylesheet" href="/book.min.6c8b9d2a1fc95075ed7da46ca81060b39add8fff6741ac51259f768929281e2c.css" integrity="sha256-bIudKh/JUHXtfaRsqBBgs5rdj/9nQaxRJZ92iSkoHiw=" crossorigin="anonymous">
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/en.search.min.6f52273b9f5fa65803e3991faf27d1a7b7b8f6b148888237d77b4e841cb030e3.js" integrity="sha256-b1InO59fplgD45kfryfRp7e49rFIiII313tOhBywMOM=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/"><span>Guichen&#39;s Blog</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/00-%E9%9B%86%E7%BE%A4%E8%A7%84%E5%88%92%E5%92%8C%E5%9F%BA%E7%A1%80%E5%8F%82%E6%95%B0%E8%AE%BE%E5%AE%9A-00--ji-qun-gui-hua-he-ji-chu-can-shu-she-ding/" class="">00-集群规划和基础参数设定 2023-09-28 15:19:02.214</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/01-%E5%88%9B%E5%BB%BA%E8%AF%81%E4%B9%A6%E5%92%8C%E7%8E%AF%E5%A2%83%E5%87%86%E5%A4%87-01--chuang-jian-zheng-shu-he-huan-jing-zhun-bei/" class="">01-创建证书和环境准备 2023-09-28 15:22:19.812</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/02-%E5%AE%89%E8%A3%85etcd%E9%9B%86%E7%BE%A4-02--an-zhuang-etcd-ji-qun/" class="">02-安装etcd集群 2023-09-28 15:23:07.363</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E9%9D%A2%E8%AF%950224/" class="">0224面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-26-k8s%E7%9B%B8%E5%85%B3/" class="">0226 k8s题目</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/03-%E5%AE%89%E8%A3%85%E5%AE%B9%E5%99%A8%E8%BF%90%E8%A1%8C%E6%97%B6-03--an-zhuang-rong-qi-yun-xing-shi/" class="">03-安装容器运行时 2023-09-28 15:23:56.241</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/04-%E5%AE%89%E8%A3%85kube_master%E8%8A%82%E7%82%B9-04--an-zhuang-kubemaster-jie-dian/" class="">04-安装kube_master节点 2023-09-28 15:24:21.203</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/05-%E5%AE%89%E8%A3%85kube_node%E8%8A%82%E7%82%B9-05--an-zhuang-kubenode-jie-dian/" class="">05-安装kube_node节点 2023-09-28 15:24:43.201</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85calico%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-calico-wang-luo-zu-jian/" class="">06-安装calico网络组件 2023-09-28 15:34:28.483</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85cilium%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-cilium-wang-luo-zu-jian/" class="">06-安装cilium网络组件 2023-09-28 15:35:23.884</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85flannel%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-flannel-wang-luo-zu-jian/" class="">06-安装flannel网络组件 2023-09-28 15:35:50.039</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85kube-ovn%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-kube-ovn-wang-luo-zu-jian/" class="">06-安装kube-ovn网络组件 2023-09-28 15:36:11.265</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-wang-luo-zu-jian/" class="">06-安装网络组件 2023-09-28 15:25:14.997</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/07-%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4%E4%B8%BB%E8%A6%81%E6%8F%92%E4%BB%B6-07--an-zhuang-ji-qun-zhu-yao-cha-jian/" class="">07-安装集群主要插件 2023-09-28 15:26:42.651</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/08-k8s-%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8--k8s-ji-qun-cun-chu/" class="">08-K8S 集群存储  2023-09-28 15:27:29.454</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/16%E4%B8%AA%E6%A6%82%E5%BF%B5%E5%B8%A6%E4%BD%A0%E5%85%A5%E9%97%A8-kubernetes-16-ge-gai-nian-dai-ni-ru-men-kubernetes/" class="">16个概念带你入门 Kubernetes 2024-04-03 15:09:21.671</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/16%E5%BC%A0%E7%A1%AC%E6%A0%B8%E5%9B%BE%E8%A7%A3k8s%E7%BD%91%E7%BB%9C-16-zhang-ying-he-tu-jie-k8s-wang-luo/" class="">16张硬核图解k8s网络 2024-04-03 15:12:49.601</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-07-microk8s/" class="">2024-12-07 microk8s</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-devstack/" class="">2024-12-08 devstack</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-mutilpass%E6%93%8D%E4%BD%9C/" class="">2024-12-08 mutilpass操作</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-nano%E6%93%8D%E4%BD%9C/" class="">2024-12-08 nano操作</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-openstack%E5%92%8Ckubernetes%E5%8C%BA%E5%88%AB/" class="">2024-12-08 openstack和kubernetes区别</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-openstack%E9%9C%80%E8%A6%81%E5%87%A0%E5%8F%B0%E8%99%9A%E6%8B%9F%E6%9C%BA/" class="">2024-12-08 openstack需要几台虚拟机</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-%E5%9D%97%E5%AD%98%E5%82%A8%E5%92%8C%E5%AF%B9%E8%B1%A1%E5%82%A8%E5%AD%98%E5%8C%BA%E5%88%AB/" class="">2024-12-08 块存储和对象储存区别</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-docker-daemon.json/" class="">2024-12-09 docker daemon.json</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-helmchart-%E9%83%A8%E7%BD%B2flask%E5%BA%94%E7%94%A8/" class="">2024-12-09 helmchart 部署flask应用</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-mutilpass%E9%83%A8%E7%BD%B2openstack/" class="">2024-12-09 mutilpass部署openstack devstack形式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-openstack-ssh%E8%BF%9E%E6%8E%A5/" class="">2024-12-09 openstack ssh连接</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-10-docker-registrry/" class="">2024-12-10 docker registrry</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-22-k8s%E6%9E%B6%E6%9E%84%E5%B8%88%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8/" class="">2024-2-22 k8s架构师面试大全</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-22-k8s%E9%9D%A2%E8%AF%95%E5%AE%9D%E5%85%B8/" class="">2024-2-22 k8s面试宝典</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-26-%E9%9D%A2%E8%AF%95/" class="">2024-2-26 面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-19-%E4%B8%A4%E5%BC%A0%E5%9B%BE%E5%85%A8%E9%9D%A2%E7%90%86%E8%A7%A3k8s%E5%8E%9F%E7%90%86/" class="">2024-3-19 两张图全面理解k8s原理</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-cni%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B/" class="">2024-3-4 CNI剖析演进</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-8-%E9%9D%A2%E8%AF%950308/" class="">2024-3-8 面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-4-17-%E9%9D%A2%E8%AF%95%E6%80%BB%E7%BB%93/" class="">2024-4-17 面试总结</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-kubernetes%E9%9D%A2%E8%AF%95%E9%A2%98/" class="">2024-8-1 k8s面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-%E5%B8%B8%E8%A7%81linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98%E6%89%BE%E5%B7%A5%E4%BD%9C%E7%9A%84%E5%BF%85%E7%9C%8B/" class="">2024-8-1 linux运维面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98/" class="">2024-8-1 linux面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-1-1-%E5%A4%A7%E5%A0%B0%E6%B2%B3-%E6%88%91%E7%9A%84%E4%BF%9D%E5%A7%86/" class="">2025-1-1 大堰河-我的保姆</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-k8s-csi%E5%89%96%E6%9E%90/" class="">2025-1-16 CSI剖析演进</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-1-16-k8s%E5%B8%B8%E8%A7%81%E6%95%85%E9%9A%9C%E6%8C%87%E5%8D%97/" class="">2025-1-16 k8s常见故障指南</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-k8s%E6%B5%81%E9%87%8F%E9%93%BE%E8%B7%AF%E5%89%96%E6%9E%90/" class="">2025-1-16 k8s流量链路剖析</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/33%E6%AC%BEgitops%E4%B8%8Edevops%E4%B8%BB%E6%B5%81%E7%B3%BB%E7%BB%9F-33-kuan-gitops-yu-devops-zhu-liu-xi-tong/" class="">33款gitops与devops主流系统 2024-08-02 17:45:15.709</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/600%E6%9D%A1%E6%9C%80%E5%BC%BAlinux%E5%91%BD%E4%BB%A4%E6%80%BB%E7%BB%93-600-tiao-zui-qiang-linux-ming-ling-zong-jie/" class="">600条最强linux命令总结 2024-04-03 15:12:31.282</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/acme%E8%87%AA%E5%8A%A8%E6%9B%B4%E6%96%B0%E8%AF%81%E4%B9%A6-acme-zi-dong-geng-xin-zheng-shu/" class="">acme自动更新证书 2024-04-03 14:41:44.289</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/calico-%E9%85%8D%E7%BD%AE-bgp-route-reflectors-calico-pei-zhi-bgproutereflectors/" class="">calico 配置 BGP Route Reflectors 2023-09-28 15:34:01.007</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/calico%E7%BD%91%E7%BB%9C%E8%87%AA%E5%AE%9A%E4%B9%89-calico-wang-luo-zi-ding-yi/" class="">Calico网络自定义 2024-04-03 15:08:43.394</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/cicd%E6%80%9D%E8%80%83-cicd-si-kao/" class="">CICD思考 2024-04-03 15:11:24.151</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/client-go-%E5%9B%9B%E7%A7%8D%E5%AE%A2%E6%88%B7%E7%AB%AF-client-go-si-zhong-ke-hu-duan/" class="">Client-go 四种客户端 2024-04-03 14:49:34.32</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/client-go-%E6%9E%B6%E6%9E%84-client-go-jia-gou/" class="">Client-go 架构 2024-04-03 14:48:40.716</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/cni%E6%8F%92%E4%BB%B6%E9%80%89%E5%9E%8B-cni-cha-jian-xuan-xing/" class="">CNI插件选型 2024-04-03 15:01:51.29</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/containerd-%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C-containerd-ji-ben-cao-zuo/" class="">Containerd 基本操作 2024-04-03 14:55:46.786</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/coredns%E4%B9%8B%E5%85%89-coredns-zhi-guang/" class="">COREDNS之光 2024-04-03 14:54:52.059</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/dockerfile%E5%AE%9A%E5%88%B6%E4%B8%93%E5%B1%9E%E9%95%9C%E5%83%8F-dockerfile-ding-zhi-zhuan-shu-jing-xiang/" class="">dockerfile定制专属镜像 2024-08-02 17:44:00.522</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/dockerfile%E7%9A%84copy%E5%92%8Cadd%E7%9A%84%E5%8C%BA%E5%88%AB-dockerfile-de-copy-he-add-de-qu-bie/" class="">dockerfile的copy和add的区别 2024-04-03 15:01:09.565</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/docker%E9%87%8D%E8%A6%81%E7%9A%84%E7%BD%91%E7%BB%9C%E7%9F%A5%E8%AF%86%E7%82%B9-docker-zhong-yao-de-wang-luo-zhi-shi-dian/" class="">Docker重要的网络知识点  2024-04-03 15:12:10.162</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/etcd%E5%A4%87%E4%BB%BD-etcd-bei-fen/" class="">ETCD备份 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/etcd%E7%A8%B3%E5%AE%9A%E6%80%A7%E5%8F%8A%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%AE%9E%E8%B7%B5-etcd-wen-ding-xing-ji-xing-neng-you-hua-shi-jian/" class="">ETCD稳定性及性能优化实践 2024-04-03 15:06:31.141</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ex-lb-%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E9%83%A8%E7%BD%B2-ex-lb-fu-zai-jun-heng-bu-shu/" class="">EX-LB 负载均衡部署 2023-09-28 15:28:51.998</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ezctl-%E5%91%BD%E4%BB%A4%E8%A1%8C%E4%BB%8B%E7%BB%8D-ezctl-ming-ling-xing-jie-shao/" class="">ezctl 命令行介绍 2023-09-28 15:28:00.619</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/flanel%E7%BD%91%E7%BB%9C-flanel-wang-luo/" class="">flanel网络 2024-04-03 15:05:04.16</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/godel-scheduler-godel-scheduler/" class="">godel-scheduler 2024-08-02 17:41:00.668</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/helm-chart%E5%92%8Crepo-helmchart-he-repo/" class="">helm chart和repo 2024-04-03 15:00:43.125</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/istio-ingress-gateway-istio-ingress-gateway/" class="">istio-ingress-gateway 2024-08-02 17:51:54.75</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/istio%E9%83%A8%E7%BD%B2-istio-bu-shu/" class="">istio部署 2024-08-02 17:52:40.721</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-cni%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B-k8scni-pou-xi-yan-jin/" class="">K8S CNI剖析演进 2024-03-04 10:51:33.245</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-csi-openebs%E5%8E%9F%E7%90%86-k8scsiopenebs-yuan-li/" class="">K8S csi openebs原理 2024-04-03 14:44:48.967</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-csi%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B-k8scsi-pou-xi-yan-jin/" class="">K8S CSI剖析演进 2024-03-04 10:52:20.507</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-gpt-k8sgpt/" class="active">K8S GPT 2024-04-03 15:02:09.127</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E5%BC%80%E5%8F%91%E5%8F%AF%E4%B8%8D%E6%AD%A2-crud-k8s-kai-fa-ke-bu-zhi-crud/" class="">K8S 开发可不止 CRUD 2024-04-03 14:50:11.765</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E6%8E%A2%E9%92%88%E5%8E%9F%E7%90%86-k8s-tan-zhen-yuan-li/" class="">K8S 探针原理 2024-04-03 14:53:29.429</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E6%B5%81%E9%87%8F%E9%93%BE%E8%B7%AF%E5%89%96%E6%9E%90-k8s-liu-liang-lian-lu-pou-xi/" class="">K8S 流量链路剖析 2024-03-04 10:50:22.991</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E8%B0%83%E5%BA%A6%E5%99%A8-scheduler_onego-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-diao-du-qi-scheduleronego-yuan-ma-jie-du/" class="">K8S 调度器 scheduler_one.go 源码解读 2024-04-09 11:45:28.22</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E4%B9%8Bingress-nginx%E5%8E%9F%E7%90%86%E5%8F%8A%E9%85%8D%E7%BD%AE-k8s-zhi-ingress-nginx-yuan-li-ji-pei-zhi/" class="">K8S之ingress-nginx原理及配置 2024-07-05 18:02:14.243</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E4%B9%8Bkubelet%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-zhi-kubelet-yuan-ma-jie-du/" class="">k8s之kubelet源码解读 2024-03-28 15:30:39.633</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7-k8s-yuan-de-sheng-ji/" class="">K8S原地升级 2024-04-03 15:04:38.125</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%91%BD%E4%BB%A4%E6%8C%87%E5%8D%97-k8s-ming-ling-zhi-nan/" class="">K8S命令指南 2024-04-03 15:14:14.207</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%A6%82%E4%BD%95%E8%8E%B7%E5%BE%97-ip-k8s-ru-he-huo-de-ip/" class="">K8S如何获得 IP 2024-04-16 17:09:59.658</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%BA%94%E7%94%A8%E7%9A%84%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5-k8s-ying-yong-de-zui-jia-shi-jian/" class="">k8s应用的最佳实践 2024-04-03 14:43:16.936</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-deployment_controllergo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-deploymentcontrollergo-yuan-ma-jie-du/" class="">K8S控制器之 deployment_controller.go源码解读 2024-04-09 11:30:03.133</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-progressgo-%E8%BF%9B%E5%BA%A6-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-progressgo-jin-du-yuan-ma-jie-du/" class="">K8S控制器之 progress.go 进度 源码解读 2024-04-09 11:31:08.86</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-rollinggo-%E6%BB%9A%E5%8A%A8%E6%9B%B4%E6%96%B0-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-rollinggo-gun-dong-geng-xin-yuan-ma-jie-du/" class="">K8S控制器之 rolling.go 滚动更新 源码解读 2024-04-09 11:32:58.133</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-schedulergo-%E8%B0%83%E5%BA%A6%E5%99%A8-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-schedulergo-diao-du-qi-yuan-ma-jie-du/" class="">K8S控制器之 scheduler.go 调度器 源码解读 2024-04-09 11:44:25.171</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Brecreatego-%E9%87%8D%E5%BB%BA-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-recreatego-zhong-jian-yuan-ma-jie-du/" class="">K8S控制器之recreate.go 重建 源码解读 2024-04-09 11:31:49.855</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Brollbackgo-%E5%9B%9E%E6%BB%9A-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-rollbackgo-hui-gun-yuan-ma-jie-du/" class="">K8S控制器之rollback.go 回滚 源码解读 2024-04-09 11:32:26.587</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_pod_controlgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulpodcontrolgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_pod_control.go源码解读 2024-04-10 09:42:50.078</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_set_controlgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetcontrolgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_set_control.go源码解读 2024-04-10 09:41:30.316</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_set_status_updatego%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetstatusupdatego-yuan-ma-jie-du/" class="">K8S控制器之stateful_set_status_update.go源码解读 2024-04-10</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_setgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_set.go源码解读 2024-04-10</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bsyncgo-%E5%90%8C%E6%AD%A5-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-syncgo-tong-bu-yuan-ma-jie-du/" class="">K8S控制器之sync.go 同步 源码解读 2024-04-09 11:33:26.356</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E7%9A%84pod%E7%B1%BB%E5%9E%8B-k8s-de-pod-lei-xing/" class="">K8S的POD类型 2024-04-03 14:57:11.072</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E7%9A%84%E6%9C%80%E5%90%8E%E4%B8%80%E5%9D%97%E6%8B%BC%E5%9B%BE-dbpaas-k8s-de-zui-hou-yi-kuai-pin-tu-dbpaas/" class="">K8S的最后一块拼图 dbpaas 2024-08-02 17:48:35.899</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-k8s%E7%BB%84%E4%BB%B6/" class="">k8s组件</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%83%8C%E5%90%8Eservice%E6%98%AF%E5%A6%82%E4%BD%95%E5%B7%A5%E4%BD%9C%E7%9A%84-k8s-bei-hou-service-shi-ru-he-gong-zuo-de/" class="">k8s背后service是如何工作的 2024-08-02 17:49:44.981</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%B0%83%E5%BA%A6%E5%99%A8-extendergo-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-diao-du-qi-extendergo-yuan-ma-jie-du/" class="">K8S调度器 extender.go 源码解读 2024-04-09 11:45:59.666</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%B0%83%E8%AF%95pod-k8s-diao-shi-pod/" class="">K8S调试POD 2024-04-03 14:58:15.293</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%BF%90%E7%BB%B4%E4%B9%8B%E6%B8%85%E7%90%86%E7%A3%81%E7%9B%98-k8s-yun-wei-zhi-qing-li-ci-pan/" class="">k8s运维之清理磁盘 2024-04-03 15:13:57.279</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8-k8s-mian-shi-da-quan/" class="">K8S面试大全 2024-04-03 15:10:54.493</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E5%AE%9D%E5%85%B8-k8s-mian-shi-bao-dian/" class="">K8S面试宝典 2024-04-03 15:11:09.316</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E9%A2%98-k8s-mian-shi-ti/" class="">K8S面试题 2024-08-02 17:50:50.418</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kruise%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7%E8%A7%A3%E6%9E%90-kruise-yuan-de-sheng-ji-jie-xi/" class="">kruise原地升级解析 2024-08-02 17:59:31.689</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kube-router-%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-kube-router-wang-luo-zu-jian/" class="">kube-router 网络组件 2023-09-28 15:33:20.658</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-05-kubeasz%E9%83%A8%E7%BD%B2k8s/" class="">kubeasz部署k8s</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubekey%E6%B7%BB%E5%8A%A0%E6%96%B0%E8%8A%82%E7%82%B9-kubekey-tian-jia-xin-jie-dian/" class="">kubekey添加新节点 2024-04-03 15:36:47.646</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-api-kubernetesapi/" class="">Kubernetes API 2024-04-03 14:47:30.212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E6%BA%90%E7%A0%81%E7%BB%93%E6%9E%84-kubernetes-yuan-ma-jie-gou/" class="">Kubernetes 源码结构 2024-04-03 14:48:05.954</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3%E8%AE%A4%E8%AF%81-kubernetes-zheng-shu-xiang-jie--ren-zheng-/" class="">Kubernetes 证书详解(认证) 2024-04-03 14:52:56.54</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3%E9%89%B4%E6%9D%83-kubernetes-zheng-shu-xiang-jie--jian-quan-/" class="">Kubernetes 证书详解(鉴权) 2024-04-03 14:49:04.385</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubewharf-kubewharf/" class="">kubewharf 2024-08-02 17:41:32.72</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux-awk%E6%96%87%E6%9C%AC%E5%A4%84%E7%90%86%E5%99%A8-8%E4%B8%AA%E6%A1%88%E4%BE%8B-linuxawk-wen-ben-chu-li-qi-8-ge-an-li/" class="">linux awk文本处理器 8个案例 2024-08-02 17:46:53.603</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux-%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%A4%A7%E5%85%A8-linux-xing-neng-you-hua-da-quan/" class="">Linux 性能优化大全 2024-04-03 15:09:06.854</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux%E7%B3%BB%E7%BB%9F%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96-%E4%B8%83%E4%B8%AA%E5%AE%9E%E6%88%98%E7%BB%8F%E9%AA%8C-linux-xi-tong-xing-neng-you-hua-qi-ge-shi-zhan-jing-yan/" class="">linux系统性能优化 七个实战经验 2024-08-02 17:47:26.212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98-linux-yun-wei-gong-cheng-shi-50-ge-chang-jian-mian-shi-ti/" class="">linux运维工程师50个常见面试题 2024-08-02 17:42:12.968</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/metallb-l2-%E5%8E%9F%E7%90%86-metallbl2-yuan-li/" class="">MetalLB L2 原理 2024-04-03 14:52:24.662</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/netctl%E6%A3%80%E6%B5%8B%E9%9B%86%E7%BE%A4pod%E9%97%B4%E8%BF%9E%E9%80%9A%E6%80%A7-netctl-jian-ce-ji-qun-pod-jian-lian-tong-xing/" class="">netctl检测集群pod间连通性 2024-08-02 18:00:36.753</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/network-check-network-check/" class="">network-check 2023-09-28 15:36:33.04</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/nginx%E5%A6%82%E4%BD%95%E8%A7%A3%E5%86%B3%E6%83%8A%E7%BE%A4%E6%95%88%E5%BA%94-nginx-ru-he-jie-jue-jing-qun-xiao-ying/" class="">nginx如何解决惊群效应 2024-08-02 17:45:54.531</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/openkruise%E8%AF%A6%E7%BB%86%E8%A7%A3%E9%87%8A%E4%BB%A5%E5%8F%8A%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7%E5%8F%8A%E5%85%A8%E9%93%BE%E8%B7%AF%E7%81%B0%E5%BA%A6%E5%8F%91%E5%B8%83%E6%96%B9%E6%A1%88-openkruise-xiang-xi-jie-shi-yi-ji-yuan-de-sheng-ji-ji-quan-lian-lu-hui-du-fa-bu-fang-an/" class="">OpenKruise详细解释以及原地升级及全链路灰度发布方案 2024-07-22 11:44:46.892</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/pixie-pixie/" class="">pixie 2024-08-02 17:52:17.843</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-28-prometheus/" class="">prometheus 面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/prometheus-stack-prometheus-stack/" class="">prometheus-stack 2024-08-02 17:55:22.326</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/prometheus%E4%BC%81%E4%B8%9A%E7%BA%A7%E7%9B%91%E6%8E%A7%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93-prometheus-qi-ye-ji-jian-kong-shi-yong-zong-jie/" class="">prometheus企业级监控使用总结 2024-04-03 15:13:11.185</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ssl%E8%AF%81%E4%B9%A6%E8%87%AA%E7%AD%BE%E5%8F%91-ssl-zheng-shu-zi-qian-fa/" class="">ssl证书自签发 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/teg%E4%B8%8Eistio%E9%9B%86%E6%88%90-teg-yu-istio-ji-cheng/" class="">TEG与istio集成 2024-08-02 17:51:20.389</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%B8%A4%E5%BC%A0%E5%9B%BE%E5%85%A8%E9%9D%A2%E7%90%86%E8%A7%A3k8s%E5%8E%9F%E7%90%86-liang-zhang-tu-quan-mian-li-jie-k8s-yuan-li/" class="">两张图全面理解K8S原理 2024-04-03 14:51:27.431</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%B8%AA%E6%80%A7%E5%8C%96%E9%9B%86%E7%BE%A4%E5%8F%82%E6%95%B0%E9%85%8D%E7%BD%AE-ge-xing-hua-ji-qun-can-shu-pei-zhi/" class="">个性化集群参数配置 2023-09-28 15:30:56.072</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E4%B8%AD%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_%E9%A2%98%E7%9B%AE/" class="">中级运维面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BA%8C%E8%BF%9B%E5%88%B6%E9%83%A8%E7%BD%B2k8s%E5%8A%A0%E8%8A%82%E7%82%B9%E6%93%8D%E4%BD%9C-er-jin-zhi-bu-shu-k8s-jia-jie-dian-cao-zuo/" class="">二进制部署K8S加节点操作 2024-04-03 15:08:26.726</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-10-20-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8%E9%9B%86%E7%BE%A4/" class="">使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8-keepalived-%E5%92%8C-haproxy-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8-kubernetes-%E9%9B%86%E7%BE%A4-shi-yong-keepalived-he-haproxy-chuang-jian-gao-ke-yong-kubernetes-ji-qun/" class="">使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群 2023-04-12 04:04:09.458</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8-openfunction-%E5%9C%A8%E4%BB%BB%E4%BD%95%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E4%B8%8A%E8%BF%90%E8%A1%8C%E6%97%A0%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%B7%A5%E4%BD%9C%E8%B4%9F%E8%BD%BD-shi-yong-openfunction-zai-ren-he-ji-chu-she-shi-shang-yun-xing-wu-fu-wu-qi-gong-zuo-fu-zai/" class="">使用 OpenFunction 在任何基础设施上运行无服务器工作负载 2024-01-21 04:02:44.459</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8cloudflarecf%E6%90%AD%E5%BB%BAdockerhub%E4%BB%A3%E7%90%86-shi-yong-cloudflarecf-da-jian-dockerhub-dai-li/" class="">使用cloudflare(CF)搭建dockerhub代理 2024-06-28 14:38:34.339</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8kubernees-leases-%E8%BD%BB%E6%9D%BE%E5%AE%9E%E7%8E%B0leader-election-shi-yong-kuberneesleases-qing-song-shi-xian-leaderelection/" class="">使用kubernees leases 轻松实现leader election 2024-04-03 15:09:46.129</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%85%AC%E6%9C%89%E4%BA%91%E4%B8%8A%E9%83%A8%E7%BD%B2-kubeasz-gong-you-yun-shang-bu-shu-kubeasz/" class="">公有云上部署 kubeasz 2023-09-28 15:31:16.19</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-5-14-%E5%8D%95master%E5%8D%95etcd%E6%94%B9%E9%80%A0/" class="">单master单etcd改造为3master3etcd</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%8F%B2%E4%B8%8A%E6%9C%80%E7%89%9Bjenkins-pipeline%E6%B5%81%E6%B0%B4%E7%BA%BF%E8%AF%A6%E8%A7%A3-shi-shang-zui-niu-jenkinspipeline-liu-shui-xian-xiang-jie/" class="">史上最牛jenkins pipeline流水线详解 2024-08-02</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%9A%E6%9E%B6%E6%9E%84%E6%94%AF%E6%8C%81-duo-jia-gou-zhi-chi/" class="">多架构支持 2023-09-28 15:29:54.111</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%A7%E5%8E%82%E6%80%BB%E7%BB%93nginx%E9%AB%98%E5%B9%B6%E5%8F%91%E4%BC%98%E5%8C%96%E7%AC%94%E8%AE%B0-da-chang-zong-jie-nginx-gao-bing-fa-you-hua-bi-ji/" class="">大厂总结nginx高并发优化笔记 2024-08-02 17:46:19.098</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%A7%E8%A7%84%E6%A8%A1%E5%B9%B6%E5%8F%91%E4%B8%8B%E5%A6%82%E4%BD%95%E5%8A%A0%E5%BF%AB-pod-%E5%90%AF%E5%8A%A8%E9%80%9F%E5%BA%A6-da-gui-mo-bing-fa-xia-ru-he-jia-kuai-pod-qi-dong-su-du/" class="">大规模并发下如何加快 Pod 启动速度 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E4%B8%BAk8s%E4%BF%9D%E9%A9%BE%E6%8A%A4%E8%88%AA-ru-he-wei-k8s-bao-jia-hu-hang/" class="">如何为K8S保驾护航 2024-04-16 17:09:21.962</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8tekton%E5%BF%AB%E9%80%9F%E6%90%AD%E5%BB%BAcicd%E5%B9%B3%E5%8F%B0-ru-he-shi-yong-tekton-kuai-su-da-jian-cicd-ping-tai/" class="">如何使用tekton快速搭建CI/CD平台 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E8%B0%83%E8%AF%95-crash-%E5%AE%B9%E5%99%A8%E7%9A%84%E7%BD%91%E7%BB%9C-ru-he-diao-shi-crash-rong-qi-de-wang-luo/" class="">如何调试 crash 容器的网络 2024-04-03 14:50:51.378</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E4%B8%AD%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E4%BB%A5%E5%8F%8A%E4%B8%8D%E5%90%8Cdnspolicy%E5%AF%B9%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E7%9A%84%E5%BD%B1%E5%93%8D-rong-qi-zhong-yu-ming-jie-xi-yi-ji-bu-tong-dnspolicy-dui-yu-ming-jie-xi-de-ying-xiang/" class="">容器中域名解析以及不同dnspolicy对域名解析的影响 2024-04-03 15:04:09.254</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E5%86%85%E7%9A%84-1-%E5%8F%B7%E8%BF%9B%E7%A8%8B-rong-qi-nei-de-1-hao-jin-cheng/" class="">容器内的 1 号进程 2024-04-03 14:46:29.998</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E5%8E%9F%E7%90%86-rong-qi-yuan-li/" class="">容器原理 2024-04-03 14:45:58.422</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E7%9A%84%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E4%B8%80-overlayfs-%E5%8E%9F%E7%90%86-rong-qi-de-wen-jian-xi-tong--yi-overlayfs-yuan-li/" class="">容器的文件系统 OverlayFS 原理 2024-04-03 14:45:26.893</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C%E5%8E%9F%E7%90%86-rong-qi-wang-luo-yuan-li/" class="">容器网络原理 2024-04-03 14:51:51.962</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%B8%B8%E8%A7%81linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98-chang-jian-linux-yun-wei-mian-shi-ti/" class="">常见linux运维面试题 2024-08-02 17:42:33.873</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BC%80%E5%A7%8B%E4%BD%BF%E7%94%A8-cilium-kai-shi-shi-yong-cilium/" class="">开始使用 cilium 2023-09-28 15:34:49.205</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BD%BB%E6%82%9F%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C-che-wu-rong-qi-wang-luo/" class="">彻悟容器网络 2024-04-07 10:30:11.55</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BF%AB%E9%80%9F%E6%8C%87%E5%8D%97-kuai-su-zhi-nan/" class="">快速指南 2023-09-28 15:28:25.71</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%88%91%E5%8F%AA%E6%83%B3%E5%81%9A%E6%8A%80%E6%9C%AF-%E8%B5%B0%E6%8A%80%E6%9C%AF%E8%B7%AF%E7%BA%BF-wo-zhi-xiang-zuo-ji-shu-zou-ji-shu-lu-xian/" class="">我只想做技术 走技术路线 2024-08-02 17:43:31.897</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%90%9E%E6%87%82k8s%E9%89%B4%E6%9D%83-gao-dong-k8s-jian-quan/" class="">搞懂K8S鉴权 2024-04-03 15:11:54.885</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%90%AD%E4%B8%AA%E6%97%A5%E5%BF%97%E6%89%8B%E6%9C%BA%E7%B3%BB%E7%BB%9F%E4%B8%8D%E9%A6%99%E5%90%97-da-ge-ri-zhi-shou-ji-xi-tong-bu-xiang-ma/" class="">搭个日志手机系统不香吗 2024-08-02 17:47:58.794</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E8%AF%B4%E6%98%8E-cao-zuo-xi-tong-shuo-ming/" class="">操作系统说明 2023-09-28 15:31:37.694</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%96%87%E5%AD%A6%E7%9A%84%E6%95%85%E4%B9%A1-wen-xue-de-gu-xiang/" class="">文学的故乡 2024-04-03 14:40:45.926</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%98%AF%E6%8A%80%E6%9C%AF%E5%A4%A7%E7%A5%9E%E8%BF%98%E6%98%AF%E5%9F%BA%E7%A1%80%E6%9E%B6%E6%9E%84%E9%83%A8%E7%9A%84%E7%A5%B8%E5%AE%B3-shi-ji-shu-da-shen-hai-shi-ji-chu-jia-gou-bu-de-huo-hai/" class="">是技术大神还是基础架构部的祸害 2024-08-02 17:50:26.139</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9C%89%E8%BF%993%E4%B8%AA%E8%BF%B9%E8%B1%A1%E4%BD%A0%E5%B0%B1%E8%AF%A5%E7%A6%BB%E8%81%8C%E4%BA%86-you-zhe-3-ge-ji-xiang--ni-jiu-gai-li-zhi-le/" class="">有这3个迹象，你就该离职了 2023-09-21 16:00:22.432</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9E%81%E5%A4%A7%E6%8F%90%E9%AB%98%E5%B7%A5%E4%BD%9C%E6%95%88%E7%8E%87%E7%9A%84-linux-%E5%91%BD%E4%BB%A4-ji-da-ti-gao-gong-zuo-xiao-lv-de-linux-ming-ling/" class="">极大提高工作效率的 Linux 命令 2024-04-03 14:42:46.957</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9E%84%E5%BB%BA%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E5%88%A9%E5%99%A8buildkit-gou-jian-rong-qi-jing-xiang-li-qi-buildkit/" class="">构建容器镜像利器buildkit 2024-08-02 17:49:14.916</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B5%81%E9%87%8F%E4%BD%95%E5%A4%84%E6%9D%A5%E4%BD%95%E5%A4%84%E5%8E%BB-liu-liang-he-chu-lai-he-chu-qu/" class="">流量何处来何处去 2024-04-03 14:56:20.089</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B8%85%E7%90%86docker%E9%95%9C%E5%83%8F-qing-li-docker-jing-xiang/" class="">清理docker镜像 2024-08-02 17:54:48.594</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B8%85%E7%90%86%E6%AE%8B%E7%95%99%E7%9A%84calico%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6-qing-li-can-liu-de-calico-wang-luo/" class="">清理残留的calico网络插件 2024-04-03 15:07:38.854</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A3%81%E7%9B%98%E6%95%B0%E6%8D%AE%E6%81%A2%E5%A4%8D-ci-pan-shu-ju-hui-fu/" class="">磁盘数据恢复 2024-04-03 14:59:27.839</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85kubephere-li-xian-an-zhuang-kubephere/" class="">离线安装kubephere 2024-04-03 14:59:59.885</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4-li-xian-an-zhuang-ji-qun/" class="">离线安装集群 2023-09-28 15:29:14.742</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-%E8%AE%A1%E5%88%92/" class="">美国码农薪酬</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-%E8%AE%A1%E5%88%922/" class="">美国码农计划</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E8%87%AA%E5%8A%A8%E5%B1%8F%E8%94%BDip%E6%94%BB%E5%87%BB-zi-dong-ping-bi-ip-gong-ji/" class="">自动屏蔽IP攻击 2024-04-03 14:54:11.783</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-12-%E9%9D%A2%E8%AF%950212/" class="">面试0212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-19-%E9%9D%A2%E8%AF%950219/" class="">面试0219</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-20-%E9%9D%A2%E8%AF%950220/" class="">面试0220</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-26-%E9%9D%A2%E8%AF%950225/" class="">面试0225</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%9D%A2%E8%AF%950308-mian-shi-0308/" class="">面试0308 2024-04-03 14:57:53.576</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-11-%E9%9D%A2%E8%AF%950211/" class="">面试2025-02-11</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-18-%E9%9D%A2%E8%AF%95/" class="">面试2025-0218</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%9D%A2%E8%AF%95%E7%94%A8-golang-%E6%89%8B%E6%92%B8-lru-mian-shi-yong-golang-shou-lu-lru/" class="">面试用 Golang 手撸 LRU 2024-04-03 14:47:00.767</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%A1%B6%E7%BA%A7devops%E5%B7%A5%E5%85%B7%E5%A4%A7%E7%9B%98%E7%82%B9-ding-ji-devops-gong-ju-da-pan-dian/" class="">顶级devops工具大盘点 2024-08-02 17:43:03.661</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E9%AB%98%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_ai_linux%E9%83%A8%E5%88%86/" class="">高级运维面试题-linux部分</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>K8S GPT 2024-04-03 15:02:09.127</h3>
+
+  <label for="toc-control">
+    
+    <img src="/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#概述">概述</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#安装">安装</a>
+      <ul>
+        <li></li>
+        <li><a href="#其他安装选项">其他安装选项</a></li>
+      </ul>
+    </li>
+    <li><a href="#k8sgpt-cli">K8sGPT CLI</a>
+      <ul>
+        <li></li>
+        <li><a href="#附加功能">附加功能</a></li>
+      </ul>
+    </li>
+    <li><a href="#与其他工具的集成">与其他工具的集成</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#k8sgpt-operator">K8sGPT Operator</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#参考">参考</a></li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h5 id="当你使用-kubernetes-时迟早会遇到集群中的问题需要进行调试和修复以便你的-pod-和服务能够按预期运行无论你是刚刚开始使用-kubernetes-还是正在处理大规模且更复杂的环境调试集群内进程并不总是那么简单而且可能会成为一项耗时且困难的任务">
+  当你使用 Kubernetes 时，迟早会遇到集群中的问题，需要进行调试和修复，以便你的 Pod 和服务能够按预期运行。无论你是刚刚开始使用 Kubernetes 还是正在处理大规模且更复杂的环境，调试集群内进程并不总是那么简单，而且可能会成为一项耗时且困难的任务。
+  <a class="anchor" href="#%e5%bd%93%e4%bd%a0%e4%bd%bf%e7%94%a8-kubernetes-%e6%97%b6%e8%bf%9f%e6%97%a9%e4%bc%9a%e9%81%87%e5%88%b0%e9%9b%86%e7%be%a4%e4%b8%ad%e7%9a%84%e9%97%ae%e9%a2%98%e9%9c%80%e8%a6%81%e8%bf%9b%e8%a1%8c%e8%b0%83%e8%af%95%e5%92%8c%e4%bf%ae%e5%a4%8d%e4%bb%a5%e4%be%bf%e4%bd%a0%e7%9a%84-pod-%e5%92%8c%e6%9c%8d%e5%8a%a1%e8%83%bd%e5%a4%9f%e6%8c%89%e9%a2%84%e6%9c%9f%e8%bf%90%e8%a1%8c%e6%97%a0%e8%ae%ba%e4%bd%a0%e6%98%af%e5%88%9a%e5%88%9a%e5%bc%80%e5%a7%8b%e4%bd%bf%e7%94%a8-kubernetes-%e8%bf%98%e6%98%af%e6%ad%a3%e5%9c%a8%e5%a4%84%e7%90%86%e5%a4%a7%e8%a7%84%e6%a8%a1%e4%b8%94%e6%9b%b4%e5%a4%8d%e6%9d%82%e7%9a%84%e7%8e%af%e5%a2%83%e8%b0%83%e8%af%95%e9%9b%86%e7%be%a4%e5%86%85%e8%bf%9b%e7%a8%8b%e5%b9%b6%e4%b8%8d%e6%80%bb%e6%98%af%e9%82%a3%e4%b9%88%e7%ae%80%e5%8d%95%e8%80%8c%e4%b8%94%e5%8f%af%e8%83%bd%e4%bc%9a%e6%88%90%e4%b8%ba%e4%b8%80%e9%a1%b9%e8%80%97%e6%97%b6%e4%b8%94%e5%9b%b0%e9%9a%be%e7%9a%84%e4%bb%bb%e5%8a%a1">#</a>
+</h5>
+<h5 id="云原生环境中有多种可用的调试解决方案可帮助你访问集群内信息然而其中大多数不提供上下文信息">
+  云原生环境中有多种可用的调试解决方案，可帮助你访问集群内信息。然而，其中大多数不提供上下文信息。
+  <a class="anchor" href="#%e4%ba%91%e5%8e%9f%e7%94%9f%e7%8e%af%e5%a2%83%e4%b8%ad%e6%9c%89%e5%a4%9a%e7%a7%8d%e5%8f%af%e7%94%a8%e7%9a%84%e8%b0%83%e8%af%95%e8%a7%a3%e5%86%b3%e6%96%b9%e6%a1%88%e5%8f%af%e5%b8%ae%e5%8a%a9%e4%bd%a0%e8%ae%bf%e9%97%ae%e9%9b%86%e7%be%a4%e5%86%85%e4%bf%a1%e6%81%af%e7%84%b6%e8%80%8c%e5%85%b6%e4%b8%ad%e5%a4%a7%e5%a4%9a%e6%95%b0%e4%b8%8d%e6%8f%90%e4%be%9b%e4%b8%8a%e4%b8%8b%e6%96%87%e4%bf%a1%e6%81%af">#</a>
+</h5>
+<h5 id="在这篇博文中我将向你介绍k8sgpt这个项目旨在为所有人提供-kubernetes-的超能力">
+  在这篇博文中，我将向你介绍K8sGPT，这个项目旨在为所有人提供 Kubernetes 的超能力。
+  <a class="anchor" href="#%e5%9c%a8%e8%bf%99%e7%af%87%e5%8d%9a%e6%96%87%e4%b8%ad%e6%88%91%e5%b0%86%e5%90%91%e4%bd%a0%e4%bb%8b%e7%bb%8dk8sgpt%e8%bf%99%e4%b8%aa%e9%a1%b9%e7%9b%ae%e6%97%a8%e5%9c%a8%e4%b8%ba%e6%89%80%e6%9c%89%e4%ba%ba%e6%8f%90%e4%be%9b-kubernetes-%e7%9a%84%e8%b6%85%e8%83%bd%e5%8a%9b">#</a>
+</h5>
+<h5 id="k8sgpt-的应用场景">
+  K8sGPT 的应用场景
+  <a class="anchor" href="#k8sgpt-%e7%9a%84%e5%ba%94%e7%94%a8%e5%9c%ba%e6%99%af">#</a>
+</h5>
+<h2 id="概述">
+  概述
+  <a class="anchor" href="#%e6%a6%82%e8%bf%b0">#</a>
+</h2>
+<h5 id="k8sgpt于2023年4月由一群云原生生态系统中经验丰富的工程师启动它是一个完全开源的项目k8sgpt-背后的主要思想是利用-ai-模型提供-kubernetes-错误消息以及其他集群见解的详细且情境化的解释">
+  K8sGPT于2023年4月由一群云原生生态系统中经验丰富的工程师启动。它是一个完全开源的项目。K8sGPT 背后的主要思想是利用 AI 模型提供 Kubernetes 错误消息以及其他集群见解的详细且情境化的解释。
+  <a class="anchor" href="#k8sgpt%e4%ba%8e2023%e5%b9%b44%e6%9c%88%e7%94%b1%e4%b8%80%e7%be%a4%e4%ba%91%e5%8e%9f%e7%94%9f%e7%94%9f%e6%80%81%e7%b3%bb%e7%bb%9f%e4%b8%ad%e7%bb%8f%e9%aa%8c%e4%b8%b0%e5%af%8c%e7%9a%84%e5%b7%a5%e7%a8%8b%e5%b8%88%e5%90%af%e5%8a%a8%e5%ae%83%e6%98%af%e4%b8%80%e4%b8%aa%e5%ae%8c%e5%85%a8%e5%bc%80%e6%ba%90%e7%9a%84%e9%a1%b9%e7%9b%aek8sgpt-%e8%83%8c%e5%90%8e%e7%9a%84%e4%b8%bb%e8%a6%81%e6%80%9d%e6%83%b3%e6%98%af%e5%88%a9%e7%94%a8-ai-%e6%a8%a1%e5%9e%8b%e6%8f%90%e4%be%9b-kubernetes-%e9%94%99%e8%af%af%e6%b6%88%e6%81%af%e4%bb%a5%e5%8f%8a%e5%85%b6%e4%bb%96%e9%9b%86%e7%be%a4%e8%a7%81%e8%a7%a3%e7%9a%84%e8%af%a6%e7%bb%86%e4%b8%94%e6%83%85%e5%a2%83%e5%8c%96%e7%9a%84%e8%a7%a3%e9%87%8a">#</a>
+</h5>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061707332.png" alt="image-20240306170727284" /></p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061708741.png" alt="image-20240306170809686" /></p>
+<h5 id="此外该项目已被两个组织在生产中使用并已申请成为-cncf-沙箱项目从长远来看该项目的目标是为-kubernetes-构建面向任务的机器学习模型">
+  此外，该项目已被两个组织在生产中使用，并已申请成为 CNCF 沙箱项目。从长远来看，该项目的目标是为 Kubernetes 构建面向任务的机器学习模型。
+  <a class="anchor" href="#%e6%ad%a4%e5%a4%96%e8%af%a5%e9%a1%b9%e7%9b%ae%e5%b7%b2%e8%a2%ab%e4%b8%a4%e4%b8%aa%e7%bb%84%e7%bb%87%e5%9c%a8%e7%94%9f%e4%ba%a7%e4%b8%ad%e4%bd%bf%e7%94%a8%e5%b9%b6%e5%b7%b2%e7%94%b3%e8%af%b7%e6%88%90%e4%b8%ba-cncf-%e6%b2%99%e7%ae%b1%e9%a1%b9%e7%9b%ae%e4%bb%8e%e9%95%bf%e8%bf%9c%e6%9d%a5%e7%9c%8b%e8%af%a5%e9%a1%b9%e7%9b%ae%e7%9a%84%e7%9b%ae%e6%a0%87%e6%98%af%e4%b8%ba-kubernetes-%e6%9e%84%e5%bb%ba%e9%9d%a2%e5%90%91%e4%bb%bb%e5%8a%a1%e7%9a%84%e6%9c%ba%e5%99%a8%e5%ad%a6%e4%b9%a0%e6%a8%a1%e5%9e%8b">#</a>
+</h5>
+<h5 id="该项目已经支持多种安装选项和不同的人工智能后端在这篇博文中我将向你展示如何安装和开始使用-k8sgptcli-工具和-operator以及-k8sgpt-如何支持其他集成">
+  该项目已经支持多种安装选项和不同的人工智能后端。在这篇博文中，我将向你展示如何安装和开始使用 K8sGPT、CLI 工具和 Operator，以及 K8sGPT 如何支持其他集成。
+  <a class="anchor" href="#%e8%af%a5%e9%a1%b9%e7%9b%ae%e5%b7%b2%e7%bb%8f%e6%94%af%e6%8c%81%e5%a4%9a%e7%a7%8d%e5%ae%89%e8%a3%85%e9%80%89%e9%a1%b9%e5%92%8c%e4%b8%8d%e5%90%8c%e7%9a%84%e4%ba%ba%e5%b7%a5%e6%99%ba%e8%83%bd%e5%90%8e%e7%ab%af%e5%9c%a8%e8%bf%99%e7%af%87%e5%8d%9a%e6%96%87%e4%b8%ad%e6%88%91%e5%b0%86%e5%90%91%e4%bd%a0%e5%b1%95%e7%a4%ba%e5%a6%82%e4%bd%95%e5%ae%89%e8%a3%85%e5%92%8c%e5%bc%80%e5%a7%8b%e4%bd%bf%e7%94%a8-k8sgptcli-%e5%b7%a5%e5%85%b7%e5%92%8c-operator%e4%bb%a5%e5%8f%8a-k8sgpt-%e5%a6%82%e4%bd%95%e6%94%af%e6%8c%81%e5%85%b6%e4%bb%96%e9%9b%86%e6%88%90">#</a>
+</h5>
+<h2 id="安装">
+  安装
+  <a class="anchor" href="#%e5%ae%89%e8%a3%85">#</a>
+</h2>
+<h5 id="根据你的偏好和操作系统有多种安装选项可用你可以在k8sgpt文档的安装部分找到不同的选项">
+  根据你的偏好和操作系统，有多种安装选项可用。你可以在K8sGPT文档的安装部分找到不同的选项。
+  <a class="anchor" href="#%e6%a0%b9%e6%8d%ae%e4%bd%a0%e7%9a%84%e5%81%8f%e5%a5%bd%e5%92%8c%e6%93%8d%e4%bd%9c%e7%b3%bb%e7%bb%9f%e6%9c%89%e5%a4%9a%e7%a7%8d%e5%ae%89%e8%a3%85%e9%80%89%e9%a1%b9%e5%8f%af%e7%94%a8%e4%bd%a0%e5%8f%af%e4%bb%a5%e5%9c%a8k8sgpt%e6%96%87%e6%a1%a3%e7%9a%84%e5%ae%89%e8%a3%85%e9%83%a8%e5%88%86%e6%89%be%e5%88%b0%e4%b8%8d%e5%90%8c%e7%9a%84%e9%80%89%e9%a1%b9">#</a>
+</h5>
+<h5 id="如下所述安装-k8sgpt-的先决条件是在-mac-上安装homebrew或在-windows-计算机上安装-wsl">
+  如下所述安装 K8sGPT 的先决条件是在 Mac 上安装Homebrew或在 Windows 计算机上安装 WSL。
+  <a class="anchor" href="#%e5%a6%82%e4%b8%8b%e6%89%80%e8%bf%b0%e5%ae%89%e8%a3%85-k8sgpt-%e7%9a%84%e5%85%88%e5%86%b3%e6%9d%a1%e4%bb%b6%e6%98%af%e5%9c%a8-mac-%e4%b8%8a%e5%ae%89%e8%a3%85homebrew%e6%88%96%e5%9c%a8-windows-%e8%ae%a1%e7%ae%97%e6%9c%ba%e4%b8%8a%e5%ae%89%e8%a3%85-wsl">#</a>
+</h5>
+<h5 id="接下来你可以运行以下命令">
+  接下来，你可以运行以下命令：
+  <a class="anchor" href="#%e6%8e%a5%e4%b8%8b%e6%9d%a5%e4%bd%a0%e5%8f%af%e4%bb%a5%e8%bf%90%e8%a1%8c%e4%bb%a5%e4%b8%8b%e5%91%bd%e4%bb%a4">#</a>
+</h5>
+<pre tabindex="0"><code>brew tap k8sgpt-ai/k8sgpt
+brew install k8sgpt
+</code></pre><h3 id="其他安装选项">
+  其他安装选项
+  <a class="anchor" href="#%e5%85%b6%e4%bb%96%e5%ae%89%e8%a3%85%e9%80%89%e9%a1%b9">#</a>
+</h3>
+<h4 id="基于-rpm-的安装-redhatcentosfedora">
+  基于 RPM 的安装 (RedHat/CentOS/Fedora)
+  <a class="anchor" href="#%e5%9f%ba%e4%ba%8e-rpm-%e7%9a%84%e5%ae%89%e8%a3%85-redhatcentosfedora">#</a>
+</h4>
+<h4 id="32位">
+  <strong>32位：</strong>
+  <a class="anchor" href="#32%e4%bd%8d">#</a>
+</h4>
+<pre tabindex="0"><code>curl -LO https://github.com/k8sgpt-ai/k8sgpt/releases/download/v0.3.6/k8sgpt_386.rpm
+sudo rpm -ivh k8sgpt_386.rpm
+</code></pre><h4 id="64-位">
+  <strong>64 位：</strong>
+  <a class="anchor" href="#64-%e4%bd%8d">#</a>
+</h4>
+<pre tabindex="0"><code>curl -LO https://github.com/k8sgpt-ai/k8sgpt/releases/download/v0.3.6/k8sgpt_amd64.rpm
+sudo rpm -ivh -i k8sgpt_amd64.rpm
+</code></pre><h4 id="基于-deb-的安装-ubuntudebian">
+  基于 DEB 的安装 (Ubuntu/Debian)
+  <a class="anchor" href="#%e5%9f%ba%e4%ba%8e-deb-%e7%9a%84%e5%ae%89%e8%a3%85-ubuntudebian">#</a>
+</h4>
+<h4 id="32位-1">
+  <strong>32位：</strong>
+  <a class="anchor" href="#32%e4%bd%8d-1">#</a>
+</h4>
+<pre tabindex="0"><code>curl -LO https://github.com/k8sgpt-ai/k8sgpt/releases/download/v0.3.6/k8sgpt_386.deb
+sudo dpkg -i k8sgpt_386.deb
+</code></pre><h4 id="64-位-1">
+  <strong>64 位：</strong>
+  <a class="anchor" href="#64-%e4%bd%8d-1">#</a>
+</h4>
+<pre tabindex="0"><code>curl -LO https://github.com/k8sgpt-ai/k8sgpt/releases/download/v0.3.6/k8sgpt_amd64.deb
+sudo dpkg -i k8sgpt_amd64.deb
+</code></pre><p>要验证 K8sGPT 是否安装正确，你可以检查安装的版本：</p>
+<pre tabindex="0"><code>k8sgpt version
+k8sgpt: 0.3.6 (9c0efe6), built at: unknown
+</code></pre><h2 id="k8sgpt-cli">
+  K8sGPT CLI
+  <a class="anchor" href="#k8sgpt-cli">#</a>
+</h2>
+<h5 id="要查看-k8sgpt-提供的所有命令请使用---help-标志">
+  要查看 K8sGPT 提供的所有命令，请使用 <code>--help</code> 标志：
+  <a class="anchor" href="#%e8%a6%81%e6%9f%a5%e7%9c%8b-k8sgpt-%e6%8f%90%e4%be%9b%e7%9a%84%e6%89%80%e6%9c%89%e5%91%bd%e4%bb%a4%e8%af%b7%e4%bd%bf%e7%94%a8---help-%e6%a0%87%e5%bf%97">#</a>
+</h5>
+<pre tabindex="0"><code>k8sgpt --help
+</code></pre><h5 id="接下来我们必须授权ai后端在本文中我们将使用-openai">
+  接下来，我们必须授权AI后端。在本文中，我们将使用 OpenAI。
+  <a class="anchor" href="#%e6%8e%a5%e4%b8%8b%e6%9d%a5%e6%88%91%e4%bb%ac%e5%bf%85%e9%a1%bb%e6%8e%88%e6%9d%83ai%e5%90%8e%e7%ab%af%e5%9c%a8%e6%9c%ac%e6%96%87%e4%b8%ad%e6%88%91%e4%bb%ac%e5%b0%86%e4%bd%bf%e7%94%a8-openai">#</a>
+</h5>
+<p><strong>先决条件</strong></p>
+<h5 id="遵循下一节的先决条件是拥有一个opneai-帐户和一个正在运行的-kubernetes-集群例如-microk8s-或-minikube-就足够了">
+  遵循下一节的先决条件是拥有一个OpneAI 帐户和一个正在运行的 Kubernetes 集群，例如 microk8s 或 minikube 就足够了。
+  <a class="anchor" href="#%e9%81%b5%e5%be%aa%e4%b8%8b%e4%b8%80%e8%8a%82%e7%9a%84%e5%85%88%e5%86%b3%e6%9d%a1%e4%bb%b6%e6%98%af%e6%8b%a5%e6%9c%89%e4%b8%80%e4%b8%aaopneai-%e5%b8%90%e6%88%b7%e5%92%8c%e4%b8%80%e4%b8%aa%e6%ad%a3%e5%9c%a8%e8%bf%90%e8%a1%8c%e7%9a%84-kubernetes-%e9%9b%86%e7%be%a4%e4%be%8b%e5%a6%82-microk8s-%e6%88%96-minikube-%e5%b0%b1%e8%b6%b3%e5%a4%9f%e4%ba%86">#</a>
+</h5>
+<h5 id="拥有-opneai-帐户后你需要访问这个地址httpsplatformopenaicomaccountapi-keys生成新的-api-密钥">
+  拥有 OpneAI 帐户后，你需要访问这个地址https://platform.openai.com/account/api-keys生成新的 API 密钥
+  <a class="anchor" href="#%e6%8b%a5%e6%9c%89-opneai-%e5%b8%90%e6%88%b7%e5%90%8e%e4%bd%a0%e9%9c%80%e8%a6%81%e8%ae%bf%e9%97%ae%e8%bf%99%e4%b8%aa%e5%9c%b0%e5%9d%80httpsplatformopenaicomaccountapi-keys%e7%94%9f%e6%88%90%e6%96%b0%e7%9a%84-api-%e5%af%86%e9%92%a5">#</a>
+</h5>
+<h5 id="或者你可以运行以下命令k8sgpt-将在默认浏览器中打开同一地址">
+  或者，你可以运行以下命令，K8sGPT 将在默认浏览器中打开同一地址：
+  <a class="anchor" href="#%e6%88%96%e8%80%85%e4%bd%a0%e5%8f%af%e4%bb%a5%e8%bf%90%e8%a1%8c%e4%bb%a5%e4%b8%8b%e5%91%bd%e4%bb%a4k8sgpt-%e5%b0%86%e5%9c%a8%e9%bb%98%e8%ae%a4%e6%b5%8f%e8%a7%88%e5%99%a8%e4%b8%ad%e6%89%93%e5%bc%80%e5%90%8c%e4%b8%80%e5%9c%b0%e5%9d%80">#</a>
+</h5>
+<pre tabindex="0"><code>k8sgpt generate
+</code></pre><h5 id="k8sgpt-与-openai-交互需要此密钥使用新创建的-api-密钥令牌授权-k8sgpt">
+  K8sGPT 与 OpenAI 交互需要此密钥。使用新创建的 API 密钥/令牌授权 K8sGPT：
+  <a class="anchor" href="#k8sgpt-%e4%b8%8e-openai-%e4%ba%a4%e4%ba%92%e9%9c%80%e8%a6%81%e6%ad%a4%e5%af%86%e9%92%a5%e4%bd%bf%e7%94%a8%e6%96%b0%e5%88%9b%e5%bb%ba%e7%9a%84-api-%e5%af%86%e9%92%a5%e4%bb%a4%e7%89%8c%e6%8e%88%e6%9d%83-k8sgpt">#</a>
+</h5>
+<pre tabindex="0"><code>k8sgpt auth add openai
+Enter openai Key: openai added to the AI backend provider list
+</code></pre><h5 id="你可以使用以下命令列出你的后端">
+  你可以使用以下命令列出你的后端：
+  <a class="anchor" href="#%e4%bd%a0%e5%8f%af%e4%bb%a5%e4%bd%bf%e7%94%a8%e4%bb%a5%e4%b8%8b%e5%91%bd%e4%bb%a4%e5%88%97%e5%87%ba%e4%bd%a0%e7%9a%84%e5%90%8e%e7%ab%af">#</a>
+</h5>
+<pre tabindex="0"><code>k8sgpt auth list
+
+Default:
+&gt; openai
+Active:
+&gt; openai
+Unused:
+&gt; localai
+&gt; azureopenai
+&gt; noopai
+</code></pre><h5 id="接下来我们将在-kubernetes-集群中部署一个异常的deploymentpod-将成为crashloopbackoff状态以下是-yaml">
+  接下来，我们将在 Kubernetes 集群中部署一个异常的Deployment，Pod 将成为CrashLoopBackOff状态。以下是 YAML：
+  <a class="anchor" href="#%e6%8e%a5%e4%b8%8b%e6%9d%a5%e6%88%91%e4%bb%ac%e5%b0%86%e5%9c%a8-kubernetes-%e9%9b%86%e7%be%a4%e4%b8%ad%e9%83%a8%e7%bd%b2%e4%b8%80%e4%b8%aa%e5%bc%82%e5%b8%b8%e7%9a%84deploymentpod-%e5%b0%86%e6%88%90%e4%b8%bacrashloopbackoff%e7%8a%b6%e6%80%81%e4%bb%a5%e4%b8%8b%e6%98%af-yaml">#</a>
+</h5>
+<pre tabindex="0"><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.14.2
+        ports:
+        - containerPort: 80
+        securityContext:
+          readOnlyRootFilesystem: true
+</code></pre><h5 id="接下来我们将为示例应用程序创建demo命名空间并安装部署">
+  接下来，我们将为示例应用程序创建demo命名空间并安装部署：
+  <a class="anchor" href="#%e6%8e%a5%e4%b8%8b%e6%9d%a5%e6%88%91%e4%bb%ac%e5%b0%86%e4%b8%ba%e7%a4%ba%e4%be%8b%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e5%88%9b%e5%bb%bademo%e5%91%bd%e5%90%8d%e7%a9%ba%e9%97%b4%e5%b9%b6%e5%ae%89%e8%a3%85%e9%83%a8%e7%bd%b2">#</a>
+</h5>
+<pre tabindex="0"><code>kubectl create ns demo
+namespace/demo created
+kubectl apply -f ./deployment.yaml -n demo
+deployment.apps/nginx-deployment created
+</code></pre><h5 id="现在你将看到我们的演示命名空间中的-pod-抛出错误">
+  现在你将看到我们的演示命名空间中的 Pod 抛出错误：
+  <a class="anchor" href="#%e7%8e%b0%e5%9c%a8%e4%bd%a0%e5%b0%86%e7%9c%8b%e5%88%b0%e6%88%91%e4%bb%ac%e7%9a%84%e6%bc%94%e7%a4%ba%e5%91%bd%e5%90%8d%e7%a9%ba%e9%97%b4%e4%b8%ad%e7%9a%84-pod-%e6%8a%9b%e5%87%ba%e9%94%99%e8%af%af">#</a>
+</h5>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061713133.png" alt="image-20240306171313070" /></p>
+<h5 id="如果我们查看其中一个-pod-的事件但是我们不知道具体问题原因">
+  如果我们查看其中一个 pod 的事件，但是我们不知道具体问题原因：
+  <a class="anchor" href="#%e5%a6%82%e6%9e%9c%e6%88%91%e4%bb%ac%e6%9f%a5%e7%9c%8b%e5%85%b6%e4%b8%ad%e4%b8%80%e4%b8%aa-pod-%e7%9a%84%e4%ba%8b%e4%bb%b6%e4%bd%86%e6%98%af%e6%88%91%e4%bb%ac%e4%b8%8d%e7%9f%a5%e9%81%93%e5%85%b7%e4%bd%93%e9%97%ae%e9%a2%98%e5%8e%9f%e5%9b%a0">#</a>
+</h5>
+<pre tabindex="0"><code>Warning  BackOff 3s (x8 over 87s)  kubelet         Back-off restarting failed container
+</code></pre><h5 id="因此我们可以运行-k8sgpt-命令来访问有关这些-pod-出错原因的更多详细信息">
+  因此，我们可以运行 K8sGPT 命令来访问有关这些 pod 出错原因的更多详细信息：
+  <a class="anchor" href="#%e5%9b%a0%e6%ad%a4%e6%88%91%e4%bb%ac%e5%8f%af%e4%bb%a5%e8%bf%90%e8%a1%8c-k8sgpt-%e5%91%bd%e4%bb%a4%e6%9d%a5%e8%ae%bf%e9%97%ae%e6%9c%89%e5%85%b3%e8%bf%99%e4%ba%9b-pod-%e5%87%ba%e9%94%99%e5%8e%9f%e5%9b%a0%e7%9a%84%e6%9b%b4%e5%a4%9a%e8%af%a6%e7%bb%86%e4%bf%a1%e6%81%af">#</a>
+</h5>
+<pre tabindex="0"><code>k8sgpt analyse
+</code></pre><h5 id="这将向我们展示-k8sgpt-在集群中发现的问题">
+  这将向我们展示 k8sGPT 在集群中发现的问题：
+  <a class="anchor" href="#%e8%bf%99%e5%b0%86%e5%90%91%e6%88%91%e4%bb%ac%e5%b1%95%e7%a4%ba-k8sgpt-%e5%9c%a8%e9%9b%86%e7%be%a4%e4%b8%ad%e5%8f%91%e7%8e%b0%e7%9a%84%e9%97%ae%e9%a2%98">#</a>
+</h5>
+<pre tabindex="0"><code>AI Provider: openai
+
+0 demo/nginx-deployment-5f4c7db77b-hq74n(Deployment/nginx-deployment)
+- Error: back-off 1m20s restarting failed container=nginx pod=nginx-deployment-5f4c7db77b-hq74n_demo(7854b793-21b7-4f81-86e5-dbb4113f64f4)
+
+1 demo/nginx-deployment-5f4c7db77b-phbq8(Deployment/nginx-deployment)
+- Error: back-off 1m20s restarting failed container=nginx pod=nginx-deployment-5f4c7db77b-phbq8_demo(74038531-e362-45a6-a436-cf1a6ea46d8a)
+
+2 demo/nginx-deployment-5f4c7db77b-shkw6(Deployment/nginx-deployment)
+- Error: back-off 1m20s restarting failed container=nginx pod=nginx-deployment-5f4c7db77b-shkw6_demo(2603f332-3e1c-45da-8080-e34dd6d956ad)
+</code></pre><p><strong>要接收更多信息以及有关如何解决问题的建议，我们可以使用以下<code>--explain</code>标志：</strong></p>
+<pre tabindex="0"><code>k8sgpt analyse --explain
+</code></pre><h3 id="附加功能">
+  附加功能
+  <a class="anchor" href="#%e9%99%84%e5%8a%a0%e5%8a%9f%e8%83%bd">#</a>
+</h3>
+<h5 id="根据你的集群大小和-k8sgpt-在集群中识别的问题数量你还可以按特定命名空间和工作负载类型进行过滤">
+  根据你的集群大小和 K8sGPT 在集群中识别的问题数量，你还可以按特定命名空间和工作负载类型进行过滤。
+  <a class="anchor" href="#%e6%a0%b9%e6%8d%ae%e4%bd%a0%e7%9a%84%e9%9b%86%e7%be%a4%e5%a4%a7%e5%b0%8f%e5%92%8c-k8sgpt-%e5%9c%a8%e9%9b%86%e7%be%a4%e4%b8%ad%e8%af%86%e5%88%ab%e7%9a%84%e9%97%ae%e9%a2%98%e6%95%b0%e9%87%8f%e4%bd%a0%e8%bf%98%e5%8f%af%e4%bb%a5%e6%8c%89%e7%89%b9%e5%ae%9a%e5%91%bd%e5%90%8d%e7%a9%ba%e9%97%b4%e5%92%8c%e5%b7%a5%e4%bd%9c%e8%b4%9f%e8%bd%bd%e7%b1%bb%e5%9e%8b%e8%bf%9b%e8%a1%8c%e8%bf%87%e6%bb%a4">#</a>
+</h5>
+<h5 id="此外如果你或你的组织担心-openai-或其他后端接收有关你的工作负载的敏感信息你可以使用--anonymize规避应用的敏感信息">
+  此外，如果你或你的组织担心 OpenAI 或其他后端接收有关你的工作负载的敏感信息，你可以使用<code>--anonymize</code>规避应用的敏感信息。
+  <a class="anchor" href="#%e6%ad%a4%e5%a4%96%e5%a6%82%e6%9e%9c%e4%bd%a0%e6%88%96%e4%bd%a0%e7%9a%84%e7%bb%84%e7%bb%87%e6%8b%85%e5%bf%83-openai-%e6%88%96%e5%85%b6%e4%bb%96%e5%90%8e%e7%ab%af%e6%8e%a5%e6%94%b6%e6%9c%89%e5%85%b3%e4%bd%a0%e7%9a%84%e5%b7%a5%e4%bd%9c%e8%b4%9f%e8%bd%bd%e7%9a%84%e6%95%8f%e6%84%9f%e4%bf%a1%e6%81%af%e4%bd%a0%e5%8f%af%e4%bb%a5%e4%bd%bf%e7%94%a8--anonymize%e8%a7%84%e9%81%bf%e5%ba%94%e7%94%a8%e7%9a%84%e6%95%8f%e6%84%9f%e4%bf%a1%e6%81%af">#</a>
+</h5>
+<h2 id="与其他工具的集成">
+  与其他工具的集成
+  <a class="anchor" href="#%e4%b8%8e%e5%85%b6%e4%bb%96%e5%b7%a5%e5%85%b7%e7%9a%84%e9%9b%86%e6%88%90">#</a>
+</h2>
+<p><strong>云原生生态系统中大多数工具的价值源于它们与其他工具的集成程度。</strong></p>
+<h5 id="在撰写本文时k8sgpt-提供了与-gafana-和-prometheus-等可观察性工具的轻松集成此外还可以为-k8sgpt-编写插件维护者提供的第一个插件是trivy一个一体化的云原生安全扫描器">
+  在撰写本文时，K8sGPT 提供了与 Gafana 和 Prometheus 等可观察性工具的轻松集成。此外，还可以为 K8sGPT 编写插件。维护者提供的第一个插件是Trivy，一个一体化的云原生安全扫描器。
+  <a class="anchor" href="#%e5%9c%a8%e6%92%b0%e5%86%99%e6%9c%ac%e6%96%87%e6%97%b6k8sgpt-%e6%8f%90%e4%be%9b%e4%ba%86%e4%b8%8e-gafana-%e5%92%8c-prometheus-%e7%ad%89%e5%8f%af%e8%a7%82%e5%af%9f%e6%80%a7%e5%b7%a5%e5%85%b7%e7%9a%84%e8%bd%bb%e6%9d%be%e9%9b%86%e6%88%90%e6%ad%a4%e5%a4%96%e8%bf%98%e5%8f%af%e4%bb%a5%e4%b8%ba-k8sgpt-%e7%bc%96%e5%86%99%e6%8f%92%e4%bb%b6%e7%bb%b4%e6%8a%a4%e8%80%85%e6%8f%90%e4%be%9b%e7%9a%84%e7%ac%ac%e4%b8%80%e4%b8%aa%e6%8f%92%e4%bb%b6%e6%98%aftrivy%e4%b8%80%e4%b8%aa%e4%b8%80%e4%bd%93%e5%8c%96%e7%9a%84%e4%ba%91%e5%8e%9f%e7%94%9f%e5%ae%89%e5%85%a8%e6%89%ab%e6%8f%8f%e5%99%a8">#</a>
+</h5>
+<h5 id="你可以使用以下命令列出所有可用的集成">
+  你可以使用以下命令列出所有可用的集成：
+  <a class="anchor" href="#%e4%bd%a0%e5%8f%af%e4%bb%a5%e4%bd%bf%e7%94%a8%e4%bb%a5%e4%b8%8b%e5%91%bd%e4%bb%a4%e5%88%97%e5%87%ba%e6%89%80%e6%9c%89%e5%8f%af%e7%94%a8%e7%9a%84%e9%9b%86%e6%88%90">#</a>
+</h5>
+<pre tabindex="0"><code>k8sgpt integration list
+Active:
+Unused:
+&gt; trivy
+</code></pre><h5 id="接下来我们要激活-trivy-集成">
+  接下来，我们要激活 Trivy 集成：
+  <a class="anchor" href="#%e6%8e%a5%e4%b8%8b%e6%9d%a5%e6%88%91%e4%bb%ac%e8%a6%81%e6%bf%80%e6%b4%bb-trivy-%e9%9b%86%e6%88%90">#</a>
+</h5>
+<pre tabindex="0"><code>k8sgpt integration activate trivy
+</code></pre><h5 id="这将在集群内安装-trivy-operator如果尚未安装">
+  这将在集群内安装 Trivy Operator（如果尚未安装）：
+  <a class="anchor" href="#%e8%bf%99%e5%b0%86%e5%9c%a8%e9%9b%86%e7%be%a4%e5%86%85%e5%ae%89%e8%a3%85-trivy-operator%e5%a6%82%e6%9e%9c%e5%b0%9a%e6%9c%aa%e5%ae%89%e8%a3%85">#</a>
+</h5>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061713622.png" alt="image-20240306171344539" /></p>
+<p>激活集成后，我们可以通过 k8sgpt 过滤器，使用 Trivy 创建的漏洞报告作为 K8sGPT 分析的一部分：</p>
+<pre tabindex="0"><code>❯ k8sgpt filters list
+Active:
+&gt; Pod
+&gt; VulnerabilityReport (integration)
+Unused:
+&gt; Deployment
+&gt; ReplicaSet
+&gt; Node
+&gt; Service
+&gt; Ingress
+&gt; StatefulSet
+&gt; CronJob
+&gt; PersistentVolumeClaim
+&gt; HorizontalPodAutoScaler
+&gt; PodDisruptionBudget
+&gt; NetworkPolicy
+</code></pre><h5 id="过滤器对应于-k8sgpt-代码中的特定分析器分析器仅查看相关信息例如最关键的漏洞">
+  过滤器对应于 k8sgpt 代码中的特定分析器。分析器仅查看相关信息，例如最关键的漏洞。
+  <a class="anchor" href="#%e8%bf%87%e6%bb%a4%e5%99%a8%e5%af%b9%e5%ba%94%e4%ba%8e-k8sgpt-%e4%bb%a3%e7%a0%81%e4%b8%ad%e7%9a%84%e7%89%b9%e5%ae%9a%e5%88%86%e6%9e%90%e5%99%a8%e5%88%86%e6%9e%90%e5%99%a8%e4%bb%85%e6%9f%a5%e7%9c%8b%e7%9b%b8%e5%85%b3%e4%bf%a1%e6%81%af%e4%be%8b%e5%a6%82%e6%9c%80%e5%85%b3%e9%94%ae%e7%9a%84%e6%bc%8f%e6%b4%9e">#</a>
+</h5>
+<h5 id="要使用-vulnerabilityreport-过滤器请使用以下命令">
+  要使用 VulnerabilityReport 过滤器，请使用以下命令：
+  <a class="anchor" href="#%e8%a6%81%e4%bd%bf%e7%94%a8-vulnerabilityreport-%e8%bf%87%e6%bb%a4%e5%99%a8%e8%af%b7%e4%bd%bf%e7%94%a8%e4%bb%a5%e4%b8%8b%e5%91%bd%e4%bb%a4">#</a>
+</h5>
+<pre tabindex="0"><code>k8sgpt analyse --filter=VulnerabilityReport
+</code></pre><h5 id="fixme与之前类似我们也可以要求-k8sgpt-对扫描提供进一步的解释">
+  (FIXME)与之前类似，我们也可以要求 K8sGPT 对扫描提供进一步的解释：
+  <a class="anchor" href="#fixme%e4%b8%8e%e4%b9%8b%e5%89%8d%e7%b1%bb%e4%bc%bc%e6%88%91%e4%bb%ac%e4%b9%9f%e5%8f%af%e4%bb%a5%e8%a6%81%e6%b1%82-k8sgpt-%e5%af%b9%e6%89%ab%e6%8f%8f%e6%8f%90%e4%be%9b%e8%bf%9b%e4%b8%80%e6%ad%a5%e7%9a%84%e8%a7%a3%e9%87%8a">#</a>
+</h5>
+<pre tabindex="0"><code>k8sgpt analyse --filter=VulnerabilityReport --explain
+</code></pre><h2 id="k8sgpt-operator">
+  K8sGPT Operator
+  <a class="anchor" href="#k8sgpt-operator">#</a>
+</h2>
+<h5 id="虽然-cli-工具为集群管理员提供了对其基础设施和工作负载执行即席扫描的功能但-k8sgpt-operator-在集群中全天候-247-运行它是-kubernetes-原生的这意味着它作为-kubernetes-自定义资源运行并生成作为-yaml-清单存储在集群中的报告">
+  虽然 CLI 工具为集群管理员提供了对其基础设施和工作负载执行即席扫描的功能，但 K8sGPT Operator 在集群中全天候 (24/7) 运行。它是 Kubernetes 原生的，这意味着它作为 Kubernetes 自定义资源运行，并生成作为 YAML 清单存储在集群中的报告。
+  <a class="anchor" href="#%e8%99%bd%e7%84%b6-cli-%e5%b7%a5%e5%85%b7%e4%b8%ba%e9%9b%86%e7%be%a4%e7%ae%a1%e7%90%86%e5%91%98%e6%8f%90%e4%be%9b%e4%ba%86%e5%af%b9%e5%85%b6%e5%9f%ba%e7%a1%80%e8%ae%be%e6%96%bd%e5%92%8c%e5%b7%a5%e4%bd%9c%e8%b4%9f%e8%bd%bd%e6%89%a7%e8%a1%8c%e5%8d%b3%e5%b8%ad%e6%89%ab%e6%8f%8f%e7%9a%84%e5%8a%9f%e8%83%bd%e4%bd%86-k8sgpt-operator-%e5%9c%a8%e9%9b%86%e7%be%a4%e4%b8%ad%e5%85%a8%e5%a4%a9%e5%80%99-247-%e8%bf%90%e8%a1%8c%e5%ae%83%e6%98%af-kubernetes-%e5%8e%9f%e7%94%9f%e7%9a%84%e8%bf%99%e6%84%8f%e5%91%b3%e7%9d%80%e5%ae%83%e4%bd%9c%e4%b8%ba-kubernetes-%e8%87%aa%e5%ae%9a%e4%b9%89%e8%b5%84%e6%ba%90%e8%bf%90%e8%a1%8c%e5%b9%b6%e7%94%9f%e6%88%90%e4%bd%9c%e4%b8%ba-yaml-%e6%b8%85%e5%8d%95%e5%ad%98%e5%82%a8%e5%9c%a8%e9%9b%86%e7%be%a4%e4%b8%ad%e7%9a%84%e6%8a%a5%e5%91%8a">#</a>
+</h5>
+<h5 id="要安装-operator请按照以下命令进行操作">
+  要安装 Operator，请按照以下命令进行操作：
+  <a class="anchor" href="#%e8%a6%81%e5%ae%89%e8%a3%85-operator%e8%af%b7%e6%8c%89%e7%85%a7%e4%bb%a5%e4%b8%8b%e5%91%bd%e4%bb%a4%e8%bf%9b%e8%a1%8c%e6%93%8d%e4%bd%9c">#</a>
+</h5>
+<pre tabindex="0"><code>helm repo add k8sgpt https://charts.k8sgpt.ai/
+helm repo update
+helm install release k8sgpt/k8sgpt-operator -n k8sgpt-operator-system --create-namespace
+</code></pre><h5 id="如果你想将-k8sgpt-与-prometheus-和-grafana-集成你可以通过向上面的安装提供valuesyaml-清单来使用略有不同的安装">
+  如果你想将 K8sGPT 与 Prometheus 和 Grafana 集成，你可以通过向上面的安装提供values.yaml 清单来使用略有不同的安装：
+  <a class="anchor" href="#%e5%a6%82%e6%9e%9c%e4%bd%a0%e6%83%b3%e5%b0%86-k8sgpt-%e4%b8%8e-prometheus-%e5%92%8c-grafana-%e9%9b%86%e6%88%90%e4%bd%a0%e5%8f%af%e4%bb%a5%e9%80%9a%e8%bf%87%e5%90%91%e4%b8%8a%e9%9d%a2%e7%9a%84%e5%ae%89%e8%a3%85%e6%8f%90%e4%be%9bvaluesyaml-%e6%b8%85%e5%8d%95%e6%9d%a5%e4%bd%bf%e7%94%a8%e7%95%a5%e6%9c%89%e4%b8%8d%e5%90%8c%e7%9a%84%e5%ae%89%e8%a3%85">#</a>
+</h5>
+<pre tabindex="0"><code>serviceMonitor:
+    enabled: true
+
+GrafanaDashboard:
+    enabled: true
+</code></pre><h5 id="然后安装-operator-或更新现有安装">
+  然后安装 Operator 或更新现有安装：
+  <a class="anchor" href="#%e7%84%b6%e5%90%8e%e5%ae%89%e8%a3%85-operator-%e6%88%96%e6%9b%b4%e6%96%b0%e7%8e%b0%e6%9c%89%e5%ae%89%e8%a3%85">#</a>
+</h5>
+<pre tabindex="0"><code>helm install release k8sgpt/k8sgpt-operator -n k8sgpt-operator-system --create-namespace --values values.yaml
+</code></pre><h5 id="在本例中我们告诉-k8sgpt-还安装一个-servicemonitor它将扫描报告中的指标发送到-prometheus并为-k8sgpt-创建一个仪表板如果你使用了此安装则还需要安装-kube-prometheus-stack-helm-chart-才能访问-grafana-和-prometheus这可以通过以下命令来完成">
+  在本例中，我们告诉 K8sGPT 还安装一个 ServiceMonitor，它将扫描报告中的指标发送到 Prometheus，并为 K8sGPT 创建一个仪表板。如果你使用了此安装，则还需要安装 kube-prometheus-stack Helm Chart 才能访问 Grafana 和 Prometheus。这可以通过以下命令来完成：
+  <a class="anchor" href="#%e5%9c%a8%e6%9c%ac%e4%be%8b%e4%b8%ad%e6%88%91%e4%bb%ac%e5%91%8a%e8%af%89-k8sgpt-%e8%bf%98%e5%ae%89%e8%a3%85%e4%b8%80%e4%b8%aa-servicemonitor%e5%ae%83%e5%b0%86%e6%89%ab%e6%8f%8f%e6%8a%a5%e5%91%8a%e4%b8%ad%e7%9a%84%e6%8c%87%e6%a0%87%e5%8f%91%e9%80%81%e5%88%b0-prometheus%e5%b9%b6%e4%b8%ba-k8sgpt-%e5%88%9b%e5%bb%ba%e4%b8%80%e4%b8%aa%e4%bb%aa%e8%a1%a8%e6%9d%bf%e5%a6%82%e6%9e%9c%e4%bd%a0%e4%bd%bf%e7%94%a8%e4%ba%86%e6%ad%a4%e5%ae%89%e8%a3%85%e5%88%99%e8%bf%98%e9%9c%80%e8%a6%81%e5%ae%89%e8%a3%85-kube-prometheus-stack-helm-chart-%e6%89%8d%e8%83%bd%e8%ae%bf%e9%97%ae-grafana-%e5%92%8c-prometheus%e8%bf%99%e5%8f%af%e4%bb%a5%e9%80%9a%e8%bf%87%e4%bb%a5%e4%b8%8b%e5%91%bd%e4%bb%a4%e6%9d%a5%e5%ae%8c%e6%88%90">#</a>
+</h5>
+<pre tabindex="0"><code>helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+
+helm repo update
+
+helm install prom prometheus-community/kube-prometheus-stack -n k8sgpt-operator-system --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false
+</code></pre><h5 id="此时你应该在集群内运行-k8sgpt-operator-和-prometheus-stack-helm-chart也是-kubernetes-operator">
+  此时，你应该在集群内运行 K8sGPT Operator 和 Prometheus Stack Helm Chart（也是 Kubernetes Operator）。
+  <a class="anchor" href="#%e6%ad%a4%e6%97%b6%e4%bd%a0%e5%ba%94%e8%af%a5%e5%9c%a8%e9%9b%86%e7%be%a4%e5%86%85%e8%bf%90%e8%a1%8c-k8sgpt-operator-%e5%92%8c-prometheus-stack-helm-chart%e4%b9%9f%e6%98%af-kubernetes-operator">#</a>
+</h5>
+<h5 id="与我们需要向-cli-提供-openai-api-密钥的方式类似我们需要使用-api-密钥创建-kubernetes-密钥为此请使用与之前相同的密钥或者在你的-openai-帐户上生成一个新密钥">
+  与我们需要向 CLI 提供 OpenAI API 密钥的方式类似，我们需要使用 API 密钥创建 Kubernetes 密钥。为此，请使用与之前相同的密钥，或者在你的 OpenAI 帐户上生成一个新密钥。
+  <a class="anchor" href="#%e4%b8%8e%e6%88%91%e4%bb%ac%e9%9c%80%e8%a6%81%e5%90%91-cli-%e6%8f%90%e4%be%9b-openai-api-%e5%af%86%e9%92%a5%e7%9a%84%e6%96%b9%e5%bc%8f%e7%b1%bb%e4%bc%bc%e6%88%91%e4%bb%ac%e9%9c%80%e8%a6%81%e4%bd%bf%e7%94%a8-api-%e5%af%86%e9%92%a5%e5%88%9b%e5%bb%ba-kubernetes-%e5%af%86%e9%92%a5%e4%b8%ba%e6%ad%a4%e8%af%b7%e4%bd%bf%e7%94%a8%e4%b8%8e%e4%b9%8b%e5%89%8d%e7%9b%b8%e5%90%8c%e7%9a%84%e5%af%86%e9%92%a5%e6%88%96%e8%80%85%e5%9c%a8%e4%bd%a0%e7%9a%84-openai-%e5%b8%90%e6%88%b7%e4%b8%8a%e7%94%9f%e6%88%90%e4%b8%80%e4%b8%aa%e6%96%b0%e5%af%86%e9%92%a5">#</a>
+</h5>
+<h5 id="要生成-kubernetes-密钥请将你的-openai-密钥粘贴到以下命令中">
+  要生成 Kubernetes 密钥，请将你的 OpenAI 密钥粘贴到以下命令中：
+  <a class="anchor" href="#%e8%a6%81%e7%94%9f%e6%88%90-kubernetes-%e5%af%86%e9%92%a5%e8%af%b7%e5%b0%86%e4%bd%a0%e7%9a%84-openai-%e5%af%86%e9%92%a5%e7%b2%98%e8%b4%b4%e5%88%b0%e4%bb%a5%e4%b8%8b%e5%91%bd%e4%bb%a4%e4%b8%ad">#</a>
+</h5>
+<pre tabindex="0"><code>export OPENAI_TOKEN=&lt;YOUR API KEY HERE&gt;
+
+kubectl create secret generic k8sgpt-sample-secret --from-literal=openai-api-key=$OPENAI_TOKEN -n k8sgpt-operator-system
+</code></pre><h5 id="然后我们需要配置-k8sgpt-operator-以了解要使用哪个版本的-k8sgpt-以及哪个-ai-后端">
+  然后，我们需要配置 K8sGPT Operator 以了解要使用哪个版本的 K8sGPT 以及哪个 AI 后端：
+  <a class="anchor" href="#%e7%84%b6%e5%90%8e%e6%88%91%e4%bb%ac%e9%9c%80%e8%a6%81%e9%85%8d%e7%bd%ae-k8sgpt-operator-%e4%bb%a5%e4%ba%86%e8%a7%a3%e8%a6%81%e4%bd%bf%e7%94%a8%e5%93%aa%e4%b8%aa%e7%89%88%e6%9c%ac%e7%9a%84-k8sgpt-%e4%bb%a5%e5%8f%8a%e5%93%aa%e4%b8%aa-ai-%e5%90%8e%e7%ab%af">#</a>
+</h5>
+<pre tabindex="0"><code>apiVersion: core.k8sgpt.ai/v1alpha1
+kind: K8sGPT
+metadata:
+  name: k8sgpt-sample
+spec:
+  model: gpt-3.5-turbo
+  backend: openai
+  noCache: false
+  version: v0.3.2
+  enableAI: true
+  secret:
+    name: k8sgpt-sample-secret
+    key: openai-api-key
+</code></pre><h5 id="现在我们需要将此文件应用到我们的-k8sgpt-集群命名空间">
+  现在，我们需要将此文件应用到我们的 K8sGPT 集群命名空间：
+  <a class="anchor" href="#%e7%8e%b0%e5%9c%a8%e6%88%91%e4%bb%ac%e9%9c%80%e8%a6%81%e5%b0%86%e6%ad%a4%e6%96%87%e4%bb%b6%e5%ba%94%e7%94%a8%e5%88%b0%e6%88%91%e4%bb%ac%e7%9a%84-k8sgpt-%e9%9b%86%e7%be%a4%e5%91%bd%e5%90%8d%e7%a9%ba%e9%97%b4">#</a>
+</h5>
+<pre tabindex="0"><code>kubectl apply -f k8sgpt-resource.yaml -n k8sgpt-operator-system
+</code></pre><h5 id="几秒钟内operator-将创建新结果">
+  几秒钟内，Operator 将创建新结果：
+  <a class="anchor" href="#%e5%87%a0%e7%a7%92%e9%92%9f%e5%86%85operator-%e5%b0%86%e5%88%9b%e5%bb%ba%e6%96%b0%e7%bb%93%e6%9e%9c">#</a>
+</h5>
+<pre tabindex="0"><code>kubectl get results -n k8sgpt-operator-system
+</code></pre><h5 id="以下是不同命令的屏幕截图你可以按照这些命令从-k8sgpt-operator-查看结果报告">
+  以下是不同命令的屏幕截图，你可以按照这些命令从 K8sGPT Operator 查看结果报告：
+  <a class="anchor" href="#%e4%bb%a5%e4%b8%8b%e6%98%af%e4%b8%8d%e5%90%8c%e5%91%bd%e4%bb%a4%e7%9a%84%e5%b1%8f%e5%b9%95%e6%88%aa%e5%9b%be%e4%bd%a0%e5%8f%af%e4%bb%a5%e6%8c%89%e7%85%a7%e8%bf%99%e4%ba%9b%e5%91%bd%e4%bb%a4%e4%bb%8e-k8sgpt-operator-%e6%9f%a5%e7%9c%8b%e7%bb%93%e6%9e%9c%e6%8a%a5%e5%91%8a">#</a>
+</h5>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061714569.png" alt="image-20240306171418481" /></p>
+<h5 id="从-k8sgpt-operator-查看结果报告">
+  从 K8sGPT Operator 查看结果报告
+  <a class="anchor" href="#%e4%bb%8e-k8sgpt-operator-%e6%9f%a5%e7%9c%8b%e7%bb%93%e6%9e%9c%e6%8a%a5%e5%91%8a">#</a>
+</h5>
+<h5 id="最后我们将看一下-grafana-仪表板端口转发-grafana-服务以通过-localhost-访问它">
+  最后，我们将看一下 Grafana 仪表板。端口转发 Grafana 服务以通过 localhost 访问它：
+  <a class="anchor" href="#%e6%9c%80%e5%90%8e%e6%88%91%e4%bb%ac%e5%b0%86%e7%9c%8b%e4%b8%80%e4%b8%8b-grafana-%e4%bb%aa%e8%a1%a8%e6%9d%bf%e7%ab%af%e5%8f%a3%e8%bd%ac%e5%8f%91-grafana-%e6%9c%8d%e5%8a%a1%e4%bb%a5%e9%80%9a%e8%bf%87-localhost-%e8%ae%bf%e9%97%ae%e5%ae%83">#</a>
+</h5>
+<pre tabindex="0"><code>kubectl port-forward service/prom-grafana -n prom 3000:80
+</code></pre><h5 id="打开-localhost3000然后导航到-dashboardsk8sgpt-overview然后你将看到包含结果的仪表板">
+  打开 localhost:3000，然后导航到 Dashboards&gt;K8sGPT Overview，然后你将看到包含结果的仪表板：
+  <a class="anchor" href="#%e6%89%93%e5%bc%80-localhost3000%e7%84%b6%e5%90%8e%e5%af%bc%e8%88%aa%e5%88%b0-dashboardsk8sgpt-overview%e7%84%b6%e5%90%8e%e4%bd%a0%e5%b0%86%e7%9c%8b%e5%88%b0%e5%8c%85%e5%90%ab%e7%bb%93%e6%9e%9c%e7%9a%84%e4%bb%aa%e8%a1%a8%e6%9d%bf">#</a>
+</h5>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403061714659.png" alt="image-20240306171435610" />Grafana 中的 K8sGPT 仪表板</p>
+<h2 id="参考">
+  参考
+  <a class="anchor" href="#%e5%8f%82%e8%80%83">#</a>
+</h2>
+<ol>
+<li>\1. <a href="https://k8sgpt.ai/">https://k8sgpt.ai/</a></li>
+<li>\2. <a href="https://docs.k8sgpt.ai/">https://docs.k8sgpt.ai/</a></li>
+<li>\3. <a href="https://github.com/k8sgpt-ai">https://github.com/k8sgpt-ai</a></li>
+</ol>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#概述">概述</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#安装">安装</a>
+      <ul>
+        <li></li>
+        <li><a href="#其他安装选项">其他安装选项</a></li>
+      </ul>
+    </li>
+    <li><a href="#k8sgpt-cli">K8sGPT CLI</a>
+      <ul>
+        <li></li>
+        <li><a href="#附加功能">附加功能</a></li>
+      </ul>
+    </li>
+    <li><a href="#与其他工具的集成">与其他工具的集成</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#k8sgpt-operator">K8sGPT Operator</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#参考">参考</a></li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

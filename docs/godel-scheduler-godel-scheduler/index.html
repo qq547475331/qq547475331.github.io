@@ -1,0 +1,3912 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  Local Gödel Environment Setup with KIND
+  #
+
+使用KIND设置本地哥德尔环境
+This guide will walk you through how to set up the Gödel Unified Scheduling system.
+本指南将指导您如何设置哥德尔统一调度系统。
+
+  One-Step Cluster Bootstrap &amp; Installation
+  #
+
+一步式集群引导和安装
+We provided a quick way to help you try Gödel on your local machine, which will set up a kind cluster locally and deploy necessary crds, clusterrole and rolebindings
+我们提供了一种快速的方法来帮助您在本地计算机上尝试Gödel，它将在本地设置一个类集群，并部署必要的crd、clusterrole和rolebindings
+
+  Prerequisites
+  #
+
+先决条件
+Please make sure the following dependencies are installed.">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="http://192.168.0.139:1313/docs/godel-scheduler-godel-scheduler/">
+  <meta property="og:site_name" content="Guichen&#39;s Blog">
+  <meta property="og:title" content="godel-scheduler 2024-08-02 17:41:00.668">
+  <meta property="og:description" content="Local Gödel Environment Setup with KIND # 使用KIND设置本地哥德尔环境
+This guide will walk you through how to set up the Gödel Unified Scheduling system.
+本指南将指导您如何设置哥德尔统一调度系统。
+One-Step Cluster Bootstrap &amp; Installation # 一步式集群引导和安装
+We provided a quick way to help you try Gödel on your local machine, which will set up a kind cluster locally and deploy necessary crds, clusterrole and rolebindings
+我们提供了一种快速的方法来帮助您在本地计算机上尝试Gödel，它将在本地设置一个类集群，并部署必要的crd、clusterrole和rolebindings
+Prerequisites # 先决条件
+Please make sure the following dependencies are installed.">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+<title>godel-scheduler 2024-08-02 17:41:00.668 | Guichen&#39;s Blog</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="http://192.168.0.139:1313/docs/godel-scheduler-godel-scheduler/">
+<link rel="stylesheet" href="/book.min.6c8b9d2a1fc95075ed7da46ca81060b39add8fff6741ac51259f768929281e2c.css" integrity="sha256-bIudKh/JUHXtfaRsqBBgs5rdj/9nQaxRJZ92iSkoHiw=" crossorigin="anonymous">
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/en.search.min.6f52273b9f5fa65803e3991faf27d1a7b7b8f6b148888237d77b4e841cb030e3.js" integrity="sha256-b1InO59fplgD45kfryfRp7e49rFIiII313tOhBywMOM=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/"><span>Guichen&#39;s Blog</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/00-%E9%9B%86%E7%BE%A4%E8%A7%84%E5%88%92%E5%92%8C%E5%9F%BA%E7%A1%80%E5%8F%82%E6%95%B0%E8%AE%BE%E5%AE%9A-00--ji-qun-gui-hua-he-ji-chu-can-shu-she-ding/" class="">00-集群规划和基础参数设定 2023-09-28 15:19:02.214</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/01-%E5%88%9B%E5%BB%BA%E8%AF%81%E4%B9%A6%E5%92%8C%E7%8E%AF%E5%A2%83%E5%87%86%E5%A4%87-01--chuang-jian-zheng-shu-he-huan-jing-zhun-bei/" class="">01-创建证书和环境准备 2023-09-28 15:22:19.812</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/02-%E5%AE%89%E8%A3%85etcd%E9%9B%86%E7%BE%A4-02--an-zhuang-etcd-ji-qun/" class="">02-安装etcd集群 2023-09-28 15:23:07.363</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E9%9D%A2%E8%AF%950224/" class="">0224面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-26-k8s%E7%9B%B8%E5%85%B3/" class="">0226 k8s题目</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/03-%E5%AE%89%E8%A3%85%E5%AE%B9%E5%99%A8%E8%BF%90%E8%A1%8C%E6%97%B6-03--an-zhuang-rong-qi-yun-xing-shi/" class="">03-安装容器运行时 2023-09-28 15:23:56.241</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/04-%E5%AE%89%E8%A3%85kube_master%E8%8A%82%E7%82%B9-04--an-zhuang-kubemaster-jie-dian/" class="">04-安装kube_master节点 2023-09-28 15:24:21.203</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/05-%E5%AE%89%E8%A3%85kube_node%E8%8A%82%E7%82%B9-05--an-zhuang-kubenode-jie-dian/" class="">05-安装kube_node节点 2023-09-28 15:24:43.201</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85calico%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-calico-wang-luo-zu-jian/" class="">06-安装calico网络组件 2023-09-28 15:34:28.483</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85cilium%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-cilium-wang-luo-zu-jian/" class="">06-安装cilium网络组件 2023-09-28 15:35:23.884</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85flannel%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-flannel-wang-luo-zu-jian/" class="">06-安装flannel网络组件 2023-09-28 15:35:50.039</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85kube-ovn%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-kube-ovn-wang-luo-zu-jian/" class="">06-安装kube-ovn网络组件 2023-09-28 15:36:11.265</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-wang-luo-zu-jian/" class="">06-安装网络组件 2023-09-28 15:25:14.997</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/07-%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4%E4%B8%BB%E8%A6%81%E6%8F%92%E4%BB%B6-07--an-zhuang-ji-qun-zhu-yao-cha-jian/" class="">07-安装集群主要插件 2023-09-28 15:26:42.651</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/08-k8s-%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8--k8s-ji-qun-cun-chu/" class="">08-K8S 集群存储  2023-09-28 15:27:29.454</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/16%E4%B8%AA%E6%A6%82%E5%BF%B5%E5%B8%A6%E4%BD%A0%E5%85%A5%E9%97%A8-kubernetes-16-ge-gai-nian-dai-ni-ru-men-kubernetes/" class="">16个概念带你入门 Kubernetes 2024-04-03 15:09:21.671</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/16%E5%BC%A0%E7%A1%AC%E6%A0%B8%E5%9B%BE%E8%A7%A3k8s%E7%BD%91%E7%BB%9C-16-zhang-ying-he-tu-jie-k8s-wang-luo/" class="">16张硬核图解k8s网络 2024-04-03 15:12:49.601</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-07-microk8s/" class="">2024-12-07 microk8s</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-devstack/" class="">2024-12-08 devstack</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-mutilpass%E6%93%8D%E4%BD%9C/" class="">2024-12-08 mutilpass操作</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-nano%E6%93%8D%E4%BD%9C/" class="">2024-12-08 nano操作</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-openstack%E5%92%8Ckubernetes%E5%8C%BA%E5%88%AB/" class="">2024-12-08 openstack和kubernetes区别</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-openstack%E9%9C%80%E8%A6%81%E5%87%A0%E5%8F%B0%E8%99%9A%E6%8B%9F%E6%9C%BA/" class="">2024-12-08 openstack需要几台虚拟机</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-%E5%9D%97%E5%AD%98%E5%82%A8%E5%92%8C%E5%AF%B9%E8%B1%A1%E5%82%A8%E5%AD%98%E5%8C%BA%E5%88%AB/" class="">2024-12-08 块存储和对象储存区别</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-docker-daemon.json/" class="">2024-12-09 docker daemon.json</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-helmchart-%E9%83%A8%E7%BD%B2flask%E5%BA%94%E7%94%A8/" class="">2024-12-09 helmchart 部署flask应用</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-mutilpass%E9%83%A8%E7%BD%B2openstack/" class="">2024-12-09 mutilpass部署openstack devstack形式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-openstack-ssh%E8%BF%9E%E6%8E%A5/" class="">2024-12-09 openstack ssh连接</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-10-docker-registrry/" class="">2024-12-10 docker registrry</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-22-k8s%E6%9E%B6%E6%9E%84%E5%B8%88%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8/" class="">2024-2-22 k8s架构师面试大全</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-22-k8s%E9%9D%A2%E8%AF%95%E5%AE%9D%E5%85%B8/" class="">2024-2-22 k8s面试宝典</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-26-%E9%9D%A2%E8%AF%95/" class="">2024-2-26 面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-19-%E4%B8%A4%E5%BC%A0%E5%9B%BE%E5%85%A8%E9%9D%A2%E7%90%86%E8%A7%A3k8s%E5%8E%9F%E7%90%86/" class="">2024-3-19 两张图全面理解k8s原理</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-cni%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B/" class="">2024-3-4 CNI剖析演进</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-8-%E9%9D%A2%E8%AF%950308/" class="">2024-3-8 面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-4-17-%E9%9D%A2%E8%AF%95%E6%80%BB%E7%BB%93/" class="">2024-4-17 面试总结</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-kubernetes%E9%9D%A2%E8%AF%95%E9%A2%98/" class="">2024-8-1 k8s面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-%E5%B8%B8%E8%A7%81linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98%E6%89%BE%E5%B7%A5%E4%BD%9C%E7%9A%84%E5%BF%85%E7%9C%8B/" class="">2024-8-1 linux运维面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98/" class="">2024-8-1 linux面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-1-1-%E5%A4%A7%E5%A0%B0%E6%B2%B3-%E6%88%91%E7%9A%84%E4%BF%9D%E5%A7%86/" class="">2025-1-1 大堰河-我的保姆</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-k8s-csi%E5%89%96%E6%9E%90/" class="">2025-1-16 CSI剖析演进</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-1-16-k8s%E5%B8%B8%E8%A7%81%E6%95%85%E9%9A%9C%E6%8C%87%E5%8D%97/" class="">2025-1-16 k8s常见故障指南</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-k8s%E6%B5%81%E9%87%8F%E9%93%BE%E8%B7%AF%E5%89%96%E6%9E%90/" class="">2025-1-16 k8s流量链路剖析</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/33%E6%AC%BEgitops%E4%B8%8Edevops%E4%B8%BB%E6%B5%81%E7%B3%BB%E7%BB%9F-33-kuan-gitops-yu-devops-zhu-liu-xi-tong/" class="">33款gitops与devops主流系统 2024-08-02 17:45:15.709</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/600%E6%9D%A1%E6%9C%80%E5%BC%BAlinux%E5%91%BD%E4%BB%A4%E6%80%BB%E7%BB%93-600-tiao-zui-qiang-linux-ming-ling-zong-jie/" class="">600条最强linux命令总结 2024-04-03 15:12:31.282</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/acme%E8%87%AA%E5%8A%A8%E6%9B%B4%E6%96%B0%E8%AF%81%E4%B9%A6-acme-zi-dong-geng-xin-zheng-shu/" class="">acme自动更新证书 2024-04-03 14:41:44.289</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/calico-%E9%85%8D%E7%BD%AE-bgp-route-reflectors-calico-pei-zhi-bgproutereflectors/" class="">calico 配置 BGP Route Reflectors 2023-09-28 15:34:01.007</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/calico%E7%BD%91%E7%BB%9C%E8%87%AA%E5%AE%9A%E4%B9%89-calico-wang-luo-zi-ding-yi/" class="">Calico网络自定义 2024-04-03 15:08:43.394</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/cicd%E6%80%9D%E8%80%83-cicd-si-kao/" class="">CICD思考 2024-04-03 15:11:24.151</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/client-go-%E5%9B%9B%E7%A7%8D%E5%AE%A2%E6%88%B7%E7%AB%AF-client-go-si-zhong-ke-hu-duan/" class="">Client-go 四种客户端 2024-04-03 14:49:34.32</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/client-go-%E6%9E%B6%E6%9E%84-client-go-jia-gou/" class="">Client-go 架构 2024-04-03 14:48:40.716</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/cni%E6%8F%92%E4%BB%B6%E9%80%89%E5%9E%8B-cni-cha-jian-xuan-xing/" class="">CNI插件选型 2024-04-03 15:01:51.29</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/containerd-%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C-containerd-ji-ben-cao-zuo/" class="">Containerd 基本操作 2024-04-03 14:55:46.786</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/coredns%E4%B9%8B%E5%85%89-coredns-zhi-guang/" class="">COREDNS之光 2024-04-03 14:54:52.059</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/dockerfile%E5%AE%9A%E5%88%B6%E4%B8%93%E5%B1%9E%E9%95%9C%E5%83%8F-dockerfile-ding-zhi-zhuan-shu-jing-xiang/" class="">dockerfile定制专属镜像 2024-08-02 17:44:00.522</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/dockerfile%E7%9A%84copy%E5%92%8Cadd%E7%9A%84%E5%8C%BA%E5%88%AB-dockerfile-de-copy-he-add-de-qu-bie/" class="">dockerfile的copy和add的区别 2024-04-03 15:01:09.565</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/docker%E9%87%8D%E8%A6%81%E7%9A%84%E7%BD%91%E7%BB%9C%E7%9F%A5%E8%AF%86%E7%82%B9-docker-zhong-yao-de-wang-luo-zhi-shi-dian/" class="">Docker重要的网络知识点  2024-04-03 15:12:10.162</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/etcd%E5%A4%87%E4%BB%BD-etcd-bei-fen/" class="">ETCD备份 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/etcd%E7%A8%B3%E5%AE%9A%E6%80%A7%E5%8F%8A%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%AE%9E%E8%B7%B5-etcd-wen-ding-xing-ji-xing-neng-you-hua-shi-jian/" class="">ETCD稳定性及性能优化实践 2024-04-03 15:06:31.141</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ex-lb-%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E9%83%A8%E7%BD%B2-ex-lb-fu-zai-jun-heng-bu-shu/" class="">EX-LB 负载均衡部署 2023-09-28 15:28:51.998</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ezctl-%E5%91%BD%E4%BB%A4%E8%A1%8C%E4%BB%8B%E7%BB%8D-ezctl-ming-ling-xing-jie-shao/" class="">ezctl 命令行介绍 2023-09-28 15:28:00.619</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/flanel%E7%BD%91%E7%BB%9C-flanel-wang-luo/" class="">flanel网络 2024-04-03 15:05:04.16</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/godel-scheduler-godel-scheduler/" class="active">godel-scheduler 2024-08-02 17:41:00.668</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/helm-chart%E5%92%8Crepo-helmchart-he-repo/" class="">helm chart和repo 2024-04-03 15:00:43.125</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/istio-ingress-gateway-istio-ingress-gateway/" class="">istio-ingress-gateway 2024-08-02 17:51:54.75</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/istio%E9%83%A8%E7%BD%B2-istio-bu-shu/" class="">istio部署 2024-08-02 17:52:40.721</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-cni%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B-k8scni-pou-xi-yan-jin/" class="">K8S CNI剖析演进 2024-03-04 10:51:33.245</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-csi-openebs%E5%8E%9F%E7%90%86-k8scsiopenebs-yuan-li/" class="">K8S csi openebs原理 2024-04-03 14:44:48.967</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-csi%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B-k8scsi-pou-xi-yan-jin/" class="">K8S CSI剖析演进 2024-03-04 10:52:20.507</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-gpt-k8sgpt/" class="">K8S GPT 2024-04-03 15:02:09.127</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E5%BC%80%E5%8F%91%E5%8F%AF%E4%B8%8D%E6%AD%A2-crud-k8s-kai-fa-ke-bu-zhi-crud/" class="">K8S 开发可不止 CRUD 2024-04-03 14:50:11.765</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E6%8E%A2%E9%92%88%E5%8E%9F%E7%90%86-k8s-tan-zhen-yuan-li/" class="">K8S 探针原理 2024-04-03 14:53:29.429</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E6%B5%81%E9%87%8F%E9%93%BE%E8%B7%AF%E5%89%96%E6%9E%90-k8s-liu-liang-lian-lu-pou-xi/" class="">K8S 流量链路剖析 2024-03-04 10:50:22.991</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E8%B0%83%E5%BA%A6%E5%99%A8-scheduler_onego-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-diao-du-qi-scheduleronego-yuan-ma-jie-du/" class="">K8S 调度器 scheduler_one.go 源码解读 2024-04-09 11:45:28.22</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E4%B9%8Bingress-nginx%E5%8E%9F%E7%90%86%E5%8F%8A%E9%85%8D%E7%BD%AE-k8s-zhi-ingress-nginx-yuan-li-ji-pei-zhi/" class="">K8S之ingress-nginx原理及配置 2024-07-05 18:02:14.243</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E4%B9%8Bkubelet%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-zhi-kubelet-yuan-ma-jie-du/" class="">k8s之kubelet源码解读 2024-03-28 15:30:39.633</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7-k8s-yuan-de-sheng-ji/" class="">K8S原地升级 2024-04-03 15:04:38.125</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%91%BD%E4%BB%A4%E6%8C%87%E5%8D%97-k8s-ming-ling-zhi-nan/" class="">K8S命令指南 2024-04-03 15:14:14.207</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%A6%82%E4%BD%95%E8%8E%B7%E5%BE%97-ip-k8s-ru-he-huo-de-ip/" class="">K8S如何获得 IP 2024-04-16 17:09:59.658</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%BA%94%E7%94%A8%E7%9A%84%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5-k8s-ying-yong-de-zui-jia-shi-jian/" class="">k8s应用的最佳实践 2024-04-03 14:43:16.936</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-deployment_controllergo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-deploymentcontrollergo-yuan-ma-jie-du/" class="">K8S控制器之 deployment_controller.go源码解读 2024-04-09 11:30:03.133</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-progressgo-%E8%BF%9B%E5%BA%A6-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-progressgo-jin-du-yuan-ma-jie-du/" class="">K8S控制器之 progress.go 进度 源码解读 2024-04-09 11:31:08.86</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-rollinggo-%E6%BB%9A%E5%8A%A8%E6%9B%B4%E6%96%B0-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-rollinggo-gun-dong-geng-xin-yuan-ma-jie-du/" class="">K8S控制器之 rolling.go 滚动更新 源码解读 2024-04-09 11:32:58.133</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-schedulergo-%E8%B0%83%E5%BA%A6%E5%99%A8-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-schedulergo-diao-du-qi-yuan-ma-jie-du/" class="">K8S控制器之 scheduler.go 调度器 源码解读 2024-04-09 11:44:25.171</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Brecreatego-%E9%87%8D%E5%BB%BA-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-recreatego-zhong-jian-yuan-ma-jie-du/" class="">K8S控制器之recreate.go 重建 源码解读 2024-04-09 11:31:49.855</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Brollbackgo-%E5%9B%9E%E6%BB%9A-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-rollbackgo-hui-gun-yuan-ma-jie-du/" class="">K8S控制器之rollback.go 回滚 源码解读 2024-04-09 11:32:26.587</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_pod_controlgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulpodcontrolgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_pod_control.go源码解读 2024-04-10 09:42:50.078</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_set_controlgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetcontrolgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_set_control.go源码解读 2024-04-10 09:41:30.316</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_set_status_updatego%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetstatusupdatego-yuan-ma-jie-du/" class="">K8S控制器之stateful_set_status_update.go源码解读 2024-04-10</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_setgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_set.go源码解读 2024-04-10</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bsyncgo-%E5%90%8C%E6%AD%A5-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-syncgo-tong-bu-yuan-ma-jie-du/" class="">K8S控制器之sync.go 同步 源码解读 2024-04-09 11:33:26.356</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E7%9A%84pod%E7%B1%BB%E5%9E%8B-k8s-de-pod-lei-xing/" class="">K8S的POD类型 2024-04-03 14:57:11.072</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E7%9A%84%E6%9C%80%E5%90%8E%E4%B8%80%E5%9D%97%E6%8B%BC%E5%9B%BE-dbpaas-k8s-de-zui-hou-yi-kuai-pin-tu-dbpaas/" class="">K8S的最后一块拼图 dbpaas 2024-08-02 17:48:35.899</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-k8s%E7%BB%84%E4%BB%B6/" class="">k8s组件</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%83%8C%E5%90%8Eservice%E6%98%AF%E5%A6%82%E4%BD%95%E5%B7%A5%E4%BD%9C%E7%9A%84-k8s-bei-hou-service-shi-ru-he-gong-zuo-de/" class="">k8s背后service是如何工作的 2024-08-02 17:49:44.981</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%B0%83%E5%BA%A6%E5%99%A8-extendergo-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-diao-du-qi-extendergo-yuan-ma-jie-du/" class="">K8S调度器 extender.go 源码解读 2024-04-09 11:45:59.666</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%B0%83%E8%AF%95pod-k8s-diao-shi-pod/" class="">K8S调试POD 2024-04-03 14:58:15.293</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%BF%90%E7%BB%B4%E4%B9%8B%E6%B8%85%E7%90%86%E7%A3%81%E7%9B%98-k8s-yun-wei-zhi-qing-li-ci-pan/" class="">k8s运维之清理磁盘 2024-04-03 15:13:57.279</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8-k8s-mian-shi-da-quan/" class="">K8S面试大全 2024-04-03 15:10:54.493</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E5%AE%9D%E5%85%B8-k8s-mian-shi-bao-dian/" class="">K8S面试宝典 2024-04-03 15:11:09.316</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E9%A2%98-k8s-mian-shi-ti/" class="">K8S面试题 2024-08-02 17:50:50.418</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kruise%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7%E8%A7%A3%E6%9E%90-kruise-yuan-de-sheng-ji-jie-xi/" class="">kruise原地升级解析 2024-08-02 17:59:31.689</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kube-router-%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-kube-router-wang-luo-zu-jian/" class="">kube-router 网络组件 2023-09-28 15:33:20.658</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-05-kubeasz%E9%83%A8%E7%BD%B2k8s/" class="">kubeasz部署k8s</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubekey%E6%B7%BB%E5%8A%A0%E6%96%B0%E8%8A%82%E7%82%B9-kubekey-tian-jia-xin-jie-dian/" class="">kubekey添加新节点 2024-04-03 15:36:47.646</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-api-kubernetesapi/" class="">Kubernetes API 2024-04-03 14:47:30.212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E6%BA%90%E7%A0%81%E7%BB%93%E6%9E%84-kubernetes-yuan-ma-jie-gou/" class="">Kubernetes 源码结构 2024-04-03 14:48:05.954</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3%E8%AE%A4%E8%AF%81-kubernetes-zheng-shu-xiang-jie--ren-zheng-/" class="">Kubernetes 证书详解(认证) 2024-04-03 14:52:56.54</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3%E9%89%B4%E6%9D%83-kubernetes-zheng-shu-xiang-jie--jian-quan-/" class="">Kubernetes 证书详解(鉴权) 2024-04-03 14:49:04.385</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubewharf-kubewharf/" class="">kubewharf 2024-08-02 17:41:32.72</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux-awk%E6%96%87%E6%9C%AC%E5%A4%84%E7%90%86%E5%99%A8-8%E4%B8%AA%E6%A1%88%E4%BE%8B-linuxawk-wen-ben-chu-li-qi-8-ge-an-li/" class="">linux awk文本处理器 8个案例 2024-08-02 17:46:53.603</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux-%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%A4%A7%E5%85%A8-linux-xing-neng-you-hua-da-quan/" class="">Linux 性能优化大全 2024-04-03 15:09:06.854</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux%E7%B3%BB%E7%BB%9F%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96-%E4%B8%83%E4%B8%AA%E5%AE%9E%E6%88%98%E7%BB%8F%E9%AA%8C-linux-xi-tong-xing-neng-you-hua-qi-ge-shi-zhan-jing-yan/" class="">linux系统性能优化 七个实战经验 2024-08-02 17:47:26.212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98-linux-yun-wei-gong-cheng-shi-50-ge-chang-jian-mian-shi-ti/" class="">linux运维工程师50个常见面试题 2024-08-02 17:42:12.968</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/metallb-l2-%E5%8E%9F%E7%90%86-metallbl2-yuan-li/" class="">MetalLB L2 原理 2024-04-03 14:52:24.662</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/netctl%E6%A3%80%E6%B5%8B%E9%9B%86%E7%BE%A4pod%E9%97%B4%E8%BF%9E%E9%80%9A%E6%80%A7-netctl-jian-ce-ji-qun-pod-jian-lian-tong-xing/" class="">netctl检测集群pod间连通性 2024-08-02 18:00:36.753</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/network-check-network-check/" class="">network-check 2023-09-28 15:36:33.04</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/nginx%E5%A6%82%E4%BD%95%E8%A7%A3%E5%86%B3%E6%83%8A%E7%BE%A4%E6%95%88%E5%BA%94-nginx-ru-he-jie-jue-jing-qun-xiao-ying/" class="">nginx如何解决惊群效应 2024-08-02 17:45:54.531</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/openkruise%E8%AF%A6%E7%BB%86%E8%A7%A3%E9%87%8A%E4%BB%A5%E5%8F%8A%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7%E5%8F%8A%E5%85%A8%E9%93%BE%E8%B7%AF%E7%81%B0%E5%BA%A6%E5%8F%91%E5%B8%83%E6%96%B9%E6%A1%88-openkruise-xiang-xi-jie-shi-yi-ji-yuan-de-sheng-ji-ji-quan-lian-lu-hui-du-fa-bu-fang-an/" class="">OpenKruise详细解释以及原地升级及全链路灰度发布方案 2024-07-22 11:44:46.892</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/pixie-pixie/" class="">pixie 2024-08-02 17:52:17.843</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-28-prometheus/" class="">prometheus 面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/prometheus-stack-prometheus-stack/" class="">prometheus-stack 2024-08-02 17:55:22.326</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/prometheus%E4%BC%81%E4%B8%9A%E7%BA%A7%E7%9B%91%E6%8E%A7%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93-prometheus-qi-ye-ji-jian-kong-shi-yong-zong-jie/" class="">prometheus企业级监控使用总结 2024-04-03 15:13:11.185</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ssl%E8%AF%81%E4%B9%A6%E8%87%AA%E7%AD%BE%E5%8F%91-ssl-zheng-shu-zi-qian-fa/" class="">ssl证书自签发 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/teg%E4%B8%8Eistio%E9%9B%86%E6%88%90-teg-yu-istio-ji-cheng/" class="">TEG与istio集成 2024-08-02 17:51:20.389</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%B8%A4%E5%BC%A0%E5%9B%BE%E5%85%A8%E9%9D%A2%E7%90%86%E8%A7%A3k8s%E5%8E%9F%E7%90%86-liang-zhang-tu-quan-mian-li-jie-k8s-yuan-li/" class="">两张图全面理解K8S原理 2024-04-03 14:51:27.431</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%B8%AA%E6%80%A7%E5%8C%96%E9%9B%86%E7%BE%A4%E5%8F%82%E6%95%B0%E9%85%8D%E7%BD%AE-ge-xing-hua-ji-qun-can-shu-pei-zhi/" class="">个性化集群参数配置 2023-09-28 15:30:56.072</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E4%B8%AD%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_%E9%A2%98%E7%9B%AE/" class="">中级运维面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BA%8C%E8%BF%9B%E5%88%B6%E9%83%A8%E7%BD%B2k8s%E5%8A%A0%E8%8A%82%E7%82%B9%E6%93%8D%E4%BD%9C-er-jin-zhi-bu-shu-k8s-jia-jie-dian-cao-zuo/" class="">二进制部署K8S加节点操作 2024-04-03 15:08:26.726</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-10-20-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8%E9%9B%86%E7%BE%A4/" class="">使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8-keepalived-%E5%92%8C-haproxy-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8-kubernetes-%E9%9B%86%E7%BE%A4-shi-yong-keepalived-he-haproxy-chuang-jian-gao-ke-yong-kubernetes-ji-qun/" class="">使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群 2023-04-12 04:04:09.458</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8-openfunction-%E5%9C%A8%E4%BB%BB%E4%BD%95%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E4%B8%8A%E8%BF%90%E8%A1%8C%E6%97%A0%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%B7%A5%E4%BD%9C%E8%B4%9F%E8%BD%BD-shi-yong-openfunction-zai-ren-he-ji-chu-she-shi-shang-yun-xing-wu-fu-wu-qi-gong-zuo-fu-zai/" class="">使用 OpenFunction 在任何基础设施上运行无服务器工作负载 2024-01-21 04:02:44.459</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8cloudflarecf%E6%90%AD%E5%BB%BAdockerhub%E4%BB%A3%E7%90%86-shi-yong-cloudflarecf-da-jian-dockerhub-dai-li/" class="">使用cloudflare(CF)搭建dockerhub代理 2024-06-28 14:38:34.339</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8kubernees-leases-%E8%BD%BB%E6%9D%BE%E5%AE%9E%E7%8E%B0leader-election-shi-yong-kuberneesleases-qing-song-shi-xian-leaderelection/" class="">使用kubernees leases 轻松实现leader election 2024-04-03 15:09:46.129</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%85%AC%E6%9C%89%E4%BA%91%E4%B8%8A%E9%83%A8%E7%BD%B2-kubeasz-gong-you-yun-shang-bu-shu-kubeasz/" class="">公有云上部署 kubeasz 2023-09-28 15:31:16.19</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-5-14-%E5%8D%95master%E5%8D%95etcd%E6%94%B9%E9%80%A0/" class="">单master单etcd改造为3master3etcd</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%8F%B2%E4%B8%8A%E6%9C%80%E7%89%9Bjenkins-pipeline%E6%B5%81%E6%B0%B4%E7%BA%BF%E8%AF%A6%E8%A7%A3-shi-shang-zui-niu-jenkinspipeline-liu-shui-xian-xiang-jie/" class="">史上最牛jenkins pipeline流水线详解 2024-08-02</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%9A%E6%9E%B6%E6%9E%84%E6%94%AF%E6%8C%81-duo-jia-gou-zhi-chi/" class="">多架构支持 2023-09-28 15:29:54.111</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%A7%E5%8E%82%E6%80%BB%E7%BB%93nginx%E9%AB%98%E5%B9%B6%E5%8F%91%E4%BC%98%E5%8C%96%E7%AC%94%E8%AE%B0-da-chang-zong-jie-nginx-gao-bing-fa-you-hua-bi-ji/" class="">大厂总结nginx高并发优化笔记 2024-08-02 17:46:19.098</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%A7%E8%A7%84%E6%A8%A1%E5%B9%B6%E5%8F%91%E4%B8%8B%E5%A6%82%E4%BD%95%E5%8A%A0%E5%BF%AB-pod-%E5%90%AF%E5%8A%A8%E9%80%9F%E5%BA%A6-da-gui-mo-bing-fa-xia-ru-he-jia-kuai-pod-qi-dong-su-du/" class="">大规模并发下如何加快 Pod 启动速度 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E4%B8%BAk8s%E4%BF%9D%E9%A9%BE%E6%8A%A4%E8%88%AA-ru-he-wei-k8s-bao-jia-hu-hang/" class="">如何为K8S保驾护航 2024-04-16 17:09:21.962</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8tekton%E5%BF%AB%E9%80%9F%E6%90%AD%E5%BB%BAcicd%E5%B9%B3%E5%8F%B0-ru-he-shi-yong-tekton-kuai-su-da-jian-cicd-ping-tai/" class="">如何使用tekton快速搭建CI/CD平台 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E8%B0%83%E8%AF%95-crash-%E5%AE%B9%E5%99%A8%E7%9A%84%E7%BD%91%E7%BB%9C-ru-he-diao-shi-crash-rong-qi-de-wang-luo/" class="">如何调试 crash 容器的网络 2024-04-03 14:50:51.378</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E4%B8%AD%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E4%BB%A5%E5%8F%8A%E4%B8%8D%E5%90%8Cdnspolicy%E5%AF%B9%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E7%9A%84%E5%BD%B1%E5%93%8D-rong-qi-zhong-yu-ming-jie-xi-yi-ji-bu-tong-dnspolicy-dui-yu-ming-jie-xi-de-ying-xiang/" class="">容器中域名解析以及不同dnspolicy对域名解析的影响 2024-04-03 15:04:09.254</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E5%86%85%E7%9A%84-1-%E5%8F%B7%E8%BF%9B%E7%A8%8B-rong-qi-nei-de-1-hao-jin-cheng/" class="">容器内的 1 号进程 2024-04-03 14:46:29.998</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E5%8E%9F%E7%90%86-rong-qi-yuan-li/" class="">容器原理 2024-04-03 14:45:58.422</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E7%9A%84%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E4%B8%80-overlayfs-%E5%8E%9F%E7%90%86-rong-qi-de-wen-jian-xi-tong--yi-overlayfs-yuan-li/" class="">容器的文件系统 OverlayFS 原理 2024-04-03 14:45:26.893</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C%E5%8E%9F%E7%90%86-rong-qi-wang-luo-yuan-li/" class="">容器网络原理 2024-04-03 14:51:51.962</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%B8%B8%E8%A7%81linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98-chang-jian-linux-yun-wei-mian-shi-ti/" class="">常见linux运维面试题 2024-08-02 17:42:33.873</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BC%80%E5%A7%8B%E4%BD%BF%E7%94%A8-cilium-kai-shi-shi-yong-cilium/" class="">开始使用 cilium 2023-09-28 15:34:49.205</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BD%BB%E6%82%9F%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C-che-wu-rong-qi-wang-luo/" class="">彻悟容器网络 2024-04-07 10:30:11.55</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BF%AB%E9%80%9F%E6%8C%87%E5%8D%97-kuai-su-zhi-nan/" class="">快速指南 2023-09-28 15:28:25.71</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%88%91%E5%8F%AA%E6%83%B3%E5%81%9A%E6%8A%80%E6%9C%AF-%E8%B5%B0%E6%8A%80%E6%9C%AF%E8%B7%AF%E7%BA%BF-wo-zhi-xiang-zuo-ji-shu-zou-ji-shu-lu-xian/" class="">我只想做技术 走技术路线 2024-08-02 17:43:31.897</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%90%9E%E6%87%82k8s%E9%89%B4%E6%9D%83-gao-dong-k8s-jian-quan/" class="">搞懂K8S鉴权 2024-04-03 15:11:54.885</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%90%AD%E4%B8%AA%E6%97%A5%E5%BF%97%E6%89%8B%E6%9C%BA%E7%B3%BB%E7%BB%9F%E4%B8%8D%E9%A6%99%E5%90%97-da-ge-ri-zhi-shou-ji-xi-tong-bu-xiang-ma/" class="">搭个日志手机系统不香吗 2024-08-02 17:47:58.794</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E8%AF%B4%E6%98%8E-cao-zuo-xi-tong-shuo-ming/" class="">操作系统说明 2023-09-28 15:31:37.694</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%96%87%E5%AD%A6%E7%9A%84%E6%95%85%E4%B9%A1-wen-xue-de-gu-xiang/" class="">文学的故乡 2024-04-03 14:40:45.926</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%98%AF%E6%8A%80%E6%9C%AF%E5%A4%A7%E7%A5%9E%E8%BF%98%E6%98%AF%E5%9F%BA%E7%A1%80%E6%9E%B6%E6%9E%84%E9%83%A8%E7%9A%84%E7%A5%B8%E5%AE%B3-shi-ji-shu-da-shen-hai-shi-ji-chu-jia-gou-bu-de-huo-hai/" class="">是技术大神还是基础架构部的祸害 2024-08-02 17:50:26.139</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9C%89%E8%BF%993%E4%B8%AA%E8%BF%B9%E8%B1%A1%E4%BD%A0%E5%B0%B1%E8%AF%A5%E7%A6%BB%E8%81%8C%E4%BA%86-you-zhe-3-ge-ji-xiang--ni-jiu-gai-li-zhi-le/" class="">有这3个迹象，你就该离职了 2023-09-21 16:00:22.432</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9E%81%E5%A4%A7%E6%8F%90%E9%AB%98%E5%B7%A5%E4%BD%9C%E6%95%88%E7%8E%87%E7%9A%84-linux-%E5%91%BD%E4%BB%A4-ji-da-ti-gao-gong-zuo-xiao-lv-de-linux-ming-ling/" class="">极大提高工作效率的 Linux 命令 2024-04-03 14:42:46.957</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9E%84%E5%BB%BA%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E5%88%A9%E5%99%A8buildkit-gou-jian-rong-qi-jing-xiang-li-qi-buildkit/" class="">构建容器镜像利器buildkit 2024-08-02 17:49:14.916</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B5%81%E9%87%8F%E4%BD%95%E5%A4%84%E6%9D%A5%E4%BD%95%E5%A4%84%E5%8E%BB-liu-liang-he-chu-lai-he-chu-qu/" class="">流量何处来何处去 2024-04-03 14:56:20.089</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B8%85%E7%90%86docker%E9%95%9C%E5%83%8F-qing-li-docker-jing-xiang/" class="">清理docker镜像 2024-08-02 17:54:48.594</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B8%85%E7%90%86%E6%AE%8B%E7%95%99%E7%9A%84calico%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6-qing-li-can-liu-de-calico-wang-luo/" class="">清理残留的calico网络插件 2024-04-03 15:07:38.854</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A3%81%E7%9B%98%E6%95%B0%E6%8D%AE%E6%81%A2%E5%A4%8D-ci-pan-shu-ju-hui-fu/" class="">磁盘数据恢复 2024-04-03 14:59:27.839</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85kubephere-li-xian-an-zhuang-kubephere/" class="">离线安装kubephere 2024-04-03 14:59:59.885</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4-li-xian-an-zhuang-ji-qun/" class="">离线安装集群 2023-09-28 15:29:14.742</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-%E8%AE%A1%E5%88%92/" class="">美国码农薪酬</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-%E8%AE%A1%E5%88%922/" class="">美国码农计划</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E8%87%AA%E5%8A%A8%E5%B1%8F%E8%94%BDip%E6%94%BB%E5%87%BB-zi-dong-ping-bi-ip-gong-ji/" class="">自动屏蔽IP攻击 2024-04-03 14:54:11.783</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-12-%E9%9D%A2%E8%AF%950212/" class="">面试0212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-19-%E9%9D%A2%E8%AF%950219/" class="">面试0219</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-20-%E9%9D%A2%E8%AF%950220/" class="">面试0220</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-26-%E9%9D%A2%E8%AF%950225/" class="">面试0225</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%9D%A2%E8%AF%950308-mian-shi-0308/" class="">面试0308 2024-04-03 14:57:53.576</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-11-%E9%9D%A2%E8%AF%950211/" class="">面试2025-02-11</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-18-%E9%9D%A2%E8%AF%95/" class="">面试2025-0218</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%9D%A2%E8%AF%95%E7%94%A8-golang-%E6%89%8B%E6%92%B8-lru-mian-shi-yong-golang-shou-lu-lru/" class="">面试用 Golang 手撸 LRU 2024-04-03 14:47:00.767</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%A1%B6%E7%BA%A7devops%E5%B7%A5%E5%85%B7%E5%A4%A7%E7%9B%98%E7%82%B9-ding-ji-devops-gong-ju-da-pan-dian/" class="">顶级devops工具大盘点 2024-08-02 17:43:03.661</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E9%AB%98%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_ai_linux%E9%83%A8%E5%88%86/" class="">高级运维面试题-linux部分</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>godel-scheduler 2024-08-02 17:41:00.668</h3>
+
+  <label for="toc-control">
+    
+    <img src="/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#one-step-cluster-bootstrap--installation">One-Step Cluster Bootstrap &amp; Installation</a>
+      <ul>
+        <li><a href="#prerequisites">Prerequisites</a></li>
+        <li><a href="#1-clone-the-gödel-repo-to-your-machine">1. Clone the Gödel repo to your machine</a></li>
+        <li><a href="#2-change-to-the-gödel-directory">2. Change to the Gödel directory</a></li>
+        <li><a href="#3-bootstrap-the-cluster-and-install-gödel-components">3. Bootstrap the cluster and install Gödel components</a></li>
+      </ul>
+    </li>
+    <li><a href="#manual-installation">Manual Installation</a>
+      <ul>
+        <li><a href="#1-build-gödel-image">1. Build Gödel image</a></li>
+        <li><a href="#2-load-gödel-image-to-your-cluster">2. Load Gödel image to your cluster</a></li>
+        <li><a href="#3-create-gödel-components-in-the-cluster">3. Create Gödel components in the cluster</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li><a href="#local-cluster-bootstrap--installation">Local Cluster Bootstrap &amp; Installation</a></li>
+    <li><a href="#affinity-related-configurations">Affinity-Related Configurations</a>
+      <ul>
+        <li><a href="#node">Node</a></li>
+        <li><a href="#podgroup">PodGroup</a></li>
+        <li><a href="#deployment">Deployment</a></li>
+      </ul>
+    </li>
+    <li><a href="#use-job-level-affinity-in-scheduling">Use Job Level Affinity in Scheduling</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#local-cluster-bootstrap--installation-1">Local Cluster Bootstrap &amp; Installation</a></li>
+    <li><a href="#related-configurations">Related Configurations</a>
+      <ul>
+        <li><a href="#node-1">Node</a></li>
+        <li><a href="#godel-scheduler-configuration">Godel Scheduler Configuration</a></li>
+        <li><a href="#deployment-1">Deployment</a></li>
+      </ul>
+    </li>
+    <li><a href="#concurrent-scheduling-quick-demo">Concurrent Scheduling Quick Demo</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#introduction">Introduction</a></li>
+    <li><a href="#local-cluster-bootstrap--installation-2">Local Cluster Bootstrap &amp; Installation</a></li>
+    <li><a href="#related-configurations-1">Related Configurations</a>
+      <ul>
+        <li><a href="#pod-group-configuration">Pod Group Configuration</a></li>
+        <li><a href="#pod-configuration">Pod Configuration</a></li>
+      </ul>
+    </li>
+    <li><a href="#using-gang-scheduling">Using Gang Scheduling</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#one-step-cluster-bootstrap--installation-1">One-Step Cluster Bootstrap &amp; Installation</a>
+      <ul>
+        <li><a href="#prerequisites-1">Prerequisites</a></li>
+        <li><a href="#1-clone-the-gödel-repo-to-your-machine-1">1. Clone the Gödel repo to your machine</a></li>
+        <li><a href="#2-change-to-the-gödel-directory-1">2. Change to the Gödel directory</a></li>
+        <li><a href="#3-bootstrap-the-cluster-and-install-gödel-components-1">3. Bootstrap the cluster and install Gödel components</a></li>
+      </ul>
+    </li>
+    <li><a href="#manual-installation-1">Manual Installation</a>
+      <ul>
+        <li><a href="#1-build-gödel-image-1">1. Build Gödel image</a></li>
+        <li><a href="#2-load-gödel-image-to-your-cluster-1">2. Load Gödel image to your cluster</a></li>
+        <li><a href="#3-create-gödel-components-in-the-cluster-1">3. Create Gödel components in the cluster</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li><a href="#local-cluster-bootstrap--installation-3">Local Cluster Bootstrap &amp; Installation</a></li>
+    <li><a href="#how-preemption-works">How Preemption Works</a>
+      <ul>
+        <li><a href="#quickstart-scenario">Quickstart Scenario</a></li>
+        <li><a href="#basic-preemption">Basic Preemption</a></li>
+        <li><a href="#gödel-specific-preemption">Gödel-specific Preemption</a></li>
+      </ul>
+    </li>
+    <li><a href="#wrap-up">Wrap-up</a></li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="local-gödel-environment-setup-with-kind">
+  Local Gödel Environment Setup with KIND
+  <a class="anchor" href="#local-g%c3%b6del-environment-setup-with-kind">#</a>
+</h1>
+<p>使用KIND设置本地哥德尔环境</p>
+<p>This guide will walk you through how to set up the Gödel Unified Scheduling system.</p>
+<p>本指南将指导您如何设置哥德尔统一调度系统。</p>
+<h2 id="one-step-cluster-bootstrap--installation">
+  One-Step Cluster Bootstrap &amp; Installation
+  <a class="anchor" href="#one-step-cluster-bootstrap--installation">#</a>
+</h2>
+<p>一步式集群引导和安装</p>
+<p>We provided a quick way to help you try Gödel on your local machine, which will set up a kind cluster locally and deploy necessary crds, clusterrole and rolebindings</p>
+<p>我们提供了一种快速的方法来帮助您在本地计算机上尝试Gödel，它将在本地设置一个类集群，并部署必要的crd、clusterrole和rolebindings</p>
+<h3 id="prerequisites">
+  Prerequisites
+  <a class="anchor" href="#prerequisites">#</a>
+</h3>
+<p>先决条件</p>
+<p>Please make sure the following dependencies are installed.</p>
+<p>请确保安装了以下依赖项。</p>
+<ul>
+<li>kubectl &gt;= v1.19</li>
+<li>docker &gt;= 19.03</li>
+<li>kind &gt;= v0.17.0</li>
+<li>go &gt;= v1.21.4</li>
+<li>kustomize &gt;= v4.5.7</li>
+</ul>
+<h3 id="1-clone-the-gödel-repo-to-your-machine">
+  1. Clone the Gödel repo to your machine
+  <a class="anchor" href="#1-clone-the-g%c3%b6del-repo-to-your-machine">#</a>
+</h3>
+<p>将哥德尔仓库克隆到您的计算机上</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-console" data-lang="console"><span style="display:flex;"><span>$ git clone https://github.com/kubewharf/godel-scheduler
+</span></span></code></pre></div><h3 id="2-change-to-the-gödel-directory">
+  2. Change to the Gödel directory
+  <a class="anchor" href="#2-change-to-the-g%c3%b6del-directory">#</a>
+</h3>
+<p>切换到哥德尔目录</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-console" data-lang="console"><span style="display:flex;"><span>$ cd godel
+</span></span></code></pre></div><h3 id="3-bootstrap-the-cluster-and-install-gödel-components">
+  3. Bootstrap the cluster and install Gödel components
+  <a class="anchor" href="#3-bootstrap-the-cluster-and-install-g%c3%b6del-components">#</a>
+</h3>
+<p>引导集群并安装哥德尔组件</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-console" data-lang="console"><span style="display:flex;"><span>$ make local-up
+</span></span></code></pre></div><p>This command will complete the following steps:</p>
+<ol>
+<li>
+<p>Build Gödel image locally;</p>
+</li>
+<li>
+<p>Start a Kubernetes cluster using Kind;</p>
+</li>
+<li>
+<p>Installs the Gödel control-plane components on the cluster.</p>
+<p>此命令将完成以下步骤：</p>
+<p>1.在当地树立哥德尔形象；
+2.使用Kind启动Kubernetes集群；
+3.在仪表盘上安装哥德尔控制平面组件。</p>
+</li>
+</ol>
+<h2 id="manual-installation">
+  Manual Installation
+  <a class="anchor" href="#manual-installation">#</a>
+</h2>
+<p>手动安装</p>
+<p>If you have an existing Kubernetes cluster, please follow the steps below to install Gödel.</p>
+<p>如果您有一个现有的Kubernetes集群，请按照以下步骤安装Gödel。</p>
+<h3 id="1-build-gödel-image">
+  1. Build Gödel image
+  <a class="anchor" href="#1-build-g%c3%b6del-image">#</a>
+</h3>
+<p>1.塑造哥德尔形象</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-console" data-lang="console"><span style="display:flex;"><span>make docker-images
+</span></span></code></pre></div><h3 id="2-load-gödel-image-to-your-cluster">
+  2. Load Gödel image to your cluster
+  <a class="anchor" href="#2-load-g%c3%b6del-image-to-your-cluster">#</a>
+</h3>
+<p>2.将哥德尔图像加载到集群</p>
+<p>For example, if you are using Kind</p>
+<p>例如，如果您正在使用Kind</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-console" data-lang="console"><span style="display:flex;"><span>kind load docker-image godel-local:latest --name &lt;cluster-name&gt; --nodes &lt;control-plane-nodes&gt;
+</span></span></code></pre></div><h3 id="3-create-gödel-components-in-the-cluster">
+  3. Create Gödel components in the cluster
+  <a class="anchor" href="#3-create-g%c3%b6del-components-in-the-cluster">#</a>
+</h3>
+<p>3.在集群中创建哥德尔组件</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-console" data-lang="console"><span style="display:flex;"><span>kustomize build manifests/base/ | kubectl apply -f -
+</span></span></code></pre></div><pre tabindex="0"><code>#!/bin/bash  
+  
+# error on exit  
+set -e  
+  
+# Main of the script  
+DOCKERFILE_DIR=&#34;docker/&#34;  
+LOCAL_DOCKERFILE=&#34;godel-local.Dockerfile&#34;  
+  
+echo &#34;Building docker image(s)...&#34;  
+  
+docker container prune -f || true;  
+docker image prune -f || true  
+  
+function cleanup_godel_images() {  
+  for i in $(docker images | grep &#34;${1}&#34; | awk &#34;{print \$3}&#34;);  
+  do  
+    docker rmi &#34;$i&#34; -f;  
+  done  
+}  
+  
+build_image() {  
+  local file=${1}  
+  REPO=$(basename &#34;$file&#34;);  
+  REPO=${REPO%.*};  
+  
+  # Check if we are in a Git repository  
+  if [ -d &#34;.git&#34; ]; then  
+    REV=$(git log --pretty=format:&#39;%h&#39; -n 1)  
+    TAG=&#34;${REPO}:${REV}&#34;  
+  else  
+    # Use a fixed tag if not in a Git repository  
+    REV=&#34;non-git-commit&#34;  
+    TAG=&#34;${REPO}:${REV}&#34;  
+    echo &#34;Warning: Building image with non-Git tag &#39;${TAG}&#39; because this is not a Git repository.&#34;  
+  fi  
+  
+  cleanup_godel_images &#34;${REPO}&#34;  
+  docker build -t &#34;${TAG}&#34; -f &#34;$file&#34; ./;  
+  docker tag &#34;${TAG}&#34; &#34;${REPO}:latest&#34;  
+}  
+  
+for file in $(find &#34;$DOCKERFILE_DIR&#34; -name *.Dockerfile);  
+do  
+  build_image &#34;${file}&#34;  
+done;
+</code></pre><h1 id="quickstart---job-level-affinity">
+  Quickstart - Job Level Affinity
+  <a class="anchor" href="#quickstart---job-level-affinity">#</a>
+</h1>
+<p>快速入门-工作级别亲和力</p>
+<p>This Quickstart guide provides a step-by-step tutorial on how to effectively use the job-level affinity feature for podgroups, with a focus on both preferred and required affinity types. For comprehensive information about this feature, please consult the Job Level Affinity Design Document.
+&lt;TODO Add the design doc when it&rsquo;s ready&gt;</p>
+<p>本快速入门指南提供了一个分步教程，介绍如何有效地使用播客组的作业级关联功能，重点介绍首选和必需的关联类型。有关此功能的全面信息，请参阅工作级亲和力设计文档。
+&lt;TODO准备好后添加设计文档&gt;</p>
+<h2 id="local-cluster-bootstrap--installation">
+  Local Cluster Bootstrap &amp; Installation
+  <a class="anchor" href="#local-cluster-bootstrap--installation">#</a>
+</h2>
+<p>本地集群引导和安装</p>
+<p>To try out this feature, we would need to set up a few labels for the Kubernetes cluster nodes. We provided a make command for you to boostrap such a cluster locally using KIND.</p>
+<p>要尝试此功能，我们需要为Kubernetes集群节点设置一些标签。我们为您提供了一个make命令，用于使用KIND在本地对这样的集群进行助推。</p>
+<pre tabindex="0"><code>make local-up-labels
+</code></pre><h2 id="affinity-related-configurations">
+  Affinity-Related Configurations
+  <a class="anchor" href="#affinity-related-configurations">#</a>
+</h2>
+<p>亲和性相关配置</p>
+<h3 id="node">
+  Node
+  <a class="anchor" href="#node">#</a>
+</h3>
+<p>节点</p>
+<p>In our sample YAML for KIND, we defined &lsquo;mainnet&rsquo; and &lsquo;micronet&rsquo; as custom node labels. These labels are employed to simulate real-world production environments, specifically regarding the network configurations of nodes.</p>
+<p>在我们的KIND示例YAML中，我们将“主网”和“微网”定义为自定义节点标签。这些标签用于模拟现实世界的生产环境，特别是关于节点的网络配置。</p>
+<pre tabindex="0"><code>- role: worker
+  image: kindest/node:v1.21.1
+  labels:
+    micronet: 10.76.65.0
+    mainnet: 10.76.0.0
+</code></pre><h3 id="podgroup">
+  PodGroup
+  <a class="anchor" href="#podgroup">#</a>
+</h3>
+<p>In our sample YAML for podgroup, we specified &lsquo;podGroupAffinity&rsquo;. This configuration stipulates that pods belonging to this podgroup should be scheduled on nodes within the same &lsquo;mainnet&rsquo;. Additionally, there&rsquo;s a preference to schedule them on nodes sharing the same &lsquo;micronet&rsquo;.</p>
+<p>在我们的podgroup示例YAML中，我们指定了“podGroupAffinity”。此配置规定，属于此Pod组的Pod应安排在同一“主网”内的节点上。此外，人们更倾向于将它们安排在共享相同“微网络”的节点上。</p>
+<pre tabindex="0"><code>apiVersion: scheduling.godel.kubewharf.io/v1alpha1
+kind: PodGroup
+metadata:
+  generation: 1
+  name: nginx
+spec:
+  affinity:
+    podGroupAffinity:
+      preferred:
+        - topologyKey: micronet
+      required:
+        - topologyKey: mainnet
+  minMember: 10
+  scheduleTimeoutSeconds: 3000
+</code></pre><h3 id="deployment">
+  Deployment
+  <a class="anchor" href="#deployment">#</a>
+</h3>
+<p>Specify the podgroup name in pod spec.</p>
+<p>在pod规范中指定pod组名称。</p>
+<pre tabindex="0"><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      name: nginx
+  template:
+    metadata:
+      name: nginx
+      labels:
+        name: nginx
+        godel.bytedance.com/pod-group-name: &#34;nginx&#34;
+      annotations:
+        godel.bytedance.com/pod-group-name: &#34;nginx&#34;
+    spec:
+      schedulerName: godel-scheduler
+      containers:
+        - name: nginx
+          image: nginx
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              cpu: 1
+            requests:
+              cpu: 1
+</code></pre><h2 id="use-job-level-affinity-in-scheduling">
+  Use Job Level Affinity in Scheduling
+  <a class="anchor" href="#use-job-level-affinity-in-scheduling">#</a>
+</h2>
+<p>在调度中使用作业级别相关性</p>
+<p>First, let&rsquo;s check out the labels for nodes in the cluster.</p>
+<p>首先，让我们查看集群中节点的标签。</p>
+<pre tabindex="0"><code>$ kubectl get nodes --show-labels
+NAME                       STATUS   ROLES                  AGE   VERSION   LABELS
+godel-demo-labels-control-plane   Ready    control-plane,master   37m   v1.21.1   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=godel-demo-labels-control-plane,kubernetes.io/os=linux,node-role.kubernetes.io/control-plane=,node-role.kubernetes.io/master=,node.kubernetes.io/exclude-from-external-load-balancers=
+godel-demo-labels-worker          Ready    &lt;none&gt;                 36m   v1.21.1   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=godel-demo-labels-worker,kubernetes.io/os=linux,mainnet=10.76.0.0,micronet=10.76.64.0,subCluster=subCluster-a
+godel-demo-labels-worker2         Ready    &lt;none&gt;                 36m   v1.21.1   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=godel-demo-labels-worker2,kubernetes.io/os=linux,mainnet=10.25.0.0,micronet=10.25.162.0,subCluster=subCluster-b
+godel-demo-labels-worker3         Ready    &lt;none&gt;                 36m   v1.21.1   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=godel-demo-labels-worker3,kubernetes.io/os=linux,mainnet=10.76.0.0,micronet=10.76.65.0,subCluster=subCluster-a
+godel-demo-labels-worker4         Ready    &lt;none&gt;                 36m   v1.21.1   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=godel-demo-labels-worker4,kubernetes.io/os=linux,mainnet=10.76.0.0,micronet=10.76.64.0,subCluster=subCluster-a
+godel-demo-labels-worker5         Ready    &lt;none&gt;                 36m   v1.21.1   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=godel-demo-labels-worker5,kubernetes.io/os=linux,mainnet=10.53.0.0,micronet=10.53.16.0,subCluster=subCluster-a
+godel-demo-labels-worker6         Ready    &lt;none&gt;                 36m   v1.21.1   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=godel-demo-labels-worker6,kubernetes.io/os=linux,mainnet=10.57.0.0,micronet=10.57.111.0,subCluster=subCluster-b
+</code></pre><ul>
+<li><strong>godel-demo-labels-worker</strong> and <strong>godel-demo-labels-worker4</strong> share the same &lsquo;micronet&rsquo;;</li>
+<li><strong>哥德尔演示标签工人</strong>和哥德尔demo-labels-worker4**共享相同的“微网”；</li>
+<li><strong>godel-demo-labels-worker</strong>, <strong>godel-demo-labels-worker-3</strong>, and <strong>godel-demo-labels-worker4</strong> share the same &lsquo;mainnet&rsquo;.</li>
+<li><strong>哥德尔演示标签worker</strong>、<strong>godel-demo-labels-worker-3</strong>和<strong>godel-demo-labels-worker4</strong>共享同一个“主网”。</li>
+</ul>
+<p>Second, create the podgroup and deployment.</p>
+<p>其次，创建podgroup和部署。</p>
+<pre tabindex="0"><code>$ kubectl apply -f manifests/quickstart-feature-examples/job-level-affinity/podGroup.yaml
+podgroup.scheduling.godel.kubewharf.io/nginx created
+
+$ kubectl apply -f manifests/quickstart-feature-examples/job-level-affinity/deployment.yaml
+deployment.apps/nginx created
+</code></pre><p>Third, check the scheduling result.</p>
+<p>第三，检查调度结果。</p>
+<pre tabindex="0"><code>$ kubectl get pods -l name=nginx -o wide
+NAME                     READY   STATUS    RESTARTS   AGE   IP            NODE                 NOMINATED NODE   READINESS GATES
+nginx-68fc9649cc-5pdb7   1/1     Running   0          8s    10.244.2.21   godel-demo-labels-worker    &lt;none&gt;           &lt;none&gt;
+nginx-68fc9649cc-b26tk   1/1     Running   0          8s    10.244.2.19   godel-demo-labels-worker    &lt;none&gt;           &lt;none&gt;
+nginx-68fc9649cc-bvvx6   1/1     Running   0          8s    10.244.2.18   godel-demo-labels-worker    &lt;none&gt;           &lt;none&gt;
+nginx-68fc9649cc-dtxqn   1/1     Running   0          8s    10.244.2.23   godel-demo-labels-worker    &lt;none&gt;           &lt;none&gt;
+nginx-68fc9649cc-hh5pr   1/1     Running   0          8s    10.244.3.34   godel-demo-labels-worker4   &lt;none&gt;           &lt;none&gt;
+nginx-68fc9649cc-jt8q9   1/1     Running   0          8s    10.244.3.35   godel-demo-labels-worker4   &lt;none&gt;           &lt;none&gt;
+nginx-68fc9649cc-l8j2s   1/1     Running   0          8s    10.244.2.20   godel-demo-labels-worker    &lt;none&gt;           &lt;none&gt;
+nginx-68fc9649cc-t9fb8   1/1     Running   0          8s    10.244.3.33   godel-demo-labels-worker4   &lt;none&gt;           &lt;none&gt;
+nginx-68fc9649cc-vcjm7   1/1     Running   0          8s    10.244.2.17   godel-demo-labels-worker    &lt;none&gt;           &lt;none&gt;
+nginx-68fc9649cc-wplt7   1/1     Running   0          8s    10.244.2.22   godel-demo-labels-worker    &lt;none&gt;           &lt;none&gt;
+</code></pre><p>The pods have been scheduled to <strong>godel-demo-labels-worker</strong> and <strong>godel-demo-labels-worker4</strong>, which share the same &lsquo;micronet&rsquo;. We achieved this result because the resources are sufficient.</p>
+<p>这些吊舱已被安排为<strong>godel演示标签worker</strong>和**godel-demo-labels-worker4*，它们共享相同的“微网”。我们之所以取得这一成果，是因为资源充足。</p>
+<p>Next, let&rsquo;s try with scheduling a podgroup with minMember equal to 15, with the else of the configuration remains the same.</p>
+<p>接下来，让我们尝试调度一个minMember等于15的podgroup，其他配置保持不变。</p>
+<ul>
+<li>In <code>manifests/quickstart-feature-examples/job-level-affinity/podGroup-2.yaml</code>, notice the minMember is 15.</li>
+<li>在“manifests/quickstart features examples/job-level affinity/podGroup-2.yaml”中，注意minMember是15。</li>
+</ul>
+<pre tabindex="0"><code>  minMember: 15
+</code></pre><ul>
+<li>In <code>manifests/quickstart-feature-examples/job-level-affinity/deployment-2.yaml</code>, notice the replicas is 15.</li>
+<li>在“manifests/quickstart features examples/job-level affinity/deployment-2.yaml”中，请注意副本为15。</li>
+</ul>
+<pre tabindex="0"><code>spec:
+  replicas: 15
+</code></pre><p>Apply the two yaml files and check the scheduling result</p>
+<p>应用两个yaml文件并检查调度结果</p>
+<pre tabindex="0"><code># Clean up the env first
+$ kubectl delete -f manifests/quickstart-feature-examples/job-level-affinity/deployment.yaml &amp;&amp; kubectl delete -f manifests/quickstart-feature-examples/job-level-affinity/podGroup.yaml
+deployment.apps &#34;nginx&#34; deleted
+podgroup.scheduling.godel.kubewharf.io &#34;nginx&#34; deleted
+
+$ kubectl apply -f manifests/quickstart-feature-examples/job-level-affinity/podGroup-2.yaml
+podgroup.scheduling.godel.kubewharf.io/nginx-2 created
+
+$ kubectl apply -f manifests/quickstart-feature-examples/job-level-affinity/deployment-2.yaml
+deployment.apps/nginx-2 created
+
+$ kubectl get pods -l name=nginx-2 -o wide
+NAME                       READY   STATUS    RESTARTS   AGE   IP            NODE                 NOMINATED NODE   READINESS GATES
+nginx-2-68fc9649cc-2l2v7   1/1     Running   0          6s    10.244.6.11   godel-demo-labels-worker3   &lt;none&gt;           &lt;none&gt;
+nginx-2-68fc9649cc-6mz78   1/1     Running   0          6s    10.244.2.13   godel-demo-labels-worker    &lt;none&gt;           &lt;none&gt;
+nginx-2-68fc9649cc-6nm92   1/1     Running   0          6s    10.244.6.12   godel-demo-labels-worker3   &lt;none&gt;           &lt;none&gt;
+nginx-2-68fc9649cc-6qmmx   1/1     Running   0          6s    10.244.2.14   godel-demo-labels-worker    &lt;none&gt;           &lt;none&gt;
+nginx-2-68fc9649cc-cfd75   1/1     Running   0          6s    10.244.2.11   godel-demo-labels-worker    &lt;none&gt;           &lt;none&gt;
+nginx-2-68fc9649cc-fg87r   1/1     Running   0          6s    10.244.3.28   godel-demo-labels-worker4   &lt;none&gt;           &lt;none&gt;
+nginx-2-68fc9649cc-gss27   1/1     Running   0          6s    10.244.3.26   godel-demo-labels-worker4   &lt;none&gt;           &lt;none&gt;
+nginx-2-68fc9649cc-hbpwt   1/1     Running   0          6s    10.244.6.15   godel-demo-labels-worker3   &lt;none&gt;           &lt;none&gt;
+nginx-2-68fc9649cc-jkdqx   1/1     Running   0          6s    10.244.3.27   godel-demo-labels-worker4   &lt;none&gt;           &lt;none&gt;
+nginx-2-68fc9649cc-n498k   1/1     Running   0          6s    10.244.6.9    godel-demo-labels-worker3   &lt;none&gt;           &lt;none&gt;
+nginx-2-68fc9649cc-q5h5r   1/1     Running   0          6s    10.244.2.12   godel-demo-labels-worker    &lt;none&gt;           &lt;none&gt;
+nginx-2-68fc9649cc-qjsgk   1/1     Running   0          6s    10.244.6.14   godel-demo-labels-worker3   &lt;none&gt;           &lt;none&gt;
+nginx-2-68fc9649cc-vdp2v   1/1     Running   0          6s    10.244.6.13   godel-demo-labels-worker3   &lt;none&gt;           &lt;none&gt;
+nginx-2-68fc9649cc-vpzlj   1/1     Running   0          6s    10.244.6.10   godel-demo-labels-worker3   &lt;none&gt;           &lt;none&gt;
+nginx-2-68fc9649cc-z2ffg   1/1     Running   0          6s    10.244.3.29   godel-demo-labels-worker4   &lt;none&gt;           &lt;none&gt;
+</code></pre><p>The pods have been scheduled to <strong>godel-demo-labels-worker</strong>, <strong>godel-demo-labels-worker3</strong> and <strong>godel-demo-labels-worker4</strong>. <strong>godel-demo-labels-worker3</strong> was used here because the resources on worker and worker4 were not sufficient. And worker3 met the requirement of the same mainnet.</p>
+<p>这些豆荚已被安排为<strong>哥德尔演示标签工人</strong>、<strong>哥德尔-德莫标签工人</strong><em>和</em><em>戈德尔-德莫尔标签工人</em>**<strong>这里使用godel-demo-labels-worker3</strong>是因为worker和worker4上的资源不足。worker3满足同一主网的要求。</p>
+<p>Clean up the environment.</p>
+<p>清理环境。</p>
+<pre tabindex="0"><code>$ kubectl delete -f manifests/quickstart-feature-examples/job-level-affinity/podGroup-2.yaml &amp;&amp; kubectl delete -f manifests/quickstart-feature-examples/job-level-affinity/deployment-2.yaml
+podgroup.scheduling.godel.kubewharf.io &#34;nginx-2&#34; deleted
+deployment.apps &#34;nginx-2&#34; deleted
+</code></pre><h1 id="quickstart---subcluster-concurrent-scheduling">
+  Quickstart - SubCluster Concurrent Scheduling
+  <a class="anchor" href="#quickstart---subcluster-concurrent-scheduling">#</a>
+</h1>
+<p>快速入门-子集群并发调度</p>
+<p>This Quickstart guide demonstrates how to implement concurrent scheduling at the SubCluster level. Each SubCluster, defined by node labels, will possess its own distinct scheduling workflow. These workflows will execute simultaneously, ensuring efficient task management across the system.</p>
+<p>本快速入门指南演示了如何在子集群级别实现并发调度。由节点标签定义的每个子集群都将拥有自己独特的调度工作流。这些工作流将同时执行，确保整个系统的高效任务管理。</p>
+<h2 id="local-cluster-bootstrap--installation-1">
+  Local Cluster Bootstrap &amp; Installation
+  <a class="anchor" href="#local-cluster-bootstrap--installation-1">#</a>
+</h2>
+<p>本地集群引导和安装</p>
+<p>To try out this feature, we would need to set up a few labels for the Kubernetes cluster nodes. We provided a make command for you to boostrap such a cluster locally using KIND.</p>
+<p>要尝试此功能，我们需要为Kubernetes集群节点设置一些标签。我们为您提供了一个make命令，用于使用KIND在本地对这样的集群进行助推。</p>
+<pre tabindex="0"><code>make local-up-labels
+</code></pre><h2 id="related-configurations">
+  Related Configurations
+  <a class="anchor" href="#related-configurations">#</a>
+</h2>
+<p>相关配置</p>
+<h3 id="node-1">
+  Node
+  <a class="anchor" href="#node-1">#</a>
+</h3>
+<p>In our sample YAML for KIND, we defined &lsquo;subCluster&rsquo; as custom node labels. These labels are employed to simulate real-world production environments, where nodes can be classified by different business scenarios.</p>
+<p>在我们的KIND示例YAML中，我们将“subCluster”定义为自定义节点标签。这些标签用于模拟现实世界的生产环境，其中节点可以按不同的业务场景进行分类。</p>
+<pre tabindex="0"><code>- role: worker
+  image: kindest/node:v1.21.1
+  labels:
+    subCluster: subCluster-a
+- role: worker
+  image: kindest/node:v1.21.1
+  labels:
+    subCluster: subCluster-b
+</code></pre><h3 id="godel-scheduler-configuration">
+  Godel Scheduler Configuration
+  <a class="anchor" href="#godel-scheduler-configuration">#</a>
+</h3>
+<p>Godel调度程序配置</p>
+<p>We defined &lsquo;subCluster&rsquo; as the subClusterKey in the Godel Scheduler Configuration. This is corresponding to the node label key above.</p>
+<p>我们在Godel调度程序配置中将“subCluster”定义为subClusterKey。这对应于上面的节点标签键。</p>
+<pre tabindex="0"><code>apiVersion: godelscheduler.config.kubewharf.io/v1beta1
+kind: GodelSchedulerConfiguration
+subClusterKey: subCluster
+</code></pre><h3 id="deployment-1">
+  Deployment
+  <a class="anchor" href="#deployment-1">#</a>
+</h3>
+<p>In the sample deployment file, one deployment specifies &lsquo;subCluster: subCluster-a&rsquo; in its nodeSelector, while the other deployment specifies &lsquo;subCluster: subCluster-b&rsquo;.</p>
+<p>在示例部署文件中，一个部署在其nodeSelector中指定“subCluster:subCluster-a”，而另一个部署指定“subCluster:subCluster-b”。</p>
+<pre tabindex="0"><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-a
+spec:
+  ...
+    spec:
+      schedulerName: godel-scheduler
+      nodeSelector:
+        subCluster: subCluster-a
+      ...
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-b
+spec:
+  ...
+    spec:
+      schedulerName: godel-scheduler
+      nodeSelector:
+        subCluster: subCluster-b
+      ...
+</code></pre><h2 id="concurrent-scheduling-quick-demo">
+  Concurrent Scheduling Quick Demo
+  <a class="anchor" href="#concurrent-scheduling-quick-demo">#</a>
+</h2>
+<p>并发调度快速演示</p>
+<p>Apply the deployment YAML files.</p>
+<p>应用部署YAML文件。</p>
+<pre tabindex="0"><code>$ kubectl apply -f manifests/quickstart-feature-examples/concurrent-scheduling/deployment.yaml
+deployment.apps/nginx-a created
+deployment.apps/nginx-b created
+</code></pre><p>Check the scheduler logs.</p>
+<p>检查调度程序日志。</p>
+<pre tabindex="0"><code>$ kubectl get pods -n godel-system
+NAME                          READY   STATUS    RESTARTS   AGE
+binder-858c974d4c-bhbtv       1/1     Running   0          123m
+dispatcher-5b8f5cf5c6-fcm8d   1/1     Running   0          123m
+scheduler-85f4556799-6ltv5    1/1     Running   0          123m
+
+$ kubectl logs scheduler-85f4556799-6ltv5 -n godel-system
+...
+I0108 22:38:36.183175       1 util.go:90] &#34;Ready to try and schedule the next unit&#34; numberOfPods=1 unitKey=&#34;SinglePodUnit/default/nginx-b-69ccdbff54-fvpg6&#34;
+I0108 22:38:36.183190       1 unit_scheduler.go:280] &#34;Attempting to schedule unit&#34; switchType=&#34;GTSchedule&#34; subCluster=&#34;subCluster-b&#34; unitKey=&#34;SinglePodUnit/default/nginx-b-69ccdbff54-fvpg6&#34;
+I0108 22:38:36.183229       1 util.go:90] &#34;Ready to try and schedule the next unit&#34; numberOfPods=1 unitKey=&#34;SinglePodUnit/default/nginx-a-649b85664f-2tjvp&#34;
+I0108 22:38:36.183246       1 unit_scheduler.go:280] &#34;Attempting to schedule unit&#34; switchType=&#34;GTSchedule&#34; subCluster=&#34;subCluster-a&#34; unitKey=&#34;SinglePodUnit/default/nginx-a-649b85664f-2tjvp&#34;
+I0108 22:38:36.183390       1 unit_scheduler.go:327] &#34;Attempting to schedule unit in this node group&#34; switchType=&#34;GTSchedule&#34; subCluster=&#34;subCluster-b&#34; unitKey=&#34;SinglePodUnit/default/nginx-b-69ccdbff54-fvpg6&#34; nodeGroup=&#34;[]&#34;
+...
+</code></pre><p>From the log snippet above, it&rsquo;s clear that both pods, nginx-a (subCluster: subCluster-a) and nginx-b (subCluster: subCluster-b), are overlapping.</p>
+<p>从上面的日志片段中可以清楚地看出，两个Pod nginx-a（subCluster:subCluster-a）和nginx-b（subCluster/subCluster-b）是重叠的。</p>
+<p>Clean up the environment</p>
+<p>清理环境</p>
+<pre tabindex="0"><code>$ kubectl delete -f manifests/quickstart-feature-examples/concurrent-scheduling/deployment.yaml
+deployment.apps &#34;nginx-a&#34; deleted
+deployment.apps &#34;nginx-b&#34; deleted
+</code></pre><h1 id="quickstart---gang-scheduling">
+  Quickstart - Gang Scheduling
+  <a class="anchor" href="#quickstart---gang-scheduling">#</a>
+</h1>
+<p>快速入门-帮派调度</p>
+<h2 id="introduction">
+  Introduction
+  <a class="anchor" href="#introduction">#</a>
+</h2>
+<p>介绍</p>
+<p>In this quickstart guide, we&rsquo;ll explore Gang Scheduling, a feature that ensures an &ldquo;all or nothing&rdquo; approach to scheduling pods.
+Gödel scheduler treats all pods under a job (PodGroup) as a unified entity during scheduling attempts.
+This approach eliminates scenarios where a job has &ldquo;partially reserved resources&rdquo;, effectively mitigating resource deadlocks between multiple jobs and making it a valuable tool for managing complex scheduling scenarios in your cluster.
+This guide will walk you through setting up and using Gang Scheduling.</p>
+<p>在本快速入门指南中，我们将探讨Gang调度，这是一个确保采用“全有或全无”方法调度Pod的功能。
+在调度尝试期间，哥德尔调度器将作业（PodGroup）下的所有Pod视为一个统一的实体。
+这种方法消除了作业具有“部分保留资源”的情况，有效地缓解了多个作业之间的资源死锁，使其成为管理集群中复杂调度场景的有价值的工具。
+本指南将引导您完成Gang调度的设置和使用。</p>
+<h2 id="local-cluster-bootstrap--installation-2">
+  Local Cluster Bootstrap &amp; Installation
+  <a class="anchor" href="#local-cluster-bootstrap--installation-2">#</a>
+</h2>
+<p>本地集群引导和安装</p>
+<p>If you do not have a local Kubernetes cluster installed with Godel yet, please refer to the <a href="kind-cluster-setup.md">Cluster Setup Guide</a>.</p>
+<p>如果您还没有使用Godel安装本地Kubernetes集群，请参阅[cluster Setup Guide]（kind-cluster-Setup.md）。</p>
+<h2 id="related-configurations-1">
+  Related Configurations
+  <a class="anchor" href="#related-configurations-1">#</a>
+</h2>
+<p>相关配置</p>
+<p>Below are the YAML contents and descriptions for the related configuration used in this guide:</p>
+<p>以下是本指南中使用的相关配置的YAML内容和描述：</p>
+<h3 id="pod-group-configuration">
+  Pod Group Configuration
+  <a class="anchor" href="#pod-group-configuration">#</a>
+</h3>
+<p>Pod组配置</p>
+<p>The Pod Group configuration specifies the minimum number of members (<code>minMember</code>) required and the scheduling timeout in seconds (<code>scheduleTimeoutSeconds</code>).</p>
+<p>Pod Group配置指定了所需的最小成员数（“minMember”）和以秒为单位的调度超时（“scheduleTimeoutSeconds”）。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">scheduling.godel.kubewharf.io/v1alpha1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">PodGroup</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">generation</span>: <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">test-podgroup</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spec</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">minMember</span>: <span style="color:#ae81ff">2</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">scheduleTimeoutSeconds</span>: <span style="color:#ae81ff">300</span>
+</span></span></code></pre></div><h3 id="pod-configuration">
+  Pod Configuration
+  <a class="anchor" href="#pod-configuration">#</a>
+</h3>
+<p>Pod配置</p>
+<p>This YAML configuration defines the first child pod (pod-1) within the Pod Group. It includes labels and annotations required for Gang Scheduling.</p>
+<p>此YAML配置定义pod组中的第一个子pod（pod-1）。它包括Gang调度所需的标签和注释。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">Pod</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">pod-1</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">labels</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">name</span>: <span style="color:#ae81ff">nginx</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># Pods must have this label set</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">godel.bytedance.com/pod-group-name</span>: <span style="color:#e6db74">&#34;test-podgroup&#34;</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">annotations</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># Pods must have this annotation set</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">godel.bytedance.com/pod-group-name</span>: <span style="color:#e6db74">&#34;test-podgroup&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spec</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">schedulerName</span>: <span style="color:#ae81ff">godel-scheduler</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">containers</span>:
+</span></span><span style="display:flex;"><span>  - <span style="color:#f92672">name</span>: <span style="color:#ae81ff">test</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">image</span>: <span style="color:#ae81ff">nginx</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">imagePullPolicy</span>: <span style="color:#ae81ff">IfNotPresent</span>
+</span></span></code></pre></div><p>The second child pod only varies in name.</p>
+<p>第二个子吊舱只是名称不同。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">Pod</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">pod-2</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">labels</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">name</span>: <span style="color:#ae81ff">nginx</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># Pods must have this label set</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">godel.bytedance.com/pod-group-name</span>: <span style="color:#e6db74">&#34;test-podgroup&#34;</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">annotations</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># Pods must have this annotation set</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">godel.bytedance.com/pod-group-name</span>: <span style="color:#e6db74">&#34;test-podgroup&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spec</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">schedulerName</span>: <span style="color:#ae81ff">godel-scheduler</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">containers</span>:
+</span></span><span style="display:flex;"><span>  - <span style="color:#f92672">name</span>: <span style="color:#ae81ff">test</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">image</span>: <span style="color:#ae81ff">nginx</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">imagePullPolicy</span>: <span style="color:#ae81ff">IfNotPresent</span>
+</span></span></code></pre></div><h2 id="using-gang-scheduling">
+  Using Gang Scheduling
+  <a class="anchor" href="#using-gang-scheduling">#</a>
+</h2>
+<p>使用帮派调度</p>
+<ol>
+<li><strong>Create a Pod Group:</strong></li>
+<li><strong>创建Pod组：</strong></li>
+</ol>
+<p>To start using Gang Scheduling, create a Pod Group using the following command:</p>
+<p>要开始使用Gang调度，请使用以下命令创建Pod组：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-console" data-lang="console"><span style="display:flex;"><span>$ kubectl apply -f manifests/quickstart-feature-examples/gang-scheduling/podgroup.yaml
+</span></span><span style="display:flex;"><span>podgroup.scheduling.godel.kubewharf.io/test-podgroup created
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>$ kubectl get podgroups
+</span></span><span style="display:flex;"><span>NAME            AGE
+</span></span><span style="display:flex;"><span>test-podgroup   11s
+</span></span></code></pre></div><ol start="2">
+<li><strong>Create Child Pod 1 of the Pod Group:</strong></li>
+<li><strong>创建Pod组的子Pod 1：</strong></li>
+</ol>
+<p>Now, let&rsquo;s create the first child pod within the Pod Group.
+Keep in mind that due to Gang Scheduling, this pod will initially be in a &ldquo;Pending&rdquo; state until the <code>minMember</code> requirement of the Pod Group is satisfied.
+Gang Scheduling ensures that pods are not scheduled until the specified number of pods (in this case, 2) is ready to be scheduled together.</p>
+<p>现在，让我们在pod组中创建第一个子pod。
+请记住，由于Gang调度，此pod最初将处于“待定”状态，直到pod组的“minMember”要求得到满足。
+Gang调度确保在指定数量的Pod（在本例中为2个）准备好一起调度之前，不会对Pod进行调度。</p>
+<p>Use the following command to create the first child pod:</p>
+<p>使用以下命令创建第一个子pod：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-console" data-lang="console"><span style="display:flex;"><span>$ kubectl apply -f manifests/quickstart-feature-examples/gang-scheduling/pod-1.yaml
+</span></span><span style="display:flex;"><span>pod/pod-1 created
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>$ kubectl get pods
+</span></span><span style="display:flex;"><span>NAME    READY   STATUS    RESTARTS   AGE
+</span></span><span style="display:flex;"><span>pod-1   0/1     Pending   0          18s
+</span></span></code></pre></div><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408021048013.png" alt="image-20240802104837883" /></p>
+<ol start="3">
+<li><strong>Create Child Pod 2 of the Pod Group:</strong></li>
+<li>创建Pod组的子Pod 2：</li>
+</ol>
+<p>Now that we have created the first child pod and it&rsquo;s in a &ldquo;Pending&rdquo; state, let&rsquo;s proceed to create the second child pod.
+Both pods will become &ldquo;Running&rdquo; simultaneously once the <code>minMember</code> requirement of the Pod Group is fulfilled.</p>
+<p>现在我们已经创建了第一个子pod，并且它处于“待定”状态，让我们继续创建第二个子pod。
+一旦Pod组的“minMember”要求得到满足，两个Pod将同时“运行”。</p>
+<p>Similarly, create the second child pod within the same Pod Group:</p>
+<p>同样，在同一pod组中创建第二个子pod：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-console" data-lang="console"><span style="display:flex;"><span>$ kubectl apply -f manifests/quickstart-feature-examples/gang-scheduling/pod-2.yaml
+</span></span><span style="display:flex;"><span>pod/pod-2 created
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>$ kubectl get pods
+</span></span><span style="display:flex;"><span>NAME    READY   STATUS    RESTARTS   AGE
+</span></span><span style="display:flex;"><span>pod-1   1/1     Running   0          24s
+</span></span><span style="display:flex;"><span>pod-2   1/1     Running   0          2s
+</span></span></code></pre></div><ol start="4">
+<li><strong>View Pod Group Status:</strong></li>
+<li>查看Pod组状态：</li>
+</ol>
+<p>You can check the status of the Pod Group using the following command:</p>
+<p>您可以使用以下命令检查Pod组的状态：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-console" data-lang="console"><span style="display:flex;"><span>$ kubectl get podgroup test-podgroup -o yaml
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">scheduling.godel.kubewharf.io/v1alpha1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">PodGroup</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">annotations</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">godel.bytedance.com/podgroup-final-op-lock</span>: <span style="color:#ae81ff">binder</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">kubectl.kubernetes.io/last-applied-configuration</span>: |<span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      {&#34;apiVersion&#34;:&#34;scheduling.godel.kubewharf.io/v1alpha1&#34;,&#34;kind&#34;:&#34;PodGroup&#34;,&#34;metadata&#34;:{&#34;annotations&#34;:{},&#34;generation&#34;:1,&#34;name&#34;:&#34;test-podgroup&#34;,&#34;namespace&#34;:&#34;default&#34;},&#34;spec&#34;:{&#34;minMember&#34;:2,&#34;scheduleTimeoutSeconds&#34;:300}}</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">creationTimestamp</span>: <span style="color:#e6db74">&#34;2024-01-11T00:28:17Z&#34;</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">generation</span>: <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">test-podgroup</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">namespace</span>: <span style="color:#ae81ff">default</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">resourceVersion</span>: <span style="color:#e6db74">&#34;722&#34;</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">selfLink</span>: <span style="color:#ae81ff">/apis/scheduling.godel.kubewharf.io/v1alpha1/namespaces/default/podgroups/test-podgroup</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">uid</span>: <span style="color:#ae81ff">fe2931c4-fa6b-4770-8ef2-589966fce3f7</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spec</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">minMember</span>: <span style="color:#ae81ff">2</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">scheduleTimeoutSeconds</span>: <span style="color:#ae81ff">300</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">status</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">conditions</span>:
+</span></span><span style="display:flex;"><span>  - <span style="color:#f92672">lastTransitionTime</span>: <span style="color:#e6db74">&#34;2024-01-11T00:28:22Z&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">phase</span>: <span style="color:#ae81ff">Pending</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">reason</span>: <span style="color:#ae81ff">Pending</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">status</span>: <span style="color:#e6db74">&#34;True&#34;</span>
+</span></span><span style="display:flex;"><span>  - <span style="color:#f92672">lastTransitionTime</span>: <span style="color:#e6db74">&#34;2024-01-11T00:28:36Z&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">message</span>: <span style="color:#ae81ff">More than 2 pods has been created but not fully scheduled</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">phase</span>: <span style="color:#ae81ff">PreScheduling</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">reason</span>: <span style="color:#ae81ff">PreScheduling</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">status</span>: <span style="color:#e6db74">&#34;True&#34;</span>
+</span></span><span style="display:flex;"><span>  - <span style="color:#f92672">lastTransitionTime</span>: <span style="color:#e6db74">&#34;2024-01-11T00:28:36Z&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">message</span>: <span style="color:#ae81ff">More than 2 pods has been scheduled</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">phase</span>: <span style="color:#ae81ff">Scheduled</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">reason</span>: <span style="color:#ae81ff">Scheduled</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">status</span>: <span style="color:#e6db74">&#34;True&#34;</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">phase</span>: <span style="color:#ae81ff">Scheduled</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">scheduleStartTime</span>: <span style="color:#e6db74">&#34;2024-01-11T00:28:37Z&#34;</span>
+</span></span></code></pre></div><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408021048283.png" alt="image-20240802104858162" /></p>
+<h1 id="local-gödel-environment-setup-with-kind-1">
+  Local Gödel Environment Setup with KIND
+  <a class="anchor" href="#local-g%c3%b6del-environment-setup-with-kind-1">#</a>
+</h1>
+<p>使用KIND设置本地哥德尔环境</p>
+<p>This guide will walk you through how to set up the Gödel Unified Scheduling system.</p>
+<p>本指南将指导您如何设置哥德尔统一调度系统。</p>
+<h2 id="one-step-cluster-bootstrap--installation-1">
+  One-Step Cluster Bootstrap &amp; Installation
+  <a class="anchor" href="#one-step-cluster-bootstrap--installation-1">#</a>
+</h2>
+<p>一步式集群引导和安装</p>
+<p>We provided a quick way to help you try Gödel on your local machine, which will set up a kind cluster locally and deploy necessary crds, clusterrole and rolebindings</p>
+<p>我们提供了一种快速的方法来帮助您在本地计算机上尝试Gödel，它将在本地设置一个类集群，并部署必要的crd、clusterrole和rolebindings</p>
+<h3 id="prerequisites-1">
+  Prerequisites
+  <a class="anchor" href="#prerequisites-1">#</a>
+</h3>
+<p>Please make sure the following dependencies are installed.</p>
+<ul>
+<li>kubectl &gt;= v1.19</li>
+<li>docker &gt;= 19.03</li>
+<li>kind &gt;= v0.17.0</li>
+<li>go &gt;= v1.21.4</li>
+<li>kustomize &gt;= v4.5.7</li>
+</ul>
+<h3 id="1-clone-the-gödel-repo-to-your-machine-1">
+  1. Clone the Gödel repo to your machine
+  <a class="anchor" href="#1-clone-the-g%c3%b6del-repo-to-your-machine-1">#</a>
+</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-console" data-lang="console"><span style="display:flex;"><span>$ git clone https://github.com/kubewharf/godel-scheduler
+</span></span></code></pre></div><h3 id="2-change-to-the-gödel-directory-1">
+  2. Change to the Gödel directory
+  <a class="anchor" href="#2-change-to-the-g%c3%b6del-directory-1">#</a>
+</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-console" data-lang="console"><span style="display:flex;"><span>$ cd godel
+</span></span></code></pre></div><h3 id="3-bootstrap-the-cluster-and-install-gödel-components-1">
+  3. Bootstrap the cluster and install Gödel components
+  <a class="anchor" href="#3-bootstrap-the-cluster-and-install-g%c3%b6del-components-1">#</a>
+</h3>
+<p>引导集群并安装哥德尔组件</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-console" data-lang="console"><span style="display:flex;"><span>$ make local-up
+</span></span></code></pre></div><p>This command will complete the following steps:</p>
+<ol>
+<li>Build Gödel image locally;</li>
+<li>Start a Kubernetes cluster using Kind;</li>
+<li>Installs the Gödel control-plane components on the cluster.</li>
+</ol>
+<p>此命令将完成以下步骤：</p>
+<p>1.在当地树立哥德尔形象；
+2.使用Kind启动Kubernetes集群；
+3.在仪表盘上安装哥德尔控制平面组件。</p>
+<h2 id="manual-installation-1">
+  Manual Installation
+  <a class="anchor" href="#manual-installation-1">#</a>
+</h2>
+<p>If you have an existing Kubernetes cluster, please follow the steps below to install Gödel.</p>
+<p>如果您有一个现有的Kubernetes集群，请按照以下步骤安装Gödel。</p>
+<h3 id="1-build-gödel-image-1">
+  1. Build Gödel image
+  <a class="anchor" href="#1-build-g%c3%b6del-image-1">#</a>
+</h3>
+<p>塑造哥德尔形象</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-console" data-lang="console"><span style="display:flex;"><span>make docker-images
+</span></span></code></pre></div><h3 id="2-load-gödel-image-to-your-cluster-1">
+  2. Load Gödel image to your cluster
+  <a class="anchor" href="#2-load-g%c3%b6del-image-to-your-cluster-1">#</a>
+</h3>
+<p>将哥德尔图像加载到集群</p>
+<p>For example, if you are using Kind</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-console" data-lang="console"><span style="display:flex;"><span>kind load docker-image godel-local:latest --name &lt;cluster-name&gt; --nodes &lt;control-plane-nodes&gt;
+</span></span></code></pre></div><h3 id="3-create-gödel-components-in-the-cluster-1">
+  3. Create Gödel components in the cluster
+  <a class="anchor" href="#3-create-g%c3%b6del-components-in-the-cluster-1">#</a>
+</h3>
+<p>在集群中创建哥德尔组件</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-console" data-lang="console"><span style="display:flex;"><span>kustomize build manifests/base/ | kubectl apply -f -
+</span></span></code></pre></div><h1 id="quickstart---preemption">
+  Quickstart - Preemption
+  <a class="anchor" href="#quickstart---preemption">#</a>
+</h1>
+<p>快速入门-优先购买</p>
+<p>Within the Gödel Scheduling System, Pod preemption emerges as a key feature designed to uphold optimal resource utilization.
+If a Pod cannot be scheduled, the Gödel scheduler tries to preempt (evict) lower priority Pods to make scheduling of the pending Pod possible.</p>
+<p>This is a Quickstart guide that will walk you through how preemption works in the Gödel Scheduling System.</p>
+<p>在哥德尔调度系统中，吊舱抢占成为一个关键特征，旨在保持最佳的资源利用率。
+如果无法调度Pod，哥德尔调度器会尝试抢占（驱逐）优先级较低的Pod，以使未决Pod的调度成为可能。</p>
+<p>这是一个快速入门指南，将引导您了解抢占在哥德尔调度系统中的工作原理。</p>
+<h2 id="local-cluster-bootstrap--installation-3">
+  Local Cluster Bootstrap &amp; Installation
+  <a class="anchor" href="#local-cluster-bootstrap--installation-3">#</a>
+</h2>
+<p>本地集群引导和安装</p>
+<p>If you do not have a local Kubernetes cluster installed with Godel yet, please refer to the <a href="kind-cluster-setup.md">Cluster Setup Guide</a> for creating a local KIND cluster installed with Gödel.</p>
+<p>如果您还没有使用Godel安装本地Kubernetes集群，请参阅[cluster Setup Guide]（kind-cluster-Setup.md）以创建使用Gödel安装的本地kind集群。</p>
+<h2 id="how-preemption-works">
+  How Preemption Works
+  <a class="anchor" href="#how-preemption-works">#</a>
+</h2>
+<p>优先购买权如何运作</p>
+<p>When there is no more resource for scheduling a pending Pod, preemption comes into picture.
+Gödel scheduler tries to preempt (evict) lower priority Pods to make scheduling of the pending Pod possible, with a few of protection strategies being respected.</p>
+<p>当没有更多资源来调度挂起的Pod时，抢占就会出现。
+哥德尔调度器试图抢占（驱逐）优先级较低的Pod，以使未决Pod的调度成为可能，并遵守一些保护策略。</p>
+<h3 id="quickstart-scenario">
+  Quickstart Scenario
+  <a class="anchor" href="#quickstart-scenario">#</a>
+</h3>
+<p>快速入门场景</p>
+<p>To better illustrate the preemption features, let&rsquo;s assume there is one node with less than 8 CPU cores available for scheduling.</p>
+<p>为了更好地说明抢占功能，让我们假设有一个节点的CPU核数少于8个，可用于调度。</p>
+<p><strong>Note:</strong> The <code>Capacity</code> and <code>Allocatable</code> of worker node <strong>depend on your own Docker resources configuration</strong>. Thus they are not guaranteed to be exactly the same with this guide. To try out this feature locally, you should tune the resources configuration in the example yaml files based on your own setup. For example, the author configured 8 CPU for Docker resources preference, so the worker node has 8 CPU in the guide.</p>
+<p>**注意：**工作节点的“容量”和“可分配”<strong>取决于您自己的Docker资源配置</strong>。因此，不能保证它们与本指南完全相同。要在本地尝试此功能，您应该根据自己的设置调整示例yaml文件中的资源配置。例如，作者为Docker资源偏好配置了8个CPU，因此工作节点在指南中有8个CPU。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl describe node godel-demo-default-worker   
+</span></span><span style="display:flex;"><span>  Name:               godel-demo-default-worker
+</span></span><span style="display:flex;"><span>  ...
+</span></span><span style="display:flex;"><span>  Capacity:
+</span></span><span style="display:flex;"><span>    cpu:                <span style="color:#ae81ff">8</span>
+</span></span><span style="display:flex;"><span>    ...
+</span></span><span style="display:flex;"><span>  Allocatable:
+</span></span><span style="display:flex;"><span>    cpu:                <span style="color:#ae81ff">8</span>
+</span></span><span style="display:flex;"><span>    ...
+</span></span><span style="display:flex;"><span>  ...
+</span></span><span style="display:flex;"><span>  Non-terminated Pods:          <span style="color:#f92672">(</span><span style="color:#ae81ff">2</span> in total<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>    Namespace                   Name                CPU Requests  CPU Limits  Memory Requests  Memory Limits  Age
+</span></span><span style="display:flex;"><span>    ---------                   ----                ------------  ----------  ---------------  -------------  ---
+</span></span><span style="display:flex;"><span>    kube-system                 kindnet-cnvtd       100m <span style="color:#f92672">(</span>2%<span style="color:#f92672">)</span>     100m <span style="color:#f92672">(</span>2%<span style="color:#f92672">)</span>   50Mi <span style="color:#f92672">(</span>0%<span style="color:#f92672">)</span>        50Mi <span style="color:#f92672">(</span>0%<span style="color:#f92672">)</span>      3d23h
+</span></span><span style="display:flex;"><span>    kube-system                 kube-proxy-6fh4g    <span style="color:#ae81ff">0</span> <span style="color:#f92672">(</span>0%<span style="color:#f92672">)</span>        <span style="color:#ae81ff">0</span> <span style="color:#f92672">(</span>0%<span style="color:#f92672">)</span>      <span style="color:#ae81ff">0</span> <span style="color:#f92672">(</span>0%<span style="color:#f92672">)</span>           <span style="color:#ae81ff">0</span> <span style="color:#f92672">(</span>0%<span style="color:#f92672">)</span>         3d23h
+</span></span><span style="display:flex;"><span>  Allocated resources:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">(</span>Total limits may be over <span style="color:#ae81ff">100</span> percent, i.e., overcommitted.<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>    Resource           Requests   Limits
+</span></span><span style="display:flex;"><span>    --------           --------   ------
+</span></span><span style="display:flex;"><span>    cpu                100m <span style="color:#f92672">(</span>2%<span style="color:#f92672">)</span>  100m <span style="color:#f92672">(</span>2%<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>    ...
+</span></span><span style="display:flex;"><span>  Events:              &lt;none&gt;
+</span></span></code></pre></div><h3 id="basic-preemption">
+  Basic Preemption
+  <a class="anchor" href="#basic-preemption">#</a>
+</h3>
+<p>基本优先购买权</p>
+<p>Gödel Scheduling System provides basic preemption features that are comparable with the offering of the Kubernetes scheduler.</p>
+<p>Gödel调度系统提供了与Kubernetes调度器相当的基本抢占功能。</p>
+<h4 id="priority-based-preemption">
+  Priority-based Preemption
+  <a class="anchor" href="#priority-based-preemption">#</a>
+</h4>
+<p>基于优先级的优先购买权</p>
+<ol>
+<li>
+<p>Create a pod with a lower priority, which requests 6 CPU cores.</p>
+</li>
+<li>
+<p>创建一个优先级较低的pod，它需要6个CPU核心。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">scheduling.k8s.io/v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">PriorityClass</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">name</span>: <span style="color:#ae81ff">low-priority</span>
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">annotations</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;godel.bytedance.com/can-be-preempted&#34;: </span><span style="color:#e6db74">&#34;true&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">value</span>: <span style="color:#ae81ff">80</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">description</span>: <span style="color:#e6db74">&#34;a priority class with low priority that can be preempted&#34;</span>
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">Pod</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">name</span>: <span style="color:#ae81ff">nginx-victim</span>
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">annotations</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;godel.bytedance.com/can-be-preempted&#34;: </span><span style="color:#e6db74">&#34;true&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spec</span>:
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">schedulerName</span>: <span style="color:#ae81ff">godel-scheduler</span>
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">priorityClassName</span>: <span style="color:#ae81ff">low-priority</span>
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">containers</span>:
+</span></span><span style="display:flex;"><span>      - <span style="color:#f92672">name</span>: <span style="color:#ae81ff">nginx-victim</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">image</span>: <span style="color:#ae81ff">nginx</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">imagePullPolicy</span>: <span style="color:#ae81ff">IfNotPresent</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">resources</span>:
+</span></span><span style="display:flex;"><span>           <span style="color:#f92672">limits</span>:
+</span></span><span style="display:flex;"><span>              <span style="color:#f92672">cpu</span>: <span style="color:#ae81ff">6</span>
+</span></span><span style="display:flex;"><span>           <span style="color:#f92672">requests</span>:
+</span></span><span style="display:flex;"><span>              <span style="color:#f92672">cpu</span>: <span style="color:#ae81ff">6</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl get pod
+</span></span><span style="display:flex;"><span>  NAME           READY   STATUS    RESTARTS   AGE
+</span></span><span style="display:flex;"><span>  nginx-victim   1/1     Running   <span style="color:#ae81ff">0</span>          2s
+</span></span></code></pre></div><ol start="2">
+<li>
+<p>Create a pod with a higher priority, which requests 3 CPU core.</p>
+</li>
+<li>
+<p>创建一个优先级更高的pod，它需要3个CPU核心。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">scheduling.k8s.io/v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">PriorityClass</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">name</span>: <span style="color:#ae81ff">high-priority</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">value</span>: <span style="color:#ae81ff">100</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">description</span>: <span style="color:#e6db74">&#34;a priority class with a high priority&#34;</span>
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">Pod</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">name</span>: <span style="color:#ae81ff">nginx-preemptor</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spec</span>:
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">schedulerName</span>: <span style="color:#ae81ff">godel-scheduler</span>
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">priorityClassName</span>: <span style="color:#ae81ff">high-priority</span>
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">containers</span>:
+</span></span><span style="display:flex;"><span>     - <span style="color:#f92672">name</span>: <span style="color:#ae81ff">nginx-preemptor</span>
+</span></span><span style="display:flex;"><span>       <span style="color:#f92672">image</span>: <span style="color:#ae81ff">nginx</span>
+</span></span><span style="display:flex;"><span>       <span style="color:#f92672">imagePullPolicy</span>: <span style="color:#ae81ff">IfNotPresent</span>
+</span></span><span style="display:flex;"><span>       <span style="color:#f92672">resources</span>:
+</span></span><span style="display:flex;"><span>         <span style="color:#f92672">limits</span>:
+</span></span><span style="display:flex;"><span>           <span style="color:#f92672">cpu</span>: <span style="color:#ae81ff">3</span>
+</span></span><span style="display:flex;"><span>         <span style="color:#f92672">requests</span>:
+</span></span><span style="display:flex;"><span>           <span style="color:#f92672">cpu</span>: <span style="color:#ae81ff">3</span>
+</span></span></code></pre></div><p>Remember, there is only 8 CPU cores available. So, preemption will be triggered when the high-priority Pod gets scheduled.</p>
+<p>记住，只有8个CPU核可用。因此，当高优先级Pod被调度时，将触发抢占。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408021114522.png" alt="image-20240802111436419" /></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl get pod
+</span></span><span style="display:flex;"><span>  NAME              READY   STATUS    RESTARTS   AGE
+</span></span><span style="display:flex;"><span>  nginx-preemptor   1/1     Running   <span style="color:#ae81ff">0</span>          18s
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>$ kubectl get event
+</span></span><span style="display:flex;"><span>  ...
+</span></span><span style="display:flex;"><span>  0s          Normal    PreemptForPodSuccessfully   pod/nginx-preemptor   Pod can be placed by evicting some other pods, nominated node: godel-demo-default-worker, victims: <span style="color:#f92672">[{</span>Name:nginx-victim Namespace:default UID:b685ef99-20b8-43bb-9576-10d2ca09e2d6<span style="color:#f92672">}]</span>, in node group: <span style="color:#f92672">[]</span>
+</span></span><span style="display:flex;"><span>  ...
+</span></span></code></pre></div><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408021114199.png" alt="image-20240802111412122" /></p>
+<p>As we can see, the pod with a lower priority was preempted to accommodate the pod with a higher priority.</p>
+<p>正如我们所看到的，优先级较低的pod被抢占，以容纳优先级较高的pod。</p>
+</li>
+<li>
+<p>Clean up the environment</p>
+</li>
+<li>
+<p>清理环境</p>
+</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>kubectl delete pod nginx-preemptor
+</span></span></code></pre></div></li>
+</ol>
+<h4 id="protection-with-poddisruptionbudget">
+  Protection with PodDisruptionBudget
+  <a class="anchor" href="#protection-with-poddisruptionbudget">#</a>
+</h4>
+<p>使用PodDisruption预算进行保护</p>
+<ol>
+<li>
+<p>Create a 3-replica deployment with a lower priority, which requests 6 CPU cores in total. Meanwhile, a PodDisruptionBudget object with minAvailable being set to 3 is also created.</p>
+</li>
+<li>
+<p>创建一个优先级较低的3副本部署，总共需要6个CPU核心。同时，还创建了一个minAvailable设置为3的PodDisruptionBudget对象。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">scheduling.k8s.io/v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">PriorityClass</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">name</span>: <span style="color:#ae81ff">low-priority</span>
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">annotations</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;godel.bytedance.com/can-be-preempted&#34;: </span><span style="color:#e6db74">&#34;true&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">value</span>: <span style="color:#ae81ff">80</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">description</span>: <span style="color:#e6db74">&#34;a priority class with low priority that can be preempted&#34;</span>
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">policy/v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">PodDisruptionBudget</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">name</span>: <span style="color:#ae81ff">nginx-pdb</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spec</span>:
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">minAvailable</span>: <span style="color:#ae81ff">3</span>
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">selector</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">matchLabels</span>:
+</span></span><span style="display:flex;"><span>         <span style="color:#f92672">name</span>: <span style="color:#ae81ff">nginx</span>
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">apps/v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">Deployment</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">name</span>: <span style="color:#ae81ff">nginx-victim</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spec</span>:
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">replicas</span>: <span style="color:#ae81ff">3</span>
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">selector</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">matchLabels</span>:
+</span></span><span style="display:flex;"><span>         <span style="color:#f92672">name</span>: <span style="color:#ae81ff">nginx</span>
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">template</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>         <span style="color:#f92672">name</span>: <span style="color:#ae81ff">nginx-victim</span>
+</span></span><span style="display:flex;"><span>         <span style="color:#f92672">labels</span>:
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">name</span>: <span style="color:#ae81ff">nginx</span>
+</span></span><span style="display:flex;"><span>         <span style="color:#f92672">annotations</span>:
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">&#34;godel.bytedance.com/can-be-preempted&#34;: </span><span style="color:#e6db74">&#34;true&#34;</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">spec</span>:
+</span></span><span style="display:flex;"><span>         <span style="color:#f92672">schedulerName</span>: <span style="color:#ae81ff">godel-scheduler</span>
+</span></span><span style="display:flex;"><span>         <span style="color:#f92672">priorityClassName</span>: <span style="color:#ae81ff">low-priority</span>
+</span></span><span style="display:flex;"><span>         <span style="color:#f92672">containers</span>:
+</span></span><span style="display:flex;"><span>            - <span style="color:#f92672">name</span>: <span style="color:#ae81ff">test</span>
+</span></span><span style="display:flex;"><span>              <span style="color:#f92672">image</span>: <span style="color:#ae81ff">nginx</span>
+</span></span><span style="display:flex;"><span>              <span style="color:#f92672">imagePullPolicy</span>: <span style="color:#ae81ff">IfNotPresent</span>
+</span></span><span style="display:flex;"><span>              <span style="color:#f92672">resources</span>:
+</span></span><span style="display:flex;"><span>                 <span style="color:#f92672">limits</span>:
+</span></span><span style="display:flex;"><span>                    <span style="color:#f92672">cpu</span>: <span style="color:#ae81ff">2</span>
+</span></span><span style="display:flex;"><span>                 <span style="color:#f92672">requests</span>:
+</span></span><span style="display:flex;"><span>                    <span style="color:#f92672">cpu</span>: <span style="color:#ae81ff">2</span> 
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl get pod,deploy
+</span></span><span style="display:flex;"><span>  NAME                                READY   STATUS    RESTARTS   AGE
+</span></span><span style="display:flex;"><span>  pod/nginx-victim-588f6db4bd-r99bq   1/1     Running   <span style="color:#ae81ff">0</span>          6s
+</span></span><span style="display:flex;"><span>  pod/nginx-victim-588f6db4bd-vv24v   1/1     Running   <span style="color:#ae81ff">0</span>          6s
+</span></span><span style="display:flex;"><span>  pod/nginx-victim-588f6db4bd-xdsht   1/1     Running   <span style="color:#ae81ff">0</span>          6s
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  NAME                           READY   UP-TO-DATE   AVAILABLE   AGE
+</span></span><span style="display:flex;"><span>  deployment.apps/nginx-victim   3/3     <span style="color:#ae81ff">3</span>            <span style="color:#ae81ff">3</span>           6s
+</span></span></code></pre></div></li>
+<li>
+<p>Create a pod with a higher priority, which requests 3 CPU core.</p>
+</li>
+<li>
+<p>创建一个优先级更高的pod，它需要3个CPU核心。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">scheduling.k8s.io/v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">PriorityClass</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">name</span>: <span style="color:#ae81ff">high-priority</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">value</span>: <span style="color:#ae81ff">100</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">description</span>: <span style="color:#e6db74">&#34;a priority class with a high priority&#34;</span>
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">Pod</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">name</span>: <span style="color:#ae81ff">nginx-preemptor</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spec</span>:
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">schedulerName</span>: <span style="color:#ae81ff">godel-scheduler</span>
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">priorityClassName</span>: <span style="color:#ae81ff">high-priority</span>
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">containers</span>:
+</span></span><span style="display:flex;"><span>      - <span style="color:#f92672">name</span>: <span style="color:#ae81ff">nginx-preemptor</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">image</span>: <span style="color:#ae81ff">nginx</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">imagePullPolicy</span>: <span style="color:#ae81ff">IfNotPresent</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">resources</span>:
+</span></span><span style="display:flex;"><span>           <span style="color:#f92672">limits</span>:
+</span></span><span style="display:flex;"><span>              <span style="color:#f92672">cpu</span>: <span style="color:#ae81ff">3</span>
+</span></span><span style="display:flex;"><span>           <span style="color:#f92672">requests</span>:
+</span></span><span style="display:flex;"><span>              <span style="color:#f92672">cpu</span>: <span style="color:#ae81ff">3</span>
+</span></span></code></pre></div><p>In this case, preemption will not be triggered for scheduling the high-priority Pod above, due to the protection provided by the PodDisruptionBudget object.</p>
+<p>在这种情况下，由于PodDisruptionBudget对象提供的保护，在调度上述高优先级Pod时不会触发抢占。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl get pod,deploy
+</span></span><span style="display:flex;"><span>  NAME                                READY   STATUS    RESTARTS   AGE
+</span></span><span style="display:flex;"><span>  pod/nginx-preemptor                 0/1     Pending   <span style="color:#ae81ff">0</span>          34s
+</span></span><span style="display:flex;"><span>  pod/nginx-victim-588f6db4bd-r99bq   1/1     Running   <span style="color:#ae81ff">0</span>          109s
+</span></span><span style="display:flex;"><span>  pod/nginx-victim-588f6db4bd-vv24v   1/1     Running   <span style="color:#ae81ff">0</span>          109s
+</span></span><span style="display:flex;"><span>  pod/nginx-victim-588f6db4bd-xdsht   1/1     Running   <span style="color:#ae81ff">0</span>          109s
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  NAME                           READY   UP-TO-DATE   AVAILABLE   AGE
+</span></span><span style="display:flex;"><span>  deployment.apps/nginx-victim   3/3     <span style="color:#ae81ff">3</span>            <span style="color:#ae81ff">3</span>           109s
+</span></span></code></pre></div><p>But, if we update the PodDisruptionBudget object by setting the minAvailable field to 2. The preemption will be triggered in the next scheduling cycle for the Pod with high priority.</p>
+<p>但是，如果我们通过将minAvailable字段设置为2来更新PodDisruptionBudget对象。对于具有高优先级的Pod，抢占将在下一个调度周期中触发。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl get pdb     
+</span></span><span style="display:flex;"><span> NAME        MIN AVAILABLE   MAX UNAVAILABLE   ALLOWED DISRUPTIONS   AGE
+</span></span><span style="display:flex;"><span> nginx-pdb   <span style="color:#ae81ff">2</span>               N/A               <span style="color:#ae81ff">0</span>                     5m22s
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>$ kubectl get pod,deploy    
+</span></span><span style="display:flex;"><span> NAME                                READY   STATUS    RESTARTS   AGE
+</span></span><span style="display:flex;"><span> pod/nginx-preemptor                 1/1     Running   <span style="color:#ae81ff">0</span>          6m25s
+</span></span><span style="display:flex;"><span> pod/nginx-victim-588f6db4bd-p49vg   0/1     Pending   <span style="color:#ae81ff">0</span>          3m19s
+</span></span><span style="display:flex;"><span> pod/nginx-victim-588f6db4bd-r99bq   1/1     Running   <span style="color:#ae81ff">0</span>          7m40s
+</span></span><span style="display:flex;"><span> pod/nginx-victim-588f6db4bd-xdsht   1/1     Running   <span style="color:#ae81ff">0</span>          7m40s
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> NAME                           READY   UP-TO-DATE   AVAILABLE   AGE
+</span></span><span style="display:flex;"><span> deployment.apps/nginx-victim   2/3     <span style="color:#ae81ff">3</span>            <span style="color:#ae81ff">2</span>           7m40s
+</span></span></code></pre></div><p>Based on the observation above, one replica of the low-priority deployment was preempted.</p>
+<p>基于上述观察，低优先级部署的一个副本被抢占。</p>
+</li>
+<li>
+<p>Clean up the environment</p>
+</li>
+<li>
+<p>清理环境</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>kubectl delete pod nginx-preemptor <span style="color:#f92672">&amp;&amp;</span> kubectl delete deploy nginx-victim <span style="color:#f92672">&amp;&amp;</span> kubectl delete pdb nginx-pdb
+</span></span></code></pre></div></li>
+</ol>
+<h3 id="gödel-specific-preemption">
+  Gödel-specific Preemption
+  <a class="anchor" href="#g%c3%b6del-specific-preemption">#</a>
+</h3>
+<p>哥德尔特定优先购买权</p>
+<p>Apart from the basic preemption functionalities shown above, extra protection behaviors are also honored in Gödel Scheduling System.</p>
+<p>除了上面显示的基本抢占功能外，哥德尔调度系统还支持额外的保护行为。</p>
+<h4 id="preemptibility-annotation">
+  Preemptibility Annotation
+  <a class="anchor" href="#preemptibility-annotation">#</a>
+</h4>
+<p>优先购买性注释</p>
+<p>Gödel Scheduling System introduces a customized annotation, <code>&quot;godel.bytedance.com/can-be-preempted&quot;: &quot;true&quot;</code>,
+to enable the preemptibility of Pods. The preemptibility annotation specified either in the Pod object or the PriorityClass object will be honored.
+Specifically, only Pods with the preemptibility being enabled can preempted in any cases. Otherwise, no preemption will happen.</p>
+<p>哥德尔调度系统引入了一个定制的注释，<code>“godel.bytedance.com/can be preceded”：“true”</code>，
+以实现Pod的可抢占性。Pod对象或PriorityClass对象中指定的抢占性注释将被遵守。
+具体来说，在任何情况下，只有启用了可抢占性的Pod才能被抢占。否则，不会发生先发制人。</p>
+<ol>
+<li>
+<p>Create a Pod without the preemptibility being enabled.</p>
+</li>
+<li>
+<p>在不启用抢占功能的情况下创建Pod。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">scheduling.k8s.io/v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">PriorityClass</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">low-priority</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">value</span>: <span style="color:#ae81ff">80</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">description</span>: <span style="color:#e6db74">&#34;a priority class with low priority&#34;</span>
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">Pod</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">nginx-victim</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spec</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">schedulerName</span>: <span style="color:#ae81ff">godel-scheduler</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">priorityClassName</span>: <span style="color:#ae81ff">low-priority</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">containers</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#f92672">name</span>: <span style="color:#ae81ff">nginx-victim</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">image</span>: <span style="color:#ae81ff">nginx</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">imagePullPolicy</span>: <span style="color:#ae81ff">IfNotPresent</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">resources</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">limits</span>:
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">cpu</span>: <span style="color:#ae81ff">6</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">requests</span>:
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">cpu</span>: <span style="color:#ae81ff">6</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl get pod
+</span></span><span style="display:flex;"><span>  NAME           READY   STATUS    RESTARTS   AGE
+</span></span><span style="display:flex;"><span>  nginx-victim   1/1     Running   <span style="color:#ae81ff">0</span>          2s
+</span></span></code></pre></div></li>
+<li>
+<p>Create a Pod with a higher priority.</p>
+</li>
+<li>
+<p>创建具有更高优先级的Pod。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">scheduling.k8s.io/v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">PriorityClass</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">high-priority</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">value</span>: <span style="color:#ae81ff">100</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">description</span>: <span style="color:#e6db74">&#34;a priority class with a high priority&#34;</span>
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">Pod</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">nginx-preemptor</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spec</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">schedulerName</span>: <span style="color:#ae81ff">godel-scheduler</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">priorityClassName</span>: <span style="color:#ae81ff">high-priority</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">containers</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#f92672">name</span>: <span style="color:#ae81ff">nginx-preemptor</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">image</span>: <span style="color:#ae81ff">nginx</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">imagePullPolicy</span>: <span style="color:#ae81ff">IfNotPresent</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">resources</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">limits</span>:
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">cpu</span>: <span style="color:#ae81ff">3</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">requests</span>:
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">cpu</span>: <span style="color:#ae81ff">3</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl get pod
+</span></span><span style="display:flex;"><span>  NAME              READY   STATUS    RESTARTS   AGE
+</span></span><span style="display:flex;"><span>  nginx-preemptor   0/1     Pending   <span style="color:#ae81ff">0</span>          11s
+</span></span><span style="display:flex;"><span>  nginx-victim      1/1     Running   <span style="color:#ae81ff">0</span>          2m32s
+</span></span></code></pre></div><p>In this case, preemption will not happen because the preemptibility is not enabled.</p>
+<p>在这种情况下，由于未启用抢占功能，因此不会发生抢占。</p>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408021441297.png" alt="image-20240802144142130" /></p>
+</li>
+<li>
+<p>Clean up the environment</p>
+</li>
+<li>
+<p>清理环境</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>kubectl delete pod nginx-preemptor nginx-victim
+</span></span></code></pre></div></li>
+</ol>
+<h4 id="protection-duration">
+  Protection Duration
+  <a class="anchor" href="#protection-duration">#</a>
+</h4>
+<p>保护期限</p>
+<p>Gödel Scheduling System also supports protecting preemptible Pods from preemption for at least a specified amount of time after it&rsquo;s started up.
+By leveraging the Pod annotation <code>godel.bytedance.com/protection-duration-from-preemption</code>,
+users will be able to specify the protection duration in seconds.</p>
+<p>哥德尔调度系统还支持在可抢占的Pod启动后至少在指定时间内保护其免受抢占。
+通过利用Pod注释“godel.bytedance.com/protection duration from prevention”，
+用户将能够以秒为单位指定保护持续时间。</p>
+<ol>
+<li>
+<p>Create a Pod with a 30-second protection duration.</p>
+</li>
+<li>
+<p>创建一个保护时间为30秒的Pod。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">scheduling.k8s.io/v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">PriorityClass</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">low-priority</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">annotations</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;godel.bytedance.com/can-be-preempted&#34;: </span><span style="color:#e6db74">&#34;true&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">value</span>: <span style="color:#ae81ff">80</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">description</span>: <span style="color:#e6db74">&#34;a priority class with low priority that can be preempted&#34;</span>
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">Pod</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">nginx-victim</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">annotations</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;godel.bytedance.com/protection-duration-from-preemption&#34;: </span><span style="color:#e6db74">&#34;30&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spec</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">schedulerName</span>: <span style="color:#ae81ff">godel-scheduler</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">priorityClassName</span>: <span style="color:#ae81ff">low-priority</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">containers</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#f92672">name</span>: <span style="color:#ae81ff">nginx-victim</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">image</span>: <span style="color:#ae81ff">nginx</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">imagePullPolicy</span>: <span style="color:#ae81ff">IfNotPresent</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">resources</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">limits</span>:
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">cpu</span>: <span style="color:#ae81ff">6</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">requests</span>:
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">cpu</span>: <span style="color:#ae81ff">6</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl get pod
+</span></span><span style="display:flex;"><span>  NAME           READY   STATUS    RESTARTS   AGE
+</span></span><span style="display:flex;"><span>  nginx-victim   1/1     Running   <span style="color:#ae81ff">0</span>          3s
+</span></span></code></pre></div></li>
+<li>
+<p>Create a Pod with a higher priority.</p>
+</li>
+<li>
+<p>创建具有更高优先级的Pod。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">scheduling.k8s.io/v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">PriorityClass</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">high-priority</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">value</span>: <span style="color:#ae81ff">100</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">description</span>: <span style="color:#e6db74">&#34;a priority class with a high priority&#34;</span>
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">Pod</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">nginx-preemptor</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spec</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">schedulerName</span>: <span style="color:#ae81ff">godel-scheduler</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">priorityClassName</span>: <span style="color:#ae81ff">high-priority</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">containers</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#f92672">name</span>: <span style="color:#ae81ff">nginx-preemptor</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">image</span>: <span style="color:#ae81ff">nginx</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">imagePullPolicy</span>: <span style="color:#ae81ff">IfNotPresent</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">resources</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">limits</span>:
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">cpu</span>: <span style="color:#ae81ff">3</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">requests</span>:
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">cpu</span>: <span style="color:#ae81ff">3</span>
+</span></span></code></pre></div><p>Within the protection duration, preemption will not be triggered.</p>
+<p>在保护期内，不会触发抢占。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl get pod
+</span></span><span style="display:flex;"><span>  NAME              READY   STATUS    RESTARTS   AGE
+</span></span><span style="display:flex;"><span>  nginx-preemptor   0/1     Pending   <span style="color:#ae81ff">0</span>          14s
+</span></span><span style="display:flex;"><span>  nginx-victim      1/1     Running   <span style="color:#ae81ff">0</span>          26s
+</span></span></code></pre></div><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408021456625.png" alt="image-20240802145609549" /></p>
+<p>Beyond that, preemption takes place eventually.</p>
+<p>除此之外，先发制人最终会发生。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl get pod
+</span></span><span style="display:flex;"><span>  NAME           READY   STATUS    RESTARTS   AGE
+</span></span><span style="display:flex;"><span>  nginx-preemptor   1/1     Running   <span style="color:#ae81ff">0</span>          78s
+</span></span></code></pre></div><p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202408021456137.png" alt="image-20240802145602048" /></p>
+</li>
+<li>
+<p>Clean up the environment</p>
+</li>
+<li>
+<p>清理环境</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>kubectl delete pod nginx-preemptor
+</span></span></code></pre></div></li>
+</ol>
+<h2 id="wrap-up">
+  Wrap-up
+  <a class="anchor" href="#wrap-up">#</a>
+</h2>
+<p>总结</p>
+<p>In this doc, we share a Quickstart guide about selected functionalities of preemption in Gödel Scheduling System.
+More advanced preemption features/strategies as well as the corresponding technical deep-dives can be expected.</p>
+<p>在本文档中，我们将分享一份关于哥德尔调度系统中优先购买功能的快速入门指南。
+可以期待更高级的抢占功能/策略以及相应的技术深度探索。</p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#one-step-cluster-bootstrap--installation">One-Step Cluster Bootstrap &amp; Installation</a>
+      <ul>
+        <li><a href="#prerequisites">Prerequisites</a></li>
+        <li><a href="#1-clone-the-gödel-repo-to-your-machine">1. Clone the Gödel repo to your machine</a></li>
+        <li><a href="#2-change-to-the-gödel-directory">2. Change to the Gödel directory</a></li>
+        <li><a href="#3-bootstrap-the-cluster-and-install-gödel-components">3. Bootstrap the cluster and install Gödel components</a></li>
+      </ul>
+    </li>
+    <li><a href="#manual-installation">Manual Installation</a>
+      <ul>
+        <li><a href="#1-build-gödel-image">1. Build Gödel image</a></li>
+        <li><a href="#2-load-gödel-image-to-your-cluster">2. Load Gödel image to your cluster</a></li>
+        <li><a href="#3-create-gödel-components-in-the-cluster">3. Create Gödel components in the cluster</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li><a href="#local-cluster-bootstrap--installation">Local Cluster Bootstrap &amp; Installation</a></li>
+    <li><a href="#affinity-related-configurations">Affinity-Related Configurations</a>
+      <ul>
+        <li><a href="#node">Node</a></li>
+        <li><a href="#podgroup">PodGroup</a></li>
+        <li><a href="#deployment">Deployment</a></li>
+      </ul>
+    </li>
+    <li><a href="#use-job-level-affinity-in-scheduling">Use Job Level Affinity in Scheduling</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#local-cluster-bootstrap--installation-1">Local Cluster Bootstrap &amp; Installation</a></li>
+    <li><a href="#related-configurations">Related Configurations</a>
+      <ul>
+        <li><a href="#node-1">Node</a></li>
+        <li><a href="#godel-scheduler-configuration">Godel Scheduler Configuration</a></li>
+        <li><a href="#deployment-1">Deployment</a></li>
+      </ul>
+    </li>
+    <li><a href="#concurrent-scheduling-quick-demo">Concurrent Scheduling Quick Demo</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#introduction">Introduction</a></li>
+    <li><a href="#local-cluster-bootstrap--installation-2">Local Cluster Bootstrap &amp; Installation</a></li>
+    <li><a href="#related-configurations-1">Related Configurations</a>
+      <ul>
+        <li><a href="#pod-group-configuration">Pod Group Configuration</a></li>
+        <li><a href="#pod-configuration">Pod Configuration</a></li>
+      </ul>
+    </li>
+    <li><a href="#using-gang-scheduling">Using Gang Scheduling</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#one-step-cluster-bootstrap--installation-1">One-Step Cluster Bootstrap &amp; Installation</a>
+      <ul>
+        <li><a href="#prerequisites-1">Prerequisites</a></li>
+        <li><a href="#1-clone-the-gödel-repo-to-your-machine-1">1. Clone the Gödel repo to your machine</a></li>
+        <li><a href="#2-change-to-the-gödel-directory-1">2. Change to the Gödel directory</a></li>
+        <li><a href="#3-bootstrap-the-cluster-and-install-gödel-components-1">3. Bootstrap the cluster and install Gödel components</a></li>
+      </ul>
+    </li>
+    <li><a href="#manual-installation-1">Manual Installation</a>
+      <ul>
+        <li><a href="#1-build-gödel-image-1">1. Build Gödel image</a></li>
+        <li><a href="#2-load-gödel-image-to-your-cluster-1">2. Load Gödel image to your cluster</a></li>
+        <li><a href="#3-create-gödel-components-in-the-cluster-1">3. Create Gödel components in the cluster</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li><a href="#local-cluster-bootstrap--installation-3">Local Cluster Bootstrap &amp; Installation</a></li>
+    <li><a href="#how-preemption-works">How Preemption Works</a>
+      <ul>
+        <li><a href="#quickstart-scenario">Quickstart Scenario</a></li>
+        <li><a href="#basic-preemption">Basic Preemption</a></li>
+        <li><a href="#gödel-specific-preemption">Gödel-specific Preemption</a></li>
+      </ul>
+    </li>
+    <li><a href="#wrap-up">Wrap-up</a></li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

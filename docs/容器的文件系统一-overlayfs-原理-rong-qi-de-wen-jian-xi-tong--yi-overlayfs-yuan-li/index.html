@@ -1,0 +1,2967 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  容器文件系统
+  #
+
+
+  之前文章 容器原理 说到容器的核心技术是由 Linux Namespace &#43; Cgroups 实现的。其中在说到 Mount Namespace 中说到，使用 docker exec 进入某个容器后。可以看到一个崭新的文件系统，就类似于 ssh 到某个虚拟机或者物理机上，实际上就是利用 Linux Mount Namespace 隔离实现的。当创建一个容器时，Linux 系统上就会创建一个 对应的 Mount Namespace，那么这个 Mount Namespace 就是该容器的文件系统。
+  #
+
+
+  容器的文件系统在用户视角和宿主机的文件系统没有什么区别，但是其背后的原理却不同。在容器里运行 df 命令，可以看到在容器中根目录(/)的文件系统类型是 overlay，它不是我们在普通 Linux 节点上看到的 Ext4 或者 XFS 之类常见的文件系统。
+  #
+
+root@624d08ddaf99:~# df -h
+Filesystem      Size  Used Avail Use% Mounted on
+overlay         558G   70G  488G  13% /
+
+
+  为什么需要 OverlayFS
+  #
+
+
+  那么这个 OverlayFS 是一个怎样的文件系统，容器为什么使用这种文件系统？
+  #
+
+
+  我们知道虚拟机需要 iso 镜像才能启动，那么每个容器也需要一个镜像才能启动。然后这个镜像会包含容器运行的二进制文件、库文件、配置文件，其他的依赖的文件等全部打包成一个 镜像文件。如果使用正常的 EXT4 或者 XFS 文件系统的话，那么每次启动一个容器，就需要把一个镜像文件下载并存储在宿主机上。
+  #
+
+
+  比如：假设一个镜像文件的大小是 500MB，那么 100 个容器的话，就需要下载 500MB*100= 50GB 的文件，并且占用 50GB 的磁盘空间。然而在这 50GB 的磁盘空间中，大部分数据都是重复的，因为大部分数据都是镜像的 base 镜像，而且这些 base 镜像基本都是只读的，在容器运行时不会变动。
+  #
+
+
+  如说这 100 个容器镜像都是基于 ubuntu:18.04 的，每个容器镜像只是额外复制了 50MB 左右自己的应用程序到 ubuntu: 18.04 里，那么就是说在总共 50GB 的数据里，有 90% 的数据是冗余的。
+  #
+
+
+  所以有没有一种文件系统可以达到用户的应用程序可以重复利用 ubuntu:18.04 ？也就是能够有效地减少磁盘上冗余的镜像数据，同时减少冗余的镜像数据在网络上的传输。这类的文件系统被称为 UnionFS。下图就是 UnionFS 解决问题的实现。
+  #
+
+">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="http://192.168.0.139:1313/docs/%E5%AE%B9%E5%99%A8%E7%9A%84%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E4%B8%80-overlayfs-%E5%8E%9F%E7%90%86-rong-qi-de-wen-jian-xi-tong--yi-overlayfs-yuan-li/">
+  <meta property="og:site_name" content="Guichen&#39;s Blog">
+  <meta property="og:title" content="容器的文件系统 OverlayFS 原理 2024-04-03 14:45:26.893">
+  <meta property="og:description" content="容器文件系统 # 之前文章 容器原理 说到容器的核心技术是由 Linux Namespace &#43; Cgroups 实现的。其中在说到 Mount Namespace 中说到，使用 docker exec 进入某个容器后。可以看到一个崭新的文件系统，就类似于 ssh 到某个虚拟机或者物理机上，实际上就是利用 Linux Mount Namespace 隔离实现的。当创建一个容器时，Linux 系统上就会创建一个 对应的 Mount Namespace，那么这个 Mount Namespace 就是该容器的文件系统。 # 容器的文件系统在用户视角和宿主机的文件系统没有什么区别，但是其背后的原理却不同。在容器里运行 df 命令，可以看到在容器中根目录(/)的文件系统类型是 overlay，它不是我们在普通 Linux 节点上看到的 Ext4 或者 XFS 之类常见的文件系统。 # root@624d08ddaf99:~# df -h Filesystem Size Used Avail Use% Mounted on overlay 558G 70G 488G 13% / 为什么需要 OverlayFS # 那么这个 OverlayFS 是一个怎样的文件系统，容器为什么使用这种文件系统？ # 我们知道虚拟机需要 iso 镜像才能启动，那么每个容器也需要一个镜像才能启动。然后这个镜像会包含容器运行的二进制文件、库文件、配置文件，其他的依赖的文件等全部打包成一个 镜像文件。如果使用正常的 EXT4 或者 XFS 文件系统的话，那么每次启动一个容器，就需要把一个镜像文件下载并存储在宿主机上。 # 比如：假设一个镜像文件的大小是 500MB，那么 100 个容器的话，就需要下载 500MB*100= 50GB 的文件，并且占用 50GB 的磁盘空间。然而在这 50GB 的磁盘空间中，大部分数据都是重复的，因为大部分数据都是镜像的 base 镜像，而且这些 base 镜像基本都是只读的，在容器运行时不会变动。 # 如说这 100 个容器镜像都是基于 ubuntu:18.04 的，每个容器镜像只是额外复制了 50MB 左右自己的应用程序到 ubuntu: 18.04 里，那么就是说在总共 50GB 的数据里，有 90% 的数据是冗余的。 # 所以有没有一种文件系统可以达到用户的应用程序可以重复利用 ubuntu:18.04 ？也就是能够有效地减少磁盘上冗余的镜像数据，同时减少冗余的镜像数据在网络上的传输。这类的文件系统被称为 UnionFS。下图就是 UnionFS 解决问题的实现。 #">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+<title>容器的文件系统 OverlayFS 原理 2024-04-03 14:45:26.893 | Guichen&#39;s Blog</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="http://192.168.0.139:1313/docs/%E5%AE%B9%E5%99%A8%E7%9A%84%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E4%B8%80-overlayfs-%E5%8E%9F%E7%90%86-rong-qi-de-wen-jian-xi-tong--yi-overlayfs-yuan-li/">
+<link rel="stylesheet" href="/book.min.6c8b9d2a1fc95075ed7da46ca81060b39add8fff6741ac51259f768929281e2c.css" integrity="sha256-bIudKh/JUHXtfaRsqBBgs5rdj/9nQaxRJZ92iSkoHiw=" crossorigin="anonymous">
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/en.search.min.6f52273b9f5fa65803e3991faf27d1a7b7b8f6b148888237d77b4e841cb030e3.js" integrity="sha256-b1InO59fplgD45kfryfRp7e49rFIiII313tOhBywMOM=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/"><span>Guichen&#39;s Blog</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/00-%E9%9B%86%E7%BE%A4%E8%A7%84%E5%88%92%E5%92%8C%E5%9F%BA%E7%A1%80%E5%8F%82%E6%95%B0%E8%AE%BE%E5%AE%9A-00--ji-qun-gui-hua-he-ji-chu-can-shu-she-ding/" class="">00-集群规划和基础参数设定 2023-09-28 15:19:02.214</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/01-%E5%88%9B%E5%BB%BA%E8%AF%81%E4%B9%A6%E5%92%8C%E7%8E%AF%E5%A2%83%E5%87%86%E5%A4%87-01--chuang-jian-zheng-shu-he-huan-jing-zhun-bei/" class="">01-创建证书和环境准备 2023-09-28 15:22:19.812</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/02-%E5%AE%89%E8%A3%85etcd%E9%9B%86%E7%BE%A4-02--an-zhuang-etcd-ji-qun/" class="">02-安装etcd集群 2023-09-28 15:23:07.363</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E9%9D%A2%E8%AF%950224/" class="">0224面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-26-k8s%E7%9B%B8%E5%85%B3/" class="">0226 k8s题目</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/03-%E5%AE%89%E8%A3%85%E5%AE%B9%E5%99%A8%E8%BF%90%E8%A1%8C%E6%97%B6-03--an-zhuang-rong-qi-yun-xing-shi/" class="">03-安装容器运行时 2023-09-28 15:23:56.241</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/04-%E5%AE%89%E8%A3%85kube_master%E8%8A%82%E7%82%B9-04--an-zhuang-kubemaster-jie-dian/" class="">04-安装kube_master节点 2023-09-28 15:24:21.203</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/05-%E5%AE%89%E8%A3%85kube_node%E8%8A%82%E7%82%B9-05--an-zhuang-kubenode-jie-dian/" class="">05-安装kube_node节点 2023-09-28 15:24:43.201</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85calico%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-calico-wang-luo-zu-jian/" class="">06-安装calico网络组件 2023-09-28 15:34:28.483</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85cilium%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-cilium-wang-luo-zu-jian/" class="">06-安装cilium网络组件 2023-09-28 15:35:23.884</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85flannel%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-flannel-wang-luo-zu-jian/" class="">06-安装flannel网络组件 2023-09-28 15:35:50.039</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85kube-ovn%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-kube-ovn-wang-luo-zu-jian/" class="">06-安装kube-ovn网络组件 2023-09-28 15:36:11.265</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-wang-luo-zu-jian/" class="">06-安装网络组件 2023-09-28 15:25:14.997</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/07-%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4%E4%B8%BB%E8%A6%81%E6%8F%92%E4%BB%B6-07--an-zhuang-ji-qun-zhu-yao-cha-jian/" class="">07-安装集群主要插件 2023-09-28 15:26:42.651</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/08-k8s-%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8--k8s-ji-qun-cun-chu/" class="">08-K8S 集群存储  2023-09-28 15:27:29.454</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/16%E4%B8%AA%E6%A6%82%E5%BF%B5%E5%B8%A6%E4%BD%A0%E5%85%A5%E9%97%A8-kubernetes-16-ge-gai-nian-dai-ni-ru-men-kubernetes/" class="">16个概念带你入门 Kubernetes 2024-04-03 15:09:21.671</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/16%E5%BC%A0%E7%A1%AC%E6%A0%B8%E5%9B%BE%E8%A7%A3k8s%E7%BD%91%E7%BB%9C-16-zhang-ying-he-tu-jie-k8s-wang-luo/" class="">16张硬核图解k8s网络 2024-04-03 15:12:49.601</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-07-microk8s/" class="">2024-12-07 microk8s</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-devstack/" class="">2024-12-08 devstack</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-mutilpass%E6%93%8D%E4%BD%9C/" class="">2024-12-08 mutilpass操作</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-nano%E6%93%8D%E4%BD%9C/" class="">2024-12-08 nano操作</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-openstack%E5%92%8Ckubernetes%E5%8C%BA%E5%88%AB/" class="">2024-12-08 openstack和kubernetes区别</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-openstack%E9%9C%80%E8%A6%81%E5%87%A0%E5%8F%B0%E8%99%9A%E6%8B%9F%E6%9C%BA/" class="">2024-12-08 openstack需要几台虚拟机</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-%E5%9D%97%E5%AD%98%E5%82%A8%E5%92%8C%E5%AF%B9%E8%B1%A1%E5%82%A8%E5%AD%98%E5%8C%BA%E5%88%AB/" class="">2024-12-08 块存储和对象储存区别</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-docker-daemon.json/" class="">2024-12-09 docker daemon.json</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-helmchart-%E9%83%A8%E7%BD%B2flask%E5%BA%94%E7%94%A8/" class="">2024-12-09 helmchart 部署flask应用</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-mutilpass%E9%83%A8%E7%BD%B2openstack/" class="">2024-12-09 mutilpass部署openstack devstack形式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-openstack-ssh%E8%BF%9E%E6%8E%A5/" class="">2024-12-09 openstack ssh连接</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-10-docker-registrry/" class="">2024-12-10 docker registrry</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-22-k8s%E6%9E%B6%E6%9E%84%E5%B8%88%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8/" class="">2024-2-22 k8s架构师面试大全</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-22-k8s%E9%9D%A2%E8%AF%95%E5%AE%9D%E5%85%B8/" class="">2024-2-22 k8s面试宝典</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-26-%E9%9D%A2%E8%AF%95/" class="">2024-2-26 面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-19-%E4%B8%A4%E5%BC%A0%E5%9B%BE%E5%85%A8%E9%9D%A2%E7%90%86%E8%A7%A3k8s%E5%8E%9F%E7%90%86/" class="">2024-3-19 两张图全面理解k8s原理</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-cni%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B/" class="">2024-3-4 CNI剖析演进</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-8-%E9%9D%A2%E8%AF%950308/" class="">2024-3-8 面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-4-17-%E9%9D%A2%E8%AF%95%E6%80%BB%E7%BB%93/" class="">2024-4-17 面试总结</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-kubernetes%E9%9D%A2%E8%AF%95%E9%A2%98/" class="">2024-8-1 k8s面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-%E5%B8%B8%E8%A7%81linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98%E6%89%BE%E5%B7%A5%E4%BD%9C%E7%9A%84%E5%BF%85%E7%9C%8B/" class="">2024-8-1 linux运维面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98/" class="">2024-8-1 linux面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-1-1-%E5%A4%A7%E5%A0%B0%E6%B2%B3-%E6%88%91%E7%9A%84%E4%BF%9D%E5%A7%86/" class="">2025-1-1 大堰河-我的保姆</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-k8s-csi%E5%89%96%E6%9E%90/" class="">2025-1-16 CSI剖析演进</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-1-16-k8s%E5%B8%B8%E8%A7%81%E6%95%85%E9%9A%9C%E6%8C%87%E5%8D%97/" class="">2025-1-16 k8s常见故障指南</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-k8s%E6%B5%81%E9%87%8F%E9%93%BE%E8%B7%AF%E5%89%96%E6%9E%90/" class="">2025-1-16 k8s流量链路剖析</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/33%E6%AC%BEgitops%E4%B8%8Edevops%E4%B8%BB%E6%B5%81%E7%B3%BB%E7%BB%9F-33-kuan-gitops-yu-devops-zhu-liu-xi-tong/" class="">33款gitops与devops主流系统 2024-08-02 17:45:15.709</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/600%E6%9D%A1%E6%9C%80%E5%BC%BAlinux%E5%91%BD%E4%BB%A4%E6%80%BB%E7%BB%93-600-tiao-zui-qiang-linux-ming-ling-zong-jie/" class="">600条最强linux命令总结 2024-04-03 15:12:31.282</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/acme%E8%87%AA%E5%8A%A8%E6%9B%B4%E6%96%B0%E8%AF%81%E4%B9%A6-acme-zi-dong-geng-xin-zheng-shu/" class="">acme自动更新证书 2024-04-03 14:41:44.289</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/calico-%E9%85%8D%E7%BD%AE-bgp-route-reflectors-calico-pei-zhi-bgproutereflectors/" class="">calico 配置 BGP Route Reflectors 2023-09-28 15:34:01.007</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/calico%E7%BD%91%E7%BB%9C%E8%87%AA%E5%AE%9A%E4%B9%89-calico-wang-luo-zi-ding-yi/" class="">Calico网络自定义 2024-04-03 15:08:43.394</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/cicd%E6%80%9D%E8%80%83-cicd-si-kao/" class="">CICD思考 2024-04-03 15:11:24.151</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/client-go-%E5%9B%9B%E7%A7%8D%E5%AE%A2%E6%88%B7%E7%AB%AF-client-go-si-zhong-ke-hu-duan/" class="">Client-go 四种客户端 2024-04-03 14:49:34.32</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/client-go-%E6%9E%B6%E6%9E%84-client-go-jia-gou/" class="">Client-go 架构 2024-04-03 14:48:40.716</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/cni%E6%8F%92%E4%BB%B6%E9%80%89%E5%9E%8B-cni-cha-jian-xuan-xing/" class="">CNI插件选型 2024-04-03 15:01:51.29</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/containerd-%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C-containerd-ji-ben-cao-zuo/" class="">Containerd 基本操作 2024-04-03 14:55:46.786</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/coredns%E4%B9%8B%E5%85%89-coredns-zhi-guang/" class="">COREDNS之光 2024-04-03 14:54:52.059</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/dockerfile%E5%AE%9A%E5%88%B6%E4%B8%93%E5%B1%9E%E9%95%9C%E5%83%8F-dockerfile-ding-zhi-zhuan-shu-jing-xiang/" class="">dockerfile定制专属镜像 2024-08-02 17:44:00.522</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/dockerfile%E7%9A%84copy%E5%92%8Cadd%E7%9A%84%E5%8C%BA%E5%88%AB-dockerfile-de-copy-he-add-de-qu-bie/" class="">dockerfile的copy和add的区别 2024-04-03 15:01:09.565</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/docker%E9%87%8D%E8%A6%81%E7%9A%84%E7%BD%91%E7%BB%9C%E7%9F%A5%E8%AF%86%E7%82%B9-docker-zhong-yao-de-wang-luo-zhi-shi-dian/" class="">Docker重要的网络知识点  2024-04-03 15:12:10.162</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/etcd%E5%A4%87%E4%BB%BD-etcd-bei-fen/" class="">ETCD备份 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/etcd%E7%A8%B3%E5%AE%9A%E6%80%A7%E5%8F%8A%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%AE%9E%E8%B7%B5-etcd-wen-ding-xing-ji-xing-neng-you-hua-shi-jian/" class="">ETCD稳定性及性能优化实践 2024-04-03 15:06:31.141</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ex-lb-%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E9%83%A8%E7%BD%B2-ex-lb-fu-zai-jun-heng-bu-shu/" class="">EX-LB 负载均衡部署 2023-09-28 15:28:51.998</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ezctl-%E5%91%BD%E4%BB%A4%E8%A1%8C%E4%BB%8B%E7%BB%8D-ezctl-ming-ling-xing-jie-shao/" class="">ezctl 命令行介绍 2023-09-28 15:28:00.619</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/flanel%E7%BD%91%E7%BB%9C-flanel-wang-luo/" class="">flanel网络 2024-04-03 15:05:04.16</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/godel-scheduler-godel-scheduler/" class="">godel-scheduler 2024-08-02 17:41:00.668</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/helm-chart%E5%92%8Crepo-helmchart-he-repo/" class="">helm chart和repo 2024-04-03 15:00:43.125</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/istio-ingress-gateway-istio-ingress-gateway/" class="">istio-ingress-gateway 2024-08-02 17:51:54.75</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/istio%E9%83%A8%E7%BD%B2-istio-bu-shu/" class="">istio部署 2024-08-02 17:52:40.721</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-cni%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B-k8scni-pou-xi-yan-jin/" class="">K8S CNI剖析演进 2024-03-04 10:51:33.245</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-csi-openebs%E5%8E%9F%E7%90%86-k8scsiopenebs-yuan-li/" class="">K8S csi openebs原理 2024-04-03 14:44:48.967</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-csi%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B-k8scsi-pou-xi-yan-jin/" class="">K8S CSI剖析演进 2024-03-04 10:52:20.507</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-gpt-k8sgpt/" class="">K8S GPT 2024-04-03 15:02:09.127</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E5%BC%80%E5%8F%91%E5%8F%AF%E4%B8%8D%E6%AD%A2-crud-k8s-kai-fa-ke-bu-zhi-crud/" class="">K8S 开发可不止 CRUD 2024-04-03 14:50:11.765</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E6%8E%A2%E9%92%88%E5%8E%9F%E7%90%86-k8s-tan-zhen-yuan-li/" class="">K8S 探针原理 2024-04-03 14:53:29.429</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E6%B5%81%E9%87%8F%E9%93%BE%E8%B7%AF%E5%89%96%E6%9E%90-k8s-liu-liang-lian-lu-pou-xi/" class="">K8S 流量链路剖析 2024-03-04 10:50:22.991</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E8%B0%83%E5%BA%A6%E5%99%A8-scheduler_onego-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-diao-du-qi-scheduleronego-yuan-ma-jie-du/" class="">K8S 调度器 scheduler_one.go 源码解读 2024-04-09 11:45:28.22</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E4%B9%8Bingress-nginx%E5%8E%9F%E7%90%86%E5%8F%8A%E9%85%8D%E7%BD%AE-k8s-zhi-ingress-nginx-yuan-li-ji-pei-zhi/" class="">K8S之ingress-nginx原理及配置 2024-07-05 18:02:14.243</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E4%B9%8Bkubelet%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-zhi-kubelet-yuan-ma-jie-du/" class="">k8s之kubelet源码解读 2024-03-28 15:30:39.633</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7-k8s-yuan-de-sheng-ji/" class="">K8S原地升级 2024-04-03 15:04:38.125</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%91%BD%E4%BB%A4%E6%8C%87%E5%8D%97-k8s-ming-ling-zhi-nan/" class="">K8S命令指南 2024-04-03 15:14:14.207</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%A6%82%E4%BD%95%E8%8E%B7%E5%BE%97-ip-k8s-ru-he-huo-de-ip/" class="">K8S如何获得 IP 2024-04-16 17:09:59.658</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%BA%94%E7%94%A8%E7%9A%84%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5-k8s-ying-yong-de-zui-jia-shi-jian/" class="">k8s应用的最佳实践 2024-04-03 14:43:16.936</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-deployment_controllergo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-deploymentcontrollergo-yuan-ma-jie-du/" class="">K8S控制器之 deployment_controller.go源码解读 2024-04-09 11:30:03.133</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-progressgo-%E8%BF%9B%E5%BA%A6-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-progressgo-jin-du-yuan-ma-jie-du/" class="">K8S控制器之 progress.go 进度 源码解读 2024-04-09 11:31:08.86</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-rollinggo-%E6%BB%9A%E5%8A%A8%E6%9B%B4%E6%96%B0-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-rollinggo-gun-dong-geng-xin-yuan-ma-jie-du/" class="">K8S控制器之 rolling.go 滚动更新 源码解读 2024-04-09 11:32:58.133</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-schedulergo-%E8%B0%83%E5%BA%A6%E5%99%A8-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-schedulergo-diao-du-qi-yuan-ma-jie-du/" class="">K8S控制器之 scheduler.go 调度器 源码解读 2024-04-09 11:44:25.171</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Brecreatego-%E9%87%8D%E5%BB%BA-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-recreatego-zhong-jian-yuan-ma-jie-du/" class="">K8S控制器之recreate.go 重建 源码解读 2024-04-09 11:31:49.855</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Brollbackgo-%E5%9B%9E%E6%BB%9A-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-rollbackgo-hui-gun-yuan-ma-jie-du/" class="">K8S控制器之rollback.go 回滚 源码解读 2024-04-09 11:32:26.587</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_pod_controlgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulpodcontrolgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_pod_control.go源码解读 2024-04-10 09:42:50.078</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_set_controlgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetcontrolgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_set_control.go源码解读 2024-04-10 09:41:30.316</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_set_status_updatego%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetstatusupdatego-yuan-ma-jie-du/" class="">K8S控制器之stateful_set_status_update.go源码解读 2024-04-10</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_setgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_set.go源码解读 2024-04-10</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bsyncgo-%E5%90%8C%E6%AD%A5-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-syncgo-tong-bu-yuan-ma-jie-du/" class="">K8S控制器之sync.go 同步 源码解读 2024-04-09 11:33:26.356</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E7%9A%84pod%E7%B1%BB%E5%9E%8B-k8s-de-pod-lei-xing/" class="">K8S的POD类型 2024-04-03 14:57:11.072</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E7%9A%84%E6%9C%80%E5%90%8E%E4%B8%80%E5%9D%97%E6%8B%BC%E5%9B%BE-dbpaas-k8s-de-zui-hou-yi-kuai-pin-tu-dbpaas/" class="">K8S的最后一块拼图 dbpaas 2024-08-02 17:48:35.899</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-k8s%E7%BB%84%E4%BB%B6/" class="">k8s组件</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%83%8C%E5%90%8Eservice%E6%98%AF%E5%A6%82%E4%BD%95%E5%B7%A5%E4%BD%9C%E7%9A%84-k8s-bei-hou-service-shi-ru-he-gong-zuo-de/" class="">k8s背后service是如何工作的 2024-08-02 17:49:44.981</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%B0%83%E5%BA%A6%E5%99%A8-extendergo-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-diao-du-qi-extendergo-yuan-ma-jie-du/" class="">K8S调度器 extender.go 源码解读 2024-04-09 11:45:59.666</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%B0%83%E8%AF%95pod-k8s-diao-shi-pod/" class="">K8S调试POD 2024-04-03 14:58:15.293</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%BF%90%E7%BB%B4%E4%B9%8B%E6%B8%85%E7%90%86%E7%A3%81%E7%9B%98-k8s-yun-wei-zhi-qing-li-ci-pan/" class="">k8s运维之清理磁盘 2024-04-03 15:13:57.279</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8-k8s-mian-shi-da-quan/" class="">K8S面试大全 2024-04-03 15:10:54.493</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E5%AE%9D%E5%85%B8-k8s-mian-shi-bao-dian/" class="">K8S面试宝典 2024-04-03 15:11:09.316</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E9%A2%98-k8s-mian-shi-ti/" class="">K8S面试题 2024-08-02 17:50:50.418</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kruise%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7%E8%A7%A3%E6%9E%90-kruise-yuan-de-sheng-ji-jie-xi/" class="">kruise原地升级解析 2024-08-02 17:59:31.689</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kube-router-%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-kube-router-wang-luo-zu-jian/" class="">kube-router 网络组件 2023-09-28 15:33:20.658</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-05-kubeasz%E9%83%A8%E7%BD%B2k8s/" class="">kubeasz部署k8s</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubekey%E6%B7%BB%E5%8A%A0%E6%96%B0%E8%8A%82%E7%82%B9-kubekey-tian-jia-xin-jie-dian/" class="">kubekey添加新节点 2024-04-03 15:36:47.646</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-api-kubernetesapi/" class="">Kubernetes API 2024-04-03 14:47:30.212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E6%BA%90%E7%A0%81%E7%BB%93%E6%9E%84-kubernetes-yuan-ma-jie-gou/" class="">Kubernetes 源码结构 2024-04-03 14:48:05.954</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3%E8%AE%A4%E8%AF%81-kubernetes-zheng-shu-xiang-jie--ren-zheng-/" class="">Kubernetes 证书详解(认证) 2024-04-03 14:52:56.54</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3%E9%89%B4%E6%9D%83-kubernetes-zheng-shu-xiang-jie--jian-quan-/" class="">Kubernetes 证书详解(鉴权) 2024-04-03 14:49:04.385</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubewharf-kubewharf/" class="">kubewharf 2024-08-02 17:41:32.72</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux-awk%E6%96%87%E6%9C%AC%E5%A4%84%E7%90%86%E5%99%A8-8%E4%B8%AA%E6%A1%88%E4%BE%8B-linuxawk-wen-ben-chu-li-qi-8-ge-an-li/" class="">linux awk文本处理器 8个案例 2024-08-02 17:46:53.603</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux-%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%A4%A7%E5%85%A8-linux-xing-neng-you-hua-da-quan/" class="">Linux 性能优化大全 2024-04-03 15:09:06.854</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux%E7%B3%BB%E7%BB%9F%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96-%E4%B8%83%E4%B8%AA%E5%AE%9E%E6%88%98%E7%BB%8F%E9%AA%8C-linux-xi-tong-xing-neng-you-hua-qi-ge-shi-zhan-jing-yan/" class="">linux系统性能优化 七个实战经验 2024-08-02 17:47:26.212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98-linux-yun-wei-gong-cheng-shi-50-ge-chang-jian-mian-shi-ti/" class="">linux运维工程师50个常见面试题 2024-08-02 17:42:12.968</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/metallb-l2-%E5%8E%9F%E7%90%86-metallbl2-yuan-li/" class="">MetalLB L2 原理 2024-04-03 14:52:24.662</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/netctl%E6%A3%80%E6%B5%8B%E9%9B%86%E7%BE%A4pod%E9%97%B4%E8%BF%9E%E9%80%9A%E6%80%A7-netctl-jian-ce-ji-qun-pod-jian-lian-tong-xing/" class="">netctl检测集群pod间连通性 2024-08-02 18:00:36.753</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/network-check-network-check/" class="">network-check 2023-09-28 15:36:33.04</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/nginx%E5%A6%82%E4%BD%95%E8%A7%A3%E5%86%B3%E6%83%8A%E7%BE%A4%E6%95%88%E5%BA%94-nginx-ru-he-jie-jue-jing-qun-xiao-ying/" class="">nginx如何解决惊群效应 2024-08-02 17:45:54.531</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/openkruise%E8%AF%A6%E7%BB%86%E8%A7%A3%E9%87%8A%E4%BB%A5%E5%8F%8A%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7%E5%8F%8A%E5%85%A8%E9%93%BE%E8%B7%AF%E7%81%B0%E5%BA%A6%E5%8F%91%E5%B8%83%E6%96%B9%E6%A1%88-openkruise-xiang-xi-jie-shi-yi-ji-yuan-de-sheng-ji-ji-quan-lian-lu-hui-du-fa-bu-fang-an/" class="">OpenKruise详细解释以及原地升级及全链路灰度发布方案 2024-07-22 11:44:46.892</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/pixie-pixie/" class="">pixie 2024-08-02 17:52:17.843</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-28-prometheus/" class="">prometheus 面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/prometheus-stack-prometheus-stack/" class="">prometheus-stack 2024-08-02 17:55:22.326</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/prometheus%E4%BC%81%E4%B8%9A%E7%BA%A7%E7%9B%91%E6%8E%A7%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93-prometheus-qi-ye-ji-jian-kong-shi-yong-zong-jie/" class="">prometheus企业级监控使用总结 2024-04-03 15:13:11.185</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ssl%E8%AF%81%E4%B9%A6%E8%87%AA%E7%AD%BE%E5%8F%91-ssl-zheng-shu-zi-qian-fa/" class="">ssl证书自签发 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/teg%E4%B8%8Eistio%E9%9B%86%E6%88%90-teg-yu-istio-ji-cheng/" class="">TEG与istio集成 2024-08-02 17:51:20.389</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%B8%A4%E5%BC%A0%E5%9B%BE%E5%85%A8%E9%9D%A2%E7%90%86%E8%A7%A3k8s%E5%8E%9F%E7%90%86-liang-zhang-tu-quan-mian-li-jie-k8s-yuan-li/" class="">两张图全面理解K8S原理 2024-04-03 14:51:27.431</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%B8%AA%E6%80%A7%E5%8C%96%E9%9B%86%E7%BE%A4%E5%8F%82%E6%95%B0%E9%85%8D%E7%BD%AE-ge-xing-hua-ji-qun-can-shu-pei-zhi/" class="">个性化集群参数配置 2023-09-28 15:30:56.072</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E4%B8%AD%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_%E9%A2%98%E7%9B%AE/" class="">中级运维面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BA%8C%E8%BF%9B%E5%88%B6%E9%83%A8%E7%BD%B2k8s%E5%8A%A0%E8%8A%82%E7%82%B9%E6%93%8D%E4%BD%9C-er-jin-zhi-bu-shu-k8s-jia-jie-dian-cao-zuo/" class="">二进制部署K8S加节点操作 2024-04-03 15:08:26.726</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-10-20-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8%E9%9B%86%E7%BE%A4/" class="">使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8-keepalived-%E5%92%8C-haproxy-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8-kubernetes-%E9%9B%86%E7%BE%A4-shi-yong-keepalived-he-haproxy-chuang-jian-gao-ke-yong-kubernetes-ji-qun/" class="">使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群 2023-04-12 04:04:09.458</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8-openfunction-%E5%9C%A8%E4%BB%BB%E4%BD%95%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E4%B8%8A%E8%BF%90%E8%A1%8C%E6%97%A0%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%B7%A5%E4%BD%9C%E8%B4%9F%E8%BD%BD-shi-yong-openfunction-zai-ren-he-ji-chu-she-shi-shang-yun-xing-wu-fu-wu-qi-gong-zuo-fu-zai/" class="">使用 OpenFunction 在任何基础设施上运行无服务器工作负载 2024-01-21 04:02:44.459</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8cloudflarecf%E6%90%AD%E5%BB%BAdockerhub%E4%BB%A3%E7%90%86-shi-yong-cloudflarecf-da-jian-dockerhub-dai-li/" class="">使用cloudflare(CF)搭建dockerhub代理 2024-06-28 14:38:34.339</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8kubernees-leases-%E8%BD%BB%E6%9D%BE%E5%AE%9E%E7%8E%B0leader-election-shi-yong-kuberneesleases-qing-song-shi-xian-leaderelection/" class="">使用kubernees leases 轻松实现leader election 2024-04-03 15:09:46.129</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%85%AC%E6%9C%89%E4%BA%91%E4%B8%8A%E9%83%A8%E7%BD%B2-kubeasz-gong-you-yun-shang-bu-shu-kubeasz/" class="">公有云上部署 kubeasz 2023-09-28 15:31:16.19</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-5-14-%E5%8D%95master%E5%8D%95etcd%E6%94%B9%E9%80%A0/" class="">单master单etcd改造为3master3etcd</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%8F%B2%E4%B8%8A%E6%9C%80%E7%89%9Bjenkins-pipeline%E6%B5%81%E6%B0%B4%E7%BA%BF%E8%AF%A6%E8%A7%A3-shi-shang-zui-niu-jenkinspipeline-liu-shui-xian-xiang-jie/" class="">史上最牛jenkins pipeline流水线详解 2024-08-02</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%9A%E6%9E%B6%E6%9E%84%E6%94%AF%E6%8C%81-duo-jia-gou-zhi-chi/" class="">多架构支持 2023-09-28 15:29:54.111</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%A7%E5%8E%82%E6%80%BB%E7%BB%93nginx%E9%AB%98%E5%B9%B6%E5%8F%91%E4%BC%98%E5%8C%96%E7%AC%94%E8%AE%B0-da-chang-zong-jie-nginx-gao-bing-fa-you-hua-bi-ji/" class="">大厂总结nginx高并发优化笔记 2024-08-02 17:46:19.098</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%A7%E8%A7%84%E6%A8%A1%E5%B9%B6%E5%8F%91%E4%B8%8B%E5%A6%82%E4%BD%95%E5%8A%A0%E5%BF%AB-pod-%E5%90%AF%E5%8A%A8%E9%80%9F%E5%BA%A6-da-gui-mo-bing-fa-xia-ru-he-jia-kuai-pod-qi-dong-su-du/" class="">大规模并发下如何加快 Pod 启动速度 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E4%B8%BAk8s%E4%BF%9D%E9%A9%BE%E6%8A%A4%E8%88%AA-ru-he-wei-k8s-bao-jia-hu-hang/" class="">如何为K8S保驾护航 2024-04-16 17:09:21.962</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8tekton%E5%BF%AB%E9%80%9F%E6%90%AD%E5%BB%BAcicd%E5%B9%B3%E5%8F%B0-ru-he-shi-yong-tekton-kuai-su-da-jian-cicd-ping-tai/" class="">如何使用tekton快速搭建CI/CD平台 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E8%B0%83%E8%AF%95-crash-%E5%AE%B9%E5%99%A8%E7%9A%84%E7%BD%91%E7%BB%9C-ru-he-diao-shi-crash-rong-qi-de-wang-luo/" class="">如何调试 crash 容器的网络 2024-04-03 14:50:51.378</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E4%B8%AD%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E4%BB%A5%E5%8F%8A%E4%B8%8D%E5%90%8Cdnspolicy%E5%AF%B9%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E7%9A%84%E5%BD%B1%E5%93%8D-rong-qi-zhong-yu-ming-jie-xi-yi-ji-bu-tong-dnspolicy-dui-yu-ming-jie-xi-de-ying-xiang/" class="">容器中域名解析以及不同dnspolicy对域名解析的影响 2024-04-03 15:04:09.254</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E5%86%85%E7%9A%84-1-%E5%8F%B7%E8%BF%9B%E7%A8%8B-rong-qi-nei-de-1-hao-jin-cheng/" class="">容器内的 1 号进程 2024-04-03 14:46:29.998</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E5%8E%9F%E7%90%86-rong-qi-yuan-li/" class="">容器原理 2024-04-03 14:45:58.422</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E7%9A%84%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E4%B8%80-overlayfs-%E5%8E%9F%E7%90%86-rong-qi-de-wen-jian-xi-tong--yi-overlayfs-yuan-li/" class="active">容器的文件系统 OverlayFS 原理 2024-04-03 14:45:26.893</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C%E5%8E%9F%E7%90%86-rong-qi-wang-luo-yuan-li/" class="">容器网络原理 2024-04-03 14:51:51.962</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%B8%B8%E8%A7%81linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98-chang-jian-linux-yun-wei-mian-shi-ti/" class="">常见linux运维面试题 2024-08-02 17:42:33.873</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BC%80%E5%A7%8B%E4%BD%BF%E7%94%A8-cilium-kai-shi-shi-yong-cilium/" class="">开始使用 cilium 2023-09-28 15:34:49.205</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BD%BB%E6%82%9F%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C-che-wu-rong-qi-wang-luo/" class="">彻悟容器网络 2024-04-07 10:30:11.55</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BF%AB%E9%80%9F%E6%8C%87%E5%8D%97-kuai-su-zhi-nan/" class="">快速指南 2023-09-28 15:28:25.71</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%88%91%E5%8F%AA%E6%83%B3%E5%81%9A%E6%8A%80%E6%9C%AF-%E8%B5%B0%E6%8A%80%E6%9C%AF%E8%B7%AF%E7%BA%BF-wo-zhi-xiang-zuo-ji-shu-zou-ji-shu-lu-xian/" class="">我只想做技术 走技术路线 2024-08-02 17:43:31.897</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%90%9E%E6%87%82k8s%E9%89%B4%E6%9D%83-gao-dong-k8s-jian-quan/" class="">搞懂K8S鉴权 2024-04-03 15:11:54.885</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%90%AD%E4%B8%AA%E6%97%A5%E5%BF%97%E6%89%8B%E6%9C%BA%E7%B3%BB%E7%BB%9F%E4%B8%8D%E9%A6%99%E5%90%97-da-ge-ri-zhi-shou-ji-xi-tong-bu-xiang-ma/" class="">搭个日志手机系统不香吗 2024-08-02 17:47:58.794</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E8%AF%B4%E6%98%8E-cao-zuo-xi-tong-shuo-ming/" class="">操作系统说明 2023-09-28 15:31:37.694</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%96%87%E5%AD%A6%E7%9A%84%E6%95%85%E4%B9%A1-wen-xue-de-gu-xiang/" class="">文学的故乡 2024-04-03 14:40:45.926</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%98%AF%E6%8A%80%E6%9C%AF%E5%A4%A7%E7%A5%9E%E8%BF%98%E6%98%AF%E5%9F%BA%E7%A1%80%E6%9E%B6%E6%9E%84%E9%83%A8%E7%9A%84%E7%A5%B8%E5%AE%B3-shi-ji-shu-da-shen-hai-shi-ji-chu-jia-gou-bu-de-huo-hai/" class="">是技术大神还是基础架构部的祸害 2024-08-02 17:50:26.139</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9C%89%E8%BF%993%E4%B8%AA%E8%BF%B9%E8%B1%A1%E4%BD%A0%E5%B0%B1%E8%AF%A5%E7%A6%BB%E8%81%8C%E4%BA%86-you-zhe-3-ge-ji-xiang--ni-jiu-gai-li-zhi-le/" class="">有这3个迹象，你就该离职了 2023-09-21 16:00:22.432</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9E%81%E5%A4%A7%E6%8F%90%E9%AB%98%E5%B7%A5%E4%BD%9C%E6%95%88%E7%8E%87%E7%9A%84-linux-%E5%91%BD%E4%BB%A4-ji-da-ti-gao-gong-zuo-xiao-lv-de-linux-ming-ling/" class="">极大提高工作效率的 Linux 命令 2024-04-03 14:42:46.957</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9E%84%E5%BB%BA%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E5%88%A9%E5%99%A8buildkit-gou-jian-rong-qi-jing-xiang-li-qi-buildkit/" class="">构建容器镜像利器buildkit 2024-08-02 17:49:14.916</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B5%81%E9%87%8F%E4%BD%95%E5%A4%84%E6%9D%A5%E4%BD%95%E5%A4%84%E5%8E%BB-liu-liang-he-chu-lai-he-chu-qu/" class="">流量何处来何处去 2024-04-03 14:56:20.089</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B8%85%E7%90%86docker%E9%95%9C%E5%83%8F-qing-li-docker-jing-xiang/" class="">清理docker镜像 2024-08-02 17:54:48.594</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B8%85%E7%90%86%E6%AE%8B%E7%95%99%E7%9A%84calico%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6-qing-li-can-liu-de-calico-wang-luo/" class="">清理残留的calico网络插件 2024-04-03 15:07:38.854</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A3%81%E7%9B%98%E6%95%B0%E6%8D%AE%E6%81%A2%E5%A4%8D-ci-pan-shu-ju-hui-fu/" class="">磁盘数据恢复 2024-04-03 14:59:27.839</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85kubephere-li-xian-an-zhuang-kubephere/" class="">离线安装kubephere 2024-04-03 14:59:59.885</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4-li-xian-an-zhuang-ji-qun/" class="">离线安装集群 2023-09-28 15:29:14.742</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-%E8%AE%A1%E5%88%92/" class="">美国码农薪酬</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-%E8%AE%A1%E5%88%922/" class="">美国码农计划</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E8%87%AA%E5%8A%A8%E5%B1%8F%E8%94%BDip%E6%94%BB%E5%87%BB-zi-dong-ping-bi-ip-gong-ji/" class="">自动屏蔽IP攻击 2024-04-03 14:54:11.783</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-12-%E9%9D%A2%E8%AF%950212/" class="">面试0212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-19-%E9%9D%A2%E8%AF%950219/" class="">面试0219</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-20-%E9%9D%A2%E8%AF%950220/" class="">面试0220</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-26-%E9%9D%A2%E8%AF%950225/" class="">面试0225</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%9D%A2%E8%AF%950308-mian-shi-0308/" class="">面试0308 2024-04-03 14:57:53.576</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-11-%E9%9D%A2%E8%AF%950211/" class="">面试2025-02-11</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-18-%E9%9D%A2%E8%AF%95/" class="">面试2025-0218</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%9D%A2%E8%AF%95%E7%94%A8-golang-%E6%89%8B%E6%92%B8-lru-mian-shi-yong-golang-shou-lu-lru/" class="">面试用 Golang 手撸 LRU 2024-04-03 14:47:00.767</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%A1%B6%E7%BA%A7devops%E5%B7%A5%E5%85%B7%E5%A4%A7%E7%9B%98%E7%82%B9-ding-ji-devops-gong-ju-da-pan-dian/" class="">顶级devops工具大盘点 2024-08-02 17:43:03.661</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E9%AB%98%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_ai_linux%E9%83%A8%E5%88%86/" class="">高级运维面试题-linux部分</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>容器的文件系统 OverlayFS 原理 2024-04-03 14:45:26.893</h3>
+
+  <label for="toc-control">
+    
+    <img src="/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#容器文件系统">容器文件系统</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#为什么需要-overlayfs">为什么需要 OverlayFS</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#overlayfs">OverlayFS</a>
+      <ul>
+        <li></li>
+        <li><a href="#如何使用">如何使用</a></li>
+        <li><a href="#删除文件">删除文件</a></li>
+        <li><a href="#新建文件">新建文件</a></li>
+        <li><a href="#修改文件">修改文件</a></li>
+        <li><a href="#写时复制">写时复制</a></li>
+      </ul>
+    </li>
+    <li><a href="#总结">总结</a></li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h2 id="容器文件系统">
+  容器文件系统
+  <a class="anchor" href="#%e5%ae%b9%e5%99%a8%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f">#</a>
+</h2>
+<h5 id="之前文章-容器原理-说到容器的核心技术是由-linux-namespace--cgroups-实现的其中在说到-mount-namespace-中说到使用-docker-exec-进入某个容器后可以看到一个崭新的文件系统就类似于-ssh-到某个虚拟机或者物理机上实际上就是利用-linux-mount-namespace-隔离实现的当创建一个容器时linux-系统上就会创建一个-对应的-mount-namespace那么这个-mount-namespace-就是该容器的文件系统">
+  之前文章 <a href="http://mp.weixin.qq.com/s?__biz=MzkyNDMyNjAyMg==&amp;mid=2247484030&amp;idx=1&amp;sn=43bd06072aa327ded21d6513b891d84d&amp;chksm=c1d6c397f6a14a81cbef67203522f0a5201492b161d1faf205d7d271b2e6afe64f1a2b710391&amp;scene=21#wechat_redirect">容器原理</a> 说到容器的核心技术是由 Linux <strong>Namespace + Cgroups</strong> 实现的。其中在说到 <strong>Mount Namespace</strong> 中说到，使用 <code>docker exec</code> 进入某个容器后。可以看到一个崭新的文件系统，就类似于 <code>ssh</code> 到某个虚拟机或者物理机上，实际上就是利用 Linux <strong>Mount Namespace</strong> 隔离实现的。当创建一个容器时，Linux 系统上就会创建一个 对应的 <strong>Mount Namespace</strong>，那么这个 <strong>Mount Namespace</strong> 就是该容器的文件系统。
+  <a class="anchor" href="#%e4%b9%8b%e5%89%8d%e6%96%87%e7%ab%a0-%e5%ae%b9%e5%99%a8%e5%8e%9f%e7%90%86-%e8%af%b4%e5%88%b0%e5%ae%b9%e5%99%a8%e7%9a%84%e6%a0%b8%e5%bf%83%e6%8a%80%e6%9c%af%e6%98%af%e7%94%b1-linux-namespace--cgroups-%e5%ae%9e%e7%8e%b0%e7%9a%84%e5%85%b6%e4%b8%ad%e5%9c%a8%e8%af%b4%e5%88%b0-mount-namespace-%e4%b8%ad%e8%af%b4%e5%88%b0%e4%bd%bf%e7%94%a8-docker-exec-%e8%bf%9b%e5%85%a5%e6%9f%90%e4%b8%aa%e5%ae%b9%e5%99%a8%e5%90%8e%e5%8f%af%e4%bb%a5%e7%9c%8b%e5%88%b0%e4%b8%80%e4%b8%aa%e5%b4%ad%e6%96%b0%e7%9a%84%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f%e5%b0%b1%e7%b1%bb%e4%bc%bc%e4%ba%8e-ssh-%e5%88%b0%e6%9f%90%e4%b8%aa%e8%99%9a%e6%8b%9f%e6%9c%ba%e6%88%96%e8%80%85%e7%89%a9%e7%90%86%e6%9c%ba%e4%b8%8a%e5%ae%9e%e9%99%85%e4%b8%8a%e5%b0%b1%e6%98%af%e5%88%a9%e7%94%a8-linux-mount-namespace-%e9%9a%94%e7%a6%bb%e5%ae%9e%e7%8e%b0%e7%9a%84%e5%bd%93%e5%88%9b%e5%bb%ba%e4%b8%80%e4%b8%aa%e5%ae%b9%e5%99%a8%e6%97%b6linux-%e7%b3%bb%e7%bb%9f%e4%b8%8a%e5%b0%b1%e4%bc%9a%e5%88%9b%e5%bb%ba%e4%b8%80%e4%b8%aa-%e5%af%b9%e5%ba%94%e7%9a%84-mount-namespace%e9%82%a3%e4%b9%88%e8%bf%99%e4%b8%aa-mount-namespace-%e5%b0%b1%e6%98%af%e8%af%a5%e5%ae%b9%e5%99%a8%e7%9a%84%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f">#</a>
+</h5>
+<h5 id="容器的文件系统在用户视角和宿主机的文件系统没有什么区别但是其背后的原理却不同在容器里运行-df-命令可以看到在容器中根目录的文件系统类型是-overlay它不是我们在普通-linux-节点上看到的-ext4-或者-xfs-之类常见的文件系统">
+  容器的文件系统在用户视角和宿主机的文件系统没有什么区别，但是其背后的原理却不同。在容器里运行 <code>df</code> 命令，可以看到在容器中<code>根目录(/)</code>的文件系统类型是 <strong>overlay</strong>，它不是我们在普通 Linux 节点上看到的 Ext4 或者 XFS 之类常见的文件系统。
+  <a class="anchor" href="#%e5%ae%b9%e5%99%a8%e7%9a%84%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f%e5%9c%a8%e7%94%a8%e6%88%b7%e8%a7%86%e8%a7%92%e5%92%8c%e5%ae%bf%e4%b8%bb%e6%9c%ba%e7%9a%84%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f%e6%b2%a1%e6%9c%89%e4%bb%80%e4%b9%88%e5%8c%ba%e5%88%ab%e4%bd%86%e6%98%af%e5%85%b6%e8%83%8c%e5%90%8e%e7%9a%84%e5%8e%9f%e7%90%86%e5%8d%b4%e4%b8%8d%e5%90%8c%e5%9c%a8%e5%ae%b9%e5%99%a8%e9%87%8c%e8%bf%90%e8%a1%8c-df-%e5%91%bd%e4%bb%a4%e5%8f%af%e4%bb%a5%e7%9c%8b%e5%88%b0%e5%9c%a8%e5%ae%b9%e5%99%a8%e4%b8%ad%e6%a0%b9%e7%9b%ae%e5%bd%95%e7%9a%84%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f%e7%b1%bb%e5%9e%8b%e6%98%af-overlay%e5%ae%83%e4%b8%8d%e6%98%af%e6%88%91%e4%bb%ac%e5%9c%a8%e6%99%ae%e9%80%9a-linux-%e8%8a%82%e7%82%b9%e4%b8%8a%e7%9c%8b%e5%88%b0%e7%9a%84-ext4-%e6%88%96%e8%80%85-xfs-%e4%b9%8b%e7%b1%bb%e5%b8%b8%e8%a7%81%e7%9a%84%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f">#</a>
+</h5>
+<pre tabindex="0"><code>root@624d08ddaf99:~# df -h
+Filesystem      Size  Used Avail Use% Mounted on
+overlay         558G   70G  488G  13% /
+</code></pre><hr>
+<h2 id="为什么需要-overlayfs">
+  为什么需要 OverlayFS
+  <a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e9%9c%80%e8%a6%81-overlayfs">#</a>
+</h2>
+<h5 id="那么这个-overlayfs-是一个怎样的文件系统容器为什么使用这种文件系统">
+  那么这个 <strong>OverlayFS</strong> 是一个怎样的文件系统，容器为什么使用这种文件系统？
+  <a class="anchor" href="#%e9%82%a3%e4%b9%88%e8%bf%99%e4%b8%aa-overlayfs-%e6%98%af%e4%b8%80%e4%b8%aa%e6%80%8e%e6%a0%b7%e7%9a%84%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f%e5%ae%b9%e5%99%a8%e4%b8%ba%e4%bb%80%e4%b9%88%e4%bd%bf%e7%94%a8%e8%bf%99%e7%a7%8d%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f">#</a>
+</h5>
+<h5 id="我们知道虚拟机需要-iso-镜像才能启动那么每个容器也需要一个镜像才能启动然后这个镜像会包含容器运行的二进制文件库文件配置文件其他的依赖的文件等全部打包成一个-镜像文件如果使用正常的-ext4-或者-xfs-文件系统的话那么每次启动一个容器就需要把一个镜像文件下载并存储在宿主机上">
+  我们知道虚拟机需要 iso 镜像才能启动，那么每个容器也需要一个镜像才能启动。然后这个镜像会包含容器运行的二进制文件、库文件、配置文件，其他的依赖的文件等全部打包成一个 镜像文件。如果使用正常的 EXT4 或者 XFS 文件系统的话，那么每次启动一个容器，就需要把一个镜像文件下载并存储在宿主机上。
+  <a class="anchor" href="#%e6%88%91%e4%bb%ac%e7%9f%a5%e9%81%93%e8%99%9a%e6%8b%9f%e6%9c%ba%e9%9c%80%e8%a6%81-iso-%e9%95%9c%e5%83%8f%e6%89%8d%e8%83%bd%e5%90%af%e5%8a%a8%e9%82%a3%e4%b9%88%e6%af%8f%e4%b8%aa%e5%ae%b9%e5%99%a8%e4%b9%9f%e9%9c%80%e8%a6%81%e4%b8%80%e4%b8%aa%e9%95%9c%e5%83%8f%e6%89%8d%e8%83%bd%e5%90%af%e5%8a%a8%e7%84%b6%e5%90%8e%e8%bf%99%e4%b8%aa%e9%95%9c%e5%83%8f%e4%bc%9a%e5%8c%85%e5%90%ab%e5%ae%b9%e5%99%a8%e8%bf%90%e8%a1%8c%e7%9a%84%e4%ba%8c%e8%bf%9b%e5%88%b6%e6%96%87%e4%bb%b6%e5%ba%93%e6%96%87%e4%bb%b6%e9%85%8d%e7%bd%ae%e6%96%87%e4%bb%b6%e5%85%b6%e4%bb%96%e7%9a%84%e4%be%9d%e8%b5%96%e7%9a%84%e6%96%87%e4%bb%b6%e7%ad%89%e5%85%a8%e9%83%a8%e6%89%93%e5%8c%85%e6%88%90%e4%b8%80%e4%b8%aa-%e9%95%9c%e5%83%8f%e6%96%87%e4%bb%b6%e5%a6%82%e6%9e%9c%e4%bd%bf%e7%94%a8%e6%ad%a3%e5%b8%b8%e7%9a%84-ext4-%e6%88%96%e8%80%85-xfs-%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f%e7%9a%84%e8%af%9d%e9%82%a3%e4%b9%88%e6%af%8f%e6%ac%a1%e5%90%af%e5%8a%a8%e4%b8%80%e4%b8%aa%e5%ae%b9%e5%99%a8%e5%b0%b1%e9%9c%80%e8%a6%81%e6%8a%8a%e4%b8%80%e4%b8%aa%e9%95%9c%e5%83%8f%e6%96%87%e4%bb%b6%e4%b8%8b%e8%bd%bd%e5%b9%b6%e5%ad%98%e5%82%a8%e5%9c%a8%e5%ae%bf%e4%b8%bb%e6%9c%ba%e4%b8%8a">#</a>
+</h5>
+<h5 id="比如假设一个镜像文件的大小是-500mb那么-100-个容器的话就需要下载-500mb100-50gb-的文件并且占用-50gb-的磁盘空间然而在这-50gb-的磁盘空间中大部分数据都是重复的因为大部分数据都是镜像的-base-镜像而且这些-base-镜像基本都是只读的在容器运行时不会变动">
+  比如：假设一个镜像文件的大小是 500MB，那么 100 个容器的话，就需要下载 <code>500MB*100= 50GB</code> 的文件，并且占用 50GB 的磁盘空间。然而在这 50GB 的磁盘空间中，大部分数据都是重复的，因为大部分数据都是镜像的 base 镜像，而且这些 base 镜像基本都是只读的，在容器运行时不会变动。
+  <a class="anchor" href="#%e6%af%94%e5%a6%82%e5%81%87%e8%ae%be%e4%b8%80%e4%b8%aa%e9%95%9c%e5%83%8f%e6%96%87%e4%bb%b6%e7%9a%84%e5%a4%a7%e5%b0%8f%e6%98%af-500mb%e9%82%a3%e4%b9%88-100-%e4%b8%aa%e5%ae%b9%e5%99%a8%e7%9a%84%e8%af%9d%e5%b0%b1%e9%9c%80%e8%a6%81%e4%b8%8b%e8%bd%bd-500mb100-50gb-%e7%9a%84%e6%96%87%e4%bb%b6%e5%b9%b6%e4%b8%94%e5%8d%a0%e7%94%a8-50gb-%e7%9a%84%e7%a3%81%e7%9b%98%e7%a9%ba%e9%97%b4%e7%84%b6%e8%80%8c%e5%9c%a8%e8%bf%99-50gb-%e7%9a%84%e7%a3%81%e7%9b%98%e7%a9%ba%e9%97%b4%e4%b8%ad%e5%a4%a7%e9%83%a8%e5%88%86%e6%95%b0%e6%8d%ae%e9%83%bd%e6%98%af%e9%87%8d%e5%a4%8d%e7%9a%84%e5%9b%a0%e4%b8%ba%e5%a4%a7%e9%83%a8%e5%88%86%e6%95%b0%e6%8d%ae%e9%83%bd%e6%98%af%e9%95%9c%e5%83%8f%e7%9a%84-base-%e9%95%9c%e5%83%8f%e8%80%8c%e4%b8%94%e8%bf%99%e4%ba%9b-base-%e9%95%9c%e5%83%8f%e5%9f%ba%e6%9c%ac%e9%83%bd%e6%98%af%e5%8f%aa%e8%af%bb%e7%9a%84%e5%9c%a8%e5%ae%b9%e5%99%a8%e8%bf%90%e8%a1%8c%e6%97%b6%e4%b8%8d%e4%bc%9a%e5%8f%98%e5%8a%a8">#</a>
+</h5>
+<h5 id="如说这-100-个容器镜像都是基于-ubuntu1804-的每个容器镜像只是额外复制了-50mb-左右自己的应用程序到-ubuntu-1804-里那么就是说在总共-50gb-的数据里有-90-的数据是冗余的">
+  如说这 100 个容器镜像都是基于 ubuntu:18.04 的，每个容器镜像只是额外复制了 50MB 左右自己的应用程序到 ubuntu: 18.04 里，那么就是说在总共 50GB 的数据里，有 90% 的数据是冗余的。
+  <a class="anchor" href="#%e5%a6%82%e8%af%b4%e8%bf%99-100-%e4%b8%aa%e5%ae%b9%e5%99%a8%e9%95%9c%e5%83%8f%e9%83%bd%e6%98%af%e5%9f%ba%e4%ba%8e-ubuntu1804-%e7%9a%84%e6%af%8f%e4%b8%aa%e5%ae%b9%e5%99%a8%e9%95%9c%e5%83%8f%e5%8f%aa%e6%98%af%e9%a2%9d%e5%a4%96%e5%a4%8d%e5%88%b6%e4%ba%86-50mb-%e5%b7%a6%e5%8f%b3%e8%87%aa%e5%b7%b1%e7%9a%84%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e5%88%b0-ubuntu-1804-%e9%87%8c%e9%82%a3%e4%b9%88%e5%b0%b1%e6%98%af%e8%af%b4%e5%9c%a8%e6%80%bb%e5%85%b1-50gb-%e7%9a%84%e6%95%b0%e6%8d%ae%e9%87%8c%e6%9c%89-90-%e7%9a%84%e6%95%b0%e6%8d%ae%e6%98%af%e5%86%97%e4%bd%99%e7%9a%84">#</a>
+</h5>
+<h5 id="所以有没有一种文件系统可以达到用户的应用程序可以重复利用-ubuntu1804-也就是能够有效地减少磁盘上冗余的镜像数据同时减少冗余的镜像数据在网络上的传输这类的文件系统被称为-unionfs下图就是-unionfs-解决问题的实现">
+  所以有没有一种文件系统可以达到用户的应用程序可以重复利用 ubuntu:18.04 ？也就是能够有效地减少磁盘上冗余的镜像数据，同时减少冗余的镜像数据在网络上的传输。这类的文件系统被称为 <strong>UnionFS</strong>。下图就是 <strong>UnionFS</strong> 解决问题的实现。
+  <a class="anchor" href="#%e6%89%80%e4%bb%a5%e6%9c%89%e6%b2%a1%e6%9c%89%e4%b8%80%e7%a7%8d%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f%e5%8f%af%e4%bb%a5%e8%be%be%e5%88%b0%e7%94%a8%e6%88%b7%e7%9a%84%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e5%8f%af%e4%bb%a5%e9%87%8d%e5%a4%8d%e5%88%a9%e7%94%a8-ubuntu1804-%e4%b9%9f%e5%b0%b1%e6%98%af%e8%83%bd%e5%a4%9f%e6%9c%89%e6%95%88%e5%9c%b0%e5%87%8f%e5%b0%91%e7%a3%81%e7%9b%98%e4%b8%8a%e5%86%97%e4%bd%99%e7%9a%84%e9%95%9c%e5%83%8f%e6%95%b0%e6%8d%ae%e5%90%8c%e6%97%b6%e5%87%8f%e5%b0%91%e5%86%97%e4%bd%99%e7%9a%84%e9%95%9c%e5%83%8f%e6%95%b0%e6%8d%ae%e5%9c%a8%e7%bd%91%e7%bb%9c%e4%b8%8a%e7%9a%84%e4%bc%a0%e8%be%93%e8%bf%99%e7%b1%bb%e7%9a%84%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f%e8%a2%ab%e7%a7%b0%e4%b8%ba-unionfs%e4%b8%8b%e5%9b%be%e5%b0%b1%e6%98%af-unionfs-%e8%a7%a3%e5%86%b3%e9%97%ae%e9%a2%98%e7%9a%84%e5%ae%9e%e7%8e%b0">#</a>
+</h5>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191550850.png" alt="image-20240319155030778" /></p>
+<h5 id="unionfs-这类文件系统实现的主要功能是把多个目录处于不同的分区一起挂载mount在一个目录下这种多目录挂载的方式正好可以解决我们刚才说的容器镜像的问题">
+  <strong>UnionFS</strong> 这类文件系统实现的主要功能是把多个目录（处于不同的分区）一起挂载（<code>mount</code>）在一个目录下。这种多目录挂载的方式，正好可以解决我们刚才说的容器镜像的问题。
+  <a class="anchor" href="#unionfs-%e8%bf%99%e7%b1%bb%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f%e5%ae%9e%e7%8e%b0%e7%9a%84%e4%b8%bb%e8%a6%81%e5%8a%9f%e8%83%bd%e6%98%af%e6%8a%8a%e5%a4%9a%e4%b8%aa%e7%9b%ae%e5%bd%95%e5%a4%84%e4%ba%8e%e4%b8%8d%e5%90%8c%e7%9a%84%e5%88%86%e5%8c%ba%e4%b8%80%e8%b5%b7%e6%8c%82%e8%bd%bdmount%e5%9c%a8%e4%b8%80%e4%b8%aa%e7%9b%ae%e5%bd%95%e4%b8%8b%e8%bf%99%e7%a7%8d%e5%a4%9a%e7%9b%ae%e5%bd%95%e6%8c%82%e8%bd%bd%e7%9a%84%e6%96%b9%e5%bc%8f%e6%ad%a3%e5%a5%bd%e5%8f%af%e4%bb%a5%e8%a7%a3%e5%86%b3%e6%88%91%e4%bb%ac%e5%88%9a%e6%89%8d%e8%af%b4%e7%9a%84%e5%ae%b9%e5%99%a8%e9%95%9c%e5%83%8f%e7%9a%84%e9%97%ae%e9%a2%98">#</a>
+</h5>
+<h5 id="比如我们可以把-ubuntu1804-这个基础镜像的文件放在一个目录-ubuntu1804-下容器自己额外的程序文件-app_1_bin-放在-app_1-目录下">
+  比如，我们可以把 ubuntu18.04 这个基础镜像的文件放在一个目录 ubuntu18.04/ 下，容器自己额外的程序文件 <code>app_1_bin</code> 放在 <code>app_1/</code> 目录下。
+  <a class="anchor" href="#%e6%af%94%e5%a6%82%e6%88%91%e4%bb%ac%e5%8f%af%e4%bb%a5%e6%8a%8a-ubuntu1804-%e8%bf%99%e4%b8%aa%e5%9f%ba%e7%a1%80%e9%95%9c%e5%83%8f%e7%9a%84%e6%96%87%e4%bb%b6%e6%94%be%e5%9c%a8%e4%b8%80%e4%b8%aa%e7%9b%ae%e5%bd%95-ubuntu1804-%e4%b8%8b%e5%ae%b9%e5%99%a8%e8%87%aa%e5%b7%b1%e9%a2%9d%e5%a4%96%e7%9a%84%e7%a8%8b%e5%ba%8f%e6%96%87%e4%bb%b6-app_1_bin-%e6%94%be%e5%9c%a8-app_1-%e7%9b%ae%e5%bd%95%e4%b8%8b">#</a>
+</h5>
+<h5 id="然后我们把这两个目录挂载到-container_1-这个目录下作为容器-1-看到的文件系统对于容器-2就可以把-ubuntu1804-和-app_2-两个目录一起挂载到-container_2-的目录下这样在节点上我们只要保留一份-ubuntu1804-的文件就可以了可参考下图">
+  然后，我们把这两个目录挂载到 <code>container_1/</code> 这个目录下，作为<strong>容器 1</strong> 看到的文件系统；对于<strong>容器 2</strong>，就可以把 <code>ubuntu18.04/</code> 和 <code>app_2/</code> 两个目录一起挂载到 <code>container_2</code> 的目录下。这样在节点上我们只要保留一份 ubuntu18.04 的文件就可以了。可参考下图：
+  <a class="anchor" href="#%e7%84%b6%e5%90%8e%e6%88%91%e4%bb%ac%e6%8a%8a%e8%bf%99%e4%b8%a4%e4%b8%aa%e7%9b%ae%e5%bd%95%e6%8c%82%e8%bd%bd%e5%88%b0-container_1-%e8%bf%99%e4%b8%aa%e7%9b%ae%e5%bd%95%e4%b8%8b%e4%bd%9c%e4%b8%ba%e5%ae%b9%e5%99%a8-1-%e7%9c%8b%e5%88%b0%e7%9a%84%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f%e5%af%b9%e4%ba%8e%e5%ae%b9%e5%99%a8-2%e5%b0%b1%e5%8f%af%e4%bb%a5%e6%8a%8a-ubuntu1804-%e5%92%8c-app_2-%e4%b8%a4%e4%b8%aa%e7%9b%ae%e5%bd%95%e4%b8%80%e8%b5%b7%e6%8c%82%e8%bd%bd%e5%88%b0-container_2-%e7%9a%84%e7%9b%ae%e5%bd%95%e4%b8%8b%e8%bf%99%e6%a0%b7%e5%9c%a8%e8%8a%82%e7%82%b9%e4%b8%8a%e6%88%91%e4%bb%ac%e5%8f%aa%e8%a6%81%e4%bf%9d%e7%95%99%e4%b8%80%e4%bb%bd-ubuntu1804-%e7%9a%84%e6%96%87%e4%bb%b6%e5%b0%b1%e5%8f%af%e4%bb%a5%e4%ba%86%e5%8f%af%e5%8f%82%e8%80%83%e4%b8%8b%e5%9b%be">#</a>
+</h5>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191550155.png" alt="image-20240319155046111" /></p>
+<hr>
+<h2 id="overlayfs">
+  OverlayFS
+  <a class="anchor" href="#overlayfs">#</a>
+</h2>
+<h5 id="unionfs-类似的有很多种实现docker-支持-overlayfsfuse-overlayfsdevicemapperbtrfszfsvfsaufs已废弃-前面我们在运行-df-的时候看到的文件系统类型-overlay-指的就是-overlayfs">
+  <strong>UnionFS</strong> 类似的有很多种实现，Docker 支持 <strong>OverlayFS、Fuse-overlayfs、Devicemapper、Btrfs、ZFS、VFS、AUFS(已废弃)</strong> 。前面我们在运行 <code>df</code> 的时候，看到的文件系统类型 <strong>overlay</strong> 指的就是 <strong>OverlayFS</strong>。
+  <a class="anchor" href="#unionfs-%e7%b1%bb%e4%bc%bc%e7%9a%84%e6%9c%89%e5%be%88%e5%a4%9a%e7%a7%8d%e5%ae%9e%e7%8e%b0docker-%e6%94%af%e6%8c%81-overlayfsfuse-overlayfsdevicemapperbtrfszfsvfsaufs%e5%b7%b2%e5%ba%9f%e5%bc%83-%e5%89%8d%e9%9d%a2%e6%88%91%e4%bb%ac%e5%9c%a8%e8%bf%90%e8%a1%8c-df-%e7%9a%84%e6%97%b6%e5%80%99%e7%9c%8b%e5%88%b0%e7%9a%84%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f%e7%b1%bb%e5%9e%8b-overlay-%e6%8c%87%e7%9a%84%e5%b0%b1%e6%98%af-overlayfs">#</a>
+</h5>
+<h5 id="在-linux-内核-318-版本中overlayfs-代码正式合入-linux-内核的主分支在这之后overlayfs-也就逐渐成为各个主流-linux-发行版本里缺省使用的容器文件系统了">
+  在 Linux 内核 3.18 版本中，<strong>OverlayFS</strong> 代码正式合入 Linux 内核的主分支。在这之后，<strong>OverlayFS</strong> 也就逐渐成为各个主流 Linux 发行版本里缺省使用的容器文件系统了。
+  <a class="anchor" href="#%e5%9c%a8-linux-%e5%86%85%e6%a0%b8-318-%e7%89%88%e6%9c%ac%e4%b8%adoverlayfs-%e4%bb%a3%e7%a0%81%e6%ad%a3%e5%bc%8f%e5%90%88%e5%85%a5-linux-%e5%86%85%e6%a0%b8%e7%9a%84%e4%b8%bb%e5%88%86%e6%94%af%e5%9c%a8%e8%bf%99%e4%b9%8b%e5%90%8eoverlayfs-%e4%b9%9f%e5%b0%b1%e9%80%90%e6%b8%90%e6%88%90%e4%b8%ba%e5%90%84%e4%b8%aa%e4%b8%bb%e6%b5%81-linux-%e5%8f%91%e8%a1%8c%e7%89%88%e6%9c%ac%e9%87%8c%e7%bc%ba%e7%9c%81%e4%bd%bf%e7%94%a8%e7%9a%84%e5%ae%b9%e5%99%a8%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f%e4%ba%86">#</a>
+</h5>
+<h5 id="overlayfs-工作时由四个目录组成">
+  <strong>OverlayFS</strong> 工作时由四个目录组成：
+  <a class="anchor" href="#overlayfs-%e5%b7%a5%e4%bd%9c%e6%97%b6%e7%94%b1%e5%9b%9b%e4%b8%aa%e7%9b%ae%e5%bd%95%e7%bb%84%e6%88%90">#</a>
+</h5>
+<ul>
+<li>
+<h5 id="-lowerdir只读层该层无法修改可以指定多个-lower">
+  • <strong>lowerdir</strong>：只读层，该层无法修改，可以指定多个 lower
+  <a class="anchor" href="#-lowerdir%e5%8f%aa%e8%af%bb%e5%b1%82%e8%af%a5%e5%b1%82%e6%97%a0%e6%b3%95%e4%bf%ae%e6%94%b9%e5%8f%af%e4%bb%a5%e6%8c%87%e5%ae%9a%e5%a4%9a%e4%b8%aa-lower">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-upperdir读写层容器数据修改保存的地方">
+  • <strong>upperdir</strong>：读写层，容器数据修改保存的地方
+  <a class="anchor" href="#-upperdir%e8%af%bb%e5%86%99%e5%b1%82%e5%ae%b9%e5%99%a8%e6%95%b0%e6%8d%ae%e4%bf%ae%e6%94%b9%e4%bf%9d%e5%ad%98%e7%9a%84%e5%9c%b0%e6%96%b9">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-merged最终呈现给用户的目录">
+  • <strong>merged</strong>：最终呈现给用户的目录
+  <a class="anchor" href="#-merged%e6%9c%80%e7%bb%88%e5%91%88%e7%8e%b0%e7%bb%99%e7%94%a8%e6%88%b7%e7%9a%84%e7%9b%ae%e5%bd%95">#</a>
+</h5>
+</li>
+<li>
+<h5 id="-workdir工作目录指-overlayfs-工作时临时使用的目录保证文件操作的原子性挂载后会被清空">
+  • <strong>workdir</strong>：工作目录，指 <strong>OverlayFS</strong> 工作时临时使用的目录，保证文件操作的原子性，挂载后会被清空
+  <a class="anchor" href="#-workdir%e5%b7%a5%e4%bd%9c%e7%9b%ae%e5%bd%95%e6%8c%87-overlayfs-%e5%b7%a5%e4%bd%9c%e6%97%b6%e4%b8%b4%e6%97%b6%e4%bd%bf%e7%94%a8%e7%9a%84%e7%9b%ae%e5%bd%95%e4%bf%9d%e8%af%81%e6%96%87%e4%bb%b6%e6%93%8d%e4%bd%9c%e7%9a%84%e5%8e%9f%e5%ad%90%e6%80%a7%e6%8c%82%e8%bd%bd%e5%90%8e%e4%bc%9a%e8%a2%ab%e6%b8%85%e7%a9%ba">#</a>
+</h5>
+</li>
+</ul>
+<h3 id="如何使用">
+  如何使用
+  <a class="anchor" href="#%e5%a6%82%e4%bd%95%e4%bd%bf%e7%94%a8">#</a>
+</h3>
+<h5 id="overlayfs-实现的功能就是将-lower-层和-upper-层联合挂载到-merged-层使得-merged-层拥有-lower-和-upper-层所有文件目录">
+  <strong>OverlayFS</strong> 实现的功能就是将 lower 层和 upper 层联合挂载到 merged 层，使得 merged 层拥有 lower 和 upper 层所有文件、目录。
+  <a class="anchor" href="#overlayfs-%e5%ae%9e%e7%8e%b0%e7%9a%84%e5%8a%9f%e8%83%bd%e5%b0%b1%e6%98%af%e5%b0%86-lower-%e5%b1%82%e5%92%8c-upper-%e5%b1%82%e8%81%94%e5%90%88%e6%8c%82%e8%bd%bd%e5%88%b0-merged-%e5%b1%82%e4%bd%bf%e5%be%97-merged-%e5%b1%82%e6%8b%a5%e6%9c%89-lower-%e5%92%8c-upper-%e5%b1%82%e6%89%80%e6%9c%89%e6%96%87%e4%bb%b6%e7%9b%ae%e5%bd%95">#</a>
+</h5>
+<pre tabindex="0"><code>$ mkdir upper lower_1 lower_2 merged work
+$ echo &#34;I&#39;m from lower_1&#34; &gt; lower_1/in_lower_1.txt 
+$ echo &#34;I&#39;m from lower_2&#34; &gt; lower_2/in_lower_2.txt 
+$ echo &#34;I&#39;m from upper&#34; &gt; upper/in_upper.txt
+$ # `in_both` is in both directories
+$ echo &#34;I&#39;m from lower_1&#34; &gt; lower_1/in_both.txt 
+$ echo &#34;I&#39;m from lower_2&#34; &gt; lower_2/in_both.txt 
+$ echo &#34;I&#39;m from upper&#34; &gt; upper/in_both.txt
+</code></pre><h5 id="只需使用-mount-命令即可将-lowerupper-挂载到-merged用法mount--t-overlay-overlay--o-lowerdirlowerdir1-dirlowerdir2-dirlowerdir3-dirupperdirupper-dirworkdirwork-dir-merded-dir">
+  只需使用 <code>mount</code> 命令即可将 lower、upper 挂载到 merged，用法：<code>mount -t overlay overlay -o lowerdir=&lt;lowerdir1-dir&gt;:&lt;lowerdir2-dir&gt;:&lt;lowerdir3-dir&gt;,upperdir=&lt;upper-dir&gt;,workdir=&lt;work-dir&gt; &lt;merded-dir&gt;</code>
+  <a class="anchor" href="#%e5%8f%aa%e9%9c%80%e4%bd%bf%e7%94%a8-mount-%e5%91%bd%e4%bb%a4%e5%8d%b3%e5%8f%af%e5%b0%86-lowerupper-%e6%8c%82%e8%bd%bd%e5%88%b0-merged%e7%94%a8%e6%b3%95mount--t-overlay-overlay--o-lowerdirlowerdir1-dirlowerdir2-dirlowerdir3-dirupperdirupper-dirworkdirwork-dir-merded-dir">#</a>
+</h5>
+<pre tabindex="0"><code>$ mount -t overlay overlay -o lowerdir=./lower_1:./lower_2,upperdir=./upper,workdir=./work ./merged
+</code></pre><h5 id="最终实现的效果就是可以在-merged-目录下看到-in_lower_1txtin_lower_2txtin_uppertxtin_bothtxt">
+  最终实现的效果就是可以在 <code>./merged</code> 目录下看到 <code>in_lower_1.txt、in_lower_2.txt、in_upper.txt、in_both.txt</code>
+  <a class="anchor" href="#%e6%9c%80%e7%bb%88%e5%ae%9e%e7%8e%b0%e7%9a%84%e6%95%88%e6%9e%9c%e5%b0%b1%e6%98%af%e5%8f%af%e4%bb%a5%e5%9c%a8-merged-%e7%9b%ae%e5%bd%95%e4%b8%8b%e7%9c%8b%e5%88%b0-in_lower_1txtin_lower_2txtin_uppertxtin_bothtxt">#</a>
+</h5>
+<pre tabindex="0"><code>$ find lower_1/ lower_2/ upper/ merged/
+lower_1/
+lower_1/in_lower_1.txt
+lower_1/in_both.txt
+lower_2/
+lower_2/in_lower_2.txt
+lower_2/in_both.txt
+upper/
+upper/in_upper.txt
+upper/in_both.txt
+merged/
+merged/in_lower_2.txt
+merged/in_both.txt
+merged/in_upper.txt
+merged/in_lower_1.txt
+</code></pre><h5 id="具体挂载实现可参考下图">
+  具体挂载实现可参考下图：
+  <a class="anchor" href="#%e5%85%b7%e4%bd%93%e6%8c%82%e8%bd%bd%e5%ae%9e%e7%8e%b0%e5%8f%af%e5%8f%82%e8%80%83%e4%b8%8b%e5%9b%be">#</a>
+</h5>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191551124.png" alt="image-20240319155113075" /></p>
+<h5 id="上面我们在-upper-目录lower_1-目录lower_2-目录都创建了-in_bothtxt同时写入不同的内容">
+  上面我们在 upper 目录、lower_1 目录、lower_2 目录都创建了 in_both.txt，同时写入不同的内容。
+  <a class="anchor" href="#%e4%b8%8a%e9%9d%a2%e6%88%91%e4%bb%ac%e5%9c%a8-upper-%e7%9b%ae%e5%bd%95lower_1-%e7%9b%ae%e5%bd%95lower_2-%e7%9b%ae%e5%bd%95%e9%83%bd%e5%88%9b%e5%bb%ba%e4%ba%86-in_bothtxt%e5%90%8c%e6%97%b6%e5%86%99%e5%85%a5%e4%b8%8d%e5%90%8c%e7%9a%84%e5%86%85%e5%ae%b9">#</a>
+</h5>
+<h5 id="最终挂载时-upper-层的文件会覆盖-lower-层的文件所以-mergedin_uppertxt-内容应该是-im-from-upper">
+  最终挂载时 upper 层的文件会覆盖 lower 层的文件，所以 <code>merged/in_upper.txt</code> 内容应该是 <code>I'm from upper!</code>
+  <a class="anchor" href="#%e6%9c%80%e7%bb%88%e6%8c%82%e8%bd%bd%e6%97%b6-upper-%e5%b1%82%e7%9a%84%e6%96%87%e4%bb%b6%e4%bc%9a%e8%a6%86%e7%9b%96-lower-%e5%b1%82%e7%9a%84%e6%96%87%e4%bb%b6%e6%89%80%e4%bb%a5-mergedin_uppertxt-%e5%86%85%e5%ae%b9%e5%ba%94%e8%af%a5%e6%98%af-im-from-upper">#</a>
+</h5>
+<pre tabindex="0"><code>$ cat merged/in_both.txt 
+&#34;I&#39;m from upper
+</code></pre><blockquote>
+<h5 id="当我们挂载完成-overlayfs-以后对文件系统的任何操作都只能在-merge-dir-中进行用户不允许再直接或间接的到底层文件系统的原始-lowerdir-或-upperdir-目录下修改文件或目录否则可能会出现一些无法预料的后果kernel-crash除外">
+  当我们挂载完成 <strong>OverlayFS</strong> 以后，对文件系统的任何操作都只能在 merge dir 中进行，用户不允许再直接或间接的到底层文件系统的原始 lowerdir 或 upperdir 目录下修改文件或目录，否则可能会出现一些无法预料的后果（kernel crash除外）。
+  <a class="anchor" href="#%e5%bd%93%e6%88%91%e4%bb%ac%e6%8c%82%e8%bd%bd%e5%ae%8c%e6%88%90-overlayfs-%e4%bb%a5%e5%90%8e%e5%af%b9%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f%e7%9a%84%e4%bb%bb%e4%bd%95%e6%93%8d%e4%bd%9c%e9%83%bd%e5%8f%aa%e8%83%bd%e5%9c%a8-merge-dir-%e4%b8%ad%e8%bf%9b%e8%a1%8c%e7%94%a8%e6%88%b7%e4%b8%8d%e5%85%81%e8%ae%b8%e5%86%8d%e7%9b%b4%e6%8e%a5%e6%88%96%e9%97%b4%e6%8e%a5%e7%9a%84%e5%88%b0%e5%ba%95%e5%b1%82%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f%e7%9a%84%e5%8e%9f%e5%a7%8b-lowerdir-%e6%88%96-upperdir-%e7%9b%ae%e5%bd%95%e4%b8%8b%e4%bf%ae%e6%94%b9%e6%96%87%e4%bb%b6%e6%88%96%e7%9b%ae%e5%bd%95%e5%90%a6%e5%88%99%e5%8f%af%e8%83%bd%e4%bc%9a%e5%87%ba%e7%8e%b0%e4%b8%80%e4%ba%9b%e6%97%a0%e6%b3%95%e9%a2%84%e6%96%99%e7%9a%84%e5%90%8e%e6%9e%9ckernel-crash%e9%99%a4%e5%a4%96">#</a>
+</h5></blockquote>
+<h5 id="上面说到-overlayfs-文件系统的-upper-层是保存更新的文件就是说我们在-merged-层创建修改删除文件目录时应该都发生在-upper-层下面看看在-overlayfs-删除新建更新文件是如何实现的">
+  上面说到 <strong>OverlayFS</strong> 文件系统的 upper 层是保存更新的文件，就是说我们在 merged 层创建、修改、删除文件、目录时应该都发生在 upper 层。下面看看在 OverlayFS 删除、新建、更新文件是如何实现的？
+  <a class="anchor" href="#%e4%b8%8a%e9%9d%a2%e8%af%b4%e5%88%b0-overlayfs-%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f%e7%9a%84-upper-%e5%b1%82%e6%98%af%e4%bf%9d%e5%ad%98%e6%9b%b4%e6%96%b0%e7%9a%84%e6%96%87%e4%bb%b6%e5%b0%b1%e6%98%af%e8%af%b4%e6%88%91%e4%bb%ac%e5%9c%a8-merged-%e5%b1%82%e5%88%9b%e5%bb%ba%e4%bf%ae%e6%94%b9%e5%88%a0%e9%99%a4%e6%96%87%e4%bb%b6%e7%9b%ae%e5%bd%95%e6%97%b6%e5%ba%94%e8%af%a5%e9%83%bd%e5%8f%91%e7%94%9f%e5%9c%a8-upper-%e5%b1%82%e4%b8%8b%e9%9d%a2%e7%9c%8b%e7%9c%8b%e5%9c%a8-overlayfs-%e5%88%a0%e9%99%a4%e6%96%b0%e5%bb%ba%e6%9b%b4%e6%96%b0%e6%96%87%e4%bb%b6%e6%98%af%e5%a6%82%e4%bd%95%e5%ae%9e%e7%8e%b0%e7%9a%84">#</a>
+</h5>
+<h3 id="删除文件">
+  删除文件
+  <a class="anchor" href="#%e5%88%a0%e9%99%a4%e6%96%87%e4%bb%b6">#</a>
+</h3>
+<h5 id="在-merged-目录删除文件或者目录时存在三种情况">
+  在 merged 目录删除文件或者目录时，存在三种情况：
+  <a class="anchor" href="#%e5%9c%a8-merged-%e7%9b%ae%e5%bd%95%e5%88%a0%e9%99%a4%e6%96%87%e4%bb%b6%e6%88%96%e8%80%85%e7%9b%ae%e5%bd%95%e6%97%b6%e5%ad%98%e5%9c%a8%e4%b8%89%e7%a7%8d%e6%83%85%e5%86%b5">#</a>
+</h5>
+<h4 id="删除来源于-upper-层-的文件">
+  删除来源于 upper 层 的文件
+  <a class="anchor" href="#%e5%88%a0%e9%99%a4%e6%9d%a5%e6%ba%90%e4%ba%8e-upper-%e5%b1%82-%e7%9a%84%e6%96%87%e4%bb%b6">#</a>
+</h4>
+<h5 id="upper-层用于保存文件的更新那么这个文件在-upper-层消失">
+  upper 层用于保存文件的更新，那么这个文件在 upper 层消失
+  <a class="anchor" href="#upper-%e5%b1%82%e7%94%a8%e4%ba%8e%e4%bf%9d%e5%ad%98%e6%96%87%e4%bb%b6%e7%9a%84%e6%9b%b4%e6%96%b0%e9%82%a3%e4%b9%88%e8%bf%99%e4%b8%aa%e6%96%87%e4%bb%b6%e5%9c%a8-upper-%e5%b1%82%e6%b6%88%e5%a4%b1">#</a>
+</h5>
+<pre tabindex="0"><code>$ cd merged/
+$ rm -rf in_upper.txt 
+# in_upper.txt 已经删除
+$ ls
+in_both.txt  in_lower_1.txt  in_lower_2.txt  new_file
+# 发现 upper 层 in_upper.txt 也消失了
+$ ls -l ../upper/
+总用量 8
+-rw-r--r--. 1 root root 15 11月  6 20:16 in_both.txt
+-rw-r--r--. 1 root root 12 11月  6 20:07 new_file
+</code></pre><h4 id="删除来源于-lower-层的文件">
+  删除来源于 lower 层的文件
+  <a class="anchor" href="#%e5%88%a0%e9%99%a4%e6%9d%a5%e6%ba%90%e4%ba%8e-lower-%e5%b1%82%e7%9a%84%e6%96%87%e4%bb%b6">#</a>
+</h4>
+<h5 id="lower-层是只读层不允许被修改所以删除该层文件并不会在-lower-层消失只不过会在-upper-层创建一个-whiteout-文件标识这个文件已经删除在-merged-层起到删除的效果">
+  lower 层是只读层，不允许被修改，所以删除该层文件并不会在 lower 层消失，只不过会在 upper 层创建一个 <strong>Whiteout 文件</strong>，标识这个文件已经删除，在 merged 层起到删除的效果。
+  <a class="anchor" href="#lower-%e5%b1%82%e6%98%af%e5%8f%aa%e8%af%bb%e5%b1%82%e4%b8%8d%e5%85%81%e8%ae%b8%e8%a2%ab%e4%bf%ae%e6%94%b9%e6%89%80%e4%bb%a5%e5%88%a0%e9%99%a4%e8%af%a5%e5%b1%82%e6%96%87%e4%bb%b6%e5%b9%b6%e4%b8%8d%e4%bc%9a%e5%9c%a8-lower-%e5%b1%82%e6%b6%88%e5%a4%b1%e5%8f%aa%e4%b8%8d%e8%bf%87%e4%bc%9a%e5%9c%a8-upper-%e5%b1%82%e5%88%9b%e5%bb%ba%e4%b8%80%e4%b8%aa-whiteout-%e6%96%87%e4%bb%b6%e6%a0%87%e8%af%86%e8%bf%99%e4%b8%aa%e6%96%87%e4%bb%b6%e5%b7%b2%e7%bb%8f%e5%88%a0%e9%99%a4%e5%9c%a8-merged-%e5%b1%82%e8%b5%b7%e5%88%b0%e5%88%a0%e9%99%a4%e7%9a%84%e6%95%88%e6%9e%9c">#</a>
+</h5>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191551462.png" alt="image-20240319155136409" /></p>
+<h5 id="whiteout-文件在用户删除文件时创建用于屏蔽底层的同名文件同时该文件在-merge-层是不可见的所以用户就看不到被删除的文件或目录了whiteout-文件并非普通文件而是主次设备号都为-0-的字符设备-可以通过-mknod-name-c-0-0-命令手动创建-当用户在-merge-层通过-ls-命令-将通过-readddir-系统调用检查父目录的目录项时overlayfs-会自动过过滤掉和-whiteout-文件自身以及和它同名的-lower-层文件和目录达到了隐藏文件的目的让用户以为文件已经被删除了">
+  <strong>Whiteout 文件</strong>在用户删除文件时创建，用于屏蔽底层的同名文件，同时该文件在 merge 层是不可见的，所以用户就看不到被删除的文件或目录了。<strong>whiteout 文件</strong>并非普通文件，而是主次设备号都为 0 的<strong>字符设备(</strong> 可以通过 <code>mknod &lt;name&gt; c 0 0</code> 命令手动创建 )，当用户在 merge 层通过 <code>ls</code> 命令( 将通过 <code>readddir</code> 系统调用）检查父目录的目录项时，<strong>OverlayFS</strong> 会自动过过滤掉和 <strong>whiteout 文件</strong>自身以及和它同名的 lower 层文件和目录，达到了隐藏文件的目的，让用户以为文件已经被删除了。
+  <a class="anchor" href="#whiteout-%e6%96%87%e4%bb%b6%e5%9c%a8%e7%94%a8%e6%88%b7%e5%88%a0%e9%99%a4%e6%96%87%e4%bb%b6%e6%97%b6%e5%88%9b%e5%bb%ba%e7%94%a8%e4%ba%8e%e5%b1%8f%e8%94%bd%e5%ba%95%e5%b1%82%e7%9a%84%e5%90%8c%e5%90%8d%e6%96%87%e4%bb%b6%e5%90%8c%e6%97%b6%e8%af%a5%e6%96%87%e4%bb%b6%e5%9c%a8-merge-%e5%b1%82%e6%98%af%e4%b8%8d%e5%8f%af%e8%a7%81%e7%9a%84%e6%89%80%e4%bb%a5%e7%94%a8%e6%88%b7%e5%b0%b1%e7%9c%8b%e4%b8%8d%e5%88%b0%e8%a2%ab%e5%88%a0%e9%99%a4%e7%9a%84%e6%96%87%e4%bb%b6%e6%88%96%e7%9b%ae%e5%bd%95%e4%ba%86whiteout-%e6%96%87%e4%bb%b6%e5%b9%b6%e9%9d%9e%e6%99%ae%e9%80%9a%e6%96%87%e4%bb%b6%e8%80%8c%e6%98%af%e4%b8%bb%e6%ac%a1%e8%ae%be%e5%a4%87%e5%8f%b7%e9%83%bd%e4%b8%ba-0-%e7%9a%84%e5%ad%97%e7%ac%a6%e8%ae%be%e5%a4%87-%e5%8f%af%e4%bb%a5%e9%80%9a%e8%bf%87-mknod-name-c-0-0-%e5%91%bd%e4%bb%a4%e6%89%8b%e5%8a%a8%e5%88%9b%e5%bb%ba-%e5%bd%93%e7%94%a8%e6%88%b7%e5%9c%a8-merge-%e5%b1%82%e9%80%9a%e8%bf%87-ls-%e5%91%bd%e4%bb%a4-%e5%b0%86%e9%80%9a%e8%bf%87-readddir-%e7%b3%bb%e7%bb%9f%e8%b0%83%e7%94%a8%e6%a3%80%e6%9f%a5%e7%88%b6%e7%9b%ae%e5%bd%95%e7%9a%84%e7%9b%ae%e5%bd%95%e9%a1%b9%e6%97%b6overlayfs-%e4%bc%9a%e8%87%aa%e5%8a%a8%e8%bf%87%e8%bf%87%e6%bb%a4%e6%8e%89%e5%92%8c-whiteout-%e6%96%87%e4%bb%b6%e8%87%aa%e8%ba%ab%e4%bb%a5%e5%8f%8a%e5%92%8c%e5%ae%83%e5%90%8c%e5%90%8d%e7%9a%84-lower-%e5%b1%82%e6%96%87%e4%bb%b6%e5%92%8c%e7%9b%ae%e5%bd%95%e8%be%be%e5%88%b0%e4%ba%86%e9%9a%90%e8%97%8f%e6%96%87%e4%bb%b6%e7%9a%84%e7%9b%ae%e7%9a%84%e8%ae%a9%e7%94%a8%e6%88%b7%e4%bb%a5%e4%b8%ba%e6%96%87%e4%bb%b6%e5%b7%b2%e7%bb%8f%e8%a2%ab%e5%88%a0%e9%99%a4%e4%ba%86">#</a>
+</h5>
+<h4 id="要删除的文件是-upper-层覆盖-lower层的文件">
+  要删除的文件是 upper 层覆盖 lower层的文件
+  <a class="anchor" href="#%e8%a6%81%e5%88%a0%e9%99%a4%e7%9a%84%e6%96%87%e4%bb%b6%e6%98%af-upper-%e5%b1%82%e8%a6%86%e7%9b%96-lower%e5%b1%82%e7%9a%84%e6%96%87%e4%bb%b6">#</a>
+</h4>
+<h5 id="这种情况-overlayfs-即需要删除-upper-层对应文件系统中的文件或目录也需要在对应位置创建同名-whiteout文件让upper层的文件被删除后不至于lower层的文件被暴露出来">
+  这种情况 <strong>OverlayFS</strong> 即需要删除 upper 层对应文件系统中的文件或目录，也需要在对应位置创建同名 <strong>whiteout文件</strong>，让upper层的文件被删除后不至于lower层的文件被暴露出来。
+  <a class="anchor" href="#%e8%bf%99%e7%a7%8d%e6%83%85%e5%86%b5-overlayfs-%e5%8d%b3%e9%9c%80%e8%a6%81%e5%88%a0%e9%99%a4-upper-%e5%b1%82%e5%af%b9%e5%ba%94%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f%e4%b8%ad%e7%9a%84%e6%96%87%e4%bb%b6%e6%88%96%e7%9b%ae%e5%bd%95%e4%b9%9f%e9%9c%80%e8%a6%81%e5%9c%a8%e5%af%b9%e5%ba%94%e4%bd%8d%e7%bd%ae%e5%88%9b%e5%bb%ba%e5%90%8c%e5%90%8d-whiteout%e6%96%87%e4%bb%b6%e8%ae%a9upper%e5%b1%82%e7%9a%84%e6%96%87%e4%bb%b6%e8%a2%ab%e5%88%a0%e9%99%a4%e5%90%8e%e4%b8%8d%e8%87%b3%e4%ba%8elower%e5%b1%82%e7%9a%84%e6%96%87%e4%bb%b6%e8%a2%ab%e6%9a%b4%e9%9c%b2%e5%87%ba%e6%9d%a5">#</a>
+</h5>
+<h5 id="这里我们删除-in_bothtxt该文件是-upper-层覆盖两个-lower-层的文件删除之后发现两个-lower-层依然存在该文件但是-upper-层的-in_bothtxt-已经变成-whiteout-文件了">
+  这里我们删除 in_both.txt，该文件是 upper 层覆盖两个 lower 层的文件，删除之后，发现两个 lower 层依然存在该文件，但是 upper 层的 in_both.txt 已经变成 <strong>whiteout 文件</strong>了。
+  <a class="anchor" href="#%e8%bf%99%e9%87%8c%e6%88%91%e4%bb%ac%e5%88%a0%e9%99%a4-in_bothtxt%e8%af%a5%e6%96%87%e4%bb%b6%e6%98%af-upper-%e5%b1%82%e8%a6%86%e7%9b%96%e4%b8%a4%e4%b8%aa-lower-%e5%b1%82%e7%9a%84%e6%96%87%e4%bb%b6%e5%88%a0%e9%99%a4%e4%b9%8b%e5%90%8e%e5%8f%91%e7%8e%b0%e4%b8%a4%e4%b8%aa-lower-%e5%b1%82%e4%be%9d%e7%84%b6%e5%ad%98%e5%9c%a8%e8%af%a5%e6%96%87%e4%bb%b6%e4%bd%86%e6%98%af-upper-%e5%b1%82%e7%9a%84-in_bothtxt-%e5%b7%b2%e7%bb%8f%e5%8f%98%e6%88%90-whiteout-%e6%96%87%e4%bb%b6%e4%ba%86">#</a>
+</h5>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191551685.png" alt="image-20240319155153638" /></p>
+<h3 id="新建文件">
+  新建文件
+  <a class="anchor" href="#%e6%96%b0%e5%bb%ba%e6%96%87%e4%bb%b6">#</a>
+</h3>
+<h5 id="在-overlayfs-新建文件同样存在两种情况">
+  在 <strong>OverlayFS</strong> 新建文件同样存在两种情况：
+  <a class="anchor" href="#%e5%9c%a8-overlayfs-%e6%96%b0%e5%bb%ba%e6%96%87%e4%bb%b6%e5%90%8c%e6%a0%b7%e5%ad%98%e5%9c%a8%e4%b8%a4%e7%a7%8d%e6%83%85%e5%86%b5">#</a>
+</h5>
+<h4 id="新建的文件在-lower-层中和-upper-层中都不存在对应的文件或目录">
+  新建的文件在 lower 层中和 upper 层中都不存在对应的文件或目录
+  <a class="anchor" href="#%e6%96%b0%e5%bb%ba%e7%9a%84%e6%96%87%e4%bb%b6%e5%9c%a8-lower-%e5%b1%82%e4%b8%ad%e5%92%8c-upper-%e5%b1%82%e4%b8%ad%e9%83%bd%e4%b8%8d%e5%ad%98%e5%9c%a8%e5%af%b9%e5%ba%94%e7%9a%84%e6%96%87%e4%bb%b6%e6%88%96%e7%9b%ae%e5%bd%95">#</a>
+</h4>
+<h5 id="这种情况会直接在-upper-层中对应的目录下新创建文件或目录">
+  这种情况会直接在 upper 层中对应的目录下新创建文件或目录
+  <a class="anchor" href="#%e8%bf%99%e7%a7%8d%e6%83%85%e5%86%b5%e4%bc%9a%e7%9b%b4%e6%8e%a5%e5%9c%a8-upper-%e5%b1%82%e4%b8%ad%e5%af%b9%e5%ba%94%e7%9a%84%e7%9b%ae%e5%bd%95%e4%b8%8b%e6%96%b0%e5%88%9b%e5%bb%ba%e6%96%87%e4%bb%b6%e6%88%96%e7%9b%ae%e5%bd%95">#</a>
+</h5>
+<pre tabindex="0"><code>$ echo &#39;new file&#39; &gt; merged/new_file
+$ ls -l */new_file 
+-rw-r--r--. 1 root root 9 11月  6 20:05 merged/new_file
+-rw-r--r--. 1 root root 9 11月  6 20:05 upper/new_file
+</code></pre><h4 id="创建一个在-lower-层已经存在且在-upper-层有-whiteout-文件的同名文件">
+  创建一个在 lower 层已经存在且在 upper 层有 <strong>whiteout 文件</strong>的同名文件
+  <a class="anchor" href="#%e5%88%9b%e5%bb%ba%e4%b8%80%e4%b8%aa%e5%9c%a8-lower-%e5%b1%82%e5%b7%b2%e7%bb%8f%e5%ad%98%e5%9c%a8%e4%b8%94%e5%9c%a8-upper-%e5%b1%82%e6%9c%89-whiteout-%e6%96%87%e4%bb%b6%e7%9a%84%e5%90%8c%e5%90%8d%e6%96%87%e4%bb%b6">#</a>
+</h4>
+<h5 id="显然该文件已经在-merged-层被删除了所以用户在-merge-层看不到它们可以新建一个同名的文件这种场景下overlayfs-需要删除-upper-层中的用新建的文件替换原有的-whiteout文件这样在-merge-层中看到的文件就是来自-upper-层的新文件了">
+  显然该文件已经在 merged 层被删除了，所以用户在 merge 层看不到它们，可以新建一个同名的文件。这种场景下，<strong>OverlayFS</strong> 需要删除 upper 层中的用新建的文件替换原有的 <strong>whiteout文件</strong>，这样在 merge 层中看到的文件就是来自 upper 层的新文件了。
+  <a class="anchor" href="#%e6%98%be%e7%84%b6%e8%af%a5%e6%96%87%e4%bb%b6%e5%b7%b2%e7%bb%8f%e5%9c%a8-merged-%e5%b1%82%e8%a2%ab%e5%88%a0%e9%99%a4%e4%ba%86%e6%89%80%e4%bb%a5%e7%94%a8%e6%88%b7%e5%9c%a8-merge-%e5%b1%82%e7%9c%8b%e4%b8%8d%e5%88%b0%e5%ae%83%e4%bb%ac%e5%8f%af%e4%bb%a5%e6%96%b0%e5%bb%ba%e4%b8%80%e4%b8%aa%e5%90%8c%e5%90%8d%e7%9a%84%e6%96%87%e4%bb%b6%e8%bf%99%e7%a7%8d%e5%9c%ba%e6%99%af%e4%b8%8boverlayfs-%e9%9c%80%e8%a6%81%e5%88%a0%e9%99%a4-upper-%e5%b1%82%e4%b8%ad%e7%9a%84%e7%94%a8%e6%96%b0%e5%bb%ba%e7%9a%84%e6%96%87%e4%bb%b6%e6%9b%bf%e6%8d%a2%e5%8e%9f%e6%9c%89%e7%9a%84-whiteout%e6%96%87%e4%bb%b6%e8%bf%99%e6%a0%b7%e5%9c%a8-merge-%e5%b1%82%e4%b8%ad%e7%9c%8b%e5%88%b0%e7%9a%84%e6%96%87%e4%bb%b6%e5%b0%b1%e6%98%af%e6%9d%a5%e8%87%aa-upper-%e5%b1%82%e7%9a%84%e6%96%b0%e6%96%87%e4%bb%b6%e4%ba%86">#</a>
+</h5>
+<h5 id="这里创建-in_lower_1txt该文件来源于-lower-层且之前已经被删除发现可以创建成功且在-upper-层用新建的文件替换了原有的-whiteout-文件">
+  这里创建 in_lower_1.txt(该文件来源于 lower 层且之前已经被删除)，发现可以创建成功，且在 upper 层用新建的文件替换了原有的 <strong>whiteout 文件</strong>。
+  <a class="anchor" href="#%e8%bf%99%e9%87%8c%e5%88%9b%e5%bb%ba-in_lower_1txt%e8%af%a5%e6%96%87%e4%bb%b6%e6%9d%a5%e6%ba%90%e4%ba%8e-lower-%e5%b1%82%e4%b8%94%e4%b9%8b%e5%89%8d%e5%b7%b2%e7%bb%8f%e8%a2%ab%e5%88%a0%e9%99%a4%e5%8f%91%e7%8e%b0%e5%8f%af%e4%bb%a5%e5%88%9b%e5%bb%ba%e6%88%90%e5%8a%9f%e4%b8%94%e5%9c%a8-upper-%e5%b1%82%e7%94%a8%e6%96%b0%e5%bb%ba%e7%9a%84%e6%96%87%e4%bb%b6%e6%9b%bf%e6%8d%a2%e4%ba%86%e5%8e%9f%e6%9c%89%e7%9a%84-whiteout-%e6%96%87%e4%bb%b6">#</a>
+</h5>
+<p><img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403191552802.png" alt="image-20240319155209753" /></p>
+<h3 id="修改文件">
+  修改文件
+  <a class="anchor" href="#%e4%bf%ae%e6%94%b9%e6%96%87%e4%bb%b6">#</a>
+</h3>
+<h5 id="修改文件同样地会发生在-upper-层同样存在两情况">
+  修改文件同样地会发生在 upper 层，同样存在两情况：
+  <a class="anchor" href="#%e4%bf%ae%e6%94%b9%e6%96%87%e4%bb%b6%e5%90%8c%e6%a0%b7%e5%9c%b0%e4%bc%9a%e5%8f%91%e7%94%9f%e5%9c%a8-upper-%e5%b1%82%e5%90%8c%e6%a0%b7%e5%ad%98%e5%9c%a8%e4%b8%a4%e6%83%85%e5%86%b5">#</a>
+</h5>
+<h4 id="修改来源与-upper-层的文件">
+  修改来源与 upper 层的文件
+  <a class="anchor" href="#%e4%bf%ae%e6%94%b9%e6%9d%a5%e6%ba%90%e4%b8%8e-upper-%e5%b1%82%e7%9a%84%e6%96%87%e4%bb%b6">#</a>
+</h4>
+<h5 id="这里修改-mergedin_uppertxt来源于-upper-层那么在-upper-层该文件也被修改">
+  这里修改 <code>merged/in_upper.txt</code>(来源于 upper 层)，那么在 upper 层该文件也被修改。
+  <a class="anchor" href="#%e8%bf%99%e9%87%8c%e4%bf%ae%e6%94%b9-mergedin_uppertxt%e6%9d%a5%e6%ba%90%e4%ba%8e-upper-%e5%b1%82%e9%82%a3%e4%b9%88%e5%9c%a8-upper-%e5%b1%82%e8%af%a5%e6%96%87%e4%bb%b6%e4%b9%9f%e8%a2%ab%e4%bf%ae%e6%94%b9">#</a>
+</h5>
+<pre tabindex="0"><code>$ sed -i &#39;s/new file/update file/g&#39; merged/new_file
+$ grep -R &#39;update file&#39; *
+merged/new_file:update file
+upper/new_file:update file
+</code></pre><h3 id="写时复制">
+  写时复制
+  <a class="anchor" href="#%e5%86%99%e6%97%b6%e5%a4%8d%e5%88%b6">#</a>
+</h3>
+<h5 id="用户在写文件时如果文件来自-upper-层那直接写入即可但是如果文件来自-lower-层由于-lower-层文件无法修改因此需要先复制到-upper-层然后再往其中写入内容这就是overlayfs-的写时复制copy-up-特性">
+  用户在写文件时，如果文件来自 upper 层，那直接写入即可。但是如果文件来自 lower 层，由于 lower 层文件无法修改，因此需要先复制到 upper 层，然后再往其中写入内容，这就是<strong>OverlayFS</strong> 的<strong>写时复制(copy-up)</strong> 特性。
+  <a class="anchor" href="#%e7%94%a8%e6%88%b7%e5%9c%a8%e5%86%99%e6%96%87%e4%bb%b6%e6%97%b6%e5%a6%82%e6%9e%9c%e6%96%87%e4%bb%b6%e6%9d%a5%e8%87%aa-upper-%e5%b1%82%e9%82%a3%e7%9b%b4%e6%8e%a5%e5%86%99%e5%85%a5%e5%8d%b3%e5%8f%af%e4%bd%86%e6%98%af%e5%a6%82%e6%9e%9c%e6%96%87%e4%bb%b6%e6%9d%a5%e8%87%aa-lower-%e5%b1%82%e7%94%b1%e4%ba%8e-lower-%e5%b1%82%e6%96%87%e4%bb%b6%e6%97%a0%e6%b3%95%e4%bf%ae%e6%94%b9%e5%9b%a0%e6%ad%a4%e9%9c%80%e8%a6%81%e5%85%88%e5%a4%8d%e5%88%b6%e5%88%b0-upper-%e5%b1%82%e7%84%b6%e5%90%8e%e5%86%8d%e5%be%80%e5%85%b6%e4%b8%ad%e5%86%99%e5%85%a5%e5%86%85%e5%ae%b9%e8%bf%99%e5%b0%b1%e6%98%afoverlayfs-%e7%9a%84%e5%86%99%e6%97%b6%e5%a4%8d%e5%88%b6copy-up-%e7%89%b9%e6%80%a7">#</a>
+</h5>
+<h5 id="修改来源于-lower-层的文件">
+  修改来源于 lower 层的文件
+  <a class="anchor" href="#%e4%bf%ae%e6%94%b9%e6%9d%a5%e6%ba%90%e4%ba%8e-lower-%e5%b1%82%e7%9a%84%e6%96%87%e4%bb%b6">#</a>
+</h5>
+<h5 id="修改-mergedin_lower_2txt来源于-lower-层lowerin_lower_2txt-不会被修改同时-upper-层会出现-in_lower_2txt">
+  修改 <code>merged/in_lower_2.txt</code>(来源于 lower 层)，<code>lower/in_lower_2.txt</code> 不会被修改，同时 upper 层会出现 in_lower_2.txt
+  <a class="anchor" href="#%e4%bf%ae%e6%94%b9-mergedin_lower_2txt%e6%9d%a5%e6%ba%90%e4%ba%8e-lower-%e5%b1%82lowerin_lower_2txt-%e4%b8%8d%e4%bc%9a%e8%a2%ab%e4%bf%ae%e6%94%b9%e5%90%8c%e6%97%b6-upper-%e5%b1%82%e4%bc%9a%e5%87%ba%e7%8e%b0-in_lower_2txt">#</a>
+</h5>
+<h5 id="这里就是触发了-overlayfs-的写时复制copy-up机制">
+  这里就是触发了 <strong>OverlayFS</strong> 的**写时复制(copy-up)**机制。
+  <a class="anchor" href="#%e8%bf%99%e9%87%8c%e5%b0%b1%e6%98%af%e8%a7%a6%e5%8f%91%e4%ba%86-overlayfs-%e7%9a%84%e5%86%99%e6%97%b6%e5%a4%8d%e5%88%b6copy-up%e6%9c%ba%e5%88%b6">#</a>
+</h5>
+<pre tabindex="0"><code>$ cd merged/
+# 更新 in_lower_2.txt
+$ echo &#39;update lower_2&#39; &gt;&gt; in_lower_2.txt
+$ cat in_lower_2.txt 
+I&#39;m from lower_2
+update lower_2
+$ ls -l ../upper/
+总用量 12
+-rw-r--r--. 1 root root   15 11月  6 20:16 in_both.txt
+c---------. 1 root root 0, 0 11月  6 20:21 in_lower_1.txt
+-rw-r--r--. 1 root root   32 11月  6 20:53 in_lower_2.txt
+-rw-r--r--. 1 root root   12 11月  6 20:07 new_file
+</code></pre><h5 id="通过-merged-目录向-in_lower_2txt-写入新的内容观察-merged-目录下-in_lower_2txt-文件的内容包含原来有的和新写入的同时观察-upper-目录中也同样存在一个新的从-lower-目录复制上来的文件-in_lower_2txt内容同merge目录中看到的一致">
+  通过 merged 目录向 in_lower_2.txt 写入新的内容，观察 merged 目录下 in_lower_2.txt 文件的内容，包含原来有的和新写入的，同时观察 upper 目录中，也同样存在一个新的从 lower 目录复制上来的文件 in_lower_2.txt，内容同merge目录中看到的一致。
+  <a class="anchor" href="#%e9%80%9a%e8%bf%87-merged-%e7%9b%ae%e5%bd%95%e5%90%91-in_lower_2txt-%e5%86%99%e5%85%a5%e6%96%b0%e7%9a%84%e5%86%85%e5%ae%b9%e8%a7%82%e5%af%9f-merged-%e7%9b%ae%e5%bd%95%e4%b8%8b-in_lower_2txt-%e6%96%87%e4%bb%b6%e7%9a%84%e5%86%85%e5%ae%b9%e5%8c%85%e5%90%ab%e5%8e%9f%e6%9d%a5%e6%9c%89%e7%9a%84%e5%92%8c%e6%96%b0%e5%86%99%e5%85%a5%e7%9a%84%e5%90%8c%e6%97%b6%e8%a7%82%e5%af%9f-upper-%e7%9b%ae%e5%bd%95%e4%b8%ad%e4%b9%9f%e5%90%8c%e6%a0%b7%e5%ad%98%e5%9c%a8%e4%b8%80%e4%b8%aa%e6%96%b0%e7%9a%84%e4%bb%8e-lower-%e7%9b%ae%e5%bd%95%e5%a4%8d%e5%88%b6%e4%b8%8a%e6%9d%a5%e7%9a%84%e6%96%87%e4%bb%b6-in_lower_2txt%e5%86%85%e5%ae%b9%e5%90%8cmerge%e7%9b%ae%e5%bd%95%e4%b8%ad%e7%9c%8b%e5%88%b0%e7%9a%84%e4%b8%80%e8%87%b4">#</a>
+</h5>
+<blockquote>
+<h5 id="当然overlayfs-的-copy-up-特性并不仅仅在往一个来自-lower-层的文件写入新内容时触发还有很多的场景会触发但是基本上都是对-lower-层进行修改会触发比如">
+  当然，<strong>OverlayFS</strong> 的 <strong>copy-up</strong> 特性并不仅仅在往一个来自 lower 层的文件写入新内容时触发，还有很多的场景会触发，但是基本上都是对 lower 层进行修改会触发，比如：
+  <a class="anchor" href="#%e5%bd%93%e7%84%b6overlayfs-%e7%9a%84-copy-up-%e7%89%b9%e6%80%a7%e5%b9%b6%e4%b8%8d%e4%bb%85%e4%bb%85%e5%9c%a8%e5%be%80%e4%b8%80%e4%b8%aa%e6%9d%a5%e8%87%aa-lower-%e5%b1%82%e7%9a%84%e6%96%87%e4%bb%b6%e5%86%99%e5%85%a5%e6%96%b0%e5%86%85%e5%ae%b9%e6%97%b6%e8%a7%a6%e5%8f%91%e8%bf%98%e6%9c%89%e5%be%88%e5%a4%9a%e7%9a%84%e5%9c%ba%e6%99%af%e4%bc%9a%e8%a7%a6%e5%8f%91%e4%bd%86%e6%98%af%e5%9f%ba%e6%9c%ac%e4%b8%8a%e9%83%bd%e6%98%af%e5%af%b9-lower-%e5%b1%82%e8%bf%9b%e8%a1%8c%e4%bf%ae%e6%94%b9%e4%bc%9a%e8%a7%a6%e5%8f%91%e6%af%94%e5%a6%82">#</a>
+</h5>
+<h5 id="1用户以写方式打开来自-lower-层的文件时对该文件执行-copy-up即-open系统调用时带有-o_write-或-o_rdwr-等标识">
+  1）用户以写方式打开来自 lower 层的文件时，对该文件执行 <strong>copy-up</strong>，即 <code>open()</code>系统调用时带有 O_WRITE 或 O_RDWR 等标识；
+  <a class="anchor" href="#1%e7%94%a8%e6%88%b7%e4%bb%a5%e5%86%99%e6%96%b9%e5%bc%8f%e6%89%93%e5%bc%80%e6%9d%a5%e8%87%aa-lower-%e5%b1%82%e7%9a%84%e6%96%87%e4%bb%b6%e6%97%b6%e5%af%b9%e8%af%a5%e6%96%87%e4%bb%b6%e6%89%a7%e8%a1%8c-copy-up%e5%8d%b3-open%e7%b3%bb%e7%bb%9f%e8%b0%83%e7%94%a8%e6%97%b6%e5%b8%a6%e6%9c%89-o_write-%e6%88%96-o_rdwr-%e7%ad%89%e6%a0%87%e8%af%86">#</a>
+</h5>
+<h5 id="2修改来自-lower-层文件或目录属性或者扩展属性时对该文件或目录触发-copy-up例如-chmodchown-或设置-acl-属性等">
+  2）修改来自 lower 层文件或目录属性或者扩展属性时，对该文件或目录触发 <strong>copy-up</strong>，例如 <code>chmod</code>、<code>chown</code> 或设置 acl 属性等；
+  <a class="anchor" href="#2%e4%bf%ae%e6%94%b9%e6%9d%a5%e8%87%aa-lower-%e5%b1%82%e6%96%87%e4%bb%b6%e6%88%96%e7%9b%ae%e5%bd%95%e5%b1%9e%e6%80%a7%e6%88%96%e8%80%85%e6%89%a9%e5%b1%95%e5%b1%9e%e6%80%a7%e6%97%b6%e5%af%b9%e8%af%a5%e6%96%87%e4%bb%b6%e6%88%96%e7%9b%ae%e5%bd%95%e8%a7%a6%e5%8f%91-copy-up%e4%be%8b%e5%a6%82-chmodchown-%e6%88%96%e8%ae%be%e7%bd%ae-acl-%e5%b1%9e%e6%80%a7%e7%ad%89">#</a>
+</h5>
+<h5 id="3rename-来自-lower-层文件时对该文件执行-copy-up">
+  3）rename 来自 lower 层文件时，对该文件执行 <strong>copy-up</strong>；
+  <a class="anchor" href="#3rename-%e6%9d%a5%e8%87%aa-lower-%e5%b1%82%e6%96%87%e4%bb%b6%e6%97%b6%e5%af%b9%e8%af%a5%e6%96%87%e4%bb%b6%e6%89%a7%e8%a1%8c-copy-up">#</a>
+</h5>
+<h5 id="4对来自-lower-层的文件创建硬链接时对链接原文件执行-copy-up">
+  4）对来自 lower 层的文件创建硬链接时，对链接原文件执行 <strong>copy-up</strong>；
+  <a class="anchor" href="#4%e5%af%b9%e6%9d%a5%e8%87%aa-lower-%e5%b1%82%e7%9a%84%e6%96%87%e4%bb%b6%e5%88%9b%e5%bb%ba%e7%a1%ac%e9%93%be%e6%8e%a5%e6%97%b6%e5%af%b9%e9%93%be%e6%8e%a5%e5%8e%9f%e6%96%87%e4%bb%b6%e6%89%a7%e8%a1%8c-copy-up">#</a>
+</h5>
+<h5 id="5在来自-lower-层的目录里创建文件目录链接等内容时对其父目录执行-copy-up">
+  5）在来自 lower 层的目录里创建文件、目录、链接等内容时，对其父目录执行 <strong>copy-up</strong>；
+  <a class="anchor" href="#5%e5%9c%a8%e6%9d%a5%e8%87%aa-lower-%e5%b1%82%e7%9a%84%e7%9b%ae%e5%bd%95%e9%87%8c%e5%88%9b%e5%bb%ba%e6%96%87%e4%bb%b6%e7%9b%ae%e5%bd%95%e9%93%be%e6%8e%a5%e7%ad%89%e5%86%85%e5%ae%b9%e6%97%b6%e5%af%b9%e5%85%b6%e7%88%b6%e7%9b%ae%e5%bd%95%e6%89%a7%e8%a1%8c-copy-up">#</a>
+</h5>
+<h5 id="6对来自-lower-层某个文件或目录进行删除rename或其它会触发-copy-up-的动作时其对应的父目录会至下而上递归执行-copy-up">
+  6）对来自 lower 层某个文件或目录进行删除、rename、或其它会触发 <strong>copy-up</strong> 的动作时，其对应的父目录会至下而上递归执行 <strong>copy-up</strong>。
+  <a class="anchor" href="#6%e5%af%b9%e6%9d%a5%e8%87%aa-lower-%e5%b1%82%e6%9f%90%e4%b8%aa%e6%96%87%e4%bb%b6%e6%88%96%e7%9b%ae%e5%bd%95%e8%bf%9b%e8%a1%8c%e5%88%a0%e9%99%a4rename%e6%88%96%e5%85%b6%e5%ae%83%e4%bc%9a%e8%a7%a6%e5%8f%91-copy-up-%e7%9a%84%e5%8a%a8%e4%bd%9c%e6%97%b6%e5%85%b6%e5%af%b9%e5%ba%94%e7%9a%84%e7%88%b6%e7%9b%ae%e5%bd%95%e4%bc%9a%e8%87%b3%e4%b8%8b%e8%80%8c%e4%b8%8a%e9%80%92%e5%bd%92%e6%89%a7%e8%a1%8c-copy-up">#</a>
+</h5></blockquote>
+<h5 id="通过这个例子我们知道了-overlayfs-是怎么工作了那么我们可以再想一想怎么把它运用到容器的镜像文件上">
+  通过这个例子，我们知道了 <strong>OverlayFS</strong> 是怎么工作了。那么我们可以再想一想，怎么把它运用到容器的镜像文件上？
+  <a class="anchor" href="#%e9%80%9a%e8%bf%87%e8%bf%99%e4%b8%aa%e4%be%8b%e5%ad%90%e6%88%91%e4%bb%ac%e7%9f%a5%e9%81%93%e4%ba%86-overlayfs-%e6%98%af%e6%80%8e%e4%b9%88%e5%b7%a5%e4%bd%9c%e4%ba%86%e9%82%a3%e4%b9%88%e6%88%91%e4%bb%ac%e5%8f%af%e4%bb%a5%e5%86%8d%e6%83%b3%e4%b8%80%e6%83%b3%e6%80%8e%e4%b9%88%e6%8a%8a%e5%ae%83%e8%bf%90%e7%94%a8%e5%88%b0%e5%ae%b9%e5%99%a8%e7%9a%84%e9%95%9c%e5%83%8f%e6%96%87%e4%bb%b6%e4%b8%8a">#</a>
+</h5>
+<h5 id="从系统的-mounts-信息中我们可以看到-docker-是怎么用-overlayfs-来挂载镜像文件的容器镜像文件可以分成多个层layer每层可以对应-overlayfs-里-lowerdir-的一个目录lowerdir-支持多个目录也就可以支持多层的镜像文件在容器启动后对镜像文件中修改就会被保存在-upperdir-里了">
+  从系统的 mounts 信息中，我们可以看到 Docker 是怎么用 <strong>OverlayFS</strong> 来挂载镜像文件的。容器镜像文件可以分成多个层（layer），每层可以对应 <strong>OverlayFS</strong> 里 lowerdir 的一个目录，lowerdir 支持多个目录，也就可以支持多层的镜像文件。在容器启动后，对镜像文件中修改就会被保存在 upperdir 里了。
+  <a class="anchor" href="#%e4%bb%8e%e7%b3%bb%e7%bb%9f%e7%9a%84-mounts-%e4%bf%a1%e6%81%af%e4%b8%ad%e6%88%91%e4%bb%ac%e5%8f%af%e4%bb%a5%e7%9c%8b%e5%88%b0-docker-%e6%98%af%e6%80%8e%e4%b9%88%e7%94%a8-overlayfs-%e6%9d%a5%e6%8c%82%e8%bd%bd%e9%95%9c%e5%83%8f%e6%96%87%e4%bb%b6%e7%9a%84%e5%ae%b9%e5%99%a8%e9%95%9c%e5%83%8f%e6%96%87%e4%bb%b6%e5%8f%af%e4%bb%a5%e5%88%86%e6%88%90%e5%a4%9a%e4%b8%aa%e5%b1%82layer%e6%af%8f%e5%b1%82%e5%8f%af%e4%bb%a5%e5%af%b9%e5%ba%94-overlayfs-%e9%87%8c-lowerdir-%e7%9a%84%e4%b8%80%e4%b8%aa%e7%9b%ae%e5%bd%95lowerdir-%e6%94%af%e6%8c%81%e5%a4%9a%e4%b8%aa%e7%9b%ae%e5%bd%95%e4%b9%9f%e5%b0%b1%e5%8f%af%e4%bb%a5%e6%94%af%e6%8c%81%e5%a4%9a%e5%b1%82%e7%9a%84%e9%95%9c%e5%83%8f%e6%96%87%e4%bb%b6%e5%9c%a8%e5%ae%b9%e5%99%a8%e5%90%af%e5%8a%a8%e5%90%8e%e5%af%b9%e9%95%9c%e5%83%8f%e6%96%87%e4%bb%b6%e4%b8%ad%e4%bf%ae%e6%94%b9%e5%b0%b1%e4%bc%9a%e8%a2%ab%e4%bf%9d%e5%ad%98%e5%9c%a8-upperdir-%e9%87%8c%e4%ba%86">#</a>
+</h5>
+<pre tabindex="0"><code>$ mount | grep overlay
+overlay on /var/lib/docker/overlay2/ee3585aa8e2cd992af3a66db41f54c4d046b5f3758fb87d7f96c140e90e0dfe6/merged type overlay 
+(rw,relatime,seclabel,lowerdir=/var/lib/docker/overlay2/l/URC3EYQVHZ23W6KLE3MASVGHSG:/var/lib/docker/overlay2/l/NFMDRCK2PPWPFDSVGPU2YYLJUF,
+upperdir=/var/lib/docker/overlay2/ee3585aa8e2cd992af3a66db41f54c4d046b5f3758fb87d7f96c140e90e0dfe6/diff,
+workdir=/var/lib/docker/overlay2/ee3585aa8e2cd992af3a66db41f54c4d046b5f3758fb87d7f96c140e90e0dfe6/work)
+</code></pre><hr>
+<h2 id="总结">
+  总结
+  <a class="anchor" href="#%e6%80%bb%e7%bb%93">#</a>
+</h2>
+<p>本文主要解答了容器为什么需要 <strong>OverlayFS</strong> 的问题，同时详细讲解 <strong>OverlayFS</strong> 的使用、原理。</p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#容器文件系统">容器文件系统</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#为什么需要-overlayfs">为什么需要 OverlayFS</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#overlayfs">OverlayFS</a>
+      <ul>
+        <li></li>
+        <li><a href="#如何使用">如何使用</a></li>
+        <li><a href="#删除文件">删除文件</a></li>
+        <li><a href="#新建文件">新建文件</a></li>
+        <li><a href="#修改文件">修改文件</a></li>
+        <li><a href="#写时复制">写时复制</a></li>
+      </ul>
+    </li>
+    <li><a href="#总结">总结</a></li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

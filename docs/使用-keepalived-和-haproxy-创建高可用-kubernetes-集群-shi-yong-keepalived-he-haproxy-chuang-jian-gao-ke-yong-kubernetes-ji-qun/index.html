@@ -1,0 +1,3537 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群
+  #
+
+高可用 Kubernetes 集群能够确保应用程序在运行时不会出现服务中断，这也是生产的需求之一。为此，有很多方法可供选择以实现高可用。
+本教程演示了如何配置 Keepalived 和 HAproxy 使负载均衡、实现高可用。步骤如下：
+
+准备主机。
+配置 Keepalived 和 HAproxy。
+使用 KubeKey 创建 Kubernetes 集群，并安装 KubeSphere。
+
+
+  集群架构
+  #
+
+示例集群有三个主节点，三个工作节点，两个用于负载均衡的节点，以及一个虚拟 IP 地址。本示例中的虚拟 IP 地址也可称为“浮动 IP 地址”。这意味着在节点故障的情况下，该 IP 地址可在节点之间漂移，从而实现高可用。
+
+请注意，在本示例中，Keepalived 和 HAproxy 没有安装在任何主节点上。但您也可以这样做，并同时实现高可用。然而，配置两个用于负载均衡的特定节点（您可以按需增加更多此类节点）会更加安全。这两个节点上只安装 Keepalived 和 HAproxy，以避免与任何 Kubernetes 组件和服务的潜在冲突。
+
+  准备主机
+  #
+
+
+  
+      
+          IP 地址
+          主机名
+          角色
+      
+  
+  
+      
+          172.16.0.2
+          lb1
+          Keepalived &amp; HAproxy
+      
+      
+          172.16.0.3
+          lb2
+          Keepalived &amp; HAproxy
+      
+      
+          172.16.0.4
+          master1
+          master, etcd
+      
+      
+          172.16.0.5
+          master2
+          master, etcd
+      
+      
+          172.16.0.6
+          master3
+          master, etcd
+      
+      
+          172.16.0.7
+          worker1
+          worker
+      
+      
+          172.16.0.8
+          worker2
+          worker
+      
+      
+          172.16.0.9
+          worker3
+          worker
+      
+      
+          172.16.0.10
+          
+          虚拟 IP 地址
+      
+  
+
+有关更多节点、网络、依赖项等要求的信息，请参见多节点安装。">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="http://192.168.0.139:1313/docs/%E4%BD%BF%E7%94%A8-keepalived-%E5%92%8C-haproxy-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8-kubernetes-%E9%9B%86%E7%BE%A4-shi-yong-keepalived-he-haproxy-chuang-jian-gao-ke-yong-kubernetes-ji-qun/">
+  <meta property="og:site_name" content="Guichen&#39;s Blog">
+  <meta property="og:title" content="使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群 2023-04-12 04:04:09.458">
+  <meta property="og:description" content="使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群 # 高可用 Kubernetes 集群能够确保应用程序在运行时不会出现服务中断，这也是生产的需求之一。为此，有很多方法可供选择以实现高可用。
+本教程演示了如何配置 Keepalived 和 HAproxy 使负载均衡、实现高可用。步骤如下：
+准备主机。 配置 Keepalived 和 HAproxy。 使用 KubeKey 创建 Kubernetes 集群，并安装 KubeSphere。 集群架构 # 示例集群有三个主节点，三个工作节点，两个用于负载均衡的节点，以及一个虚拟 IP 地址。本示例中的虚拟 IP 地址也可称为“浮动 IP 地址”。这意味着在节点故障的情况下，该 IP 地址可在节点之间漂移，从而实现高可用。
+请注意，在本示例中，Keepalived 和 HAproxy 没有安装在任何主节点上。但您也可以这样做，并同时实现高可用。然而，配置两个用于负载均衡的特定节点（您可以按需增加更多此类节点）会更加安全。这两个节点上只安装 Keepalived 和 HAproxy，以避免与任何 Kubernetes 组件和服务的潜在冲突。
+准备主机 # IP 地址 主机名 角色 172.16.0.2 lb1 Keepalived &amp; HAproxy 172.16.0.3 lb2 Keepalived &amp; HAproxy 172.16.0.4 master1 master, etcd 172.16.0.5 master2 master, etcd 172.16.0.6 master3 master, etcd 172.16.0.7 worker1 worker 172.16.0.8 worker2 worker 172.16.0.9 worker3 worker 172.16.0.10 虚拟 IP 地址 有关更多节点、网络、依赖项等要求的信息，请参见多节点安装。">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+<title>使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群 2023-04-12 04:04:09.458 | Guichen&#39;s Blog</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="http://192.168.0.139:1313/docs/%E4%BD%BF%E7%94%A8-keepalived-%E5%92%8C-haproxy-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8-kubernetes-%E9%9B%86%E7%BE%A4-shi-yong-keepalived-he-haproxy-chuang-jian-gao-ke-yong-kubernetes-ji-qun/">
+<link rel="stylesheet" href="/book.min.6c8b9d2a1fc95075ed7da46ca81060b39add8fff6741ac51259f768929281e2c.css" integrity="sha256-bIudKh/JUHXtfaRsqBBgs5rdj/9nQaxRJZ92iSkoHiw=" crossorigin="anonymous">
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/en.search.min.6f52273b9f5fa65803e3991faf27d1a7b7b8f6b148888237d77b4e841cb030e3.js" integrity="sha256-b1InO59fplgD45kfryfRp7e49rFIiII313tOhBywMOM=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/"><span>Guichen&#39;s Blog</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/00-%E9%9B%86%E7%BE%A4%E8%A7%84%E5%88%92%E5%92%8C%E5%9F%BA%E7%A1%80%E5%8F%82%E6%95%B0%E8%AE%BE%E5%AE%9A-00--ji-qun-gui-hua-he-ji-chu-can-shu-she-ding/" class="">00-集群规划和基础参数设定 2023-09-28 15:19:02.214</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/01-%E5%88%9B%E5%BB%BA%E8%AF%81%E4%B9%A6%E5%92%8C%E7%8E%AF%E5%A2%83%E5%87%86%E5%A4%87-01--chuang-jian-zheng-shu-he-huan-jing-zhun-bei/" class="">01-创建证书和环境准备 2023-09-28 15:22:19.812</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/02-%E5%AE%89%E8%A3%85etcd%E9%9B%86%E7%BE%A4-02--an-zhuang-etcd-ji-qun/" class="">02-安装etcd集群 2023-09-28 15:23:07.363</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E9%9D%A2%E8%AF%950224/" class="">0224面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-26-k8s%E7%9B%B8%E5%85%B3/" class="">0226 k8s题目</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/03-%E5%AE%89%E8%A3%85%E5%AE%B9%E5%99%A8%E8%BF%90%E8%A1%8C%E6%97%B6-03--an-zhuang-rong-qi-yun-xing-shi/" class="">03-安装容器运行时 2023-09-28 15:23:56.241</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/04-%E5%AE%89%E8%A3%85kube_master%E8%8A%82%E7%82%B9-04--an-zhuang-kubemaster-jie-dian/" class="">04-安装kube_master节点 2023-09-28 15:24:21.203</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/05-%E5%AE%89%E8%A3%85kube_node%E8%8A%82%E7%82%B9-05--an-zhuang-kubenode-jie-dian/" class="">05-安装kube_node节点 2023-09-28 15:24:43.201</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85calico%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-calico-wang-luo-zu-jian/" class="">06-安装calico网络组件 2023-09-28 15:34:28.483</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85cilium%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-cilium-wang-luo-zu-jian/" class="">06-安装cilium网络组件 2023-09-28 15:35:23.884</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85flannel%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-flannel-wang-luo-zu-jian/" class="">06-安装flannel网络组件 2023-09-28 15:35:50.039</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85kube-ovn%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-kube-ovn-wang-luo-zu-jian/" class="">06-安装kube-ovn网络组件 2023-09-28 15:36:11.265</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-wang-luo-zu-jian/" class="">06-安装网络组件 2023-09-28 15:25:14.997</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/07-%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4%E4%B8%BB%E8%A6%81%E6%8F%92%E4%BB%B6-07--an-zhuang-ji-qun-zhu-yao-cha-jian/" class="">07-安装集群主要插件 2023-09-28 15:26:42.651</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/08-k8s-%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8--k8s-ji-qun-cun-chu/" class="">08-K8S 集群存储  2023-09-28 15:27:29.454</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/16%E4%B8%AA%E6%A6%82%E5%BF%B5%E5%B8%A6%E4%BD%A0%E5%85%A5%E9%97%A8-kubernetes-16-ge-gai-nian-dai-ni-ru-men-kubernetes/" class="">16个概念带你入门 Kubernetes 2024-04-03 15:09:21.671</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/16%E5%BC%A0%E7%A1%AC%E6%A0%B8%E5%9B%BE%E8%A7%A3k8s%E7%BD%91%E7%BB%9C-16-zhang-ying-he-tu-jie-k8s-wang-luo/" class="">16张硬核图解k8s网络 2024-04-03 15:12:49.601</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-07-microk8s/" class="">2024-12-07 microk8s</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-devstack/" class="">2024-12-08 devstack</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-mutilpass%E6%93%8D%E4%BD%9C/" class="">2024-12-08 mutilpass操作</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-nano%E6%93%8D%E4%BD%9C/" class="">2024-12-08 nano操作</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-openstack%E5%92%8Ckubernetes%E5%8C%BA%E5%88%AB/" class="">2024-12-08 openstack和kubernetes区别</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-openstack%E9%9C%80%E8%A6%81%E5%87%A0%E5%8F%B0%E8%99%9A%E6%8B%9F%E6%9C%BA/" class="">2024-12-08 openstack需要几台虚拟机</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-%E5%9D%97%E5%AD%98%E5%82%A8%E5%92%8C%E5%AF%B9%E8%B1%A1%E5%82%A8%E5%AD%98%E5%8C%BA%E5%88%AB/" class="">2024-12-08 块存储和对象储存区别</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-docker-daemon.json/" class="">2024-12-09 docker daemon.json</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-helmchart-%E9%83%A8%E7%BD%B2flask%E5%BA%94%E7%94%A8/" class="">2024-12-09 helmchart 部署flask应用</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-mutilpass%E9%83%A8%E7%BD%B2openstack/" class="">2024-12-09 mutilpass部署openstack devstack形式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-openstack-ssh%E8%BF%9E%E6%8E%A5/" class="">2024-12-09 openstack ssh连接</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-10-docker-registrry/" class="">2024-12-10 docker registrry</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-22-k8s%E6%9E%B6%E6%9E%84%E5%B8%88%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8/" class="">2024-2-22 k8s架构师面试大全</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-22-k8s%E9%9D%A2%E8%AF%95%E5%AE%9D%E5%85%B8/" class="">2024-2-22 k8s面试宝典</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-26-%E9%9D%A2%E8%AF%95/" class="">2024-2-26 面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-19-%E4%B8%A4%E5%BC%A0%E5%9B%BE%E5%85%A8%E9%9D%A2%E7%90%86%E8%A7%A3k8s%E5%8E%9F%E7%90%86/" class="">2024-3-19 两张图全面理解k8s原理</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-cni%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B/" class="">2024-3-4 CNI剖析演进</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-8-%E9%9D%A2%E8%AF%950308/" class="">2024-3-8 面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-4-17-%E9%9D%A2%E8%AF%95%E6%80%BB%E7%BB%93/" class="">2024-4-17 面试总结</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-kubernetes%E9%9D%A2%E8%AF%95%E9%A2%98/" class="">2024-8-1 k8s面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-%E5%B8%B8%E8%A7%81linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98%E6%89%BE%E5%B7%A5%E4%BD%9C%E7%9A%84%E5%BF%85%E7%9C%8B/" class="">2024-8-1 linux运维面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98/" class="">2024-8-1 linux面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-1-1-%E5%A4%A7%E5%A0%B0%E6%B2%B3-%E6%88%91%E7%9A%84%E4%BF%9D%E5%A7%86/" class="">2025-1-1 大堰河-我的保姆</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-k8s-csi%E5%89%96%E6%9E%90/" class="">2025-1-16 CSI剖析演进</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-1-16-k8s%E5%B8%B8%E8%A7%81%E6%95%85%E9%9A%9C%E6%8C%87%E5%8D%97/" class="">2025-1-16 k8s常见故障指南</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-k8s%E6%B5%81%E9%87%8F%E9%93%BE%E8%B7%AF%E5%89%96%E6%9E%90/" class="">2025-1-16 k8s流量链路剖析</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/33%E6%AC%BEgitops%E4%B8%8Edevops%E4%B8%BB%E6%B5%81%E7%B3%BB%E7%BB%9F-33-kuan-gitops-yu-devops-zhu-liu-xi-tong/" class="">33款gitops与devops主流系统 2024-08-02 17:45:15.709</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/600%E6%9D%A1%E6%9C%80%E5%BC%BAlinux%E5%91%BD%E4%BB%A4%E6%80%BB%E7%BB%93-600-tiao-zui-qiang-linux-ming-ling-zong-jie/" class="">600条最强linux命令总结 2024-04-03 15:12:31.282</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/acme%E8%87%AA%E5%8A%A8%E6%9B%B4%E6%96%B0%E8%AF%81%E4%B9%A6-acme-zi-dong-geng-xin-zheng-shu/" class="">acme自动更新证书 2024-04-03 14:41:44.289</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/calico-%E9%85%8D%E7%BD%AE-bgp-route-reflectors-calico-pei-zhi-bgproutereflectors/" class="">calico 配置 BGP Route Reflectors 2023-09-28 15:34:01.007</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/calico%E7%BD%91%E7%BB%9C%E8%87%AA%E5%AE%9A%E4%B9%89-calico-wang-luo-zi-ding-yi/" class="">Calico网络自定义 2024-04-03 15:08:43.394</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/cicd%E6%80%9D%E8%80%83-cicd-si-kao/" class="">CICD思考 2024-04-03 15:11:24.151</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/client-go-%E5%9B%9B%E7%A7%8D%E5%AE%A2%E6%88%B7%E7%AB%AF-client-go-si-zhong-ke-hu-duan/" class="">Client-go 四种客户端 2024-04-03 14:49:34.32</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/client-go-%E6%9E%B6%E6%9E%84-client-go-jia-gou/" class="">Client-go 架构 2024-04-03 14:48:40.716</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/cni%E6%8F%92%E4%BB%B6%E9%80%89%E5%9E%8B-cni-cha-jian-xuan-xing/" class="">CNI插件选型 2024-04-03 15:01:51.29</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/containerd-%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C-containerd-ji-ben-cao-zuo/" class="">Containerd 基本操作 2024-04-03 14:55:46.786</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/coredns%E4%B9%8B%E5%85%89-coredns-zhi-guang/" class="">COREDNS之光 2024-04-03 14:54:52.059</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/dockerfile%E5%AE%9A%E5%88%B6%E4%B8%93%E5%B1%9E%E9%95%9C%E5%83%8F-dockerfile-ding-zhi-zhuan-shu-jing-xiang/" class="">dockerfile定制专属镜像 2024-08-02 17:44:00.522</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/dockerfile%E7%9A%84copy%E5%92%8Cadd%E7%9A%84%E5%8C%BA%E5%88%AB-dockerfile-de-copy-he-add-de-qu-bie/" class="">dockerfile的copy和add的区别 2024-04-03 15:01:09.565</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/docker%E9%87%8D%E8%A6%81%E7%9A%84%E7%BD%91%E7%BB%9C%E7%9F%A5%E8%AF%86%E7%82%B9-docker-zhong-yao-de-wang-luo-zhi-shi-dian/" class="">Docker重要的网络知识点  2024-04-03 15:12:10.162</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/etcd%E5%A4%87%E4%BB%BD-etcd-bei-fen/" class="">ETCD备份 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/etcd%E7%A8%B3%E5%AE%9A%E6%80%A7%E5%8F%8A%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%AE%9E%E8%B7%B5-etcd-wen-ding-xing-ji-xing-neng-you-hua-shi-jian/" class="">ETCD稳定性及性能优化实践 2024-04-03 15:06:31.141</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ex-lb-%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E9%83%A8%E7%BD%B2-ex-lb-fu-zai-jun-heng-bu-shu/" class="">EX-LB 负载均衡部署 2023-09-28 15:28:51.998</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ezctl-%E5%91%BD%E4%BB%A4%E8%A1%8C%E4%BB%8B%E7%BB%8D-ezctl-ming-ling-xing-jie-shao/" class="">ezctl 命令行介绍 2023-09-28 15:28:00.619</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/flanel%E7%BD%91%E7%BB%9C-flanel-wang-luo/" class="">flanel网络 2024-04-03 15:05:04.16</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/godel-scheduler-godel-scheduler/" class="">godel-scheduler 2024-08-02 17:41:00.668</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/helm-chart%E5%92%8Crepo-helmchart-he-repo/" class="">helm chart和repo 2024-04-03 15:00:43.125</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/istio-ingress-gateway-istio-ingress-gateway/" class="">istio-ingress-gateway 2024-08-02 17:51:54.75</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/istio%E9%83%A8%E7%BD%B2-istio-bu-shu/" class="">istio部署 2024-08-02 17:52:40.721</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-cni%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B-k8scni-pou-xi-yan-jin/" class="">K8S CNI剖析演进 2024-03-04 10:51:33.245</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-csi-openebs%E5%8E%9F%E7%90%86-k8scsiopenebs-yuan-li/" class="">K8S csi openebs原理 2024-04-03 14:44:48.967</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-csi%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B-k8scsi-pou-xi-yan-jin/" class="">K8S CSI剖析演进 2024-03-04 10:52:20.507</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-gpt-k8sgpt/" class="">K8S GPT 2024-04-03 15:02:09.127</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E5%BC%80%E5%8F%91%E5%8F%AF%E4%B8%8D%E6%AD%A2-crud-k8s-kai-fa-ke-bu-zhi-crud/" class="">K8S 开发可不止 CRUD 2024-04-03 14:50:11.765</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E6%8E%A2%E9%92%88%E5%8E%9F%E7%90%86-k8s-tan-zhen-yuan-li/" class="">K8S 探针原理 2024-04-03 14:53:29.429</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E6%B5%81%E9%87%8F%E9%93%BE%E8%B7%AF%E5%89%96%E6%9E%90-k8s-liu-liang-lian-lu-pou-xi/" class="">K8S 流量链路剖析 2024-03-04 10:50:22.991</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E8%B0%83%E5%BA%A6%E5%99%A8-scheduler_onego-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-diao-du-qi-scheduleronego-yuan-ma-jie-du/" class="">K8S 调度器 scheduler_one.go 源码解读 2024-04-09 11:45:28.22</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E4%B9%8Bingress-nginx%E5%8E%9F%E7%90%86%E5%8F%8A%E9%85%8D%E7%BD%AE-k8s-zhi-ingress-nginx-yuan-li-ji-pei-zhi/" class="">K8S之ingress-nginx原理及配置 2024-07-05 18:02:14.243</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E4%B9%8Bkubelet%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-zhi-kubelet-yuan-ma-jie-du/" class="">k8s之kubelet源码解读 2024-03-28 15:30:39.633</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7-k8s-yuan-de-sheng-ji/" class="">K8S原地升级 2024-04-03 15:04:38.125</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%91%BD%E4%BB%A4%E6%8C%87%E5%8D%97-k8s-ming-ling-zhi-nan/" class="">K8S命令指南 2024-04-03 15:14:14.207</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%A6%82%E4%BD%95%E8%8E%B7%E5%BE%97-ip-k8s-ru-he-huo-de-ip/" class="">K8S如何获得 IP 2024-04-16 17:09:59.658</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%BA%94%E7%94%A8%E7%9A%84%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5-k8s-ying-yong-de-zui-jia-shi-jian/" class="">k8s应用的最佳实践 2024-04-03 14:43:16.936</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-deployment_controllergo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-deploymentcontrollergo-yuan-ma-jie-du/" class="">K8S控制器之 deployment_controller.go源码解读 2024-04-09 11:30:03.133</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-progressgo-%E8%BF%9B%E5%BA%A6-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-progressgo-jin-du-yuan-ma-jie-du/" class="">K8S控制器之 progress.go 进度 源码解读 2024-04-09 11:31:08.86</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-rollinggo-%E6%BB%9A%E5%8A%A8%E6%9B%B4%E6%96%B0-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-rollinggo-gun-dong-geng-xin-yuan-ma-jie-du/" class="">K8S控制器之 rolling.go 滚动更新 源码解读 2024-04-09 11:32:58.133</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-schedulergo-%E8%B0%83%E5%BA%A6%E5%99%A8-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-schedulergo-diao-du-qi-yuan-ma-jie-du/" class="">K8S控制器之 scheduler.go 调度器 源码解读 2024-04-09 11:44:25.171</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Brecreatego-%E9%87%8D%E5%BB%BA-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-recreatego-zhong-jian-yuan-ma-jie-du/" class="">K8S控制器之recreate.go 重建 源码解读 2024-04-09 11:31:49.855</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Brollbackgo-%E5%9B%9E%E6%BB%9A-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-rollbackgo-hui-gun-yuan-ma-jie-du/" class="">K8S控制器之rollback.go 回滚 源码解读 2024-04-09 11:32:26.587</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_pod_controlgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulpodcontrolgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_pod_control.go源码解读 2024-04-10 09:42:50.078</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_set_controlgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetcontrolgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_set_control.go源码解读 2024-04-10 09:41:30.316</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_set_status_updatego%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetstatusupdatego-yuan-ma-jie-du/" class="">K8S控制器之stateful_set_status_update.go源码解读 2024-04-10</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_setgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_set.go源码解读 2024-04-10</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bsyncgo-%E5%90%8C%E6%AD%A5-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-syncgo-tong-bu-yuan-ma-jie-du/" class="">K8S控制器之sync.go 同步 源码解读 2024-04-09 11:33:26.356</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E7%9A%84pod%E7%B1%BB%E5%9E%8B-k8s-de-pod-lei-xing/" class="">K8S的POD类型 2024-04-03 14:57:11.072</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E7%9A%84%E6%9C%80%E5%90%8E%E4%B8%80%E5%9D%97%E6%8B%BC%E5%9B%BE-dbpaas-k8s-de-zui-hou-yi-kuai-pin-tu-dbpaas/" class="">K8S的最后一块拼图 dbpaas 2024-08-02 17:48:35.899</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-k8s%E7%BB%84%E4%BB%B6/" class="">k8s组件</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%83%8C%E5%90%8Eservice%E6%98%AF%E5%A6%82%E4%BD%95%E5%B7%A5%E4%BD%9C%E7%9A%84-k8s-bei-hou-service-shi-ru-he-gong-zuo-de/" class="">k8s背后service是如何工作的 2024-08-02 17:49:44.981</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%B0%83%E5%BA%A6%E5%99%A8-extendergo-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-diao-du-qi-extendergo-yuan-ma-jie-du/" class="">K8S调度器 extender.go 源码解读 2024-04-09 11:45:59.666</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%B0%83%E8%AF%95pod-k8s-diao-shi-pod/" class="">K8S调试POD 2024-04-03 14:58:15.293</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%BF%90%E7%BB%B4%E4%B9%8B%E6%B8%85%E7%90%86%E7%A3%81%E7%9B%98-k8s-yun-wei-zhi-qing-li-ci-pan/" class="">k8s运维之清理磁盘 2024-04-03 15:13:57.279</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8-k8s-mian-shi-da-quan/" class="">K8S面试大全 2024-04-03 15:10:54.493</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E5%AE%9D%E5%85%B8-k8s-mian-shi-bao-dian/" class="">K8S面试宝典 2024-04-03 15:11:09.316</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E9%A2%98-k8s-mian-shi-ti/" class="">K8S面试题 2024-08-02 17:50:50.418</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kruise%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7%E8%A7%A3%E6%9E%90-kruise-yuan-de-sheng-ji-jie-xi/" class="">kruise原地升级解析 2024-08-02 17:59:31.689</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kube-router-%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-kube-router-wang-luo-zu-jian/" class="">kube-router 网络组件 2023-09-28 15:33:20.658</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-05-kubeasz%E9%83%A8%E7%BD%B2k8s/" class="">kubeasz部署k8s</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubekey%E6%B7%BB%E5%8A%A0%E6%96%B0%E8%8A%82%E7%82%B9-kubekey-tian-jia-xin-jie-dian/" class="">kubekey添加新节点 2024-04-03 15:36:47.646</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-api-kubernetesapi/" class="">Kubernetes API 2024-04-03 14:47:30.212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E6%BA%90%E7%A0%81%E7%BB%93%E6%9E%84-kubernetes-yuan-ma-jie-gou/" class="">Kubernetes 源码结构 2024-04-03 14:48:05.954</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3%E8%AE%A4%E8%AF%81-kubernetes-zheng-shu-xiang-jie--ren-zheng-/" class="">Kubernetes 证书详解(认证) 2024-04-03 14:52:56.54</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3%E9%89%B4%E6%9D%83-kubernetes-zheng-shu-xiang-jie--jian-quan-/" class="">Kubernetes 证书详解(鉴权) 2024-04-03 14:49:04.385</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubewharf-kubewharf/" class="">kubewharf 2024-08-02 17:41:32.72</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux-awk%E6%96%87%E6%9C%AC%E5%A4%84%E7%90%86%E5%99%A8-8%E4%B8%AA%E6%A1%88%E4%BE%8B-linuxawk-wen-ben-chu-li-qi-8-ge-an-li/" class="">linux awk文本处理器 8个案例 2024-08-02 17:46:53.603</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux-%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%A4%A7%E5%85%A8-linux-xing-neng-you-hua-da-quan/" class="">Linux 性能优化大全 2024-04-03 15:09:06.854</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux%E7%B3%BB%E7%BB%9F%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96-%E4%B8%83%E4%B8%AA%E5%AE%9E%E6%88%98%E7%BB%8F%E9%AA%8C-linux-xi-tong-xing-neng-you-hua-qi-ge-shi-zhan-jing-yan/" class="">linux系统性能优化 七个实战经验 2024-08-02 17:47:26.212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98-linux-yun-wei-gong-cheng-shi-50-ge-chang-jian-mian-shi-ti/" class="">linux运维工程师50个常见面试题 2024-08-02 17:42:12.968</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/metallb-l2-%E5%8E%9F%E7%90%86-metallbl2-yuan-li/" class="">MetalLB L2 原理 2024-04-03 14:52:24.662</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/netctl%E6%A3%80%E6%B5%8B%E9%9B%86%E7%BE%A4pod%E9%97%B4%E8%BF%9E%E9%80%9A%E6%80%A7-netctl-jian-ce-ji-qun-pod-jian-lian-tong-xing/" class="">netctl检测集群pod间连通性 2024-08-02 18:00:36.753</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/network-check-network-check/" class="">network-check 2023-09-28 15:36:33.04</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/nginx%E5%A6%82%E4%BD%95%E8%A7%A3%E5%86%B3%E6%83%8A%E7%BE%A4%E6%95%88%E5%BA%94-nginx-ru-he-jie-jue-jing-qun-xiao-ying/" class="">nginx如何解决惊群效应 2024-08-02 17:45:54.531</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/openkruise%E8%AF%A6%E7%BB%86%E8%A7%A3%E9%87%8A%E4%BB%A5%E5%8F%8A%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7%E5%8F%8A%E5%85%A8%E9%93%BE%E8%B7%AF%E7%81%B0%E5%BA%A6%E5%8F%91%E5%B8%83%E6%96%B9%E6%A1%88-openkruise-xiang-xi-jie-shi-yi-ji-yuan-de-sheng-ji-ji-quan-lian-lu-hui-du-fa-bu-fang-an/" class="">OpenKruise详细解释以及原地升级及全链路灰度发布方案 2024-07-22 11:44:46.892</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/pixie-pixie/" class="">pixie 2024-08-02 17:52:17.843</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-28-prometheus/" class="">prometheus 面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/prometheus-stack-prometheus-stack/" class="">prometheus-stack 2024-08-02 17:55:22.326</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/prometheus%E4%BC%81%E4%B8%9A%E7%BA%A7%E7%9B%91%E6%8E%A7%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93-prometheus-qi-ye-ji-jian-kong-shi-yong-zong-jie/" class="">prometheus企业级监控使用总结 2024-04-03 15:13:11.185</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ssl%E8%AF%81%E4%B9%A6%E8%87%AA%E7%AD%BE%E5%8F%91-ssl-zheng-shu-zi-qian-fa/" class="">ssl证书自签发 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/teg%E4%B8%8Eistio%E9%9B%86%E6%88%90-teg-yu-istio-ji-cheng/" class="">TEG与istio集成 2024-08-02 17:51:20.389</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%B8%A4%E5%BC%A0%E5%9B%BE%E5%85%A8%E9%9D%A2%E7%90%86%E8%A7%A3k8s%E5%8E%9F%E7%90%86-liang-zhang-tu-quan-mian-li-jie-k8s-yuan-li/" class="">两张图全面理解K8S原理 2024-04-03 14:51:27.431</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%B8%AA%E6%80%A7%E5%8C%96%E9%9B%86%E7%BE%A4%E5%8F%82%E6%95%B0%E9%85%8D%E7%BD%AE-ge-xing-hua-ji-qun-can-shu-pei-zhi/" class="">个性化集群参数配置 2023-09-28 15:30:56.072</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E4%B8%AD%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_%E9%A2%98%E7%9B%AE/" class="">中级运维面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BA%8C%E8%BF%9B%E5%88%B6%E9%83%A8%E7%BD%B2k8s%E5%8A%A0%E8%8A%82%E7%82%B9%E6%93%8D%E4%BD%9C-er-jin-zhi-bu-shu-k8s-jia-jie-dian-cao-zuo/" class="">二进制部署K8S加节点操作 2024-04-03 15:08:26.726</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-10-20-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8%E9%9B%86%E7%BE%A4/" class="">使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8-keepalived-%E5%92%8C-haproxy-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8-kubernetes-%E9%9B%86%E7%BE%A4-shi-yong-keepalived-he-haproxy-chuang-jian-gao-ke-yong-kubernetes-ji-qun/" class="active">使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群 2023-04-12 04:04:09.458</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8-openfunction-%E5%9C%A8%E4%BB%BB%E4%BD%95%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E4%B8%8A%E8%BF%90%E8%A1%8C%E6%97%A0%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%B7%A5%E4%BD%9C%E8%B4%9F%E8%BD%BD-shi-yong-openfunction-zai-ren-he-ji-chu-she-shi-shang-yun-xing-wu-fu-wu-qi-gong-zuo-fu-zai/" class="">使用 OpenFunction 在任何基础设施上运行无服务器工作负载 2024-01-21 04:02:44.459</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8cloudflarecf%E6%90%AD%E5%BB%BAdockerhub%E4%BB%A3%E7%90%86-shi-yong-cloudflarecf-da-jian-dockerhub-dai-li/" class="">使用cloudflare(CF)搭建dockerhub代理 2024-06-28 14:38:34.339</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8kubernees-leases-%E8%BD%BB%E6%9D%BE%E5%AE%9E%E7%8E%B0leader-election-shi-yong-kuberneesleases-qing-song-shi-xian-leaderelection/" class="">使用kubernees leases 轻松实现leader election 2024-04-03 15:09:46.129</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%85%AC%E6%9C%89%E4%BA%91%E4%B8%8A%E9%83%A8%E7%BD%B2-kubeasz-gong-you-yun-shang-bu-shu-kubeasz/" class="">公有云上部署 kubeasz 2023-09-28 15:31:16.19</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-5-14-%E5%8D%95master%E5%8D%95etcd%E6%94%B9%E9%80%A0/" class="">单master单etcd改造为3master3etcd</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%8F%B2%E4%B8%8A%E6%9C%80%E7%89%9Bjenkins-pipeline%E6%B5%81%E6%B0%B4%E7%BA%BF%E8%AF%A6%E8%A7%A3-shi-shang-zui-niu-jenkinspipeline-liu-shui-xian-xiang-jie/" class="">史上最牛jenkins pipeline流水线详解 2024-08-02</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%9A%E6%9E%B6%E6%9E%84%E6%94%AF%E6%8C%81-duo-jia-gou-zhi-chi/" class="">多架构支持 2023-09-28 15:29:54.111</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%A7%E5%8E%82%E6%80%BB%E7%BB%93nginx%E9%AB%98%E5%B9%B6%E5%8F%91%E4%BC%98%E5%8C%96%E7%AC%94%E8%AE%B0-da-chang-zong-jie-nginx-gao-bing-fa-you-hua-bi-ji/" class="">大厂总结nginx高并发优化笔记 2024-08-02 17:46:19.098</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%A7%E8%A7%84%E6%A8%A1%E5%B9%B6%E5%8F%91%E4%B8%8B%E5%A6%82%E4%BD%95%E5%8A%A0%E5%BF%AB-pod-%E5%90%AF%E5%8A%A8%E9%80%9F%E5%BA%A6-da-gui-mo-bing-fa-xia-ru-he-jia-kuai-pod-qi-dong-su-du/" class="">大规模并发下如何加快 Pod 启动速度 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E4%B8%BAk8s%E4%BF%9D%E9%A9%BE%E6%8A%A4%E8%88%AA-ru-he-wei-k8s-bao-jia-hu-hang/" class="">如何为K8S保驾护航 2024-04-16 17:09:21.962</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8tekton%E5%BF%AB%E9%80%9F%E6%90%AD%E5%BB%BAcicd%E5%B9%B3%E5%8F%B0-ru-he-shi-yong-tekton-kuai-su-da-jian-cicd-ping-tai/" class="">如何使用tekton快速搭建CI/CD平台 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E8%B0%83%E8%AF%95-crash-%E5%AE%B9%E5%99%A8%E7%9A%84%E7%BD%91%E7%BB%9C-ru-he-diao-shi-crash-rong-qi-de-wang-luo/" class="">如何调试 crash 容器的网络 2024-04-03 14:50:51.378</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E4%B8%AD%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E4%BB%A5%E5%8F%8A%E4%B8%8D%E5%90%8Cdnspolicy%E5%AF%B9%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E7%9A%84%E5%BD%B1%E5%93%8D-rong-qi-zhong-yu-ming-jie-xi-yi-ji-bu-tong-dnspolicy-dui-yu-ming-jie-xi-de-ying-xiang/" class="">容器中域名解析以及不同dnspolicy对域名解析的影响 2024-04-03 15:04:09.254</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E5%86%85%E7%9A%84-1-%E5%8F%B7%E8%BF%9B%E7%A8%8B-rong-qi-nei-de-1-hao-jin-cheng/" class="">容器内的 1 号进程 2024-04-03 14:46:29.998</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E5%8E%9F%E7%90%86-rong-qi-yuan-li/" class="">容器原理 2024-04-03 14:45:58.422</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E7%9A%84%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E4%B8%80-overlayfs-%E5%8E%9F%E7%90%86-rong-qi-de-wen-jian-xi-tong--yi-overlayfs-yuan-li/" class="">容器的文件系统 OverlayFS 原理 2024-04-03 14:45:26.893</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C%E5%8E%9F%E7%90%86-rong-qi-wang-luo-yuan-li/" class="">容器网络原理 2024-04-03 14:51:51.962</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%B8%B8%E8%A7%81linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98-chang-jian-linux-yun-wei-mian-shi-ti/" class="">常见linux运维面试题 2024-08-02 17:42:33.873</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BC%80%E5%A7%8B%E4%BD%BF%E7%94%A8-cilium-kai-shi-shi-yong-cilium/" class="">开始使用 cilium 2023-09-28 15:34:49.205</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BD%BB%E6%82%9F%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C-che-wu-rong-qi-wang-luo/" class="">彻悟容器网络 2024-04-07 10:30:11.55</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BF%AB%E9%80%9F%E6%8C%87%E5%8D%97-kuai-su-zhi-nan/" class="">快速指南 2023-09-28 15:28:25.71</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%88%91%E5%8F%AA%E6%83%B3%E5%81%9A%E6%8A%80%E6%9C%AF-%E8%B5%B0%E6%8A%80%E6%9C%AF%E8%B7%AF%E7%BA%BF-wo-zhi-xiang-zuo-ji-shu-zou-ji-shu-lu-xian/" class="">我只想做技术 走技术路线 2024-08-02 17:43:31.897</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%90%9E%E6%87%82k8s%E9%89%B4%E6%9D%83-gao-dong-k8s-jian-quan/" class="">搞懂K8S鉴权 2024-04-03 15:11:54.885</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%90%AD%E4%B8%AA%E6%97%A5%E5%BF%97%E6%89%8B%E6%9C%BA%E7%B3%BB%E7%BB%9F%E4%B8%8D%E9%A6%99%E5%90%97-da-ge-ri-zhi-shou-ji-xi-tong-bu-xiang-ma/" class="">搭个日志手机系统不香吗 2024-08-02 17:47:58.794</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E8%AF%B4%E6%98%8E-cao-zuo-xi-tong-shuo-ming/" class="">操作系统说明 2023-09-28 15:31:37.694</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%96%87%E5%AD%A6%E7%9A%84%E6%95%85%E4%B9%A1-wen-xue-de-gu-xiang/" class="">文学的故乡 2024-04-03 14:40:45.926</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%98%AF%E6%8A%80%E6%9C%AF%E5%A4%A7%E7%A5%9E%E8%BF%98%E6%98%AF%E5%9F%BA%E7%A1%80%E6%9E%B6%E6%9E%84%E9%83%A8%E7%9A%84%E7%A5%B8%E5%AE%B3-shi-ji-shu-da-shen-hai-shi-ji-chu-jia-gou-bu-de-huo-hai/" class="">是技术大神还是基础架构部的祸害 2024-08-02 17:50:26.139</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9C%89%E8%BF%993%E4%B8%AA%E8%BF%B9%E8%B1%A1%E4%BD%A0%E5%B0%B1%E8%AF%A5%E7%A6%BB%E8%81%8C%E4%BA%86-you-zhe-3-ge-ji-xiang--ni-jiu-gai-li-zhi-le/" class="">有这3个迹象，你就该离职了 2023-09-21 16:00:22.432</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9E%81%E5%A4%A7%E6%8F%90%E9%AB%98%E5%B7%A5%E4%BD%9C%E6%95%88%E7%8E%87%E7%9A%84-linux-%E5%91%BD%E4%BB%A4-ji-da-ti-gao-gong-zuo-xiao-lv-de-linux-ming-ling/" class="">极大提高工作效率的 Linux 命令 2024-04-03 14:42:46.957</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9E%84%E5%BB%BA%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E5%88%A9%E5%99%A8buildkit-gou-jian-rong-qi-jing-xiang-li-qi-buildkit/" class="">构建容器镜像利器buildkit 2024-08-02 17:49:14.916</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B5%81%E9%87%8F%E4%BD%95%E5%A4%84%E6%9D%A5%E4%BD%95%E5%A4%84%E5%8E%BB-liu-liang-he-chu-lai-he-chu-qu/" class="">流量何处来何处去 2024-04-03 14:56:20.089</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B8%85%E7%90%86docker%E9%95%9C%E5%83%8F-qing-li-docker-jing-xiang/" class="">清理docker镜像 2024-08-02 17:54:48.594</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B8%85%E7%90%86%E6%AE%8B%E7%95%99%E7%9A%84calico%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6-qing-li-can-liu-de-calico-wang-luo/" class="">清理残留的calico网络插件 2024-04-03 15:07:38.854</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A3%81%E7%9B%98%E6%95%B0%E6%8D%AE%E6%81%A2%E5%A4%8D-ci-pan-shu-ju-hui-fu/" class="">磁盘数据恢复 2024-04-03 14:59:27.839</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85kubephere-li-xian-an-zhuang-kubephere/" class="">离线安装kubephere 2024-04-03 14:59:59.885</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4-li-xian-an-zhuang-ji-qun/" class="">离线安装集群 2023-09-28 15:29:14.742</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-%E8%AE%A1%E5%88%92/" class="">美国码农薪酬</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-%E8%AE%A1%E5%88%922/" class="">美国码农计划</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E8%87%AA%E5%8A%A8%E5%B1%8F%E8%94%BDip%E6%94%BB%E5%87%BB-zi-dong-ping-bi-ip-gong-ji/" class="">自动屏蔽IP攻击 2024-04-03 14:54:11.783</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-12-%E9%9D%A2%E8%AF%950212/" class="">面试0212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-19-%E9%9D%A2%E8%AF%950219/" class="">面试0219</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-20-%E9%9D%A2%E8%AF%950220/" class="">面试0220</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-26-%E9%9D%A2%E8%AF%950225/" class="">面试0225</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%9D%A2%E8%AF%950308-mian-shi-0308/" class="">面试0308 2024-04-03 14:57:53.576</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-11-%E9%9D%A2%E8%AF%950211/" class="">面试2025-02-11</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-18-%E9%9D%A2%E8%AF%95/" class="">面试2025-0218</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%9D%A2%E8%AF%95%E7%94%A8-golang-%E6%89%8B%E6%92%B8-lru-mian-shi-yong-golang-shou-lu-lru/" class="">面试用 Golang 手撸 LRU 2024-04-03 14:47:00.767</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%A1%B6%E7%BA%A7devops%E5%B7%A5%E5%85%B7%E5%A4%A7%E7%9B%98%E7%82%B9-ding-ji-devops-gong-ju-da-pan-dian/" class="">顶级devops工具大盘点 2024-08-02 17:43:03.661</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E9%AB%98%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_ai_linux%E9%83%A8%E5%88%86/" class="">高级运维面试题-linux部分</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群 2023-04-12 04:04:09.458</h3>
+
+  <label for="toc-control">
+    
+    <img src="/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#集群架构">集群架构</a></li>
+    <li><a href="#准备主机">准备主机</a></li>
+    <li><a href="#配置负载均衡">配置负载均衡</a>
+      <ul>
+        <li><a href="#haproxy">HAproxy</a></li>
+        <li><a href="#keepalived">Keepalived</a></li>
+      </ul>
+    </li>
+    <li><a href="#验证高可用">验证高可用</a></li>
+    <li><a href="#使用-kubekey-创建-kubernetes-集群">使用 KubeKey 创建 Kubernetes 集群</a></li>
+    <li><a href="#部署-kubesphere-和-kubernetes">部署 KubeSphere 和 Kubernetes</a>
+      <ul>
+        <li><a href="#config-sampleyaml-示例">config-sample.yaml 示例</a></li>
+        <li><a href="#开始安装">开始安装</a></li>
+        <li><a href="#验证安装">验证安装</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#在down掉主节点后-访问-19216801888068-还是可以访问到1921680105和1921680106">在down掉主节点后 访问 192.168.0.188:8068 还是可以访问到192.168.0.105和192.168.0.106</a></li>
+        <li><a href="#在down掉主节点后vip自动漂移到1921680106备节点">在down掉主节点后vip自动漂移到192.168.0.106备节点</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="使用-keepalived-和-haproxy-创建高可用-kubernetes-集群">
+  使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群
+  <a class="anchor" href="#%e4%bd%bf%e7%94%a8-keepalived-%e5%92%8c-haproxy-%e5%88%9b%e5%bb%ba%e9%ab%98%e5%8f%af%e7%94%a8-kubernetes-%e9%9b%86%e7%be%a4">#</a>
+</h1>
+<p>高可用 Kubernetes 集群能够确保应用程序在运行时不会出现服务中断，这也是生产的需求之一。为此，有很多方法可供选择以实现高可用。</p>
+<p>本教程演示了如何配置 Keepalived 和 HAproxy 使负载均衡、实现高可用。步骤如下：</p>
+<ol>
+<li>准备主机。</li>
+<li>配置 Keepalived 和 HAproxy。</li>
+<li>使用 KubeKey 创建 Kubernetes 集群，并安装 KubeSphere。</li>
+</ol>
+<h2 id="集群架构">
+  集群架构
+  <a class="anchor" href="#%e9%9b%86%e7%be%a4%e6%9e%b6%e6%9e%84">#</a>
+</h2>
+<p>示例集群有三个主节点，三个工作节点，两个用于负载均衡的节点，以及一个虚拟 IP 地址。本示例中的虚拟 IP 地址也可称为“浮动 IP 地址”。这意味着在节点故障的情况下，该 IP 地址可在节点之间漂移，从而实现高可用。</p>
+<p><img src="/upload/2023/04/image.png" alt="image" /></p>
+<p>请注意，在本示例中，Keepalived 和 HAproxy 没有安装在任何主节点上。但您也可以这样做，并同时实现高可用。然而，配置两个用于负载均衡的特定节点（您可以按需增加更多此类节点）会更加安全。这两个节点上只安装 Keepalived 和 HAproxy，以避免与任何 Kubernetes 组件和服务的潜在冲突。</p>
+<h2 id="准备主机">
+  准备主机
+  <a class="anchor" href="#%e5%87%86%e5%a4%87%e4%b8%bb%e6%9c%ba">#</a>
+</h2>
+<table>
+  <thead>
+      <tr>
+          <th>IP 地址</th>
+          <th>主机名</th>
+          <th>角色</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>172.16.0.2</td>
+          <td>lb1</td>
+          <td>Keepalived &amp; HAproxy</td>
+      </tr>
+      <tr>
+          <td>172.16.0.3</td>
+          <td>lb2</td>
+          <td>Keepalived &amp; HAproxy</td>
+      </tr>
+      <tr>
+          <td>172.16.0.4</td>
+          <td>master1</td>
+          <td>master, etcd</td>
+      </tr>
+      <tr>
+          <td>172.16.0.5</td>
+          <td>master2</td>
+          <td>master, etcd</td>
+      </tr>
+      <tr>
+          <td>172.16.0.6</td>
+          <td>master3</td>
+          <td>master, etcd</td>
+      </tr>
+      <tr>
+          <td>172.16.0.7</td>
+          <td>worker1</td>
+          <td>worker</td>
+      </tr>
+      <tr>
+          <td>172.16.0.8</td>
+          <td>worker2</td>
+          <td>worker</td>
+      </tr>
+      <tr>
+          <td>172.16.0.9</td>
+          <td>worker3</td>
+          <td>worker</td>
+      </tr>
+      <tr>
+          <td>172.16.0.10</td>
+          <td></td>
+          <td>虚拟 IP 地址</td>
+      </tr>
+  </tbody>
+</table>
+<p>有关更多节点、网络、依赖项等要求的信息，请参见<a href="https://kubesphere.com.cn/docs/installing-on-linux/introduction/multioverview/#step-1-prepare-linux-hosts">多节点安装</a>。</p>
+<h2 id="配置负载均衡">
+  配置负载均衡
+  <a class="anchor" href="#%e9%85%8d%e7%bd%ae%e8%b4%9f%e8%bd%bd%e5%9d%87%e8%a1%a1">#</a>
+</h2>
+<p><a href="https://www.keepalived.org/">Keepalived</a> 提供 VRRP 实现，并允许您配置 Linux 机器使负载均衡，预防单点故障。<a href="http://www.haproxy.org/">HAProxy</a> 提供可靠、高性能的负载均衡，能与 Keepalived 完美配合。</p>
+<p>由于 <code>lb1</code> 和 <code>lb2</code> 上安装了 Keepalived 和 HAproxy，如果其中一个节点故障，虚拟 IP 地址（即浮动 IP 地址）将自动与另一个节点关联，使集群仍然可以正常运行，从而实现高可用。若有需要，也可以此为目的，添加更多安装 Keepalived 和 HAproxy 的节点。</p>
+<p>先运行以下命令安装 Keepalived 和 HAproxy。</p>
+<pre tabindex="0"><code>yum install keepalived haproxy psmisc -y
+</code></pre><h3 id="haproxy">
+  HAproxy
+  <a class="anchor" href="#haproxy">#</a>
+</h3>
+<ol>
+<li></li>
+</ol>
+<p>在两台用于负载均衡的机器上运行以下命令以配置 Proxy（两台机器的 Proxy 配置相同）：</p>
+<pre tabindex="0"><code>vi /etc/haproxy/haproxy.cfg
+</code></pre><ol start="2">
+<li></li>
+</ol>
+<p>以下是示例配置，供您参考（请注意 <code>server</code> 字段。请记住 <code>6443</code> 是 <code>apiserver</code> 端口）：</p>
+<pre tabindex="0"><code>global
+    log /dev/log  local0 warning
+    chroot      /var/lib/haproxy
+    pidfile     /var/run/haproxy.pid
+    maxconn     4000
+    user        haproxy
+    group       haproxy
+    daemon
+   
+   stats socket /var/lib/haproxy/stats
+   
+defaults
+  log global
+  option  httplog
+  option  dontlognull
+        timeout connect 5000
+        timeout client 50000
+        timeout server 50000
+   
+frontend kube-apiserver
+  bind *:6443
+  mode tcp
+  option tcplog
+  default_backend kube-apiserver
+   
+backend kube-apiserver
+    mode tcp
+    option tcplog
+    option tcp-check
+    balance roundrobin
+    default-server inter 10s downinter 5s rise 2 fall 2 slowstart 60s maxconn 250 maxqueue 256 weight 100
+    server kube-apiserver-1 172.16.0.4:6443 check # Replace the IP address with your own.
+    server kube-apiserver-2 172.16.0.5:6443 check # Replace the IP address with your own.
+    server kube-apiserver-3 172.16.0.6:6443 check # Replace the IP address with your own.
+</code></pre><ol start="3">
+<li></li>
+</ol>
+<p>保存文件并运行以下命令以重启 HAproxy。</p>
+<pre tabindex="0"><code>systemctl restart haproxy
+</code></pre><ol start="4">
+<li></li>
+</ol>
+<p>使 HAproxy 在开机后自动运行：</p>
+<pre tabindex="0"><code>systemctl enable haproxy
+</code></pre><ol start="5">
+<li></li>
+</ol>
+<p>确保您在另一台机器 (<code>lb2</code>) 上也配置了 HAproxy。</p>
+<h3 id="keepalived">
+  Keepalived
+  <a class="anchor" href="#keepalived">#</a>
+</h3>
+<p>两台机器上必须都安装 Keepalived，但在配置上略有不同。</p>
+<ol>
+<li></li>
+</ol>
+<p>运行以下命令以配置 Keepalived。</p>
+<pre tabindex="0"><code>vi /etc/keepalived/keepalived.conf
+</code></pre><ol start="2">
+<li></li>
+</ol>
+<p>以下是示例配置 (<code>lb1</code>)，供您参考：</p>
+<pre tabindex="0"><code>global_defs {
+  notification_email {
+  }
+  router_id LVS_DEVEL
+  vrrp_skip_check_adv_addr
+  vrrp_garp_interval 0
+  vrrp_gna_interval 0
+}
+   
+vrrp_script chk_haproxy {
+  script &#34;killall -0 haproxy&#34;
+  interval 2
+  weight 2
+}
+   
+vrrp_instance haproxy-vip {
+  state BACKUP
+  priority 100
+  interface eth0                       # Network card
+  virtual_router_id 60
+  advert_int 1
+  authentication {
+    auth_type PASS
+    auth_pass 1111
+  }
+  unicast_src_ip 172.16.0.2      # The IP address of this machine
+  unicast_peer {
+    172.16.0.3                         # The IP address of peer machines
+  }
+   
+  virtual_ipaddress {
+    172.16.0.10/24                  # The VIP address
+  }
+   
+  track_script {
+    chk_haproxy
+  }
+}
+</code></pre><p>备注</p>
+<ul>
+<li>对于 <code>interface</code> 字段，您必须提供自己的网卡信息。您可以在机器上运行 <code>ifconfig</code> 以获取该值。</li>
+<li>为 <code>unicast_src_ip</code> 提供的 IP 地址是您当前机器的 IP 地址。对于也安装了 HAproxy 和 Keepalived 进行负载均衡的其他机器，必须在字段 <code>unicast_peer</code> 中输入其 IP 地址。</li>
+</ul>
+<ol start="3">
+<li></li>
+</ol>
+<p>保存文件并运行以下命令以重启 Keepalived。</p>
+<pre tabindex="0"><code>systemctl restart keepalived
+</code></pre><ol start="4">
+<li></li>
+</ol>
+<p>使 Keepalived 在开机后自动运行：</p>
+<pre tabindex="0"><code>systemctl enable keepalived
+</code></pre><ol start="5">
+<li></li>
+</ol>
+<p>确保您在另一台机器 (<code>lb2</code>) 上也配置了 Keepalived。</p>
+<h2 id="验证高可用">
+  验证高可用
+  <a class="anchor" href="#%e9%aa%8c%e8%af%81%e9%ab%98%e5%8f%af%e7%94%a8">#</a>
+</h2>
+<p>在开始创建 Kubernetes 集群之前，请确保已经测试了高可用。</p>
+<ol>
+<li></li>
+</ol>
+<p>在机器 <code>lb1</code> 上，运行以下命令：</p>
+<pre tabindex="0"><code>[root@lb1 ~]# ip a s
+1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host
+       valid_lft forever preferred_lft forever
+2: eth0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc mq state UP group default qlen 1000
+    link/ether 52:54:9e:27:38:c8 brd ff:ff:ff:ff:ff:ff
+    inet 172.16.0.2/24 brd 172.16.0.255 scope global noprefixroute dynamic eth0
+       valid_lft 73334sec preferred_lft 73334sec
+    inet 172.16.0.10/24 scope global secondary eth0 # The VIP address
+       valid_lft forever preferred_lft forever
+    inet6 fe80::510e:f96:98b2:af40/64 scope link noprefixroute
+       valid_lft forever preferred_lft forever
+</code></pre><ol start="2">
+<li></li>
+</ol>
+<p>如上图所示，虚拟 IP 地址已经成功添加。模拟此节点上的故障：</p>
+<pre tabindex="0"><code>systemctl stop haproxy
+</code></pre><ol start="3">
+<li></li>
+</ol>
+<p>再次检查浮动 IP 地址，您可以看到该地址在 <code>lb1</code> 上消失了。</p>
+<pre tabindex="0"><code>[root@lb1 ~]# ip a s
+1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host
+       valid_lft forever preferred_lft forever
+2: eth0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc mq state UP group default qlen 1000
+    link/ether 52:54:9e:27:38:c8 brd ff:ff:ff:ff:ff:ff
+    inet 172.16.0.2/24 brd 172.16.0.255 scope global noprefixroute dynamic eth0
+       valid_lft 72802sec preferred_lft 72802sec
+    inet6 fe80::510e:f96:98b2:af40/64 scope link noprefixroute
+       valid_lft forever preferred_lft forever
+</code></pre><ol start="4">
+<li></li>
+</ol>
+<p>理论上讲，若配置成功，该虚拟 IP 会漂移到另一台机器 (<code>lb2</code>) 上。在 <code>lb2</code> 上运行以下命令，这是预期的输出：</p>
+<pre tabindex="0"><code>[root@lb2 ~]# ip a s
+1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host
+       valid_lft forever preferred_lft forever
+2: eth0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc mq state UP group default qlen 1000
+    link/ether 52:54:9e:3f:51:ba brd ff:ff:ff:ff:ff:ff
+    inet 172.16.0.3/24 brd 172.16.0.255 scope global noprefixroute dynamic eth0
+       valid_lft 72690sec preferred_lft 72690sec
+    inet 172.16.0.10/24 scope global secondary eth0   # The VIP address
+       valid_lft forever preferred_lft forever
+    inet6 fe80::f67c:bd4f:d6d5:1d9b/64 scope link noprefixroute
+       valid_lft forever preferred_lft forever
+</code></pre><ol start="5">
+<li></li>
+</ol>
+<p>如上所示，高可用已经配置成功。</p>
+<h2 id="使用-kubekey-创建-kubernetes-集群">
+  使用 KubeKey 创建 Kubernetes 集群
+  <a class="anchor" href="#%e4%bd%bf%e7%94%a8-kubekey-%e5%88%9b%e5%bb%ba-kubernetes-%e9%9b%86%e7%be%a4">#</a>
+</h2>
+<p><a href="https://github.com/kubesphere/kubekey">KubeKey</a> 是一款用来创建 Kubernetes 集群的工具，高效而便捷。请按照以下步骤下载 KubeKey。</p>
+<ul>
+<li><a href="https://kubesphere.com.cn/docs/installing-on-linux/high-availability-configurations/set-up-ha-cluster-using-keepalived-haproxy/#">如果您能正常访问 GitHub/Googleapis</a></li>
+<li><a href="https://kubesphere.com.cn/docs/installing-on-linux/high-availability-configurations/set-up-ha-cluster-using-keepalived-haproxy/#">如果您访问 GitHub/Googleapis 受限</a></li>
+</ul>
+<p>从 <a href="https://github.com/kubesphere/kubekey/releases">GitHub Release Page</a> 下载 KubeKey 或者直接使用以下命令。</p>
+<pre tabindex="0"><code>curl -sfL https://get-kk.kubesphere.io | VERSION=v2.0.0 sh -
+</code></pre><p>备注</p>
+<p>通过以上命令，可以下载 KubeKey 的最新版本 (v2.0.0)。您可以更改命令中的版本号来下载特定的版本。</p>
+<p>使 <code>kk</code> 成为可执行文件：</p>
+<pre tabindex="0"><code>chmod +x kk
+</code></pre><p>使用默认配置创建一个示例配置文件。此处以 Kubernetes v1.21.5 作为示例。</p>
+<pre tabindex="0"><code>./kk create config --with-kubesphere v3.2.1 --with-kubernetes v1.21.5
+</code></pre><p>备注</p>
+<ul>
+<li>安装 KubeSphere 3.2.1 的建议 Kubernetes 版本：v1.19.x、v1.20.x、v1.21.x 或 v1.22.x（实验性支持）。如果不指定 Kubernetes 版本，KubeKey 将默认安装 Kubernetes v1.21.5。有关受支持的 Kubernetes 版本的更多信息，请参见<a href="https://kubesphere.com.cn/docs/installing-on-linux/introduction/kubekey/#%E6%94%AF%E6%8C%81%E7%9F%A9%E9%98%B5">支持矩阵</a>。</li>
+<li>如果您没有在本步骤的命令中添加标志 <code>--with-kubesphere</code>，那么除非您使用配置文件中的 <code>addons</code> 字段进行安装，或者稍后使用 <code>./kk create cluster</code> 时再添加该标志，否则 KubeSphere 将不会被部署。</li>
+<li>如果您添加标志 <code>--with-kubesphere</code> 时未指定 KubeSphere 版本，则会安装最新版本的 KubeSphere。</li>
+</ul>
+<h2 id="部署-kubesphere-和-kubernetes">
+  部署 KubeSphere 和 Kubernetes
+  <a class="anchor" href="#%e9%83%a8%e7%bd%b2-kubesphere-%e5%92%8c-kubernetes">#</a>
+</h2>
+<p>运行上述命令后，将创建配置文件 <code>config-sample.yaml</code>。编辑文件以添加机器信息、配置负载均衡器等。</p>
+<p>备注</p>
+<p>如果自定义文件名，那么文件名可能会有所不同。</p>
+<h3 id="config-sampleyaml-示例">
+  config-sample.yaml 示例
+  <a class="anchor" href="#config-sampleyaml-%e7%a4%ba%e4%be%8b">#</a>
+</h3>
+<pre tabindex="0"><code>...
+spec:
+  hosts:
+  - {name: master1, address: 172.16.0.4, internalAddress: 172.16.0.4, user: root, password: Testing123}
+  - {name: master2, address: 172.16.0.5, internalAddress: 172.16.0.5, user: root, password: Testing123}
+  - {name: master3, address: 172.16.0.6, internalAddress: 172.16.0.6, user: root, password: Testing123}
+  - {name: worker1, address: 172.16.0.7, internalAddress: 172.16.0.7, user: root, password: Testing123}
+  - {name: worker2, address: 172.16.0.8, internalAddress: 172.16.0.8, user: root, password: Testing123}
+  - {name: worker3, address: 172.16.0.9, internalAddress: 172.16.0.9, user: root, password: Testing123}
+  roleGroups:
+    etcd:
+    - master1
+    - master2
+    - master3
+    master:
+    - master1
+    - master2
+    - master3
+    worker:
+    - worker1
+    - worker2
+    - worker3
+  controlPlaneEndpoint:
+    domain: lb.kubesphere.local
+    address: 172.16.0.10   # The VIP address
+    port: 6443
+...
+</code></pre><p>备注</p>
+<ul>
+<li>请使用您自己的 VIP 地址来替换 <code>controlPlaneEndpoint.address</code> 的值。</li>
+<li>有关更多本配置文件中不同参数的信息，请参见<a href="https://kubesphere.com.cn/docs/installing-on-linux/introduction/multioverview/#2-edit-the-configuration-file">多节点安装</a>。</li>
+</ul>
+<h3 id="开始安装">
+  开始安装
+  <a class="anchor" href="#%e5%bc%80%e5%a7%8b%e5%ae%89%e8%a3%85">#</a>
+</h3>
+<p>完成配置之后，可以执行以下命令开始安装：</p>
+<pre tabindex="0"><code>./kk create cluster -f config-sample.yaml
+</code></pre><h3 id="验证安装">
+  验证安装
+  <a class="anchor" href="#%e9%aa%8c%e8%af%81%e5%ae%89%e8%a3%85">#</a>
+</h3>
+<ol>
+<li></li>
+</ol>
+<p>运行以下命令以检查安装日志。</p>
+<pre tabindex="0"><code>kubectl logs -n kubesphere-system $(kubectl get pod -n kubesphere-system -l app=ks-install -o jsonpath=&#39;{.items[0].metadata.name}&#39;) -f
+</code></pre><ol start="2">
+<li></li>
+</ol>
+<p>看到以下信息时，表明高可用集群已成功创建。</p>
+<pre tabindex="0"><code>#####################################################
+###              Welcome to KubeSphere!           ###
+#####################################################
+   
+Console: http://172.16.0.4:30880
+Account: admin
+Password: P@88w0rd
+   
+NOTES：
+  1. After you log into the console, please check the
+     monitoring status of service components in
+     the &#34;Cluster Management&#34;. If any service is not
+     ready, please wait patiently until all components
+     are up and running.
+  2. Please change the default password after login.
+   
+#####################################################
+https://kubesphere.io             2020-xx-xx xx:xx:xx
+#####################################################
+</code></pre><h1 id="keepalivehaproxy部署">
+  Keepalive+Haproxy部署
+  <a class="anchor" href="#keepalivehaproxy%e9%83%a8%e7%bd%b2">#</a>
+</h1>
+<p>实验环境：</p>
+<pre tabindex="0"><code>IP	备注
+172.16.3.225/21	Keepalive-Master+Haproxy+Nginx
+172.16.3.226/21	Keepalive-Backup+Haproxy+Nginx
+172.16.3.200/24	VIP
+</code></pre><p>注：这里因为自己的环境有限为了更好地测试，所以就用两台机器。</p>
+<p>实验效果</p>
+<pre tabindex="0"><code>最终的实验效果是通过一个虚拟IP反向代理两台Nginx，当我们Keepalive-Master宕机VIP会转到Keepalive-Backup并且还可以正常对外访问
+</code></pre><p>实验步骤</p>
+<p>1、部署Keepalive</p>
+<p>1）关闭两台Firewalls、Selinux</p>
+<pre tabindex="0"><code>[root@bogon ~]# setenforce 0 &amp;&amp; sed -i  &#39;s/^SELINUX=.*/SELINUX=disabled/&#39; /etc/selinux/config
+[root@bogon ~]# systemctl  stop firewalld  &amp;&amp;  systemctl  disable firewalld
+</code></pre><p>2）两台主机安装环境所需的软件</p>
+<pre tabindex="0"><code>[root@bogon ~]# yum install epel-release keepalived haproxy  bzip2-devel  popt-devel kernel-devel openssl-devel -y
+[root@bogon ~]# yum install nginx -y
+</code></pre><p>3）配置一下Master配置文件</p>
+<pre tabindex="0"><code>vim /etc/keepalived/keepalived.conf
+[root@bogon ~]# cat &gt; /etc/keepalived/keepalived.conf &lt;&lt; EOF
+! Configuration File for keepalived
+
+global_defs {
+   notification_email {
+     acassen@firewall.loc
+     failover@firewall.loc
+     sysadmin@firewall.loc
+   }
+   notification_email_from Alexandre.Cassen@firewall.loc
+   smtp_server 192.168.200.1
+   smtp_connect_timeout 30
+   router_id LVS_DEVEL_MASTER           # 两台ID不能一致
+   vrrp_skip_check_adv_addr
+   vrrp_strict
+   vrrp_garp_interval 0
+   vrrp_gna_interval 0
+}
+
+vrrp_instance VI_1 {
+    state MASTER                        # 指定A节点为主节点 备用节点上设置为BACKUP即可
+    interface ens160                    # 绑定虚拟IP的网络接口
+    virtual_router_id 51                # VRRP组名，两个节点的设置必须一样，以指明各个节点属于同一VRRP组
+    priority 100                        # 主节点的优先级（1-254之间），备用节点必须比主节点优先级低
+    advert_int 1                        # 组播信息发送间隔，两个节点设置必须一样
+    authentication {                    # 设置验证信息，两个节点必须一致
+        auth_type PASS					 
+        auth_pass 1111					 
+    }
+    virtual_ipaddress {                 # 指定虚拟IP, 两个节点设置必须一样
+            172.16.3.200/24				
+} 
+}
+EOF
+</code></pre><pre tabindex="0"><code>cat &gt; /etc/keepalived/keepalived.conf &lt;&lt; EOF
+! Configuration File for keepalived
+
+global_defs {
+   notification_email {
+     acassen@firewall.loc
+     failover@firewall.loc
+     sysadmin@firewall.loc
+   }
+   notification_email_from Alexandre.Cassen@firewall.loc
+   smtp_server 192.168.200.1
+   smtp_connect_timeout 30
+   router_id LVS_DEVEL1
+   vrrp_skip_check_adv_addr
+   #vrrp_strict
+   #ping不通 注释掉上面这行
+   vrrp_garp_interval 0
+   vrrp_gna_interval 0
+}
+
+vrrp_instance VI_1 {
+    state MASTER
+    interface eth192
+    virtual_router_id 51
+    priority 100
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass 1111
+    }
+    virtual_ipaddress {
+        192.168.1.104/24
+    }
+}
+EOF
+</code></pre><pre tabindex="0"><code>192.168.1.105 
+192.168.1.106
+
+192.168.1.104
+
+ens192
+</code></pre><p>4）配置一下Backup的配置文件</p>
+<pre tabindex="0"><code>[root@bogon ~]# cat &gt; /etc/keepalived/keepalived.conf &lt;&lt; EOF
+! Configuration File for keepalived
+
+global_defs {
+   notification_email {
+     acassen@firewall.loc
+     failover@firewall.loc
+     sysadmin@firewall.loc
+   }
+   notification_email_from Alexandre.Cassen@firewall.loc
+   smtp_server 192.168.200.1
+   smtp_connect_timeout 30
+   router_id LVS_DEVEL_NODE           # 两台ID不能一致
+   vrrp_skip_check_adv_addr
+   #vrrp_strict
+   #注释掉，不注释ping不通
+   vrrp_garp_interval 0
+   vrrp_gna_interval 0
+}
+
+vrrp_instance VI_1 {
+    state BACKUP                        # 指定A节点为主节点 备用节点上设置为BACKUP即可
+    interface ens160                    # 绑定虚拟IP的网络接口
+    virtual_router_id 51                # VRRP组名，两个节点的设置必须一样，以指明各个节点属于同一VRRP组
+    priority 90                         # 主节点的优先级（1-254之间），备用节点必须比主节点优先级低
+    advert_int 1                        # 组播信息发送间隔，两个节点设置必须一样
+    authentication {                    # 设置验证信息，两个节点必须一致
+        auth_type PASS					 
+        auth_pass 1111					 
+    }
+    virtual_ipaddress {                 # 指定虚拟IP, 两个节点设置必须一样
+            172.16.3.200/24				
+} 
+}
+EOF
+</code></pre><pre tabindex="0"><code>cat &gt; /etc/keepalived/keepalived.conf &lt;&lt; EOF
+! Configuration File for keepalived
+
+global_defs {
+   notification_email {
+     acassen@firewall.loc
+     failover@firewall.loc
+     sysadmin@firewall.loc
+   }
+   notification_email_from Alexandre.Cassen@firewall.loc
+   smtp_server 192.168.200.1
+   smtp_connect_timeout 30
+   router_id LVS_DEVEL2
+   vrrp_skip_check_adv_addr
+   vrrp_strict
+   vrrp_garp_interval 0
+   vrrp_gna_interval 0
+}
+
+vrrp_instance VI_1 {
+    state buckup
+    interface eth192
+    virtual_router_id 51
+    priority 90
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass 1111
+    }
+    virtual_ipaddress {
+        192.168.1.118/24
+    }
+}
+EOF
+</code></pre><p>4）验证一下VIP是否已经映射出</p>
+<pre tabindex="0"><code>[root@bogon ~]# ip a | grep &#39;172.16.3.200&#39;
+inet 172.16.3.200/24 scope global ens160
+
+ip a | grep &#39;192.168.1.104&#39;
+</code></pre><p>2、修改一下Nginx网页方便验证</p>
+<pre tabindex="0"><code>[root@bogon ~]# echo &#34;172.16.3.225&#34; &gt; /usr/share/nginx/html/index.html 
+[root@bogon ~]# echo &#34;172.16.3.226&#34; &gt; /usr/share/nginx/html/index.html
+
+echo &#34;192.168.1.105&#34; &gt; /usr/share/nginx/html/index.html 
+echo &#34;192.168.1.106&#34; &gt; /usr/share/nginx/html/index.html
+</code></pre><p>3、配置Haproxy</p>
+<p>1）创建日志目录</p>
+<pre tabindex="0"><code>mkdir /var/log/haproxy
+chmod a+w /var/log/haproxy
+</code></pre><p>2）开启rsyslog记录haproxy日志</p>
+<pre tabindex="0"><code>vim /etc/rsyslog.conf 
+
+# Provides UDP syslog reception
+
+$ModLoad imudp    # 
+$UDPServerRun 514
+
+# haproxy log
+
+local0.*    /var/log/haproxy/haproxy.log  # 添加
+</code></pre><p>3）修改/etc/sysconfig/rsyslog文件</p>
+<pre tabindex="0"><code>vim /etc/sysconfig/rsyslog
+
+# Options for rsyslogd
+
+# Syslogd options are deprecated since rsyslog v3.
+
+# If you want to use them, switch to compatibility mode 2 by &#34;-c 2&#34;
+
+# See rsyslogd(8) for more details
+
+SYSLOGD_OPTIONS=&#34;-r -m 0 -c 2&#34;
+[root@bogon ~]# systemctl restart rsyslog
+</code></pre><p>4）在Master配置Haproxy配置</p>
+<pre tabindex="0"><code>[root@bogon ~]# cat &gt; /etc/haproxy/haproxy.cfg &lt;&lt; EOF
+###########全局配置#########
+global
+    log 127.0.0.1 local0 info  # 日志类型，为不影响性能使用err
+    daemon
+    #nbproc 1     #进程数量 
+    maxconn 4096  #最大连接数 
+    #user haproxy  #运行用户  
+    #group haproxy #运行组 
+    chroot      /var/lib/haproxy
+    pidfile     /var/run/haproxy.pid
+
+########默认配置############
+    defaults
+        log global
+        mode http          #默认模式{ tcp|http|health }
+        option httplog       #日志类别,采用httplog
+        option dontlognull   #不记录健康检查日志信息  
+        retries 2            #3次连接失败就认为服务器不可用
+        option forwardfor    except 127.0.0.0/8  #后端服务获得真实ip,在HTTP请求中添加&#34;HTTP_X_FORWARDED_FOR&#34;字段
+        option httpclose     #请求完毕后主动关闭http通道
+        option abortonclose  #服务器负载很高，自动结束比较久的链接  
+        maxconn 10000        #最大连接数  
+        timeout connect 5m   #连接超时   m(分钟)
+        timeout client 1m    #客户端超时  
+        timeout server 1m    #服务器超时  
+        timeout check 10s    #心跳检测超时  s(秒)
+        balance leastconn    #负载均衡方式，最少连接 
+
+########后端配置############
+     listen test
+         bind *:8080
+         mode http
+         #balance roundrobin
+         timeout server 15s
+         timeout connect 15s
+         server web01 172.16.3.225:80 check port 80 inter 5000 fall 5
+         server web02 172.16.3.226:80 check port 80 inter 5000 fall 5
+EOF
+[root@bogon ~]# systemctl start haproxy
+</code></pre><pre tabindex="0"><code>cat &gt; /etc/haproxy/haproxy.cfg &lt;&lt; EOF
+###########全局配置#########
+global
+    log 127.0.0.1 local0 info  # 日志类型，为不影响性能使用err
+    daemon
+    #nbproc 1     #进程数量 
+    maxconn 4096  #最大连接数 
+    #user haproxy  #运行用户  
+    #group haproxy #运行组 
+    chroot      /var/lib/haproxy
+    pidfile     /var/run/haproxy.pid
+
+########默认配置############
+    defaults
+        log global
+        mode http          #默认模式{ tcp|http|health }
+        option httplog       #日志类别,采用httplog
+        option dontlognull   #不记录健康检查日志信息  
+        retries 2            #3次连接失败就认为服务器不可用
+        option forwardfor    except 127.0.0.0/8  #后端服务获得真实ip,在HTTP请求中添加&#34;HTTP_X_FORWARDED_FOR&#34;字段
+        option httpclose     #请求完毕后主动关闭http通道
+        option abortonclose  #服务器负载很高，自动结束比较久的链接  
+        maxconn 10000        #最大连接数  
+        timeout connect 5m   #连接超时   m(分钟)
+        timeout client 1m    #客户端超时  
+        timeout server 1m    #服务器超时  
+        timeout check 10s    #心跳检测超时  s(秒)
+        balance leastconn    #负载均衡方式，最少连接 
+
+########后端配置############
+     listen test
+         bind *:8068
+         mode http
+         #balance roundrobin
+         timeout server 15s
+         timeout connect 15s
+         server web01 192.168.1.105:80 check port 80 inter 5000 fall 5
+         server web02 192.168.1.106:80 check port 80 inter 5000 fall 5
+EOF
+</code></pre><p>重启haproxy</p>
+<pre tabindex="0"><code>systemctl start haproxy
+</code></pre><p>5）Backup上配置Haproxy</p>
+<pre tabindex="0"><code>vim /etc/haproxy/haproxy.cfg
+[root@bogon ~]# cat &gt; /etc/haproxy/haproxy.cfg &lt;&lt; EOF
+###########全局配置#########
+global
+    log 127.0.0.1 local0 info  # 日志类型，为不影响性能使用err
+    daemon
+    #nbproc 1     #进程数量 
+    maxconn 4096  #最大连接数 
+    #user haproxy  #运行用户  
+    #group haproxy #运行组 
+    chroot      /var/lib/haproxy
+    pidfile     /var/run/haproxy.pid
+
+########默认配置############
+    defaults
+        log global
+        mode http          #默认模式{ tcp|http|health }
+        option httplog       #日志类别,采用httplog
+        option dontlognull   #不记录健康检查日志信息  
+        retries 2            #3次连接失败就认为服务器不可用
+        option forwardfor    except 127.0.0.0/8  #后端服务获得真实ip,在HTTP请求中添加&#34;HTTP_X_FORWARDED_FOR&#34;字段
+        option httpclose     #请求完毕后主动关闭http通道
+        option abortonclose  #服务器负载很高，自动结束比较久的链接  
+        maxconn 10000        #最大连接数  
+        timeout connect 5m   #连接超时   m(分钟)
+        timeout client 1m    #客户端超时  
+        timeout server 1m    #服务器超时  
+        timeout check 10s    #心跳检测超时  s(秒)
+        balance leastconn    #负载均衡方式，最少连接 
+
+########后端配置############
+     listen test
+         bind *:8080
+         mode http
+         #balance roundrobin
+         timeout server 15s
+         timeout connect 15s
+         server web01 172.16.3.225:80 check port 80 inter 5000 fall 5
+         server web02 172.16.3.226:80 check port 80 inter 5000 fall 5
+EOF
+</code></pre><pre tabindex="0"><code>cat &gt; /etc/haproxy/haproxy.cfg &lt;&lt; EOF
+###########全局配置#########
+global
+    log 127.0.0.1 local0 info  # 日志类型，为不影响性能使用err
+    daemon
+    #nbproc 1     #进程数量 
+    maxconn 4096  #最大连接数 
+    #user haproxy  #运行用户  
+    #group haproxy #运行组 
+    chroot      /var/lib/haproxy
+    pidfile     /var/run/haproxy.pid
+
+########默认配置############
+    defaults
+        log global
+        mode http          #默认模式{ tcp|http|health }
+        option httplog       #日志类别,采用httplog
+        option dontlognull   #不记录健康检查日志信息  
+        retries 2            #3次连接失败就认为服务器不可用
+        option forwardfor    except 127.0.0.0/8  #后端服务获得真实ip,在HTTP请求中添加&#34;HTTP_X_FORWARDED_FOR&#34;字段
+        option httpclose     #请求完毕后主动关闭http通道
+        option abortonclose  #服务器负载很高，自动结束比较久的链接  
+        maxconn 10000        #最大连接数  
+        timeout connect 5m   #连接超时   m(分钟)
+        timeout client 1m    #客户端超时  
+        timeout server 1m    #服务器超时  
+        timeout check 10s    #心跳检测超时  s(秒)
+        balance leastconn    #负载均衡方式，最少连接 
+
+########后端配置############
+     listen test
+         bind *:8068
+         mode http
+         #balance roundrobin
+         timeout server 15s
+         timeout connect 15s
+         server web01 192.168.1.105:80 check port 80 inter 5000 fall 5
+         server web02 192.168.1.106:80 check port 80 inter 5000 fall 5
+EOF
+</code></pre><p>重启haproxy</p>
+<pre tabindex="0"><code>systemctl start haproxy
+</code></pre><p>6）测试一下haproxy代理是否配置成功，虚拟ip访问</p>
+<pre tabindex="0"><code>[root@bogon ~]# curl http://172.16.3.200:8080
+172.16.3.225
+[root@bogon ~]# curl http://172.16.3.200:8080
+172.16.3.226
+</code></pre><pre tabindex="0"><code>curl http://192.168.1.118:8068
+</code></pre><p>注：出现这种负载说明没有问题</p>
+<p>现在开始测试keepalive</p>
+<p>注：将Master宕机看一下vip是否会转移到Backup</p>
+<pre tabindex="0"><code>[root@bogon ~]# systemctl stop keepalived
+[root@bogon ~]# ip a | grep 200			# 如果Backup上可以查看到说明没有问题，再次访问一下VIP看一下是否可以正常访问
+inet 172.16.3.200/24 scope global ens160
+
+# 如果还可以访问说明实验成功
+
+[root@bogon ~]# curl http://172.16.3.200:8080
+172.16.3.225
+[root@bogon ~]# curl http://172.16.3.200:8080
+172.16.3.226
+
+
+curl http://192.168.1.104:8068
+</code></pre><p>在down掉主节点后 vip自动漂移到了192.168.0.106备节点上</p>
+<p>在down掉主节点后 访问 192.168.0.188:8068 还是可以访问到192.168.0.105和192.168.0.106</p>
+<p><img src="http://devopsz.top:30090/picture/2022/6/23/image-20220623010743086.png#id=AymyD&amp;originHeight=384&amp;originWidth=893&amp;originalType=binary&amp;ratio=1&amp;rotation=0&amp;showTitle=false&amp;status=done&amp;style=none&amp;title=" alt="" /></p>
+<h3 id="在down掉主节点后-访问-19216801888068-还是可以访问到1921680105和1921680106">
+  在down掉主节点后 访问 192.168.0.188:8068 还是可以访问到192.168.0.105和192.168.0.106
+  <a class="anchor" href="#%e5%9c%a8down%e6%8e%89%e4%b8%bb%e8%8a%82%e7%82%b9%e5%90%8e-%e8%ae%bf%e9%97%ae-19216801888068-%e8%bf%98%e6%98%af%e5%8f%af%e4%bb%a5%e8%ae%bf%e9%97%ae%e5%88%b01921680105%e5%92%8c1921680106">#</a>
+</h3>
+<p><img src="http://devopsz.top:30090/picture/2022/6/23/image-20220623011423415.png#id=CqdXU&amp;originHeight=265&amp;originWidth=956&amp;originalType=binary&amp;ratio=1&amp;rotation=0&amp;showTitle=false&amp;status=done&amp;style=none&amp;title=" alt="" /></p>
+<h3 id="在down掉主节点后vip自动漂移到1921680106备节点">
+  在down掉主节点后vip自动漂移到192.168.0.106备节点
+  <a class="anchor" href="#%e5%9c%a8down%e6%8e%89%e4%b8%bb%e8%8a%82%e7%82%b9%e5%90%8evip%e8%87%aa%e5%8a%a8%e6%bc%82%e7%a7%bb%e5%88%b01921680106%e5%a4%87%e8%8a%82%e7%82%b9">#</a>
+</h3>
+<p><img src="http://devopsz.top:30090/picture/2022/6/23/image-20220623011512649.png#id=cCV5n&amp;originHeight=107&amp;originWidth=889&amp;originalType=binary&amp;ratio=1&amp;rotation=0&amp;showTitle=false&amp;status=done&amp;style=none&amp;title=" alt="" /></p>
+<p><strong>1，手动添加vip</strong></p>
+<p>1,ifconfig查看当前活动网卡。如：eth0</p>
+<p>2,执行</p>
+<pre tabindex="0"><code>ifconfig eth0:0 166.111.69.100 netmask 255.255.255.0 up
+
+ifconfig ens192:0 166.111.69.100 netmask 255.255.255.0 up
+</code></pre><p>进行vip添加</p>
+<p>3，执行ifconfig查看是否生效</p>
+<p>4，测试 ping 166.111.69.100</p>
+<p>5,写在/etc/rc.local里进行开机自动设置</p>
+<p><strong>2，第三方工具keepalived增加vip</strong></p>
+<p>1，下载与安装</p>
+<p>安装：</p>
+<pre tabindex="0"><code>tar xf keepalived-1.2.12.tar.gz      
+cd keepalived-1.2.12
+./configure --prefix=/usr/local/keepalived
+make &amp;&amp;  make install
+cp /usr/local/keepalived/etc/rc.d/init.d/keepalived /etc/init.d/
+cp /usr/local/keepalived/etc/sysconfig/keepalived /etc/sysconfig/
+mkdir /etc/keepalived
+cp /usr/local/keepalived/etc/keepalived/keepalived.conf /etc/keepalived/
+cp /usr/local/keepalived/sbin/keepalived /usr/sbin/
+</code></pre><p>2，配置：</p>
+<pre tabindex="0"><code>vim 
+
+/etc/keepalived/keepalived.conf 如下：
+! Configuration File for keepalived
+
+global_defs {
+   notification_email {
+   saltstack@163.com
+  }
+  notification_email_from dba@dbserver.com
+  smtp_server 127.0.0.1
+  smtp_connect_timeout 30
+  router_id MySQL-HA
+}
+
+
+vrrp_instance VI_1 {
+  state BACKUP
+  interface eth1
+  virtual_router_id 51
+  priority 150
+  advert_int 1
+  nopreempt
+
+  authentication {
+  auth_type PASS
+  auth_pass 1111
+  }
+
+  virtual_ipaddress {
+    192.168.1.88
+  }
+}
+</code></pre><p>红色区域为需要修改的地方：</p>
+<p>notification_email :变更后通知的email</p>
+<p>notification_email_from :发送email</p>
+<p>router_id MySQL-HA :路由器组id，局域网中需要共享该vip的服务器，该配置要一致。</p>
+<p>state BACKUP：在keepalived中2种模式，</p>
+<p><strong>分别是master-&gt;backup模式和backup-&gt;backup模式</strong>。</p>
+<h1 id="配置keepalived-ping不通-解决办法">
+  配置keepalived ping不通 解决办法
+  <a class="anchor" href="#%e9%85%8d%e7%bd%aekeepalived-ping%e4%b8%8d%e9%80%9a-%e8%a7%a3%e5%86%b3%e5%8a%9e%e6%b3%95">#</a>
+</h1>
+<pre tabindex="0"><code>vim /etc/keepalived/keepalived.conf
+
+把这个注释就可以了
+
+vrrp_strict
+</code></pre></article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#集群架构">集群架构</a></li>
+    <li><a href="#准备主机">准备主机</a></li>
+    <li><a href="#配置负载均衡">配置负载均衡</a>
+      <ul>
+        <li><a href="#haproxy">HAproxy</a></li>
+        <li><a href="#keepalived">Keepalived</a></li>
+      </ul>
+    </li>
+    <li><a href="#验证高可用">验证高可用</a></li>
+    <li><a href="#使用-kubekey-创建-kubernetes-集群">使用 KubeKey 创建 Kubernetes 集群</a></li>
+    <li><a href="#部署-kubesphere-和-kubernetes">部署 KubeSphere 和 Kubernetes</a>
+      <ul>
+        <li><a href="#config-sampleyaml-示例">config-sample.yaml 示例</a></li>
+        <li><a href="#开始安装">开始安装</a></li>
+        <li><a href="#验证安装">验证安装</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#在down掉主节点后-访问-19216801888068-还是可以访问到1921680105和1921680106">在down掉主节点后 访问 192.168.0.188:8068 还是可以访问到192.168.0.105和192.168.0.106</a></li>
+        <li><a href="#在down掉主节点后vip自动漂移到1921680106备节点">在down掉主节点后vip自动漂移到192.168.0.106备节点</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,3263 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  k8s 有哪些组件？
+  #
+
+
+  1、etcd保存了集群的状态
+  #
+
+
+  2、apiserver提供了资源操作的唯一入口，还提供认证，授权，访问控制，api注册和服务发现等
+  #
+
+
+  3、controller manager负责维护集群的状态，比如自动扩展，滚动更新，故障检测等
+  #
+
+
+  4、scheduler 负责集群资源的调度，安照预期的调度策略将pod调度到相应的node上
+  #
+
+
+  5、kubelet负责管理容器的生命周期，还负责共享存储卷和网络的管理
+  #
+
+
+  6、Container runtime 容器运行时，负责管理镜像的管理，pod和容器的真正运行
+  #
+
+
+  7、kube-proxy负责管理集群的服务发现和负载均衡
+  #
+
+Kubernetes（K8s）是一个功能强大的容器编排平台，它由多个组件构成，这些组件共同协作来实现集群的管理、调度、监控等功能。下面是 Kubernetes 主要组件的简要介绍：
+
+  1. Kubernetes 核心组件
+  #
+
+
+  1.1 API Server (kube-apiserver)
+  #
+
+
+
+职责：API Server 是 Kubernetes 控制平面的核心组件，它暴露了 Kubernetes 集群的 REST API，所有的命令和操作（如创建、删除、更新 Pod 等）都通过 API Server 来进行。
+
+
+功能
+：
+
+接收来自用户、控制器、调度器等的请求。
+负责验证和处理请求。
+提供 REST API 接口，供客户端和其他组件使用。
+存储集群状态数据（通过与 etcd 交互）。
+
+
+
+
+  1.2 Controller Manager (kube-controller-manager)
+  #
+
+
+
+职责：Controller Manager 负责运行集群的控制循环（controller loops），确保集群的实际状态与期望状态相一致。">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="http://192.168.0.139:1313/docs/2024-2-26-%E9%9D%A2%E8%AF%95/">
+  <meta property="og:site_name" content="Guichen&#39;s Blog">
+  <meta property="og:title" content="2024-2-26 面试">
+  <meta property="og:description" content="k8s 有哪些组件？ # 1、etcd保存了集群的状态 # 2、apiserver提供了资源操作的唯一入口，还提供认证，授权，访问控制，api注册和服务发现等 # 3、controller manager负责维护集群的状态，比如自动扩展，滚动更新，故障检测等 # 4、scheduler 负责集群资源的调度，安照预期的调度策略将pod调度到相应的node上 # 5、kubelet负责管理容器的生命周期，还负责共享存储卷和网络的管理 # 6、Container runtime 容器运行时，负责管理镜像的管理，pod和容器的真正运行 # 7、kube-proxy负责管理集群的服务发现和负载均衡 # Kubernetes（K8s）是一个功能强大的容器编排平台，它由多个组件构成，这些组件共同协作来实现集群的管理、调度、监控等功能。下面是 Kubernetes 主要组件的简要介绍：
+1. Kubernetes 核心组件 # 1.1 API Server (kube-apiserver) # 职责：API Server 是 Kubernetes 控制平面的核心组件，它暴露了 Kubernetes 集群的 REST API，所有的命令和操作（如创建、删除、更新 Pod 等）都通过 API Server 来进行。
+功能
+：
+接收来自用户、控制器、调度器等的请求。 负责验证和处理请求。 提供 REST API 接口，供客户端和其他组件使用。 存储集群状态数据（通过与 etcd 交互）。 1.2 Controller Manager (kube-controller-manager) # 职责：Controller Manager 负责运行集群的控制循环（controller loops），确保集群的实际状态与期望状态相一致。">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+<title>2024-2-26 面试 | Guichen&#39;s Blog</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="http://192.168.0.139:1313/docs/2024-2-26-%E9%9D%A2%E8%AF%95/">
+<link rel="stylesheet" href="/book.min.6c8b9d2a1fc95075ed7da46ca81060b39add8fff6741ac51259f768929281e2c.css" integrity="sha256-bIudKh/JUHXtfaRsqBBgs5rdj/9nQaxRJZ92iSkoHiw=" crossorigin="anonymous">
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/en.search.min.6f52273b9f5fa65803e3991faf27d1a7b7b8f6b148888237d77b4e841cb030e3.js" integrity="sha256-b1InO59fplgD45kfryfRp7e49rFIiII313tOhBywMOM=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/"><span>Guichen&#39;s Blog</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/00-%E9%9B%86%E7%BE%A4%E8%A7%84%E5%88%92%E5%92%8C%E5%9F%BA%E7%A1%80%E5%8F%82%E6%95%B0%E8%AE%BE%E5%AE%9A-00--ji-qun-gui-hua-he-ji-chu-can-shu-she-ding/" class="">00-集群规划和基础参数设定 2023-09-28 15:19:02.214</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/01-%E5%88%9B%E5%BB%BA%E8%AF%81%E4%B9%A6%E5%92%8C%E7%8E%AF%E5%A2%83%E5%87%86%E5%A4%87-01--chuang-jian-zheng-shu-he-huan-jing-zhun-bei/" class="">01-创建证书和环境准备 2023-09-28 15:22:19.812</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/02-%E5%AE%89%E8%A3%85etcd%E9%9B%86%E7%BE%A4-02--an-zhuang-etcd-ji-qun/" class="">02-安装etcd集群 2023-09-28 15:23:07.363</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E9%9D%A2%E8%AF%950224/" class="">0224面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-26-k8s%E7%9B%B8%E5%85%B3/" class="">0226 k8s题目</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/03-%E5%AE%89%E8%A3%85%E5%AE%B9%E5%99%A8%E8%BF%90%E8%A1%8C%E6%97%B6-03--an-zhuang-rong-qi-yun-xing-shi/" class="">03-安装容器运行时 2023-09-28 15:23:56.241</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/04-%E5%AE%89%E8%A3%85kube_master%E8%8A%82%E7%82%B9-04--an-zhuang-kubemaster-jie-dian/" class="">04-安装kube_master节点 2023-09-28 15:24:21.203</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/05-%E5%AE%89%E8%A3%85kube_node%E8%8A%82%E7%82%B9-05--an-zhuang-kubenode-jie-dian/" class="">05-安装kube_node节点 2023-09-28 15:24:43.201</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85calico%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-calico-wang-luo-zu-jian/" class="">06-安装calico网络组件 2023-09-28 15:34:28.483</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85cilium%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-cilium-wang-luo-zu-jian/" class="">06-安装cilium网络组件 2023-09-28 15:35:23.884</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85flannel%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-flannel-wang-luo-zu-jian/" class="">06-安装flannel网络组件 2023-09-28 15:35:50.039</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85kube-ovn%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-kube-ovn-wang-luo-zu-jian/" class="">06-安装kube-ovn网络组件 2023-09-28 15:36:11.265</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/06-%E5%AE%89%E8%A3%85%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-06--an-zhuang-wang-luo-zu-jian/" class="">06-安装网络组件 2023-09-28 15:25:14.997</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/07-%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4%E4%B8%BB%E8%A6%81%E6%8F%92%E4%BB%B6-07--an-zhuang-ji-qun-zhu-yao-cha-jian/" class="">07-安装集群主要插件 2023-09-28 15:26:42.651</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/08-k8s-%E9%9B%86%E7%BE%A4%E5%AD%98%E5%82%A8--k8s-ji-qun-cun-chu/" class="">08-K8S 集群存储  2023-09-28 15:27:29.454</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/16%E4%B8%AA%E6%A6%82%E5%BF%B5%E5%B8%A6%E4%BD%A0%E5%85%A5%E9%97%A8-kubernetes-16-ge-gai-nian-dai-ni-ru-men-kubernetes/" class="">16个概念带你入门 Kubernetes 2024-04-03 15:09:21.671</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/16%E5%BC%A0%E7%A1%AC%E6%A0%B8%E5%9B%BE%E8%A7%A3k8s%E7%BD%91%E7%BB%9C-16-zhang-ying-he-tu-jie-k8s-wang-luo/" class="">16张硬核图解k8s网络 2024-04-03 15:12:49.601</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-07-microk8s/" class="">2024-12-07 microk8s</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-devstack/" class="">2024-12-08 devstack</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-mutilpass%E6%93%8D%E4%BD%9C/" class="">2024-12-08 mutilpass操作</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-nano%E6%93%8D%E4%BD%9C/" class="">2024-12-08 nano操作</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-openstack%E5%92%8Ckubernetes%E5%8C%BA%E5%88%AB/" class="">2024-12-08 openstack和kubernetes区别</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-openstack%E9%9C%80%E8%A6%81%E5%87%A0%E5%8F%B0%E8%99%9A%E6%8B%9F%E6%9C%BA/" class="">2024-12-08 openstack需要几台虚拟机</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-%E5%9D%97%E5%AD%98%E5%82%A8%E5%92%8C%E5%AF%B9%E8%B1%A1%E5%82%A8%E5%AD%98%E5%8C%BA%E5%88%AB/" class="">2024-12-08 块存储和对象储存区别</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-docker-daemon.json/" class="">2024-12-09 docker daemon.json</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-helmchart-%E9%83%A8%E7%BD%B2flask%E5%BA%94%E7%94%A8/" class="">2024-12-09 helmchart 部署flask应用</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-08-mutilpass%E9%83%A8%E7%BD%B2openstack/" class="">2024-12-09 mutilpass部署openstack devstack形式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-09-openstack-ssh%E8%BF%9E%E6%8E%A5/" class="">2024-12-09 openstack ssh连接</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-10-docker-registrry/" class="">2024-12-10 docker registrry</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-22-k8s%E6%9E%B6%E6%9E%84%E5%B8%88%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8/" class="">2024-2-22 k8s架构师面试大全</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-22-k8s%E9%9D%A2%E8%AF%95%E5%AE%9D%E5%85%B8/" class="">2024-2-22 k8s面试宝典</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-2-26-%E9%9D%A2%E8%AF%95/" class="active">2024-2-26 面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-19-%E4%B8%A4%E5%BC%A0%E5%9B%BE%E5%85%A8%E9%9D%A2%E7%90%86%E8%A7%A3k8s%E5%8E%9F%E7%90%86/" class="">2024-3-19 两张图全面理解k8s原理</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-cni%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B/" class="">2024-3-4 CNI剖析演进</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-8-%E9%9D%A2%E8%AF%950308/" class="">2024-3-8 面试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-4-17-%E9%9D%A2%E8%AF%95%E6%80%BB%E7%BB%93/" class="">2024-4-17 面试总结</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-kubernetes%E9%9D%A2%E8%AF%95%E9%A2%98/" class="">2024-8-1 k8s面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-%E5%B8%B8%E8%A7%81linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98%E6%89%BE%E5%B7%A5%E4%BD%9C%E7%9A%84%E5%BF%85%E7%9C%8B/" class="">2024-8-1 linux运维面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-8-1-linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98/" class="">2024-8-1 linux面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-1-1-%E5%A4%A7%E5%A0%B0%E6%B2%B3-%E6%88%91%E7%9A%84%E4%BF%9D%E5%A7%86/" class="">2025-1-1 大堰河-我的保姆</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-k8s-csi%E5%89%96%E6%9E%90/" class="">2025-1-16 CSI剖析演进</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-1-16-k8s%E5%B8%B8%E8%A7%81%E6%95%85%E9%9A%9C%E6%8C%87%E5%8D%97/" class="">2025-1-16 k8s常见故障指南</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-3-4-k8s%E6%B5%81%E9%87%8F%E9%93%BE%E8%B7%AF%E5%89%96%E6%9E%90/" class="">2025-1-16 k8s流量链路剖析</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/33%E6%AC%BEgitops%E4%B8%8Edevops%E4%B8%BB%E6%B5%81%E7%B3%BB%E7%BB%9F-33-kuan-gitops-yu-devops-zhu-liu-xi-tong/" class="">33款gitops与devops主流系统 2024-08-02 17:45:15.709</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/600%E6%9D%A1%E6%9C%80%E5%BC%BAlinux%E5%91%BD%E4%BB%A4%E6%80%BB%E7%BB%93-600-tiao-zui-qiang-linux-ming-ling-zong-jie/" class="">600条最强linux命令总结 2024-04-03 15:12:31.282</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/acme%E8%87%AA%E5%8A%A8%E6%9B%B4%E6%96%B0%E8%AF%81%E4%B9%A6-acme-zi-dong-geng-xin-zheng-shu/" class="">acme自动更新证书 2024-04-03 14:41:44.289</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/calico-%E9%85%8D%E7%BD%AE-bgp-route-reflectors-calico-pei-zhi-bgproutereflectors/" class="">calico 配置 BGP Route Reflectors 2023-09-28 15:34:01.007</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/calico%E7%BD%91%E7%BB%9C%E8%87%AA%E5%AE%9A%E4%B9%89-calico-wang-luo-zi-ding-yi/" class="">Calico网络自定义 2024-04-03 15:08:43.394</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/cicd%E6%80%9D%E8%80%83-cicd-si-kao/" class="">CICD思考 2024-04-03 15:11:24.151</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/client-go-%E5%9B%9B%E7%A7%8D%E5%AE%A2%E6%88%B7%E7%AB%AF-client-go-si-zhong-ke-hu-duan/" class="">Client-go 四种客户端 2024-04-03 14:49:34.32</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/client-go-%E6%9E%B6%E6%9E%84-client-go-jia-gou/" class="">Client-go 架构 2024-04-03 14:48:40.716</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/cni%E6%8F%92%E4%BB%B6%E9%80%89%E5%9E%8B-cni-cha-jian-xuan-xing/" class="">CNI插件选型 2024-04-03 15:01:51.29</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/containerd-%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C-containerd-ji-ben-cao-zuo/" class="">Containerd 基本操作 2024-04-03 14:55:46.786</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/coredns%E4%B9%8B%E5%85%89-coredns-zhi-guang/" class="">COREDNS之光 2024-04-03 14:54:52.059</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/dockerfile%E5%AE%9A%E5%88%B6%E4%B8%93%E5%B1%9E%E9%95%9C%E5%83%8F-dockerfile-ding-zhi-zhuan-shu-jing-xiang/" class="">dockerfile定制专属镜像 2024-08-02 17:44:00.522</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/dockerfile%E7%9A%84copy%E5%92%8Cadd%E7%9A%84%E5%8C%BA%E5%88%AB-dockerfile-de-copy-he-add-de-qu-bie/" class="">dockerfile的copy和add的区别 2024-04-03 15:01:09.565</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/docker%E9%87%8D%E8%A6%81%E7%9A%84%E7%BD%91%E7%BB%9C%E7%9F%A5%E8%AF%86%E7%82%B9-docker-zhong-yao-de-wang-luo-zhi-shi-dian/" class="">Docker重要的网络知识点  2024-04-03 15:12:10.162</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/etcd%E5%A4%87%E4%BB%BD-etcd-bei-fen/" class="">ETCD备份 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/etcd%E7%A8%B3%E5%AE%9A%E6%80%A7%E5%8F%8A%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%AE%9E%E8%B7%B5-etcd-wen-ding-xing-ji-xing-neng-you-hua-shi-jian/" class="">ETCD稳定性及性能优化实践 2024-04-03 15:06:31.141</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ex-lb-%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E9%83%A8%E7%BD%B2-ex-lb-fu-zai-jun-heng-bu-shu/" class="">EX-LB 负载均衡部署 2023-09-28 15:28:51.998</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ezctl-%E5%91%BD%E4%BB%A4%E8%A1%8C%E4%BB%8B%E7%BB%8D-ezctl-ming-ling-xing-jie-shao/" class="">ezctl 命令行介绍 2023-09-28 15:28:00.619</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/flanel%E7%BD%91%E7%BB%9C-flanel-wang-luo/" class="">flanel网络 2024-04-03 15:05:04.16</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/godel-scheduler-godel-scheduler/" class="">godel-scheduler 2024-08-02 17:41:00.668</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/helm-chart%E5%92%8Crepo-helmchart-he-repo/" class="">helm chart和repo 2024-04-03 15:00:43.125</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/istio-ingress-gateway-istio-ingress-gateway/" class="">istio-ingress-gateway 2024-08-02 17:51:54.75</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/istio%E9%83%A8%E7%BD%B2-istio-bu-shu/" class="">istio部署 2024-08-02 17:52:40.721</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-cni%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B-k8scni-pou-xi-yan-jin/" class="">K8S CNI剖析演进 2024-03-04 10:51:33.245</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-csi-openebs%E5%8E%9F%E7%90%86-k8scsiopenebs-yuan-li/" class="">K8S csi openebs原理 2024-04-03 14:44:48.967</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-csi%E5%89%96%E6%9E%90%E6%BC%94%E8%BF%9B-k8scsi-pou-xi-yan-jin/" class="">K8S CSI剖析演进 2024-03-04 10:52:20.507</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-gpt-k8sgpt/" class="">K8S GPT 2024-04-03 15:02:09.127</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E5%BC%80%E5%8F%91%E5%8F%AF%E4%B8%8D%E6%AD%A2-crud-k8s-kai-fa-ke-bu-zhi-crud/" class="">K8S 开发可不止 CRUD 2024-04-03 14:50:11.765</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E6%8E%A2%E9%92%88%E5%8E%9F%E7%90%86-k8s-tan-zhen-yuan-li/" class="">K8S 探针原理 2024-04-03 14:53:29.429</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E6%B5%81%E9%87%8F%E9%93%BE%E8%B7%AF%E5%89%96%E6%9E%90-k8s-liu-liang-lian-lu-pou-xi/" class="">K8S 流量链路剖析 2024-03-04 10:50:22.991</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s-%E8%B0%83%E5%BA%A6%E5%99%A8-scheduler_onego-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-diao-du-qi-scheduleronego-yuan-ma-jie-du/" class="">K8S 调度器 scheduler_one.go 源码解读 2024-04-09 11:45:28.22</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E4%B9%8Bingress-nginx%E5%8E%9F%E7%90%86%E5%8F%8A%E9%85%8D%E7%BD%AE-k8s-zhi-ingress-nginx-yuan-li-ji-pei-zhi/" class="">K8S之ingress-nginx原理及配置 2024-07-05 18:02:14.243</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E4%B9%8Bkubelet%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-zhi-kubelet-yuan-ma-jie-du/" class="">k8s之kubelet源码解读 2024-03-28 15:30:39.633</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7-k8s-yuan-de-sheng-ji/" class="">K8S原地升级 2024-04-03 15:04:38.125</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%91%BD%E4%BB%A4%E6%8C%87%E5%8D%97-k8s-ming-ling-zhi-nan/" class="">K8S命令指南 2024-04-03 15:14:14.207</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%A6%82%E4%BD%95%E8%8E%B7%E5%BE%97-ip-k8s-ru-he-huo-de-ip/" class="">K8S如何获得 IP 2024-04-16 17:09:59.658</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E5%BA%94%E7%94%A8%E7%9A%84%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5-k8s-ying-yong-de-zui-jia-shi-jian/" class="">k8s应用的最佳实践 2024-04-03 14:43:16.936</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-deployment_controllergo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-deploymentcontrollergo-yuan-ma-jie-du/" class="">K8S控制器之 deployment_controller.go源码解读 2024-04-09 11:30:03.133</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-progressgo-%E8%BF%9B%E5%BA%A6-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-progressgo-jin-du-yuan-ma-jie-du/" class="">K8S控制器之 progress.go 进度 源码解读 2024-04-09 11:31:08.86</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-rollinggo-%E6%BB%9A%E5%8A%A8%E6%9B%B4%E6%96%B0-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-rollinggo-gun-dong-geng-xin-yuan-ma-jie-du/" class="">K8S控制器之 rolling.go 滚动更新 源码解读 2024-04-09 11:32:58.133</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8B-schedulergo-%E8%B0%83%E5%BA%A6%E5%99%A8-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-schedulergo-diao-du-qi-yuan-ma-jie-du/" class="">K8S控制器之 scheduler.go 调度器 源码解读 2024-04-09 11:44:25.171</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Brecreatego-%E9%87%8D%E5%BB%BA-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-recreatego-zhong-jian-yuan-ma-jie-du/" class="">K8S控制器之recreate.go 重建 源码解读 2024-04-09 11:31:49.855</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Brollbackgo-%E5%9B%9E%E6%BB%9A-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-rollbackgo-hui-gun-yuan-ma-jie-du/" class="">K8S控制器之rollback.go 回滚 源码解读 2024-04-09 11:32:26.587</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_pod_controlgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulpodcontrolgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_pod_control.go源码解读 2024-04-10 09:42:50.078</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_set_controlgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetcontrolgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_set_control.go源码解读 2024-04-10 09:41:30.316</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_set_status_updatego%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetstatusupdatego-yuan-ma-jie-du/" class="">K8S控制器之stateful_set_status_update.go源码解读 2024-04-10</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bstateful_setgo%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-statefulsetgo-yuan-ma-jie-du/" class="">K8S控制器之stateful_set.go源码解读 2024-04-10</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B9%8Bsyncgo-%E5%90%8C%E6%AD%A5-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-kong-zhi-qi-zhi-syncgo-tong-bu-yuan-ma-jie-du/" class="">K8S控制器之sync.go 同步 源码解读 2024-04-09 11:33:26.356</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E7%9A%84pod%E7%B1%BB%E5%9E%8B-k8s-de-pod-lei-xing/" class="">K8S的POD类型 2024-04-03 14:57:11.072</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E7%9A%84%E6%9C%80%E5%90%8E%E4%B8%80%E5%9D%97%E6%8B%BC%E5%9B%BE-dbpaas-k8s-de-zui-hou-yi-kuai-pin-tu-dbpaas/" class="">K8S的最后一块拼图 dbpaas 2024-08-02 17:48:35.899</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-k8s%E7%BB%84%E4%BB%B6/" class="">k8s组件</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%83%8C%E5%90%8Eservice%E6%98%AF%E5%A6%82%E4%BD%95%E5%B7%A5%E4%BD%9C%E7%9A%84-k8s-bei-hou-service-shi-ru-he-gong-zuo-de/" class="">k8s背后service是如何工作的 2024-08-02 17:49:44.981</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%B0%83%E5%BA%A6%E5%99%A8-extendergo-%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-k8s-diao-du-qi-extendergo-yuan-ma-jie-du/" class="">K8S调度器 extender.go 源码解读 2024-04-09 11:45:59.666</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%B0%83%E8%AF%95pod-k8s-diao-shi-pod/" class="">K8S调试POD 2024-04-03 14:58:15.293</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E8%BF%90%E7%BB%B4%E4%B9%8B%E6%B8%85%E7%90%86%E7%A3%81%E7%9B%98-k8s-yun-wei-zhi-qing-li-ci-pan/" class="">k8s运维之清理磁盘 2024-04-03 15:13:57.279</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E5%A4%A7%E5%85%A8-k8s-mian-shi-da-quan/" class="">K8S面试大全 2024-04-03 15:10:54.493</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E5%AE%9D%E5%85%B8-k8s-mian-shi-bao-dian/" class="">K8S面试宝典 2024-04-03 15:11:09.316</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/k8s%E9%9D%A2%E8%AF%95%E9%A2%98-k8s-mian-shi-ti/" class="">K8S面试题 2024-08-02 17:50:50.418</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kruise%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7%E8%A7%A3%E6%9E%90-kruise-yuan-de-sheng-ji-jie-xi/" class="">kruise原地升级解析 2024-08-02 17:59:31.689</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kube-router-%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6-kube-router-wang-luo-zu-jian/" class="">kube-router 网络组件 2023-09-28 15:33:20.658</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-12-05-kubeasz%E9%83%A8%E7%BD%B2k8s/" class="">kubeasz部署k8s</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubekey%E6%B7%BB%E5%8A%A0%E6%96%B0%E8%8A%82%E7%82%B9-kubekey-tian-jia-xin-jie-dian/" class="">kubekey添加新节点 2024-04-03 15:36:47.646</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-api-kubernetesapi/" class="">Kubernetes API 2024-04-03 14:47:30.212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E6%BA%90%E7%A0%81%E7%BB%93%E6%9E%84-kubernetes-yuan-ma-jie-gou/" class="">Kubernetes 源码结构 2024-04-03 14:48:05.954</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3%E8%AE%A4%E8%AF%81-kubernetes-zheng-shu-xiang-jie--ren-zheng-/" class="">Kubernetes 证书详解(认证) 2024-04-03 14:52:56.54</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubernetes-%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3%E9%89%B4%E6%9D%83-kubernetes-zheng-shu-xiang-jie--jian-quan-/" class="">Kubernetes 证书详解(鉴权) 2024-04-03 14:49:04.385</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/kubewharf-kubewharf/" class="">kubewharf 2024-08-02 17:41:32.72</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux-awk%E6%96%87%E6%9C%AC%E5%A4%84%E7%90%86%E5%99%A8-8%E4%B8%AA%E6%A1%88%E4%BE%8B-linuxawk-wen-ben-chu-li-qi-8-ge-an-li/" class="">linux awk文本处理器 8个案例 2024-08-02 17:46:53.603</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux-%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%A4%A7%E5%85%A8-linux-xing-neng-you-hua-da-quan/" class="">Linux 性能优化大全 2024-04-03 15:09:06.854</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux%E7%B3%BB%E7%BB%9F%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96-%E4%B8%83%E4%B8%AA%E5%AE%9E%E6%88%98%E7%BB%8F%E9%AA%8C-linux-xi-tong-xing-neng-you-hua-qi-ge-shi-zhan-jing-yan/" class="">linux系统性能优化 七个实战经验 2024-08-02 17:47:26.212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/linux%E8%BF%90%E7%BB%B4%E5%B7%A5%E7%A8%8B%E5%B8%8850%E4%B8%AA%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98-linux-yun-wei-gong-cheng-shi-50-ge-chang-jian-mian-shi-ti/" class="">linux运维工程师50个常见面试题 2024-08-02 17:42:12.968</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/metallb-l2-%E5%8E%9F%E7%90%86-metallbl2-yuan-li/" class="">MetalLB L2 原理 2024-04-03 14:52:24.662</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/netctl%E6%A3%80%E6%B5%8B%E9%9B%86%E7%BE%A4pod%E9%97%B4%E8%BF%9E%E9%80%9A%E6%80%A7-netctl-jian-ce-ji-qun-pod-jian-lian-tong-xing/" class="">netctl检测集群pod间连通性 2024-08-02 18:00:36.753</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/network-check-network-check/" class="">network-check 2023-09-28 15:36:33.04</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/nginx%E5%A6%82%E4%BD%95%E8%A7%A3%E5%86%B3%E6%83%8A%E7%BE%A4%E6%95%88%E5%BA%94-nginx-ru-he-jie-jue-jing-qun-xiao-ying/" class="">nginx如何解决惊群效应 2024-08-02 17:45:54.531</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/openkruise%E8%AF%A6%E7%BB%86%E8%A7%A3%E9%87%8A%E4%BB%A5%E5%8F%8A%E5%8E%9F%E5%9C%B0%E5%8D%87%E7%BA%A7%E5%8F%8A%E5%85%A8%E9%93%BE%E8%B7%AF%E7%81%B0%E5%BA%A6%E5%8F%91%E5%B8%83%E6%96%B9%E6%A1%88-openkruise-xiang-xi-jie-shi-yi-ji-yuan-de-sheng-ji-ji-quan-lian-lu-hui-du-fa-bu-fang-an/" class="">OpenKruise详细解释以及原地升级及全链路灰度发布方案 2024-07-22 11:44:46.892</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/pixie-pixie/" class="">pixie 2024-08-02 17:52:17.843</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-28-prometheus/" class="">prometheus 面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/prometheus-stack-prometheus-stack/" class="">prometheus-stack 2024-08-02 17:55:22.326</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/prometheus%E4%BC%81%E4%B8%9A%E7%BA%A7%E7%9B%91%E6%8E%A7%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93-prometheus-qi-ye-ji-jian-kong-shi-yong-zong-jie/" class="">prometheus企业级监控使用总结 2024-04-03 15:13:11.185</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/ssl%E8%AF%81%E4%B9%A6%E8%87%AA%E7%AD%BE%E5%8F%91-ssl-zheng-shu-zi-qian-fa/" class="">ssl证书自签发 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/teg%E4%B8%8Eistio%E9%9B%86%E6%88%90-teg-yu-istio-ji-cheng/" class="">TEG与istio集成 2024-08-02 17:51:20.389</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%B8%A4%E5%BC%A0%E5%9B%BE%E5%85%A8%E9%9D%A2%E7%90%86%E8%A7%A3k8s%E5%8E%9F%E7%90%86-liang-zhang-tu-quan-mian-li-jie-k8s-yuan-li/" class="">两张图全面理解K8S原理 2024-04-03 14:51:27.431</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%B8%AA%E6%80%A7%E5%8C%96%E9%9B%86%E7%BE%A4%E5%8F%82%E6%95%B0%E9%85%8D%E7%BD%AE-ge-xing-hua-ji-qun-can-shu-pei-zhi/" class="">个性化集群参数配置 2023-09-28 15:30:56.072</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E4%B8%AD%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_%E9%A2%98%E7%9B%AE/" class="">中级运维面试题</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BA%8C%E8%BF%9B%E5%88%B6%E9%83%A8%E7%BD%B2k8s%E5%8A%A0%E8%8A%82%E7%82%B9%E6%93%8D%E4%BD%9C-er-jin-zhi-bu-shu-k8s-jia-jie-dian-cao-zuo/" class="">二进制部署K8S加节点操作 2024-04-03 15:08:26.726</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-10-20-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8%E9%9B%86%E7%BE%A4/" class="">使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8-keepalived-%E5%92%8C-haproxy-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8-kubernetes-%E9%9B%86%E7%BE%A4-shi-yong-keepalived-he-haproxy-chuang-jian-gao-ke-yong-kubernetes-ji-qun/" class="">使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群 2023-04-12 04:04:09.458</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8-openfunction-%E5%9C%A8%E4%BB%BB%E4%BD%95%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E4%B8%8A%E8%BF%90%E8%A1%8C%E6%97%A0%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%B7%A5%E4%BD%9C%E8%B4%9F%E8%BD%BD-shi-yong-openfunction-zai-ren-he-ji-chu-she-shi-shang-yun-xing-wu-fu-wu-qi-gong-zuo-fu-zai/" class="">使用 OpenFunction 在任何基础设施上运行无服务器工作负载 2024-01-21 04:02:44.459</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8cloudflarecf%E6%90%AD%E5%BB%BAdockerhub%E4%BB%A3%E7%90%86-shi-yong-cloudflarecf-da-jian-dockerhub-dai-li/" class="">使用cloudflare(CF)搭建dockerhub代理 2024-06-28 14:38:34.339</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E4%BD%BF%E7%94%A8kubernees-leases-%E8%BD%BB%E6%9D%BE%E5%AE%9E%E7%8E%B0leader-election-shi-yong-kuberneesleases-qing-song-shi-xian-leaderelection/" class="">使用kubernees leases 轻松实现leader election 2024-04-03 15:09:46.129</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%85%AC%E6%9C%89%E4%BA%91%E4%B8%8A%E9%83%A8%E7%BD%B2-kubeasz-gong-you-yun-shang-bu-shu-kubeasz/" class="">公有云上部署 kubeasz 2023-09-28 15:31:16.19</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2024-5-14-%E5%8D%95master%E5%8D%95etcd%E6%94%B9%E9%80%A0/" class="">单master单etcd改造为3master3etcd</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%8F%B2%E4%B8%8A%E6%9C%80%E7%89%9Bjenkins-pipeline%E6%B5%81%E6%B0%B4%E7%BA%BF%E8%AF%A6%E8%A7%A3-shi-shang-zui-niu-jenkinspipeline-liu-shui-xian-xiang-jie/" class="">史上最牛jenkins pipeline流水线详解 2024-08-02</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%9A%E6%9E%B6%E6%9E%84%E6%94%AF%E6%8C%81-duo-jia-gou-zhi-chi/" class="">多架构支持 2023-09-28 15:29:54.111</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%A7%E5%8E%82%E6%80%BB%E7%BB%93nginx%E9%AB%98%E5%B9%B6%E5%8F%91%E4%BC%98%E5%8C%96%E7%AC%94%E8%AE%B0-da-chang-zong-jie-nginx-gao-bing-fa-you-hua-bi-ji/" class="">大厂总结nginx高并发优化笔记 2024-08-02 17:46:19.098</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A4%A7%E8%A7%84%E6%A8%A1%E5%B9%B6%E5%8F%91%E4%B8%8B%E5%A6%82%E4%BD%95%E5%8A%A0%E5%BF%AB-pod-%E5%90%AF%E5%8A%A8%E9%80%9F%E5%BA%A6-da-gui-mo-bing-fa-xia-ru-he-jia-kuai-pod-qi-dong-su-du/" class="">大规模并发下如何加快 Pod 启动速度 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E4%B8%BAk8s%E4%BF%9D%E9%A9%BE%E6%8A%A4%E8%88%AA-ru-he-wei-k8s-bao-jia-hu-hang/" class="">如何为K8S保驾护航 2024-04-16 17:09:21.962</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8tekton%E5%BF%AB%E9%80%9F%E6%90%AD%E5%BB%BAcicd%E5%B9%B3%E5%8F%B0-ru-he-shi-yong-tekton-kuai-su-da-jian-cicd-ping-tai/" class="">如何使用tekton快速搭建CI/CD平台 2024-04-03</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%A6%82%E4%BD%95%E8%B0%83%E8%AF%95-crash-%E5%AE%B9%E5%99%A8%E7%9A%84%E7%BD%91%E7%BB%9C-ru-he-diao-shi-crash-rong-qi-de-wang-luo/" class="">如何调试 crash 容器的网络 2024-04-03 14:50:51.378</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E4%B8%AD%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E4%BB%A5%E5%8F%8A%E4%B8%8D%E5%90%8Cdnspolicy%E5%AF%B9%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E7%9A%84%E5%BD%B1%E5%93%8D-rong-qi-zhong-yu-ming-jie-xi-yi-ji-bu-tong-dnspolicy-dui-yu-ming-jie-xi-de-ying-xiang/" class="">容器中域名解析以及不同dnspolicy对域名解析的影响 2024-04-03 15:04:09.254</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E5%86%85%E7%9A%84-1-%E5%8F%B7%E8%BF%9B%E7%A8%8B-rong-qi-nei-de-1-hao-jin-cheng/" class="">容器内的 1 号进程 2024-04-03 14:46:29.998</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E5%8E%9F%E7%90%86-rong-qi-yuan-li/" class="">容器原理 2024-04-03 14:45:58.422</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E7%9A%84%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E4%B8%80-overlayfs-%E5%8E%9F%E7%90%86-rong-qi-de-wen-jian-xi-tong--yi-overlayfs-yuan-li/" class="">容器的文件系统 OverlayFS 原理 2024-04-03 14:45:26.893</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C%E5%8E%9F%E7%90%86-rong-qi-wang-luo-yuan-li/" class="">容器网络原理 2024-04-03 14:51:51.962</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%B8%B8%E8%A7%81linux%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98-chang-jian-linux-yun-wei-mian-shi-ti/" class="">常见linux运维面试题 2024-08-02 17:42:33.873</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BC%80%E5%A7%8B%E4%BD%BF%E7%94%A8-cilium-kai-shi-shi-yong-cilium/" class="">开始使用 cilium 2023-09-28 15:34:49.205</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BD%BB%E6%82%9F%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C-che-wu-rong-qi-wang-luo/" class="">彻悟容器网络 2024-04-07 10:30:11.55</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E5%BF%AB%E9%80%9F%E6%8C%87%E5%8D%97-kuai-su-zhi-nan/" class="">快速指南 2023-09-28 15:28:25.71</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%88%91%E5%8F%AA%E6%83%B3%E5%81%9A%E6%8A%80%E6%9C%AF-%E8%B5%B0%E6%8A%80%E6%9C%AF%E8%B7%AF%E7%BA%BF-wo-zhi-xiang-zuo-ji-shu-zou-ji-shu-lu-xian/" class="">我只想做技术 走技术路线 2024-08-02 17:43:31.897</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%90%9E%E6%87%82k8s%E9%89%B4%E6%9D%83-gao-dong-k8s-jian-quan/" class="">搞懂K8S鉴权 2024-04-03 15:11:54.885</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%90%AD%E4%B8%AA%E6%97%A5%E5%BF%97%E6%89%8B%E6%9C%BA%E7%B3%BB%E7%BB%9F%E4%B8%8D%E9%A6%99%E5%90%97-da-ge-ri-zhi-shou-ji-xi-tong-bu-xiang-ma/" class="">搭个日志手机系统不香吗 2024-08-02 17:47:58.794</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E8%AF%B4%E6%98%8E-cao-zuo-xi-tong-shuo-ming/" class="">操作系统说明 2023-09-28 15:31:37.694</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%96%87%E5%AD%A6%E7%9A%84%E6%95%85%E4%B9%A1-wen-xue-de-gu-xiang/" class="">文学的故乡 2024-04-03 14:40:45.926</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%98%AF%E6%8A%80%E6%9C%AF%E5%A4%A7%E7%A5%9E%E8%BF%98%E6%98%AF%E5%9F%BA%E7%A1%80%E6%9E%B6%E6%9E%84%E9%83%A8%E7%9A%84%E7%A5%B8%E5%AE%B3-shi-ji-shu-da-shen-hai-shi-ji-chu-jia-gou-bu-de-huo-hai/" class="">是技术大神还是基础架构部的祸害 2024-08-02 17:50:26.139</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9C%89%E8%BF%993%E4%B8%AA%E8%BF%B9%E8%B1%A1%E4%BD%A0%E5%B0%B1%E8%AF%A5%E7%A6%BB%E8%81%8C%E4%BA%86-you-zhe-3-ge-ji-xiang--ni-jiu-gai-li-zhi-le/" class="">有这3个迹象，你就该离职了 2023-09-21 16:00:22.432</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9E%81%E5%A4%A7%E6%8F%90%E9%AB%98%E5%B7%A5%E4%BD%9C%E6%95%88%E7%8E%87%E7%9A%84-linux-%E5%91%BD%E4%BB%A4-ji-da-ti-gao-gong-zuo-xiao-lv-de-linux-ming-ling/" class="">极大提高工作效率的 Linux 命令 2024-04-03 14:42:46.957</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%9E%84%E5%BB%BA%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E5%88%A9%E5%99%A8buildkit-gou-jian-rong-qi-jing-xiang-li-qi-buildkit/" class="">构建容器镜像利器buildkit 2024-08-02 17:49:14.916</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B5%81%E9%87%8F%E4%BD%95%E5%A4%84%E6%9D%A5%E4%BD%95%E5%A4%84%E5%8E%BB-liu-liang-he-chu-lai-he-chu-qu/" class="">流量何处来何处去 2024-04-03 14:56:20.089</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B8%85%E7%90%86docker%E9%95%9C%E5%83%8F-qing-li-docker-jing-xiang/" class="">清理docker镜像 2024-08-02 17:54:48.594</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E6%B8%85%E7%90%86%E6%AE%8B%E7%95%99%E7%9A%84calico%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6-qing-li-can-liu-de-calico-wang-luo/" class="">清理残留的calico网络插件 2024-04-03 15:07:38.854</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A3%81%E7%9B%98%E6%95%B0%E6%8D%AE%E6%81%A2%E5%A4%8D-ci-pan-shu-ju-hui-fu/" class="">磁盘数据恢复 2024-04-03 14:59:27.839</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85kubephere-li-xian-an-zhuang-kubephere/" class="">离线安装kubephere 2024-04-03 14:59:59.885</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E7%A6%BB%E7%BA%BF%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4-li-xian-an-zhuang-ji-qun/" class="">离线安装集群 2023-09-28 15:29:14.742</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-%E8%AE%A1%E5%88%92/" class="">美国码农薪酬</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-7-%E8%AE%A1%E5%88%922/" class="">美国码农计划</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E8%87%AA%E5%8A%A8%E5%B1%8F%E8%94%BDip%E6%94%BB%E5%87%BB-zi-dong-ping-bi-ip-gong-ji/" class="">自动屏蔽IP攻击 2024-04-03 14:54:11.783</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-12-%E9%9D%A2%E8%AF%950212/" class="">面试0212</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-19-%E9%9D%A2%E8%AF%950219/" class="">面试0219</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-20-%E9%9D%A2%E8%AF%950220/" class="">面试0220</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-26-%E9%9D%A2%E8%AF%950225/" class="">面试0225</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%9D%A2%E8%AF%950308-mian-shi-0308/" class="">面试0308 2024-04-03 14:57:53.576</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-11-%E9%9D%A2%E8%AF%950211/" class="">面试2025-02-11</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-18-%E9%9D%A2%E8%AF%95/" class="">面试2025-0218</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%9D%A2%E8%AF%95%E7%94%A8-golang-%E6%89%8B%E6%92%B8-lru-mian-shi-yong-golang-shou-lu-lru/" class="">面试用 Golang 手撸 LRU 2024-04-03 14:47:00.767</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/%E9%A1%B6%E7%BA%A7devops%E5%B7%A5%E5%85%B7%E5%A4%A7%E7%9B%98%E7%82%B9-ding-ji-devops-gong-ju-da-pan-dian/" class="">顶级devops工具大盘点 2024-08-02 17:43:03.661</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/2025-2-24-%E9%AB%98%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_ai_linux%E9%83%A8%E5%88%86/" class="">高级运维面试题-linux部分</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>2024-2-26 面试</h3>
+
+  <label for="toc-control">
+    
+    <img src="/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#k8s-有哪些组件">k8s 有哪些组件？</a></li>
+        <li><a href="#1-kubernetes-核心组件"><strong>1. Kubernetes 核心组件</strong></a></li>
+        <li><a href="#2-kubernetes-节点组件"><strong>2. Kubernetes 节点组件</strong></a></li>
+        <li><a href="#3-高层组件和工具"><strong>3. 高层组件和工具</strong></a></li>
+        <li><a href="#4-kubernetes-核心资源"><strong>4. Kubernetes 核心资源</strong></a></li>
+        <li><a href="#总结"><strong>总结</strong></a></li>
+        <li><a href="#创建-pod的主要流程">创建 Pod的主要流程?</a></li>
+        <li><a href="#1-用户请求创建-pod"><strong>1. 用户请求创建 Pod</strong></a></li>
+        <li><a href="#2-api-server-接收并验证请求"><strong>2. API Server 接收并验证请求</strong></a></li>
+        <li><a href="#3-调度器选择节点调度"><strong>3. 调度器选择节点（调度）</strong></a></li>
+        <li><a href="#4-节点上的-kubelet-处理-pod"><strong>4. 节点上的 Kubelet 处理 Pod</strong></a></li>
+        <li><a href="#5-pod-运行与健康检查"><strong>5. Pod 运行与健康检查</strong></a></li>
+        <li><a href="#6-控制器的反馈如-deploymentstatefulset"><strong>6. 控制器的反馈（如 Deployment、StatefulSet）</strong></a></li>
+        <li><a href="#7-更新集群状态"><strong>7. 更新集群状态</strong></a></li>
+        <li><a href="#总结创建-pod-的主要流程"><strong>总结：创建 Pod 的主要流程</strong></a></li>
+        <li><a href="#k8s的调度机制">k8s的调度机制</a></li>
+        <li><a href="#kubernetes-调度流程概述"><strong>Kubernetes 调度流程概述</strong></a></li>
+        <li><a href="#kubernetes-调度的关键机制"><strong>Kubernetes 调度的关键机制</strong></a></li>
+        <li><a href="#kubernetes-调度策略"><strong>Kubernetes 调度策略</strong></a></li>
+        <li><a href="#kubernetes-默认调度器和自定义调度器"><strong>Kubernetes 默认调度器和自定义调度器</strong></a></li>
+        <li><a href="#kubernetes-调度器插件"><strong>Kubernetes 调度器插件</strong></a></li>
+        <li><a href="#总结-1"><strong>总结</strong></a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h3 id="k8s-有哪些组件">
+  k8s 有哪些组件？
+  <a class="anchor" href="#k8s-%e6%9c%89%e5%93%aa%e4%ba%9b%e7%bb%84%e4%bb%b6">#</a>
+</h3>
+<h5 id="1etcd保存了集群的状态">
+  1、etcd保存了集群的状态
+  <a class="anchor" href="#1etcd%e4%bf%9d%e5%ad%98%e4%ba%86%e9%9b%86%e7%be%a4%e7%9a%84%e7%8a%b6%e6%80%81">#</a>
+</h5>
+<h5 id="2apiserver提供了资源操作的唯一入口还提供认证授权访问控制api注册和服务发现等">
+  2、apiserver提供了资源操作的唯一入口，还提供认证，授权，访问控制，api注册和服务发现等
+  <a class="anchor" href="#2apiserver%e6%8f%90%e4%be%9b%e4%ba%86%e8%b5%84%e6%ba%90%e6%93%8d%e4%bd%9c%e7%9a%84%e5%94%af%e4%b8%80%e5%85%a5%e5%8f%a3%e8%bf%98%e6%8f%90%e4%be%9b%e8%ae%a4%e8%af%81%e6%8e%88%e6%9d%83%e8%ae%bf%e9%97%ae%e6%8e%a7%e5%88%b6api%e6%b3%a8%e5%86%8c%e5%92%8c%e6%9c%8d%e5%8a%a1%e5%8f%91%e7%8e%b0%e7%ad%89">#</a>
+</h5>
+<h5 id="3controller-manager负责维护集群的状态比如自动扩展滚动更新故障检测等">
+  3、controller manager负责维护集群的状态，比如自动扩展，滚动更新，故障检测等
+  <a class="anchor" href="#3controller-manager%e8%b4%9f%e8%b4%a3%e7%bb%b4%e6%8a%a4%e9%9b%86%e7%be%a4%e7%9a%84%e7%8a%b6%e6%80%81%e6%af%94%e5%a6%82%e8%87%aa%e5%8a%a8%e6%89%a9%e5%b1%95%e6%bb%9a%e5%8a%a8%e6%9b%b4%e6%96%b0%e6%95%85%e9%9a%9c%e6%a3%80%e6%b5%8b%e7%ad%89">#</a>
+</h5>
+<h5 id="4scheduler-负责集群资源的调度安照预期的调度策略将pod调度到相应的node上">
+  4、scheduler 负责集群资源的调度，安照预期的调度策略将pod调度到相应的node上
+  <a class="anchor" href="#4scheduler-%e8%b4%9f%e8%b4%a3%e9%9b%86%e7%be%a4%e8%b5%84%e6%ba%90%e7%9a%84%e8%b0%83%e5%ba%a6%e5%ae%89%e7%85%a7%e9%a2%84%e6%9c%9f%e7%9a%84%e8%b0%83%e5%ba%a6%e7%ad%96%e7%95%a5%e5%b0%86pod%e8%b0%83%e5%ba%a6%e5%88%b0%e7%9b%b8%e5%ba%94%e7%9a%84node%e4%b8%8a">#</a>
+</h5>
+<h5 id="5kubelet负责管理容器的生命周期还负责共享存储卷和网络的管理">
+  5、kubelet负责管理容器的生命周期，还负责共享存储卷和网络的管理
+  <a class="anchor" href="#5kubelet%e8%b4%9f%e8%b4%a3%e7%ae%a1%e7%90%86%e5%ae%b9%e5%99%a8%e7%9a%84%e7%94%9f%e5%91%bd%e5%91%a8%e6%9c%9f%e8%bf%98%e8%b4%9f%e8%b4%a3%e5%85%b1%e4%ba%ab%e5%ad%98%e5%82%a8%e5%8d%b7%e5%92%8c%e7%bd%91%e7%bb%9c%e7%9a%84%e7%ae%a1%e7%90%86">#</a>
+</h5>
+<h5 id="6container-runtime-容器运行时负责管理镜像的管理pod和容器的真正运行">
+  6、Container runtime 容器运行时，负责管理镜像的管理，pod和容器的真正运行
+  <a class="anchor" href="#6container-runtime-%e5%ae%b9%e5%99%a8%e8%bf%90%e8%a1%8c%e6%97%b6%e8%b4%9f%e8%b4%a3%e7%ae%a1%e7%90%86%e9%95%9c%e5%83%8f%e7%9a%84%e7%ae%a1%e7%90%86pod%e5%92%8c%e5%ae%b9%e5%99%a8%e7%9a%84%e7%9c%9f%e6%ad%a3%e8%bf%90%e8%a1%8c">#</a>
+</h5>
+<h5 id="7kube-proxy负责管理集群的服务发现和负载均衡">
+  7、kube-proxy负责管理集群的服务发现和负载均衡
+  <a class="anchor" href="#7kube-proxy%e8%b4%9f%e8%b4%a3%e7%ae%a1%e7%90%86%e9%9b%86%e7%be%a4%e7%9a%84%e6%9c%8d%e5%8a%a1%e5%8f%91%e7%8e%b0%e5%92%8c%e8%b4%9f%e8%bd%bd%e5%9d%87%e8%a1%a1">#</a>
+</h5>
+<p>Kubernetes（K8s）是一个功能强大的容器编排平台，它由多个组件构成，这些组件共同协作来实现集群的管理、调度、监控等功能。下面是 Kubernetes 主要组件的简要介绍：</p>
+<h3 id="1-kubernetes-核心组件">
+  <strong>1. Kubernetes 核心组件</strong>
+  <a class="anchor" href="#1-kubernetes-%e6%a0%b8%e5%bf%83%e7%bb%84%e4%bb%b6">#</a>
+</h3>
+<h4 id="11-api-server-">
+  1.1 <strong>API Server (<code>kube-apiserver</code>)</strong>
+  <a class="anchor" href="#11-api-server-">#</a>
+</h4>
+<ul>
+<li>
+<p><strong>职责</strong>：API Server 是 Kubernetes 控制平面的核心组件，它暴露了 Kubernetes 集群的 REST API，所有的命令和操作（如创建、删除、更新 Pod 等）都通过 API Server 来进行。</p>
+</li>
+<li>
+<p>功能</p>
+<p>：</p>
+<ul>
+<li>接收来自用户、控制器、调度器等的请求。</li>
+<li>负责验证和处理请求。</li>
+<li>提供 REST API 接口，供客户端和其他组件使用。</li>
+<li>存储集群状态数据（通过与 etcd 交互）。</li>
+</ul>
+</li>
+</ul>
+<h4 id="12-controller-manager-">
+  1.2 <strong>Controller Manager (<code>kube-controller-manager</code>)</strong>
+  <a class="anchor" href="#12-controller-manager-">#</a>
+</h4>
+<ul>
+<li>
+<p><strong>职责</strong>：Controller Manager 负责运行集群的控制循环（controller loops），确保集群的实际状态与期望状态相一致。</p>
+</li>
+<li>
+<p>功能</p>
+<p>：</p>
+<ul>
+<li>启动各种控制器，如 Deployment Controller、ReplicaSet Controller、Node Controller 等。</li>
+<li>处理集群资源的自我修复任务，如创建新的 Pod 来替代已死 Pod，扩缩容等。</li>
+</ul>
+</li>
+</ul>
+<h4 id="13-scheduler-">
+  1.3 <strong>Scheduler (<code>kube-scheduler</code>)</strong>
+  <a class="anchor" href="#13-scheduler-">#</a>
+</h4>
+<ul>
+<li>
+<p><strong>职责</strong>：调度器负责将 Pod 分配到集群中的合适节点上。</p>
+</li>
+<li>
+<p>功能</p>
+<p>：</p>
+<ul>
+<li>根据集群资源情况和 Pod 的要求，选择最佳的节点来运行 Pod。</li>
+<li>支持不同的调度策略，如资源请求、节点亲和性（Node Affinity）等。</li>
+</ul>
+</li>
+</ul>
+<h4 id="14-etcd">
+  1.4 <strong>etcd</strong>
+  <a class="anchor" href="#14-etcd">#</a>
+</h4>
+<ul>
+<li>
+<p><strong>职责</strong>：etcd 是 Kubernetes 的分布式键值存储系统，用于存储集群的所有状态数据，包括 Pod、节点、Service 等所有资源对象的配置和元数据。</p>
+</li>
+<li>
+<p>功能</p>
+<p>：</p>
+<ul>
+<li>持久化存储集群的所有状态信息。</li>
+<li>提供强一致性保障，确保所有集群组件共享最新的状态数据。</li>
+</ul>
+</li>
+</ul>
+<h4 id="15-cloud-controller-manager-">
+  1.5 <strong>Cloud Controller Manager (<code>kube-cloud-controller-manager</code>)</strong>
+  <a class="anchor" href="#15-cloud-controller-manager-">#</a>
+</h4>
+<ul>
+<li>
+<p><strong>职责</strong>：Cloud Controller Manager 是为了支持云环境的 Kubernetes 扩展，它使得 Kubernetes 集群能够与云提供商的 API 集成。</p>
+</li>
+<li>
+<p>功能</p>
+<p>：</p>
+<ul>
+<li>负责与云提供商的控制平面交互，管理负载均衡器、存储卷等云资源。</li>
+<li>让 Kubernetes 集群能够在多云环境中管理资源。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="2-kubernetes-节点组件">
+  <strong>2. Kubernetes 节点组件</strong>
+  <a class="anchor" href="#2-kubernetes-%e8%8a%82%e7%82%b9%e7%bb%84%e4%bb%b6">#</a>
+</h3>
+<h4 id="21-kubelet">
+  2.1 <strong>Kubelet</strong>
+  <a class="anchor" href="#21-kubelet">#</a>
+</h4>
+<ul>
+<li>
+<p><strong>职责</strong>：Kubelet 是集群中每个节点上的代理，负责管理节点上的容器（Pod）。</p>
+</li>
+<li>
+<p>功能</p>
+<p>：</p>
+<ul>
+<li>监控和管理节点上的容器，确保 Pod 中的容器处于正常状态。</li>
+<li>从 API Server 获取 Pod 的规格，并执行容器的启动、停止等操作。</li>
+<li>收集和报告节点的资源使用情况（如 CPU、内存）到 API Server。</li>
+</ul>
+</li>
+</ul>
+<h4 id="22-kube-proxy">
+  2.2 <strong>Kube Proxy</strong>
+  <a class="anchor" href="#22-kube-proxy">#</a>
+</h4>
+<ul>
+<li>
+<p><strong>职责</strong>：Kube Proxy 是一个网络代理，它负责维护集群中的网络规则，以确保网络流量能够正确地转发到 Pod。</p>
+</li>
+<li>
+<p>功能</p>
+<p>：</p>
+<ul>
+<li>管理每个节点的网络流量，基于 iptables 或 IPVS 实现负载均衡。</li>
+<li>确保 Service 的 DNS 名称能够被解析，并且流量能够正确地路由到后端的 Pod。</li>
+</ul>
+</li>
+</ul>
+<h4 id="23-container-runtime">
+  2.3 <strong>Container Runtime</strong>
+  <a class="anchor" href="#23-container-runtime">#</a>
+</h4>
+<ul>
+<li>
+<p><strong>职责</strong>：容器运行时（如 Docker、containerd）负责运行容器并管理容器生命周期。</p>
+</li>
+<li>
+<p>功能</p>
+<p>：</p>
+<ul>
+<li>启动、停止容器。</li>
+<li>拉取容器镜像并管理容器资源。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="3-高层组件和工具">
+  <strong>3. 高层组件和工具</strong>
+  <a class="anchor" href="#3-%e9%ab%98%e5%b1%82%e7%bb%84%e4%bb%b6%e5%92%8c%e5%b7%a5%e5%85%b7">#</a>
+</h3>
+<h4 id="31-kubernetes-dashboard">
+  3.1 <strong>Kubernetes Dashboard</strong>
+  <a class="anchor" href="#31-kubernetes-dashboard">#</a>
+</h4>
+<ul>
+<li>
+<p><strong>职责</strong>：Kubernetes Dashboard 是一个基于 Web 的 UI 工具，用于管理和监控 Kubernetes 集群。</p>
+</li>
+<li>
+<p>功能</p>
+<p>：</p>
+<ul>
+<li>提供图形化的界面，方便用户查看集群状态、Pod、Deployment、Service 等资源。</li>
+<li>支持用户创建、更新、删除集群资源。</li>
+</ul>
+</li>
+</ul>
+<h4 id="32-helm">
+  3.2 <strong>Helm</strong>
+  <a class="anchor" href="#32-helm">#</a>
+</h4>
+<ul>
+<li>
+<p><strong>职责</strong>：Helm 是 Kubernetes 的包管理工具，类似于 Linux 的 <code>apt</code> 或 <code>yum</code>。</p>
+</li>
+<li>
+<p>功能</p>
+<p>：</p>
+<ul>
+<li>通过 Helm Charts 来管理应用程序的部署。</li>
+<li>Helm Charts 是预配置的 Kubernetes 资源文件集合，允许用户方便地部署和管理应用。</li>
+</ul>
+</li>
+</ul>
+<h4 id="33-ingress-controller">
+  3.3 <strong>Ingress Controller</strong>
+  <a class="anchor" href="#33-ingress-controller">#</a>
+</h4>
+<ul>
+<li>
+<p><strong>职责</strong>：Ingress Controller 是一种专门处理 HTTP/HTTPS 请求的 Kubernetes 组件，它根据 Ingress 资源来路由流量。</p>
+</li>
+<li>
+<p>功能</p>
+<p>：</p>
+<ul>
+<li>控制外部流量进入集群。</li>
+<li>配置负载均衡、SSL/TLS 终端和 URL 路由等。</li>
+<li>常见的 Ingress Controller 有 Nginx Ingress Controller、Traefik 等。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="4-kubernetes-核心资源">
+  <strong>4. Kubernetes 核心资源</strong>
+  <a class="anchor" href="#4-kubernetes-%e6%a0%b8%e5%bf%83%e8%b5%84%e6%ba%90">#</a>
+</h3>
+<p>除了上述组件，Kubernetes 还包括一些重要的资源对象，用于管理集群和应用程序：</p>
+<h4 id="41-pod">
+  4.1 <strong>Pod</strong>
+  <a class="anchor" href="#41-pod">#</a>
+</h4>
+<ul>
+<li><strong>职责</strong>：Pod 是 Kubernetes 中最小的可调度单元，包含一个或多个容器，所有容器共享同一网络和存储。</li>
+</ul>
+<h4 id="42-service">
+  4.2 <strong>Service</strong>
+  <a class="anchor" href="#42-service">#</a>
+</h4>
+<ul>
+<li><strong>职责</strong>：Service 提供了一种稳定的访问方式，用于暴露一组 Pod。它抽象了 Pod 的 IP 地址，并可以提供负载均衡。</li>
+</ul>
+<h4 id="43-replicaset">
+  4.3 <strong>ReplicaSet</strong>
+  <a class="anchor" href="#43-replicaset">#</a>
+</h4>
+<ul>
+<li><strong>职责</strong>：ReplicaSet 用于保证在任何时候都维持指定数量的 Pod 副本。它常常与 Deployment 一起使用。</li>
+</ul>
+<h4 id="44-deployment">
+  4.4 <strong>Deployment</strong>
+  <a class="anchor" href="#44-deployment">#</a>
+</h4>
+<ul>
+<li><strong>职责</strong>：Deployment 是一种高级控制器，负责管理 Pod 的副本、更新和滚动更新等操作。</li>
+</ul>
+<h4 id="45-statefulset">
+  4.5 <strong>StatefulSet</strong>
+  <a class="anchor" href="#45-statefulset">#</a>
+</h4>
+<ul>
+<li><strong>职责</strong>：StatefulSet 是 Kubernetes 中用于管理有状态应用的控制器，支持持久化存储和 Pod 的稳定标识符。</li>
+</ul>
+<h4 id="46-configmap-和-secret">
+  4.6 <strong>ConfigMap 和 Secret</strong>
+  <a class="anchor" href="#46-configmap-%e5%92%8c-secret">#</a>
+</h4>
+<ul>
+<li>
+<p>职责</p>
+<p>：</p>
+<ul>
+<li><strong>ConfigMap</strong>：用于存储非敏感的配置数据。</li>
+<li><strong>Secret</strong>：用于存储敏感数据，如密码、OAuth token 等。</li>
+</ul>
+</li>
+</ul>
+<h4 id="47-persistentvolume-pv-和-persistentvolumeclaim-pvc">
+  4.7 <strong>PersistentVolume (PV) 和 PersistentVolumeClaim (PVC)</strong>
+  <a class="anchor" href="#47-persistentvolume-pv-%e5%92%8c-persistentvolumeclaim-pvc">#</a>
+</h4>
+<ul>
+<li><strong>职责</strong>：PV 和 PVC 用于管理 Kubernetes 中的持久存储。PV 是集群中的存储资源，PVC 是 Pod 请求存储资源的方式。</li>
+</ul>
+<hr>
+<h3 id="总结">
+  <strong>总结</strong>
+  <a class="anchor" href="#%e6%80%bb%e7%bb%93">#</a>
+</h3>
+<p>Kubernetes 是由多个组件组成的复杂系统，每个组件都在集群的不同部分起着关键作用。<strong>控制平面</strong> 主要负责管理集群的整体状态，如 API Server、调度器、控制器等；而 <strong>节点组件</strong> 则在每个工作节点上执行容器的管理和调度任务，确保容器能够按照预期正常运行。通过这些组件的协作，Kubernetes 提供了强大的容器管理能力，支持大规模的容器化应用部署和运维。</p>
+<h3 id="创建-pod的主要流程">
+  创建 Pod的主要流程?
+  <a class="anchor" href="#%e5%88%9b%e5%bb%ba-pod%e7%9a%84%e4%b8%bb%e8%a6%81%e6%b5%81%e7%a8%8b">#</a>
+</h3>
+<h5 id="1客户端提交pod的配置信息可以是yaml到kube-apiserver">
+  1.客户端提交pod的配置信息(可以是yaml)到kube-apiserver
+  <a class="anchor" href="#1%e5%ae%a2%e6%88%b7%e7%ab%af%e6%8f%90%e4%ba%a4pod%e7%9a%84%e9%85%8d%e7%bd%ae%e4%bf%a1%e6%81%af%e5%8f%af%e4%bb%a5%e6%98%afyaml%e5%88%b0kube-apiserver">#</a>
+</h5>
+<h5 id="2apiserver收到信息后kube-controller-manager创建资源对象">
+  2.apiserver收到信息后kube-controller-manager创建资源对象
+  <a class="anchor" href="#2apiserver%e6%94%b6%e5%88%b0%e4%bf%a1%e6%81%af%e5%90%8ekube-controller-manager%e5%88%9b%e5%bb%ba%e8%b5%84%e6%ba%90%e5%af%b9%e8%b1%a1">#</a>
+</h5>
+<h5 id="3kubecontroller将yaml信息存到etcd">
+  3.kubecontroller将yaml信息存到etcd
+  <a class="anchor" href="#3kubecontroller%e5%b0%86yaml%e4%bf%a1%e6%81%af%e5%ad%98%e5%88%b0etcd">#</a>
+</h5>
+<h5 id="4kubescheduler调度pod到某个节点">
+  4.kubescheduler调度pod到某个节点
+  <a class="anchor" href="#4kubescheduler%e8%b0%83%e5%ba%a6pod%e5%88%b0%e6%9f%90%e4%b8%aa%e8%8a%82%e7%82%b9">#</a>
+</h5>
+<h5 id="5kubelet根据kube-scheduler发来的配置信息来运行pod运行成功将pod信息返回给schedulescheduler将信息返回并存储到到etcd">
+  5.kubelet根据kube-scheduler发来的配置信息来运行pod，运行成功将pod信息返回给schedule，scheduler将信息返回并存储到到etcd
+  <a class="anchor" href="#5kubelet%e6%a0%b9%e6%8d%aekube-scheduler%e5%8f%91%e6%9d%a5%e7%9a%84%e9%85%8d%e7%bd%ae%e4%bf%a1%e6%81%af%e6%9d%a5%e8%bf%90%e8%a1%8cpod%e8%bf%90%e8%a1%8c%e6%88%90%e5%8a%9f%e5%b0%86pod%e4%bf%a1%e6%81%af%e8%bf%94%e5%9b%9e%e7%bb%99schedulescheduler%e5%b0%86%e4%bf%a1%e6%81%af%e8%bf%94%e5%9b%9e%e5%b9%b6%e5%ad%98%e5%82%a8%e5%88%b0%e5%88%b0etcd">#</a>
+</h5>
+<p>在 Kubernetes 中，<strong>Pod</strong> 是最小的部署单元，通常用于部署一个或多个容器。创建 Pod 的主要流程包括从用户发起请求到容器在节点上运行的各个步骤。以下是创建 Pod 的主要流程：</p>
+<hr>
+<h3 id="1-用户请求创建-pod">
+  <strong>1. 用户请求创建 Pod</strong>
+  <a class="anchor" href="#1-%e7%94%a8%e6%88%b7%e8%af%b7%e6%b1%82%e5%88%9b%e5%bb%ba-pod">#</a>
+</h3>
+<p>创建 Pod 的第一步是用户通过 <code>kubectl</code> 或其他 Kubernetes API 客户端发起创建请求。</p>
+<ul>
+<li>
+<p><strong>通过 kubectl 命令</strong>： 用户可以通过 <code>kubectl run</code> 或 <code>kubectl apply -f pod.yaml</code> 命令创建 Pod。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>kubectl apply -f pod.yaml
+</span></span></code></pre></div><p>或者通过 <code>kubectl run</code> 创建 Pod（通常用于临时 Pod）：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>kubectl run mypod --image<span style="color:#f92672">=</span>nginx
+</span></span></code></pre></div></li>
+<li>
+<p><strong>通过 Kubernetes API</strong>： 用户也可以通过 Kubernetes API 发起创建请求（通常由控制器自动发起，如 Deployment 或 StatefulSet）。这时，Pod 描述会通过 API 发送到 API Server。</p>
+</li>
+</ul>
+<hr>
+<h3 id="2-api-server-接收并验证请求">
+  <strong>2. API Server 接收并验证请求</strong>
+  <a class="anchor" href="#2-api-server-%e6%8e%a5%e6%94%b6%e5%b9%b6%e9%aa%8c%e8%af%81%e8%af%b7%e6%b1%82">#</a>
+</h3>
+<p>Kubernetes 中的所有操作都会通过 <strong>API Server</strong> 来进行。无论是通过 <code>kubectl</code> 还是 API 发起的请求，都会到达 API Server。</p>
+<ul>
+<li><strong>验证请求</strong>：API Server 对 Pod 请求进行验证，确保所请求的 Pod 描述符合 Kubernetes 的规范。例如，确保资源请求正确，标签、容忍等参数合法。</li>
+<li><strong>存储请求</strong>：验证通过后，API Server 会将 Pod 的描述（通常是 YAML 或 JSON 格式）存储到 Kubernetes 的 <strong>etcd</strong> 数据存储中，作为集群的当前状态。</li>
+</ul>
+<hr>
+<h3 id="3-调度器选择节点调度">
+  <strong>3. 调度器选择节点（调度）</strong>
+  <a class="anchor" href="#3-%e8%b0%83%e5%ba%a6%e5%99%a8%e9%80%89%e6%8b%a9%e8%8a%82%e7%82%b9%e8%b0%83%e5%ba%a6">#</a>
+</h3>
+<p>当 API Server 成功接收到 Pod 创建请求并将其存储在 etcd 中后，接下来的任务是将 Pod 调度到一个合适的节点上。这是由 <strong>调度器（kube-scheduler）</strong> 完成的。</p>
+<h4 id="调度过程">
+  <strong>调度过程</strong>：
+  <a class="anchor" href="#%e8%b0%83%e5%ba%a6%e8%bf%87%e7%a8%8b">#</a>
+</h4>
+<ol>
+<li><strong>过滤阶段</strong>：
+<ul>
+<li>调度器会根据 Pod 的要求（如资源请求、亲和性/反亲和性等），对所有节点进行过滤，排除不符合条件的节点。</li>
+<li>例如，某些节点的资源可能不足，或者节点与 Pod 的亲和性要求不匹配。</li>
+</ul>
+</li>
+<li><strong>优选阶段</strong>：
+<ul>
+<li>对剩下的符合条件的节点，调度器会根据节点的负载、拓扑结构等因素打分，选择一个最合适的节点。</li>
+<li>例如，调度器会考虑节点的 CPU 和内存使用情况，选择资源最空闲的节点。</li>
+</ul>
+</li>
+<li><strong>绑定</strong>：
+<ul>
+<li>一旦选定了节点，调度器会将 Pod 与节点绑定，向 API Server 通知这个 Pod 已经成功调度到指定节点。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h3 id="4-节点上的-kubelet-处理-pod">
+  <strong>4. 节点上的 Kubelet 处理 Pod</strong>
+  <a class="anchor" href="#4-%e8%8a%82%e7%82%b9%e4%b8%8a%e7%9a%84-kubelet-%e5%a4%84%e7%90%86-pod">#</a>
+</h3>
+<p>调度器将 Pod 绑定到特定节点后，<strong>Kubelet</strong> 会在该节点上进行具体的操作。</p>
+<ul>
+<li><strong>拉取容器镜像</strong>：Kubelet 会根据 Pod 配置中的容器镜像信息，拉取相应的容器镜像到本地。如果镜像已经存在，则会跳过这一步。</li>
+<li><strong>创建容器</strong>：Kubelet 使用容器运行时（如 Docker、containerd）在节点上启动容器。Pod 可以包含一个或多个容器，Kubelet 会逐个启动它们。</li>
+<li><strong>设置网络和存储</strong>：
+<ul>
+<li>Kubelet 为 Pod 配置网络，使得容器之间可以相互通信，并且可以访问外部网络。</li>
+<li>如果 Pod 定义了持久存储（如卷），Kubelet 会挂载相关的存储资源。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="5-pod-运行与健康检查">
+  <strong>5. Pod 运行与健康检查</strong>
+  <a class="anchor" href="#5-pod-%e8%bf%90%e8%a1%8c%e4%b8%8e%e5%81%a5%e5%ba%b7%e6%a3%80%e6%9f%a5">#</a>
+</h3>
+<p>当容器启动后，Kubelet 会持续监控 Pod 和容器的状态。Kubelet 会定期执行以下任务：</p>
+<ul>
+<li><strong>健康检查（Liveness / Readiness）</strong>：
+<ul>
+<li><strong>Liveness Probe</strong>：检查容器是否仍然存活。如果 Pod 容器挂掉，Kubelet 会重启容器。</li>
+<li><strong>Readiness Probe</strong>：检查容器是否已准备好接受流量。如果容器不准备好，Kubelet 会将其从服务的负载均衡池中移除，直到它准备好。</li>
+</ul>
+</li>
+<li><strong>资源监控</strong>： Kubelet 会报告节点和容器的资源使用情况（如 CPU、内存等）到 API Server。</li>
+<li><strong>日志与事件</strong>： Kubelet 会将容器的日志和事件收集起来，供用户查看。</li>
+</ul>
+<hr>
+<h3 id="6-控制器的反馈如-deploymentstatefulset">
+  <strong>6. 控制器的反馈（如 Deployment、StatefulSet）</strong>
+  <a class="anchor" href="#6-%e6%8e%a7%e5%88%b6%e5%99%a8%e7%9a%84%e5%8f%8d%e9%a6%88%e5%a6%82-deploymentstatefulset">#</a>
+</h3>
+<p>如果 Pod 是由某个控制器（如 <strong>Deployment</strong>、<strong>StatefulSet</strong>、<strong>DaemonSet</strong>）管理的，那么这些控制器会继续监视 Pod 的状态，确保集群的实际状态符合所期望的状态。如果有 Pod 创建失败，控制器会重新调度 Pod。</p>
+<ul>
+<li>例如，<strong>Deployment</strong> 会确保它管理的 Pod 数量始终保持一致。如果某个 Pod 不健康或不可用，Deployment 会创建一个新的 Pod 来替代它。</li>
+</ul>
+<hr>
+<h3 id="7-更新集群状态">
+  <strong>7. 更新集群状态</strong>
+  <a class="anchor" href="#7-%e6%9b%b4%e6%96%b0%e9%9b%86%e7%be%a4%e7%8a%b6%e6%80%81">#</a>
+</h3>
+<p>最终，Kubernetes 集群的状态（包括 Pod、节点、容器等信息）会更新到 <strong>etcd</strong> 中，以确保集群的最终状态一致。</p>
+<h3 id="总结创建-pod-的主要流程">
+  <strong>总结：创建 Pod 的主要流程</strong>
+  <a class="anchor" href="#%e6%80%bb%e7%bb%93%e5%88%9b%e5%bb%ba-pod-%e7%9a%84%e4%b8%bb%e8%a6%81%e6%b5%81%e7%a8%8b">#</a>
+</h3>
+<ol>
+<li><strong>用户请求</strong>：用户通过 <code>kubectl</code> 或 API 创建 Pod。</li>
+<li><strong>API Server 验证和存储</strong>：API Server 验证请求并将 Pod 存储到 etcd 中。</li>
+<li><strong>调度器调度</strong>：调度器选择合适的节点，并将 Pod 绑定到该节点。</li>
+<li><strong>Kubelet 启动容器</strong>：Kubelet 在节点上拉取容器镜像并启动容器。</li>
+<li><strong>健康检查与资源监控</strong>：Kubelet 执行容器的健康检查，并持续报告资源使用情况。</li>
+<li><strong>控制器管理</strong>：控制器监控 Pod 的状态，确保集群的期望状态与实际状态一致。</li>
+<li><strong>集群状态更新</strong>：Pod 创建成功后，集群状态存储在 etcd 中。</li>
+</ol>
+<p>通过这些步骤，Kubernetes 确保 Pod 在集群中得到高效、可靠的管理和调度。</p>
+<h3 id="k8s的调度机制">
+  k8s的调度机制
+  <a class="anchor" href="#k8s%e7%9a%84%e8%b0%83%e5%ba%a6%e6%9c%ba%e5%88%b6">#</a>
+</h3>
+<h5 id="1节点预选">
+  1.节点预选
+  <a class="anchor" href="#1%e8%8a%82%e7%82%b9%e9%a2%84%e9%80%89">#</a>
+</h5>
+<h5 id="2节点打分排序">
+  2.节点打分排序
+  <a class="anchor" href="#2%e8%8a%82%e7%82%b9%e6%89%93%e5%88%86%e6%8e%92%e5%ba%8f">#</a>
+</h5>
+<h5 id="3节点选优">
+  3.节点选优
+  <a class="anchor" href="#3%e8%8a%82%e7%82%b9%e9%80%89%e4%bc%98">#</a>
+</h5>
+<p><strong>Kubernetes (K8s)</strong> 的调度机制是其核心功能之一，用于决定容器应该在集群中的哪个节点上运行。K8s 调度器（Scheduler）负责根据节点的资源可用性、负载、拓扑、约束条件等因素，智能地将 Pod 分配到集群中的不同节点。调度是一个多阶段的过程，并且涉及到多个重要的调度策略和插件。</p>
+<h3 id="kubernetes-调度流程概述">
+  <strong>Kubernetes 调度流程概述</strong>
+  <a class="anchor" href="#kubernetes-%e8%b0%83%e5%ba%a6%e6%b5%81%e7%a8%8b%e6%a6%82%e8%bf%b0">#</a>
+</h3>
+<ol>
+<li><strong>Pod 创建</strong>
+<ul>
+<li>用户通过 <code>kubectl</code> 或其他 API 创建一个 Pod 请求，或者在某个 Deployment、StatefulSet 等控制器中声明了新的 Pod。</li>
+<li>Kubernetes 控制平面通过 API Server 接收这个请求，并将 Pod 交给调度器来决定放置在哪个节点上。</li>
+</ul>
+</li>
+<li><strong>调度器决定节点</strong>
+<ul>
+<li>调度器会检查集群中所有节点的资源使用情况，并根据一系列规则来选择最合适的节点。</li>
+</ul>
+</li>
+<li><strong>Pod 绑定到节点</strong>
+<ul>
+<li>调度器选择合适的节点后，将 Pod 绑定到节点上，并将信息更新到 API Server。然后，节点上的 kubelet 负责拉取容器镜像、启动容器。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h3 id="kubernetes-调度的关键机制">
+  <strong>Kubernetes 调度的关键机制</strong>
+  <a class="anchor" href="#kubernetes-%e8%b0%83%e5%ba%a6%e7%9a%84%e5%85%b3%e9%94%ae%e6%9c%ba%e5%88%b6">#</a>
+</h3>
+<ol>
+<li><strong>调度阶段</strong> Kubernetes 调度器通常按以下顺序工作：
+<ul>
+<li><strong>过滤阶段 (Filter)</strong>
+<ul>
+<li>调度器通过节点的 <strong>节点选择器</strong>（NodeSelector）、资源限制、硬件/网络要求等，过滤出不符合条件的节点。</li>
+<li>过滤阶段的目标是排除掉那些不适合运行该 Pod 的节点，通常根据一些基本的约束条件，如 CPU、内存等资源。</li>
+</ul>
+</li>
+<li><strong>优选阶段 (Score)</strong>
+<ul>
+<li>对于剩下的候选节点，调度器通过 <strong>调度策略</strong> 进行排序（比如节点的负载、拓扑结构等），选择一个最优的节点。</li>
+<li>在优选阶段，调度器会基于 <code>Affinity</code>（亲和性）和 <code>Anti-Affinity</code>（反亲和性）规则、Pod 的资源请求与限制、Pod 的拓扑要求等因素对节点进行评分。</li>
+</ul>
+</li>
+<li><strong>绑定阶段 (Bind)</strong>
+<ul>
+<li>调度器最终选择一个节点并将 Pod 绑定到该节点上。这时，节点上的 <code>kubelet</code> 会负责启动容器。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h3 id="kubernetes-调度策略">
+  <strong>Kubernetes 调度策略</strong>
+  <a class="anchor" href="#kubernetes-%e8%b0%83%e5%ba%a6%e7%ad%96%e7%95%a5">#</a>
+</h3>
+<ol>
+<li>
+<p><strong>资源请求和限制</strong></p>
+<ul>
+<li>每个 Pod 可以定义 <strong>资源请求</strong>（request）和 <strong>资源限制</strong>（limit）。资源请求是调度器决定在哪里调度 Pod 的基础，而资源限制则是容器运行时能使用的最大资源量。</li>
+<li>调度器会根据节点的可用资源（CPU、内存等）和 Pod 的资源请求来选择节点。</li>
+</ul>
+</li>
+<li>
+<p><strong>Node Affinity（节点亲和性）</strong></p>
+<ul>
+<li>通过 <code>nodeAffinity</code> 规则，可以控制 Pod 只调度到符合特定标签的节点上。</li>
+<li><strong>硬亲和性</strong>（必需条件）和 <strong>软亲和性</strong>（优先条件）都可以通过 <code>affinity</code> 配置来指定。</li>
+</ul>
+<p>示例：让 Pod 只调度到具有特定标签的节点上：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">affinity</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">nodeAffinity</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">requiredDuringSchedulingIgnoredDuringExecution</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">nodeSelectorTerms</span>:
+</span></span><span style="display:flex;"><span>      - <span style="color:#f92672">matchExpressions</span>:
+</span></span><span style="display:flex;"><span>          - <span style="color:#f92672">key</span>: <span style="color:#e6db74">&#34;disktype&#34;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">operator</span>: <span style="color:#ae81ff">In</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">values</span>:
+</span></span><span style="display:flex;"><span>            - <span style="color:#ae81ff">ssd</span>
+</span></span></code></pre></div></li>
+<li>
+<p><strong>Pod Affinity 和 Anti-Affinity（Pod亲和性和反亲和性）</strong></p>
+<ul>
+<li><strong>Pod Affinity</strong>：控制 Pod 应该尽可能地调度到与其他 Pod 相同或相邻的节点上。</li>
+<li><strong>Pod Anti-Affinity</strong>：控制 Pod 不应调度到与特定 Pod 相同或相邻的节点上。</li>
+</ul>
+<p>示例：让 Pod 调度到与另一个特定 Pod 在同一个节点上：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">affinity</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">podAffinity</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">requiredDuringSchedulingIgnoredDuringExecution</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">labelSelector</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">matchLabels</span>:
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">app</span>: <span style="color:#ae81ff">frontend</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">topologyKey</span>: <span style="color:#e6db74">&#34;kubernetes.io/hostname&#34;</span>
+</span></span></code></pre></div></li>
+<li>
+<p><strong>Taints 和 Tolerations（污点和容忍）</strong></p>
+<ul>
+<li><strong>Taints</strong>：允许节点标记为“污点”，即节点会拒绝调度任何没有适当容忍的 Pod。</li>
+<li><strong>Tolerations</strong>：Pod 可以设置容忍，允许其调度到有污点的节点上。</li>
+</ul>
+<p>示例：一个节点加上污点，只有具有特定容忍的 Pod 才能调度到该节点。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#ae81ff">kubectl taint nodes node1 key=value:NoSchedule</span>
+</span></span></code></pre></div><p>在 Pod 配置中添加容忍：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">tolerations</span>:
+</span></span><span style="display:flex;"><span>- <span style="color:#f92672">key</span>: <span style="color:#e6db74">&#34;key&#34;</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">operator</span>: <span style="color:#e6db74">&#34;Equal&#34;</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#34;value&#34;</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">effect</span>: <span style="color:#e6db74">&#34;NoSchedule&#34;</span>
+</span></span></code></pre></div></li>
+<li>
+<p><strong>资源负载均衡</strong></p>
+<ul>
+<li>在选择节点时，调度器也会考虑节点的负载，确保集群资源的合理利用。调度器会避免某些节点资源过载，而其他节点资源闲置。</li>
+<li>调度器会根据节点的 CPU、内存等资源的剩余情况来选择最合适的节点。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h3 id="kubernetes-默认调度器和自定义调度器">
+  <strong>Kubernetes 默认调度器和自定义调度器</strong>
+  <a class="anchor" href="#kubernetes-%e9%bb%98%e8%ae%a4%e8%b0%83%e5%ba%a6%e5%99%a8%e5%92%8c%e8%87%aa%e5%ae%9a%e4%b9%89%e8%b0%83%e5%ba%a6%e5%99%a8">#</a>
+</h3>
+<ol>
+<li><strong>默认调度器</strong>：Kubernetes 使用 <code>kube-scheduler</code> 作为默认调度器，处理所有 Pod 的调度请求。</li>
+<li><strong>自定义调度器</strong>：如果有特殊的调度需求，可以使用自定义调度器。可以在集群中运行多个调度器，指定特定的调度策略和工作负载。</li>
+</ol>
+<hr>
+<h3 id="kubernetes-调度器插件">
+  <strong>Kubernetes 调度器插件</strong>
+  <a class="anchor" href="#kubernetes-%e8%b0%83%e5%ba%a6%e5%99%a8%e6%8f%92%e4%bb%b6">#</a>
+</h3>
+<p>Kubernetes 调度器支持插件架构，允许在调度过程中使用不同的策略和插件来定制行为。常见的插件包括：</p>
+<ul>
+<li><strong>预调度插件</strong>（如 <code>NodeAffinity</code>、<code>TaintToleration</code> 等）</li>
+<li><strong>调度策略插件</strong>（如 <code>PodAffinity</code>、<code>ResourceLimits</code> 等）</li>
+<li><strong>后调度插件</strong>（如调度后监听 Pod 状态的变化）</li>
+</ul>
+<p>这些插件使得 Kubernetes 调度器能够灵活地满足各种业务场景的需求。</p>
+<hr>
+<h3 id="总结-1">
+  <strong>总结</strong>
+  <a class="anchor" href="#%e6%80%bb%e7%bb%93-1">#</a>
+</h3>
+<p>Kubernetes 调度器负责根据节点的资源、拓扑、亲和性和反亲和性、污点和容忍等规则，智能地将 Pod 分配到最合适的节点上。调度过程包括 <strong>过滤</strong>、<strong>优选</strong> 和 <strong>绑定</strong> 阶段。通过使用 <strong>Node Affinity</strong>、<strong>Pod Affinity</strong>、<strong>Taints 和 Tolerations</strong> 等策略，可以精细控制 Pod 的调度行为，确保集群资源的高效利用和满足业务需求。</p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#k8s-有哪些组件">k8s 有哪些组件？</a></li>
+        <li><a href="#1-kubernetes-核心组件"><strong>1. Kubernetes 核心组件</strong></a></li>
+        <li><a href="#2-kubernetes-节点组件"><strong>2. Kubernetes 节点组件</strong></a></li>
+        <li><a href="#3-高层组件和工具"><strong>3. 高层组件和工具</strong></a></li>
+        <li><a href="#4-kubernetes-核心资源"><strong>4. Kubernetes 核心资源</strong></a></li>
+        <li><a href="#总结"><strong>总结</strong></a></li>
+        <li><a href="#创建-pod的主要流程">创建 Pod的主要流程?</a></li>
+        <li><a href="#1-用户请求创建-pod"><strong>1. 用户请求创建 Pod</strong></a></li>
+        <li><a href="#2-api-server-接收并验证请求"><strong>2. API Server 接收并验证请求</strong></a></li>
+        <li><a href="#3-调度器选择节点调度"><strong>3. 调度器选择节点（调度）</strong></a></li>
+        <li><a href="#4-节点上的-kubelet-处理-pod"><strong>4. 节点上的 Kubelet 处理 Pod</strong></a></li>
+        <li><a href="#5-pod-运行与健康检查"><strong>5. Pod 运行与健康检查</strong></a></li>
+        <li><a href="#6-控制器的反馈如-deploymentstatefulset"><strong>6. 控制器的反馈（如 Deployment、StatefulSet）</strong></a></li>
+        <li><a href="#7-更新集群状态"><strong>7. 更新集群状态</strong></a></li>
+        <li><a href="#总结创建-pod-的主要流程"><strong>总结：创建 Pod 的主要流程</strong></a></li>
+        <li><a href="#k8s的调度机制">k8s的调度机制</a></li>
+        <li><a href="#kubernetes-调度流程概述"><strong>Kubernetes 调度流程概述</strong></a></li>
+        <li><a href="#kubernetes-调度的关键机制"><strong>Kubernetes 调度的关键机制</strong></a></li>
+        <li><a href="#kubernetes-调度策略"><strong>Kubernetes 调度策略</strong></a></li>
+        <li><a href="#kubernetes-默认调度器和自定义调度器"><strong>Kubernetes 默认调度器和自定义调度器</strong></a></li>
+        <li><a href="#kubernetes-调度器插件"><strong>Kubernetes 调度器插件</strong></a></li>
+        <li><a href="#总结-1"><strong>总结</strong></a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
