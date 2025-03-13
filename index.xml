@@ -5129,7 +5129,172 @@ systemctl start kubelet
 &lt;p>汇报三级，周报一次&lt;/p>
 &lt;p>出差频率？&lt;/p>
 &lt;p>全国各地，一次出差多久？&lt;/p>
-&lt;p>上架部署，标注化产品，很少有项目式的&lt;/p></description></item><item><title>2025-3-8 k8s创建pod 流程图详解</title><link>https://qq547475331.github.io/docs/2025-3-8-k8s%E5%88%9B%E5%BB%BApod-deployment%E6%B5%81%E7%A8%8B%E5%9B%BE%E8%AF%A6%E8%A7%A3/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-3-8-k8s%E5%88%9B%E5%BB%BApod-deployment%E6%B5%81%E7%A8%8B%E5%9B%BE%E8%AF%A6%E8%A7%A3/</guid><description>&lt;pre tabindex="0">&lt;code class="language-mermaid" data-lang="mermaid">sequenceDiagram
+&lt;p>上架部署，标注化产品，很少有项目式的&lt;/p></description></item><item><title>2025-3-13 calico三种模式下流量传输</title><link>https://qq547475331.github.io/docs/2025-3-13-calico%E4%B8%89%E7%A7%8D%E6%A8%A1%E5%BC%8F%E4%B8%8B%E6%B5%81%E9%87%8F%E4%BC%A0%E8%BE%93%E8%B7%AF%E5%BE%84%E5%88%86%E6%9E%90/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-3-13-calico%E4%B8%89%E7%A7%8D%E6%A8%A1%E5%BC%8F%E4%B8%8B%E6%B5%81%E9%87%8F%E4%BC%A0%E8%BE%93%E8%B7%AF%E5%BE%84%E5%88%86%E6%9E%90/</guid><description>&lt;p>要详细分析 &lt;strong>Calico BGP、IPIP 和 VXLAN 模式&lt;/strong>下不同 &lt;strong>Node 上 Pod 之间的流量传输路径&lt;/strong>，需要关注以下几个关键网络接口的角色和数据流向：&lt;/p>
+&lt;ol>
+&lt;li>&lt;strong>Pod 内部的 veth 接口&lt;/strong>&lt;/li>
+&lt;li>&lt;strong>宿主机的 veth 对应端&lt;/strong>&lt;/li>
+&lt;li>&lt;strong>宿主机的 CNI 设备（通常是 &lt;code>cali+&lt;/code> 接口）&lt;/strong>&lt;/li>
+&lt;li>&lt;strong>Node 上的物理网络接口（如 &lt;code>eth0&lt;/code>）&lt;/strong>&lt;/li>
+&lt;li>&lt;strong>IPIP/VXLAN 设备（如果适用）&lt;/strong>&lt;/li>
+&lt;li>&lt;strong>目的地 Node 的解封装流程&lt;/strong>&lt;/li>
+&lt;li>&lt;strong>目的 Pod 的 veth 接口&lt;/strong>&lt;/li>
+&lt;/ol>
+&lt;hr>
+&lt;h1 id="一calico-bgp-模式下-pod-之间的流量传输">
+ &lt;strong>一、Calico BGP 模式下 Pod 之间的流量传输&lt;/strong>
+ &lt;a class="anchor" href="#%e4%b8%80calico-bgp-%e6%a8%a1%e5%bc%8f%e4%b8%8b-pod-%e4%b9%8b%e9%97%b4%e7%9a%84%e6%b5%81%e9%87%8f%e4%bc%a0%e8%be%93">#&lt;/a>
+&lt;/h1>
+&lt;h2 id="1-网络拓扑">
+ &lt;strong>1. 网络拓扑&lt;/strong>
+ &lt;a class="anchor" href="#1-%e7%bd%91%e7%bb%9c%e6%8b%93%e6%89%91">#&lt;/a>
+&lt;/h2>
+&lt;ul>
+&lt;li>Node1（192.168.1.1）：
+&lt;ul>
+&lt;li>PodA（10.1.1.2）&lt;/li>
+&lt;li>宿主机 &lt;code>eth0&lt;/code>（192.168.1.1）&lt;/li>
+&lt;li>&lt;code>cali+&lt;/code> 接口（连接 PodA）&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>Node2（192.168.1.2）：
+&lt;ul>
+&lt;li>PodB（10.1.2.3）&lt;/li>
+&lt;li>宿主机 &lt;code>eth0&lt;/code>（192.168.1.2）&lt;/li>
+&lt;li>&lt;code>cali+&lt;/code> 接口（连接 PodB）&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;hr>
+&lt;h2 id="2-详细流量路径">
+ &lt;strong>2. 详细流量路径&lt;/strong>
+ &lt;a class="anchor" href="#2-%e8%af%a6%e7%bb%86%e6%b5%81%e9%87%8f%e8%b7%af%e5%be%84">#&lt;/a>
+&lt;/h2>
+&lt;pre tabindex="0">&lt;code class="language-mermaid" data-lang="mermaid">graph TD
+ subgraph Node1[&amp;#34;Node 1 (192.168.1.1)&amp;#34;]
+ PodA[&amp;#34;PodA (10.1.1.2)&amp;#34;]
+ vethA[&amp;#34;vethA (PodA eth0)&amp;#34;]
+ caliA[&amp;#34;caliXXXX (Calico veth)&amp;#34;]
+ eth1[&amp;#34;eth0 (宿主机)&amp;#34;]
+ end
+
+ subgraph Node2[&amp;#34;Node 2 (192.168.1.2)&amp;#34;]
+ PodB[&amp;#34;PodB (10.1.2.3)&amp;#34;]
+ vethB[&amp;#34;vethB (PodB eth0)&amp;#34;]
+ caliB[&amp;#34;caliYYYY (Calico veth)&amp;#34;]
+ eth2[&amp;#34;eth0 (宿主机)&amp;#34;]
+ end
+
+ PodA --&amp;gt; vethA --&amp;gt; caliA
+ caliA --&amp;gt;|BGP 路由| eth1
+ eth1 --&amp;gt;|裸 IP 直接转发| eth2
+ eth2 --&amp;gt; caliB --&amp;gt; vethB --&amp;gt; PodB
+&lt;/code>&lt;/pre>&lt;h3 id="poda-10112--podb-10123">
+ &lt;strong>PodA (10.1.1.2) → PodB (10.1.2.3)&lt;/strong>
+ &lt;a class="anchor" href="#poda-10112--podb-10123">#&lt;/a>
+&lt;/h3>
+&lt;ol>
+&lt;li>&lt;strong>PodA 发送数据包&lt;/strong>
+&lt;ul>
+&lt;li>PodA (10.1.1.2) 向 PodB (10.1.2.3) 发送数据包&lt;/li>
+&lt;li>数据包进入 PodA 的 &lt;strong>veth&lt;/strong> 接口 &lt;code>eth0&lt;/code>&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>通过 veth pair 进入宿主机&lt;/strong>
+&lt;ul>
+&lt;li>PodA 的 &lt;code>eth0&lt;/code>（veth 子接口）连接到宿主机上的 &lt;code>caliXXXX&lt;/code> 设备（Calico 创建的 veth 对应端）&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>宿主机查找路由&lt;/strong>
+&lt;ul>
+&lt;li>&lt;code>caliXXXX&lt;/code> 设备收到数据包，进入宿主机的 &lt;strong>路由表&lt;/strong>&lt;/li>
+&lt;li>由于 Calico 通过 &lt;strong>BGP 传播路由&lt;/strong>，Node1 知道 &lt;strong>10.1.2.3 在 Node2&lt;/strong>&lt;/li>
+&lt;li>宿主机的 &lt;code>eth0&lt;/code> 直接将数据包&lt;strong>原生 IP 转发&lt;/strong>到 &lt;code>192.168.1.2&lt;/code>&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>Node2 接收数据&lt;/strong>
+&lt;ul>
+&lt;li>Node2 的 &lt;code>eth0&lt;/code> 接收到数据包&lt;/li>
+&lt;li>根据 &lt;strong>路由表&lt;/strong> 知道 10.1.2.3 在本机，数据包通过 &lt;code>caliXXXX&lt;/code> 进入 PodB 的 &lt;code>eth0&lt;/code>&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>PodB 接收数据&lt;/strong>
+&lt;ul>
+&lt;li>PodB（10.1.2.3）收到数据包，通信完成&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ol>
+&lt;h3 id="特点">
+ &lt;strong>特点&lt;/strong>
+ &lt;a class="anchor" href="#%e7%89%b9%e7%82%b9">#&lt;/a>
+&lt;/h3>
+&lt;p>✅ &lt;strong>优点&lt;/strong>&lt;/p></description></item><item><title>2025-3-13 istio流量分析</title><link>https://qq547475331.github.io/docs/2025-3-13-istio%E6%B5%81%E9%87%8F%E5%88%86%E6%9E%90/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-3-13-istio%E6%B5%81%E9%87%8F%E5%88%86%E6%9E%90/</guid><description>&lt;h3 id="istio-流量路径">
+ Istio 流量路径
+ &lt;a class="anchor" href="#istio-%e6%b5%81%e9%87%8f%e8%b7%af%e5%be%84">#&lt;/a>
+&lt;/h3>
+&lt;pre tabindex="0">&lt;code class="language-mermaid" data-lang="mermaid">graph TD;
+ A[Client Request] --&amp;gt; B[Istio Ingress Gateway]
+ B --&amp;gt; C[VirtualService]
+ C --&amp;gt; D[DestinationRule]
+ D --&amp;gt;|Traffic Routing| E[Sidecar Proxy - Pod1]
+ D --&amp;gt;|Traffic Routing| F[Sidecar Proxy - Pod2]
+ E --&amp;gt; G[Application - Pod1]
+ F --&amp;gt; H[Application - Pod2]
+ G --&amp;gt;|Response| E
+ H --&amp;gt;|Response| F
+ E --&amp;gt;|Return to Gateway| B
+ F --&amp;gt;|Return to Gateway| B
+ B --&amp;gt;|Send Response to Client| A
+&lt;/code>&lt;/pre>&lt;h3 id="说明">
+ &lt;strong>说明&lt;/strong>
+ &lt;a class="anchor" href="#%e8%af%b4%e6%98%8e">#&lt;/a>
+&lt;/h3>
+&lt;ol>
+&lt;li>&lt;strong>客户端请求 (&lt;code>A&lt;/code>) 进入 &lt;code>Istio Ingress Gateway&lt;/code> (&lt;code>B&lt;/code>)&lt;/strong>：
+&lt;ul>
+&lt;li>处理外部 HTTP/HTTPS 请求，可能涉及 TLS 终止。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>&lt;code>VirtualService&lt;/code> (&lt;code>C&lt;/code>) 定义流量规则&lt;/strong>：
+&lt;ul>
+&lt;li>指定 &lt;strong>流量如何路由&lt;/strong>，如&lt;strong>蓝绿部署、金丝雀发布&lt;/strong>等。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>&lt;code>DestinationRule&lt;/code> (&lt;code>D&lt;/code>) 选择目标 Pod&lt;/strong>：
+&lt;ul>
+&lt;li>可能涉及 &lt;strong>负载均衡、流量分配&lt;/strong>。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>流量通过 &lt;code>Sidecar Proxy&lt;/code> (&lt;code>E&lt;/code>, &lt;code>F&lt;/code>) 进入 Pod&lt;/strong>：
+&lt;ul>
+&lt;li>&lt;strong>Envoy 代理&lt;/strong> 处理流量，提供安全、流量管理功能。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>Pod 内的应用 (&lt;code>G&lt;/code>, &lt;code>H&lt;/code>) 处理请求并返回&lt;/strong>：
+&lt;ul>
+&lt;li>响应先经过 &lt;code>Sidecar Proxy&lt;/code>，再回到 &lt;code>Ingress Gateway&lt;/code>。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>最终响应返回客户端 (&lt;code>A&lt;/code>)&lt;/strong>。&lt;/li>
+&lt;/ol>
+&lt;h3 id="流量路径解析">
+ &lt;strong>流量路径解析&lt;/strong>
+ &lt;a class="anchor" href="#%e6%b5%81%e9%87%8f%e8%b7%af%e5%be%84%e8%a7%a3%e6%9e%90">#&lt;/a>
+&lt;/h3>
+&lt;ol>
+&lt;li>&lt;strong>外部请求（Client）&lt;/strong> 访问 &lt;code>example.com&lt;/code>，流量进入 &lt;strong>Istio Ingress Gateway&lt;/strong>。&lt;/li>
+&lt;li>&lt;strong>Ingress Gateway&lt;/strong> 解析流量并匹配相应的 &lt;strong>VirtualService&lt;/strong> 规则。&lt;/li>
+&lt;li>&lt;strong>VirtualService&lt;/strong> 进行 &lt;strong>流量路由&lt;/strong>（如 &lt;strong>流量镜像、权重分流、请求重写&lt;/strong>）。&lt;/li>
+&lt;li>&lt;strong>DestinationRule&lt;/strong> 负责 &lt;strong>负载均衡、熔断、超时重试&lt;/strong>，并将流量分配给不同的 &lt;strong>Sidecar Proxy&lt;/strong>。&lt;/li>
+&lt;li>&lt;strong>Sidecar Proxy（Envoy）&lt;/strong> 负责代理流量到目标 &lt;strong>应用 Pod&lt;/strong>，并提供安全、可观测性等能力。&lt;/li>
+&lt;li>&lt;strong>应用 Pod&lt;/strong> 处理请求后返回响应，同样经过 &lt;strong>Sidecar Proxy → Ingress Gateway&lt;/strong>，最终返回给 &lt;strong>外部客户端&lt;/strong>。&lt;/li>
+&lt;/ol>
+&lt;h3 id="适用场景">
+ &lt;strong>适用场景&lt;/strong>
+ &lt;a class="anchor" href="#%e9%80%82%e7%94%a8%e5%9c%ba%e6%99%af">#&lt;/a>
+&lt;/h3>
+&lt;p>✅ 适用于 &lt;strong>Istio 外部流量管理&lt;/strong>（如 &lt;code>https://example.com/api&lt;/code>）
+✅ 支持 &lt;strong>负载均衡、蓝绿发布、金丝雀部署&lt;/strong>
+✅ 适用于 &lt;strong>Ingress Gateway 代理的 Kubernetes 服务&lt;/strong>&lt;/p></description></item><item><title>2025-3-8 k8s创建pod 流程图详解</title><link>https://qq547475331.github.io/docs/2025-3-8-k8s%E5%88%9B%E5%BB%BApod-deployment%E6%B5%81%E7%A8%8B%E5%9B%BE%E8%AF%A6%E8%A7%A3/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-3-8-k8s%E5%88%9B%E5%BB%BApod-deployment%E6%B5%81%E7%A8%8B%E5%9B%BE%E8%AF%A6%E8%A7%A3/</guid><description>&lt;pre tabindex="0">&lt;code class="language-mermaid" data-lang="mermaid">sequenceDiagram
  participant User as 用户
  participant Kubectl as Kubectl
  participant API as API Server
