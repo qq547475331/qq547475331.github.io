@@ -1,83 +1,4 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>欢迎来到我的技术博客 on Guichen's Blog</title><link>https://qq547475331.github.io/</link><description>Recent content in 欢迎来到我的技术博客 on Guichen's Blog</description><generator>Hugo</generator><language>en-us</language><atom:link href="https://qq547475331.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>0224面试</title><link>https://qq547475331.github.io/docs/2025-2-24-%E9%9D%A2%E8%AF%950224/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-24-%E9%9D%A2%E8%AF%950224/</guid><description>&lt;h1 id="比较好的监控是怎样的-prometheus-grafana-alertmanager-考虑存储-大规模-2000台机器-考虑告警延迟-考虑长期储存-考虑监控业务的全面性-准确性-告警实时性">
- 比较好的监控是怎样的 prometheus grafana alertmanager 考虑存储 大规模 2000台机器 考虑告警延迟 考虑长期储存 考虑监控业务的全面性 准确性 告警实时性
- &lt;a class="anchor" href="#%e6%af%94%e8%be%83%e5%a5%bd%e7%9a%84%e7%9b%91%e6%8e%a7%e6%98%af%e6%80%8e%e6%a0%b7%e7%9a%84-prometheus-grafana-alertmanager-%e8%80%83%e8%99%91%e5%ad%98%e5%82%a8-%e5%a4%a7%e8%a7%84%e6%a8%a1-2000%e5%8f%b0%e6%9c%ba%e5%99%a8-%e8%80%83%e8%99%91%e5%91%8a%e8%ad%a6%e5%bb%b6%e8%bf%9f-%e8%80%83%e8%99%91%e9%95%bf%e6%9c%9f%e5%82%a8%e5%ad%98-%e8%80%83%e8%99%91%e7%9b%91%e6%8e%a7%e4%b8%9a%e5%8a%a1%e7%9a%84%e5%85%a8%e9%9d%a2%e6%80%a7-%e5%87%86%e7%a1%ae%e6%80%a7-%e5%91%8a%e8%ad%a6%e5%ae%9e%e6%97%b6%e6%80%a7">#&lt;/a>
-&lt;/h1>
-&lt;p>在你的场景中，涉及到大规模的监控部署，2000台机器、长时间的存储、实时告警等多个方面。要构建一个高效、可靠的监控系统，你可以基于 &lt;strong>Prometheus&lt;/strong>、&lt;strong>Grafana&lt;/strong> 和 &lt;strong>Alertmanager&lt;/strong> 这些工具进行设计，但需要优化配置，以满足大规模、低延迟、高可用、长时间存储等需求。&lt;/p>
-&lt;h3 id="1-prometheus-架构设计">
- 1. &lt;strong>Prometheus 架构设计&lt;/strong>
- &lt;a class="anchor" href="#1-prometheus-%e6%9e%b6%e6%9e%84%e8%ae%be%e8%ae%a1">#&lt;/a>
-&lt;/h3>
-&lt;ul>
-&lt;li>&lt;strong>水平扩展&lt;/strong>：单个 Prometheus 实例无法支撑大规模的数据采集和存储，因此需要考虑&lt;strong>水平扩展&lt;/strong>。可以使用多个 Prometheus 实例分担不同的监控目标（例如，按区域或按机器类型分配 Prometheus 实例）。也可以使用 &lt;strong>Prometheus Federation&lt;/strong>（联邦）来将多个 Prometheus 实例的指标数据汇聚到一个主 Prometheus 实例中。&lt;/li>
-&lt;li>&lt;strong>存储优化&lt;/strong>：Prometheus 本身的存储是针对短期数据存储优化的，支持时序数据的压缩。但对于长期存储，Prometheus 并不适合将数据保留很长时间。可以使用 &lt;strong>Thanos&lt;/strong> 或 &lt;strong>Cortex&lt;/strong> 来为 Prometheus 提供分布式存储，支持长期数据保留。这样可以跨多个 Prometheus 实例集中存储数据，进行长时间查询。&lt;/li>
-&lt;li>&lt;strong>数据分片&lt;/strong>：如果你的监控数据量非常大（如 2000 台机器），你可以通过数据分片（sharding）来分散负载，减少单个 Prometheus 实例的压力。Thanos 和 Cortex 都支持这种分片模型。&lt;/li>
-&lt;/ul>
-&lt;h3 id="2-grafana-可视化">
- 2. &lt;strong>Grafana 可视化&lt;/strong>
- &lt;a class="anchor" href="#2-grafana-%e5%8f%af%e8%a7%86%e5%8c%96">#&lt;/a>
-&lt;/h3>
-&lt;ul>
-&lt;li>&lt;strong>仪表盘设计&lt;/strong>：Grafana 适用于展示大规模监控数据。你可以设计多个针对不同层级的仪表盘，例如：硬件监控、应用性能监控、网络流量等。Grafana 允许将数据按需聚合或细分，以帮助从不同维度监控业务指标。&lt;/li>
-&lt;li>&lt;strong>分布式查询&lt;/strong>：通过 &lt;strong>Thanos&lt;/strong> 或 &lt;strong>Cortex&lt;/strong> 等分布式存储系统，Grafana 可以访问跨多个 Prometheus 实例的数据，呈现完整的监控视图。&lt;/li>
-&lt;li>&lt;strong>查询性能优化&lt;/strong>：随着监控系统规模的扩大，Grafana 查询的数据量增大。你需要优化 Prometheus 的查询性能，避免低效的查询（如不加时间范围的查询），或者使用预计算的聚合数据来减轻查询负担。&lt;/li>
-&lt;/ul>
-&lt;h3 id="3-alertmanager-告警管理">
- 3. &lt;strong>Alertmanager 告警管理&lt;/strong>
- &lt;a class="anchor" href="#3-alertmanager-%e5%91%8a%e8%ad%a6%e7%ae%a1%e7%90%86">#&lt;/a>
-&lt;/h3>
-&lt;ul>
-&lt;li>&lt;strong>告警延迟&lt;/strong>：为了确保告警的实时性，Prometheus 的抓取周期（默认 15 秒）需要优化。如果告警的延迟非常关键，可能需要缩短抓取周期或者增加更多 Prometheus 实例，分担告警流量。&lt;/li>
-&lt;li>&lt;strong>告警策略设计&lt;/strong>：针对大规模的监控系统，告警的&lt;strong>去重和抑制&lt;/strong>非常重要，避免过多无效告警。可以根据告警的严重性、关联性进行聚合，避免“告警风暴”。Alertmanager 可以进行告警的抑制和分组，减少重复告警。&lt;/li>
-&lt;li>&lt;strong>通知渠道&lt;/strong>：Alertmanager 可以与 Slack、邮件、Webhook 等通知渠道集成，根据告警级别不同，选择不同的通知方式（例如，严重告警通过短信，轻微告警通过邮件）。&lt;/li>
-&lt;li>&lt;strong>告警灵敏度&lt;/strong>：在大规模系统中，容易产生很多低优先级的告警。可以通过设置 &lt;strong>Prometheus&lt;/strong> 的告警规则，精细化告警条件，确保告警的准确性和有效性。&lt;/li>
-&lt;/ul>
-&lt;h3 id="4-存储与长期数据保留">
- 4. &lt;strong>存储与长期数据保留&lt;/strong>
- &lt;a class="anchor" href="#4-%e5%ad%98%e5%82%a8%e4%b8%8e%e9%95%bf%e6%9c%9f%e6%95%b0%e6%8d%ae%e4%bf%9d%e7%95%99">#&lt;/a>
-&lt;/h3>
-&lt;ul>
-&lt;li>
-&lt;p>长期存储解决方案&lt;/p></description></item><item><title>0226 k8s题目</title><link>https://qq547475331.github.io/docs/2025-2-26-k8s%E7%9B%B8%E5%85%B3/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-26-k8s%E7%9B%B8%E5%85%B3/</guid><description>&lt;h2 id="kubernetes">
- Kubernetes
- &lt;a class="anchor" href="#kubernetes">#&lt;/a>
-&lt;/h2>
-&lt;h2 id="谈谈你对k8s的理解">
- 谈谈你对k8s的理解☆
- &lt;a class="anchor" href="#%e8%b0%88%e8%b0%88%e4%bd%a0%e5%af%b9k8s%e7%9a%84%e7%90%86%e8%a7%a3">#&lt;/a>
-&lt;/h2>
-&lt;p>Kubernetes（简称 K8s）是一个开源的容器编排平台，旨在自动化容器化应用程序的部署、扩展和管理。它最初由 Google 设计，并在2014年开源。K8s 提供了一个集中的平台来管理和运行容器化的应用程序，尤其适合大规模的分布式系统和微服务架构。&lt;/p>
-&lt;p>从技术角度看，K8s 主要有以下几个核心组成部分：&lt;/p>
-&lt;ol>
-&lt;li>&lt;strong>集群（Cluster）&lt;/strong>： K8s 将多个节点组织成一个集群，集群中通常有两类节点：控制平面节点（Control Plane）和工作节点（Worker Node）。控制平面负责集群的管理与调度，而工作节点运行实际的应用程序。&lt;/li>
-&lt;li>&lt;strong>Pod&lt;/strong>： Pod 是 Kubernetes 中最小的调度单位，通常包含一个或多个容器，这些容器共享同一个网络、存储和其他资源。Pod 是容器运行的基本单位。&lt;/li>
-&lt;li>&lt;strong>Deployment&lt;/strong>： Deployment 用于管理和控制应用程序的副本和版本。它通过定义副本数来保证应用的高可用性，支持滚动更新、回滚等功能。&lt;/li>
-&lt;li>&lt;strong>Service&lt;/strong>： Service 用于暴露应用程序的网络接口，并提供负载均衡。通过 Service，用户可以通过稳定的 IP 或 DNS 名称访问一组 Pod。&lt;/li>
-&lt;li>&lt;strong>Ingress&lt;/strong>： Ingress 提供 HTTP 和 HTTPS 路由到集群内的服务，可以用于管理外部流量进入集群，支持负载均衡、SSL 终端等功能。&lt;/li>
-&lt;li>&lt;strong>ConfigMap 和 Secret&lt;/strong>： ConfigMap 用于管理应用的配置数据，Secret 用于存储敏感数据（如密码、API 密钥等）。这些资源可以被容器在运行时动态加载。&lt;/li>
-&lt;li>&lt;strong>Namespace&lt;/strong>： Namespace 提供了对资源的隔离，允许在同一个集群中多个团队或应用之间共享资源而不发生冲突。它相当于虚拟化的逻辑分区。&lt;/li>
-&lt;li>&lt;strong>StatefulSet&lt;/strong>： StatefulSet 是一种控制器，用于管理有状态应用，如数据库等。与 Deployment 不同，StatefulSet 保证了 Pod 的稳定性和唯一性，适合需要持久存储和有序部署的应用。&lt;/li>
-&lt;li>&lt;strong>Persistent Volume (PV) 和 Persistent Volume Claim (PVC)&lt;/strong>： PV 是集群内的存储资源，而 PVC 是用户对存储资源的请求。通过这种方式，K8s 支持动态存储的创建和销毁。&lt;/li>
-&lt;/ol>
-&lt;h3 id="关键优势">
- 关键优势：
- &lt;a class="anchor" href="#%e5%85%b3%e9%94%ae%e4%bc%98%e5%8a%bf">#&lt;/a>
-&lt;/h3>
-&lt;ul>
-&lt;li>&lt;strong>自动化&lt;/strong>：K8s 提供了自动化部署、滚动更新、扩展和恢复功能，极大地简化了应用程序生命周期管理。&lt;/li>
-&lt;li>&lt;strong>高可用性&lt;/strong>：K8s 支持容错和高可用性，可以通过多副本部署、健康检查、自动恢复等机制保证应用的可靠性。&lt;/li>
-&lt;li>&lt;strong>灵活性&lt;/strong>：通过声明式配置，K8s 让开发者可以专注于应用本身，而不必担心基础设施细节。&lt;/li>
-&lt;li>&lt;strong>扩展性&lt;/strong>：K8s 提供了强大的插件和扩展机制，支持各种中间件、监控、日志等功能的集成。&lt;/li>
-&lt;/ul>
-&lt;h3 id="适用场景">
- 适用场景：
- &lt;a class="anchor" href="#%e9%80%82%e7%94%a8%e5%9c%ba%e6%99%af">#&lt;/a>
-&lt;/h3>
-&lt;ul>
-&lt;li>&lt;strong>微服务架构&lt;/strong>：K8s 非常适合容器化微服务的管理，能有效地处理服务之间的依赖、负载均衡、容错等。&lt;/li>
-&lt;li>&lt;strong>大规模分布式应用&lt;/strong>：由于其自动化和扩展性，K8s 很适合处理大规模、复杂的分布式系统。&lt;/li>
-&lt;li>&lt;strong>混合云/多云架构&lt;/strong>：K8s 提供跨平台的支持，使得应用能够在不同的云环境或本地数据中心之间无缝迁移。&lt;/li>
-&lt;/ul>
-&lt;p>总的来说，Kubernetes 是现代 DevOps 和持续集成/持续交付（CI/CD）的核心技术之一，能够有效地管理容器化应用，使得开发和运维更加高效、灵活和可靠。&lt;/p></description></item><item><title>2023-04-12 使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群</title><link>https://qq547475331.github.io/docs/%E4%BD%BF%E7%94%A8-keepalived-%E5%92%8C-haproxy-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8-kubernetes-%E9%9B%86%E7%BE%A4-shi-yong-keepalived-he-haproxy-chuang-jian-gao-ke-yong-kubernetes-ji-qun/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/%E4%BD%BF%E7%94%A8-keepalived-%E5%92%8C-haproxy-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8-kubernetes-%E9%9B%86%E7%BE%A4-shi-yong-keepalived-he-haproxy-chuang-jian-gao-ke-yong-kubernetes-ji-qun/</guid><description>&lt;h1 id="使用-keepalived-和-haproxy-创建高可用-kubernetes-集群">
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>欢迎来到我的技术博客 on Guichen's Blog</title><link>https://qq547475331.github.io/</link><description>Recent content in 欢迎来到我的技术博客 on Guichen's Blog</description><generator>Hugo</generator><language>en-us</language><atom:link href="https://qq547475331.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>2023-04-12 使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群</title><link>https://qq547475331.github.io/docs/%E4%BD%BF%E7%94%A8-keepalived-%E5%92%8C-haproxy-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8-kubernetes-%E9%9B%86%E7%BE%A4-shi-yong-keepalived-he-haproxy-chuang-jian-gao-ke-yong-kubernetes-ji-qun/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/%E4%BD%BF%E7%94%A8-keepalived-%E5%92%8C-haproxy-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8-kubernetes-%E9%9B%86%E7%BE%A4-shi-yong-keepalived-he-haproxy-chuang-jian-gao-ke-yong-kubernetes-ji-qun/</guid><description>&lt;h1 id="使用-keepalived-和-haproxy-创建高可用-kubernetes-集群">
  使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群
  &lt;a class="anchor" href="#%e4%bd%bf%e7%94%a8-keepalived-%e5%92%8c-haproxy-%e5%88%9b%e5%bb%ba%e9%ab%98%e5%8f%af%e7%94%a8-kubernetes-%e9%9b%86%e7%be%a4">#&lt;/a>
 &lt;/h1>
@@ -155,7 +76,7 @@
  &lt;/tr>
  &lt;/tbody>
 &lt;/table>
-&lt;p>有关更多节点、网络、依赖项等要求的信息，请参见&lt;a href="https://kubesphere.com.cn/docs/installing-on-linux/introduction/multioverview/#step-1-prepare-linux-hosts">多节点安装&lt;/a>。&lt;/p></description></item><item><title>2023-09-21 有这3个迹象，你就该离职了</title><link>https://qq547475331.github.io/docs/%E6%9C%89%E8%BF%993%E4%B8%AA%E8%BF%B9%E8%B1%A1%E4%BD%A0%E5%B0%B1%E8%AF%A5%E7%A6%BB%E8%81%8C%E4%BA%86-you-zhe-3-ge-ji-xiang--ni-jiu-gai-li-zhi-le/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/%E6%9C%89%E8%BF%993%E4%B8%AA%E8%BF%B9%E8%B1%A1%E4%BD%A0%E5%B0%B1%E8%AF%A5%E7%A6%BB%E8%81%8C%E4%BA%86-you-zhe-3-ge-ji-xiang--ni-jiu-gai-li-zhi-le/</guid><description>&lt;p>我的前下属小P，在当前这样的环境下，裸辞了。&lt;/p>
+&lt;p>有关更多节点、网络、依赖项等要求的信息，请参见&lt;a href="https://kubesphere.com.cn/docs/installing-on-linux/introduction/multioverview/#step-1-prepare-linux-hosts">多节点安装&lt;/a>。&lt;/p></description></item><item><title>2023-09-21 思考</title><link>https://qq547475331.github.io/docs/%E6%9C%89%E8%BF%993%E4%B8%AA%E8%BF%B9%E8%B1%A1%E4%BD%A0%E5%B0%B1%E8%AF%A5%E7%A6%BB%E8%81%8C%E4%BA%86-you-zhe-3-ge-ji-xiang--ni-jiu-gai-li-zhi-le/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/%E6%9C%89%E8%BF%993%E4%B8%AA%E8%BF%B9%E8%B1%A1%E4%BD%A0%E5%B0%B1%E8%AF%A5%E7%A6%BB%E8%81%8C%E4%BA%86-you-zhe-3-ge-ji-xiang--ni-jiu-gai-li-zhi-le/</guid><description>&lt;p>我的前下属小P，在当前这样的环境下，裸辞了。&lt;/p>
 &lt;p>小P在这家公司呆了3年，平时任劳任怨，努力踏实。对一些“007”加班、背黑锅等“非常规”任务，也来者不拒，积极配合。&lt;/p>
 &lt;p>本以为这样就可以获得领导的青睐，能让自己的职场之路更顺畅。但现实却没如他所愿，前段时间公司有个主管空缺，无论从哪个角度看，小P都是最佳人选，小P自己也以为十拿九稳，但没想到领导却提拔了一个刚入职不到半年的新同事，真实的原因并不是那个人能力有多强，而是因为他是领导以前的旧下属，是嫡系“子弟兵”。&lt;/p>
 &lt;p>小P输给一个寸功未立的“关系户”，心里憋屈，找领导理论。但领导就是领导，一下子指出N条小P在工作中的不足，说他工作效率低、有时候还犯错、而且还缺少大局观。小P听了更感到委屈，自己平时干的都是其他同事不愿接的“脏乱差”的活，有时候一整个项目都靠自己一个人顶着，现在反而成了多做多错，而那位被领导提拔的“嫡系”，手里没啥正事，整天和领导一起吹牛抽烟，反倒成了有大局观。&lt;/p>
@@ -24368,7 +24289,169 @@ docker images | grep &amp;#39;1.0&amp;#39; | awk &amp;#39;{print $3}&amp;#39; | 
  Trello
  &lt;a class="anchor" href="#trello">#&lt;/a>
 &lt;/h6>
-&lt;p>Trello 是一个基于 Web 的看板风格的清单应用程序，是 Atlassian 的子公司。&lt;/p></description></item><item><title>2024-12-07 microk8s</title><link>https://qq547475331.github.io/docs/2024-12-07-microk8s/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2024-12-07-microk8s/</guid><description>&lt;p>在mutipass中启动ubuntu虚拟机&lt;/p>
+&lt;p>Trello 是一个基于 Web 的看板风格的清单应用程序，是 Atlassian 的子公司。&lt;/p></description></item><item><title>2024-10-20 使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群</title><link>https://qq547475331.github.io/docs/2024-10-20-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8%E9%9B%86%E7%BE%A4/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2024-10-20-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8%E9%9B%86%E7%BE%A4/</guid><description>&lt;h1 id="使用-keepalived-和-haproxy-创建高可用-kubernetes-集群">
+ 使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群
+ &lt;a class="anchor" href="#%e4%bd%bf%e7%94%a8-keepalived-%e5%92%8c-haproxy-%e5%88%9b%e5%bb%ba%e9%ab%98%e5%8f%af%e7%94%a8-kubernetes-%e9%9b%86%e7%be%a4">#&lt;/a>
+&lt;/h1>
+&lt;p>高可用 Kubernetes 集群能够确保应用程序在运行时不会出现服务中断，这也是生产的需求之一。为此，有很多方法可供选择以实现高可用。&lt;/p>
+&lt;p>本教程演示了如何配置 Keepalived 和 HAproxy 使负载均衡、实现高可用。步骤如下：&lt;/p>
+&lt;ol>
+&lt;li>准备主机。&lt;/li>
+&lt;li>配置 Keepalived 和 HAproxy。&lt;/li>
+&lt;li>使用 KubeKey 创建 Kubernetes 集群，并安装 KubeSphere。&lt;/li>
+&lt;/ol>
+&lt;h2 id="集群架构">
+ 集群架构
+ &lt;a class="anchor" href="#%e9%9b%86%e7%be%a4%e6%9e%b6%e6%9e%84">#&lt;/a>
+&lt;/h2>
+&lt;p>示例集群有三个主节点，三个工作节点，两个用于负载均衡的节点，以及一个虚拟 IP 地址。本示例中的虚拟 IP 地址也可称为“浮动 IP 地址”。这意味着在节点故障的情况下，该 IP 地址可在节点之间漂移，从而实现高可用。&lt;/p>
+&lt;p>&lt;img src="https://kubesphere.io/images/docs/v3.x/installing-on-linux/high-availability-configurations/set-up-ha-cluster-using-keepalived-haproxy/architecture-ha-k8s-cluster.png" alt="architecture-ha-k8s-cluster" />&lt;/p>
+&lt;p>请注意，在本示例中，Keepalived 和 HAproxy 没有安装在任何主节点上。但您也可以这样做，并同时实现高可用。然而，配置两个用于负载均衡的特定节点（您可以按需增加更多此类节点）会更加安全。这两个节点上只安装 Keepalived 和 HAproxy，以避免与任何 Kubernetes 组件和服务的潜在冲突。&lt;/p>
+&lt;h2 id="准备主机">
+ 准备主机
+ &lt;a class="anchor" href="#%e5%87%86%e5%a4%87%e4%b8%bb%e6%9c%ba">#&lt;/a>
+&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th style="text-align: left">IP 地址&lt;/th>
+ &lt;th style="text-align: left">主机名&lt;/th>
+ &lt;th style="text-align: left">角色&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td style="text-align: left">172.16.0.2&lt;/td>
+ &lt;td style="text-align: left">lb1&lt;/td>
+ &lt;td style="text-align: left">Keepalived &amp;amp; HAproxy&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td style="text-align: left">172.16.0.3&lt;/td>
+ &lt;td style="text-align: left">lb2&lt;/td>
+ &lt;td style="text-align: left">Keepalived &amp;amp; HAproxy&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td style="text-align: left">172.16.0.4&lt;/td>
+ &lt;td style="text-align: left">master1&lt;/td>
+ &lt;td style="text-align: left">master, etcd&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td style="text-align: left">172.16.0.5&lt;/td>
+ &lt;td style="text-align: left">master2&lt;/td>
+ &lt;td style="text-align: left">master, etcd&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td style="text-align: left">172.16.0.6&lt;/td>
+ &lt;td style="text-align: left">master3&lt;/td>
+ &lt;td style="text-align: left">master, etcd&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td style="text-align: left">172.16.0.7&lt;/td>
+ &lt;td style="text-align: left">worker1&lt;/td>
+ &lt;td style="text-align: left">worker&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td style="text-align: left">172.16.0.8&lt;/td>
+ &lt;td style="text-align: left">worker2&lt;/td>
+ &lt;td style="text-align: left">worker&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td style="text-align: left">172.16.0.9&lt;/td>
+ &lt;td style="text-align: left">worker3&lt;/td>
+ &lt;td style="text-align: left">worker&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td style="text-align: left">172.16.0.10&lt;/td>
+ &lt;td style="text-align: left">&lt;/td>
+ &lt;td style="text-align: left">虚拟 IP 地址&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;p>有关更多节点、网络、依赖项等要求的信息，请参见&lt;a href="https://kubesphere.io/zh/docs/v3.4/installing-on-linux/introduction/multioverview/#step-1-prepare-linux-hosts">多节点安装&lt;/a>。&lt;/p></description></item><item><title>2024-12-05 kubeasz部署k8s</title><link>https://qq547475331.github.io/docs/2024-12-05-kubeasz%E9%83%A8%E7%BD%B2k8s/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2024-12-05-kubeasz%E9%83%A8%E7%BD%B2k8s/</guid><description>&lt;h2 id="00-集群规划和基础参数设定">
+ 00-集群规划和基础参数设定
+ &lt;a class="anchor" href="#00-%e9%9b%86%e7%be%a4%e8%a7%84%e5%88%92%e5%92%8c%e5%9f%ba%e7%a1%80%e5%8f%82%e6%95%b0%e8%ae%be%e5%ae%9a">#&lt;/a>
+&lt;/h2>
+&lt;h3 id="ha-architecture">
+ HA architecture
+ &lt;a class="anchor" href="#ha-architecture">#&lt;/a>
+&lt;/h3>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20241204235826382.png" alt="image-20241204235826382" />&lt;/p>
+&lt;ul>
+&lt;li>注意1：确保各节点时区设置一致、时间同步。 如果你的环境没有提供NTP 时间同步，推荐集成安装&lt;a href="../guide/chrony.md">chrony&lt;/a>&lt;/li>
+&lt;li>注意2：确保在干净的系统上开始安装，不要使用曾经装过kubeadm或其他k8s发行版的环境&lt;/li>
+&lt;li>注意3：建议操作系统升级到新的稳定内核，请结合阅读&lt;a href="../guide/kernel_upgrade.md">内核升级文档&lt;/a>&lt;/li>
+&lt;li>注意4：在公有云上创建多主集群，请结合阅读&lt;a href="kubeasz_on_public_cloud.md">在公有云上部署 kubeasz&lt;/a>&lt;/li>
+&lt;/ul>
+&lt;h2 id="高可用集群所需节点配置如下">
+ 高可用集群所需节点配置如下
+ &lt;a class="anchor" href="#%e9%ab%98%e5%8f%af%e7%94%a8%e9%9b%86%e7%be%a4%e6%89%80%e9%9c%80%e8%8a%82%e7%82%b9%e9%85%8d%e7%bd%ae%e5%a6%82%e4%b8%8b">#&lt;/a>
+&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th style="text-align: left">角色&lt;/th>
+ &lt;th style="text-align: left">数量&lt;/th>
+ &lt;th style="text-align: left">描述&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td style="text-align: left">部署节点&lt;/td>
+ &lt;td style="text-align: left">1&lt;/td>
+ &lt;td style="text-align: left">运行ansible/ezctl命令，一般复用第一个master节点&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td style="text-align: left">etcd节点&lt;/td>
+ &lt;td style="text-align: left">3&lt;/td>
+ &lt;td style="text-align: left">注意etcd集群需要1,3,5,&amp;hellip;奇数个节点，一般复用master节点&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td style="text-align: left">master节点&lt;/td>
+ &lt;td style="text-align: left">2&lt;/td>
+ &lt;td style="text-align: left">高可用集群至少2个master节点&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td style="text-align: left">node节点&lt;/td>
+ &lt;td style="text-align: left">n&lt;/td>
+ &lt;td style="text-align: left">运行应用负载的节点，可根据需要提升机器配置/增加节点数&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;p>机器配置：&lt;/p>
+&lt;ul>
+&lt;li>master节点：4c/8g内存/50g硬盘&lt;/li>
+&lt;li>worker节点：建议8c/32g内存/200g硬盘以上&lt;/li>
+&lt;/ul>
+&lt;p>注意：默认配置下容器运行时和kubelet会占用/var的磁盘空间，如果磁盘分区特殊，可以设置config.yml中的容器运行时和kubelet数据目录：&lt;code>CONTAINERD_STORAGE_DIR&lt;/code> &lt;code>DOCKER_STORAGE_DIR&lt;/code> &lt;code>KUBELET_ROOT_DIR&lt;/code>&lt;/p>
+&lt;p>在 kubeasz 2x 版本，多节点高可用集群安装可以使用2种方式&lt;/p>
+&lt;ul>
+&lt;li>1.按照本文步骤先规划准备，预先配置节点信息后，直接安装多节点高可用集群&lt;/li>
+&lt;li>2.先部署单节点集群 &lt;a href="quickStart.md">AllinOne部署&lt;/a>，然后通过 &lt;a href="../op/op-index.md">节点添加&lt;/a> 扩容成高可用集群&lt;/li>
+&lt;/ul>
+&lt;h2 id="部署步骤">
+ 部署步骤
+ &lt;a class="anchor" href="#%e9%83%a8%e7%bd%b2%e6%ad%a5%e9%aa%a4">#&lt;/a>
+&lt;/h2>
+&lt;p>以下示例创建一个4节点的多主高可用集群，文档中命令默认都需要root权限运行。&lt;/p>
+&lt;h3 id="1基础系统配置">
+ 1.基础系统配置
+ &lt;a class="anchor" href="#1%e5%9f%ba%e7%a1%80%e7%b3%bb%e7%bb%9f%e9%85%8d%e7%bd%ae">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>2c/4g内存/40g硬盘（该配置仅测试用）&lt;/li>
+&lt;li>最小化安装&lt;code>Ubuntu 16.04 server&lt;/code>或者&lt;code>CentOS 7 Minimal&lt;/code>&lt;/li>
+&lt;li>配置基础网络、更新源、SSH登录等&lt;/li>
+&lt;/ul>
+&lt;h3 id="2在每个节点安装依赖工具">
+ 2.在每个节点安装依赖工具
+ &lt;a class="anchor" href="#2%e5%9c%a8%e6%af%8f%e4%b8%aa%e8%8a%82%e7%82%b9%e5%ae%89%e8%a3%85%e4%be%9d%e8%b5%96%e5%b7%a5%e5%85%b7">#&lt;/a>
+&lt;/h3>
+&lt;p>推荐使用ansible in docker 容器化方式运行，无需安装额外依赖。&lt;/p>
+&lt;h3 id="3准备ssh免密登陆">
+ 3.准备ssh免密登陆
+ &lt;a class="anchor" href="#3%e5%87%86%e5%a4%87ssh%e5%85%8d%e5%af%86%e7%99%bb%e9%99%86">#&lt;/a>
+&lt;/h3>
+&lt;p>配置从部署节点能够ssh免密登陆所有节点，并且设置python软连接&lt;/p></description></item><item><title>2024-12-07 microk8s</title><link>https://qq547475331.github.io/docs/2024-12-07-microk8s/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2024-12-07-microk8s/</guid><description>&lt;p>在mutipass中启动ubuntu虚拟机&lt;/p>
 &lt;pre tabindex="0">&lt;code>multipass shell microk8s-vm
 &lt;/code>&lt;/pre>&lt;p>&lt;strong>MicroK8s&lt;/strong> 是一个由 &lt;strong>Canonical&lt;/strong>（Ubuntu 的开发商）维护的轻量级 Kubernetes 发行版。它旨在为开发者、运维人员和边缘计算场景提供一个快速、简便的 Kubernetes 部署方式，适用于本地开发、测试环境、边缘设备以及生产场景。&lt;/p>
 &lt;hr>
@@ -26720,7 +26803,97 @@ cat /etc/cpuinfo 或 cat /proc/cpuinfo
 负载值小于1表明系统整体上是轻载的，CPU有足够的处理能力和时间处理新的请求。
 负载值接近或超过CPU核心数，意味着系统可能正面临资源瓶颈，有较多的进程在等待CPU时间片分配，可能会出现性能下降或响应延迟。
 长时间持续较高的负载可能意味着系统配置不足或者有进程出现了性能问题，需要进一步排查优化。
-&lt;/code>&lt;/pre>&lt;p>&lt;strong>3.优化做过哪些？内核参数优化，具体讲下&lt;/strong>&lt;/p></description></item><item><title>2024-8-1 k8s面试题</title><link>https://qq547475331.github.io/docs/2024-8-1-kubernetes%E9%9D%A2%E8%AF%95%E9%A2%98/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2024-8-1-kubernetes%E9%9D%A2%E8%AF%95%E9%A2%98/</guid><description>&lt;h2 id="简述etcd及其特点">
+&lt;/code>&lt;/pre>&lt;p>&lt;strong>3.优化做过哪些？内核参数优化，具体讲下&lt;/strong>&lt;/p></description></item><item><title>2024-5-1 单master单etcd改造为3master3etcd</title><link>https://qq547475331.github.io/docs/2024-5-14-%E5%8D%95master%E5%8D%95etcd%E6%94%B9%E9%80%A0/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2024-5-14-%E5%8D%95master%E5%8D%95etcd%E6%94%B9%E9%80%A0/</guid><description>&lt;pre tabindex="0">&lt;code>备份etcd的数据
+
+1、单master单etcd扩展到3master3etcd节点
+2、涉及的 
+ master节点的证书
+ - apiserver.crt
+ - apiserver.csr
+ - apiserver.key
+ - client.crt
+ - client.key
+ - etcd_client.crt
+ - etcd_client.key
+ - front-proxy_bak-ca.crt
+ - front-proxy_bak-ca.key
+ - front-proxy_bak-ca.srl
+ - front-proxy_bak-client.crt
+ - front-proxy_bak-client.key
+ - front_proxy_ssl.cnf
+ - sa.key
+ - sa.pub 
+ 
+ - etcd_server.crt
+ - etcd_server.key
+ - etcd_client.crt
+ - etcd_client.key
+ 
+ work节点的证书
+ - ca.crt 
+ - client.key 
+ - client.crt 
+ 
+ 需要重新生成，ca.crt和ca.key可以不用重新生成，新的证书需要准备好，老的证书需要备份好。
+3、根据ca证书和master_ssl.cnf，etcd_ssl.cnf生成新的master节点和etcd节点证书，根据ca证书和master_ssl.cnf生成work节点的client.crt证书，提前准备好。 master_ssl.cnf包含3个master节点的ip和硬负载vip，etcd_ssl.cnf包含3个etcd节点的ip。
+4、拷贝新生成的etcd证书到etcd节点，替换老的证书，重新etcd节点。
+5、拷贝新生成的master节点的节点到master节点，替换老的master节点证书，重启master节点的master服务，包括kube-apiserver，kube-scheduler，kube-controller-manager，kubelet，kube-proxy。
+6、拷贝新生成的work节点的证书到work节点，替换work节点的证书，并重启node节点的kubelet和kube-proxy服务。
+7、验证master节点的相关服务是否正常，包括kube-apiserver，kube-scheduler，kube-controller-manager，kubelet，kube-proxy，etcd服务。node节点的kubelet和kube-proxy服务。
+
+
+回退，删除新加的2个master节点，将老的备份的证书替换回去，重启master节点和node节点的相关服务
+&lt;/code>&lt;/pre>&lt;pre tabindex="0">&lt;code>模拟单master单etcd节点 扩展到 3master3etcd
+
+现状：
+master1 192.168.0.61
+node1 192.168.0.64
+
+改造后
+master1：192.168.0.61
+master2：192.168.0.62
+master3：192.168.0.63
+node1： 192.168.0.64
+lb1： 192.168.0.71
+lb2： 192.168.0.72
+vip： 192.168.0.70
+&lt;/code>&lt;/pre>&lt;pre tabindex="0">&lt;code>1、备份etcd数据
+2、停止所有节点的kube-apiserver，kube-scheduler，kube-controller-manager，etcd，kubelet，kube-proxy服务
+3、修改all.yml里的master节点的vip为真实的vip，hosts文件增加master组和etcd组，node组 2个新增的master节点的ip
+4、备份老的证书文件夹下的文件，执行ansible-playbook -i hosts setup.yml，只包含创建证书这一步
+
+在/opt/kubernetes_ssl下重新生成apiserver.crt
+apiserver.csr
+apiserver.key
+ca.crt
+ca.key
+ca.srl
+client.crt
+client.csr
+client.key
+etcd_client.crt
+etcd_client.csr
+etcd_client.key
+etcd_server.crt
+etcd_server.csr
+etcd_server.key
+etcd_ssl.cnf
+front-proxy-ca.crt
+front-proxy-ca.key
+front-proxy-ca.srl
+front-proxy-client.crt
+front-proxy-client.csr
+front-proxy-client.key
+front_proxy_ssl.cnf
+master_ssl.cnf
+sa.key
+sa.pub
+证书 
+&lt;/code>&lt;/pre>&lt;h3 id="单master-单etcd-pod-pvc-sc需要扩容后数据任然存在">
+ 单master 单etcd pod pvc sc，需要扩容后数据任然存在
+ &lt;a class="anchor" href="#%e5%8d%95master-%e5%8d%95etcd-pod-pvc-sc%e9%9c%80%e8%a6%81%e6%89%a9%e5%ae%b9%e5%90%8e%e6%95%b0%e6%8d%ae%e4%bb%bb%e7%84%b6%e5%ad%98%e5%9c%a8">#&lt;/a>
+&lt;/h3>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405141912859.png" alt="image-20240514191208781" />&lt;/p></description></item><item><title>2024-8-1 k8s面试题</title><link>https://qq547475331.github.io/docs/2024-8-1-kubernetes%E9%9D%A2%E8%AF%95%E9%A2%98/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2024-8-1-kubernetes%E9%9D%A2%E8%AF%95%E9%A2%98/</guid><description>&lt;h2 id="简述etcd及其特点">
  &lt;strong>简述ETCD及其特点？&lt;/strong>
  &lt;a class="anchor" href="#%e7%ae%80%e8%bf%b0etcd%e5%8f%8a%e5%85%b6%e7%89%b9%e7%82%b9">#&lt;/a>
 &lt;/h2>
@@ -27345,7 +27518,849 @@ systemctl start kubelet
 &lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403041025682.png" alt="image-20240304102555618" />&lt;/p>
 &lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403041027558.png" alt="image-20240304102704294" />&lt;/p>
 &lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403041027144.png" alt="image-20240304102728769" />&lt;/p>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403041027257.png" alt="image-20240304102755026" />&lt;/p></description></item><item><title>2025-3-12 追觅面试</title><link>https://qq547475331.github.io/docs/2025-3-12-%E8%BF%BD%E8%A7%85%E9%9D%A2%E8%AF%95/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-3-12-%E8%BF%BD%E8%A7%85%E9%9D%A2%E8%AF%95/</guid><description>&lt;h1 id="你做了啥什么对团队项目贡献比较大的">
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403041027257.png" alt="image-20240304102755026" />&lt;/p></description></item><item><title>2025-2-11 面试2025-02-11</title><link>https://qq547475331.github.io/docs/2025-2-11-%E9%9D%A2%E8%AF%950211/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-11-%E9%9D%A2%E8%AF%950211/</guid><description>&lt;h2 id="504错误是啥">
+ 504错误是啥
+ &lt;a class="anchor" href="#504%e9%94%99%e8%af%af%e6%98%af%e5%95%a5">#&lt;/a>
+&lt;/h2>
+&lt;p>504 错误（Gateway Timeout）是一个 HTTP 状态码，表示网关或代理服务器超时。让我详细解释一下：&lt;/p>
+&lt;h3 id="主要原因">
+ 主要原因：
+ &lt;a class="anchor" href="#%e4%b8%bb%e8%a6%81%e5%8e%9f%e5%9b%a0">#&lt;/a>
+&lt;/h3>
+&lt;ol>
+&lt;li>
+&lt;p>&lt;strong>服务器响应超时&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>上游服务器（如应用服务器）没有在预定时间内响应网关/代理服务器&lt;/li>
+&lt;li>可能是因为服务器负载过高或处理请求时间过长&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>网络问题&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>网关与上游服务器之间的网络连接存在问题&lt;/li>
+&lt;li>网络拥堵或延迟过高&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ol>
+&lt;h3 id="常见场景">
+ 常见场景：
+ &lt;a class="anchor" href="#%e5%b8%b8%e8%a7%81%e5%9c%ba%e6%99%af">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>使用 Nginx 作为反向代理时，后端服务响应太慢&lt;/li>
+&lt;li>数据库查询操作耗时过长&lt;/li>
+&lt;li>服务器资源不足（CPU、内存等）&lt;/li>
+&lt;li>网络带宽不足&lt;/li>
+&lt;/ul>
+&lt;h3 id="解决方案">
+ 解决方案：
+ &lt;a class="anchor" href="#%e8%a7%a3%e5%86%b3%e6%96%b9%e6%a1%88">#&lt;/a>
+&lt;/h3>
+&lt;ol>
+&lt;li>
+&lt;p>&lt;strong>服务器端&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>增加超时设置时间&lt;/li>
+&lt;li>优化后端代码性能&lt;/li>
+&lt;li>增加服务器资源&lt;/li>
+&lt;li>使用缓存减少处理时间&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>配置示例&lt;/strong>
+如果使用 Nginx，可以调整超时设置：&lt;/p>
+&lt;/li>
+&lt;/ol>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-nginx" data-lang="nginx">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">http&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">proxy_connect_timeout&lt;/span> &lt;span style="color:#e6db74">300s&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">proxy_send_timeout&lt;/span> &lt;span style="color:#e6db74">300s&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">proxy_read_timeout&lt;/span> &lt;span style="color:#e6db74">300s&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;ol start="3">
+&lt;li>&lt;strong>客户端&lt;/strong>
+&lt;ul>
+&lt;li>实现请求重试机制&lt;/li>
+&lt;li>添加适当的错误处理&lt;/li>
+&lt;li>考虑使用断路器模式&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ol>
+&lt;p>504 错误通常是临时性的，如果持续发生，建议检查服务器日志并进行相应优化。&lt;/p>
+&lt;h2 id="常见的状态码">
+ 常见的状态码
+ &lt;a class="anchor" href="#%e5%b8%b8%e8%a7%81%e7%9a%84%e7%8a%b6%e6%80%81%e7%a0%81">#&lt;/a>
+&lt;/h2>
+&lt;p>让我为你介绍最常见的 HTTP 状态码：&lt;/p>
+&lt;h3 id="2xx---成功响应">
+ 2XX - 成功响应
+ &lt;a class="anchor" href="#2xx---%e6%88%90%e5%8a%9f%e5%93%8d%e5%ba%94">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>
+&lt;p>&lt;strong>200 OK&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>最常见的成功状态码&lt;/li>
+&lt;li>请求成功且正常返回结果&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>201 Created&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>创建资源成功&lt;/li>
+&lt;li>通常在 POST 请求后返回&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>204 No Content&lt;/strong>&lt;/p></description></item><item><title>2025-2-12 面试0212</title><link>https://qq547475331.github.io/docs/2025-2-12-%E9%9D%A2%E8%AF%950212/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-12-%E9%9D%A2%E8%AF%950212/</guid><description>&lt;h2 id="如何做k8s资源的规划">
+ 如何做k8s资源的规划
+ &lt;a class="anchor" href="#%e5%a6%82%e4%bd%95%e5%81%9ak8s%e8%b5%84%e6%ba%90%e7%9a%84%e8%a7%84%e5%88%92">#&lt;/a>
+&lt;/h2>
+&lt;p>在K8s中进行资源规划是一个重要的任务，我来详细解释一下关键点：&lt;/p>
+&lt;h3 id="1-cpu和内存资源规划">
+ 1. CPU和内存资源规划
+ &lt;a class="anchor" href="#1-cpu%e5%92%8c%e5%86%85%e5%ad%98%e8%b5%84%e6%ba%90%e8%a7%84%e5%88%92">#&lt;/a>
+&lt;/h3>
+&lt;h4 id="11-资源请求requests和限制limits">
+ 1.1 资源请求(requests)和限制(limits)
+ &lt;a class="anchor" href="#11-%e8%b5%84%e6%ba%90%e8%af%b7%e6%b1%82requests%e5%92%8c%e9%99%90%e5%88%b6limits">#&lt;/a>
+&lt;/h4>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml:deployment.yaml" data-lang="yaml:deployment.yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">spec&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">containers&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">app&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">resources&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">requests&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">memory&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;256Mi&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">cpu&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;250m&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">limits&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">memory&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;512Mi&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">cpu&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;500m&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;ul>
+&lt;li>&lt;strong>requests&lt;/strong>: 容器需要的最小资源量&lt;/li>
+&lt;li>&lt;strong>limits&lt;/strong>: 容器能够使用的最大资源量&lt;/li>
+&lt;li>CPU单位：1 CPU = 1000m（毫核）&lt;/li>
+&lt;li>内存单位：Mi（兆字节）, Gi（吉字节）&lt;/li>
+&lt;/ul>
+&lt;h3 id="2-命名空间资源配额">
+ 2. 命名空间资源配额
+ &lt;a class="anchor" href="#2-%e5%91%bd%e5%90%8d%e7%a9%ba%e9%97%b4%e8%b5%84%e6%ba%90%e9%85%8d%e9%a2%9d">#&lt;/a>
+&lt;/h3>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml:quota.yaml" data-lang="yaml:quota.yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">apiVersion&lt;/span>: &lt;span style="color:#ae81ff">v1&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">ResourceQuota&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">metadata&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">compute-quota&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">namespace&lt;/span>: &lt;span style="color:#ae81ff">your-namespace&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">spec&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">hard&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">requests.cpu&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;4&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">requests.memory&lt;/span>: &lt;span style="color:#ae81ff">4Gi&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">limits.cpu&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;8&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">limits.memory&lt;/span>: &lt;span style="color:#ae81ff">8Gi&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">pods&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;10&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="3-资源规划的最佳实践">
+ 3. 资源规划的最佳实践
+ &lt;a class="anchor" href="#3-%e8%b5%84%e6%ba%90%e8%a7%84%e5%88%92%e7%9a%84%e6%9c%80%e4%bd%b3%e5%ae%9e%e8%b7%b5">#&lt;/a>
+&lt;/h3>
+&lt;ol>
+&lt;li>
+&lt;p>&lt;strong>监控历史数据&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>使用Prometheus + Grafana监控应用实际资源使用情况&lt;/li>
+&lt;li>观察峰值和平均值&lt;/li>
+&lt;li>留出30-50%的buffer以应对突发流量&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>合理设置requests和limits&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>requests设置为应用正常运行需要的资源量&lt;/li>
+&lt;li>limits设置为预期峰值的1.5-2倍&lt;/li>
+&lt;li>避免limits设置过低导致OOM&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>Pod水平自动扩缩容(HPA)&lt;/strong>&lt;/p>
+&lt;/li>
+&lt;/ol>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml:hpa.yaml" data-lang="yaml:hpa.yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">apiVersion&lt;/span>: &lt;span style="color:#ae81ff">autoscaling/v2&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">HorizontalPodAutoscaler&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">metadata&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">app-hpa&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">spec&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">scaleTargetRef&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">apiVersion&lt;/span>: &lt;span style="color:#ae81ff">apps/v1&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">Deployment&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">your-app&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">minReplicas&lt;/span>: &lt;span style="color:#ae81ff">2&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">maxReplicas&lt;/span>: &lt;span style="color:#ae81ff">10&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">metrics&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#f92672">type&lt;/span>: &lt;span style="color:#ae81ff">Resource&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">resource&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">cpu&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">target&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">type&lt;/span>: &lt;span style="color:#ae81ff">Utilization&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">averageUtilization&lt;/span>: &lt;span style="color:#ae81ff">70&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="4-节点资源规划">
+ 4. 节点资源规划
+ &lt;a class="anchor" href="#4-%e8%8a%82%e7%82%b9%e8%b5%84%e6%ba%90%e8%a7%84%e5%88%92">#&lt;/a>
+&lt;/h3>
+&lt;ol>
+&lt;li>&lt;strong>节点标签和污点&lt;/strong>&lt;/li>
+&lt;/ol>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml:node-label.yaml" data-lang="yaml:node-label.yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#ae81ff">kubectl label nodes node1 workload-type=cpu-intensive&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#ae81ff">kubectl taint nodes node1 dedicated=cpu-intensive:NoSchedule&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;ol start="2">
+&lt;li>&lt;strong>节点亲和性&lt;/strong>&lt;/li>
+&lt;/ol>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml:pod-affinity.yaml" data-lang="yaml:pod-affinity.yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">spec&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">affinity&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">nodeAffinity&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">requiredDuringSchedulingIgnoredDuringExecution&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">nodeSelectorTerms&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#f92672">matchExpressions&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#f92672">key&lt;/span>: &lt;span style="color:#ae81ff">workload-type&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">operator&lt;/span>: &lt;span style="color:#ae81ff">In&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">values&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#ae81ff">cpu-intensive&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="5-资源规划检查清单">
+ 5. 资源规划检查清单
+ &lt;a class="anchor" href="#5-%e8%b5%84%e6%ba%90%e8%a7%84%e5%88%92%e6%a3%80%e6%9f%a5%e6%b8%85%e5%8d%95">#&lt;/a>
+&lt;/h3>
+&lt;ol>
+&lt;li>&lt;strong>应用层面&lt;/strong>&lt;/li>
+&lt;/ol>
+&lt;ul>
+&lt;li>&lt;input disabled="" type="checkbox"> 确定应用的基准资源需求&lt;/li>
+&lt;li>&lt;input disabled="" type="checkbox"> 设置合适的requests和limits&lt;/li>
+&lt;li>&lt;input disabled="" type="checkbox"> 配置HPA策略&lt;/li>
+&lt;/ul>
+&lt;ol start="2">
+&lt;li>&lt;strong>集群层面&lt;/strong>&lt;/li>
+&lt;/ol>
+&lt;ul>
+&lt;li>&lt;input disabled="" type="checkbox"> 设置namespace资源配额&lt;/li>
+&lt;li>&lt;input disabled="" type="checkbox"> 规划节点池和节点规格&lt;/li>
+&lt;li>&lt;input disabled="" type="checkbox"> 配置节点亲和性策略&lt;/li>
+&lt;/ul>
+&lt;ol start="3">
+&lt;li>&lt;strong>监控和优化&lt;/strong>&lt;/li>
+&lt;/ol>
+&lt;ul>
+&lt;li>&lt;input disabled="" type="checkbox"> 部署监控系统&lt;/li>
+&lt;li>&lt;input disabled="" type="checkbox"> 定期检查资源使用情况&lt;/li>
+&lt;li>&lt;input disabled="" type="checkbox"> 根据实际情况调整资源配置&lt;/li>
+&lt;/ul>
+&lt;h3 id="6-注意事项">
+ 6. 注意事项
+ &lt;a class="anchor" href="#6-%e6%b3%a8%e6%84%8f%e4%ba%8b%e9%a1%b9">#&lt;/a>
+&lt;/h3>
+&lt;ol>
+&lt;li>
+&lt;p>&lt;strong>避免资源过度分配&lt;/strong>&lt;/p></description></item><item><title>2025-2-16 k8s题目</title><link>https://qq547475331.github.io/docs/2025-2-26-k8s%E7%9B%B8%E5%85%B3/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-26-k8s%E7%9B%B8%E5%85%B3/</guid><description>&lt;h2 id="kubernetes">
+ Kubernetes
+ &lt;a class="anchor" href="#kubernetes">#&lt;/a>
+&lt;/h2>
+&lt;h2 id="谈谈你对k8s的理解">
+ 谈谈你对k8s的理解☆
+ &lt;a class="anchor" href="#%e8%b0%88%e8%b0%88%e4%bd%a0%e5%af%b9k8s%e7%9a%84%e7%90%86%e8%a7%a3">#&lt;/a>
+&lt;/h2>
+&lt;p>Kubernetes（简称 K8s）是一个开源的容器编排平台，旨在自动化容器化应用程序的部署、扩展和管理。它最初由 Google 设计，并在2014年开源。K8s 提供了一个集中的平台来管理和运行容器化的应用程序，尤其适合大规模的分布式系统和微服务架构。&lt;/p>
+&lt;p>从技术角度看，K8s 主要有以下几个核心组成部分：&lt;/p>
+&lt;ol>
+&lt;li>&lt;strong>集群（Cluster）&lt;/strong>： K8s 将多个节点组织成一个集群，集群中通常有两类节点：控制平面节点（Control Plane）和工作节点（Worker Node）。控制平面负责集群的管理与调度，而工作节点运行实际的应用程序。&lt;/li>
+&lt;li>&lt;strong>Pod&lt;/strong>： Pod 是 Kubernetes 中最小的调度单位，通常包含一个或多个容器，这些容器共享同一个网络、存储和其他资源。Pod 是容器运行的基本单位。&lt;/li>
+&lt;li>&lt;strong>Deployment&lt;/strong>： Deployment 用于管理和控制应用程序的副本和版本。它通过定义副本数来保证应用的高可用性，支持滚动更新、回滚等功能。&lt;/li>
+&lt;li>&lt;strong>Service&lt;/strong>： Service 用于暴露应用程序的网络接口，并提供负载均衡。通过 Service，用户可以通过稳定的 IP 或 DNS 名称访问一组 Pod。&lt;/li>
+&lt;li>&lt;strong>Ingress&lt;/strong>： Ingress 提供 HTTP 和 HTTPS 路由到集群内的服务，可以用于管理外部流量进入集群，支持负载均衡、SSL 终端等功能。&lt;/li>
+&lt;li>&lt;strong>ConfigMap 和 Secret&lt;/strong>： ConfigMap 用于管理应用的配置数据，Secret 用于存储敏感数据（如密码、API 密钥等）。这些资源可以被容器在运行时动态加载。&lt;/li>
+&lt;li>&lt;strong>Namespace&lt;/strong>： Namespace 提供了对资源的隔离，允许在同一个集群中多个团队或应用之间共享资源而不发生冲突。它相当于虚拟化的逻辑分区。&lt;/li>
+&lt;li>&lt;strong>StatefulSet&lt;/strong>： StatefulSet 是一种控制器，用于管理有状态应用，如数据库等。与 Deployment 不同，StatefulSet 保证了 Pod 的稳定性和唯一性，适合需要持久存储和有序部署的应用。&lt;/li>
+&lt;li>&lt;strong>Persistent Volume (PV) 和 Persistent Volume Claim (PVC)&lt;/strong>： PV 是集群内的存储资源，而 PVC 是用户对存储资源的请求。通过这种方式，K8s 支持动态存储的创建和销毁。&lt;/li>
+&lt;/ol>
+&lt;h3 id="关键优势">
+ 关键优势：
+ &lt;a class="anchor" href="#%e5%85%b3%e9%94%ae%e4%bc%98%e5%8a%bf">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>&lt;strong>自动化&lt;/strong>：K8s 提供了自动化部署、滚动更新、扩展和恢复功能，极大地简化了应用程序生命周期管理。&lt;/li>
+&lt;li>&lt;strong>高可用性&lt;/strong>：K8s 支持容错和高可用性，可以通过多副本部署、健康检查、自动恢复等机制保证应用的可靠性。&lt;/li>
+&lt;li>&lt;strong>灵活性&lt;/strong>：通过声明式配置，K8s 让开发者可以专注于应用本身，而不必担心基础设施细节。&lt;/li>
+&lt;li>&lt;strong>扩展性&lt;/strong>：K8s 提供了强大的插件和扩展机制，支持各种中间件、监控、日志等功能的集成。&lt;/li>
+&lt;/ul>
+&lt;h3 id="适用场景">
+ 适用场景：
+ &lt;a class="anchor" href="#%e9%80%82%e7%94%a8%e5%9c%ba%e6%99%af">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>&lt;strong>微服务架构&lt;/strong>：K8s 非常适合容器化微服务的管理，能有效地处理服务之间的依赖、负载均衡、容错等。&lt;/li>
+&lt;li>&lt;strong>大规模分布式应用&lt;/strong>：由于其自动化和扩展性，K8s 很适合处理大规模、复杂的分布式系统。&lt;/li>
+&lt;li>&lt;strong>混合云/多云架构&lt;/strong>：K8s 提供跨平台的支持，使得应用能够在不同的云环境或本地数据中心之间无缝迁移。&lt;/li>
+&lt;/ul>
+&lt;p>总的来说，Kubernetes 是现代 DevOps 和持续集成/持续交付（CI/CD）的核心技术之一，能够有效地管理容器化应用，使得开发和运维更加高效、灵活和可靠。&lt;/p></description></item><item><title>2025-2-18 面试2025-0218</title><link>https://qq547475331.github.io/docs/2025-2-18-%E9%9D%A2%E8%AF%95/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-18-%E9%9D%A2%E8%AF%95/</guid><description>&lt;h2 id="pod的request和limit的关系-以及他们在node节点上的pod被驱逐时的优先级">
+ pod的request和limit的关系 以及他们在node节点上的pod被驱逐时的优先级
+ &lt;a class="anchor" href="#pod%e7%9a%84request%e5%92%8climit%e7%9a%84%e5%85%b3%e7%b3%bb-%e4%bb%a5%e5%8f%8a%e4%bb%96%e4%bb%ac%e5%9c%a8node%e8%8a%82%e7%82%b9%e4%b8%8a%e7%9a%84pod%e8%a2%ab%e9%a9%b1%e9%80%90%e6%97%b6%e7%9a%84%e4%bc%98%e5%85%88%e7%ba%a7">#&lt;/a>
+&lt;/h2>
+&lt;p>在 Kubernetes 中，&lt;code>request&lt;/code> 和 &lt;code>limit&lt;/code> 是资源调度的关键参数，分别表示容器资源的最小需求和最大使用限制。它们的关系和在节点上的 Pod 被驱逐时的优先级可以分为以下几个方面：&lt;/p>
+&lt;h3 id="1-request">
+ 1. &lt;strong>&lt;code>request&lt;/code> 和 &lt;code>limit&lt;/code> 的关系&lt;/strong>
+ &lt;a class="anchor" href="#1-request">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>&lt;strong>&lt;code>request&lt;/code>&lt;/strong>：
+&lt;ul>
+&lt;li>&lt;code>request&lt;/code> 是容器启动时所需的资源量。Kubernetes 调度器根据 &lt;code>request&lt;/code> 来选择合适的节点调度 Pod。当你设置了 &lt;code>request&lt;/code>，Kubernetes 确保该容器至少能使用这么多资源。若没有足够的资源，Pod 将无法被调度到该节点。&lt;/li>
+&lt;li>它反映了容器的“需求量”，用于确定调度时是否能找到一个合适的节点。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>&lt;code>limit&lt;/code>&lt;/strong>：
+&lt;ul>
+&lt;li>&lt;code>limit&lt;/code> 是容器可以使用的最大资源量。容器在运行时使用的资源如果超过 &lt;code>limit&lt;/code>，Kubernetes 会根据策略（如 OOM Killer）限制容器的资源使用。&lt;/li>
+&lt;li>它是对容器资源使用的“上限”，防止容器占用过多的资源，影响同一节点上的其他容器。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>&lt;code>request&lt;/code> 和 &lt;code>limit&lt;/code> 的差异&lt;/strong>：
+&lt;ul>
+&lt;li>&lt;code>request&lt;/code> 用于调度，而 &lt;code>limit&lt;/code> 用于资源使用控制。理想情况下，&lt;code>request&lt;/code> 应该小于或等于 &lt;code>limit&lt;/code>，否则会造成资源浪费或调度错误。&lt;/li>
+&lt;li>例如：如果 &lt;code>request&lt;/code> 设置为 512Mi，而 &lt;code>limit&lt;/code> 设置为 1Gi，Pod 将被调度到有足够 512Mi 内存的节点，但在节点上运行时，该容器最多可使用 1Gi 内存。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;h3 id="2-node-节点上-pod-被驱逐时的优先级">
+ 2. &lt;strong>Node 节点上 Pod 被驱逐时的优先级&lt;/strong>
+ &lt;a class="anchor" href="#2-node-%e8%8a%82%e7%82%b9%e4%b8%8a-pod-%e8%a2%ab%e9%a9%b1%e9%80%90%e6%97%b6%e7%9a%84%e4%bc%98%e5%85%88%e7%ba%a7">#&lt;/a>
+&lt;/h3>
+&lt;p>当 Kubernetes 节点资源不足时（如内存或 CPU），Pod 可能会被驱逐。Pod 驱逐的决策基于以下几个因素：&lt;/p></description></item><item><title>2025-2-19 面试0219</title><link>https://qq547475331.github.io/docs/2025-2-19-%E9%9D%A2%E8%AF%950219/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-19-%E9%9D%A2%E8%AF%950219/</guid><description>&lt;h2 id="排查cpu使用率过高-linux">
+ 排查cpu使用率过高 linux
+ &lt;a class="anchor" href="#%e6%8e%92%e6%9f%a5cpu%e4%bd%bf%e7%94%a8%e7%8e%87%e8%bf%87%e9%ab%98-linux">#&lt;/a>
+&lt;/h2>
+&lt;p>排查 CPU 使用率过高时，通常可以从以下几个方面入手：&lt;/p>
+&lt;h3 id="1-查看当前-cpu-使用情况">
+ 1. &lt;strong>查看当前 CPU 使用情况&lt;/strong>
+ &lt;a class="anchor" href="#1-%e6%9f%a5%e7%9c%8b%e5%bd%93%e5%89%8d-cpu-%e4%bd%bf%e7%94%a8%e6%83%85%e5%86%b5">#&lt;/a>
+&lt;/h3>
+&lt;p>使用 &lt;code>top&lt;/code> 或 &lt;code>htop&lt;/code> 命令查看系统当前的 CPU 使用情况，找到占用 CPU 资源较高的进程。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>top
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>或者如果你有 &lt;code>htop&lt;/code>，可以提供更直观的界面：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>htop
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>这些工具可以显示进程的 CPU 使用率，并且帮助你找到哪个进程占用了过多的 CPU。&lt;/p>
+&lt;h3 id="2-使用">
+ 2. &lt;strong>使用 &lt;code>ps&lt;/code> 查看具体进程&lt;/strong>
+ &lt;a class="anchor" href="#2-%e4%bd%bf%e7%94%a8">#&lt;/a>
+&lt;/h3>
+&lt;p>使用 &lt;code>ps&lt;/code> 命令来列出所有进程并按 CPU 使用率排序：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>ps aux --sort&lt;span style="color:#f92672">=&lt;/span>-%cpu | head -n &lt;span style="color:#ae81ff">10&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>这条命令会列出 CPU 使用率最高的前 10 个进程。&lt;/p>
+&lt;h3 id="3-检查系统负载">
+ 3. &lt;strong>检查系统负载&lt;/strong>
+ &lt;a class="anchor" href="#3-%e6%a3%80%e6%9f%a5%e7%b3%bb%e7%bb%9f%e8%b4%9f%e8%bd%bd">#&lt;/a>
+&lt;/h3>
+&lt;p>使用 &lt;code>uptime&lt;/code> 或 &lt;code>top&lt;/code> 可以查看系统的负载情况。如果负载过高，可能是 CPU 资源被占用过多，导致系统过载。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>uptime
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>或者&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>top
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>系统负载（load average）越高，表示系统的负载越重。通常负载值大于 CPU 核数时，表示系统处于过载状态。&lt;/p></description></item><item><title>2025-2-20 面试0220</title><link>https://qq547475331.github.io/docs/2025-2-20-%E9%9D%A2%E8%AF%950220/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-20-%E9%9D%A2%E8%AF%950220/</guid><description>&lt;h2 id="delete-pvc时-设置什么字段可以保证pv不被删除">
+ delete pvc时 设置什么字段可以保证pv不被删除
+ &lt;a class="anchor" href="#delete-pvc%e6%97%b6-%e8%ae%be%e7%bd%ae%e4%bb%80%e4%b9%88%e5%ad%97%e6%ae%b5%e5%8f%af%e4%bb%a5%e4%bf%9d%e8%af%81pv%e4%b8%8d%e8%a2%ab%e5%88%a0%e9%99%a4">#&lt;/a>
+&lt;/h2>
+&lt;p>在 Kubernetes 中，当你删除 &lt;strong>PersistentVolumeClaim（PVC）&lt;/strong> 时，默认情况下与之关联的 &lt;strong>PersistentVolume（PV）&lt;/strong> 会根据 PV 的 &lt;strong>回收策略&lt;/strong> 被删除。为了确保在删除 PVC 时 &lt;strong>PV 不被删除&lt;/strong>，你需要修改 PV 的 &lt;strong>回收策略（reclaimPolicy）&lt;/strong> 字段。&lt;/p>
+&lt;h3 id="步骤">
+ 步骤
+ &lt;a class="anchor" href="#%e6%ad%a5%e9%aa%a4">#&lt;/a>
+&lt;/h3>
+&lt;ol>
+&lt;li>
+&lt;p>&lt;strong>设置 PV 的回收策略&lt;/strong>：&lt;/p>
+&lt;ul>
+&lt;li>
+&lt;p>回收策略&lt;/p>
+&lt;p>：Kubernetes 支持几种 PV 的回收策略，常见的有：&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Retain&lt;/strong>：保持 PV 不删除，手动处理。&lt;/li>
+&lt;li>&lt;strong>Recycle&lt;/strong>：回收 PV（已废弃，不推荐使用）。&lt;/li>
+&lt;li>&lt;strong>Delete&lt;/strong>：删除 PV（这是默认设置，当 PVC 删除时 PV 会被删除）。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;p>如果你希望 PVC 删除时 &lt;strong>PV 不被删除&lt;/strong>，需要将 PV 的回收策略设置为 &lt;code>Retain&lt;/code>。这样，当 PVC 删除时，PV 仍然会保留，必须手动清理或者重新配置。&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>如何修改回收策略&lt;/strong>：&lt;/p>
+&lt;ul>
+&lt;li>编辑你的 &lt;strong>PersistentVolume（PV）&lt;/strong> 对象，修改 &lt;code>reclaimPolicy&lt;/code> 为 &lt;code>Retain&lt;/code>。&lt;/li>
+&lt;/ul>
+&lt;p>下面是一个例子：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">apiVersion&lt;/span>: &lt;span style="color:#ae81ff">v1&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">PersistentVolume&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">metadata&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">my-pv&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">spec&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">capacity&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">storage&lt;/span>: &lt;span style="color:#ae81ff">10Gi&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">volumeMode&lt;/span>: &lt;span style="color:#ae81ff">Filesystem&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">accessModes&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#ae81ff">ReadWriteOnce&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">persistentVolumeReclaimPolicy&lt;/span>: &lt;span style="color:#ae81ff">Retain &lt;/span> &lt;span style="color:#75715e"># 设置回收策略为 Retain&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">storageClassName&lt;/span>: &lt;span style="color:#ae81ff">manual&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">hostPath&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">path&lt;/span>: &lt;span style="color:#ae81ff">/mnt/data&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>在这个例子中，&lt;code>persistentVolumeReclaimPolicy: Retain&lt;/code> 确保当与该 PV 关联的 PVC 被删除时，PV 并不会被删除。&lt;/p></description></item><item><title>2025-2-24 0224面试</title><link>https://qq547475331.github.io/docs/2025-2-24-%E9%9D%A2%E8%AF%950224/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-24-%E9%9D%A2%E8%AF%950224/</guid><description>&lt;h1 id="比较好的监控是怎样的-prometheus-grafana-alertmanager-考虑存储-大规模-2000台机器-考虑告警延迟-考虑长期储存-考虑监控业务的全面性-准确性-告警实时性">
+ 比较好的监控是怎样的 prometheus grafana alertmanager 考虑存储 大规模 2000台机器 考虑告警延迟 考虑长期储存 考虑监控业务的全面性 准确性 告警实时性
+ &lt;a class="anchor" href="#%e6%af%94%e8%be%83%e5%a5%bd%e7%9a%84%e7%9b%91%e6%8e%a7%e6%98%af%e6%80%8e%e6%a0%b7%e7%9a%84-prometheus-grafana-alertmanager-%e8%80%83%e8%99%91%e5%ad%98%e5%82%a8-%e5%a4%a7%e8%a7%84%e6%a8%a1-2000%e5%8f%b0%e6%9c%ba%e5%99%a8-%e8%80%83%e8%99%91%e5%91%8a%e8%ad%a6%e5%bb%b6%e8%bf%9f-%e8%80%83%e8%99%91%e9%95%bf%e6%9c%9f%e5%82%a8%e5%ad%98-%e8%80%83%e8%99%91%e7%9b%91%e6%8e%a7%e4%b8%9a%e5%8a%a1%e7%9a%84%e5%85%a8%e9%9d%a2%e6%80%a7-%e5%87%86%e7%a1%ae%e6%80%a7-%e5%91%8a%e8%ad%a6%e5%ae%9e%e6%97%b6%e6%80%a7">#&lt;/a>
+&lt;/h1>
+&lt;p>在你的场景中，涉及到大规模的监控部署，2000台机器、长时间的存储、实时告警等多个方面。要构建一个高效、可靠的监控系统，你可以基于 &lt;strong>Prometheus&lt;/strong>、&lt;strong>Grafana&lt;/strong> 和 &lt;strong>Alertmanager&lt;/strong> 这些工具进行设计，但需要优化配置，以满足大规模、低延迟、高可用、长时间存储等需求。&lt;/p>
+&lt;h3 id="1-prometheus-架构设计">
+ 1. &lt;strong>Prometheus 架构设计&lt;/strong>
+ &lt;a class="anchor" href="#1-prometheus-%e6%9e%b6%e6%9e%84%e8%ae%be%e8%ae%a1">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>&lt;strong>水平扩展&lt;/strong>：单个 Prometheus 实例无法支撑大规模的数据采集和存储，因此需要考虑&lt;strong>水平扩展&lt;/strong>。可以使用多个 Prometheus 实例分担不同的监控目标（例如，按区域或按机器类型分配 Prometheus 实例）。也可以使用 &lt;strong>Prometheus Federation&lt;/strong>（联邦）来将多个 Prometheus 实例的指标数据汇聚到一个主 Prometheus 实例中。&lt;/li>
+&lt;li>&lt;strong>存储优化&lt;/strong>：Prometheus 本身的存储是针对短期数据存储优化的，支持时序数据的压缩。但对于长期存储，Prometheus 并不适合将数据保留很长时间。可以使用 &lt;strong>Thanos&lt;/strong> 或 &lt;strong>Cortex&lt;/strong> 来为 Prometheus 提供分布式存储，支持长期数据保留。这样可以跨多个 Prometheus 实例集中存储数据，进行长时间查询。&lt;/li>
+&lt;li>&lt;strong>数据分片&lt;/strong>：如果你的监控数据量非常大（如 2000 台机器），你可以通过数据分片（sharding）来分散负载，减少单个 Prometheus 实例的压力。Thanos 和 Cortex 都支持这种分片模型。&lt;/li>
+&lt;/ul>
+&lt;h3 id="2-grafana-可视化">
+ 2. &lt;strong>Grafana 可视化&lt;/strong>
+ &lt;a class="anchor" href="#2-grafana-%e5%8f%af%e8%a7%86%e5%8c%96">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>&lt;strong>仪表盘设计&lt;/strong>：Grafana 适用于展示大规模监控数据。你可以设计多个针对不同层级的仪表盘，例如：硬件监控、应用性能监控、网络流量等。Grafana 允许将数据按需聚合或细分，以帮助从不同维度监控业务指标。&lt;/li>
+&lt;li>&lt;strong>分布式查询&lt;/strong>：通过 &lt;strong>Thanos&lt;/strong> 或 &lt;strong>Cortex&lt;/strong> 等分布式存储系统，Grafana 可以访问跨多个 Prometheus 实例的数据，呈现完整的监控视图。&lt;/li>
+&lt;li>&lt;strong>查询性能优化&lt;/strong>：随着监控系统规模的扩大，Grafana 查询的数据量增大。你需要优化 Prometheus 的查询性能，避免低效的查询（如不加时间范围的查询），或者使用预计算的聚合数据来减轻查询负担。&lt;/li>
+&lt;/ul>
+&lt;h3 id="3-alertmanager-告警管理">
+ 3. &lt;strong>Alertmanager 告警管理&lt;/strong>
+ &lt;a class="anchor" href="#3-alertmanager-%e5%91%8a%e8%ad%a6%e7%ae%a1%e7%90%86">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>&lt;strong>告警延迟&lt;/strong>：为了确保告警的实时性，Prometheus 的抓取周期（默认 15 秒）需要优化。如果告警的延迟非常关键，可能需要缩短抓取周期或者增加更多 Prometheus 实例，分担告警流量。&lt;/li>
+&lt;li>&lt;strong>告警策略设计&lt;/strong>：针对大规模的监控系统，告警的&lt;strong>去重和抑制&lt;/strong>非常重要，避免过多无效告警。可以根据告警的严重性、关联性进行聚合，避免“告警风暴”。Alertmanager 可以进行告警的抑制和分组，减少重复告警。&lt;/li>
+&lt;li>&lt;strong>通知渠道&lt;/strong>：Alertmanager 可以与 Slack、邮件、Webhook 等通知渠道集成，根据告警级别不同，选择不同的通知方式（例如，严重告警通过短信，轻微告警通过邮件）。&lt;/li>
+&lt;li>&lt;strong>告警灵敏度&lt;/strong>：在大规模系统中，容易产生很多低优先级的告警。可以通过设置 &lt;strong>Prometheus&lt;/strong> 的告警规则，精细化告警条件，确保告警的准确性和有效性。&lt;/li>
+&lt;/ul>
+&lt;h3 id="4-存储与长期数据保留">
+ 4. &lt;strong>存储与长期数据保留&lt;/strong>
+ &lt;a class="anchor" href="#4-%e5%ad%98%e5%82%a8%e4%b8%8e%e9%95%bf%e6%9c%9f%e6%95%b0%e6%8d%ae%e4%bf%9d%e7%95%99">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>
+&lt;p>长期存储解决方案&lt;/p></description></item><item><title>2025-2-24 中级运维面试题</title><link>https://qq547475331.github.io/docs/2025-2-24-%E4%B8%AD%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_%E9%A2%98%E7%9B%AE/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-24-%E4%B8%AD%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_%E9%A2%98%E7%9B%AE/</guid><description>&lt;h1 id="一linux">
+ 一、linux
+ &lt;a class="anchor" href="#%e4%b8%80linux">#&lt;/a>
+&lt;/h1>
+&lt;h1 id="1-linux系统启动流程">
+ 1. linux系统启动流程
+ &lt;a class="anchor" href="#1-linux%e7%b3%bb%e7%bb%9f%e5%90%af%e5%8a%a8%e6%b5%81%e7%a8%8b">#&lt;/a>
+&lt;/h1>
+&lt;ul>
+&lt;li>第一步：开机自检，加载BIOS&lt;/li>
+&lt;li>第二步：读取ＭＢＲ&lt;/li>
+&lt;li>第三步：Boot Loader　grub引导菜单&lt;/li>
+&lt;li>第四步：加载kernel内核&lt;/li>
+&lt;li>第五步：init进程依据inittab文件夹来设定运行级别&lt;/li>
+&lt;li>第六步：init进程执行rc.sysinit&lt;/li>
+&lt;li>第七步：启动内核模块&lt;/li>
+&lt;li>第八步：执行不同运行级别的脚本程序&lt;/li>
+&lt;li>第九步：执行/etc/rc.d/rc.lo&lt;/li>
+&lt;/ul>
+&lt;p>Linux 系统启动流程是一个多阶段的过程，涉及多个重要的系统组件。以下是 Linux 系统从开机到完全启动的详细步骤：&lt;/p>
+&lt;h3 id="1-加电自检-post">
+ 1. &lt;strong>加电自检 (POST)&lt;/strong>
+ &lt;a class="anchor" href="#1-%e5%8a%a0%e7%94%b5%e8%87%aa%e6%a3%80-post">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>当电脑通电后，首先会执行硬件自检（POST，Power-On Self-Test），由 BIOS 或 UEFI（现代系统通常使用 UEFI）来完成。这一步检查硬件设备是否正常，比如内存、硬盘、显示器等。&lt;/li>
+&lt;/ul>
+&lt;h3 id="2-加载引导程序-bootloader">
+ 2. &lt;strong>加载引导程序 (Bootloader)&lt;/strong>
+ &lt;a class="anchor" href="#2-%e5%8a%a0%e8%bd%bd%e5%bc%95%e5%af%bc%e7%a8%8b%e5%ba%8f-bootloader">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>BIOS 或 UEFI 会查找并加载存储设备（如硬盘或 SSD）上的引导加载程序（Bootloader）。常见的引导加载程序有 &lt;strong>GRUB&lt;/strong>（GRand Unified Bootloader）和 &lt;strong>LILO&lt;/strong>（Linux Loader）等。&lt;/li>
+&lt;li>引导加载程序的作用是加载并启动操作系统。它会显示可用的操作系统列表（如果有多个系统），并允许用户选择要启动的操作系统。&lt;/li>
+&lt;/ul>
+&lt;h3 id="3-加载内核-kernel">
+ 3. &lt;strong>加载内核 (Kernel)&lt;/strong>
+ &lt;a class="anchor" href="#3-%e5%8a%a0%e8%bd%bd%e5%86%85%e6%a0%b8-kernel">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>选择操作系统后，引导加载程序会加载操作系统的内核（通常是 &lt;code>vmlinuz&lt;/code> 文件）。内核是操作系统的核心，负责管理硬件资源和提供系统服务。&lt;/li>
+&lt;li>内核首先会解压并加载到内存中，然后初始化硬件设备（如处理器、内存、硬盘等）。&lt;/li>
+&lt;/ul>
+&lt;h3 id="4-初始化硬件和挂载根文件系统-root-filesystem">
+ 4. &lt;strong>初始化硬件和挂载根文件系统 (Root Filesystem)&lt;/strong>
+ &lt;a class="anchor" href="#4-%e5%88%9d%e5%a7%8b%e5%8c%96%e7%a1%ac%e4%bb%b6%e5%92%8c%e6%8c%82%e8%bd%bd%e6%a0%b9%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f-root-filesystem">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>内核在加载完毕后，会开始初始化硬件，包括磁盘驱动程序、输入设备、网络设备等。&lt;/li>
+&lt;li>内核通过 &lt;strong>initramfs&lt;/strong> 或 &lt;strong>initrd&lt;/strong>（初始 RAM 文件系统）来帮助加载根文件系统（通常是 &lt;code>/&lt;/code>）到内存中。initramfs 是一个压缩的文件系统镜像，包含必要的驱动程序和工具，确保系统能够挂载根文件系统。&lt;/li>
+&lt;/ul>
+&lt;h3 id="5-启动-init-进程">
+ 5. &lt;strong>启动 init 进程&lt;/strong>
+ &lt;a class="anchor" href="#5-%e5%90%af%e5%8a%a8-init-%e8%bf%9b%e7%a8%8b">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>内核初始化完成后，会启动系统的第一个用户空间进程，即 &lt;strong>init&lt;/strong> 进程（PID 1）。这是 Linux 系统中最重要的进程，它负责启动和管理系统的其他进程。&lt;/li>
+&lt;li>在现代 Linux 系统中，&lt;code>init&lt;/code> 进程通常由 &lt;strong>systemd&lt;/strong> 替代，systemd 是一种系统和服务管理器，负责管理系统启动过程、服务和进程。&lt;/li>
+&lt;/ul>
+&lt;h3 id="6-运行-init-脚本或服务管理器">
+ 6. &lt;strong>运行 init 脚本或服务管理器&lt;/strong>
+ &lt;a class="anchor" href="#6-%e8%bf%90%e8%a1%8c-init-%e8%84%9a%e6%9c%ac%e6%88%96%e6%9c%8d%e5%8a%a1%e7%ae%a1%e7%90%86%e5%99%a8">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>
+&lt;p>systemd&lt;/p></description></item><item><title>2025-2-24 高级运维面试题-linux部分</title><link>https://qq547475331.github.io/docs/2025-2-24-%E9%AB%98%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_ai_linux%E9%83%A8%E5%88%86/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-24-%E9%AB%98%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_ai_linux%E9%83%A8%E5%88%86/</guid><description>&lt;blockquote>
+&lt;p>经过本人为期一个半月的不懈努力，累计面试了二十多家公司，共计约五十余场面试，考察的面试题超两百道，积累了许多宝贵的面试经验。现在，我将这些面试题以及我个人的应对心得精心整理成一份面试攻略分享给大家，快来一起测测自己能回答多少道面试题吧。&lt;/p>&lt;/blockquote>
+&lt;h1 id="面试基本信息">
+ 面试基本信息
+ &lt;a class="anchor" href="#%e9%9d%a2%e8%af%95%e5%9f%ba%e6%9c%ac%e4%bf%a1%e6%81%af">#&lt;/a>
+&lt;/h1>
+&lt;p>面试岗位：运维工程师(容器与ES方向)、运维开发工程师、SRE工程师
+工作经验：5年
+薪资范围：年薪45万左右，base北京
+面试时间：7月初-8月中旬
+主要公司：&lt;/p>
+&lt;ul>
+&lt;li>互联网公司：字节、京东、百度、网易、蚂蚁金服、小米、滴滴、去哪儿、猎豹移动、商汤、旷视、智谱华章、马蜂窝、竞技世界&lt;/li>
+&lt;li>国企子公司：电信、联通、建行、中石化&lt;/li>
+&lt;/ul>
+&lt;h1 id="面试题汇总">
+ 面试题汇总
+ &lt;a class="anchor" href="#%e9%9d%a2%e8%af%95%e9%a2%98%e6%b1%87%e6%80%bb">#&lt;/a>
+&lt;/h1>
+&lt;p>其中☆表示多次出现过的高频面试题，已经按分类整理。&lt;/p>
+&lt;h2 id="linux">
+ Linux
+ &lt;a class="anchor" href="#linux">#&lt;/a>
+&lt;/h2>
+&lt;h2 id="grep-sed-awk-cut组合使用">
+ grep sed awk cut组合使用☆
+ &lt;a class="anchor" href="#grep-sed-awk-cut%e7%bb%84%e5%90%88%e4%bd%bf%e7%94%a8">#&lt;/a>
+&lt;/h2>
+&lt;p>&lt;code>grep&lt;/code>、&lt;code>sed&lt;/code>、&lt;code>awk&lt;/code> 和 &lt;code>cut&lt;/code> 都是 Linux 系统中常用的文本处理工具，通常可以结合使用以实现更复杂的文本处理任务。这里是一些常见的组合使用示例：&lt;/p>
+&lt;h3 id="1-使用-grep--cut筛选和提取字段">
+ 1. 使用 &lt;code>grep&lt;/code> + &lt;code>cut&lt;/code>：筛选和提取字段
+ &lt;a class="anchor" href="#1-%e4%bd%bf%e7%94%a8-grep--cut%e7%ad%9b%e9%80%89%e5%92%8c%e6%8f%90%e5%8f%96%e5%ad%97%e6%ae%b5">#&lt;/a>
+&lt;/h3>
+&lt;p>假设你有一个文件 &lt;code>data.txt&lt;/code>，其内容如下：&lt;/p>
+&lt;pre tabindex="0">&lt;code>Name, Age, Department
+Alice, 30, HR
+Bob, 25, Engineering
+Charlie, 35, Marketing
+&lt;/code>&lt;/pre>&lt;p>如果你只想提取 &lt;code>Name&lt;/code> 和 &lt;code>Age&lt;/code> 字段，可以使用 &lt;code>grep&lt;/code> 和 &lt;code>cut&lt;/code> 的组合：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>grep -v &lt;span style="color:#e6db74">&amp;#34;Name&amp;#34;&lt;/span> data.txt | cut -d &lt;span style="color:#e6db74">&amp;#39;,&amp;#39;&lt;/span> -f 1,2
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>解释：&lt;/p>
+&lt;ul>
+&lt;li>&lt;code>grep -v &amp;quot;Name&amp;quot;&lt;/code>：去除第一行标题。&lt;/li>
+&lt;li>&lt;code>cut -d ',' -f 1,2&lt;/code>：按照逗号分隔，提取第一列和第二列。&lt;/li>
+&lt;/ul>
+&lt;p>输出：&lt;/p></description></item><item><title>2025-2-25 面试0225</title><link>https://qq547475331.github.io/docs/2025-2-26-%E9%9D%A2%E8%AF%950225/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-26-%E9%9D%A2%E8%AF%950225/</guid><description>&lt;h2 id="上海外包太平洋保险">
+ 上海外包太平洋保险
+ &lt;a class="anchor" href="#%e4%b8%8a%e6%b5%b7%e5%a4%96%e5%8c%85%e5%a4%aa%e5%b9%b3%e6%b4%8b%e4%bf%9d%e9%99%a9">#&lt;/a>
+&lt;/h2>
+&lt;h2 id="有完成过ansible比较复杂的role-task的编写吗">
+ 有完成过ansible比较复杂的role task的编写吗？
+ &lt;a class="anchor" href="#%e6%9c%89%e5%ae%8c%e6%88%90%e8%bf%87ansible%e6%af%94%e8%be%83%e5%a4%8d%e6%9d%82%e7%9a%84role-task%e7%9a%84%e7%bc%96%e5%86%99%e5%90%97">#&lt;/a>
+&lt;/h2>
+&lt;p>是的，基于你的需求描述，我可以帮你了解和完成一些复杂的 Ansible Role 和 Task 编写。以下是一些示例场景：&lt;/p>
+&lt;h3 id="1-完整的-kubernetes-集群节点加入-role-编写">
+ &lt;strong>1. 完整的 Kubernetes 集群节点加入 Role 编写&lt;/strong>
+ &lt;a class="anchor" href="#1-%e5%ae%8c%e6%95%b4%e7%9a%84-kubernetes-%e9%9b%86%e7%be%a4%e8%8a%82%e7%82%b9%e5%8a%a0%e5%85%a5-role-%e7%bc%96%e5%86%99">#&lt;/a>
+&lt;/h3>
+&lt;p>假设你需要使用 Ansible 创建一个完整的 Kubernetes 节点加入过程，包含以下内容：&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>创建目录结构和配置文件&lt;/strong>&lt;/li>
+&lt;li>&lt;strong>二进制文件下载和分发&lt;/strong>&lt;/li>
+&lt;li>&lt;strong>&lt;code>systemd&lt;/code> 服务文件创建和启用&lt;/strong>&lt;/li>
+&lt;li>&lt;strong>配置文件模板化（&lt;code>kubelet&lt;/code>，&lt;code>kube-proxy&lt;/code>，&lt;code>CNI&lt;/code> 插件等）&lt;/strong>&lt;/li>
+&lt;li>&lt;strong>节点标签和调度禁用操作&lt;/strong>&lt;/li>
+&lt;li>&lt;strong>&lt;code>kubelet&lt;/code>、&lt;code>kube-proxy&lt;/code> 等服务的启动管理&lt;/strong>&lt;/li>
+&lt;/ul>
+&lt;h3 id="2-ansible-role-示例">
+ &lt;strong>2. Ansible Role 示例&lt;/strong>
+ &lt;a class="anchor" href="#2-ansible-role-%e7%a4%ba%e4%be%8b">#&lt;/a>
+&lt;/h3>
+&lt;p>一个复杂的 Role 可能包含以下几个部分：&lt;/p>
+&lt;h4 id="tasksmainyml">
+ &lt;strong>&lt;code>tasks/main.yml&lt;/code>&lt;/strong>
+ &lt;a class="anchor" href="#tasksmainyml">#&lt;/a>
+&lt;/h4>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>---
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 安装并配置 Kubernetes 组件（如 kubelet 和 kube-proxy）&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>- &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">创建 Kubernetes 相关目录&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">file&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">path&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;{{ item }}&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">state&lt;/span>: &lt;span style="color:#ae81ff">directory&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">owner&lt;/span>: &lt;span style="color:#ae81ff">root&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">group&lt;/span>: &lt;span style="color:#ae81ff">root&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">mode&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;0755&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">with_items&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#ae81ff">/var/lib/kubelet&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#ae81ff">/var/lib/kube-proxy&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#ae81ff">/etc/cni/net.d&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#ae81ff">/opt/cni/bin&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>- &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">分发 kubelet 和 kube-proxy 二进制文件&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">copy&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">src&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;{{ base_dir }}/bin/{{ item }}&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">dest&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;{{ bin_dir }}/{{ item }}&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">mode&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;0755&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">with_items&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#ae81ff">kubectl&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#ae81ff">kubelet&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#ae81ff">kube-proxy&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>- &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">分发 CNI 插件&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">copy&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">src&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;{{ item }}&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">dest&lt;/span>: &lt;span style="color:#ae81ff">/opt/cni/bin/&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">mode&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;0755&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">with_fileglob&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#e6db74">&amp;#34;{{ base_dir }}/bin/cni-bin/*&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 创建 kubelet 和 kube-proxy 配置文件&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>- &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">创建 kubelet 配置文件&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">template&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">src&lt;/span>: &lt;span style="color:#ae81ff">kubelet-config.yaml.j2&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">dest&lt;/span>: &lt;span style="color:#ae81ff">/var/lib/kubelet/config.yaml&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">tags&lt;/span>: &lt;span style="color:#ae81ff">configure_kubelet&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>- &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">创建 kube-proxy 配置文件&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">template&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">src&lt;/span>: &lt;span style="color:#ae81ff">kube-proxy-config.yaml.j2&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">dest&lt;/span>: &lt;span style="color:#ae81ff">/var/lib/kube-proxy/kube-proxy-config.yaml&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">tags&lt;/span>: &lt;span style="color:#ae81ff">configure_kubeproxy&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 创建 kubelet 和 kube-proxy 的 systemd 服务&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>- &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">创建 kubelet systemd 服务文件&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">template&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">src&lt;/span>: &lt;span style="color:#ae81ff">kubelet.service.j2&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">dest&lt;/span>: &lt;span style="color:#ae81ff">/etc/systemd/system/kubelet.service&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">tags&lt;/span>: &lt;span style="color:#ae81ff">manage_services&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>- &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">创建 kube-proxy systemd 服务文件&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">template&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">src&lt;/span>: &lt;span style="color:#ae81ff">kube-proxy.service.j2&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">dest&lt;/span>: &lt;span style="color:#ae81ff">/etc/systemd/system/kube-proxy.service&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">tags&lt;/span>: &lt;span style="color:#ae81ff">manage_services&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 启用并启动服务&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>- &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">启用 kubelet 服务&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">systemd&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">kubelet&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">enabled&lt;/span>: &lt;span style="color:#66d9ef">yes&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">state&lt;/span>: &lt;span style="color:#ae81ff">started&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">tags&lt;/span>: &lt;span style="color:#ae81ff">manage_services&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>- &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">启用 kube-proxy 服务&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">systemd&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">kube-proxy&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">enabled&lt;/span>: &lt;span style="color:#66d9ef">yes&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">state&lt;/span>: &lt;span style="color:#ae81ff">started&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">tags&lt;/span>: &lt;span style="color:#ae81ff">manage_services&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 节点加入 Kubernetes 集群并设置角色标签&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>- &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">设置 Kubernetes 节点角色标签&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">shell&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;{{ kubectl_bin }} label node {{ inventory_hostname }} kubernetes.io/role={{ node_role }} --overwrite&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">tags&lt;/span>: &lt;span style="color:#ae81ff">configure_node_role&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>- &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">节点调度控制&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">shell&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;{{ kubectl_bin }} cordon {{ inventory_hostname }}&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">when&lt;/span>: &lt;span style="color:#ae81ff">node_role == &amp;#34;master&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">tags&lt;/span>: &lt;span style="color:#ae81ff">configure_node_role&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="templateskubelet-configyamlj2">
+ &lt;strong>&lt;code>templates/kubelet-config.yaml.j2&lt;/code>&lt;/strong>
+ &lt;a class="anchor" href="#templateskubelet-configyamlj2">#&lt;/a>
+&lt;/h4>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">apiVersion&lt;/span>: &lt;span style="color:#ae81ff">kubelet.config.k8s.io/v1beta1&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">KubeletConfiguration&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">address&lt;/span>: &lt;span style="color:#ae81ff">0.0.0.0&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">port&lt;/span>: &lt;span style="color:#ae81ff">10250&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">readOnlyPort&lt;/span>: &lt;span style="color:#ae81ff">10255&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">clusterDNS&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - {{ &lt;span style="color:#ae81ff">cluster_dns }}&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">clusterDomain&lt;/span>: {{ &lt;span style="color:#ae81ff">cluster_domain }}&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">resolvConf&lt;/span>: &lt;span style="color:#ae81ff">/run/systemd/resolve/resolv.conf&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>...
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="templateskube-proxy-configyamlj2">
+ &lt;strong>&lt;code>templates/kube-proxy-config.yaml.j2&lt;/code>&lt;/strong>
+ &lt;a class="anchor" href="#templateskube-proxy-configyamlj2">#&lt;/a>
+&lt;/h4>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">apiVersion&lt;/span>: &lt;span style="color:#ae81ff">kubeproxy.config.k8s.io/v1alpha1&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">KubeProxyConfiguration&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">mode&lt;/span>: &lt;span style="color:#ae81ff">iptables&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">clusterCIDR&lt;/span>: {{ &lt;span style="color:#ae81ff">cluster_cidr }}&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>...
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="templateskubeletservicej2">
+ &lt;strong>&lt;code>templates/kubelet.service.j2&lt;/code>&lt;/strong>
+ &lt;a class="anchor" href="#templateskubeletservicej2">#&lt;/a>
+&lt;/h4>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ini" data-lang="ini">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">[Unit]&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">Description&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">Kubernetes Kubelet&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">Documentation&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">https://kubernetes.io/docs/home/&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">After&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">network.target&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">Requires&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">docker.service&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">[Service]&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">ExecStart&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">{{ bin_dir }}/kubelet \
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> --config={{ config_dir }}/kubelet/config.yaml \
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> --kubeconfig={{ kubeconfig_path }}&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">Restart&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">always&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">RestartSec&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">10s&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">[Install]&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">WantedBy&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">multi-user.target&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="templateskube-proxyservicej2">
+ &lt;strong>&lt;code>templates/kube-proxy.service.j2&lt;/code>&lt;/strong>
+ &lt;a class="anchor" href="#templateskube-proxyservicej2">#&lt;/a>
+&lt;/h4>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ini" data-lang="ini">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">[Unit]&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">Description&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">Kubernetes Kube Proxy&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">After&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">network.target&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">[Service]&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">ExecStart&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">{{ bin_dir }}/kube-proxy \
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> --config={{ config_dir }}/kube-proxy/kube-proxy-config.yaml \
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> --kubeconfig={{ kubeconfig_path }}&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">Restart&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">always&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">RestartSec&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">10s&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">[Install]&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">WantedBy&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">multi-user.target&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="3-role-的配置文件结构">
+ &lt;strong>3. Role 的配置文件结构&lt;/strong>
+ &lt;a class="anchor" href="#3-role-%e7%9a%84%e9%85%8d%e7%bd%ae%e6%96%87%e4%bb%b6%e7%bb%93%e6%9e%84">#&lt;/a>
+&lt;/h3>
+&lt;p>可以在 Role 中定义一个清晰的目录结构，包括以下文件：&lt;/p></description></item><item><title>2025-2-28 prometheus 面试题</title><link>https://qq547475331.github.io/docs/2025-2-28-prometheus/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-28-prometheus/</guid><description>&lt;h2 id="prometheus">
+ Prometheus
+ &lt;a class="anchor" href="#prometheus">#&lt;/a>
+&lt;/h2>
+&lt;h2 id="prometheus的工作流程">
+ Prometheus的工作流程
+ &lt;a class="anchor" href="#prometheus%e7%9a%84%e5%b7%a5%e4%bd%9c%e6%b5%81%e7%a8%8b">#&lt;/a>
+&lt;/h2>
+&lt;p>Prometheus 的工作流程可以概括为以下几个主要步骤：&lt;/p>
+&lt;ol>
+&lt;li>&lt;strong>数据抓取（Scraping）&lt;/strong>：
+&lt;ul>
+&lt;li>Prometheus 会定期从配置好的目标（如应用程序、服务、节点等）抓取数据。这些目标通常通过 HTTP 接口暴露 Prometheus 格式的监控数据（通常是 &lt;code>/metrics&lt;/code> 路径）。&lt;/li>
+&lt;li>这些数据包括各类指标，如 CPU 使用率、内存使用情况、请求数量等。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>存储（Storage）&lt;/strong>：
+&lt;ul>
+&lt;li>抓取到的数据会被存储在 Prometheus 的本地时间序列数据库（TSDB）中。每个时间序列由一个指标名称和一组标签（如 &lt;code>instance&lt;/code>, &lt;code>job&lt;/code>, &lt;code>region&lt;/code> 等）组成。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>查询（Querying）&lt;/strong>：
+&lt;ul>
+&lt;li>Prometheus 提供了强大的查询语言——PromQL（Prometheus Query Language），可以通过 PromQL 查询已存储的数据。&lt;/li>
+&lt;li>Prometheus 可以通过其 Web 界面、API 或 Grafana 进行查询，显示时间序列数据的图表，或者用于告警规则的计算。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>告警（Alerting）&lt;/strong>：
+&lt;ul>
+&lt;li>Prometheus 可以基于定义的告警规则（通过 PromQL 查询语句）进行告警。例如，当 CPU 使用率超过一定阈值时，触发告警。&lt;/li>
+&lt;li>告警规则可以定义在 Prometheus 配置文件中，告警信息可以通过 Alertmanager 发送到各类通知系统（如邮件、Slack、钉钉等）。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>数据可视化（Visualization）&lt;/strong>：
+&lt;ul>
+&lt;li>Prometheus 本身也提供了简单的图表功能，但通常会与第三方工具（如 Grafana）结合使用，以便提供更丰富的可视化效果。&lt;/li>
+&lt;li>Grafana 可以从 Prometheus 查询数据，生成漂亮的仪表板，帮助团队实时监控系统健康状况。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>服务发现与目标自动化（Service Discovery）&lt;/strong>：
+&lt;ul>
+&lt;li>Prometheus 支持多种服务发现机制，可以自动发现需要抓取数据的目标。常见的有 Kubernetes、Consul 等服务发现工具，也可以使用静态配置。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ol>
+&lt;p>整体而言，Prometheus 的核心是周期性地抓取目标的监控数据，存储成时间序列，并通过查询、告警和可视化等功能帮助用户监控和维护系统的健康。&lt;/p></description></item><item><title>2025-2-7 k8s组件</title><link>https://qq547475331.github.io/docs/2025-2-7-k8s%E7%BB%84%E4%BB%B6/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-7-k8s%E7%BB%84%E4%BB%B6/</guid><description>&lt;p>&lt;strong>k8s 有哪些组件？&lt;/strong>&lt;/p>
+&lt;p>&lt;strong>1、etcd 保存了整个集群的状态；&lt;/strong>&lt;/p>
+&lt;p>&lt;strong>2、apiserver 提供了资源操作的唯一入口，并提供认证、授权、访问控制、API 注册和发现等机制；&lt;/strong>&lt;/p>
+&lt;p>&lt;strong>3、controller manager 负责维护集群的状态，比如故障检测、自动扩展、滚动更新等；&lt;/strong>&lt;/p>
+&lt;p>&lt;strong>4、scheduler 负责资源的调度，按照预定的调度策略将 Pod 调度到相应的机器上；&lt;/strong>&lt;/p>
+&lt;p>&lt;strong>5、kubelet 负责维护容器的生命周期，同时也负责 Volume（CVI）和网络（CNI）的管理；&lt;/strong>&lt;/p>
+&lt;p>&lt;strong>6、Container runtime 负责镜像管理以及 Pod 和容器的真正运行（CRI）；&lt;/strong>&lt;/p>
+&lt;p>&lt;strong>7&lt;/strong>、&lt;strong>kube-proxy&lt;/strong> &lt;strong>负责为&lt;/strong> &lt;strong>Service&lt;/strong> &lt;strong>提供&lt;/strong> &lt;strong>cluster&lt;/strong> &lt;strong>内部的服务发现和负载均衡。&lt;/strong>&lt;/p></description></item><item><title>2025-2-7 美国码农薪酬</title><link>https://qq547475331.github.io/docs/2025-2-7-%E8%AE%A1%E5%88%92/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-7-%E8%AE%A1%E5%88%92/</guid><description>&lt;p>可如果不分国家，那么美国的CS（计算机）毕业生刚入职的税前收入就可以达到100万人民币（15.4万美元）这一水平。&lt;/p>
+&lt;p>无论是中国、美国还是世界其他地区，在过去十年中，码农都是整体收入增长最快、社会认可度提升最大的一类职业。&lt;/p>
+&lt;p>码农是软件工程师的一个带有一点点自嘲性质的简称，但码农确实是这个时代极少数可以通过踏踏实实打工就大幅提升自身经济水平并改变命运的一个职业。在我的圈子中，码农是最多的，其中一半在美国，今天我就以自己的见闻体会结合行业的发展聊聊美国码农的生活状态和财务状况。&lt;/p>
+&lt;p>&lt;strong>1&lt;/strong>&lt;/p>
+&lt;p>&lt;strong>薪酬对比&lt;/strong>&lt;/p>
+&lt;p>在互联网深度融入生活工作的时代，码农已经成为各个国家普遍存在的职业，但在待遇方面，不同国家之间待遇差别可谓巨大。&lt;/p>
+&lt;p>如果认真比，当码农最香的地方还是美国。&lt;strong>美国的码农的平均工资比同属发达地区的伦敦、新加坡、多伦多的同行要高出一倍左右&lt;/strong>，比其他发展中国家自然高出更多，这也是为什么你会发现清华北大北邮华科等CS牛校的计算机毕业生很大一部分都计划美国留学，而且这个专业的人回国比率是所有专业中最低的一个&amp;hellip;那是因为他们在大洋彼岸赚得实在是太多了。&lt;/p>
+&lt;p>根据科技行业薪资统计平台Levels.fyi给的数据，&lt;strong>旧金山湾区和西雅图的软件工程师中位数年包分别为23万美元和20.4万美元&lt;/strong>；而作为对比，多伦多对应的数字是12.2万美元、伦敦是13.5万美元、新加坡是10.7万美元。所以即使是欧洲、加拿大、新加坡这些发达国家的不少IT同行都希望能到美国工作发展。&lt;/p>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213356315.png" alt="image-20250207213356315" />&lt;/p>
+&lt;p>旧金山湾区软件工程师中位数年包23万美元&lt;/p>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213419371.png" alt="image-20250207213419371" />&lt;/p>
+&lt;p>加拿大多伦多软件工程师中位数年包12.2万美元&lt;/p>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213445886.png" alt="image-20250207213445886" />&lt;/p>
+&lt;p>英国伦敦软件工程师中位数年包13.5万美元&lt;/p>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213510807.png" alt="image-20250207213510807" />&lt;/p>
+&lt;p>新加坡软件工程师中位数年包10.7万美元&lt;/p>
+&lt;p>多说一下，我们用的Levels.fyi是非常可靠的一个平台，不同公司的员工可以验证身份、上传offer、W2表等方式反馈真实的薪酬数据，数据量非常大。不同的公司对于级别划分不同，但整体差异不大，比如一个刚刚大学毕业的计算机毕业生，去谷歌L3级别的年包平均是19.1万美元，去苹果ICT2级别的年包平均是17.2万美元，谷歌的L3和苹果的ICT2对应的都是入门级软件工程师。&lt;/p>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213529745.png" alt="image-20250207213529745" />&lt;/p>
+&lt;p>FAAMG各自对软件工程的职级划分和横向对应&lt;/p>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213550980.png" alt="image-20250207213550980" />&lt;/p>
+&lt;p>谷歌各级别软件工程师年收入 L3对应191K（19.1万美元）&lt;/p>
+&lt;p>&lt;strong>2&lt;/strong>&lt;/p>
+&lt;p>&lt;strong>股票是重点&lt;/strong>&lt;/p>
+&lt;p>尽管码农的收入都很高，但这不是这个群体致富的最关键因素，一方面美国有着高额的所得税，另一方面在旧金山湾区、西雅图、纽约等城市，物价和房价也都很高。&lt;/p>
+&lt;p>美国码农致富的核心是股票，而且职级越高、收入越高的码农，年包中股票的比例就越大。以亚马逊为例，L4（入门级码农）的年包平均16.4万美元，其中Base（基本工资）12.5万美元，Stock（股票）2.2万美元，Bonus（奖励）1.7万美元；而发展到L6（这个级别是大多数中国人可以触及的最大高度）时，平均年包达到33.2万美元，其中股票16万美元；最高的Principal（总管）年包中资本工资只有16.2万美元，但股票多达43.6万美元。&lt;/p>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213615192.png" alt="image-20250207213615192" />&lt;/p>
+&lt;p>亚马逊软件工程师薪酬&lt;/p>
+&lt;p>纳斯达克综合指数中大部分公司都是科网公司，可以直接理解为美国的“码农指数”。这个大盘指数从2009年3月到现在累计涨了12倍，这说明在这十二年多的时间里，十倍股是遍布整个市场的，否则大盘不可能有这么大的涨幅。&lt;/p>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213638798.png" alt="image-20250207213638798" />&lt;/p>
+&lt;p>我们看FAAMG五大科技公司，有四家在过去一轮牛市中涨幅远超十倍，其中苹果48倍、微软18倍、谷歌17倍、亚马逊55倍，另外一家脸书2012年才上市，至今9倍。&lt;/p>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213657427.png" alt="image-20250207213657427" />&lt;/p>
+&lt;p>亚马逊、苹果、微软、谷歌股价涨幅对比 2009-2021&lt;/p>
+&lt;p>如果一个亚马逊普通员工在2009年初入职，按当时的行情，入职年包大约是10万美元，其中1万美元是股票，假设他一直持有这些股票到了现在，那么仅2009年一年他得到的股票放现在就价值55万美元，如果他一直在亚马逊工作，而且努力上班，不考虑买房也考虑做其他投资，很可能早就已财务自由。&lt;/p>
+&lt;p>当然，人性的弱点导致大多数人没有办法看到手上已经上涨十倍以上的股票还不套现，所以老员工只有很少人能一股不卖留到现在。虽然2009年到现在湾区和西雅图的房价也涨了200%以上，但即使加上杠杆效应还是无法跑赢股价，这也解释了为什么美国的房价没有办法炒到房价收入比和租售比到扭曲的程度，因为他们有可替代的资产去满足投资需要。&lt;/p>
+&lt;p>&lt;strong>3&lt;/strong>&lt;/p>
+&lt;p>&lt;strong>内卷问题&lt;/strong>&lt;/p>
+&lt;p>尽管美国大多数码农收入很高、又有股票助推财富增长，但他们并不是都过得有你想象的那么舒服，美国也是发达经济体中内卷最严重的国家。&lt;/p>
+&lt;p>码农聚集地常常也是内卷严重的地方，因为这里人多、而且这些人还都非常聪明、非常努力、收入又高。设身处地想想也能理解，一个人年包25万美元可能会感觉很棒，但当你身边所有人年包都是这个水平时，每天还面对年薪百万美元的领导时，你得到的压力就大过成就感了。&lt;/p>
+&lt;p>以旧金山湾区为例，这里不仅汇聚了美国自己一批聪明的年轻人，还吸收了来自包括印度、中国等世界各地的无数学霸。在硅谷华人圈子里，你会发现很多人见面或线上讨论的话题越来越多地涉及到股票、买房、学区、私立学校这些概念，这些话题显然很内卷，一听就感觉到压力。&lt;/p>
+&lt;p>科技大厂在美国国内各个城市同级别职位的待遇相差不大，所以相同级别的码农在不同地方很可能完全是两种生活水平，比如100万美元在硅谷要买独立屋只能买到个小黑屋，在德州奥斯汀就可以买一个3000呎的漂亮大house，内卷很大程度上取决于地域。&lt;/p>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213721714.png" alt="image-20250207213721714" />&lt;/p>
+&lt;p>在湾区的圣何塞 100万美元买的房子是这样的&lt;/p>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213745332.png" alt="image-20250207213745332" />&lt;/p>
+&lt;p>在德州的奥斯汀 50万美元可以买到3000呎的新房&lt;/p>
+&lt;p>不过财富和人口都是流动的，内卷也是会蔓延的，在奥斯汀周边的码农聚集区Cedar Park，这里环境美、治安好、就业多、房价低，结果过去一年房价暴涨超过50%，在美国这样一个城市化结束、经济中低速增长、而且还有房产税的国家，这么快的房价涨速是很可怕的。&lt;/p>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213825885.png" alt="image-20250207213825885" />&lt;/p>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213844557.png" alt="image-20250207213844557" />&lt;/p>
+&lt;p>Cedar Park房价走势&lt;/p>
+&lt;p>说到内卷，工作压力问题绕不开，这方面美国码农还是相对轻松一些的，有oncall（随时待命）制度的公司也只是极少数时间oncall，比如亚马逊每周不同的组轮着oncall，每个组一年大概两次，一次半个星期到一个星期。&lt;/p>
+&lt;p>美国科技行业不同公司以及相同公司的不同小组、不同工作者之间在加班上的差异非常大。比如脸书和亚马逊属于整体工作强度比较大的，微软、甲骨文属于工作强度相对低的，但在脸书一些成熟产品的小组，也有人是轻松状态；在微软的新兴产品Azure相关的小组，员工们也都很拼。&lt;/p>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213901329.png" alt="image-20250207213901329" />&lt;/p></description></item><item><title>2025-2-7 美国码农计划</title><link>https://qq547475331.github.io/docs/2025-2-7-%E8%AE%A1%E5%88%922/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-7-%E8%AE%A1%E5%88%922/</guid><description>&lt;p>我给想润出去的墙内码农几条建议：&lt;/p>
+&lt;p>1.大厂在职的，深耕技术直接投简历或转海外岗，不要花冤枉钱和宝贵的时间在教育上；&lt;/p>
+&lt;p>2.第一目标应该是美国，第二是加/坡/澳/英/瑞，其他国家（欧/日/韩/港）期望收入远远不如国内；&lt;/p>
+&lt;p>3.绝大多数人的首要障碍是英语听力和口语，一定要多用英语熟练讲项目和刷Leetcode。&lt;/p>
+&lt;p>如果认真比，当码农最香的地方还是美国。&lt;strong>美国的码农的平均工资比同属发达地区的伦敦、新加坡、多伦多的同行要高出一倍左右&lt;/strong>，比其他发展中国家自然高出更多，这也是为什么你会发现清华北大北邮华科等CS牛校的计算机毕业生很大一部分都计划美国留学，而且这个专业的人回国比率是所有专业中最低的一个&amp;hellip;那是因为他们在大洋彼岸赚得实在是太多了。&lt;/p>
+&lt;p>根据科技行业薪资统计平台Levels.fyi给的数据，&lt;strong>旧金山湾区和西雅图的软件工程师中位数年包分别为23万美元和20.4万美元&lt;/strong>；而作为对比，多伦多对应的数字是12.2万美元、伦敦是13.5万美元、新加坡是10.7万美元。所以即使是欧洲、加拿大、新加坡这些发达国家的不少IT同行都希望能到美国工作发展。&lt;/p>
+&lt;p>美国码农致富的核心是股票，而且职级越高、收入越高的码农，年包中股票的比例就越大。以亚马逊为例，L4（入门级码农）的年包平均16.4万美元，其中Base（基本工资）12.5万美元，Stock（股票）2.2万美元，Bonus（奖励）1.7万美元；而发展到L6（这个级别是大多数中国人可以触及的最大高度）时，平均年包达到33.2万美元，其中股票16万美元；最高的Principal（总管）年包中资本工资只有16.2万美元，但股票多达43.6万美元。&lt;/p>
+&lt;p>中国通缩严重呗，用一个人干两个人活，中国人收入还不涨，不通缩就怪了，不管二百斤超发多少货币，都会往不缺钱的人口袋里流。&lt;/p>
+&lt;p>在美国湾区的生活成本，特别是涉及租房和吃饭的开支，通常相当高。根据网络上的信息和最新的经济数据，这里提供一个大致的开支估算：&lt;/p>
+&lt;p>### 租房：&lt;/p>
+&lt;p>- &lt;strong>一居室公寓&lt;/strong>：&lt;/p>
+&lt;p>- 在旧金山市中心，平均租金大约在$3,000 - $3,500 美元之间。&lt;/p>
+&lt;p>- 如果在郊区如Oakland或Fremont，租金会略低，约为$2,000 - $3,000 美元。&lt;/p>
+&lt;p>- &lt;strong>合租&lt;/strong>：&lt;/p>
+&lt;p>- 与他人合租可以大幅降低开支。合租一居室或多居室公寓，个人承担的租金可能会在$1,500 - $2,500 美元之间。&lt;/p>
+&lt;p>### 吃饭：&lt;/p>
+&lt;p>- &lt;strong>自制餐食&lt;/strong>：&lt;/p>
+&lt;p>- 食品杂货的价格在湾区也相对高于美国其他地区。一个单身人士每月的杂货开支可能在$300 - $600 美元之间，视饮食习惯而定。&lt;/p>
+&lt;p>- &lt;strong>外出就餐&lt;/strong>：&lt;/p>
+&lt;p>- 在湾区吃一顿普通的餐馆饭菜，价格通常在$15 - $30 美元左右，昂贵的餐厅可能更高。如果你经常外出就餐，每月的开支可能达到$400 - $800 美元或更多。&lt;/p>
+&lt;p>### 总体开支：&lt;/p>
+&lt;p>- &lt;strong>保守估计&lt;/strong>：假设一个人选择合租，注重自制餐食，尽量减少外出就餐：&lt;/p>
+&lt;p>- 租房：$1,500&lt;/p>
+&lt;p>- 吃饭：$400（杂货）&lt;/p>
+&lt;p>- &lt;strong>总计&lt;/strong>：约$1,900 美元每月&lt;/p>
+&lt;p>- &lt;strong>中等开支&lt;/strong>：如果租住一居室公寓，并且偶尔外出就餐：&lt;/p>
+&lt;p>- 租房：$3,000&lt;/p>
+&lt;p>- 吃饭：$600（杂货 + 偶尔外出就餐）&lt;/p>
+&lt;p>- &lt;strong>总计&lt;/strong>：约$3,600 美元每月&lt;/p></description></item><item><title>2025-3-12 追觅面试</title><link>https://qq547475331.github.io/docs/2025-3-12-%E8%BF%BD%E8%A7%85%E9%9D%A2%E8%AF%95/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-3-12-%E8%BF%BD%E8%A7%85%E9%9D%A2%E8%AF%95/</guid><description>&lt;h1 id="你做了啥什么对团队项目贡献比较大的">
  你做了啥什么，对团队/项目贡献比较大的？
  &lt;a class="anchor" href="#%e4%bd%a0%e5%81%9a%e4%ba%86%e5%95%a5%e4%bb%80%e4%b9%88%e5%af%b9%e5%9b%a2%e9%98%9f%e9%a1%b9%e7%9b%ae%e8%b4%a1%e7%8c%ae%e6%af%94%e8%be%83%e5%a4%a7%e7%9a%84">#&lt;/a>
 &lt;/h1>
@@ -27688,1019 +28703,4 @@ systemctl start kubelet
  Kubernetes Pod/Deployment 删除流程详解
  &lt;a class="anchor" href="#kubernetes-poddeployment-%e5%88%a0%e9%99%a4%e6%b5%81%e7%a8%8b%e8%af%a6%e8%a7%a3">#&lt;/a>
 &lt;/h1>
-&lt;p>下面是我生成的删除 Pod/Deployment 流程图中每个步骤的详细解释：&lt;/p></description></item><item><title>k8s组件</title><link>https://qq547475331.github.io/docs/2025-2-7-k8s%E7%BB%84%E4%BB%B6/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-7-k8s%E7%BB%84%E4%BB%B6/</guid><description>&lt;p>&lt;strong>k8s 有哪些组件？&lt;/strong>&lt;/p>
-&lt;p>&lt;strong>1、etcd 保存了整个集群的状态；&lt;/strong>&lt;/p>
-&lt;p>&lt;strong>2、apiserver 提供了资源操作的唯一入口，并提供认证、授权、访问控制、API 注册和发现等机制；&lt;/strong>&lt;/p>
-&lt;p>&lt;strong>3、controller manager 负责维护集群的状态，比如故障检测、自动扩展、滚动更新等；&lt;/strong>&lt;/p>
-&lt;p>&lt;strong>4、scheduler 负责资源的调度，按照预定的调度策略将 Pod 调度到相应的机器上；&lt;/strong>&lt;/p>
-&lt;p>&lt;strong>5、kubelet 负责维护容器的生命周期，同时也负责 Volume（CVI）和网络（CNI）的管理；&lt;/strong>&lt;/p>
-&lt;p>&lt;strong>6、Container runtime 负责镜像管理以及 Pod 和容器的真正运行（CRI）；&lt;/strong>&lt;/p>
-&lt;p>&lt;strong>7&lt;/strong>、&lt;strong>kube-proxy&lt;/strong> &lt;strong>负责为&lt;/strong> &lt;strong>Service&lt;/strong> &lt;strong>提供&lt;/strong> &lt;strong>cluster&lt;/strong> &lt;strong>内部的服务发现和负载均衡。&lt;/strong>&lt;/p></description></item><item><title>kubeasz部署k8s</title><link>https://qq547475331.github.io/docs/2024-12-05-kubeasz%E9%83%A8%E7%BD%B2k8s/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2024-12-05-kubeasz%E9%83%A8%E7%BD%B2k8s/</guid><description>&lt;h2 id="00-集群规划和基础参数设定">
- 00-集群规划和基础参数设定
- &lt;a class="anchor" href="#00-%e9%9b%86%e7%be%a4%e8%a7%84%e5%88%92%e5%92%8c%e5%9f%ba%e7%a1%80%e5%8f%82%e6%95%b0%e8%ae%be%e5%ae%9a">#&lt;/a>
-&lt;/h2>
-&lt;h3 id="ha-architecture">
- HA architecture
- &lt;a class="anchor" href="#ha-architecture">#&lt;/a>
-&lt;/h3>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20241204235826382.png" alt="image-20241204235826382" />&lt;/p>
-&lt;ul>
-&lt;li>注意1：确保各节点时区设置一致、时间同步。 如果你的环境没有提供NTP 时间同步，推荐集成安装&lt;a href="../guide/chrony.md">chrony&lt;/a>&lt;/li>
-&lt;li>注意2：确保在干净的系统上开始安装，不要使用曾经装过kubeadm或其他k8s发行版的环境&lt;/li>
-&lt;li>注意3：建议操作系统升级到新的稳定内核，请结合阅读&lt;a href="../guide/kernel_upgrade.md">内核升级文档&lt;/a>&lt;/li>
-&lt;li>注意4：在公有云上创建多主集群，请结合阅读&lt;a href="kubeasz_on_public_cloud.md">在公有云上部署 kubeasz&lt;/a>&lt;/li>
-&lt;/ul>
-&lt;h2 id="高可用集群所需节点配置如下">
- 高可用集群所需节点配置如下
- &lt;a class="anchor" href="#%e9%ab%98%e5%8f%af%e7%94%a8%e9%9b%86%e7%be%a4%e6%89%80%e9%9c%80%e8%8a%82%e7%82%b9%e9%85%8d%e7%bd%ae%e5%a6%82%e4%b8%8b">#&lt;/a>
-&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th style="text-align: left">角色&lt;/th>
- &lt;th style="text-align: left">数量&lt;/th>
- &lt;th style="text-align: left">描述&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td style="text-align: left">部署节点&lt;/td>
- &lt;td style="text-align: left">1&lt;/td>
- &lt;td style="text-align: left">运行ansible/ezctl命令，一般复用第一个master节点&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td style="text-align: left">etcd节点&lt;/td>
- &lt;td style="text-align: left">3&lt;/td>
- &lt;td style="text-align: left">注意etcd集群需要1,3,5,&amp;hellip;奇数个节点，一般复用master节点&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td style="text-align: left">master节点&lt;/td>
- &lt;td style="text-align: left">2&lt;/td>
- &lt;td style="text-align: left">高可用集群至少2个master节点&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td style="text-align: left">node节点&lt;/td>
- &lt;td style="text-align: left">n&lt;/td>
- &lt;td style="text-align: left">运行应用负载的节点，可根据需要提升机器配置/增加节点数&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;p>机器配置：&lt;/p>
-&lt;ul>
-&lt;li>master节点：4c/8g内存/50g硬盘&lt;/li>
-&lt;li>worker节点：建议8c/32g内存/200g硬盘以上&lt;/li>
-&lt;/ul>
-&lt;p>注意：默认配置下容器运行时和kubelet会占用/var的磁盘空间，如果磁盘分区特殊，可以设置config.yml中的容器运行时和kubelet数据目录：&lt;code>CONTAINERD_STORAGE_DIR&lt;/code> &lt;code>DOCKER_STORAGE_DIR&lt;/code> &lt;code>KUBELET_ROOT_DIR&lt;/code>&lt;/p>
-&lt;p>在 kubeasz 2x 版本，多节点高可用集群安装可以使用2种方式&lt;/p>
-&lt;ul>
-&lt;li>1.按照本文步骤先规划准备，预先配置节点信息后，直接安装多节点高可用集群&lt;/li>
-&lt;li>2.先部署单节点集群 &lt;a href="quickStart.md">AllinOne部署&lt;/a>，然后通过 &lt;a href="../op/op-index.md">节点添加&lt;/a> 扩容成高可用集群&lt;/li>
-&lt;/ul>
-&lt;h2 id="部署步骤">
- 部署步骤
- &lt;a class="anchor" href="#%e9%83%a8%e7%bd%b2%e6%ad%a5%e9%aa%a4">#&lt;/a>
-&lt;/h2>
-&lt;p>以下示例创建一个4节点的多主高可用集群，文档中命令默认都需要root权限运行。&lt;/p>
-&lt;h3 id="1基础系统配置">
- 1.基础系统配置
- &lt;a class="anchor" href="#1%e5%9f%ba%e7%a1%80%e7%b3%bb%e7%bb%9f%e9%85%8d%e7%bd%ae">#&lt;/a>
-&lt;/h3>
-&lt;ul>
-&lt;li>2c/4g内存/40g硬盘（该配置仅测试用）&lt;/li>
-&lt;li>最小化安装&lt;code>Ubuntu 16.04 server&lt;/code>或者&lt;code>CentOS 7 Minimal&lt;/code>&lt;/li>
-&lt;li>配置基础网络、更新源、SSH登录等&lt;/li>
-&lt;/ul>
-&lt;h3 id="2在每个节点安装依赖工具">
- 2.在每个节点安装依赖工具
- &lt;a class="anchor" href="#2%e5%9c%a8%e6%af%8f%e4%b8%aa%e8%8a%82%e7%82%b9%e5%ae%89%e8%a3%85%e4%be%9d%e8%b5%96%e5%b7%a5%e5%85%b7">#&lt;/a>
-&lt;/h3>
-&lt;p>推荐使用ansible in docker 容器化方式运行，无需安装额外依赖。&lt;/p>
-&lt;h3 id="3准备ssh免密登陆">
- 3.准备ssh免密登陆
- &lt;a class="anchor" href="#3%e5%87%86%e5%a4%87ssh%e5%85%8d%e5%af%86%e7%99%bb%e9%99%86">#&lt;/a>
-&lt;/h3>
-&lt;p>配置从部署节点能够ssh免密登陆所有节点，并且设置python软连接&lt;/p></description></item><item><title>prometheus 面试题</title><link>https://qq547475331.github.io/docs/2025-2-28-prometheus/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-28-prometheus/</guid><description>&lt;h2 id="prometheus">
- Prometheus
- &lt;a class="anchor" href="#prometheus">#&lt;/a>
-&lt;/h2>
-&lt;h2 id="prometheus的工作流程">
- Prometheus的工作流程
- &lt;a class="anchor" href="#prometheus%e7%9a%84%e5%b7%a5%e4%bd%9c%e6%b5%81%e7%a8%8b">#&lt;/a>
-&lt;/h2>
-&lt;p>Prometheus 的工作流程可以概括为以下几个主要步骤：&lt;/p>
-&lt;ol>
-&lt;li>&lt;strong>数据抓取（Scraping）&lt;/strong>：
-&lt;ul>
-&lt;li>Prometheus 会定期从配置好的目标（如应用程序、服务、节点等）抓取数据。这些目标通常通过 HTTP 接口暴露 Prometheus 格式的监控数据（通常是 &lt;code>/metrics&lt;/code> 路径）。&lt;/li>
-&lt;li>这些数据包括各类指标，如 CPU 使用率、内存使用情况、请求数量等。&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>&lt;strong>存储（Storage）&lt;/strong>：
-&lt;ul>
-&lt;li>抓取到的数据会被存储在 Prometheus 的本地时间序列数据库（TSDB）中。每个时间序列由一个指标名称和一组标签（如 &lt;code>instance&lt;/code>, &lt;code>job&lt;/code>, &lt;code>region&lt;/code> 等）组成。&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>&lt;strong>查询（Querying）&lt;/strong>：
-&lt;ul>
-&lt;li>Prometheus 提供了强大的查询语言——PromQL（Prometheus Query Language），可以通过 PromQL 查询已存储的数据。&lt;/li>
-&lt;li>Prometheus 可以通过其 Web 界面、API 或 Grafana 进行查询，显示时间序列数据的图表，或者用于告警规则的计算。&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>&lt;strong>告警（Alerting）&lt;/strong>：
-&lt;ul>
-&lt;li>Prometheus 可以基于定义的告警规则（通过 PromQL 查询语句）进行告警。例如，当 CPU 使用率超过一定阈值时，触发告警。&lt;/li>
-&lt;li>告警规则可以定义在 Prometheus 配置文件中，告警信息可以通过 Alertmanager 发送到各类通知系统（如邮件、Slack、钉钉等）。&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>&lt;strong>数据可视化（Visualization）&lt;/strong>：
-&lt;ul>
-&lt;li>Prometheus 本身也提供了简单的图表功能，但通常会与第三方工具（如 Grafana）结合使用，以便提供更丰富的可视化效果。&lt;/li>
-&lt;li>Grafana 可以从 Prometheus 查询数据，生成漂亮的仪表板，帮助团队实时监控系统健康状况。&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>&lt;strong>服务发现与目标自动化（Service Discovery）&lt;/strong>：
-&lt;ul>
-&lt;li>Prometheus 支持多种服务发现机制，可以自动发现需要抓取数据的目标。常见的有 Kubernetes、Consul 等服务发现工具，也可以使用静态配置。&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;/ol>
-&lt;p>整体而言，Prometheus 的核心是周期性地抓取目标的监控数据，存储成时间序列，并通过查询、告警和可视化等功能帮助用户监控和维护系统的健康。&lt;/p></description></item><item><title>中级运维面试题</title><link>https://qq547475331.github.io/docs/2025-2-24-%E4%B8%AD%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_%E9%A2%98%E7%9B%AE/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-24-%E4%B8%AD%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_%E9%A2%98%E7%9B%AE/</guid><description>&lt;h1 id="一linux">
- 一、linux
- &lt;a class="anchor" href="#%e4%b8%80linux">#&lt;/a>
-&lt;/h1>
-&lt;h1 id="1-linux系统启动流程">
- 1. linux系统启动流程
- &lt;a class="anchor" href="#1-linux%e7%b3%bb%e7%bb%9f%e5%90%af%e5%8a%a8%e6%b5%81%e7%a8%8b">#&lt;/a>
-&lt;/h1>
-&lt;ul>
-&lt;li>第一步：开机自检，加载BIOS&lt;/li>
-&lt;li>第二步：读取ＭＢＲ&lt;/li>
-&lt;li>第三步：Boot Loader　grub引导菜单&lt;/li>
-&lt;li>第四步：加载kernel内核&lt;/li>
-&lt;li>第五步：init进程依据inittab文件夹来设定运行级别&lt;/li>
-&lt;li>第六步：init进程执行rc.sysinit&lt;/li>
-&lt;li>第七步：启动内核模块&lt;/li>
-&lt;li>第八步：执行不同运行级别的脚本程序&lt;/li>
-&lt;li>第九步：执行/etc/rc.d/rc.lo&lt;/li>
-&lt;/ul>
-&lt;p>Linux 系统启动流程是一个多阶段的过程，涉及多个重要的系统组件。以下是 Linux 系统从开机到完全启动的详细步骤：&lt;/p>
-&lt;h3 id="1-加电自检-post">
- 1. &lt;strong>加电自检 (POST)&lt;/strong>
- &lt;a class="anchor" href="#1-%e5%8a%a0%e7%94%b5%e8%87%aa%e6%a3%80-post">#&lt;/a>
-&lt;/h3>
-&lt;ul>
-&lt;li>当电脑通电后，首先会执行硬件自检（POST，Power-On Self-Test），由 BIOS 或 UEFI（现代系统通常使用 UEFI）来完成。这一步检查硬件设备是否正常，比如内存、硬盘、显示器等。&lt;/li>
-&lt;/ul>
-&lt;h3 id="2-加载引导程序-bootloader">
- 2. &lt;strong>加载引导程序 (Bootloader)&lt;/strong>
- &lt;a class="anchor" href="#2-%e5%8a%a0%e8%bd%bd%e5%bc%95%e5%af%bc%e7%a8%8b%e5%ba%8f-bootloader">#&lt;/a>
-&lt;/h3>
-&lt;ul>
-&lt;li>BIOS 或 UEFI 会查找并加载存储设备（如硬盘或 SSD）上的引导加载程序（Bootloader）。常见的引导加载程序有 &lt;strong>GRUB&lt;/strong>（GRand Unified Bootloader）和 &lt;strong>LILO&lt;/strong>（Linux Loader）等。&lt;/li>
-&lt;li>引导加载程序的作用是加载并启动操作系统。它会显示可用的操作系统列表（如果有多个系统），并允许用户选择要启动的操作系统。&lt;/li>
-&lt;/ul>
-&lt;h3 id="3-加载内核-kernel">
- 3. &lt;strong>加载内核 (Kernel)&lt;/strong>
- &lt;a class="anchor" href="#3-%e5%8a%a0%e8%bd%bd%e5%86%85%e6%a0%b8-kernel">#&lt;/a>
-&lt;/h3>
-&lt;ul>
-&lt;li>选择操作系统后，引导加载程序会加载操作系统的内核（通常是 &lt;code>vmlinuz&lt;/code> 文件）。内核是操作系统的核心，负责管理硬件资源和提供系统服务。&lt;/li>
-&lt;li>内核首先会解压并加载到内存中，然后初始化硬件设备（如处理器、内存、硬盘等）。&lt;/li>
-&lt;/ul>
-&lt;h3 id="4-初始化硬件和挂载根文件系统-root-filesystem">
- 4. &lt;strong>初始化硬件和挂载根文件系统 (Root Filesystem)&lt;/strong>
- &lt;a class="anchor" href="#4-%e5%88%9d%e5%a7%8b%e5%8c%96%e7%a1%ac%e4%bb%b6%e5%92%8c%e6%8c%82%e8%bd%bd%e6%a0%b9%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f-root-filesystem">#&lt;/a>
-&lt;/h3>
-&lt;ul>
-&lt;li>内核在加载完毕后，会开始初始化硬件，包括磁盘驱动程序、输入设备、网络设备等。&lt;/li>
-&lt;li>内核通过 &lt;strong>initramfs&lt;/strong> 或 &lt;strong>initrd&lt;/strong>（初始 RAM 文件系统）来帮助加载根文件系统（通常是 &lt;code>/&lt;/code>）到内存中。initramfs 是一个压缩的文件系统镜像，包含必要的驱动程序和工具，确保系统能够挂载根文件系统。&lt;/li>
-&lt;/ul>
-&lt;h3 id="5-启动-init-进程">
- 5. &lt;strong>启动 init 进程&lt;/strong>
- &lt;a class="anchor" href="#5-%e5%90%af%e5%8a%a8-init-%e8%bf%9b%e7%a8%8b">#&lt;/a>
-&lt;/h3>
-&lt;ul>
-&lt;li>内核初始化完成后，会启动系统的第一个用户空间进程，即 &lt;strong>init&lt;/strong> 进程（PID 1）。这是 Linux 系统中最重要的进程，它负责启动和管理系统的其他进程。&lt;/li>
-&lt;li>在现代 Linux 系统中，&lt;code>init&lt;/code> 进程通常由 &lt;strong>systemd&lt;/strong> 替代，systemd 是一种系统和服务管理器，负责管理系统启动过程、服务和进程。&lt;/li>
-&lt;/ul>
-&lt;h3 id="6-运行-init-脚本或服务管理器">
- 6. &lt;strong>运行 init 脚本或服务管理器&lt;/strong>
- &lt;a class="anchor" href="#6-%e8%bf%90%e8%a1%8c-init-%e8%84%9a%e6%9c%ac%e6%88%96%e6%9c%8d%e5%8a%a1%e7%ae%a1%e7%90%86%e5%99%a8">#&lt;/a>
-&lt;/h3>
-&lt;ul>
-&lt;li>
-&lt;p>systemd&lt;/p></description></item><item><title>使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群</title><link>https://qq547475331.github.io/docs/2024-10-20-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8%E9%9B%86%E7%BE%A4/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2024-10-20-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8%E9%9B%86%E7%BE%A4/</guid><description>&lt;h1 id="使用-keepalived-和-haproxy-创建高可用-kubernetes-集群">
- 使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群
- &lt;a class="anchor" href="#%e4%bd%bf%e7%94%a8-keepalived-%e5%92%8c-haproxy-%e5%88%9b%e5%bb%ba%e9%ab%98%e5%8f%af%e7%94%a8-kubernetes-%e9%9b%86%e7%be%a4">#&lt;/a>
-&lt;/h1>
-&lt;p>高可用 Kubernetes 集群能够确保应用程序在运行时不会出现服务中断，这也是生产的需求之一。为此，有很多方法可供选择以实现高可用。&lt;/p>
-&lt;p>本教程演示了如何配置 Keepalived 和 HAproxy 使负载均衡、实现高可用。步骤如下：&lt;/p>
-&lt;ol>
-&lt;li>准备主机。&lt;/li>
-&lt;li>配置 Keepalived 和 HAproxy。&lt;/li>
-&lt;li>使用 KubeKey 创建 Kubernetes 集群，并安装 KubeSphere。&lt;/li>
-&lt;/ol>
-&lt;h2 id="集群架构">
- 集群架构
- &lt;a class="anchor" href="#%e9%9b%86%e7%be%a4%e6%9e%b6%e6%9e%84">#&lt;/a>
-&lt;/h2>
-&lt;p>示例集群有三个主节点，三个工作节点，两个用于负载均衡的节点，以及一个虚拟 IP 地址。本示例中的虚拟 IP 地址也可称为“浮动 IP 地址”。这意味着在节点故障的情况下，该 IP 地址可在节点之间漂移，从而实现高可用。&lt;/p>
-&lt;p>&lt;img src="https://kubesphere.io/images/docs/v3.x/installing-on-linux/high-availability-configurations/set-up-ha-cluster-using-keepalived-haproxy/architecture-ha-k8s-cluster.png" alt="architecture-ha-k8s-cluster" />&lt;/p>
-&lt;p>请注意，在本示例中，Keepalived 和 HAproxy 没有安装在任何主节点上。但您也可以这样做，并同时实现高可用。然而，配置两个用于负载均衡的特定节点（您可以按需增加更多此类节点）会更加安全。这两个节点上只安装 Keepalived 和 HAproxy，以避免与任何 Kubernetes 组件和服务的潜在冲突。&lt;/p>
-&lt;h2 id="准备主机">
- 准备主机
- &lt;a class="anchor" href="#%e5%87%86%e5%a4%87%e4%b8%bb%e6%9c%ba">#&lt;/a>
-&lt;/h2>
-&lt;table>
- &lt;thead>
- &lt;tr>
- &lt;th style="text-align: left">IP 地址&lt;/th>
- &lt;th style="text-align: left">主机名&lt;/th>
- &lt;th style="text-align: left">角色&lt;/th>
- &lt;/tr>
- &lt;/thead>
- &lt;tbody>
- &lt;tr>
- &lt;td style="text-align: left">172.16.0.2&lt;/td>
- &lt;td style="text-align: left">lb1&lt;/td>
- &lt;td style="text-align: left">Keepalived &amp;amp; HAproxy&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td style="text-align: left">172.16.0.3&lt;/td>
- &lt;td style="text-align: left">lb2&lt;/td>
- &lt;td style="text-align: left">Keepalived &amp;amp; HAproxy&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td style="text-align: left">172.16.0.4&lt;/td>
- &lt;td style="text-align: left">master1&lt;/td>
- &lt;td style="text-align: left">master, etcd&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td style="text-align: left">172.16.0.5&lt;/td>
- &lt;td style="text-align: left">master2&lt;/td>
- &lt;td style="text-align: left">master, etcd&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td style="text-align: left">172.16.0.6&lt;/td>
- &lt;td style="text-align: left">master3&lt;/td>
- &lt;td style="text-align: left">master, etcd&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td style="text-align: left">172.16.0.7&lt;/td>
- &lt;td style="text-align: left">worker1&lt;/td>
- &lt;td style="text-align: left">worker&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td style="text-align: left">172.16.0.8&lt;/td>
- &lt;td style="text-align: left">worker2&lt;/td>
- &lt;td style="text-align: left">worker&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td style="text-align: left">172.16.0.9&lt;/td>
- &lt;td style="text-align: left">worker3&lt;/td>
- &lt;td style="text-align: left">worker&lt;/td>
- &lt;/tr>
- &lt;tr>
- &lt;td style="text-align: left">172.16.0.10&lt;/td>
- &lt;td style="text-align: left">&lt;/td>
- &lt;td style="text-align: left">虚拟 IP 地址&lt;/td>
- &lt;/tr>
- &lt;/tbody>
-&lt;/table>
-&lt;p>有关更多节点、网络、依赖项等要求的信息，请参见&lt;a href="https://kubesphere.io/zh/docs/v3.4/installing-on-linux/introduction/multioverview/#step-1-prepare-linux-hosts">多节点安装&lt;/a>。&lt;/p></description></item><item><title>单master单etcd改造为3master3etcd</title><link>https://qq547475331.github.io/docs/2024-5-14-%E5%8D%95master%E5%8D%95etcd%E6%94%B9%E9%80%A0/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2024-5-14-%E5%8D%95master%E5%8D%95etcd%E6%94%B9%E9%80%A0/</guid><description>&lt;pre tabindex="0">&lt;code>备份etcd的数据
-
-1、单master单etcd扩展到3master3etcd节点
-2、涉及的 
- master节点的证书
- - apiserver.crt
- - apiserver.csr
- - apiserver.key
- - client.crt
- - client.key
- - etcd_client.crt
- - etcd_client.key
- - front-proxy_bak-ca.crt
- - front-proxy_bak-ca.key
- - front-proxy_bak-ca.srl
- - front-proxy_bak-client.crt
- - front-proxy_bak-client.key
- - front_proxy_ssl.cnf
- - sa.key
- - sa.pub 
- 
- - etcd_server.crt
- - etcd_server.key
- - etcd_client.crt
- - etcd_client.key
- 
- work节点的证书
- - ca.crt 
- - client.key 
- - client.crt 
- 
- 需要重新生成，ca.crt和ca.key可以不用重新生成，新的证书需要准备好，老的证书需要备份好。
-3、根据ca证书和master_ssl.cnf，etcd_ssl.cnf生成新的master节点和etcd节点证书，根据ca证书和master_ssl.cnf生成work节点的client.crt证书，提前准备好。 master_ssl.cnf包含3个master节点的ip和硬负载vip，etcd_ssl.cnf包含3个etcd节点的ip。
-4、拷贝新生成的etcd证书到etcd节点，替换老的证书，重新etcd节点。
-5、拷贝新生成的master节点的节点到master节点，替换老的master节点证书，重启master节点的master服务，包括kube-apiserver，kube-scheduler，kube-controller-manager，kubelet，kube-proxy。
-6、拷贝新生成的work节点的证书到work节点，替换work节点的证书，并重启node节点的kubelet和kube-proxy服务。
-7、验证master节点的相关服务是否正常，包括kube-apiserver，kube-scheduler，kube-controller-manager，kubelet，kube-proxy，etcd服务。node节点的kubelet和kube-proxy服务。
-
-
-回退，删除新加的2个master节点，将老的备份的证书替换回去，重启master节点和node节点的相关服务
-&lt;/code>&lt;/pre>&lt;pre tabindex="0">&lt;code>模拟单master单etcd节点 扩展到 3master3etcd
-
-现状：
-master1 192.168.0.61
-node1 192.168.0.64
-
-改造后
-master1：192.168.0.61
-master2：192.168.0.62
-master3：192.168.0.63
-node1： 192.168.0.64
-lb1： 192.168.0.71
-lb2： 192.168.0.72
-vip： 192.168.0.70
-&lt;/code>&lt;/pre>&lt;pre tabindex="0">&lt;code>1、备份etcd数据
-2、停止所有节点的kube-apiserver，kube-scheduler，kube-controller-manager，etcd，kubelet，kube-proxy服务
-3、修改all.yml里的master节点的vip为真实的vip，hosts文件增加master组和etcd组，node组 2个新增的master节点的ip
-4、备份老的证书文件夹下的文件，执行ansible-playbook -i hosts setup.yml，只包含创建证书这一步
-
-在/opt/kubernetes_ssl下重新生成apiserver.crt
-apiserver.csr
-apiserver.key
-ca.crt
-ca.key
-ca.srl
-client.crt
-client.csr
-client.key
-etcd_client.crt
-etcd_client.csr
-etcd_client.key
-etcd_server.crt
-etcd_server.csr
-etcd_server.key
-etcd_ssl.cnf
-front-proxy-ca.crt
-front-proxy-ca.key
-front-proxy-ca.srl
-front-proxy-client.crt
-front-proxy-client.csr
-front-proxy-client.key
-front_proxy_ssl.cnf
-master_ssl.cnf
-sa.key
-sa.pub
-证书 
-&lt;/code>&lt;/pre>&lt;h3 id="单master-单etcd-pod-pvc-sc需要扩容后数据任然存在">
- 单master 单etcd pod pvc sc，需要扩容后数据任然存在
- &lt;a class="anchor" href="#%e5%8d%95master-%e5%8d%95etcd-pod-pvc-sc%e9%9c%80%e8%a6%81%e6%89%a9%e5%ae%b9%e5%90%8e%e6%95%b0%e6%8d%ae%e4%bb%bb%e7%84%b6%e5%ad%98%e5%9c%a8">#&lt;/a>
-&lt;/h3>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202405141912859.png" alt="image-20240514191208781" />&lt;/p></description></item><item><title>美国码农薪酬</title><link>https://qq547475331.github.io/docs/2025-2-7-%E8%AE%A1%E5%88%92/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-7-%E8%AE%A1%E5%88%92/</guid><description>&lt;p>可如果不分国家，那么美国的CS（计算机）毕业生刚入职的税前收入就可以达到100万人民币（15.4万美元）这一水平。&lt;/p>
-&lt;p>无论是中国、美国还是世界其他地区，在过去十年中，码农都是整体收入增长最快、社会认可度提升最大的一类职业。&lt;/p>
-&lt;p>码农是软件工程师的一个带有一点点自嘲性质的简称，但码农确实是这个时代极少数可以通过踏踏实实打工就大幅提升自身经济水平并改变命运的一个职业。在我的圈子中，码农是最多的，其中一半在美国，今天我就以自己的见闻体会结合行业的发展聊聊美国码农的生活状态和财务状况。&lt;/p>
-&lt;p>&lt;strong>1&lt;/strong>&lt;/p>
-&lt;p>&lt;strong>薪酬对比&lt;/strong>&lt;/p>
-&lt;p>在互联网深度融入生活工作的时代，码农已经成为各个国家普遍存在的职业，但在待遇方面，不同国家之间待遇差别可谓巨大。&lt;/p>
-&lt;p>如果认真比，当码农最香的地方还是美国。&lt;strong>美国的码农的平均工资比同属发达地区的伦敦、新加坡、多伦多的同行要高出一倍左右&lt;/strong>，比其他发展中国家自然高出更多，这也是为什么你会发现清华北大北邮华科等CS牛校的计算机毕业生很大一部分都计划美国留学，而且这个专业的人回国比率是所有专业中最低的一个&amp;hellip;那是因为他们在大洋彼岸赚得实在是太多了。&lt;/p>
-&lt;p>根据科技行业薪资统计平台Levels.fyi给的数据，&lt;strong>旧金山湾区和西雅图的软件工程师中位数年包分别为23万美元和20.4万美元&lt;/strong>；而作为对比，多伦多对应的数字是12.2万美元、伦敦是13.5万美元、新加坡是10.7万美元。所以即使是欧洲、加拿大、新加坡这些发达国家的不少IT同行都希望能到美国工作发展。&lt;/p>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213356315.png" alt="image-20250207213356315" />&lt;/p>
-&lt;p>旧金山湾区软件工程师中位数年包23万美元&lt;/p>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213419371.png" alt="image-20250207213419371" />&lt;/p>
-&lt;p>加拿大多伦多软件工程师中位数年包12.2万美元&lt;/p>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213445886.png" alt="image-20250207213445886" />&lt;/p>
-&lt;p>英国伦敦软件工程师中位数年包13.5万美元&lt;/p>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213510807.png" alt="image-20250207213510807" />&lt;/p>
-&lt;p>新加坡软件工程师中位数年包10.7万美元&lt;/p>
-&lt;p>多说一下，我们用的Levels.fyi是非常可靠的一个平台，不同公司的员工可以验证身份、上传offer、W2表等方式反馈真实的薪酬数据，数据量非常大。不同的公司对于级别划分不同，但整体差异不大，比如一个刚刚大学毕业的计算机毕业生，去谷歌L3级别的年包平均是19.1万美元，去苹果ICT2级别的年包平均是17.2万美元，谷歌的L3和苹果的ICT2对应的都是入门级软件工程师。&lt;/p>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213529745.png" alt="image-20250207213529745" />&lt;/p>
-&lt;p>FAAMG各自对软件工程的职级划分和横向对应&lt;/p>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213550980.png" alt="image-20250207213550980" />&lt;/p>
-&lt;p>谷歌各级别软件工程师年收入 L3对应191K（19.1万美元）&lt;/p>
-&lt;p>&lt;strong>2&lt;/strong>&lt;/p>
-&lt;p>&lt;strong>股票是重点&lt;/strong>&lt;/p>
-&lt;p>尽管码农的收入都很高，但这不是这个群体致富的最关键因素，一方面美国有着高额的所得税，另一方面在旧金山湾区、西雅图、纽约等城市，物价和房价也都很高。&lt;/p>
-&lt;p>美国码农致富的核心是股票，而且职级越高、收入越高的码农，年包中股票的比例就越大。以亚马逊为例，L4（入门级码农）的年包平均16.4万美元，其中Base（基本工资）12.5万美元，Stock（股票）2.2万美元，Bonus（奖励）1.7万美元；而发展到L6（这个级别是大多数中国人可以触及的最大高度）时，平均年包达到33.2万美元，其中股票16万美元；最高的Principal（总管）年包中资本工资只有16.2万美元，但股票多达43.6万美元。&lt;/p>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213615192.png" alt="image-20250207213615192" />&lt;/p>
-&lt;p>亚马逊软件工程师薪酬&lt;/p>
-&lt;p>纳斯达克综合指数中大部分公司都是科网公司，可以直接理解为美国的“码农指数”。这个大盘指数从2009年3月到现在累计涨了12倍，这说明在这十二年多的时间里，十倍股是遍布整个市场的，否则大盘不可能有这么大的涨幅。&lt;/p>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213638798.png" alt="image-20250207213638798" />&lt;/p>
-&lt;p>我们看FAAMG五大科技公司，有四家在过去一轮牛市中涨幅远超十倍，其中苹果48倍、微软18倍、谷歌17倍、亚马逊55倍，另外一家脸书2012年才上市，至今9倍。&lt;/p>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213657427.png" alt="image-20250207213657427" />&lt;/p>
-&lt;p>亚马逊、苹果、微软、谷歌股价涨幅对比 2009-2021&lt;/p>
-&lt;p>如果一个亚马逊普通员工在2009年初入职，按当时的行情，入职年包大约是10万美元，其中1万美元是股票，假设他一直持有这些股票到了现在，那么仅2009年一年他得到的股票放现在就价值55万美元，如果他一直在亚马逊工作，而且努力上班，不考虑买房也考虑做其他投资，很可能早就已财务自由。&lt;/p>
-&lt;p>当然，人性的弱点导致大多数人没有办法看到手上已经上涨十倍以上的股票还不套现，所以老员工只有很少人能一股不卖留到现在。虽然2009年到现在湾区和西雅图的房价也涨了200%以上，但即使加上杠杆效应还是无法跑赢股价，这也解释了为什么美国的房价没有办法炒到房价收入比和租售比到扭曲的程度，因为他们有可替代的资产去满足投资需要。&lt;/p>
-&lt;p>&lt;strong>3&lt;/strong>&lt;/p>
-&lt;p>&lt;strong>内卷问题&lt;/strong>&lt;/p>
-&lt;p>尽管美国大多数码农收入很高、又有股票助推财富增长，但他们并不是都过得有你想象的那么舒服，美国也是发达经济体中内卷最严重的国家。&lt;/p>
-&lt;p>码农聚集地常常也是内卷严重的地方，因为这里人多、而且这些人还都非常聪明、非常努力、收入又高。设身处地想想也能理解，一个人年包25万美元可能会感觉很棒，但当你身边所有人年包都是这个水平时，每天还面对年薪百万美元的领导时，你得到的压力就大过成就感了。&lt;/p>
-&lt;p>以旧金山湾区为例，这里不仅汇聚了美国自己一批聪明的年轻人，还吸收了来自包括印度、中国等世界各地的无数学霸。在硅谷华人圈子里，你会发现很多人见面或线上讨论的话题越来越多地涉及到股票、买房、学区、私立学校这些概念，这些话题显然很内卷，一听就感觉到压力。&lt;/p>
-&lt;p>科技大厂在美国国内各个城市同级别职位的待遇相差不大，所以相同级别的码农在不同地方很可能完全是两种生活水平，比如100万美元在硅谷要买独立屋只能买到个小黑屋，在德州奥斯汀就可以买一个3000呎的漂亮大house，内卷很大程度上取决于地域。&lt;/p>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213721714.png" alt="image-20250207213721714" />&lt;/p>
-&lt;p>在湾区的圣何塞 100万美元买的房子是这样的&lt;/p>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213745332.png" alt="image-20250207213745332" />&lt;/p>
-&lt;p>在德州的奥斯汀 50万美元可以买到3000呎的新房&lt;/p>
-&lt;p>不过财富和人口都是流动的，内卷也是会蔓延的，在奥斯汀周边的码农聚集区Cedar Park，这里环境美、治安好、就业多、房价低，结果过去一年房价暴涨超过50%，在美国这样一个城市化结束、经济中低速增长、而且还有房产税的国家，这么快的房价涨速是很可怕的。&lt;/p>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213825885.png" alt="image-20250207213825885" />&lt;/p>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213844557.png" alt="image-20250207213844557" />&lt;/p>
-&lt;p>Cedar Park房价走势&lt;/p>
-&lt;p>说到内卷，工作压力问题绕不开，这方面美国码农还是相对轻松一些的，有oncall（随时待命）制度的公司也只是极少数时间oncall，比如亚马逊每周不同的组轮着oncall，每个组一年大概两次，一次半个星期到一个星期。&lt;/p>
-&lt;p>美国科技行业不同公司以及相同公司的不同小组、不同工作者之间在加班上的差异非常大。比如脸书和亚马逊属于整体工作强度比较大的，微软、甲骨文属于工作强度相对低的，但在脸书一些成熟产品的小组，也有人是轻松状态；在微软的新兴产品Azure相关的小组，员工们也都很拼。&lt;/p>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213901329.png" alt="image-20250207213901329" />&lt;/p></description></item><item><title>美国码农计划</title><link>https://qq547475331.github.io/docs/2025-2-7-%E8%AE%A1%E5%88%922/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-7-%E8%AE%A1%E5%88%922/</guid><description>&lt;p>我给想润出去的墙内码农几条建议：&lt;/p>
-&lt;p>1.大厂在职的，深耕技术直接投简历或转海外岗，不要花冤枉钱和宝贵的时间在教育上；&lt;/p>
-&lt;p>2.第一目标应该是美国，第二是加/坡/澳/英/瑞，其他国家（欧/日/韩/港）期望收入远远不如国内；&lt;/p>
-&lt;p>3.绝大多数人的首要障碍是英语听力和口语，一定要多用英语熟练讲项目和刷Leetcode。&lt;/p>
-&lt;p>如果认真比，当码农最香的地方还是美国。&lt;strong>美国的码农的平均工资比同属发达地区的伦敦、新加坡、多伦多的同行要高出一倍左右&lt;/strong>，比其他发展中国家自然高出更多，这也是为什么你会发现清华北大北邮华科等CS牛校的计算机毕业生很大一部分都计划美国留学，而且这个专业的人回国比率是所有专业中最低的一个&amp;hellip;那是因为他们在大洋彼岸赚得实在是太多了。&lt;/p>
-&lt;p>根据科技行业薪资统计平台Levels.fyi给的数据，&lt;strong>旧金山湾区和西雅图的软件工程师中位数年包分别为23万美元和20.4万美元&lt;/strong>；而作为对比，多伦多对应的数字是12.2万美元、伦敦是13.5万美元、新加坡是10.7万美元。所以即使是欧洲、加拿大、新加坡这些发达国家的不少IT同行都希望能到美国工作发展。&lt;/p>
-&lt;p>美国码农致富的核心是股票，而且职级越高、收入越高的码农，年包中股票的比例就越大。以亚马逊为例，L4（入门级码农）的年包平均16.4万美元，其中Base（基本工资）12.5万美元，Stock（股票）2.2万美元，Bonus（奖励）1.7万美元；而发展到L6（这个级别是大多数中国人可以触及的最大高度）时，平均年包达到33.2万美元，其中股票16万美元；最高的Principal（总管）年包中资本工资只有16.2万美元，但股票多达43.6万美元。&lt;/p>
-&lt;p>中国通缩严重呗，用一个人干两个人活，中国人收入还不涨，不通缩就怪了，不管二百斤超发多少货币，都会往不缺钱的人口袋里流。&lt;/p>
-&lt;p>在美国湾区的生活成本，特别是涉及租房和吃饭的开支，通常相当高。根据网络上的信息和最新的经济数据，这里提供一个大致的开支估算：&lt;/p>
-&lt;p>### 租房：&lt;/p>
-&lt;p>- &lt;strong>一居室公寓&lt;/strong>：&lt;/p>
-&lt;p>- 在旧金山市中心，平均租金大约在$3,000 - $3,500 美元之间。&lt;/p>
-&lt;p>- 如果在郊区如Oakland或Fremont，租金会略低，约为$2,000 - $3,000 美元。&lt;/p>
-&lt;p>- &lt;strong>合租&lt;/strong>：&lt;/p>
-&lt;p>- 与他人合租可以大幅降低开支。合租一居室或多居室公寓，个人承担的租金可能会在$1,500 - $2,500 美元之间。&lt;/p>
-&lt;p>### 吃饭：&lt;/p>
-&lt;p>- &lt;strong>自制餐食&lt;/strong>：&lt;/p>
-&lt;p>- 食品杂货的价格在湾区也相对高于美国其他地区。一个单身人士每月的杂货开支可能在$300 - $600 美元之间，视饮食习惯而定。&lt;/p>
-&lt;p>- &lt;strong>外出就餐&lt;/strong>：&lt;/p>
-&lt;p>- 在湾区吃一顿普通的餐馆饭菜，价格通常在$15 - $30 美元左右，昂贵的餐厅可能更高。如果你经常外出就餐，每月的开支可能达到$400 - $800 美元或更多。&lt;/p>
-&lt;p>### 总体开支：&lt;/p>
-&lt;p>- &lt;strong>保守估计&lt;/strong>：假设一个人选择合租，注重自制餐食，尽量减少外出就餐：&lt;/p>
-&lt;p>- 租房：$1,500&lt;/p>
-&lt;p>- 吃饭：$400（杂货）&lt;/p>
-&lt;p>- &lt;strong>总计&lt;/strong>：约$1,900 美元每月&lt;/p>
-&lt;p>- &lt;strong>中等开支&lt;/strong>：如果租住一居室公寓，并且偶尔外出就餐：&lt;/p>
-&lt;p>- 租房：$3,000&lt;/p>
-&lt;p>- 吃饭：$600（杂货 + 偶尔外出就餐）&lt;/p>
-&lt;p>- &lt;strong>总计&lt;/strong>：约$3,600 美元每月&lt;/p></description></item><item><title>面试0212</title><link>https://qq547475331.github.io/docs/2025-2-12-%E9%9D%A2%E8%AF%950212/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-12-%E9%9D%A2%E8%AF%950212/</guid><description>&lt;h2 id="如何做k8s资源的规划">
- 如何做k8s资源的规划
- &lt;a class="anchor" href="#%e5%a6%82%e4%bd%95%e5%81%9ak8s%e8%b5%84%e6%ba%90%e7%9a%84%e8%a7%84%e5%88%92">#&lt;/a>
-&lt;/h2>
-&lt;p>在K8s中进行资源规划是一个重要的任务，我来详细解释一下关键点：&lt;/p>
-&lt;h3 id="1-cpu和内存资源规划">
- 1. CPU和内存资源规划
- &lt;a class="anchor" href="#1-cpu%e5%92%8c%e5%86%85%e5%ad%98%e8%b5%84%e6%ba%90%e8%a7%84%e5%88%92">#&lt;/a>
-&lt;/h3>
-&lt;h4 id="11-资源请求requests和限制limits">
- 1.1 资源请求(requests)和限制(limits)
- &lt;a class="anchor" href="#11-%e8%b5%84%e6%ba%90%e8%af%b7%e6%b1%82requests%e5%92%8c%e9%99%90%e5%88%b6limits">#&lt;/a>
-&lt;/h4>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml:deployment.yaml" data-lang="yaml:deployment.yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">spec&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">containers&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">app&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">resources&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">requests&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">memory&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;256Mi&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">cpu&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;250m&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">limits&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">memory&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;512Mi&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">cpu&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;500m&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;ul>
-&lt;li>&lt;strong>requests&lt;/strong>: 容器需要的最小资源量&lt;/li>
-&lt;li>&lt;strong>limits&lt;/strong>: 容器能够使用的最大资源量&lt;/li>
-&lt;li>CPU单位：1 CPU = 1000m（毫核）&lt;/li>
-&lt;li>内存单位：Mi（兆字节）, Gi（吉字节）&lt;/li>
-&lt;/ul>
-&lt;h3 id="2-命名空间资源配额">
- 2. 命名空间资源配额
- &lt;a class="anchor" href="#2-%e5%91%bd%e5%90%8d%e7%a9%ba%e9%97%b4%e8%b5%84%e6%ba%90%e9%85%8d%e9%a2%9d">#&lt;/a>
-&lt;/h3>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml:quota.yaml" data-lang="yaml:quota.yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">apiVersion&lt;/span>: &lt;span style="color:#ae81ff">v1&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">ResourceQuota&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">metadata&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">compute-quota&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">namespace&lt;/span>: &lt;span style="color:#ae81ff">your-namespace&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">spec&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">hard&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">requests.cpu&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;4&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">requests.memory&lt;/span>: &lt;span style="color:#ae81ff">4Gi&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">limits.cpu&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;8&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">limits.memory&lt;/span>: &lt;span style="color:#ae81ff">8Gi&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">pods&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;10&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="3-资源规划的最佳实践">
- 3. 资源规划的最佳实践
- &lt;a class="anchor" href="#3-%e8%b5%84%e6%ba%90%e8%a7%84%e5%88%92%e7%9a%84%e6%9c%80%e4%bd%b3%e5%ae%9e%e8%b7%b5">#&lt;/a>
-&lt;/h3>
-&lt;ol>
-&lt;li>
-&lt;p>&lt;strong>监控历史数据&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>使用Prometheus + Grafana监控应用实际资源使用情况&lt;/li>
-&lt;li>观察峰值和平均值&lt;/li>
-&lt;li>留出30-50%的buffer以应对突发流量&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>
-&lt;p>&lt;strong>合理设置requests和limits&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>requests设置为应用正常运行需要的资源量&lt;/li>
-&lt;li>limits设置为预期峰值的1.5-2倍&lt;/li>
-&lt;li>避免limits设置过低导致OOM&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>
-&lt;p>&lt;strong>Pod水平自动扩缩容(HPA)&lt;/strong>&lt;/p>
-&lt;/li>
-&lt;/ol>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml:hpa.yaml" data-lang="yaml:hpa.yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">apiVersion&lt;/span>: &lt;span style="color:#ae81ff">autoscaling/v2&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">HorizontalPodAutoscaler&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">metadata&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">app-hpa&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">spec&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">scaleTargetRef&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">apiVersion&lt;/span>: &lt;span style="color:#ae81ff">apps/v1&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">Deployment&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">your-app&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">minReplicas&lt;/span>: &lt;span style="color:#ae81ff">2&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">maxReplicas&lt;/span>: &lt;span style="color:#ae81ff">10&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">metrics&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#f92672">type&lt;/span>: &lt;span style="color:#ae81ff">Resource&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">resource&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">cpu&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">target&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">type&lt;/span>: &lt;span style="color:#ae81ff">Utilization&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">averageUtilization&lt;/span>: &lt;span style="color:#ae81ff">70&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="4-节点资源规划">
- 4. 节点资源规划
- &lt;a class="anchor" href="#4-%e8%8a%82%e7%82%b9%e8%b5%84%e6%ba%90%e8%a7%84%e5%88%92">#&lt;/a>
-&lt;/h3>
-&lt;ol>
-&lt;li>&lt;strong>节点标签和污点&lt;/strong>&lt;/li>
-&lt;/ol>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml:node-label.yaml" data-lang="yaml:node-label.yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#ae81ff">kubectl label nodes node1 workload-type=cpu-intensive&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#ae81ff">kubectl taint nodes node1 dedicated=cpu-intensive:NoSchedule&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;ol start="2">
-&lt;li>&lt;strong>节点亲和性&lt;/strong>&lt;/li>
-&lt;/ol>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml:pod-affinity.yaml" data-lang="yaml:pod-affinity.yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">spec&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">affinity&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">nodeAffinity&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">requiredDuringSchedulingIgnoredDuringExecution&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">nodeSelectorTerms&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#f92672">matchExpressions&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#f92672">key&lt;/span>: &lt;span style="color:#ae81ff">workload-type&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">operator&lt;/span>: &lt;span style="color:#ae81ff">In&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">values&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#ae81ff">cpu-intensive&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="5-资源规划检查清单">
- 5. 资源规划检查清单
- &lt;a class="anchor" href="#5-%e8%b5%84%e6%ba%90%e8%a7%84%e5%88%92%e6%a3%80%e6%9f%a5%e6%b8%85%e5%8d%95">#&lt;/a>
-&lt;/h3>
-&lt;ol>
-&lt;li>&lt;strong>应用层面&lt;/strong>&lt;/li>
-&lt;/ol>
-&lt;ul>
-&lt;li>&lt;input disabled="" type="checkbox"> 确定应用的基准资源需求&lt;/li>
-&lt;li>&lt;input disabled="" type="checkbox"> 设置合适的requests和limits&lt;/li>
-&lt;li>&lt;input disabled="" type="checkbox"> 配置HPA策略&lt;/li>
-&lt;/ul>
-&lt;ol start="2">
-&lt;li>&lt;strong>集群层面&lt;/strong>&lt;/li>
-&lt;/ol>
-&lt;ul>
-&lt;li>&lt;input disabled="" type="checkbox"> 设置namespace资源配额&lt;/li>
-&lt;li>&lt;input disabled="" type="checkbox"> 规划节点池和节点规格&lt;/li>
-&lt;li>&lt;input disabled="" type="checkbox"> 配置节点亲和性策略&lt;/li>
-&lt;/ul>
-&lt;ol start="3">
-&lt;li>&lt;strong>监控和优化&lt;/strong>&lt;/li>
-&lt;/ol>
-&lt;ul>
-&lt;li>&lt;input disabled="" type="checkbox"> 部署监控系统&lt;/li>
-&lt;li>&lt;input disabled="" type="checkbox"> 定期检查资源使用情况&lt;/li>
-&lt;li>&lt;input disabled="" type="checkbox"> 根据实际情况调整资源配置&lt;/li>
-&lt;/ul>
-&lt;h3 id="6-注意事项">
- 6. 注意事项
- &lt;a class="anchor" href="#6-%e6%b3%a8%e6%84%8f%e4%ba%8b%e9%a1%b9">#&lt;/a>
-&lt;/h3>
-&lt;ol>
-&lt;li>
-&lt;p>&lt;strong>避免资源过度分配&lt;/strong>&lt;/p></description></item><item><title>面试0219</title><link>https://qq547475331.github.io/docs/2025-2-19-%E9%9D%A2%E8%AF%950219/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-19-%E9%9D%A2%E8%AF%950219/</guid><description>&lt;h2 id="排查cpu使用率过高-linux">
- 排查cpu使用率过高 linux
- &lt;a class="anchor" href="#%e6%8e%92%e6%9f%a5cpu%e4%bd%bf%e7%94%a8%e7%8e%87%e8%bf%87%e9%ab%98-linux">#&lt;/a>
-&lt;/h2>
-&lt;p>排查 CPU 使用率过高时，通常可以从以下几个方面入手：&lt;/p>
-&lt;h3 id="1-查看当前-cpu-使用情况">
- 1. &lt;strong>查看当前 CPU 使用情况&lt;/strong>
- &lt;a class="anchor" href="#1-%e6%9f%a5%e7%9c%8b%e5%bd%93%e5%89%8d-cpu-%e4%bd%bf%e7%94%a8%e6%83%85%e5%86%b5">#&lt;/a>
-&lt;/h3>
-&lt;p>使用 &lt;code>top&lt;/code> 或 &lt;code>htop&lt;/code> 命令查看系统当前的 CPU 使用情况，找到占用 CPU 资源较高的进程。&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>top
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>或者如果你有 &lt;code>htop&lt;/code>，可以提供更直观的界面：&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>htop
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>这些工具可以显示进程的 CPU 使用率，并且帮助你找到哪个进程占用了过多的 CPU。&lt;/p>
-&lt;h3 id="2-使用">
- 2. &lt;strong>使用 &lt;code>ps&lt;/code> 查看具体进程&lt;/strong>
- &lt;a class="anchor" href="#2-%e4%bd%bf%e7%94%a8">#&lt;/a>
-&lt;/h3>
-&lt;p>使用 &lt;code>ps&lt;/code> 命令来列出所有进程并按 CPU 使用率排序：&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>ps aux --sort&lt;span style="color:#f92672">=&lt;/span>-%cpu | head -n &lt;span style="color:#ae81ff">10&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>这条命令会列出 CPU 使用率最高的前 10 个进程。&lt;/p>
-&lt;h3 id="3-检查系统负载">
- 3. &lt;strong>检查系统负载&lt;/strong>
- &lt;a class="anchor" href="#3-%e6%a3%80%e6%9f%a5%e7%b3%bb%e7%bb%9f%e8%b4%9f%e8%bd%bd">#&lt;/a>
-&lt;/h3>
-&lt;p>使用 &lt;code>uptime&lt;/code> 或 &lt;code>top&lt;/code> 可以查看系统的负载情况。如果负载过高，可能是 CPU 资源被占用过多，导致系统过载。&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>uptime
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>或者&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>top
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>系统负载（load average）越高，表示系统的负载越重。通常负载值大于 CPU 核数时，表示系统处于过载状态。&lt;/p></description></item><item><title>面试0220</title><link>https://qq547475331.github.io/docs/2025-2-20-%E9%9D%A2%E8%AF%950220/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-20-%E9%9D%A2%E8%AF%950220/</guid><description>&lt;h2 id="delete-pvc时-设置什么字段可以保证pv不被删除">
- delete pvc时 设置什么字段可以保证pv不被删除
- &lt;a class="anchor" href="#delete-pvc%e6%97%b6-%e8%ae%be%e7%bd%ae%e4%bb%80%e4%b9%88%e5%ad%97%e6%ae%b5%e5%8f%af%e4%bb%a5%e4%bf%9d%e8%af%81pv%e4%b8%8d%e8%a2%ab%e5%88%a0%e9%99%a4">#&lt;/a>
-&lt;/h2>
-&lt;p>在 Kubernetes 中，当你删除 &lt;strong>PersistentVolumeClaim（PVC）&lt;/strong> 时，默认情况下与之关联的 &lt;strong>PersistentVolume（PV）&lt;/strong> 会根据 PV 的 &lt;strong>回收策略&lt;/strong> 被删除。为了确保在删除 PVC 时 &lt;strong>PV 不被删除&lt;/strong>，你需要修改 PV 的 &lt;strong>回收策略（reclaimPolicy）&lt;/strong> 字段。&lt;/p>
-&lt;h3 id="步骤">
- 步骤
- &lt;a class="anchor" href="#%e6%ad%a5%e9%aa%a4">#&lt;/a>
-&lt;/h3>
-&lt;ol>
-&lt;li>
-&lt;p>&lt;strong>设置 PV 的回收策略&lt;/strong>：&lt;/p>
-&lt;ul>
-&lt;li>
-&lt;p>回收策略&lt;/p>
-&lt;p>：Kubernetes 支持几种 PV 的回收策略，常见的有：&lt;/p>
-&lt;ul>
-&lt;li>&lt;strong>Retain&lt;/strong>：保持 PV 不删除，手动处理。&lt;/li>
-&lt;li>&lt;strong>Recycle&lt;/strong>：回收 PV（已废弃，不推荐使用）。&lt;/li>
-&lt;li>&lt;strong>Delete&lt;/strong>：删除 PV（这是默认设置，当 PVC 删除时 PV 会被删除）。&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;/ul>
-&lt;p>如果你希望 PVC 删除时 &lt;strong>PV 不被删除&lt;/strong>，需要将 PV 的回收策略设置为 &lt;code>Retain&lt;/code>。这样，当 PVC 删除时，PV 仍然会保留，必须手动清理或者重新配置。&lt;/p>
-&lt;/li>
-&lt;li>
-&lt;p>&lt;strong>如何修改回收策略&lt;/strong>：&lt;/p>
-&lt;ul>
-&lt;li>编辑你的 &lt;strong>PersistentVolume（PV）&lt;/strong> 对象，修改 &lt;code>reclaimPolicy&lt;/code> 为 &lt;code>Retain&lt;/code>。&lt;/li>
-&lt;/ul>
-&lt;p>下面是一个例子：&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">apiVersion&lt;/span>: &lt;span style="color:#ae81ff">v1&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">PersistentVolume&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">metadata&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">my-pv&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">spec&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">capacity&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">storage&lt;/span>: &lt;span style="color:#ae81ff">10Gi&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">volumeMode&lt;/span>: &lt;span style="color:#ae81ff">Filesystem&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">accessModes&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#ae81ff">ReadWriteOnce&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">persistentVolumeReclaimPolicy&lt;/span>: &lt;span style="color:#ae81ff">Retain &lt;/span> &lt;span style="color:#75715e"># 设置回收策略为 Retain&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">storageClassName&lt;/span>: &lt;span style="color:#ae81ff">manual&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">hostPath&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">path&lt;/span>: &lt;span style="color:#ae81ff">/mnt/data&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>在这个例子中，&lt;code>persistentVolumeReclaimPolicy: Retain&lt;/code> 确保当与该 PV 关联的 PVC 被删除时，PV 并不会被删除。&lt;/p></description></item><item><title>面试0225</title><link>https://qq547475331.github.io/docs/2025-2-26-%E9%9D%A2%E8%AF%950225/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-26-%E9%9D%A2%E8%AF%950225/</guid><description>&lt;h2 id="上海外包太平洋保险">
- 上海外包太平洋保险
- &lt;a class="anchor" href="#%e4%b8%8a%e6%b5%b7%e5%a4%96%e5%8c%85%e5%a4%aa%e5%b9%b3%e6%b4%8b%e4%bf%9d%e9%99%a9">#&lt;/a>
-&lt;/h2>
-&lt;h2 id="有完成过ansible比较复杂的role-task的编写吗">
- 有完成过ansible比较复杂的role task的编写吗？
- &lt;a class="anchor" href="#%e6%9c%89%e5%ae%8c%e6%88%90%e8%bf%87ansible%e6%af%94%e8%be%83%e5%a4%8d%e6%9d%82%e7%9a%84role-task%e7%9a%84%e7%bc%96%e5%86%99%e5%90%97">#&lt;/a>
-&lt;/h2>
-&lt;p>是的，基于你的需求描述，我可以帮你了解和完成一些复杂的 Ansible Role 和 Task 编写。以下是一些示例场景：&lt;/p>
-&lt;h3 id="1-完整的-kubernetes-集群节点加入-role-编写">
- &lt;strong>1. 完整的 Kubernetes 集群节点加入 Role 编写&lt;/strong>
- &lt;a class="anchor" href="#1-%e5%ae%8c%e6%95%b4%e7%9a%84-kubernetes-%e9%9b%86%e7%be%a4%e8%8a%82%e7%82%b9%e5%8a%a0%e5%85%a5-role-%e7%bc%96%e5%86%99">#&lt;/a>
-&lt;/h3>
-&lt;p>假设你需要使用 Ansible 创建一个完整的 Kubernetes 节点加入过程，包含以下内容：&lt;/p>
-&lt;ul>
-&lt;li>&lt;strong>创建目录结构和配置文件&lt;/strong>&lt;/li>
-&lt;li>&lt;strong>二进制文件下载和分发&lt;/strong>&lt;/li>
-&lt;li>&lt;strong>&lt;code>systemd&lt;/code> 服务文件创建和启用&lt;/strong>&lt;/li>
-&lt;li>&lt;strong>配置文件模板化（&lt;code>kubelet&lt;/code>，&lt;code>kube-proxy&lt;/code>，&lt;code>CNI&lt;/code> 插件等）&lt;/strong>&lt;/li>
-&lt;li>&lt;strong>节点标签和调度禁用操作&lt;/strong>&lt;/li>
-&lt;li>&lt;strong>&lt;code>kubelet&lt;/code>、&lt;code>kube-proxy&lt;/code> 等服务的启动管理&lt;/strong>&lt;/li>
-&lt;/ul>
-&lt;h3 id="2-ansible-role-示例">
- &lt;strong>2. Ansible Role 示例&lt;/strong>
- &lt;a class="anchor" href="#2-ansible-role-%e7%a4%ba%e4%be%8b">#&lt;/a>
-&lt;/h3>
-&lt;p>一个复杂的 Role 可能包含以下几个部分：&lt;/p>
-&lt;h4 id="tasksmainyml">
- &lt;strong>&lt;code>tasks/main.yml&lt;/code>&lt;/strong>
- &lt;a class="anchor" href="#tasksmainyml">#&lt;/a>
-&lt;/h4>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>---
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 安装并配置 Kubernetes 组件（如 kubelet 和 kube-proxy）&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>- &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">创建 Kubernetes 相关目录&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">file&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">path&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;{{ item }}&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">state&lt;/span>: &lt;span style="color:#ae81ff">directory&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">owner&lt;/span>: &lt;span style="color:#ae81ff">root&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">group&lt;/span>: &lt;span style="color:#ae81ff">root&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">mode&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;0755&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">with_items&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#ae81ff">/var/lib/kubelet&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#ae81ff">/var/lib/kube-proxy&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#ae81ff">/etc/cni/net.d&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#ae81ff">/opt/cni/bin&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>- &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">分发 kubelet 和 kube-proxy 二进制文件&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">copy&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">src&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;{{ base_dir }}/bin/{{ item }}&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">dest&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;{{ bin_dir }}/{{ item }}&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">mode&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;0755&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">with_items&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#ae81ff">kubectl&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#ae81ff">kubelet&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#ae81ff">kube-proxy&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>- &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">分发 CNI 插件&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">copy&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">src&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;{{ item }}&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">dest&lt;/span>: &lt;span style="color:#ae81ff">/opt/cni/bin/&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">mode&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;0755&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">with_fileglob&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#e6db74">&amp;#34;{{ base_dir }}/bin/cni-bin/*&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 创建 kubelet 和 kube-proxy 配置文件&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>- &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">创建 kubelet 配置文件&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">template&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">src&lt;/span>: &lt;span style="color:#ae81ff">kubelet-config.yaml.j2&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">dest&lt;/span>: &lt;span style="color:#ae81ff">/var/lib/kubelet/config.yaml&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">tags&lt;/span>: &lt;span style="color:#ae81ff">configure_kubelet&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>- &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">创建 kube-proxy 配置文件&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">template&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">src&lt;/span>: &lt;span style="color:#ae81ff">kube-proxy-config.yaml.j2&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">dest&lt;/span>: &lt;span style="color:#ae81ff">/var/lib/kube-proxy/kube-proxy-config.yaml&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">tags&lt;/span>: &lt;span style="color:#ae81ff">configure_kubeproxy&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 创建 kubelet 和 kube-proxy 的 systemd 服务&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>- &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">创建 kubelet systemd 服务文件&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">template&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">src&lt;/span>: &lt;span style="color:#ae81ff">kubelet.service.j2&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">dest&lt;/span>: &lt;span style="color:#ae81ff">/etc/systemd/system/kubelet.service&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">tags&lt;/span>: &lt;span style="color:#ae81ff">manage_services&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>- &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">创建 kube-proxy systemd 服务文件&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">template&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">src&lt;/span>: &lt;span style="color:#ae81ff">kube-proxy.service.j2&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">dest&lt;/span>: &lt;span style="color:#ae81ff">/etc/systemd/system/kube-proxy.service&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">tags&lt;/span>: &lt;span style="color:#ae81ff">manage_services&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 启用并启动服务&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>- &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">启用 kubelet 服务&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">systemd&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">kubelet&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">enabled&lt;/span>: &lt;span style="color:#66d9ef">yes&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">state&lt;/span>: &lt;span style="color:#ae81ff">started&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">tags&lt;/span>: &lt;span style="color:#ae81ff">manage_services&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>- &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">启用 kube-proxy 服务&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">systemd&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">kube-proxy&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">enabled&lt;/span>: &lt;span style="color:#66d9ef">yes&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">state&lt;/span>: &lt;span style="color:#ae81ff">started&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">tags&lt;/span>: &lt;span style="color:#ae81ff">manage_services&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 节点加入 Kubernetes 集群并设置角色标签&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>- &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">设置 Kubernetes 节点角色标签&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">shell&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;{{ kubectl_bin }} label node {{ inventory_hostname }} kubernetes.io/role={{ node_role }} --overwrite&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">tags&lt;/span>: &lt;span style="color:#ae81ff">configure_node_role&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>- &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">节点调度控制&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">shell&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;{{ kubectl_bin }} cordon {{ inventory_hostname }}&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">when&lt;/span>: &lt;span style="color:#ae81ff">node_role == &amp;#34;master&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">tags&lt;/span>: &lt;span style="color:#ae81ff">configure_node_role&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="templateskubelet-configyamlj2">
- &lt;strong>&lt;code>templates/kubelet-config.yaml.j2&lt;/code>&lt;/strong>
- &lt;a class="anchor" href="#templateskubelet-configyamlj2">#&lt;/a>
-&lt;/h4>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">apiVersion&lt;/span>: &lt;span style="color:#ae81ff">kubelet.config.k8s.io/v1beta1&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">KubeletConfiguration&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">address&lt;/span>: &lt;span style="color:#ae81ff">0.0.0.0&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">port&lt;/span>: &lt;span style="color:#ae81ff">10250&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">readOnlyPort&lt;/span>: &lt;span style="color:#ae81ff">10255&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">clusterDNS&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - {{ &lt;span style="color:#ae81ff">cluster_dns }}&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">clusterDomain&lt;/span>: {{ &lt;span style="color:#ae81ff">cluster_domain }}&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">resolvConf&lt;/span>: &lt;span style="color:#ae81ff">/run/systemd/resolve/resolv.conf&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>...
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="templateskube-proxy-configyamlj2">
- &lt;strong>&lt;code>templates/kube-proxy-config.yaml.j2&lt;/code>&lt;/strong>
- &lt;a class="anchor" href="#templateskube-proxy-configyamlj2">#&lt;/a>
-&lt;/h4>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">apiVersion&lt;/span>: &lt;span style="color:#ae81ff">kubeproxy.config.k8s.io/v1alpha1&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">KubeProxyConfiguration&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">mode&lt;/span>: &lt;span style="color:#ae81ff">iptables&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">clusterCIDR&lt;/span>: {{ &lt;span style="color:#ae81ff">cluster_cidr }}&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>...
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="templateskubeletservicej2">
- &lt;strong>&lt;code>templates/kubelet.service.j2&lt;/code>&lt;/strong>
- &lt;a class="anchor" href="#templateskubeletservicej2">#&lt;/a>
-&lt;/h4>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ini" data-lang="ini">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">[Unit]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">Description&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">Kubernetes Kubelet&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">Documentation&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">https://kubernetes.io/docs/home/&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">After&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">network.target&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">Requires&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">docker.service&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">[Service]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">ExecStart&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">{{ bin_dir }}/kubelet \
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> --config={{ config_dir }}/kubelet/config.yaml \
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> --kubeconfig={{ kubeconfig_path }}&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">Restart&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">always&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">RestartSec&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">10s&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">[Install]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">WantedBy&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">multi-user.target&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="templateskube-proxyservicej2">
- &lt;strong>&lt;code>templates/kube-proxy.service.j2&lt;/code>&lt;/strong>
- &lt;a class="anchor" href="#templateskube-proxyservicej2">#&lt;/a>
-&lt;/h4>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-ini" data-lang="ini">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">[Unit]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">Description&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">Kubernetes Kube Proxy&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">After&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">network.target&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">[Service]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">ExecStart&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">{{ bin_dir }}/kube-proxy \
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> --config={{ config_dir }}/kube-proxy/kube-proxy-config.yaml \
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74"> --kubeconfig={{ kubeconfig_path }}&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">Restart&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">always&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">RestartSec&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">10s&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">[Install]&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">WantedBy&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">multi-user.target&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="3-role-的配置文件结构">
- &lt;strong>3. Role 的配置文件结构&lt;/strong>
- &lt;a class="anchor" href="#3-role-%e7%9a%84%e9%85%8d%e7%bd%ae%e6%96%87%e4%bb%b6%e7%bb%93%e6%9e%84">#&lt;/a>
-&lt;/h3>
-&lt;p>可以在 Role 中定义一个清晰的目录结构，包括以下文件：&lt;/p></description></item><item><title>面试2025-02-11</title><link>https://qq547475331.github.io/docs/2025-2-11-%E9%9D%A2%E8%AF%950211/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-11-%E9%9D%A2%E8%AF%950211/</guid><description>&lt;h2 id="504错误是啥">
- 504错误是啥
- &lt;a class="anchor" href="#504%e9%94%99%e8%af%af%e6%98%af%e5%95%a5">#&lt;/a>
-&lt;/h2>
-&lt;p>504 错误（Gateway Timeout）是一个 HTTP 状态码，表示网关或代理服务器超时。让我详细解释一下：&lt;/p>
-&lt;h3 id="主要原因">
- 主要原因：
- &lt;a class="anchor" href="#%e4%b8%bb%e8%a6%81%e5%8e%9f%e5%9b%a0">#&lt;/a>
-&lt;/h3>
-&lt;ol>
-&lt;li>
-&lt;p>&lt;strong>服务器响应超时&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>上游服务器（如应用服务器）没有在预定时间内响应网关/代理服务器&lt;/li>
-&lt;li>可能是因为服务器负载过高或处理请求时间过长&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>
-&lt;p>&lt;strong>网络问题&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>网关与上游服务器之间的网络连接存在问题&lt;/li>
-&lt;li>网络拥堵或延迟过高&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;/ol>
-&lt;h3 id="常见场景">
- 常见场景：
- &lt;a class="anchor" href="#%e5%b8%b8%e8%a7%81%e5%9c%ba%e6%99%af">#&lt;/a>
-&lt;/h3>
-&lt;ul>
-&lt;li>使用 Nginx 作为反向代理时，后端服务响应太慢&lt;/li>
-&lt;li>数据库查询操作耗时过长&lt;/li>
-&lt;li>服务器资源不足（CPU、内存等）&lt;/li>
-&lt;li>网络带宽不足&lt;/li>
-&lt;/ul>
-&lt;h3 id="解决方案">
- 解决方案：
- &lt;a class="anchor" href="#%e8%a7%a3%e5%86%b3%e6%96%b9%e6%a1%88">#&lt;/a>
-&lt;/h3>
-&lt;ol>
-&lt;li>
-&lt;p>&lt;strong>服务器端&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>增加超时设置时间&lt;/li>
-&lt;li>优化后端代码性能&lt;/li>
-&lt;li>增加服务器资源&lt;/li>
-&lt;li>使用缓存减少处理时间&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>
-&lt;p>&lt;strong>配置示例&lt;/strong>
-如果使用 Nginx，可以调整超时设置：&lt;/p>
-&lt;/li>
-&lt;/ol>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-nginx" data-lang="nginx">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">http&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">proxy_connect_timeout&lt;/span> &lt;span style="color:#e6db74">300s&lt;/span>;
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">proxy_send_timeout&lt;/span> &lt;span style="color:#e6db74">300s&lt;/span>;
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">proxy_read_timeout&lt;/span> &lt;span style="color:#e6db74">300s&lt;/span>;
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;ol start="3">
-&lt;li>&lt;strong>客户端&lt;/strong>
-&lt;ul>
-&lt;li>实现请求重试机制&lt;/li>
-&lt;li>添加适当的错误处理&lt;/li>
-&lt;li>考虑使用断路器模式&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;/ol>
-&lt;p>504 错误通常是临时性的，如果持续发生，建议检查服务器日志并进行相应优化。&lt;/p>
-&lt;h2 id="常见的状态码">
- 常见的状态码
- &lt;a class="anchor" href="#%e5%b8%b8%e8%a7%81%e7%9a%84%e7%8a%b6%e6%80%81%e7%a0%81">#&lt;/a>
-&lt;/h2>
-&lt;p>让我为你介绍最常见的 HTTP 状态码：&lt;/p>
-&lt;h3 id="2xx---成功响应">
- 2XX - 成功响应
- &lt;a class="anchor" href="#2xx---%e6%88%90%e5%8a%9f%e5%93%8d%e5%ba%94">#&lt;/a>
-&lt;/h3>
-&lt;ul>
-&lt;li>
-&lt;p>&lt;strong>200 OK&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>最常见的成功状态码&lt;/li>
-&lt;li>请求成功且正常返回结果&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>
-&lt;p>&lt;strong>201 Created&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>创建资源成功&lt;/li>
-&lt;li>通常在 POST 请求后返回&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>
-&lt;p>&lt;strong>204 No Content&lt;/strong>&lt;/p></description></item><item><title>面试2025-0218</title><link>https://qq547475331.github.io/docs/2025-2-18-%E9%9D%A2%E8%AF%95/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-18-%E9%9D%A2%E8%AF%95/</guid><description>&lt;h2 id="pod的request和limit的关系-以及他们在node节点上的pod被驱逐时的优先级">
- pod的request和limit的关系 以及他们在node节点上的pod被驱逐时的优先级
- &lt;a class="anchor" href="#pod%e7%9a%84request%e5%92%8climit%e7%9a%84%e5%85%b3%e7%b3%bb-%e4%bb%a5%e5%8f%8a%e4%bb%96%e4%bb%ac%e5%9c%a8node%e8%8a%82%e7%82%b9%e4%b8%8a%e7%9a%84pod%e8%a2%ab%e9%a9%b1%e9%80%90%e6%97%b6%e7%9a%84%e4%bc%98%e5%85%88%e7%ba%a7">#&lt;/a>
-&lt;/h2>
-&lt;p>在 Kubernetes 中，&lt;code>request&lt;/code> 和 &lt;code>limit&lt;/code> 是资源调度的关键参数，分别表示容器资源的最小需求和最大使用限制。它们的关系和在节点上的 Pod 被驱逐时的优先级可以分为以下几个方面：&lt;/p>
-&lt;h3 id="1-request">
- 1. &lt;strong>&lt;code>request&lt;/code> 和 &lt;code>limit&lt;/code> 的关系&lt;/strong>
- &lt;a class="anchor" href="#1-request">#&lt;/a>
-&lt;/h3>
-&lt;ul>
-&lt;li>&lt;strong>&lt;code>request&lt;/code>&lt;/strong>：
-&lt;ul>
-&lt;li>&lt;code>request&lt;/code> 是容器启动时所需的资源量。Kubernetes 调度器根据 &lt;code>request&lt;/code> 来选择合适的节点调度 Pod。当你设置了 &lt;code>request&lt;/code>，Kubernetes 确保该容器至少能使用这么多资源。若没有足够的资源，Pod 将无法被调度到该节点。&lt;/li>
-&lt;li>它反映了容器的“需求量”，用于确定调度时是否能找到一个合适的节点。&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>&lt;strong>&lt;code>limit&lt;/code>&lt;/strong>：
-&lt;ul>
-&lt;li>&lt;code>limit&lt;/code> 是容器可以使用的最大资源量。容器在运行时使用的资源如果超过 &lt;code>limit&lt;/code>，Kubernetes 会根据策略（如 OOM Killer）限制容器的资源使用。&lt;/li>
-&lt;li>它是对容器资源使用的“上限”，防止容器占用过多的资源，影响同一节点上的其他容器。&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>&lt;strong>&lt;code>request&lt;/code> 和 &lt;code>limit&lt;/code> 的差异&lt;/strong>：
-&lt;ul>
-&lt;li>&lt;code>request&lt;/code> 用于调度，而 &lt;code>limit&lt;/code> 用于资源使用控制。理想情况下，&lt;code>request&lt;/code> 应该小于或等于 &lt;code>limit&lt;/code>，否则会造成资源浪费或调度错误。&lt;/li>
-&lt;li>例如：如果 &lt;code>request&lt;/code> 设置为 512Mi，而 &lt;code>limit&lt;/code> 设置为 1Gi，Pod 将被调度到有足够 512Mi 内存的节点，但在节点上运行时，该容器最多可使用 1Gi 内存。&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;/ul>
-&lt;h3 id="2-node-节点上-pod-被驱逐时的优先级">
- 2. &lt;strong>Node 节点上 Pod 被驱逐时的优先级&lt;/strong>
- &lt;a class="anchor" href="#2-node-%e8%8a%82%e7%82%b9%e4%b8%8a-pod-%e8%a2%ab%e9%a9%b1%e9%80%90%e6%97%b6%e7%9a%84%e4%bc%98%e5%85%88%e7%ba%a7">#&lt;/a>
-&lt;/h3>
-&lt;p>当 Kubernetes 节点资源不足时（如内存或 CPU），Pod 可能会被驱逐。Pod 驱逐的决策基于以下几个因素：&lt;/p></description></item><item><title>高级运维面试题-linux部分</title><link>https://qq547475331.github.io/docs/2025-2-24-%E9%AB%98%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_ai_linux%E9%83%A8%E5%88%86/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-24-%E9%AB%98%E7%BA%A7%E8%BF%90%E7%BB%B4%E9%9D%A2%E8%AF%95%E9%A2%98_ai_linux%E9%83%A8%E5%88%86/</guid><description>&lt;blockquote>
-&lt;p>经过本人为期一个半月的不懈努力，累计面试了二十多家公司，共计约五十余场面试，考察的面试题超两百道，积累了许多宝贵的面试经验。现在，我将这些面试题以及我个人的应对心得精心整理成一份面试攻略分享给大家，快来一起测测自己能回答多少道面试题吧。&lt;/p>&lt;/blockquote>
-&lt;h1 id="面试基本信息">
- 面试基本信息
- &lt;a class="anchor" href="#%e9%9d%a2%e8%af%95%e5%9f%ba%e6%9c%ac%e4%bf%a1%e6%81%af">#&lt;/a>
-&lt;/h1>
-&lt;p>面试岗位：运维工程师(容器与ES方向)、运维开发工程师、SRE工程师
-工作经验：5年
-薪资范围：年薪45万左右，base北京
-面试时间：7月初-8月中旬
-主要公司：&lt;/p>
-&lt;ul>
-&lt;li>互联网公司：字节、京东、百度、网易、蚂蚁金服、小米、滴滴、去哪儿、猎豹移动、商汤、旷视、智谱华章、马蜂窝、竞技世界&lt;/li>
-&lt;li>国企子公司：电信、联通、建行、中石化&lt;/li>
-&lt;/ul>
-&lt;h1 id="面试题汇总">
- 面试题汇总
- &lt;a class="anchor" href="#%e9%9d%a2%e8%af%95%e9%a2%98%e6%b1%87%e6%80%bb">#&lt;/a>
-&lt;/h1>
-&lt;p>其中☆表示多次出现过的高频面试题，已经按分类整理。&lt;/p>
-&lt;h2 id="linux">
- Linux
- &lt;a class="anchor" href="#linux">#&lt;/a>
-&lt;/h2>
-&lt;h2 id="grep-sed-awk-cut组合使用">
- grep sed awk cut组合使用☆
- &lt;a class="anchor" href="#grep-sed-awk-cut%e7%bb%84%e5%90%88%e4%bd%bf%e7%94%a8">#&lt;/a>
-&lt;/h2>
-&lt;p>&lt;code>grep&lt;/code>、&lt;code>sed&lt;/code>、&lt;code>awk&lt;/code> 和 &lt;code>cut&lt;/code> 都是 Linux 系统中常用的文本处理工具，通常可以结合使用以实现更复杂的文本处理任务。这里是一些常见的组合使用示例：&lt;/p>
-&lt;h3 id="1-使用-grep--cut筛选和提取字段">
- 1. 使用 &lt;code>grep&lt;/code> + &lt;code>cut&lt;/code>：筛选和提取字段
- &lt;a class="anchor" href="#1-%e4%bd%bf%e7%94%a8-grep--cut%e7%ad%9b%e9%80%89%e5%92%8c%e6%8f%90%e5%8f%96%e5%ad%97%e6%ae%b5">#&lt;/a>
-&lt;/h3>
-&lt;p>假设你有一个文件 &lt;code>data.txt&lt;/code>，其内容如下：&lt;/p>
-&lt;pre tabindex="0">&lt;code>Name, Age, Department
-Alice, 30, HR
-Bob, 25, Engineering
-Charlie, 35, Marketing
-&lt;/code>&lt;/pre>&lt;p>如果你只想提取 &lt;code>Name&lt;/code> 和 &lt;code>Age&lt;/code> 字段，可以使用 &lt;code>grep&lt;/code> 和 &lt;code>cut&lt;/code> 的组合：&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>grep -v &lt;span style="color:#e6db74">&amp;#34;Name&amp;#34;&lt;/span> data.txt | cut -d &lt;span style="color:#e6db74">&amp;#39;,&amp;#39;&lt;/span> -f 1,2
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>解释：&lt;/p>
-&lt;ul>
-&lt;li>&lt;code>grep -v &amp;quot;Name&amp;quot;&lt;/code>：去除第一行标题。&lt;/li>
-&lt;li>&lt;code>cut -d ',' -f 1,2&lt;/code>：按照逗号分隔，提取第一列和第二列。&lt;/li>
-&lt;/ul>
-&lt;p>输出：&lt;/p></description></item></channel></rss>
+&lt;p>下面是我生成的删除 Pod/Deployment 流程图中每个步骤的详细解释：&lt;/p></description></item></channel></rss>
