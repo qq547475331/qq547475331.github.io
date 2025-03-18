@@ -28437,7 +28437,121 @@ Charlie, 35, Marketing
 &lt;p>- &lt;strong>中等开支&lt;/strong>：如果租住一居室公寓，并且偶尔外出就餐：&lt;/p>
 &lt;p>- 租房：$3,000&lt;/p>
 &lt;p>- 吃饭：$600（杂货 + 偶尔外出就餐）&lt;/p>
-&lt;p>- &lt;strong>总计&lt;/strong>：约$3,600 美元每月&lt;/p></description></item><item><title>2025-3-12 追觅面试</title><link>https://qq547475331.github.io/docs/2025-3-12-%E8%BF%BD%E8%A7%85%E9%9D%A2%E8%AF%95/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-3-12-%E8%BF%BD%E8%A7%85%E9%9D%A2%E8%AF%95/</guid><description>&lt;h1 id="你做了啥什么对团队项目贡献比较大的">
+&lt;p>- &lt;strong>总计&lt;/strong>：约$3,600 美元每月&lt;/p></description></item><item><title>2025-3-08 k8s创建pod流程图详解</title><link>https://qq547475331.github.io/docs/2025-3-8-k8s%E5%88%9B%E5%BB%BApod-deployment%E6%B5%81%E7%A8%8B%E5%9B%BE%E8%AF%A6%E8%A7%A3/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-3-8-k8s%E5%88%9B%E5%BB%BApod-deployment%E6%B5%81%E7%A8%8B%E5%9B%BE%E8%AF%A6%E8%A7%A3/</guid><description>&lt;pre tabindex="0">&lt;code class="language-mermaid" data-lang="mermaid">sequenceDiagram
+ participant User as 用户
+ participant Kubectl as Kubectl
+ participant API as API Server
+ participant CM as Controller Manager
+ participant Etcd as etcd
+ participant Scheduler as 调度器
+ participant Kubelet as Kubelet
+ participant CRI as 容器运行时
+ participant CNI as 容器网络接口
+ participant CSI as 容器存储接口
+
+ User -&amp;gt;&amp;gt; Kubectl: 提交 Pod/Deployment 定义
+ Kubectl -&amp;gt;&amp;gt; API: 发送创建请求
+ API -&amp;gt;&amp;gt; Etcd: 存储资源信息
+ 
+ alt 如果是高级资源(Deployment/ReplicaSet等)
+ API -&amp;gt;&amp;gt; CM: 通知新资源创建
+ CM -&amp;gt;&amp;gt; API: 创建对应的附属资源(如ReplicaSet/Pod)
+ API -&amp;gt;&amp;gt; Etcd: 存储附属资源信息
+ end
+ 
+ API -&amp;gt;&amp;gt; Scheduler: 通知新建的未调度Pod
+ Scheduler -&amp;gt;&amp;gt; API: 获取未调度的Pod信息
+ Scheduler -&amp;gt;&amp;gt; Scheduler: 评估资源并分配节点
+ Scheduler -&amp;gt;&amp;gt; API: 更新Pod的节点分配信息
+ API -&amp;gt;&amp;gt; Etcd: 存储更新的Pod信息
+ 
+ API -&amp;gt;&amp;gt; Kubelet: 通知分配到该节点的Pod
+ Kubelet -&amp;gt;&amp;gt; API: 获取Pod信息
+ Kubelet -&amp;gt;&amp;gt; CRI: 拉取并启动容器镜像
+ Kubelet -&amp;gt;&amp;gt; CNI: 配置容器网络
+ Kubelet -&amp;gt;&amp;gt; CSI: 挂载存储卷
+ 
+ Kubelet -&amp;gt;&amp;gt; API: 更新Pod状态
+ API -&amp;gt;&amp;gt; Etcd: 存储更新的Pod状态
+ API -&amp;gt;&amp;gt; CM: 通知Pod状态变化
+ CM -&amp;gt;&amp;gt; CM: 处理相关控制循环
+ 
+ CM -&amp;gt;&amp;gt; API: 更新相关资源状态(如Deployment状态)
+ API -&amp;gt;&amp;gt; Etcd: 存储更新的资源状态
+&lt;/code>&lt;/pre>&lt;h1 id="kubernetes-pod-创建流程时序图详解">
+ Kubernetes Pod 创建流程时序图详解
+ &lt;a class="anchor" href="#kubernetes-pod-%e5%88%9b%e5%bb%ba%e6%b5%81%e7%a8%8b%e6%97%b6%e5%ba%8f%e5%9b%be%e8%af%a6%e8%a7%a3">#&lt;/a>
+&lt;/h1>
+&lt;p>基于我们之前讨论的 Kubernetes 时序图，以下是每个交互过程的详细解释：&lt;/p></description></item><item><title>2025-3-08 k8s删除pod或deployment的流程图详解</title><link>https://qq547475331.github.io/docs/2025-3-8-k8s%E5%88%A0%E9%99%A4pod-deployment%E7%9A%84%E6%B5%81%E7%A8%8B%E5%9B%BE%E8%AF%A6%E8%A7%A3/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-3-8-k8s%E5%88%A0%E9%99%A4pod-deployment%E7%9A%84%E6%B5%81%E7%A8%8B%E5%9B%BE%E8%AF%A6%E8%A7%A3/</guid><description>&lt;h1 id="kubernetes-poddeployment-删除流程图">
+ Kubernetes Pod/Deployment 删除流程图
+ &lt;a class="anchor" href="#kubernetes-poddeployment-%e5%88%a0%e9%99%a4%e6%b5%81%e7%a8%8b%e5%9b%be">#&lt;/a>
+&lt;/h1>
+&lt;p>下面是 Kubernetes 中删除 Pod 或 Deployment 的完整流程序列图：&lt;/p>
+&lt;pre tabindex="0">&lt;code class="language-mermaid" data-lang="mermaid">sequenceDiagram
+ participant User as 用户
+ participant Kubectl as Kubectl
+ participant API as API Server
+ participant CM as Controller Manager
+ participant Etcd as etcd
+ participant Kubelet as Kubelet
+ participant CRI as 容器运行时
+ participant CNI as 容器网络接口
+ participant CSI as 容器存储接口
+
+ User -&amp;gt;&amp;gt; Kubectl: 发起删除请求 (kubectl delete)
+ Kubectl -&amp;gt;&amp;gt; API: 发送删除API请求
+ 
+ API -&amp;gt;&amp;gt; API: 添加删除时间戳(deletionTimestamp)
+ API -&amp;gt;&amp;gt; API: 设置finalizers(如有)
+ API -&amp;gt;&amp;gt; Etcd: 更新资源状态为&amp;#34;正在删除&amp;#34;
+ 
+ alt 如果是Deployment等高级资源
+ API -&amp;gt;&amp;gt; CM: 通知资源正在删除
+ CM -&amp;gt;&amp;gt; CM: 检查删除策略(级联/非级联)
+ 
+ alt 级联删除(默认)
+ CM -&amp;gt;&amp;gt; API: 删除所属的子资源(如ReplicaSet)
+ API -&amp;gt;&amp;gt; Etcd: 更新子资源为&amp;#34;正在删除&amp;#34;
+ 
+ CM -&amp;gt;&amp;gt; API: 删除所属的Pod
+ API -&amp;gt;&amp;gt; Etcd: 更新Pod为&amp;#34;正在删除&amp;#34;
+ end
+ end
+ 
+ API -&amp;gt;&amp;gt; Kubelet: 通知节点上的Pod被标记删除
+ 
+ Kubelet -&amp;gt;&amp;gt; Kubelet: 执行Pod终止流程
+ Kubelet -&amp;gt;&amp;gt; Kubelet: 执行preStop钩子(如有)
+ 
+ Kubelet -&amp;gt;&amp;gt; CRI: 发送终止信号(SIGTERM)
+ Note over CRI: 等待优雅终止期(默认30秒)
+ 
+ alt 容器未在终止期内退出
+ Kubelet -&amp;gt;&amp;gt; CRI: 发送强制终止信号(SIGKILL)
+ end
+ 
+ Kubelet -&amp;gt;&amp;gt; CRI: 删除容器
+ Kubelet -&amp;gt;&amp;gt; CNI: 清理网络资源
+ Kubelet -&amp;gt;&amp;gt; CSI: 卸载并清理存储卷
+ 
+ Kubelet -&amp;gt;&amp;gt; API: 移除Pod finalizers(如有)
+ Kubelet -&amp;gt;&amp;gt; API: 报告Pod已终止
+ 
+ API -&amp;gt;&amp;gt; Etcd: 从etcd中物理删除Pod数据
+ 
+ alt 如果是高级资源
+ CM -&amp;gt;&amp;gt; API: 检查所有子资源是否已删除
+ CM -&amp;gt;&amp;gt; API: 移除资源finalizers
+ API -&amp;gt;&amp;gt; Etcd: 从etcd中物理删除资源数据
+ end
+ 
+ API -&amp;gt;&amp;gt; Kubectl: 返回删除完成状态
+ Kubectl -&amp;gt;&amp;gt; User: 显示资源已被删除
+&lt;/code>&lt;/pre>&lt;h1 id="kubernetes-poddeployment-删除流程详解">
+ Kubernetes Pod/Deployment 删除流程详解
+ &lt;a class="anchor" href="#kubernetes-poddeployment-%e5%88%a0%e9%99%a4%e6%b5%81%e7%a8%8b%e8%af%a6%e8%a7%a3">#&lt;/a>
+&lt;/h1>
+&lt;p>下面是我生成的删除 Pod/Deployment 流程图中每个步骤的详细解释：&lt;/p></description></item><item><title>2025-3-12 追觅面试</title><link>https://qq547475331.github.io/docs/2025-3-12-%E8%BF%BD%E8%A7%85%E9%9D%A2%E8%AF%95/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-3-12-%E8%BF%BD%E8%A7%85%E9%9D%A2%E8%AF%95/</guid><description>&lt;h1 id="你做了啥什么对团队项目贡献比较大的">
  你做了啥什么，对团队/项目贡献比较大的？
  &lt;a class="anchor" href="#%e4%bd%a0%e5%81%9a%e4%ba%86%e5%95%a5%e4%bb%80%e4%b9%88%e5%af%b9%e5%9b%a2%e9%98%9f%e9%a1%b9%e7%9b%ae%e8%b4%a1%e7%8c%ae%e6%af%94%e8%be%83%e5%a4%a7%e7%9a%84">#&lt;/a>
 &lt;/h1>
@@ -28773,118 +28887,4 @@ Charlie, 35, Marketing
 &lt;/h3>
 &lt;ol>
 &lt;li>
-&lt;p>调整 ETCD 容量至 8G：&lt;/p></description></item><item><title>2025-3-8 k8s创建pod流程图详解</title><link>https://qq547475331.github.io/docs/2025-3-8-k8s%E5%88%9B%E5%BB%BApod-deployment%E6%B5%81%E7%A8%8B%E5%9B%BE%E8%AF%A6%E8%A7%A3/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-3-8-k8s%E5%88%9B%E5%BB%BApod-deployment%E6%B5%81%E7%A8%8B%E5%9B%BE%E8%AF%A6%E8%A7%A3/</guid><description>&lt;pre tabindex="0">&lt;code class="language-mermaid" data-lang="mermaid">sequenceDiagram
- participant User as 用户
- participant Kubectl as Kubectl
- participant API as API Server
- participant CM as Controller Manager
- participant Etcd as etcd
- participant Scheduler as 调度器
- participant Kubelet as Kubelet
- participant CRI as 容器运行时
- participant CNI as 容器网络接口
- participant CSI as 容器存储接口
-
- User -&amp;gt;&amp;gt; Kubectl: 提交 Pod/Deployment 定义
- Kubectl -&amp;gt;&amp;gt; API: 发送创建请求
- API -&amp;gt;&amp;gt; Etcd: 存储资源信息
- 
- alt 如果是高级资源(Deployment/ReplicaSet等)
- API -&amp;gt;&amp;gt; CM: 通知新资源创建
- CM -&amp;gt;&amp;gt; API: 创建对应的附属资源(如ReplicaSet/Pod)
- API -&amp;gt;&amp;gt; Etcd: 存储附属资源信息
- end
- 
- API -&amp;gt;&amp;gt; Scheduler: 通知新建的未调度Pod
- Scheduler -&amp;gt;&amp;gt; API: 获取未调度的Pod信息
- Scheduler -&amp;gt;&amp;gt; Scheduler: 评估资源并分配节点
- Scheduler -&amp;gt;&amp;gt; API: 更新Pod的节点分配信息
- API -&amp;gt;&amp;gt; Etcd: 存储更新的Pod信息
- 
- API -&amp;gt;&amp;gt; Kubelet: 通知分配到该节点的Pod
- Kubelet -&amp;gt;&amp;gt; API: 获取Pod信息
- Kubelet -&amp;gt;&amp;gt; CRI: 拉取并启动容器镜像
- Kubelet -&amp;gt;&amp;gt; CNI: 配置容器网络
- Kubelet -&amp;gt;&amp;gt; CSI: 挂载存储卷
- 
- Kubelet -&amp;gt;&amp;gt; API: 更新Pod状态
- API -&amp;gt;&amp;gt; Etcd: 存储更新的Pod状态
- API -&amp;gt;&amp;gt; CM: 通知Pod状态变化
- CM -&amp;gt;&amp;gt; CM: 处理相关控制循环
- 
- CM -&amp;gt;&amp;gt; API: 更新相关资源状态(如Deployment状态)
- API -&amp;gt;&amp;gt; Etcd: 存储更新的资源状态
-&lt;/code>&lt;/pre>&lt;h1 id="kubernetes-pod-创建流程时序图详解">
- Kubernetes Pod 创建流程时序图详解
- &lt;a class="anchor" href="#kubernetes-pod-%e5%88%9b%e5%bb%ba%e6%b5%81%e7%a8%8b%e6%97%b6%e5%ba%8f%e5%9b%be%e8%af%a6%e8%a7%a3">#&lt;/a>
-&lt;/h1>
-&lt;p>基于我们之前讨论的 Kubernetes 时序图，以下是每个交互过程的详细解释：&lt;/p></description></item><item><title>2025-3-8 k8s删除pod或deployment的流程图详解</title><link>https://qq547475331.github.io/docs/2025-3-8-k8s%E5%88%A0%E9%99%A4pod-deployment%E7%9A%84%E6%B5%81%E7%A8%8B%E5%9B%BE%E8%AF%A6%E8%A7%A3/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-3-8-k8s%E5%88%A0%E9%99%A4pod-deployment%E7%9A%84%E6%B5%81%E7%A8%8B%E5%9B%BE%E8%AF%A6%E8%A7%A3/</guid><description>&lt;h1 id="kubernetes-poddeployment-删除流程图">
- Kubernetes Pod/Deployment 删除流程图
- &lt;a class="anchor" href="#kubernetes-poddeployment-%e5%88%a0%e9%99%a4%e6%b5%81%e7%a8%8b%e5%9b%be">#&lt;/a>
-&lt;/h1>
-&lt;p>下面是 Kubernetes 中删除 Pod 或 Deployment 的完整流程序列图：&lt;/p>
-&lt;pre tabindex="0">&lt;code class="language-mermaid" data-lang="mermaid">sequenceDiagram
- participant User as 用户
- participant Kubectl as Kubectl
- participant API as API Server
- participant CM as Controller Manager
- participant Etcd as etcd
- participant Kubelet as Kubelet
- participant CRI as 容器运行时
- participant CNI as 容器网络接口
- participant CSI as 容器存储接口
-
- User -&amp;gt;&amp;gt; Kubectl: 发起删除请求 (kubectl delete)
- Kubectl -&amp;gt;&amp;gt; API: 发送删除API请求
- 
- API -&amp;gt;&amp;gt; API: 添加删除时间戳(deletionTimestamp)
- API -&amp;gt;&amp;gt; API: 设置finalizers(如有)
- API -&amp;gt;&amp;gt; Etcd: 更新资源状态为&amp;#34;正在删除&amp;#34;
- 
- alt 如果是Deployment等高级资源
- API -&amp;gt;&amp;gt; CM: 通知资源正在删除
- CM -&amp;gt;&amp;gt; CM: 检查删除策略(级联/非级联)
- 
- alt 级联删除(默认)
- CM -&amp;gt;&amp;gt; API: 删除所属的子资源(如ReplicaSet)
- API -&amp;gt;&amp;gt; Etcd: 更新子资源为&amp;#34;正在删除&amp;#34;
- 
- CM -&amp;gt;&amp;gt; API: 删除所属的Pod
- API -&amp;gt;&amp;gt; Etcd: 更新Pod为&amp;#34;正在删除&amp;#34;
- end
- end
- 
- API -&amp;gt;&amp;gt; Kubelet: 通知节点上的Pod被标记删除
- 
- Kubelet -&amp;gt;&amp;gt; Kubelet: 执行Pod终止流程
- Kubelet -&amp;gt;&amp;gt; Kubelet: 执行preStop钩子(如有)
- 
- Kubelet -&amp;gt;&amp;gt; CRI: 发送终止信号(SIGTERM)
- Note over CRI: 等待优雅终止期(默认30秒)
- 
- alt 容器未在终止期内退出
- Kubelet -&amp;gt;&amp;gt; CRI: 发送强制终止信号(SIGKILL)
- end
- 
- Kubelet -&amp;gt;&amp;gt; CRI: 删除容器
- Kubelet -&amp;gt;&amp;gt; CNI: 清理网络资源
- Kubelet -&amp;gt;&amp;gt; CSI: 卸载并清理存储卷
- 
- Kubelet -&amp;gt;&amp;gt; API: 移除Pod finalizers(如有)
- Kubelet -&amp;gt;&amp;gt; API: 报告Pod已终止
- 
- API -&amp;gt;&amp;gt; Etcd: 从etcd中物理删除Pod数据
- 
- alt 如果是高级资源
- CM -&amp;gt;&amp;gt; API: 检查所有子资源是否已删除
- CM -&amp;gt;&amp;gt; API: 移除资源finalizers
- API -&amp;gt;&amp;gt; Etcd: 从etcd中物理删除资源数据
- end
- 
- API -&amp;gt;&amp;gt; Kubectl: 返回删除完成状态
- Kubectl -&amp;gt;&amp;gt; User: 显示资源已被删除
-&lt;/code>&lt;/pre>&lt;h1 id="kubernetes-poddeployment-删除流程详解">
- Kubernetes Pod/Deployment 删除流程详解
- &lt;a class="anchor" href="#kubernetes-poddeployment-%e5%88%a0%e9%99%a4%e6%b5%81%e7%a8%8b%e8%af%a6%e8%a7%a3">#&lt;/a>
-&lt;/h1>
-&lt;p>下面是我生成的删除 Pod/Deployment 流程图中每个步骤的详细解释：&lt;/p></description></item></channel></rss>
+&lt;p>调整 ETCD 容量至 8G：&lt;/p></description></item></channel></rss>
