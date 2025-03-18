@@ -27595,7 +27595,92 @@ systemctl start kubelet
 &lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403041025682.png" alt="image-20240304102555618" />&lt;/p>
 &lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403041027558.png" alt="image-20240304102704294" />&lt;/p>
 &lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403041027144.png" alt="image-20240304102728769" />&lt;/p>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403041027257.png" alt="image-20240304102755026" />&lt;/p></description></item><item><title>2025-2-11 面试2025-02-11</title><link>https://qq547475331.github.io/docs/2025-2-11-%E9%9D%A2%E8%AF%950211/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-11-%E9%9D%A2%E8%AF%950211/</guid><description>&lt;h2 id="504错误是啥">
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202403041027257.png" alt="image-20240304102755026" />&lt;/p></description></item><item><title>2025-2-07 k8s组件</title><link>https://qq547475331.github.io/docs/2025-2-7-k8s%E7%BB%84%E4%BB%B6/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-7-k8s%E7%BB%84%E4%BB%B6/</guid><description>&lt;p>&lt;strong>k8s 有哪些组件？&lt;/strong>&lt;/p>
+&lt;p>&lt;strong>1、etcd 保存了整个集群的状态；&lt;/strong>&lt;/p>
+&lt;p>&lt;strong>2、apiserver 提供了资源操作的唯一入口，并提供认证、授权、访问控制、API 注册和发现等机制；&lt;/strong>&lt;/p>
+&lt;p>&lt;strong>3、controller manager 负责维护集群的状态，比如故障检测、自动扩展、滚动更新等；&lt;/strong>&lt;/p>
+&lt;p>&lt;strong>4、scheduler 负责资源的调度，按照预定的调度策略将 Pod 调度到相应的机器上；&lt;/strong>&lt;/p>
+&lt;p>&lt;strong>5、kubelet 负责维护容器的生命周期，同时也负责 Volume（CVI）和网络（CNI）的管理；&lt;/strong>&lt;/p>
+&lt;p>&lt;strong>6、Container runtime 负责镜像管理以及 Pod 和容器的真正运行（CRI）；&lt;/strong>&lt;/p>
+&lt;p>&lt;strong>7&lt;/strong>、&lt;strong>kube-proxy&lt;/strong> &lt;strong>负责为&lt;/strong> &lt;strong>Service&lt;/strong> &lt;strong>提供&lt;/strong> &lt;strong>cluster&lt;/strong> &lt;strong>内部的服务发现和负载均衡。&lt;/strong>&lt;/p></description></item><item><title>2025-2-07 美国码农薪酬</title><link>https://qq547475331.github.io/docs/2025-2-7-%E8%AE%A1%E5%88%92/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-7-%E8%AE%A1%E5%88%92/</guid><description>&lt;p>可如果不分国家，那么美国的CS（计算机）毕业生刚入职的税前收入就可以达到100万人民币（15.4万美元）这一水平。&lt;/p>
+&lt;p>无论是中国、美国还是世界其他地区，在过去十年中，码农都是整体收入增长最快、社会认可度提升最大的一类职业。&lt;/p>
+&lt;p>码农是软件工程师的一个带有一点点自嘲性质的简称，但码农确实是这个时代极少数可以通过踏踏实实打工就大幅提升自身经济水平并改变命运的一个职业。在我的圈子中，码农是最多的，其中一半在美国，今天我就以自己的见闻体会结合行业的发展聊聊美国码农的生活状态和财务状况。&lt;/p>
+&lt;p>&lt;strong>1&lt;/strong>&lt;/p>
+&lt;p>&lt;strong>薪酬对比&lt;/strong>&lt;/p>
+&lt;p>在互联网深度融入生活工作的时代，码农已经成为各个国家普遍存在的职业，但在待遇方面，不同国家之间待遇差别可谓巨大。&lt;/p>
+&lt;p>如果认真比，当码农最香的地方还是美国。&lt;strong>美国的码农的平均工资比同属发达地区的伦敦、新加坡、多伦多的同行要高出一倍左右&lt;/strong>，比其他发展中国家自然高出更多，这也是为什么你会发现清华北大北邮华科等CS牛校的计算机毕业生很大一部分都计划美国留学，而且这个专业的人回国比率是所有专业中最低的一个&amp;hellip;那是因为他们在大洋彼岸赚得实在是太多了。&lt;/p>
+&lt;p>根据科技行业薪资统计平台Levels.fyi给的数据，&lt;strong>旧金山湾区和西雅图的软件工程师中位数年包分别为23万美元和20.4万美元&lt;/strong>；而作为对比，多伦多对应的数字是12.2万美元、伦敦是13.5万美元、新加坡是10.7万美元。所以即使是欧洲、加拿大、新加坡这些发达国家的不少IT同行都希望能到美国工作发展。&lt;/p>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213356315.png" alt="image-20250207213356315" />&lt;/p>
+&lt;p>旧金山湾区软件工程师中位数年包23万美元&lt;/p>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213419371.png" alt="image-20250207213419371" />&lt;/p>
+&lt;p>加拿大多伦多软件工程师中位数年包12.2万美元&lt;/p>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213445886.png" alt="image-20250207213445886" />&lt;/p>
+&lt;p>英国伦敦软件工程师中位数年包13.5万美元&lt;/p>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213510807.png" alt="image-20250207213510807" />&lt;/p>
+&lt;p>新加坡软件工程师中位数年包10.7万美元&lt;/p>
+&lt;p>多说一下，我们用的Levels.fyi是非常可靠的一个平台，不同公司的员工可以验证身份、上传offer、W2表等方式反馈真实的薪酬数据，数据量非常大。不同的公司对于级别划分不同，但整体差异不大，比如一个刚刚大学毕业的计算机毕业生，去谷歌L3级别的年包平均是19.1万美元，去苹果ICT2级别的年包平均是17.2万美元，谷歌的L3和苹果的ICT2对应的都是入门级软件工程师。&lt;/p>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213529745.png" alt="image-20250207213529745" />&lt;/p>
+&lt;p>FAAMG各自对软件工程的职级划分和横向对应&lt;/p>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213550980.png" alt="image-20250207213550980" />&lt;/p>
+&lt;p>谷歌各级别软件工程师年收入 L3对应191K（19.1万美元）&lt;/p>
+&lt;p>&lt;strong>2&lt;/strong>&lt;/p>
+&lt;p>&lt;strong>股票是重点&lt;/strong>&lt;/p>
+&lt;p>尽管码农的收入都很高，但这不是这个群体致富的最关键因素，一方面美国有着高额的所得税，另一方面在旧金山湾区、西雅图、纽约等城市，物价和房价也都很高。&lt;/p>
+&lt;p>美国码农致富的核心是股票，而且职级越高、收入越高的码农，年包中股票的比例就越大。以亚马逊为例，L4（入门级码农）的年包平均16.4万美元，其中Base（基本工资）12.5万美元，Stock（股票）2.2万美元，Bonus（奖励）1.7万美元；而发展到L6（这个级别是大多数中国人可以触及的最大高度）时，平均年包达到33.2万美元，其中股票16万美元；最高的Principal（总管）年包中资本工资只有16.2万美元，但股票多达43.6万美元。&lt;/p>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213615192.png" alt="image-20250207213615192" />&lt;/p>
+&lt;p>亚马逊软件工程师薪酬&lt;/p>
+&lt;p>纳斯达克综合指数中大部分公司都是科网公司，可以直接理解为美国的“码农指数”。这个大盘指数从2009年3月到现在累计涨了12倍，这说明在这十二年多的时间里，十倍股是遍布整个市场的，否则大盘不可能有这么大的涨幅。&lt;/p>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213638798.png" alt="image-20250207213638798" />&lt;/p>
+&lt;p>我们看FAAMG五大科技公司，有四家在过去一轮牛市中涨幅远超十倍，其中苹果48倍、微软18倍、谷歌17倍、亚马逊55倍，另外一家脸书2012年才上市，至今9倍。&lt;/p>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213657427.png" alt="image-20250207213657427" />&lt;/p>
+&lt;p>亚马逊、苹果、微软、谷歌股价涨幅对比 2009-2021&lt;/p>
+&lt;p>如果一个亚马逊普通员工在2009年初入职，按当时的行情，入职年包大约是10万美元，其中1万美元是股票，假设他一直持有这些股票到了现在，那么仅2009年一年他得到的股票放现在就价值55万美元，如果他一直在亚马逊工作，而且努力上班，不考虑买房也考虑做其他投资，很可能早就已财务自由。&lt;/p>
+&lt;p>当然，人性的弱点导致大多数人没有办法看到手上已经上涨十倍以上的股票还不套现，所以老员工只有很少人能一股不卖留到现在。虽然2009年到现在湾区和西雅图的房价也涨了200%以上，但即使加上杠杆效应还是无法跑赢股价，这也解释了为什么美国的房价没有办法炒到房价收入比和租售比到扭曲的程度，因为他们有可替代的资产去满足投资需要。&lt;/p>
+&lt;p>&lt;strong>3&lt;/strong>&lt;/p>
+&lt;p>&lt;strong>内卷问题&lt;/strong>&lt;/p>
+&lt;p>尽管美国大多数码农收入很高、又有股票助推财富增长，但他们并不是都过得有你想象的那么舒服，美国也是发达经济体中内卷最严重的国家。&lt;/p>
+&lt;p>码农聚集地常常也是内卷严重的地方，因为这里人多、而且这些人还都非常聪明、非常努力、收入又高。设身处地想想也能理解，一个人年包25万美元可能会感觉很棒，但当你身边所有人年包都是这个水平时，每天还面对年薪百万美元的领导时，你得到的压力就大过成就感了。&lt;/p>
+&lt;p>以旧金山湾区为例，这里不仅汇聚了美国自己一批聪明的年轻人，还吸收了来自包括印度、中国等世界各地的无数学霸。在硅谷华人圈子里，你会发现很多人见面或线上讨论的话题越来越多地涉及到股票、买房、学区、私立学校这些概念，这些话题显然很内卷，一听就感觉到压力。&lt;/p>
+&lt;p>科技大厂在美国国内各个城市同级别职位的待遇相差不大，所以相同级别的码农在不同地方很可能完全是两种生活水平，比如100万美元在硅谷要买独立屋只能买到个小黑屋，在德州奥斯汀就可以买一个3000呎的漂亮大house，内卷很大程度上取决于地域。&lt;/p>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213721714.png" alt="image-20250207213721714" />&lt;/p>
+&lt;p>在湾区的圣何塞 100万美元买的房子是这样的&lt;/p>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213745332.png" alt="image-20250207213745332" />&lt;/p>
+&lt;p>在德州的奥斯汀 50万美元可以买到3000呎的新房&lt;/p>
+&lt;p>不过财富和人口都是流动的，内卷也是会蔓延的，在奥斯汀周边的码农聚集区Cedar Park，这里环境美、治安好、就业多、房价低，结果过去一年房价暴涨超过50%，在美国这样一个城市化结束、经济中低速增长、而且还有房产税的国家，这么快的房价涨速是很可怕的。&lt;/p>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213825885.png" alt="image-20250207213825885" />&lt;/p>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213844557.png" alt="image-20250207213844557" />&lt;/p>
+&lt;p>Cedar Park房价走势&lt;/p>
+&lt;p>说到内卷，工作压力问题绕不开，这方面美国码农还是相对轻松一些的，有oncall（随时待命）制度的公司也只是极少数时间oncall，比如亚马逊每周不同的组轮着oncall，每个组一年大概两次，一次半个星期到一个星期。&lt;/p>
+&lt;p>美国科技行业不同公司以及相同公司的不同小组、不同工作者之间在加班上的差异非常大。比如脸书和亚马逊属于整体工作强度比较大的，微软、甲骨文属于工作强度相对低的，但在脸书一些成熟产品的小组，也有人是轻松状态；在微软的新兴产品Azure相关的小组，员工们也都很拼。&lt;/p>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213901329.png" alt="image-20250207213901329" />&lt;/p></description></item><item><title>2025-2-07 美国码农计划</title><link>https://qq547475331.github.io/docs/2025-2-7-%E8%AE%A1%E5%88%922/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-7-%E8%AE%A1%E5%88%922/</guid><description>&lt;p>我给想润出去的墙内码农几条建议：&lt;/p>
+&lt;p>1.大厂在职的，深耕技术直接投简历或转海外岗，不要花冤枉钱和宝贵的时间在教育上；&lt;/p>
+&lt;p>2.第一目标应该是美国，第二是加/坡/澳/英/瑞，其他国家（欧/日/韩/港）期望收入远远不如国内；&lt;/p>
+&lt;p>3.绝大多数人的首要障碍是英语听力和口语，一定要多用英语熟练讲项目和刷Leetcode。&lt;/p>
+&lt;p>如果认真比，当码农最香的地方还是美国。&lt;strong>美国的码农的平均工资比同属发达地区的伦敦、新加坡、多伦多的同行要高出一倍左右&lt;/strong>，比其他发展中国家自然高出更多，这也是为什么你会发现清华北大北邮华科等CS牛校的计算机毕业生很大一部分都计划美国留学，而且这个专业的人回国比率是所有专业中最低的一个&amp;hellip;那是因为他们在大洋彼岸赚得实在是太多了。&lt;/p>
+&lt;p>根据科技行业薪资统计平台Levels.fyi给的数据，&lt;strong>旧金山湾区和西雅图的软件工程师中位数年包分别为23万美元和20.4万美元&lt;/strong>；而作为对比，多伦多对应的数字是12.2万美元、伦敦是13.5万美元、新加坡是10.7万美元。所以即使是欧洲、加拿大、新加坡这些发达国家的不少IT同行都希望能到美国工作发展。&lt;/p>
+&lt;p>美国码农致富的核心是股票，而且职级越高、收入越高的码农，年包中股票的比例就越大。以亚马逊为例，L4（入门级码农）的年包平均16.4万美元，其中Base（基本工资）12.5万美元，Stock（股票）2.2万美元，Bonus（奖励）1.7万美元；而发展到L6（这个级别是大多数中国人可以触及的最大高度）时，平均年包达到33.2万美元，其中股票16万美元；最高的Principal（总管）年包中资本工资只有16.2万美元，但股票多达43.6万美元。&lt;/p>
+&lt;p>中国通缩严重呗，用一个人干两个人活，中国人收入还不涨，不通缩就怪了，不管二百斤超发多少货币，都会往不缺钱的人口袋里流。&lt;/p>
+&lt;p>在美国湾区的生活成本，特别是涉及租房和吃饭的开支，通常相当高。根据网络上的信息和最新的经济数据，这里提供一个大致的开支估算：&lt;/p>
+&lt;p>### 租房：&lt;/p>
+&lt;p>- &lt;strong>一居室公寓&lt;/strong>：&lt;/p>
+&lt;p>- 在旧金山市中心，平均租金大约在$3,000 - $3,500 美元之间。&lt;/p>
+&lt;p>- 如果在郊区如Oakland或Fremont，租金会略低，约为$2,000 - $3,000 美元。&lt;/p>
+&lt;p>- &lt;strong>合租&lt;/strong>：&lt;/p>
+&lt;p>- 与他人合租可以大幅降低开支。合租一居室或多居室公寓，个人承担的租金可能会在$1,500 - $2,500 美元之间。&lt;/p>
+&lt;p>### 吃饭：&lt;/p>
+&lt;p>- &lt;strong>自制餐食&lt;/strong>：&lt;/p>
+&lt;p>- 食品杂货的价格在湾区也相对高于美国其他地区。一个单身人士每月的杂货开支可能在$300 - $600 美元之间，视饮食习惯而定。&lt;/p>
+&lt;p>- &lt;strong>外出就餐&lt;/strong>：&lt;/p>
+&lt;p>- 在湾区吃一顿普通的餐馆饭菜，价格通常在$15 - $30 美元左右，昂贵的餐厅可能更高。如果你经常外出就餐，每月的开支可能达到$400 - $800 美元或更多。&lt;/p>
+&lt;p>### 总体开支：&lt;/p>
+&lt;p>- &lt;strong>保守估计&lt;/strong>：假设一个人选择合租，注重自制餐食，尽量减少外出就餐：&lt;/p>
+&lt;p>- 租房：$1,500&lt;/p>
+&lt;p>- 吃饭：$400（杂货）&lt;/p>
+&lt;p>- &lt;strong>总计&lt;/strong>：约$1,900 美元每月&lt;/p>
+&lt;p>- &lt;strong>中等开支&lt;/strong>：如果租住一居室公寓，并且偶尔外出就餐：&lt;/p>
+&lt;p>- 租房：$3,000&lt;/p>
+&lt;p>- 吃饭：$600（杂货 + 偶尔外出就餐）&lt;/p>
+&lt;p>- &lt;strong>总计&lt;/strong>：约$3,600 美元每月&lt;/p></description></item><item><title>2025-2-11 面试2025-02-11</title><link>https://qq547475331.github.io/docs/2025-2-11-%E9%9D%A2%E8%AF%950211/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-11-%E9%9D%A2%E8%AF%950211/</guid><description>&lt;h2 id="504错误是啥">
  504错误是啥
  &lt;a class="anchor" href="#504%e9%94%99%e8%af%af%e6%98%af%e5%95%a5">#&lt;/a>
 &lt;/h2>
@@ -28352,92 +28437,7 @@ Charlie, 35, Marketing
 &lt;/ul>
 &lt;/li>
 &lt;/ol>
-&lt;p>整体而言，Prometheus 的核心是周期性地抓取目标的监控数据，存储成时间序列，并通过查询、告警和可视化等功能帮助用户监控和维护系统的健康。&lt;/p></description></item><item><title>2025-2-7 k8s组件</title><link>https://qq547475331.github.io/docs/2025-2-7-k8s%E7%BB%84%E4%BB%B6/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-7-k8s%E7%BB%84%E4%BB%B6/</guid><description>&lt;p>&lt;strong>k8s 有哪些组件？&lt;/strong>&lt;/p>
-&lt;p>&lt;strong>1、etcd 保存了整个集群的状态；&lt;/strong>&lt;/p>
-&lt;p>&lt;strong>2、apiserver 提供了资源操作的唯一入口，并提供认证、授权、访问控制、API 注册和发现等机制；&lt;/strong>&lt;/p>
-&lt;p>&lt;strong>3、controller manager 负责维护集群的状态，比如故障检测、自动扩展、滚动更新等；&lt;/strong>&lt;/p>
-&lt;p>&lt;strong>4、scheduler 负责资源的调度，按照预定的调度策略将 Pod 调度到相应的机器上；&lt;/strong>&lt;/p>
-&lt;p>&lt;strong>5、kubelet 负责维护容器的生命周期，同时也负责 Volume（CVI）和网络（CNI）的管理；&lt;/strong>&lt;/p>
-&lt;p>&lt;strong>6、Container runtime 负责镜像管理以及 Pod 和容器的真正运行（CRI）；&lt;/strong>&lt;/p>
-&lt;p>&lt;strong>7&lt;/strong>、&lt;strong>kube-proxy&lt;/strong> &lt;strong>负责为&lt;/strong> &lt;strong>Service&lt;/strong> &lt;strong>提供&lt;/strong> &lt;strong>cluster&lt;/strong> &lt;strong>内部的服务发现和负载均衡。&lt;/strong>&lt;/p></description></item><item><title>2025-2-7 美国码农薪酬</title><link>https://qq547475331.github.io/docs/2025-2-7-%E8%AE%A1%E5%88%92/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-7-%E8%AE%A1%E5%88%92/</guid><description>&lt;p>可如果不分国家，那么美国的CS（计算机）毕业生刚入职的税前收入就可以达到100万人民币（15.4万美元）这一水平。&lt;/p>
-&lt;p>无论是中国、美国还是世界其他地区，在过去十年中，码农都是整体收入增长最快、社会认可度提升最大的一类职业。&lt;/p>
-&lt;p>码农是软件工程师的一个带有一点点自嘲性质的简称，但码农确实是这个时代极少数可以通过踏踏实实打工就大幅提升自身经济水平并改变命运的一个职业。在我的圈子中，码农是最多的，其中一半在美国，今天我就以自己的见闻体会结合行业的发展聊聊美国码农的生活状态和财务状况。&lt;/p>
-&lt;p>&lt;strong>1&lt;/strong>&lt;/p>
-&lt;p>&lt;strong>薪酬对比&lt;/strong>&lt;/p>
-&lt;p>在互联网深度融入生活工作的时代，码农已经成为各个国家普遍存在的职业，但在待遇方面，不同国家之间待遇差别可谓巨大。&lt;/p>
-&lt;p>如果认真比，当码农最香的地方还是美国。&lt;strong>美国的码农的平均工资比同属发达地区的伦敦、新加坡、多伦多的同行要高出一倍左右&lt;/strong>，比其他发展中国家自然高出更多，这也是为什么你会发现清华北大北邮华科等CS牛校的计算机毕业生很大一部分都计划美国留学，而且这个专业的人回国比率是所有专业中最低的一个&amp;hellip;那是因为他们在大洋彼岸赚得实在是太多了。&lt;/p>
-&lt;p>根据科技行业薪资统计平台Levels.fyi给的数据，&lt;strong>旧金山湾区和西雅图的软件工程师中位数年包分别为23万美元和20.4万美元&lt;/strong>；而作为对比，多伦多对应的数字是12.2万美元、伦敦是13.5万美元、新加坡是10.7万美元。所以即使是欧洲、加拿大、新加坡这些发达国家的不少IT同行都希望能到美国工作发展。&lt;/p>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213356315.png" alt="image-20250207213356315" />&lt;/p>
-&lt;p>旧金山湾区软件工程师中位数年包23万美元&lt;/p>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213419371.png" alt="image-20250207213419371" />&lt;/p>
-&lt;p>加拿大多伦多软件工程师中位数年包12.2万美元&lt;/p>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213445886.png" alt="image-20250207213445886" />&lt;/p>
-&lt;p>英国伦敦软件工程师中位数年包13.5万美元&lt;/p>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213510807.png" alt="image-20250207213510807" />&lt;/p>
-&lt;p>新加坡软件工程师中位数年包10.7万美元&lt;/p>
-&lt;p>多说一下，我们用的Levels.fyi是非常可靠的一个平台，不同公司的员工可以验证身份、上传offer、W2表等方式反馈真实的薪酬数据，数据量非常大。不同的公司对于级别划分不同，但整体差异不大，比如一个刚刚大学毕业的计算机毕业生，去谷歌L3级别的年包平均是19.1万美元，去苹果ICT2级别的年包平均是17.2万美元，谷歌的L3和苹果的ICT2对应的都是入门级软件工程师。&lt;/p>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213529745.png" alt="image-20250207213529745" />&lt;/p>
-&lt;p>FAAMG各自对软件工程的职级划分和横向对应&lt;/p>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213550980.png" alt="image-20250207213550980" />&lt;/p>
-&lt;p>谷歌各级别软件工程师年收入 L3对应191K（19.1万美元）&lt;/p>
-&lt;p>&lt;strong>2&lt;/strong>&lt;/p>
-&lt;p>&lt;strong>股票是重点&lt;/strong>&lt;/p>
-&lt;p>尽管码农的收入都很高，但这不是这个群体致富的最关键因素，一方面美国有着高额的所得税，另一方面在旧金山湾区、西雅图、纽约等城市，物价和房价也都很高。&lt;/p>
-&lt;p>美国码农致富的核心是股票，而且职级越高、收入越高的码农，年包中股票的比例就越大。以亚马逊为例，L4（入门级码农）的年包平均16.4万美元，其中Base（基本工资）12.5万美元，Stock（股票）2.2万美元，Bonus（奖励）1.7万美元；而发展到L6（这个级别是大多数中国人可以触及的最大高度）时，平均年包达到33.2万美元，其中股票16万美元；最高的Principal（总管）年包中资本工资只有16.2万美元，但股票多达43.6万美元。&lt;/p>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213615192.png" alt="image-20250207213615192" />&lt;/p>
-&lt;p>亚马逊软件工程师薪酬&lt;/p>
-&lt;p>纳斯达克综合指数中大部分公司都是科网公司，可以直接理解为美国的“码农指数”。这个大盘指数从2009年3月到现在累计涨了12倍，这说明在这十二年多的时间里，十倍股是遍布整个市场的，否则大盘不可能有这么大的涨幅。&lt;/p>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213638798.png" alt="image-20250207213638798" />&lt;/p>
-&lt;p>我们看FAAMG五大科技公司，有四家在过去一轮牛市中涨幅远超十倍，其中苹果48倍、微软18倍、谷歌17倍、亚马逊55倍，另外一家脸书2012年才上市，至今9倍。&lt;/p>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213657427.png" alt="image-20250207213657427" />&lt;/p>
-&lt;p>亚马逊、苹果、微软、谷歌股价涨幅对比 2009-2021&lt;/p>
-&lt;p>如果一个亚马逊普通员工在2009年初入职，按当时的行情，入职年包大约是10万美元，其中1万美元是股票，假设他一直持有这些股票到了现在，那么仅2009年一年他得到的股票放现在就价值55万美元，如果他一直在亚马逊工作，而且努力上班，不考虑买房也考虑做其他投资，很可能早就已财务自由。&lt;/p>
-&lt;p>当然，人性的弱点导致大多数人没有办法看到手上已经上涨十倍以上的股票还不套现，所以老员工只有很少人能一股不卖留到现在。虽然2009年到现在湾区和西雅图的房价也涨了200%以上，但即使加上杠杆效应还是无法跑赢股价，这也解释了为什么美国的房价没有办法炒到房价收入比和租售比到扭曲的程度，因为他们有可替代的资产去满足投资需要。&lt;/p>
-&lt;p>&lt;strong>3&lt;/strong>&lt;/p>
-&lt;p>&lt;strong>内卷问题&lt;/strong>&lt;/p>
-&lt;p>尽管美国大多数码农收入很高、又有股票助推财富增长，但他们并不是都过得有你想象的那么舒服，美国也是发达经济体中内卷最严重的国家。&lt;/p>
-&lt;p>码农聚集地常常也是内卷严重的地方，因为这里人多、而且这些人还都非常聪明、非常努力、收入又高。设身处地想想也能理解，一个人年包25万美元可能会感觉很棒，但当你身边所有人年包都是这个水平时，每天还面对年薪百万美元的领导时，你得到的压力就大过成就感了。&lt;/p>
-&lt;p>以旧金山湾区为例，这里不仅汇聚了美国自己一批聪明的年轻人，还吸收了来自包括印度、中国等世界各地的无数学霸。在硅谷华人圈子里，你会发现很多人见面或线上讨论的话题越来越多地涉及到股票、买房、学区、私立学校这些概念，这些话题显然很内卷，一听就感觉到压力。&lt;/p>
-&lt;p>科技大厂在美国国内各个城市同级别职位的待遇相差不大，所以相同级别的码农在不同地方很可能完全是两种生活水平，比如100万美元在硅谷要买独立屋只能买到个小黑屋，在德州奥斯汀就可以买一个3000呎的漂亮大house，内卷很大程度上取决于地域。&lt;/p>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213721714.png" alt="image-20250207213721714" />&lt;/p>
-&lt;p>在湾区的圣何塞 100万美元买的房子是这样的&lt;/p>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213745332.png" alt="image-20250207213745332" />&lt;/p>
-&lt;p>在德州的奥斯汀 50万美元可以买到3000呎的新房&lt;/p>
-&lt;p>不过财富和人口都是流动的，内卷也是会蔓延的，在奥斯汀周边的码农聚集区Cedar Park，这里环境美、治安好、就业多、房价低，结果过去一年房价暴涨超过50%，在美国这样一个城市化结束、经济中低速增长、而且还有房产税的国家，这么快的房价涨速是很可怕的。&lt;/p>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213825885.png" alt="image-20250207213825885" />&lt;/p>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213844557.png" alt="image-20250207213844557" />&lt;/p>
-&lt;p>Cedar Park房价走势&lt;/p>
-&lt;p>说到内卷，工作压力问题绕不开，这方面美国码农还是相对轻松一些的，有oncall（随时待命）制度的公司也只是极少数时间oncall，比如亚马逊每周不同的组轮着oncall，每个组一年大概两次，一次半个星期到一个星期。&lt;/p>
-&lt;p>美国科技行业不同公司以及相同公司的不同小组、不同工作者之间在加班上的差异非常大。比如脸书和亚马逊属于整体工作强度比较大的，微软、甲骨文属于工作强度相对低的，但在脸书一些成熟产品的小组，也有人是轻松状态；在微软的新兴产品Azure相关的小组，员工们也都很拼。&lt;/p>
-&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250207213901329.png" alt="image-20250207213901329" />&lt;/p></description></item><item><title>2025-2-7 美国码农计划</title><link>https://qq547475331.github.io/docs/2025-2-7-%E8%AE%A1%E5%88%922/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-7-%E8%AE%A1%E5%88%922/</guid><description>&lt;p>我给想润出去的墙内码农几条建议：&lt;/p>
-&lt;p>1.大厂在职的，深耕技术直接投简历或转海外岗，不要花冤枉钱和宝贵的时间在教育上；&lt;/p>
-&lt;p>2.第一目标应该是美国，第二是加/坡/澳/英/瑞，其他国家（欧/日/韩/港）期望收入远远不如国内；&lt;/p>
-&lt;p>3.绝大多数人的首要障碍是英语听力和口语，一定要多用英语熟练讲项目和刷Leetcode。&lt;/p>
-&lt;p>如果认真比，当码农最香的地方还是美国。&lt;strong>美国的码农的平均工资比同属发达地区的伦敦、新加坡、多伦多的同行要高出一倍左右&lt;/strong>，比其他发展中国家自然高出更多，这也是为什么你会发现清华北大北邮华科等CS牛校的计算机毕业生很大一部分都计划美国留学，而且这个专业的人回国比率是所有专业中最低的一个&amp;hellip;那是因为他们在大洋彼岸赚得实在是太多了。&lt;/p>
-&lt;p>根据科技行业薪资统计平台Levels.fyi给的数据，&lt;strong>旧金山湾区和西雅图的软件工程师中位数年包分别为23万美元和20.4万美元&lt;/strong>；而作为对比，多伦多对应的数字是12.2万美元、伦敦是13.5万美元、新加坡是10.7万美元。所以即使是欧洲、加拿大、新加坡这些发达国家的不少IT同行都希望能到美国工作发展。&lt;/p>
-&lt;p>美国码农致富的核心是股票，而且职级越高、收入越高的码农，年包中股票的比例就越大。以亚马逊为例，L4（入门级码农）的年包平均16.4万美元，其中Base（基本工资）12.5万美元，Stock（股票）2.2万美元，Bonus（奖励）1.7万美元；而发展到L6（这个级别是大多数中国人可以触及的最大高度）时，平均年包达到33.2万美元，其中股票16万美元；最高的Principal（总管）年包中资本工资只有16.2万美元，但股票多达43.6万美元。&lt;/p>
-&lt;p>中国通缩严重呗，用一个人干两个人活，中国人收入还不涨，不通缩就怪了，不管二百斤超发多少货币，都会往不缺钱的人口袋里流。&lt;/p>
-&lt;p>在美国湾区的生活成本，特别是涉及租房和吃饭的开支，通常相当高。根据网络上的信息和最新的经济数据，这里提供一个大致的开支估算：&lt;/p>
-&lt;p>### 租房：&lt;/p>
-&lt;p>- &lt;strong>一居室公寓&lt;/strong>：&lt;/p>
-&lt;p>- 在旧金山市中心，平均租金大约在$3,000 - $3,500 美元之间。&lt;/p>
-&lt;p>- 如果在郊区如Oakland或Fremont，租金会略低，约为$2,000 - $3,000 美元。&lt;/p>
-&lt;p>- &lt;strong>合租&lt;/strong>：&lt;/p>
-&lt;p>- 与他人合租可以大幅降低开支。合租一居室或多居室公寓，个人承担的租金可能会在$1,500 - $2,500 美元之间。&lt;/p>
-&lt;p>### 吃饭：&lt;/p>
-&lt;p>- &lt;strong>自制餐食&lt;/strong>：&lt;/p>
-&lt;p>- 食品杂货的价格在湾区也相对高于美国其他地区。一个单身人士每月的杂货开支可能在$300 - $600 美元之间，视饮食习惯而定。&lt;/p>
-&lt;p>- &lt;strong>外出就餐&lt;/strong>：&lt;/p>
-&lt;p>- 在湾区吃一顿普通的餐馆饭菜，价格通常在$15 - $30 美元左右，昂贵的餐厅可能更高。如果你经常外出就餐，每月的开支可能达到$400 - $800 美元或更多。&lt;/p>
-&lt;p>### 总体开支：&lt;/p>
-&lt;p>- &lt;strong>保守估计&lt;/strong>：假设一个人选择合租，注重自制餐食，尽量减少外出就餐：&lt;/p>
-&lt;p>- 租房：$1,500&lt;/p>
-&lt;p>- 吃饭：$400（杂货）&lt;/p>
-&lt;p>- &lt;strong>总计&lt;/strong>：约$1,900 美元每月&lt;/p>
-&lt;p>- &lt;strong>中等开支&lt;/strong>：如果租住一居室公寓，并且偶尔外出就餐：&lt;/p>
-&lt;p>- 租房：$3,000&lt;/p>
-&lt;p>- 吃饭：$600（杂货 + 偶尔外出就餐）&lt;/p>
-&lt;p>- &lt;strong>总计&lt;/strong>：约$3,600 美元每月&lt;/p></description></item><item><title>2025-3-08 k8s创建pod流程图详解</title><link>https://qq547475331.github.io/docs/2025-3-8-k8s%E5%88%9B%E5%BB%BApod-deployment%E6%B5%81%E7%A8%8B%E5%9B%BE%E8%AF%A6%E8%A7%A3/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-3-8-k8s%E5%88%9B%E5%BB%BApod-deployment%E6%B5%81%E7%A8%8B%E5%9B%BE%E8%AF%A6%E8%A7%A3/</guid><description>&lt;pre tabindex="0">&lt;code class="language-mermaid" data-lang="mermaid">sequenceDiagram
+&lt;p>整体而言，Prometheus 的核心是周期性地抓取目标的监控数据，存储成时间序列，并通过查询、告警和可视化等功能帮助用户监控和维护系统的健康。&lt;/p></description></item><item><title>2025-3-08 k8s创建pod流程图详解</title><link>https://qq547475331.github.io/docs/2025-3-8-k8s%E5%88%9B%E5%BB%BApod-deployment%E6%B5%81%E7%A8%8B%E5%9B%BE%E8%AF%A6%E8%A7%A3/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-3-8-k8s%E5%88%9B%E5%BB%BApod-deployment%E6%B5%81%E7%A8%8B%E5%9B%BE%E8%AF%A6%E8%A7%A3/</guid><description>&lt;pre tabindex="0">&lt;code class="language-mermaid" data-lang="mermaid">sequenceDiagram
  participant User as 用户
  participant Kubectl as Kubectl
  participant API as API Server
