@@ -28271,7 +28271,7 @@ Charlie, 35, Marketing
  &lt;strong>3. Role 的配置文件结构&lt;/strong>
  &lt;a class="anchor" href="#3-role-%e7%9a%84%e9%85%8d%e7%bd%ae%e6%96%87%e4%bb%b6%e7%bb%93%e6%9e%84">#&lt;/a>
 &lt;/h3>
-&lt;p>可以在 Role 中定义一个清晰的目录结构，包括以下文件：&lt;/p></description></item><item><title>2025-2-28 prometheus 面试题</title><link>https://qq547475331.github.io/docs/2025-2-28-prometheus/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-28-prometheus/</guid><description>&lt;h2 id="prometheus">
+&lt;p>可以在 Role 中定义一个清晰的目录结构，包括以下文件：&lt;/p></description></item><item><title>2025-2-28 prometheus面试题</title><link>https://qq547475331.github.io/docs/2025-2-28-prometheus%E9%A2%98%E7%9B%AE/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-2-28-prometheus%E9%A2%98%E7%9B%AE/</guid><description>&lt;h2 id="prometheus">
  Prometheus
  &lt;a class="anchor" href="#prometheus">#&lt;/a>
 &lt;/h2>
@@ -28843,4 +28843,442 @@ Charlie, 35, Marketing
 &lt;/h3>
 &lt;ol>
 &lt;li>
-&lt;p>调整 ETCD 容量至 8G：&lt;/p></description></item></channel></rss>
+&lt;p>调整 ETCD 容量至 8G：&lt;/p></description></item><item><title>2025-3-20 thanos架构</title><link>https://qq547475331.github.io/docs/2025-3-20-thanos%E6%9E%B6%E6%9E%84/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-3-20-thanos%E6%9E%B6%E6%9E%84/</guid><description>&lt;h3 id="thanos-架构">
+ Thanos 架构
+ &lt;a class="anchor" href="#thanos-%e6%9e%b6%e6%9e%84">#&lt;/a>
+&lt;/h3>
+&lt;p>Thanos 是一个开源的扩展工具，它能够增强 Prometheus 的功能，特别是在多集群、跨区域的长时间存储和查询方面。Thanos 架构设计旨在为 Prometheus 提供长期存储、高可用性、跨集群数据聚合、跨区域查询等能力，同时保持 Prometheus 的简洁性和易用性。&lt;/p>
+&lt;p>Thanos 的架构是模块化的，包含多个组件，每个组件在 Thanos 系统中扮演不同的角色。以下是 Thanos 主要组件的介绍及其架构设计。&lt;/p>
+&lt;h3 id="thanos-主要组件">
+ Thanos 主要组件
+ &lt;a class="anchor" href="#thanos-%e4%b8%bb%e8%a6%81%e7%bb%84%e4%bb%b6">#&lt;/a>
+&lt;/h3>
+&lt;ol>
+&lt;li>&lt;strong>Thanos Sidecar&lt;/strong>:
+&lt;ul>
+&lt;li>&lt;strong>功能&lt;/strong>：Thanos Sidecar 运行在每个 Prometheus 实例旁边，作为 Prometheus 的代理。它的主要功能是将 Prometheus 中的数据存储（本地数据）上传到外部对象存储（如 S3、GCS 等）。此外，Thanos Sidecar 还负责向 Thanos 查询组件提供查询接口，并实现跨 Prometheus 实例的查询和聚合。&lt;/li>
+&lt;li>&lt;strong>作用&lt;/strong>：通过将数据存储到对象存储（如 S3）来实现 Prometheus 的持久化存储，同时也使得 Thanos 可以提供跨集群的数据聚合和查询功能。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>Thanos Store Gateway&lt;/strong>:
+&lt;ul>
+&lt;li>&lt;strong>功能&lt;/strong>：Thanos Store Gateway 负责从对象存储中读取长期存储的数据（例如，S3、GCS 等）并提供查询接口。它可以直接从存储中读取数据并将数据返回给查询组件。&lt;/li>
+&lt;li>&lt;strong>作用&lt;/strong>：为跨集群、跨时间的数据查询提供支持，允许查询 Prometheus 集群之外的数据。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>Thanos Query&lt;/strong>:
+&lt;ul>
+&lt;li>&lt;strong>功能&lt;/strong>：Thanos Query 是一个查询层组件，它从多个 Thanos Store Gateway 和 Prometheus 实例（通过 Thanos Sidecar）拉取数据，合并结果并提供查询接口。它支持 PromQL 查询语言，可以跨多个 Prometheus 实例进行聚合查询。&lt;/li>
+&lt;li>&lt;strong>作用&lt;/strong>：提供统一的查询入口，可以进行跨集群查询，支持全局查询和聚合查询。通过 Thanos Query，用户能够查询所有 Prometheus 集群的数据，并且查询结果能实时聚合。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>Thanos Compactor&lt;/strong>:
+&lt;ul>
+&lt;li>&lt;strong>功能&lt;/strong>：Thanos Compactor 负责定期清理和压缩对象存储中的历史数据。它优化存储空间，删除过期的时间序列，压缩时间序列数据以提高存储效率。&lt;/li>
+&lt;li>&lt;strong>作用&lt;/strong>：压缩和归档数据，以减少存储空间占用，并保持数据的长期可用性。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>Thanos Ruler&lt;/strong>:
+&lt;ul>
+&lt;li>&lt;strong>功能&lt;/strong>：Thanos Ruler 是 Prometheus 的规则引擎组件，它支持基于 Prometheus 查询语言（PromQL）设置告警规则和录制规则。它能够使用存储中的数据来执行规则并触发告警。&lt;/li>
+&lt;li>&lt;strong>作用&lt;/strong>：为 Thanos 提供告警规则支持，执行长时间范围的规则计算，并将告警发送到 Alertmanager。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ol>
+&lt;h3 id="thanos-系统架构图">
+ Thanos 系统架构图
+ &lt;a class="anchor" href="#thanos-%e7%b3%bb%e7%bb%9f%e6%9e%b6%e6%9e%84%e5%9b%be">#&lt;/a>
+&lt;/h3>
+&lt;pre tabindex="0">&lt;code class="language-mermaid" data-lang="mermaid">graph TD
+ subgraph Data_Scraping
+ direction TB
+ A[Prometheus Targets]
+ end
+
+ subgraph Thanos_Cluster
+ direction TB
+ B[Thanos Sidecar]
+ C[Thanos Store Gateway]
+ D[Thanos Query]
+ E[Thanos Ruler]
+ F[Thanos Compactor]
+ end
+
+ subgraph Long_Term_Storage
+ direction TB
+ G[S3/GCS/Cloud Storage]
+ end
+
+ A --&amp;gt; B
+ B --&amp;gt; C
+ B --&amp;gt; D
+ C --&amp;gt; G
+ D --&amp;gt; G
+ D --&amp;gt; A
+ E --&amp;gt; G
+ F --&amp;gt; G
+ B --&amp;gt; E
+&lt;/code>&lt;/pre>&lt;h3 id="组件之间的交互">
+ 组件之间的交互：
+ &lt;a class="anchor" href="#%e7%bb%84%e4%bb%b6%e4%b9%8b%e9%97%b4%e7%9a%84%e4%ba%a4%e4%ba%92">#&lt;/a>
+&lt;/h3>
+&lt;ol>
+&lt;li>&lt;strong>Prometheus Targets&lt;/strong>：收集时序数据，发送到 Prometheus 进行存储。&lt;/li>
+&lt;li>Thanos Sidecar：
+&lt;ul>
+&lt;li>与 Prometheus 紧密集成，负责将 Prometheus 存储的数据上传到外部对象存储（如 S3）。&lt;/li>
+&lt;li>提供与 Thanos Query 和 Thanos Ruler 的交互接口。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>Thanos Store Gateway：
+&lt;ul>
+&lt;li>从长期存储（例如 S3）中获取历史数据，并为 Thanos Query 提供查询接口。&lt;/li>
+&lt;li>存储长期的数据，在 Prometheus 的时间范围外提供可查询的数据。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>Thanos Query：
+&lt;ul>
+&lt;li>提供统一的查询入口，允许跨多个 Prometheus 集群执行查询。&lt;/li>
+&lt;li>从 Thanos Store Gateway、Prometheus 实例中拉取数据并返回查询结果。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>Thanos Ruler：
+&lt;ul>
+&lt;li>基于存储的数据执行 Prometheus 的告警规则和录制规则。&lt;/li>
+&lt;li>通过规则引擎提供跨集群的告警和录制计算。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>Thanos Compactor：
+&lt;ul>
+&lt;li>定期清理和压缩存储的数据，减小存储占用。&lt;/li>
+&lt;li>优化历史数据存储，提高存储效率。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ol>
+&lt;h3 id="thanos-优缺点">
+ Thanos 优缺点
+ &lt;a class="anchor" href="#thanos-%e4%bc%98%e7%bc%ba%e7%82%b9">#&lt;/a>
+&lt;/h3>
+&lt;h4 id="优点">
+ 优点：
+ &lt;a class="anchor" href="#%e4%bc%98%e7%82%b9">#&lt;/a>
+&lt;/h4>
+&lt;ol>
+&lt;li>&lt;strong>跨集群查询&lt;/strong>：Thanos 可以跨多个 Prometheus 集群进行查询，支持集中式监控。&lt;/li>
+&lt;li>&lt;strong>长时间存储&lt;/strong>：与对象存储（如 S3）集成，提供几乎无限的时序数据存储能力。&lt;/li>
+&lt;li>&lt;strong>高可用性&lt;/strong>：通过 Thanos Sidecar、Store Gateway 和 Query 组件的分布式设计，提供高可用性。&lt;/li>
+&lt;li>&lt;strong>与 Prometheus 无缝集成&lt;/strong>：Thanos 能够与现有的 Prometheus 集群轻松集成，并增强 Prometheus 的能力。&lt;/li>
+&lt;li>&lt;strong>告警和规则&lt;/strong>：支持 Prometheus 的规则引擎，能够通过 Thanos Ruler 执行告警和录制规则。&lt;/li>
+&lt;/ol>
+&lt;h4 id="缺点">
+ 缺点：
+ &lt;a class="anchor" href="#%e7%bc%ba%e7%82%b9">#&lt;/a>
+&lt;/h4>
+&lt;ol>
+&lt;li>&lt;strong>部署复杂性&lt;/strong>：Thanos 的组件较多，部署和管理相对复杂，尤其是在大规模环境下。&lt;/li>
+&lt;li>&lt;strong>性能瓶颈&lt;/strong>：虽然 Thanos 能够跨多个 Prometheus 实例进行查询，但在某些高负载情况下，查询性能可能会受到影响，尤其是在大量历史数据查询时。&lt;/li>
+&lt;li>&lt;strong>存储成本&lt;/strong>：将所有历史数据存储在对象存储中，可能会增加存储成本。&lt;/li>
+&lt;/ol>
+&lt;h3 id="结论">
+ 结论
+ &lt;a class="anchor" href="#%e7%bb%93%e8%ae%ba">#&lt;/a>
+&lt;/h3>
+&lt;p>Thanos 是一个极其强大的工具，能够有效地扩展 Prometheus 的功能，特别是在跨集群、长时间存储和查询方面。通过 Thanos，Prometheus 可以具备更强的扩展性、跨地域数据聚合能力以及长时间的时序数据存储能力。这使得 Thanos 成为在大规模、多集群监控环境中非常有价值的工具。&lt;/p></description></item><item><title>2025-3-20 VictoriaMetrics 和 Thanos 对比</title><link>https://qq547475331.github.io/docs/2025-3-20-victoriametrics%E5%92%8Cthanos%E5%AF%B9%E6%AF%94/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-3-20-victoriametrics%E5%92%8Cthanos%E5%AF%B9%E6%AF%94/</guid><description>&lt;h3 id="victoriametrics-和-thanos-对比">
+ VictoriaMetrics 和 Thanos 对比
+ &lt;a class="anchor" href="#victoriametrics-%e5%92%8c-thanos-%e5%af%b9%e6%af%94">#&lt;/a>
+&lt;/h3>
+&lt;p>&lt;strong>VictoriaMetrics&lt;/strong> 和 &lt;strong>Thanos&lt;/strong> 都是为了解决 Prometheus 在大规模监控、跨集群数据聚合、长期存储和查询等方面的不足而出现的工具。虽然它们都扩展了 Prometheus 的能力，但它们在架构设计、功能、适用场景等方面有一些不同。以下是对比：&lt;/p>
+&lt;hr>
+&lt;h3 id="1-功能对比">
+ 1. &lt;strong>功能对比&lt;/strong>
+ &lt;a class="anchor" href="#1-%e5%8a%9f%e8%83%bd%e5%af%b9%e6%af%94">#&lt;/a>
+&lt;/h3>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>功能&lt;/th>
+ &lt;th>&lt;strong>VictoriaMetrics&lt;/strong>&lt;/th>
+ &lt;th>&lt;strong>Thanos&lt;/strong>&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>长期存储&lt;/strong>&lt;/td>
+ &lt;td>内建长期存储，优化了存储和压缩，支持对象存储（如 S3/GCS）&lt;/td>
+ &lt;td>通过与对象存储集成（如 S3）实现长期存储&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>扩展性&lt;/strong>&lt;/td>
+ &lt;td>支持水平扩展，能够处理数十亿条指标的时序数据&lt;/td>
+ &lt;td>通过组件（Sidecar、Query、Store Gateway）实现扩展&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>查询能力&lt;/strong>&lt;/td>
+ &lt;td>支持 PromQL，查询性能较高，尤其是对大规模数据的处理&lt;/td>
+ &lt;td>通过 Thanos Query 提供跨 Prometheus 实例的查询和聚合功能&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>高可用性&lt;/strong>&lt;/td>
+ &lt;td>通过集群模式实现高可用性&lt;/td>
+ &lt;td>高可用性通过 Sidecar 和 Store Gateway 实现，Query 和 Ruler 提供冗余&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>数据聚合&lt;/strong>&lt;/td>
+ &lt;td>内建数据聚合机制，支持跨集群的数据查询和聚合&lt;/td>
+ &lt;td>支持跨多个 Prometheus 集群的聚合，依赖于 Store Gateway&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>数据压缩&lt;/strong>&lt;/td>
+ &lt;td>高效的存储压缩机制，支持低存储成本的长期数据存储&lt;/td>
+ &lt;td>通过 Compactor 进行数据压缩和存储优化&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>告警和规则&lt;/strong>&lt;/td>
+ &lt;td>无内建告警机制，通常与 Prometheus 配合使用&lt;/td>
+ &lt;td>通过 Thanos Ruler 实现跨集群的告警和规则计算&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>性能&lt;/strong>&lt;/td>
+ &lt;td>更加优化的存储和查询引擎，特别在大规模数据下表现优秀&lt;/td>
+ &lt;td>在大规模数据查询时可能会有性能瓶颈，尤其是在高查询负载下&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>部署复杂性&lt;/strong>&lt;/td>
+ &lt;td>简单，容易部署，适合高性能、高吞吐量的场景&lt;/td>
+ &lt;td>组件较多，部署和管理较为复杂，适合需要跨集群的场景&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>成本&lt;/strong>&lt;/td>
+ &lt;td>更低的存储成本和更少的组件，适合低成本、高效的部署&lt;/td>
+ &lt;td>由于多个组件的部署，整体成本可能较高&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h3 id="2-架构对比">
+ 2. &lt;strong>架构对比&lt;/strong>
+ &lt;a class="anchor" href="#2-%e6%9e%b6%e6%9e%84%e5%af%b9%e6%af%94">#&lt;/a>
+&lt;/h3>
+&lt;h4 id="victoriametrics-架构">
+ &lt;strong>VictoriaMetrics 架构&lt;/strong>
+ &lt;a class="anchor" href="#victoriametrics-%e6%9e%b6%e6%9e%84">#&lt;/a>
+&lt;/h4>
+&lt;ul>
+&lt;li>&lt;strong>VictoriaMetrics&lt;/strong> 本身就是一个高性能时序数据库，内建了高效的数据存储、压缩和查询机制。它不需要像 Thanos 一样依赖多个组件来扩展 Prometheus 的功能。VictoriaMetrics 支持单机部署，也支持水平扩展，能够提供跨集群的数据存储和查询。&lt;/li>
+&lt;li>适用于需要高效、低成本存储并且需要高吞吐量的监控场景。&lt;/li>
+&lt;/ul>
+&lt;h4 id="thanos-架构">
+ &lt;strong>Thanos 架构&lt;/strong>
+ &lt;a class="anchor" href="#thanos-%e6%9e%b6%e6%9e%84">#&lt;/a>
+&lt;/h4>
+&lt;ul>
+&lt;li>&lt;strong>Thanos&lt;/strong> 是一个扩展工具，旨在增强 Prometheus 的能力。它通过多个组件（Sidecar、Query、Store Gateway、Ruler、Compactor）来提供跨集群数据聚合、长期存储和高可用性。&lt;/li>
+&lt;li>Thanos 主要是为了支持 Prometheus 的高可用性、跨集群查询和长期数据存储而设计的，适用于多集群、大规模监控的场景。&lt;/li>
+&lt;/ul>
+&lt;hr>
+&lt;h3 id="3-性能对比">
+ 3. &lt;strong>性能对比&lt;/strong>
+ &lt;a class="anchor" href="#3-%e6%80%a7%e8%83%bd%e5%af%b9%e6%af%94">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>&lt;strong>VictoriaMetrics&lt;/strong>：
+&lt;ul>
+&lt;li>优化了时序数据存储和查询的性能，能够处理大量指标数据，尤其是在大规模的监控场景中，查询性能非常优秀。&lt;/li>
+&lt;li>数据压缩和存储效率非常高，能够显著降低存储成本。&lt;/li>
+&lt;li>对大数据量的查询性能较为优越，尤其是在高吞吐量的时序数据下。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>Thanos&lt;/strong>：
+&lt;ul>
+&lt;li>Thanos 的查询性能受到多个组件的影响，尤其是在跨集群查询时，查询性能可能会有一定的瓶颈。&lt;/li>
+&lt;li>存储压缩由 Thanos Compactor 负责，但整体查询性能通常比 VictoriaMetrics 更依赖于架构设计和部署方式。&lt;/li>
+&lt;li>跨集群查询和长时间存储的支持优于单一集群环境中的单一 Prometheus，但对高查询频率和大量数据的查询可能会带来延迟。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;hr>
+&lt;h3 id="4-存储机制对比">
+ 4. &lt;strong>存储机制对比&lt;/strong>
+ &lt;a class="anchor" href="#4-%e5%ad%98%e5%82%a8%e6%9c%ba%e5%88%b6%e5%af%b9%e6%af%94">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>&lt;strong>VictoriaMetrics&lt;/strong>：
+&lt;ul>
+&lt;li>自带高效的存储引擎，支持对象存储（如 S3、GCS）的长时间存储。&lt;/li>
+&lt;li>提供内建的压缩机制，降低存储成本。&lt;/li>
+&lt;li>内存和磁盘使用效率高，特别适合需要处理大规模、长时间数据存储的场景。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>Thanos&lt;/strong>：
+&lt;ul>
+&lt;li>Thanos 通过将数据存储到对象存储中（如 S3、GCS），支持高效的长期存储。&lt;/li>
+&lt;li>数据压缩和存储优化是通过 Thanos Compactor 完成的。&lt;/li>
+&lt;li>Thanos 的存储机制依赖于 Prometheus 和 Store Gateway，将历史数据存储到对象存储中，并支持跨 Prometheus 实例的数据查询。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;hr>
+&lt;h3 id="5-使用场景对比">
+ 5. &lt;strong>使用场景对比&lt;/strong>
+ &lt;a class="anchor" href="#5-%e4%bd%bf%e7%94%a8%e5%9c%ba%e6%99%af%e5%af%b9%e6%af%94">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>VictoriaMetrics：
+&lt;ul>
+&lt;li>适合需要高性能存储和查询的场景，尤其在单集群或简单集群环境下。&lt;/li>
+&lt;li>更适合对存储和查询性能要求极高的监控系统，特别是处理大量数据时。&lt;/li>
+&lt;li>支持高吞吐量的数据写入和查询，适用于对低延迟、高并发有要求的场景。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>Thanos：
+&lt;ul>
+&lt;li>适合跨集群、大规模的监控系统，特别是在多区域或多集群环境下。&lt;/li>
+&lt;li>用于扩展 Prometheus 功能，提供跨集群数据聚合、长时间存储、查询和高可用性。&lt;/li>
+&lt;li>适合已有 Prometheus 部署的环境，通过 Thanos 的组件增强 Prometheus 的能力。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;hr>
+&lt;h3 id="6-优缺点总结">
+ 6. &lt;strong>优缺点总结&lt;/strong>
+ &lt;a class="anchor" href="#6-%e4%bc%98%e7%bc%ba%e7%82%b9%e6%80%bb%e7%bb%93">#&lt;/a>
+&lt;/h3>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>特性&lt;/th>
+ &lt;th>&lt;strong>VictoriaMetrics&lt;/strong>&lt;/th>
+ &lt;th>&lt;strong>Thanos&lt;/strong>&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>优点&lt;/strong>&lt;/td>
+ &lt;td>1. 高效存储，压缩能力强。&lt;/td>
+ &lt;td>1. 跨集群数据聚合和查询。&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;/td>
+ &lt;td>2. 查询性能优异，尤其在大数据量环境下。&lt;/td>
+ &lt;td>2. 支持长期存储，适用于大规模环境。&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;/td>
+ &lt;td>3. 存储成本较低，部署和维护简单。&lt;/td>
+ &lt;td>3. 与 Prometheus 集成，提供高可用性和扩展性。&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;/td>
+ &lt;td>&lt;/td>
+ &lt;td>&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;h3 id="victoriametrics-与-thanos-对比">
+ VictoriaMetrics 与 Thanos 对比
+ &lt;a class="anchor" href="#victoriametrics-%e4%b8%8e-thanos-%e5%af%b9%e6%af%94">#&lt;/a>
+&lt;/h3>
+&lt;p>&lt;strong>VictoriaMetrics&lt;/strong> 和 &lt;strong>Thanos&lt;/strong> 都是为 Prometheus 提供扩展和增强功能的开源工具，尤其是在长时间存储和跨集群查询方面。这两个工具各有特点，适用于不同的场景，下面对它们的功能、架构和优缺点做详细对比。&lt;/p></description></item><item><title>2025-3-20 victoriametrics 架构</title><link>https://qq547475331.github.io/docs/2025-3-20-victoriametrics%E6%9E%B6%E6%9E%84/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-3-20-victoriametrics%E6%9E%B6%E6%9E%84/</guid><description>&lt;p>VictoriaMetrics 是一个高性能、开源的时序数据库，设计用来处理大规模的时序数据。它支持 Prometheus 数据格式，并具有非常高的写入和查询性能。VictoriaMetrics 特别适用于大规模环境中的时序数据存储和查询，能够提供跨多个集群的时序数据存储和查询能力。&lt;/p>
+&lt;h3 id="victoriametrics-架构">
+ VictoriaMetrics 架构
+ &lt;a class="anchor" href="#victoriametrics-%e6%9e%b6%e6%9e%84">#&lt;/a>
+&lt;/h3>
+&lt;p>VictoriaMetrics 的架构可以分为几个主要组件，每个组件在存储、查询和管理数据方面都发挥着不同的作用。&lt;/p>
+&lt;h4 id="1-victoriametrics-components">
+ 1. &lt;strong>VictoriaMetrics Components&lt;/strong>:
+ &lt;a class="anchor" href="#1-victoriametrics-components">#&lt;/a>
+&lt;/h4>
+&lt;ul>
+&lt;li>&lt;strong>vmstorage&lt;/strong>：负责存储时序数据，并提供高效的数据压缩和存储管理功能。所有的时序数据都会被写入 vmstorage 中，并且在底层存储中进行压缩以节省存储空间。&lt;/li>
+&lt;li>&lt;strong>vmselect&lt;/strong>：用于执行查询操作，并从 vmstorage 获取数据。它负责解析 Prometheus 查询（PromQL）并返回查询结果。&lt;code>vmselect&lt;/code> 是查询请求的入口。&lt;/li>
+&lt;li>&lt;strong>vminsert&lt;/strong>：负责接收数据并将其写入到 &lt;code>vmstorage&lt;/code>。它接受来自 Prometheus 或其他系统的时序数据，并将其插入到存储系统中。&lt;/li>
+&lt;li>&lt;strong>VictoriaMetrics Cluster&lt;/strong>：通过多个 &lt;code>vmselect&lt;/code> 和 &lt;code>vminsert&lt;/code> 实例部署来扩展系统的写入和查询能力。这使得 VictoriaMetrics 能够水平扩展，在大规模环境中高效地处理时序数据。&lt;/li>
+&lt;li>&lt;strong>Scrape&lt;/strong>：像 Prometheus 一样，VictoriaMetrics 也可以从不同的数据源抓取时序数据，进行数据存储。&lt;/li>
+&lt;/ul>
+&lt;h4 id="2-victoriametrics-存储架构">
+ 2. &lt;strong>VictoriaMetrics 存储架构&lt;/strong>：
+ &lt;a class="anchor" href="#2-victoriametrics-%e5%ad%98%e5%82%a8%e6%9e%b6%e6%9e%84">#&lt;/a>
+&lt;/h4>
+&lt;ul>
+&lt;li>&lt;strong>数据存储&lt;/strong>：VictoriaMetrics 使用基于磁盘的列式存储结构，支持高效的数据压缩。其数据以时间序列的形式存储，并根据时间进行分片存储，以便在高并发查询时提高查询性能。&lt;/li>
+&lt;li>&lt;strong>数据压缩&lt;/strong>：为了节省存储空间，VictoriaMetrics 采用了自定义的压缩算法（如 Gorilla 算法）来压缩时序数据。压缩后的数据不仅减少了存储的开销，还提高了读取性能。&lt;/li>
+&lt;li>&lt;strong>长期存储&lt;/strong>：可以将数据长期存储在磁盘中，或者通过集成外部存储后端（如 S3）实现更长期的数据存储。VictoriaMetrics 也支持与 Thanos 兼容的 API，允许数据存储在对象存储中，从而支持跨数据中心存储和数据恢复。&lt;/li>
+&lt;/ul>
+&lt;h4 id="3-数据流">
+ 3. &lt;strong>数据流&lt;/strong>：
+ &lt;a class="anchor" href="#3-%e6%95%b0%e6%8d%ae%e6%b5%81">#&lt;/a>
+&lt;/h4>
+&lt;ul>
+&lt;li>&lt;strong>vminsert&lt;/strong> 接收来自 Prometheus 或其他数据源的时序数据，并将其写入到 &lt;code>vmstorage&lt;/code>。&lt;/li>
+&lt;li>&lt;strong>vmselect&lt;/strong> 接收查询请求，并根据查询条件从 &lt;code>vmstorage&lt;/code> 中提取数据进行查询响应。&lt;/li>
+&lt;li>查询过程中，&lt;code>vmselect&lt;/code> 会将查询请求传递给多个 &lt;code>vmstorage&lt;/code> 实例（如果是集群部署）以获得需要的数据。&lt;/li>
+&lt;li>&lt;code>vmselect&lt;/code> 提供高效的查询能力，并支持 PromQL 语法，可以像 Prometheus 一样进行查询和数据展示。&lt;/li>
+&lt;/ul>
+&lt;h3 id="典型架构图">
+ 典型架构图
+ &lt;a class="anchor" href="#%e5%85%b8%e5%9e%8b%e6%9e%b6%e6%9e%84%e5%9b%be">#&lt;/a>
+&lt;/h3>
+&lt;pre tabindex="0">&lt;code class="language-mermaid" data-lang="mermaid">graph TB
+ subgraph Data_Collection
+ direction TB
+ P[Prometheus Scraping Targets]
+ end
+
+ subgraph VictoriaMetrics_Cluster
+ direction TB
+ A[vminsert]
+ B[vmstorage]
+ C[vmselect]
+ end
+
+ subgraph Monitoring_And_Alerting
+ direction LR
+ G[Grafana]
+ A1[Alertmanager]
+ end
+
+ P --&amp;gt; A
+ A --&amp;gt; B
+ G --&amp;gt; C
+ C --&amp;gt; B
+ A1 --&amp;gt; A
+ C --&amp;gt; G
+&lt;/code>&lt;/pre>&lt;h3 id="关键组件功能和数据流">
+ 关键组件功能和数据流：
+ &lt;a class="anchor" href="#%e5%85%b3%e9%94%ae%e7%bb%84%e4%bb%b6%e5%8a%9f%e8%83%bd%e5%92%8c%e6%95%b0%e6%8d%ae%e6%b5%81">#&lt;/a>
+&lt;/h3>
+&lt;ol>
+&lt;li>&lt;strong>数据收集&lt;/strong>（Prometheus Scraping Targets）：VictoriaMetrics 可以通过 &lt;code>vminsert&lt;/code> 接收来自 Prometheus 的数据，或者其他应用将数据推送到 &lt;code>vminsert&lt;/code> 中。&lt;/li>
+&lt;li>&lt;strong>数据存储&lt;/strong>（vmstorage）：&lt;code>vmstorage&lt;/code> 组件负责数据的存储，所有接收到的时序数据都会被写入到 &lt;code>vmstorage&lt;/code> 中，存储格式采用压缩存储以减少存储开销。&lt;/li>
+&lt;li>&lt;strong>数据查询&lt;/strong>（vmselect）：&lt;code>vmselect&lt;/code> 负责处理来自客户端（如 Grafana）的查询请求，并查询数据存储中的时序数据，支持 PromQL 查询语言。&lt;/li>
+&lt;li>&lt;strong>查询结果展示和告警&lt;/strong>：通过 &lt;strong>Grafana&lt;/strong> 等可视化工具展示查询结果，同时，&lt;strong>Alertmanager&lt;/strong> 用来处理 Prometheus 的告警规则并发送告警。&lt;/li>
+&lt;/ol>
+&lt;h3 id="优缺点">
+ 优缺点：
+ &lt;a class="anchor" href="#%e4%bc%98%e7%bc%ba%e7%82%b9">#&lt;/a>
+&lt;/h3>
+&lt;h4 id="优点">
+ 优点：
+ &lt;a class="anchor" href="#%e4%bc%98%e7%82%b9">#&lt;/a>
+&lt;/h4>
+&lt;ol>
+&lt;li>&lt;strong>高性能&lt;/strong>：在数据写入和查询方面都提供了非常高的性能，特别是针对大规模时序数据场景。&lt;/li>
+&lt;li>&lt;strong>高压缩比&lt;/strong>：使用自定义的压缩算法，存储空间消耗较低，适合大规模的时序数据。&lt;/li>
+&lt;li>&lt;strong>水平扩展&lt;/strong>：支持通过增加多个 &lt;code>vmselect&lt;/code> 和 &lt;code>vminsert&lt;/code> 实例来扩展存储和查询能力，具有很好的伸缩性。&lt;/li>
+&lt;li>&lt;strong>支持 Prometheus 格式&lt;/strong>：与 Prometheus 兼容，可以直接替代 Prometheus 存储，并且支持 PromQL 查询。&lt;/li>
+&lt;li>&lt;strong>支持持久化存储&lt;/strong>：支持将数据持久化存储在本地磁盘或外部对象存储中（如 S3）。&lt;/li>
+&lt;/ol>
+&lt;h4 id="缺点">
+ 缺点：
+ &lt;a class="anchor" href="#%e7%bc%ba%e7%82%b9">#&lt;/a>
+&lt;/h4>
+&lt;ol>
+&lt;li>&lt;strong>功能较简单&lt;/strong>：虽然 VictoriaMetrics 在性能和存储管理上很强，但它的功能相对简单，缺乏 Prometheus 中的一些复杂功能（如规则引擎等）。&lt;/li>
+&lt;li>&lt;strong>查询语法不支持全部 Prometheus 功能&lt;/strong>：部分 Prometheus 的高级功能可能不完全支持，虽然它支持 PromQL，但某些查询可能在功能上有所限制。&lt;/li>
+&lt;li>&lt;strong>配置复杂性&lt;/strong>：对于大型环境的部署和集群管理，配置相对复杂，需要合理规划各个组件的部署和资源分配。&lt;/li>
+&lt;/ol>
+&lt;h3 id="总结">
+ 总结：
+ &lt;a class="anchor" href="#%e6%80%bb%e7%bb%93">#&lt;/a>
+&lt;/h3>
+&lt;p>VictoriaMetrics 是一个高效且适合大规模时序数据存储和查询的系统。它提供了高性能的时序数据存储和查询，适合大规模数据存储和处理需求，尤其在 Prometheus 生态中可以很方便地替代 Prometheus 存储和提供长时间的数据查询能力。&lt;/p></description></item></channel></rss>
