@@ -28983,7 +28983,108 @@ Charlie, 35, Marketing
  结论
  &lt;a class="anchor" href="#%e7%bb%93%e8%ae%ba">#&lt;/a>
 &lt;/h3>
-&lt;p>Thanos 是一个极其强大的工具，能够有效地扩展 Prometheus 的功能，特别是在跨集群、长时间存储和查询方面。通过 Thanos，Prometheus 可以具备更强的扩展性、跨地域数据聚合能力以及长时间的时序数据存储能力。这使得 Thanos 成为在大规模、多集群监控环境中非常有价值的工具。&lt;/p></description></item><item><title>2025-3-20 VictoriaMetrics 和 Thanos 对比</title><link>https://qq547475331.github.io/docs/2025-3-20-victoriametrics%E5%92%8Cthanos%E5%AF%B9%E6%AF%94/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-3-20-victoriametrics%E5%92%8Cthanos%E5%AF%B9%E6%AF%94/</guid><description>&lt;h3 id="victoriametrics-和-thanos-对比">
+&lt;p>Thanos 是一个极其强大的工具，能够有效地扩展 Prometheus 的功能，特别是在跨集群、长时间存储和查询方面。通过 Thanos，Prometheus 可以具备更强的扩展性、跨地域数据聚合能力以及长时间的时序数据存储能力。这使得 Thanos 成为在大规模、多集群监控环境中非常有价值的工具。&lt;/p></description></item><item><title>2025-3-20 thanos高可用架构</title><link>https://qq547475331.github.io/docs/2025-3-20-thanos%E9%AB%98%E5%8F%AF%E7%94%A8%E6%9E%B6%E6%9E%84/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-3-20-thanos%E9%AB%98%E5%8F%AF%E7%94%A8%E6%9E%B6%E6%9E%84/</guid><description>&lt;h1 id="thanos-高可用ha集群二进制部署方案">
+ &lt;strong>Thanos 高可用（HA）集群二进制部署方案&lt;/strong>
+ &lt;a class="anchor" href="#thanos-%e9%ab%98%e5%8f%af%e7%94%a8ha%e9%9b%86%e7%be%a4%e4%ba%8c%e8%bf%9b%e5%88%b6%e9%83%a8%e7%bd%b2%e6%96%b9%e6%a1%88">#&lt;/a>
+&lt;/h1>
+&lt;p>Thanos 提供 &lt;strong>水平扩展、长期存储、跨集群监控&lt;/strong> 以及 &lt;strong>高可用（HA）&lt;/strong> 的能力。通过 &lt;strong>Thanos Sidecar、Store、Query、Compactor、Receive、Ruler&lt;/strong> 组件实现 Prometheus 监控的 HA 方案。&lt;/p>
+&lt;hr>
+&lt;h2 id="1-ha-架构">
+ &lt;strong>1. HA 架构&lt;/strong>
+ &lt;a class="anchor" href="#1-ha-%e6%9e%b6%e6%9e%84">#&lt;/a>
+&lt;/h2>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-plaintext" data-lang="plaintext">&lt;span style="display:flex;">&lt;span> ┌──────────────────────────┐
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> │ Grafana │
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> └──────────────────────────┘
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ▲
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> │
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ▼
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ┌──────────────────────────┐
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> │ Thanos Query │
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> └──────────────────────────┘
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ▲
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> │
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ┌───────────────────────────────┬───────────────────────────────┐
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> │ │ │
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>│ Thanos Store │ │ Thanos Store │ │ Thanos Store │
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>└──────────────┘ └──────────────┘ └──────────────┘
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ▲ ▲ ▲
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> │ │ │
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>│ ObjectStore │ │ ObjectStore │ │ ObjectStore │
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>└──────────────┘ └──────────────┘ └──────────────┘
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ▲ ▲ ▲
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> │ │ │
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>│ Thanos Sidecar │ │ Thanos Sidecar │ │ Thanos Sidecar │
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>└──────────────┘ └──────────────┘ └──────────────┘
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ▲ ▲ ▲
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> │ │ │
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>│ Prometheus-1 │ │ Prometheus-2 │ │ Prometheus-3 │
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>└──────────────┘ └──────────────┘ └──────────────┘
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;hr>
+&lt;h2 id="2-组件介绍">
+ &lt;strong>2. 组件介绍&lt;/strong>
+ &lt;a class="anchor" href="#2-%e7%bb%84%e4%bb%b6%e4%bb%8b%e7%bb%8d">#&lt;/a>
+&lt;/h2>
+&lt;h3 id="21-thanos-sidecar">
+ &lt;strong>2.1 Thanos Sidecar&lt;/strong>
+ &lt;a class="anchor" href="#21-thanos-sidecar">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>&lt;strong>作用&lt;/strong>：附加到 &lt;strong>Prometheus 实例&lt;/strong>，提供 &lt;strong>数据长存&lt;/strong> 和 &lt;strong>查询 API&lt;/strong>。&lt;/li>
+&lt;li>&lt;strong>高可用&lt;/strong>：每个 Prometheus 实例都有对应的 Sidecar。&lt;/li>
+&lt;/ul>
+&lt;h3 id="22-thanos-query">
+ &lt;strong>2.2 Thanos Query&lt;/strong>
+ &lt;a class="anchor" href="#22-thanos-query">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>&lt;strong>作用&lt;/strong>：聚合多个 &lt;code>Prometheus&lt;/code> 和 &lt;code>Store&lt;/code>，进行统一查询。&lt;/li>
+&lt;li>&lt;strong>高可用&lt;/strong>：多个 &lt;code>Query&lt;/code> 组件可负载均衡，防止单点故障。&lt;/li>
+&lt;/ul>
+&lt;h3 id="23-thanos-store">
+ &lt;strong>2.3 Thanos Store&lt;/strong>
+ &lt;a class="anchor" href="#23-thanos-store">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>&lt;strong>作用&lt;/strong>：从远程对象存储（如 S3、OSS、Ceph）中 &lt;strong>读取历史数据&lt;/strong>，确保长期存储。&lt;/li>
+&lt;li>&lt;strong>高可用&lt;/strong>：多个 &lt;code>Store&lt;/code> 组件，防止存储查询压力集中。&lt;/li>
+&lt;/ul>
+&lt;h3 id="24-thanos-compactor">
+ &lt;strong>2.4 Thanos Compactor&lt;/strong>
+ &lt;a class="anchor" href="#24-thanos-compactor">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>&lt;strong>作用&lt;/strong>：压缩、去重和优化对象存储中的数据，提高查询效率。&lt;/li>
+&lt;li>&lt;strong>高可用&lt;/strong>：可以部署多个实例，但只需启用一个主要实例。&lt;/li>
+&lt;/ul>
+&lt;h3 id="25-thanos-receive">
+ &lt;strong>2.5 Thanos Receive&lt;/strong>
+ &lt;a class="anchor" href="#25-thanos-receive">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>&lt;strong>作用&lt;/strong>：接收 &lt;strong>Prometheus Remote Write&lt;/strong>，作为 Prometheus 远程存储，可替代 Prometheus HA 方案。&lt;/li>
+&lt;/ul>
+&lt;h3 id="26-thanos-ruler">
+ &lt;strong>2.6 Thanos Ruler&lt;/strong>
+ &lt;a class="anchor" href="#26-thanos-ruler">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>&lt;strong>作用&lt;/strong>：提供独立于 Prometheus 的 &lt;strong>告警规则&lt;/strong> 和 &lt;strong>查询聚合&lt;/strong>，提升 HA 和弹性扩展能力。&lt;/li>
+&lt;/ul>
+&lt;hr>
+&lt;h2 id="3-ha-部署方案">
+ &lt;strong>3. HA 部署方案&lt;/strong>
+ &lt;a class="anchor" href="#3-ha-%e9%83%a8%e7%bd%b2%e6%96%b9%e6%a1%88">#&lt;/a>
+&lt;/h2>
+&lt;h3 id="31-prometheus-远程存储配置">
+ &lt;strong>3.1 Prometheus 远程存储配置&lt;/strong>
+ &lt;a class="anchor" href="#31-prometheus-%e8%bf%9c%e7%a8%8b%e5%ad%98%e5%82%a8%e9%85%8d%e7%bd%ae">#&lt;/a>
+&lt;/h3>
+&lt;p>在 &lt;code>prometheus.yml&lt;/code> 配置：&lt;/p></description></item><item><title>2025-3-20 VictoriaMetrics 和 Thanos 对比</title><link>https://qq547475331.github.io/docs/2025-3-20-victoriametrics%E5%92%8Cthanos%E5%AF%B9%E6%AF%94/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-3-20-victoriametrics%E5%92%8Cthanos%E5%AF%B9%E6%AF%94/</guid><description>&lt;h3 id="victoriametrics-和-thanos-对比">
  VictoriaMetrics 和 Thanos 对比
  &lt;a class="anchor" href="#victoriametrics-%e5%92%8c-thanos-%e5%af%b9%e6%af%94">#&lt;/a>
 &lt;/h3>
@@ -29281,4 +29382,67 @@ Charlie, 35, Marketing
  总结：
  &lt;a class="anchor" href="#%e6%80%bb%e7%bb%93">#&lt;/a>
 &lt;/h3>
-&lt;p>VictoriaMetrics 是一个高效且适合大规模时序数据存储和查询的系统。它提供了高性能的时序数据存储和查询，适合大规模数据存储和处理需求，尤其在 Prometheus 生态中可以很方便地替代 Prometheus 存储和提供长时间的数据查询能力。&lt;/p></description></item></channel></rss>
+&lt;p>VictoriaMetrics 是一个高效且适合大规模时序数据存储和查询的系统。它提供了高性能的时序数据存储和查询，适合大规模数据存储和处理需求，尤其在 Prometheus 生态中可以很方便地替代 Prometheus 存储和提供长时间的数据查询能力。&lt;/p></description></item><item><title>2025-3-20 victoriametrics高可用架构</title><link>https://qq547475331.github.io/docs/2025-3-20-victoriametrics-%E9%AB%98%E5%8F%AF%E7%94%A8%E6%9E%B6%E6%9E%84/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-3-20-victoriametrics-%E9%AB%98%E5%8F%AF%E7%94%A8%E6%9E%B6%E6%9E%84/</guid><description>&lt;h2 id="victoriametrics-高可用ha集群方案">
+ &lt;strong>VictoriaMetrics 高可用（HA）集群方案&lt;/strong>
+ &lt;a class="anchor" href="#victoriametrics-%e9%ab%98%e5%8f%af%e7%94%a8ha%e9%9b%86%e7%be%a4%e6%96%b9%e6%a1%88">#&lt;/a>
+&lt;/h2>
+&lt;p>为了提高 VictoriaMetrics 的高可用性，我们可以：&lt;/p>
+&lt;ol>
+&lt;li>&lt;strong>部署多个 &lt;code>vminsert&lt;/code> 并使用负载均衡（如 Nginx）分发写入请求&lt;/strong>。&lt;/li>
+&lt;li>&lt;strong>使用负载均衡（如 Nginx）代理 &lt;code>vmselect&lt;/code> 查询，保证查询的高可用&lt;/strong>。&lt;/li>
+&lt;li>&lt;strong>扩展 &lt;code>vmstorage&lt;/code>，采用分片存储，提高存储能力和容灾能力&lt;/strong>。&lt;/li>
+&lt;/ol>
+&lt;hr>
+&lt;h2 id="1-高可用ha架构">
+ &lt;strong>1. 高可用（HA）架构&lt;/strong>
+ &lt;a class="anchor" href="#1-%e9%ab%98%e5%8f%af%e7%94%a8ha%e6%9e%b6%e6%9e%84">#&lt;/a>
+&lt;/h2>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-plaintext" data-lang="plaintext">&lt;span style="display:flex;">&lt;span> ┌──────────────────────────────────┐
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> │ Prometheus │
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> └──────────────▲───────────────────┘
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> │ remote_write
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ▼
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ┌────────────────────────────┐
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> │ HAProxy/Nginx (LB) │
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> └──────────────▲─────────────┘
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> │ 负载均衡
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ┌───────────────┴──────────────┐
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> │ │
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>┌──────▼──────┐ ┌──────▼──────┐
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>│ vminsert-1 │ │ vminsert-2 │
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>└──────▲──────┘ └──────▲──────┘
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> │ 负载均衡写入
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> └──────────────┐
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ▼
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ┌──────────────────────────────────┐
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> │ 多个 vmstorage 存储实例 │
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> └──────────────────────────────────┘
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> │
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ┌──────────────────────────────────┐
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> │ 多个 vmstorage 备份实例 │
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> └──────────────────────────────────┘
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> │
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ┌──────────────────────────────────┐
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> │ HAProxy/Nginx (LB) │
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> └──────────────────────────────────┘
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> │ 负载均衡查询
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ┌───────────────┴──────────────┐
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> │ │
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>┌──────▼──────┐ ┌──────▼──────┐
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>│ vmselect-1 │ │ vmselect-2 │
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>└──────▲──────┘ └──────▲──────┘
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> │
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ▼
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ┌────────────┐
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> │ Grafana │
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> └────────────┘
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;hr>
+&lt;h2 id="2-高可用配置">
+ &lt;strong>2. 高可用配置&lt;/strong>
+ &lt;a class="anchor" href="#2-%e9%ab%98%e5%8f%af%e7%94%a8%e9%85%8d%e7%bd%ae">#&lt;/a>
+&lt;/h2>
+&lt;h3 id="21">
+ &lt;strong>2.1 &lt;code>vminsert&lt;/code> 负载均衡&lt;/strong>
+ &lt;a class="anchor" href="#21">#&lt;/a>
+&lt;/h3>
+&lt;p>我们使用 &lt;strong>Nginx&lt;/strong> 作为 &lt;code>vminsert&lt;/code> 的负载均衡器，确保 Prometheus &lt;code>remote_write&lt;/code> 的高可用。&lt;/p></description></item></channel></rss>
