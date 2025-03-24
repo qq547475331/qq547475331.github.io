@@ -29445,4 +29445,34 @@ Charlie, 35, Marketing
  &lt;strong>2.1 &lt;code>vminsert&lt;/code> 负载均衡&lt;/strong>
  &lt;a class="anchor" href="#21">#&lt;/a>
 &lt;/h3>
-&lt;p>我们使用 &lt;strong>Nginx&lt;/strong> 作为 &lt;code>vminsert&lt;/code> 的负载均衡器，确保 Prometheus &lt;code>remote_write&lt;/code> 的高可用。&lt;/p></description></item></channel></rss>
+&lt;p>我们使用 &lt;strong>Nginx&lt;/strong> 作为 &lt;code>vminsert&lt;/code> 的负载均衡器，确保 Prometheus &lt;code>remote_write&lt;/code> 的高可用。&lt;/p></description></item><item><title>2025-3-24 自我介绍</title><link>https://qq547475331.github.io/docs/2025-3-24-%E8%87%AA%E6%88%91%E4%BB%8B%E7%BB%8D/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-3-24-%E8%87%AA%E6%88%91%E4%BB%8B%E7%BB%8D/</guid><description>&lt;h3 id="个人简介">
+ &lt;strong>个人简介&lt;/strong>
+ &lt;a class="anchor" href="#%e4%b8%aa%e4%ba%ba%e7%ae%80%e4%bb%8b">#&lt;/a>
+&lt;/h3>
+&lt;p>具备 5 年+ DevOps 经验，精通 &lt;strong>Kubernetes、Docker、CI/CD、监控运维&lt;/strong> 及 &lt;strong>云平台交付运维&lt;/strong>。曾深度参与 &lt;strong>浙江移动磐基 PaaS 平台&lt;/strong> 交付与运维，管理 &lt;strong>2000+ 服务器、10 万+ Pod&lt;/strong>，支撑浙江 11 市核心业务流量。&lt;/p>
+&lt;p>精通 &lt;strong>Kubernetes 高可用架构、Prometheus 联邦监控、微服务治理、数据库优化&lt;/strong>，具备 &lt;strong>大规模业务上云、自动化运维、故障排查及性能优化&lt;/strong> 能力。熟练掌握 &lt;strong>Ansible、Jenkins、GitLab、Prometheus、Grafana&lt;/strong>，并具备 &lt;strong>大规模 K8s 集群调优及自动化运维&lt;/strong> 经验。&lt;/p>
+&lt;p>擅长 &lt;strong>中间件（Redis、Kafka、Zookeeper、Pulsar、Nacos）&lt;/strong>、&lt;strong>数据库（MySQL、PostgreSQL、ClickHouse）&lt;/strong> 部署与优化。曾主导 BOSS 业务 &lt;strong>10 分钟内启动 5 万 Pod&lt;/strong> 的 Kubernetes 调优，保障高并发业务稳定运行。&lt;/p>
+&lt;hr>
+&lt;h3 id="工作经历">
+ &lt;strong>工作经历&lt;/strong>
+ &lt;a class="anchor" href="#%e5%b7%a5%e4%bd%9c%e7%bb%8f%e5%8e%86">#&lt;/a>
+&lt;/h3>
+&lt;h4 id="亚信科技--系统和应用运维-工程师">
+ &lt;strong>亚信科技 —— 系统和应用运维 工程师&lt;/strong>
+ &lt;a class="anchor" href="#%e4%ba%9a%e4%bf%a1%e7%a7%91%e6%8a%80--%e7%b3%bb%e7%bb%9f%e5%92%8c%e5%ba%94%e7%94%a8%e8%bf%90%e7%bb%b4-%e5%b7%a5%e7%a8%8b%e5%b8%88">#&lt;/a>
+&lt;/h4>
+&lt;p>&lt;strong>（磐基 PaaS 平台 | 2022.XX - 2024.XX）&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>负责 &lt;strong>浙江移动磐基 PaaS 平台&lt;/strong> 交付运维，涵盖 &lt;strong>2 个 K8s 控制面 + 38 个运行面集群&lt;/strong>，管理 &lt;strong>2000+ 机器、10 万+ Pod&lt;/strong>。&lt;/li>
+&lt;li>采用 &lt;strong>Ansible Playbook&lt;/strong> 部署 &lt;strong>二进制高可用 Kubernetes 集群&lt;/strong>，并搭建 &lt;strong>PaaS 平台&lt;/strong>（门户、弹性计算、组件管理、API 网关等）。&lt;/li>
+&lt;li>维护 &lt;strong>Redis、Kafka、Zookeeper、Pulsar、Nacos、MySQL、ClickHouse&lt;/strong> 等关键中间件，优化高可用与性能。&lt;/li>
+&lt;li>负责 &lt;strong>Prometheus 联邦监控架构&lt;/strong>，实现 38 个运行面的统一数据汇总和告警推送，优化 Prometheus 远程写参数、Kafka Adapter 队列满等问题，提升系统稳定性。&lt;/li>
+&lt;li>参与 &lt;strong>双中心、双平面&lt;/strong> 设计，确保 &lt;strong>Harbor、网关等核心组件高可用&lt;/strong>，并优化 ETCD、Kubelet、Kube-apiserver 运行参数，满足 &lt;strong>BOSS 业务 10 分钟内启动 5 万 Pod&lt;/strong> 需求。&lt;/li>
+&lt;li>负责 &lt;strong>浙江 CRM 统一 AI 平台、杭研智慧家庭看板、网状网磐道系统等核心系统&lt;/strong> 的上云交付。&lt;/li>
+&lt;/ul>
+&lt;hr>
+&lt;h4 id="荣怀集团-devops工程师">
+ &lt;strong>荣怀集团—— devops工程师&lt;/strong>
+ &lt;a class="anchor" href="#%e8%8d%a3%e6%80%80%e9%9b%86%e5%9b%a2-devops%e5%b7%a5%e7%a8%8b%e5%b8%88">#&lt;/a>
+&lt;/h4>
+&lt;p>&lt;strong>（2021.XX - 2022.XX）&lt;/strong>&lt;/p></description></item></channel></rss>
