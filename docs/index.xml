@@ -29475,4 +29475,50 @@ Charlie, 35, Marketing
  &lt;strong>荣怀集团—— devops工程师&lt;/strong>
  &lt;a class="anchor" href="#%e8%8d%a3%e6%80%80%e9%9b%86%e5%9b%a2-devops%e5%b7%a5%e7%a8%8b%e5%b8%88">#&lt;/a>
 &lt;/h4>
-&lt;p>&lt;strong>（2021.XX - 2022.XX）&lt;/strong>&lt;/p></description></item></channel></rss>
+&lt;p>&lt;strong>（2021.XX - 2022.XX）&lt;/strong>&lt;/p></description></item><item><title>2025-3-30 metallb</title><link>https://qq547475331.github.io/docs/2025-3-30-metallb/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-3-30-metallb/</guid><description>&lt;h3 id="怎么部署-metallb">
+ 怎么部署 MetalLB
+ &lt;a class="anchor" href="#%e6%80%8e%e4%b9%88%e9%83%a8%e7%bd%b2-metallb">#&lt;/a>
+&lt;/h3>
+&lt;p>在 Kubernetes 集群中部署 &lt;strong>MetalLB&lt;/strong>（用于在裸金属或本地环境中提供 &lt;code>LoadBalancer&lt;/code> 类型的服务支持），需按照以下步骤操作：&lt;/p>
+&lt;hr>
+&lt;h3 id="1-前提条件">
+ &lt;strong>1. 前提条件&lt;/strong>
+ &lt;a class="anchor" href="#1-%e5%89%8d%e6%8f%90%e6%9d%a1%e4%bb%b6">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>&lt;strong>Kubernetes 集群&lt;/strong>：版本 ≥ &lt;strong>1.13.0&lt;/strong>（支持 &lt;code>LoadBalancer&lt;/code> 类型 Service）。&lt;/li>
+&lt;li>&lt;strong>网络环境&lt;/strong>：
+&lt;ul>
+&lt;li>集群节点在同一二层网络（ARP/NDP 模式）或支持 BGP 路由。&lt;/li>
+&lt;li>预留一段未被占用的 IP 地址池（如 &lt;code>192.168.1.100-192.168.1.200&lt;/code>）。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;hr>
+&lt;h3 id="2-安装-metallb">
+ &lt;strong>2. 安装 MetalLB&lt;/strong>
+ &lt;a class="anchor" href="#2-%e5%ae%89%e8%a3%85-metallb">#&lt;/a>
+&lt;/h3>
+&lt;h4 id="方法-1通过-manifest-安装推荐">
+ &lt;strong>方法 1：通过 Manifest 安装（推荐）&lt;/strong>
+ &lt;a class="anchor" href="#%e6%96%b9%e6%b3%95-1%e9%80%9a%e8%bf%87-manifest-%e5%ae%89%e8%a3%85%e6%8e%a8%e8%8d%90">#&lt;/a>
+&lt;/h4>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.7/config/manifests/metallb-native.yaml
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;blockquote>
+&lt;p>&lt;strong>注意&lt;/strong>：替换 &lt;code>v0.13.7&lt;/code> 为最新版本（参考 &lt;a href="https://github.com/metallb/metallb/releases">MetalLB 发布页&lt;/a>）。&lt;/p>&lt;/blockquote>
+&lt;h4 id="方法-2helm-安装">
+ &lt;strong>方法 2：Helm 安装&lt;/strong>
+ &lt;a class="anchor" href="#%e6%96%b9%e6%b3%95-2helm-%e5%ae%89%e8%a3%85">#&lt;/a>
+&lt;/h4>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>helm repo add metallb https://metallb.github.io/metallb
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>helm install metallb metallb/metallb -n metallb-system --create-namespace
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;hr>
+&lt;h3 id="3-配置-ip-地址池">
+ &lt;strong>3. 配置 IP 地址池&lt;/strong>
+ &lt;a class="anchor" href="#3-%e9%85%8d%e7%bd%ae-ip-%e5%9c%b0%e5%9d%80%e6%b1%a0">#&lt;/a>
+&lt;/h3>
+&lt;h4 id="31-创建-ip-地址池">
+ &lt;strong>3.1 创建 IP 地址池&lt;/strong>
+ &lt;a class="anchor" href="#31-%e5%88%9b%e5%bb%ba-ip-%e5%9c%b0%e5%9d%80%e6%b1%a0">#&lt;/a>
+&lt;/h4>
+&lt;p>创建文件 &lt;code>ip-pool.yaml&lt;/code>：&lt;/p></description></item></channel></rss>
