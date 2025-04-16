@@ -1,4 +1,17 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>欢迎来到我的技术博客 on Guichen's Blog</title><link>https://qq547475331.github.io/</link><description>Recent content in 欢迎来到我的技术博客 on Guichen's Blog</description><generator>Hugo</generator><language>en-us</language><atom:link href="https://qq547475331.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>2023-04-12 使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群</title><link>https://qq547475331.github.io/docs/%E4%BD%BF%E7%94%A8-keepalived-%E5%92%8C-haproxy-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8-kubernetes-%E9%9B%86%E7%BE%A4-shi-yong-keepalived-he-haproxy-chuang-jian-gao-ke-yong-kubernetes-ji-qun/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/%E4%BD%BF%E7%94%A8-keepalived-%E5%92%8C-haproxy-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8-kubernetes-%E9%9B%86%E7%BE%A4-shi-yong-keepalived-he-haproxy-chuang-jian-gao-ke-yong-kubernetes-ji-qun/</guid><description>&lt;h1 id="使用-keepalived-和-haproxy-创建高可用-kubernetes-集群">
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>欢迎来到我的技术博客 on Guichen's Blog</title><link>https://qq547475331.github.io/</link><description>Recent content in 欢迎来到我的技术博客 on Guichen's Blog</description><generator>Hugo</generator><language>en-us</language><atom:link href="https://qq547475331.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title/><link>https://qq547475331.github.io/docs/2025-4-16-cursoe-free-vip/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-4-16-cursoe-free-vip/</guid><description>&lt;pre tabindex="0">&lt;code>title: 2025-4-16 Cursor Free VIP
+&lt;/code>&lt;/pre>&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250416134242417.png" alt="image-20250416134242417" />&lt;/p>
+&lt;h1 id="cursor-free-vip">
+ Cursor Free VIP
+ &lt;a class="anchor" href="#cursor-free-vip">#&lt;/a>
+&lt;/h1>
+&lt;p>&lt;a href="https://github.com/yeongpin/cursor-free-vip/tree/main">githhub地址&lt;/a>&lt;/p>
+&lt;!-- raw HTML omitted -->
+&lt;p>This tool is for educational purposes, currently the repo does not violate any laws. Please support the original project.
+This tool will not generate any fake email accounts and OAuth access.&lt;/p>
+&lt;p>Supports Windows, macOS and Linux.&lt;/p>
+&lt;p>For optimal performance, run with privileges and always stay up to date.&lt;/p>
+&lt;p>這是一款用於學習和研究的工具，目前 repo 沒有違反任何法律。請支持原作者。
+這款工具不會生成任何假的電子郵件帳戶和 OAuth 訪問。&lt;/p></description></item><item><title>2023-04-12 使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群</title><link>https://qq547475331.github.io/docs/%E4%BD%BF%E7%94%A8-keepalived-%E5%92%8C-haproxy-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8-kubernetes-%E9%9B%86%E7%BE%A4-shi-yong-keepalived-he-haproxy-chuang-jian-gao-ke-yong-kubernetes-ji-qun/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/%E4%BD%BF%E7%94%A8-keepalived-%E5%92%8C-haproxy-%E5%88%9B%E5%BB%BA%E9%AB%98%E5%8F%AF%E7%94%A8-kubernetes-%E9%9B%86%E7%BE%A4-shi-yong-keepalived-he-haproxy-chuang-jian-gao-ke-yong-kubernetes-ji-qun/</guid><description>&lt;h1 id="使用-keepalived-和-haproxy-创建高可用-kubernetes-集群">
  使用 Keepalived 和 HAproxy 创建高可用 Kubernetes 集群
  &lt;a class="anchor" href="#%e4%bd%bf%e7%94%a8-keepalived-%e5%92%8c-haproxy-%e5%88%9b%e5%bb%ba%e9%ab%98%e5%8f%af%e7%94%a8-kubernetes-%e9%9b%86%e7%be%a4">#&lt;/a>
 &lt;/h1>
@@ -29521,4 +29534,514 @@ Charlie, 35, Marketing
  &lt;strong>3.1 创建 IP 地址池&lt;/strong>
  &lt;a class="anchor" href="#31-%e5%88%9b%e5%bb%ba-ip-%e5%9c%b0%e5%9d%80%e6%b1%a0">#&lt;/a>
 &lt;/h4>
-&lt;p>创建文件 &lt;code>ip-pool.yaml&lt;/code>：&lt;/p></description></item></channel></rss>
+&lt;p>创建文件 &lt;code>ip-pool.yaml&lt;/code>：&lt;/p></description></item><item><title>2025-4-16 BOSS直聘自动投递</title><link>https://qq547475331.github.io/docs/2025-4-16-boss%E7%9B%B4%E8%81%98%E8%87%AA%E5%8A%A8%E6%8A%95%E9%80%92/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-4-16-boss%E7%9B%B4%E8%81%98%E8%87%AA%E5%8A%A8%E6%8A%95%E9%80%92/</guid><description>&lt;h1 id="boss直聘自动投递">
+ BOSS直聘自动投递
+ &lt;a class="anchor" href="#boss%e7%9b%b4%e8%81%98%e8%87%aa%e5%8a%a8%e6%8a%95%e9%80%92">#&lt;/a>
+&lt;/h1>
+&lt;p>&lt;img src="https://img.shields.io/badge/%e7%89%88%e6%9c%ac-1.1.0.250305-blue" alt="版本" />
+&lt;img src="https://img.shields.io/badge/%e5%b9%b3%e5%8f%b0-Android-green" alt="平台" />
+&lt;img src="https://img.shields.io/badge/%e8%af%ad%e8%a8%80-Java-orange" alt="Java" />
+&lt;img src="https://img.shields.io/badge/%e8%ae%b8%e5%8f%af%e8%af%81-MIT-yellow" alt="License" />&lt;/p>
+&lt;p>一个基于Android无障碍服务的BOSS直聘自动投递工具，通过AI驱动的界面识别和精确控制，实现招聘应用的全自动化操作。&lt;/p>
+&lt;p>&lt;a href="https://www.bilibili.com/video/BV1oRRwYLEWD/?share_source=copy_web&amp;amp;vd_source=e4ba9668fa920780dc180ebb15efa961">【用Cursor 写的 BOSS直聘自动打招呼，解放双手，解放生产力，已开源】 &lt;/a>&lt;/p>
+&lt;h2 id="-核心技术亮点">
+ 🌟 核心技术亮点
+ &lt;a class="anchor" href="#-%e6%a0%b8%e5%bf%83%e6%8a%80%e6%9c%af%e4%ba%ae%e7%82%b9">#&lt;/a>
+&lt;/h2>
+&lt;ul>
+&lt;li>&lt;strong>高级无障碍服务实现&lt;/strong>：利用AccessibilityService深度集成系统操作能力&lt;/li>
+&lt;li>&lt;strong>多层次页面状态检测&lt;/strong>：通过节点特征组合判断精确定位当前页面类型&lt;/li>
+&lt;li>&lt;strong>智能失败恢复机制&lt;/strong>：自动检测操作失败并通过多策略重试确保任务连续性&lt;/li>
+&lt;li>&lt;strong>基于UI的状态机模型&lt;/strong>：摒弃传统导航栈，实现纯UI状态驱动的操作流程&lt;/li>
+&lt;li>&lt;strong>精确节点查找算法&lt;/strong>：多维度节点特征匹配，确保在各种UI变化中稳定找到目标元素&lt;/li>
+&lt;/ul>
+&lt;h2 id="-工作原理详解">
+ 🔍 工作原理详解
+ &lt;a class="anchor" href="#-%e5%b7%a5%e4%bd%9c%e5%8e%9f%e7%90%86%e8%af%a6%e8%a7%a3">#&lt;/a>
+&lt;/h2>
+&lt;h3 id="页面识别机制">
+ 页面识别机制
+ &lt;a class="anchor" href="#%e9%a1%b5%e9%9d%a2%e8%af%86%e5%88%ab%e6%9c%ba%e5%88%b6">#&lt;/a>
+&lt;/h3>
+&lt;p>系统采用多特征组合识别方法确定当前所处的页面类型：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-java" data-lang="java">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">private&lt;/span> PageType &lt;span style="color:#a6e22e">detectPageFromUI&lt;/span>(AccessibilityNodeInfo rootNode) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 1. 主界面(MAIN_LIST)判断标准&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> List&lt;span style="color:#f92672">&amp;lt;&lt;/span>AccessibilityNodeInfo&lt;span style="color:#f92672">&amp;gt;&lt;/span> tabNodes &lt;span style="color:#f92672">=&lt;/span> rootNode.&lt;span style="color:#a6e22e">findAccessibilityNodeInfosByText&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;职位&amp;#34;&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">boolean&lt;/span> positionTabSelected &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">false&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">for&lt;/span> (AccessibilityNodeInfo node : tabNodes) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> (node.&lt;span style="color:#a6e22e">isSelected&lt;/span>()) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> positionTabSelected &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">true&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">break&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> List&lt;span style="color:#f92672">&amp;lt;&lt;/span>AccessibilityNodeInfo&lt;span style="color:#f92672">&amp;gt;&lt;/span> recommendNodes &lt;span style="color:#f92672">=&lt;/span> rootNode.&lt;span style="color:#a6e22e">findAccessibilityNodeInfosByText&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;推荐&amp;#34;&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 更多特征检测逻辑...&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> (positionTabSelected &lt;span style="color:#f92672">&amp;amp;&amp;amp;&lt;/span> (&lt;span style="color:#f92672">!&lt;/span>recommendNodes.&lt;span style="color:#a6e22e">isEmpty&lt;/span>() &lt;span style="color:#f92672">||&lt;/span> &lt;span style="color:#f92672">!&lt;/span>nearbyNodes.&lt;span style="color:#a6e22e">isEmpty&lt;/span>())) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> PageType.&lt;span style="color:#a6e22e">MAIN_LIST&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 2. 职位详情页与聊天页面判断&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 基于关键UI元素和位置特征判断...&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="智能职位匹配">
+ 智能职位匹配
+ &lt;a class="anchor" href="#%e6%99%ba%e8%83%bd%e8%81%8c%e4%bd%8d%e5%8c%b9%e9%85%8d">#&lt;/a>
+&lt;/h3>
+&lt;p>系统通过预定义的关键词集对职位进行智能过滤：&lt;/p></description></item><item><title>2025-4-16 paas开发记录</title><link>https://qq547475331.github.io/docs/2025-4-16-paas%E8%AE%BE%E8%AE%A1/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-4-16-paas%E8%AE%BE%E8%AE%A1/</guid><description>&lt;pre tabindex="0">&lt;code>你能帮我设计一个云平台的原型吗，管理k8s的，集成karmada多集群管理，能够部署应用，调整副本数，查看日志，进入pod内执行命令，部署应用可以使deployment，statefulset，daemonset，job等类型，部署应用包括常见的配置，比如存活，就绪探针，启动探针，映射本地时区，优雅启动和停止，一起启动后执行什么命令，应用负载，如果是容器组就是3个副本。会展示3个容器组的信息包括pod名称，创建时间，所在节点，pod的ip。cpu和内存的使用情况，工作负载页面还会展示 端口，包括容器端口，服务端口，以及clusterip或者nodeport，还会显示工作负载的类型是无状态还是守护进程还是有状态，显示工作负载的状态，比如运行中的状态，显示修改记录，记录修改数#1#2这种，自动扩缩容，包括资源名称，目标cpu用量%，目标内存用量MB，最小副本数，最大副本数等，查看yaml，可以查看k8s的yaml，如deployment的yaml，显示行数，可以下载该yaml，可以编辑该yaml，编辑后会更新到k8s后台，容器组详情，包括集群，项目
+&lt;/code>&lt;/pre>&lt;pre tabindex="0">&lt;code>&lt;/code>&lt;/pre>&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202503280201970.png" alt="Snipaste_2025-03-22_21-46-17" />&lt;/p>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202503280202017.png" alt="Snipaste_2025-03-22_21-46-30" />&lt;/p>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/picture/202503280202760.png" alt="Snipaste_2025-03-22_21-46-41" />&lt;/p>
+&lt;p>以下是 Kubernetes PaaS 平台工作负载管理界面的专业描述与原型设计方案：&lt;/p>
+&lt;hr>
+&lt;h3 id="一界面内容描述">
+ 一、界面内容描述
+ &lt;a class="anchor" href="#%e4%b8%80%e7%95%8c%e9%9d%a2%e5%86%85%e5%ae%b9%e6%8f%8f%e8%bf%b0">#&lt;/a>
+&lt;/h3>
+&lt;h4 id="1-核心功能模块">
+ 1. &lt;strong>核心功能模块&lt;/strong>
+ &lt;a class="anchor" href="#1-%e6%a0%b8%e5%bf%83%e5%8a%9f%e8%83%bd%e6%a8%a1%e5%9d%97">#&lt;/a>
+&lt;/h4>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>组件类型&lt;/th>
+ &lt;th>状态提示语&lt;/th>
+ &lt;th>创建按钮行为&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;strong>无状态副本集&lt;/strong>&lt;/td>
+ &lt;td>&amp;ldquo;未发现无状态副本集，请创建一个&amp;rdquo;&lt;/td>
+ &lt;td>跳转Deployment创建向导&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>有状态副本集&lt;/strong>&lt;/td>
+ &lt;td>&amp;ldquo;未发现有状态副本集，请创建一个&amp;rdquo;&lt;/td>
+ &lt;td>跳转StatefulSet创建向导&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;strong>守护进程集&lt;/strong>&lt;/td>
+ &lt;td>&amp;ldquo;未发现守护进程集，请创建一个&amp;rdquo;&lt;/td>
+ &lt;td>跳转DaemonSet创建向导&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;h4 id="2-界面布局结构">
+ 2. &lt;strong>界面布局结构&lt;/strong>
+ &lt;a class="anchor" href="#2-%e7%95%8c%e9%9d%a2%e5%b8%83%e5%b1%80%e7%bb%93%e6%9e%84">#&lt;/a>
+&lt;/h4>
+&lt;pre tabindex="0">&lt;code class="language-mermaid" data-lang="mermaid">graph TD
+ A[导航菜单] --&amp;gt; B[工作负载总览]
+ B --&amp;gt; C[&amp;#34;无状态副本集（Empty）&amp;#34;]
+ B --&amp;gt; D[&amp;#34;有状态副本集（Empty）&amp;#34;]
+ B --&amp;gt; E[&amp;#34;守护进程集（Empty）&amp;#34;]
+ C --&amp;gt; F[&amp;#34;创建Deployment按钮&amp;#34;]
+ D --&amp;gt; G[&amp;#34;创建StatefulSet按钮&amp;#34;]
+ E --&amp;gt; H[&amp;#34;创建DaemonSet按钮&amp;#34;]
+&lt;/code>&lt;/pre>&lt;hr>
+&lt;h3 id="二原型设计信息">
+ 二、原型设计信息
+ &lt;a class="anchor" href="#%e4%ba%8c%e5%8e%9f%e5%9e%8b%e8%ae%be%e8%ae%a1%e4%bf%a1%e6%81%af">#&lt;/a>
+&lt;/h3>
+&lt;h4 id="1-界面架构">
+ 1. &lt;strong>界面架构&lt;/strong>
+ &lt;a class="anchor" href="#1-%e7%95%8c%e9%9d%a2%e6%9e%b6%e6%9e%84">#&lt;/a>
+&lt;/h4>
+&lt;pre tabindex="0">&lt;code class="language-mermaid" data-lang="mermaid">graph TB
+ A[标题栏] --&amp;gt; B[工作负载类型选项卡]
+ A --&amp;gt; C[全局搜索栏]
+ B --&amp;gt; D[无状态副本集面板]
+ B --&amp;gt; E[有状态副本集面板]
+ B --&amp;gt; F[守护进程集面板]
+ D --&amp;gt; G[&amp;#34;空状态提示+创建按钮&amp;#34;]
+&lt;/code>&lt;/pre>&lt;h4 id="2-交互设计规范">
+ 2. &lt;strong>交互设计规范&lt;/strong>
+ &lt;a class="anchor" href="#2-%e4%ba%a4%e4%ba%92%e8%ae%be%e8%ae%a1%e8%a7%84%e8%8c%83">#&lt;/a>
+&lt;/h4>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>元素&lt;/th>
+ &lt;th>设计规格&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>空状态提示&lt;/td>
+ &lt;td>居中显示图标+文字描述（图标尺寸64px）&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>创建按钮&lt;/td>
+ &lt;td>主按钮样式（填充色+阴影）&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>类型切换&lt;/td>
+ &lt;td>选项卡下划线指示当前选中&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>悬停效果&lt;/td>
+ &lt;td>按钮悬停时上浮2px&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;h4 id="3-视觉设计系统">
+ 3. &lt;strong>视觉设计系统&lt;/strong>
+ &lt;a class="anchor" href="#3-%e8%a7%86%e8%a7%89%e8%ae%be%e8%ae%a1%e7%b3%bb%e7%bb%9f">#&lt;/a>
+&lt;/h4>
+&lt;ul>
+&lt;li>&lt;strong>色彩方案&lt;/strong>：
+&lt;ul>
+&lt;li>主按钮：&lt;code>#4285F4&lt;/code>（Google蓝）&lt;/li>
+&lt;li>空状态文字：&lt;code>#757575&lt;/code>（中灰）&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>布局参数&lt;/strong>：
+&lt;ul>
+&lt;li>面板间距：24px&lt;/li>
+&lt;li>空状态区域高度：240px&lt;/li>
+&lt;li>按钮尺寸：160x36px&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;h4 id="4-空状态设计细节">
+ 4. &lt;strong>空状态设计细节&lt;/strong>
+ &lt;a class="anchor" href="#4-%e7%a9%ba%e7%8a%b6%e6%80%81%e8%ae%be%e8%ae%a1%e7%bb%86%e8%8a%82">#&lt;/a>
+&lt;/h4>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-markdown" data-lang="markdown">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">### 无状态副本集面板
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>[![文档图标]](icon) 
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">**未发现无状态副本集**&lt;/span> 
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>适用于无需持久化数据的应用 
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>[创建Deployment] (主按钮)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">### 有状态副本集面板 
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>[![数据库图标]](icon) 
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">**未发现有状态副本集**&lt;/span> 
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>适用于需要稳定存储的应用 
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>[创建StatefulSet] (主按钮)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">### 守护进程集面板
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>[![节点图标]](icon) 
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="font-weight:bold">**未发现守护进程集**&lt;/span> 
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>适用于每个节点运行一个副本的场景 
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>[创建DaemonSet] (主按钮)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;hr>
+&lt;h3 id="三技术增强建议">
+ 三、技术增强建议
+ &lt;a class="anchor" href="#%e4%b8%89%e6%8a%80%e6%9c%af%e5%a2%9e%e5%bc%ba%e5%bb%ba%e8%ae%ae">#&lt;/a>
+&lt;/h3>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-diff" data-lang="diff">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">+ 增加「模板库」快速创建入口（如Nginx/Redis等）
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">+ 添加「从YAML导入」的次级按钮
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">&lt;/span>&lt;span style="color:#f92672">- 优化移动端选项卡的横向滚动体验
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="创建向导预填建议">
+ 创建向导预填建议：
+ &lt;a class="anchor" href="#%e5%88%9b%e5%bb%ba%e5%90%91%e5%af%bc%e9%a2%84%e5%a1%ab%e5%bb%ba%e8%ae%ae">#&lt;/a>
+&lt;/h4>
+&lt;ol>
+&lt;li>&lt;strong>Deployment&lt;/strong>：默认&lt;code>replicas: 2&lt;/code> + &lt;code>rollingUpdate&lt;/code>策略&lt;/li>
+&lt;li>&lt;strong>StatefulSet&lt;/strong>：自动添加&lt;code>volumeClaimTemplates&lt;/code>表单&lt;/li>
+&lt;li>&lt;strong>DaemonSet&lt;/strong>：预选&lt;code>nodeSelector&lt;/code>基础配置&lt;/li>
+&lt;/ol>
+&lt;p>该设计通过清晰的空状态引导，有效降低用户认知负荷，建议：&lt;/p></description></item><item><title>2025-4-16 sleep睡眠应用</title><link>https://qq547475331.github.io/docs/2025-4-16-sleep%E7%9D%A1%E7%9C%A0%E5%BA%94%E7%94%A8/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-4-16-sleep%E7%9D%A1%E7%9C%A0%E5%BA%94%E7%94%A8/</guid><description>&lt;h1 id="睡梦时光---睡眠追踪应用">
+ 睡梦时光 - 睡眠追踪应用
+ &lt;a class="anchor" href="#%e7%9d%a1%e6%a2%a6%e6%97%b6%e5%85%89---%e7%9d%a1%e7%9c%a0%e8%bf%bd%e8%b8%aa%e5%ba%94%e7%94%a8">#&lt;/a>
+&lt;/h1>
+&lt;p>&lt;a href="https://github.com/qq547475331/sleep">GitHub地址&lt;/a>&lt;/p>
+&lt;p>一款基于Flutter开发的睡眠记录和分析应用，帮助用户追踪睡眠模式、改善睡眠质量、提供数据分析和统计。&lt;/p>
+&lt;h2 id="应用架构">
+ 应用架构
+ &lt;a class="anchor" href="#%e5%ba%94%e7%94%a8%e6%9e%b6%e6%9e%84">#&lt;/a>
+&lt;/h2>
+&lt;h3 id="核心技术栈">
+ 核心技术栈
+ &lt;a class="anchor" href="#%e6%a0%b8%e5%bf%83%e6%8a%80%e6%9c%af%e6%a0%88">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>&lt;strong>框架&lt;/strong>: Flutter (跨平台移动应用框架)&lt;/li>
+&lt;li>&lt;strong>语言&lt;/strong>: Dart&lt;/li>
+&lt;li>&lt;strong>数据库&lt;/strong>: SQLite (通过sqflite包实现)&lt;/li>
+&lt;li>&lt;strong>状态管理&lt;/strong>: Provider + setState&lt;/li>
+&lt;li>&lt;strong>后台服务&lt;/strong>: flutter_background_service&lt;/li>
+&lt;li>&lt;strong>本地存储&lt;/strong>: shared_preferences&lt;/li>
+&lt;li>&lt;strong>音频处理&lt;/strong>: record + audio_session&lt;/li>
+&lt;/ul>
+&lt;h3 id="项目结构">
+ 项目结构
+ &lt;a class="anchor" href="#%e9%a1%b9%e7%9b%ae%e7%bb%93%e6%9e%84">#&lt;/a>
+&lt;/h3>
+&lt;pre tabindex="0">&lt;code>lib/
+├── data/
+│ └── sleep_slogans.dart # 睡眠相关语录和提示
+├── models/
+│ └── sleep_record.dart # 睡眠记录数据模型
+├── screens/
+│ ├── home_screen.dart # 主页面
+│ ├── sleep_recording_screen.dart # 睡眠记录页面
+│ ├── sleep_analysis_screen.dart # 睡眠分析页面
+│ ├── sleep_statistics_screen.dart # 睡眠统计页面
+│ ├── sleep_history_screen.dart # 睡眠历史页面
+│ └── sleep_record_detail_screen.dart # 睡眠记录详情页面
+├── services/
+│ ├── background_service.dart # 后台服务管理
+│ ├── database_helper.dart # 数据库操作
+│ └── recording_service.dart # 录音服务
+└── main.dart # 应用入口
+&lt;/code>&lt;/pre>&lt;h2 id="核心功能">
+ 核心功能
+ &lt;a class="anchor" href="#%e6%a0%b8%e5%bf%83%e5%8a%9f%e8%83%bd">#&lt;/a>
+&lt;/h2>
+&lt;h3 id="1-睡眠记录">
+ 1. 睡眠记录
+ &lt;a class="anchor" href="#1-%e7%9d%a1%e7%9c%a0%e8%ae%b0%e5%bd%95">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>&lt;strong>开始/结束记录&lt;/strong>: 用户可以在睡前点击&amp;quot;开始记录&amp;quot;按钮，醒来后点击&amp;quot;结束记录&amp;quot;按钮来追踪睡眠时间&lt;/li>
+&lt;li>&lt;strong>持久化状态&lt;/strong>: 应用在后台或关闭后仍能保持记录状态&lt;/li>
+&lt;li>&lt;strong>睡眠时长计算&lt;/strong>: 自动计算睡眠持续时间&lt;/li>
+&lt;li>&lt;strong>睡眠质量评估&lt;/strong>: 基于睡眠时长进行初步的睡眠质量评估&lt;/li>
+&lt;/ul>
+&lt;h3 id="2-睡眠统计与分析">
+ 2. 睡眠统计与分析
+ &lt;a class="anchor" href="#2-%e7%9d%a1%e7%9c%a0%e7%bb%9f%e8%ae%a1%e4%b8%8e%e5%88%86%e6%9e%90">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>&lt;strong>睡眠历史记录&lt;/strong>: 查看所有历史睡眠数据&lt;/li>
+&lt;li>&lt;strong>睡眠数据统计&lt;/strong>: 支持按周、月、年维度统计平均睡眠时长&lt;/li>
+&lt;li>&lt;strong>睡眠图表分析&lt;/strong>: 可视化展示睡眠时长和质量趋势&lt;/li>
+&lt;li>&lt;strong>睡眠详情记录&lt;/strong>: 查看每次睡眠的详细信息和数据&lt;/li>
+&lt;/ul>
+&lt;h3 id="3-后台运行与保活机制">
+ 3. 后台运行与保活机制
+ &lt;a class="anchor" href="#3-%e5%90%8e%e5%8f%b0%e8%bf%90%e8%a1%8c%e4%b8%8e%e4%bf%9d%e6%b4%bb%e6%9c%ba%e5%88%b6">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>&lt;strong>后台服务&lt;/strong>: 使用flutter_background_service确保应用在后台持续运行&lt;/li>
+&lt;li>&lt;strong>保活录音&lt;/strong>: 通过低资源消耗的录音服务保持应用活跃&lt;/li>
+&lt;li>&lt;strong>状态持久化&lt;/strong>: 利用shared_preferences在应用重启后恢复睡眠记录状态&lt;/li>
+&lt;/ul>
+&lt;h3 id="4-睡眠相关内容推送">
+ 4. 睡眠相关内容推送
+ &lt;a class="anchor" href="#4-%e7%9d%a1%e7%9c%a0%e7%9b%b8%e5%85%b3%e5%86%85%e5%ae%b9%e6%8e%a8%e9%80%81">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>&lt;strong>睡眠语录&lt;/strong>: 展示睡眠相关的激励语录和提示&lt;/li>
+&lt;li>&lt;strong>分类内容&lt;/strong>: 提供睡眠科学知识、助眠技巧等分类内容&lt;/li>
+&lt;li>&lt;strong>动态更新&lt;/strong>: 定时刷新展示内容，提供新鲜的睡眠建议&lt;/li>
+&lt;/ul>
+&lt;h2 id="技术实现细节">
+ 技术实现细节
+ &lt;a class="anchor" href="#%e6%8a%80%e6%9c%af%e5%ae%9e%e7%8e%b0%e7%bb%86%e8%8a%82">#&lt;/a>
+&lt;/h2>
+&lt;h3 id="数据持久化">
+ 数据持久化
+ &lt;a class="anchor" href="#%e6%95%b0%e6%8d%ae%e6%8c%81%e4%b9%85%e5%8c%96">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>使用SQLite数据库存储睡眠记录，通过DatabaseHelper类实现CRUD操作&lt;/li>
+&lt;li>使用SleepRecord模型类表示睡眠数据，包含开始时间、结束时间、持续时间、质量评估等字段&lt;/li>
+&lt;li>实现了数据库版本迁移机制，确保应用更新时数据完整性&lt;/li>
+&lt;/ul>
+&lt;h3 id="后台保活机制">
+ 后台保活机制
+ &lt;a class="anchor" href="#%e5%90%8e%e5%8f%b0%e4%bf%9d%e6%b4%bb%e6%9c%ba%e5%88%b6">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>实现了两层保活机制:
+&lt;ol>
+&lt;li>系统级别: 通过flutter_background_service注册前台服务&lt;/li>
+&lt;li>应用级别: 通过RecordingService实现低资源消耗的录音保活&lt;/li>
+&lt;/ol>
+&lt;/li>
+&lt;li>为防止过度消耗资源，录音文件每两分钟重启一次，并在结束后自动清理&lt;/li>
+&lt;li>通过iOS Audio Session配置，确保iOS平台后台运行能力&lt;/li>
+&lt;/ul>
+&lt;h3 id="ui设计">
+ UI设计
+ &lt;a class="anchor" href="#ui%e8%ae%be%e8%ae%a1">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>采用深色主题设计，适合夜间使用&lt;/li>
+&lt;li>使用Material Design 3组件，实现现代化UI界面&lt;/li>
+&lt;li>实现了流畅的动画过渡和交互效果&lt;/li>
+&lt;li>自适应不同屏幕大小和比例的布局&lt;/li>
+&lt;/ul>
+&lt;h3 id="数据分析与可视化">
+ 数据分析与可视化
+ &lt;a class="anchor" href="#%e6%95%b0%e6%8d%ae%e5%88%86%e6%9e%90%e4%b8%8e%e5%8f%af%e8%a7%86%e5%8c%96">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>实现多种统计维度: 日、周、月、年&lt;/li>
+&lt;li>使用图表展示睡眠时长趋势和睡眠质量分布&lt;/li>
+&lt;li>计算睡眠效率和统计数据，提供直观的睡眠质量评估&lt;/li>
+&lt;/ul>
+&lt;h3 id="应用状态管理">
+ 应用状态管理
+ &lt;a class="anchor" href="#%e5%ba%94%e7%94%a8%e7%8a%b6%e6%80%81%e7%ae%a1%e7%90%86">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>使用Flutter状态管理确保UI与数据同步&lt;/li>
+&lt;li>实现了完整的生命周期管理，确保应用在前后台切换时正确处理状态&lt;/li>
+&lt;li>错误处理机制，防止异常导致应用崩溃&lt;/li>
+&lt;/ul>
+&lt;h2 id="安装与使用">
+ 安装与使用
+ &lt;a class="anchor" href="#%e5%ae%89%e8%a3%85%e4%b8%8e%e4%bd%bf%e7%94%a8">#&lt;/a>
+&lt;/h2>
+&lt;h3 id="安装要求">
+ 安装要求
+ &lt;a class="anchor" href="#%e5%ae%89%e8%a3%85%e8%a6%81%e6%b1%82">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>iOS 11.0+ / Android 6.0+&lt;/li>
+&lt;li>Flutter 3.0.0+ (开发环境)&lt;/li>
+&lt;li>Dart 2.17.0+ (开发环境)&lt;/li>
+&lt;/ul>
+&lt;h3 id="构建应用">
+ 构建应用
+ &lt;a class="anchor" href="#%e6%9e%84%e5%bb%ba%e5%ba%94%e7%94%a8">#&lt;/a>
+&lt;/h3>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 获取依赖&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>flutter pub get
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 运行应用&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>flutter run
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 构建发布版本&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>flutter build ios &lt;span style="color:#75715e"># 构建iOS版本&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>flutter build apk &lt;span style="color:#75715e"># 构建Android版本&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="权限需求">
+ 权限需求
+ &lt;a class="anchor" href="#%e6%9d%83%e9%99%90%e9%9c%80%e6%b1%82">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>录音权限: 用于后台保活机制&lt;/li>
+&lt;li>通知权限: 用于显示前台服务通知&lt;/li>
+&lt;li>后台运行权限: 用于保持睡眠记录的连续性&lt;/li>
+&lt;/ul>
+&lt;h2 id="未来计划">
+ 未来计划
+ &lt;a class="anchor" href="#%e6%9c%aa%e6%9d%a5%e8%ae%a1%e5%88%92">#&lt;/a>
+&lt;/h2>
+&lt;ul>
+&lt;li>&lt;input disabled="" type="checkbox"> 添加更详细的睡眠质量评估算法&lt;/li>
+&lt;li>&lt;input disabled="" type="checkbox"> 实现云同步功能，支持多设备数据备份&lt;/li>
+&lt;li>&lt;input disabled="" type="checkbox"> 加入智能闹钟功能，基于睡眠周期唤醒用户&lt;/li>
+&lt;li>&lt;input disabled="" type="checkbox"> 支持可穿戴设备集成，获取更准确的睡眠数据&lt;/li>
+&lt;li>&lt;input disabled="" type="checkbox"> 增加社区功能，让用户分享睡眠经验和技巧&lt;/li>
+&lt;/ul></description></item><item><title>2025-4-16 自研k8s平台</title><link>https://qq547475331.github.io/docs/2025-4-16-%E8%87%AA%E7%A0%94k8s%E5%B9%B3%E5%8F%B0/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-4-16-%E8%87%AA%E7%A0%94k8s%E5%B9%B3%E5%8F%B0/</guid><description>&lt;h1 id="kubernetes-paas平台">
+ Kubernetes PaaS平台
+ &lt;a class="anchor" href="#kubernetes-paas%e5%b9%b3%e5%8f%b0">#&lt;/a>
+&lt;/h1>
+&lt;p>&lt;a href="https://github.com/qq547475331/GUI-P">github地址&lt;/a>&lt;/p>
+&lt;h2 id="项目简介">
+ 项目简介
+ &lt;a class="anchor" href="#%e9%a1%b9%e7%9b%ae%e7%ae%80%e4%bb%8b">#&lt;/a>
+&lt;/h2>
+&lt;p>这是一个基于Kubernetes的轻量级PaaS平台，提供了友好的Web界面来管理Kubernetes集群资源。该平台支持多集群管理、应用部署、容器管理、日志查看、终端访问等功能，旨在简化Kubernetes的日常运维和管理工作。&lt;/p>
+&lt;h2 id="主要功能">
+ 主要功能
+ &lt;a class="anchor" href="#%e4%b8%bb%e8%a6%81%e5%8a%9f%e8%83%bd">#&lt;/a>
+&lt;/h2>
+&lt;h3 id="集群管理">
+ 集群管理
+ &lt;a class="anchor" href="#%e9%9b%86%e7%be%a4%e7%ae%a1%e7%90%86">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>支持多集群管理，通过上传kubeconfig文件添加集群&lt;/li>
+&lt;li>命名空间创建与管理&lt;/li>
+&lt;li>集群资源监控与查看&lt;/li>
+&lt;/ul>
+&lt;h3 id="应用管理">
+ 应用管理
+ &lt;a class="anchor" href="#%e5%ba%94%e7%94%a8%e7%ae%a1%e7%90%86">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>创建和部署应用（支持Deployment、StatefulSet、DaemonSet等工作负载类型）&lt;/li>
+&lt;li>应用配置管理（环境变量、配置文件等）&lt;/li>
+&lt;li>应用资源伸缩和更新&lt;/li>
+&lt;li>一键导出应用YAML配置&lt;/li>
+&lt;/ul>
+&lt;h3 id="容器管理">
+ 容器管理
+ &lt;a class="anchor" href="#%e5%ae%b9%e5%99%a8%e7%ae%a1%e7%90%86">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>Pod详情查看（状态、容器信息、标签等）&lt;/li>
+&lt;li>实时日志查看（支持自动刷新和下载）&lt;/li>
+&lt;li>容器终端访问（支持全屏模式和容器切换）&lt;/li>
+&lt;/ul>
+&lt;h3 id="镜像仓库">
+ 镜像仓库
+ &lt;a class="anchor" href="#%e9%95%9c%e5%83%8f%e4%bb%93%e5%ba%93">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>私有镜像仓库集成管理&lt;/li>
+&lt;li>支持Harbor等主流镜像仓库&lt;/li>
+&lt;li>镜像版本查询和选择&lt;/li>
+&lt;/ul>
+&lt;h2 id="技术栈">
+ 技术栈
+ &lt;a class="anchor" href="#%e6%8a%80%e6%9c%af%e6%a0%88">#&lt;/a>
+&lt;/h2>
+&lt;h3 id="前端-cloud-ui">
+ 前端 (cloud-ui)
+ &lt;a class="anchor" href="#%e5%89%8d%e7%ab%af-cloud-ui">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>React.js&lt;/li>
+&lt;li>Ant Design 组件库&lt;/li>
+&lt;li>Axios用于API请求&lt;/li>
+&lt;li>WebSocket用于终端和日志实时数据&lt;/li>
+&lt;li>xterm.js用于终端模拟&lt;/li>
+&lt;/ul>
+&lt;h3 id="后端-cloud-api">
+ 后端 (cloud-api)
+ &lt;a class="anchor" href="#%e5%90%8e%e7%ab%af-cloud-api">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>Go语言&lt;/li>
+&lt;li>Gin Web框架&lt;/li>
+&lt;li>client-go与Kubernetes API交互&lt;/li>
+&lt;li>WebSocket支持实时数据传输&lt;/li>
+&lt;li>PostgreSQL持久化存储&lt;/li>
+&lt;/ul>
+&lt;h2 id="数据存储">
+ 数据存储
+ &lt;a class="anchor" href="#%e6%95%b0%e6%8d%ae%e5%ad%98%e5%82%a8">#&lt;/a>
+&lt;/h2>
+&lt;h3 id="postgresql-数据库">
+ PostgreSQL 数据库
+ &lt;a class="anchor" href="#postgresql-%e6%95%b0%e6%8d%ae%e5%ba%93">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>应用配置和元数据持久化存储&lt;/li>
+&lt;li>Kubernetes资源关联管理&lt;/li>
+&lt;li>集群配置信息安全存储&lt;/li>
+&lt;li>数据库结构包含以下主要表:
+&lt;ul>
+&lt;li>&lt;code>applications&lt;/code>: 存储应用配置信息&lt;/li>
+&lt;li>&lt;code>kube_configs&lt;/code>: 存储Kubernetes集群配置&lt;/li>
+&lt;li>&lt;code>kubernetes_resources&lt;/code>: 记录应用关联的K8s资源&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;h3 id="数据库连接管理">
+ 数据库连接管理
+ &lt;a class="anchor" href="#%e6%95%b0%e6%8d%ae%e5%ba%93%e8%bf%9e%e6%8e%a5%e7%ae%a1%e7%90%86">#&lt;/a>
+&lt;/h3>
+&lt;ul>
+&lt;li>连接池优化: 最大25个连接，10个空闲连接&lt;/li>
+&lt;li>自动重连机制: 失败后最多3次重试&lt;/li>
+&lt;li>连接生命周期管理: 最大生命期10分钟，空闲超时5分钟&lt;/li>
+&lt;/ul>
+&lt;h2 id="截图展示">
+ 截图展示
+ &lt;a class="anchor" href="#%e6%88%aa%e5%9b%be%e5%b1%95%e7%a4%ba">#&lt;/a>
+&lt;/h2>
+&lt;h3 id="应用列表界面">
+ 应用列表界面
+ &lt;a class="anchor" href="#%e5%ba%94%e7%94%a8%e5%88%97%e8%a1%a8%e7%95%8c%e9%9d%a2">#&lt;/a>
+&lt;/h3>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250329052617069.png" alt="应用列表界面" />&lt;/p></description></item></channel></rss>
