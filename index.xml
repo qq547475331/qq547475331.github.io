@@ -30241,7 +30241,50 @@ The user&amp;#39;s OS version is win32 10.0.26100. The absolute path of the user
 
 Answer the user&amp;#39;s request using the relevant tool(s), if they are available. Check that all the required parameters for each tool call are provided or can reasonably be inferred from context. IF there are no relevant tools or there are missing values for required parameters, ask the user to supply these values; otherwise proceed with the tool calls. If the user provides a specific value for a parameter (for example provided in quotes), make sure to use that value EXACTLY. DO NOT make up values for or ask about optional parameters. Carefully analyze descriptive terms in the request as they may indicate required parameter values that should be included even if not explicitly quoted.
 如果相关工具可用，请使用它们来回答用户的请求。检查每个工具调用所需的所有参数是否都已提供，或者是否可以根据上下文合理推断。如果没有相关工具或必需参数缺少值，请要求用户提供这些值；否则，继续执行工具调用。如果用户为某个参数提供了特定值（例如，用引号提供），请确保准确使用该值。请勿为可选参数编造值或询问可选参数。仔细分析请求中的描述性术语，因为它们可能指示即使未明确引用也应包含的必需参数值。
-&lt;/code>&lt;/pre></description></item><item><title>2025-5-7 好心态 app</title><link>https://qq547475331.github.io/docs/2025-5-7-%E5%A5%BD%E5%BF%83%E6%80%81-app/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-5-7-%E5%A5%BD%E5%BF%83%E6%80%81-app/</guid><description>&lt;h1 id="好心态应用">
+&lt;/code>&lt;/pre></description></item><item><title>2025-5-29 主Ingress副本变为0后报503问题分析</title><link>https://qq547475331.github.io/docs/2025-5-21-ingress%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-5-21-ingress%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/</guid><description>&lt;h1 id="主ingress副本变为0后报503问题分析">
+ 主Ingress副本变为0后报503问题分析
+ &lt;a class="anchor" href="#%e4%b8%bbingress%e5%89%af%e6%9c%ac%e5%8f%98%e4%b8%ba0%e5%90%8e%e6%8a%a5503%e9%97%ae%e9%a2%98%e5%88%86%e6%9e%90">#&lt;/a>
+&lt;/h1>
+&lt;p>当主Ingress副本数变为0时出现503错误，从Ingress-NGINX控制器源码分析，主要有以下几个关键原因：&lt;/p>
+&lt;h2 id="1-默认后端机制">
+ 1. 默认后端机制
+ &lt;a class="anchor" href="#1-%e9%bb%98%e8%ae%a4%e5%90%8e%e7%ab%af%e6%9c%ba%e5%88%b6">#&lt;/a>
+&lt;/h2>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// getDefaultUpstream 返回与默认后端关联的上游 578行&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// 配置上游在错误情况下返回 HTTP 代码 503&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">func&lt;/span> (&lt;span style="color:#a6e22e">n&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">NGINXController&lt;/span>) &lt;span style="color:#a6e22e">getDefaultUpstream&lt;/span>() &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">ingress&lt;/span>.&lt;span style="color:#a6e22e">Backend&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">upstream&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#f92672">&amp;amp;&lt;/span>&lt;span style="color:#a6e22e">ingress&lt;/span>.&lt;span style="color:#a6e22e">Backend&lt;/span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">Name&lt;/span>: &lt;span style="color:#a6e22e">defUpstreamName&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">svcKey&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#a6e22e">n&lt;/span>.&lt;span style="color:#a6e22e">cfg&lt;/span>.&lt;span style="color:#a6e22e">DefaultService&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#a6e22e">svcKey&lt;/span> &lt;span style="color:#f92672">==&lt;/span> &lt;span style="color:#e6db74">&amp;#34;&amp;#34;&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">upstream&lt;/span>.&lt;span style="color:#a6e22e">Endpoints&lt;/span> = append(&lt;span style="color:#a6e22e">upstream&lt;/span>.&lt;span style="color:#a6e22e">Endpoints&lt;/span>, &lt;span style="color:#a6e22e">n&lt;/span>.&lt;span style="color:#a6e22e">DefaultEndpoint&lt;/span>())
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> &lt;span style="color:#a6e22e">upstream&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 找不到服务或服务没有有效端点时返回DefaultEndpoint&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// DefaultEndpoint通常返回503错误&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// ...&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250521170206699.png" alt="image-20250521170206699" />&lt;/p>
+&lt;p>当主Ingress副本为0时，控制器找不到匹配的路由规则，会路由到默认后端，默认后端如果未配置或无可用端点时会返回503。&lt;/p>
+&lt;h2 id="2-canary灰度发布依赖主ingress">
+ 2. Canary灰度发布依赖主Ingress
+ &lt;a class="anchor" href="#2-canary%e7%81%b0%e5%ba%a6%e5%8f%91%e5%b8%83%e4%be%9d%e8%b5%96%e4%b8%bbingress">#&lt;/a>
+&lt;/h2>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// nonCanaryIngressExists 只有在存在一个或多个可能合并到的ingress时才允许合并canary ingress 1544行行&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">func&lt;/span> &lt;span style="color:#a6e22e">nonCanaryIngressExists&lt;/span>(&lt;span style="color:#a6e22e">ingresses&lt;/span>, &lt;span style="color:#a6e22e">canaryIngresses&lt;/span> []&lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">ingress&lt;/span>.&lt;span style="color:#a6e22e">Ingress&lt;/span>) &lt;span style="color:#66d9ef">bool&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> len(&lt;span style="color:#a6e22e">ingresses&lt;/span>)&lt;span style="color:#f92672">-&lt;/span>len(&lt;span style="color:#a6e22e">canaryIngresses&lt;/span>) &amp;gt; &lt;span style="color:#ae81ff">0&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// mergeAlternativeBackends处理 903行&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#a6e22e">nonCanaryIngressExists&lt;/span>(&lt;span style="color:#a6e22e">ingresses&lt;/span>, &lt;span style="color:#a6e22e">canaryIngresses&lt;/span>) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">for&lt;/span> &lt;span style="color:#a6e22e">_&lt;/span>, &lt;span style="color:#a6e22e">canaryIng&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#66d9ef">range&lt;/span> &lt;span style="color:#a6e22e">canaryIngresses&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">mergeAlternativeBackends&lt;/span>(&lt;span style="color:#a6e22e">canaryIng&lt;/span>, &lt;span style="color:#a6e22e">upstreams&lt;/span>, &lt;span style="color:#a6e22e">servers&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250521165735776.png" alt="image-20250521165735776" />&lt;/p></description></item><item><title>2025-5-7 好心态 app</title><link>https://qq547475331.github.io/docs/2025-5-7-%E5%A5%BD%E5%BF%83%E6%80%81-app/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-5-7-%E5%A5%BD%E5%BF%83%E6%80%81-app/</guid><description>&lt;h1 id="好心态应用">
  好心态应用
  &lt;a class="anchor" href="#%e5%a5%bd%e5%bf%83%e6%80%81%e5%ba%94%e7%94%a8">#&lt;/a>
 &lt;/h1>
