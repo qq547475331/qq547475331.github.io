@@ -30284,7 +30284,87 @@ Answer the user&amp;#39;s request using the relevant tool(s), if they are availa
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">mergeAlternativeBackends&lt;/span>(&lt;span style="color:#a6e22e">canaryIng&lt;/span>, &lt;span style="color:#a6e22e">upstreams&lt;/span>, &lt;span style="color:#a6e22e">servers&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250521165735776.png" alt="image-20250521165735776" />&lt;/p></description></item><item><title>2025-5-7 好心态 app</title><link>https://qq547475331.github.io/docs/2025-5-7-%E5%A5%BD%E5%BF%83%E6%80%81-app/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-5-7-%E5%A5%BD%E5%BF%83%E6%80%81-app/</guid><description>&lt;h1 id="好心态应用">
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250521165735776.png" alt="image-20250521165735776" />&lt;/p></description></item><item><title>2025-5-29 错题分析1</title><link>https://qq547475331.github.io/docs/2025-5-29-%E9%94%99%E9%A2%98%E5%88%86%E6%9E%901/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-5-29-%E9%94%99%E9%A2%98%E5%88%86%E6%9E%901/</guid><description>&lt;pre tabindex="0">&lt;code>以下关于lstio中gateway 的说法，错误的是哪一项?
+Gateway 主要用于管理Ingress流量
+Gateway 可以配置egress gateway
+Gateway 配置应用于服务负载的Envoy 代理上
+Gateway 可以用来限制哪些服务可以访问外部网络
+&lt;/code>&lt;/pre>&lt;p>这道题考察的是对 &lt;strong>Istio 中 Gateway 的理解&lt;/strong>。我们逐项分析，找出&lt;strong>错误选项&lt;/strong>：&lt;/p>
+&lt;hr>
+&lt;h3 id="-选项分析">
+ ✅ 选项分析：
+ &lt;a class="anchor" href="#-%e9%80%89%e9%a1%b9%e5%88%86%e6%9e%90">#&lt;/a>
+&lt;/h3>
+&lt;h4 id="-1-gateway-主要用于管理-ingress-流量">
+ ✅ 1. &lt;code>Gateway 主要用于管理 Ingress 流量&lt;/code>
+ &lt;a class="anchor" href="#-1-gateway-%e4%b8%bb%e8%a6%81%e7%94%a8%e4%ba%8e%e7%ae%a1%e7%90%86-ingress-%e6%b5%81%e9%87%8f">#&lt;/a>
+&lt;/h4>
+&lt;p>&lt;strong>正确&lt;/strong>。
+Istio 中的 &lt;code>Gateway&lt;/code> 资源主要用于配置入口（&lt;strong>Ingress&lt;/strong>）流量，比如通过 HTTP、HTTPS 等协议从集群外部进入服务网格。&lt;/p>
+&lt;hr>
+&lt;h4 id="-2-gateway-可以配置-egress-gateway">
+ ✅ 2. &lt;code>Gateway 可以配置 egress gateway&lt;/code>
+ &lt;a class="anchor" href="#-2-gateway-%e5%8f%af%e4%bb%a5%e9%85%8d%e7%bd%ae-egress-gateway">#&lt;/a>
+&lt;/h4>
+&lt;p>&lt;strong>正确&lt;/strong>。
+虽然 &lt;code>Gateway&lt;/code> 默认是用来处理 Ingress 流量的，但 Istio 同样支持通过配置一个 &lt;strong>Egress Gateway&lt;/strong> 来控制 &lt;strong>出网（egress）流量&lt;/strong>，例如设置出口 IP、控制访问哪些外部服务等。
+这个 egress gateway 通常是通过配置 &lt;strong>ServiceEntry + VirtualService + Gateway&lt;/strong> 等来实现的。&lt;/p>
+&lt;hr>
+&lt;h4 id="-3-gateway-配置应用于服务负载的-envoy-代理上">
+ ❌ 3. &lt;code>Gateway 配置应用于服务负载的 Envoy 代理上&lt;/code>
+ &lt;a class="anchor" href="#-3-gateway-%e9%85%8d%e7%bd%ae%e5%ba%94%e7%94%a8%e4%ba%8e%e6%9c%8d%e5%8a%a1%e8%b4%9f%e8%bd%bd%e7%9a%84-envoy-%e4%bb%a3%e7%90%86%e4%b8%8a">#&lt;/a>
+&lt;/h4>
+&lt;p>&lt;strong>错误&lt;/strong>。
+这是&lt;strong>错误选项&lt;/strong>，正确答案就是它。&lt;/p></description></item><item><title>2025-5-29 错题分析2</title><link>https://qq547475331.github.io/docs/2025-5-29-%E9%94%99%E9%A2%98%E5%88%86%E6%9E%902/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-5-29-%E9%94%99%E9%A2%98%E5%88%86%E6%9E%902/</guid><description>&lt;pre tabindex="0">&lt;code>多选题
+
+94/231、华为云应用运维管理AOM服务具有哪些功能?
+
+容器监控
+
+日志采集
+
+告警管理
+
+智能排障
+&lt;/code>&lt;/pre>&lt;p>好的，华为云应用运维管理 AOM 服务具备以下功能：&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>容器监控 (Container Monitoring):&lt;/strong> AOM 提供对 Kubernetes 容器、节点、工作负载等运行状态的监控，包括 CPU、内存、网络、磁盘等指标的采集和展示，帮助用户了解容器化应用的资源使用情况和健康状况。&lt;/li>
+&lt;li>&lt;strong>日志采集 (Log Collection):&lt;/strong> AOM 支持从 Kubernetes 集群中的容器、节点等采集日志数据，并提供日志检索、分析和存储等功能，方便用户进行故障排查和问题分析。&lt;/li>
+&lt;li>&lt;strong>告警管理 (Alarm Management):&lt;/strong> AOM 允许用户基于监控指标配置告警规则，当指标达到阈值时发送告警通知，支持多种告警渠道和告警策略，帮助用户及时发现和处理应用及基础设施问题。&lt;/li>
+&lt;li>&lt;strong>智能排障 (Intelligent Troubleshooting):&lt;/strong> AOM 通常会集成一些智能诊断和排障工具，例如基于 AI 的异常检测、故障关联分析、根因分析等，帮助用户更快速地定位和解决问题，提高运维效率。&lt;/li>
+&lt;/ul>
+&lt;p>&lt;strong>因此，所有列出的功能都是华为云应用运维管理 AOM 服务具备的功能。&lt;/strong>&lt;/p>
+&lt;pre tabindex="0">&lt;code>多选题95/231、容器洞察引擎具有以下哪些特点?
+
+开放兼容云原生技术
+
+以应用为中心，聚焦业务指标
+
+数据无缝关联，快捷排障
+
+健集群诊断
+&lt;/code>&lt;/pre>&lt;p>好的，容器洞察引擎通常具备以下特点：&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>开放兼容云原生技术:&lt;/strong> 容器洞察引擎通常会遵循和兼容云原生生态的技术栈，例如 Kubernetes、容器运行时 (Docker/CRI-O)、Prometheus、Grafana、OpenTelemetry 等，能够无缝集成和监控这些技术。&lt;/li>
+&lt;li>&lt;strong>以应用为中心，聚焦业务指标:&lt;/strong> 优秀的容器洞察引擎不仅仅关注基础设施指标，更重要的是能够从应用的角度出发，提供业务相关的关键指标监控和分析，帮助用户了解应用的健康状况和业务影响。&lt;/li>
+&lt;li>&lt;strong>数据无缝关联，快捷排障:&lt;/strong> 容器洞察引擎能够将来自不同来源的监控数据（例如容器指标、日志、链路追踪等）进行关联分析，帮助用户快速定位问题根源，缩短故障排除时间。&lt;/li>
+&lt;li>&lt;strong>健康集群诊断:&lt;/strong> 容器洞察引擎通常提供集群级别的健康诊断功能，能够监控 Kubernetes 集群的各个组件（例如控制平面、节点、存储、网络等）的健康状态，并提供告警和诊断信息，确保集群稳定运行。&lt;/li>
+&lt;/ul>
+&lt;p>&lt;strong>因此，所有列出的特点通常都是容器洞察引擎所具备的。&lt;/strong>&lt;/p>
+&lt;pre tabindex="0">&lt;code>多选题
+
+96/231、Karmada控制面包含以下哪些组件?
+
+Karmada APl Server
+
+B
+
+Karmada Controller Manager
+
+Karmada Agent
+
+ETCD
+&lt;/code>&lt;/pre>&lt;p>好的，Karmada 控制面包含以下组件：&lt;/p></description></item><item><title>2025-5-7 好心态 app</title><link>https://qq547475331.github.io/docs/2025-5-7-%E5%A5%BD%E5%BF%83%E6%80%81-app/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-5-7-%E5%A5%BD%E5%BF%83%E6%80%81-app/</guid><description>&lt;h1 id="好心态应用">
  好心态应用
  &lt;a class="anchor" href="#%e5%a5%bd%e5%bf%83%e6%80%81%e5%ba%94%e7%94%a8">#&lt;/a>
 &lt;/h1>
