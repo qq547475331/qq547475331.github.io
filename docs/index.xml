@@ -30241,130 +30241,7 @@ The user&amp;#39;s OS version is win32 10.0.26100. The absolute path of the user
 
 Answer the user&amp;#39;s request using the relevant tool(s), if they are available. Check that all the required parameters for each tool call are provided or can reasonably be inferred from context. IF there are no relevant tools or there are missing values for required parameters, ask the user to supply these values; otherwise proceed with the tool calls. If the user provides a specific value for a parameter (for example provided in quotes), make sure to use that value EXACTLY. DO NOT make up values for or ask about optional parameters. Carefully analyze descriptive terms in the request as they may indicate required parameter values that should be included even if not explicitly quoted.
 如果相关工具可用，请使用它们来回答用户的请求。检查每个工具调用所需的所有参数是否都已提供，或者是否可以根据上下文合理推断。如果没有相关工具或必需参数缺少值，请要求用户提供这些值；否则，继续执行工具调用。如果用户为某个参数提供了特定值（例如，用引号提供），请确保准确使用该值。请勿为可选参数编造值或询问可选参数。仔细分析请求中的描述性术语，因为它们可能指示即使未明确引用也应包含的必需参数值。
-&lt;/code>&lt;/pre></description></item><item><title>2025-5-29 主Ingress副本变为0后报503问题分析</title><link>https://qq547475331.github.io/docs/2025-5-21-ingress%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-5-21-ingress%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/</guid><description>&lt;h1 id="主ingress副本变为0后报503问题分析">
- 主Ingress副本变为0后报503问题分析
- &lt;a class="anchor" href="#%e4%b8%bbingress%e5%89%af%e6%9c%ac%e5%8f%98%e4%b8%ba0%e5%90%8e%e6%8a%a5503%e9%97%ae%e9%a2%98%e5%88%86%e6%9e%90">#&lt;/a>
-&lt;/h1>
-&lt;p>当主Ingress副本数变为0时出现503错误，从Ingress-NGINX控制器源码分析，主要有以下几个关键原因：&lt;/p>
-&lt;h2 id="1-默认后端机制">
- 1. 默认后端机制
- &lt;a class="anchor" href="#1-%e9%bb%98%e8%ae%a4%e5%90%8e%e7%ab%af%e6%9c%ba%e5%88%b6">#&lt;/a>
-&lt;/h2>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// getDefaultUpstream 返回与默认后端关联的上游 578行&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// 配置上游在错误情况下返回 HTTP 代码 503&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">func&lt;/span> (&lt;span style="color:#a6e22e">n&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">NGINXController&lt;/span>) &lt;span style="color:#a6e22e">getDefaultUpstream&lt;/span>() &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">ingress&lt;/span>.&lt;span style="color:#a6e22e">Backend&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">upstream&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#f92672">&amp;amp;&lt;/span>&lt;span style="color:#a6e22e">ingress&lt;/span>.&lt;span style="color:#a6e22e">Backend&lt;/span>{
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">Name&lt;/span>: &lt;span style="color:#a6e22e">defUpstreamName&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">svcKey&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#a6e22e">n&lt;/span>.&lt;span style="color:#a6e22e">cfg&lt;/span>.&lt;span style="color:#a6e22e">DefaultService&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#a6e22e">svcKey&lt;/span> &lt;span style="color:#f92672">==&lt;/span> &lt;span style="color:#e6db74">&amp;#34;&amp;#34;&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">upstream&lt;/span>.&lt;span style="color:#a6e22e">Endpoints&lt;/span> = append(&lt;span style="color:#a6e22e">upstream&lt;/span>.&lt;span style="color:#a6e22e">Endpoints&lt;/span>, &lt;span style="color:#a6e22e">n&lt;/span>.&lt;span style="color:#a6e22e">DefaultEndpoint&lt;/span>())
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> &lt;span style="color:#a6e22e">upstream&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 找不到服务或服务没有有效端点时返回DefaultEndpoint&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// DefaultEndpoint通常返回503错误&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// ...&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250521170206699.png" alt="image-20250521170206699" />&lt;/p>
-&lt;p>当主Ingress副本为0时，控制器找不到匹配的路由规则，会路由到默认后端，默认后端如果未配置或无可用端点时会返回503。&lt;/p>
-&lt;h2 id="2-canary灰度发布依赖主ingress">
- 2. Canary灰度发布依赖主Ingress
- &lt;a class="anchor" href="#2-canary%e7%81%b0%e5%ba%a6%e5%8f%91%e5%b8%83%e4%be%9d%e8%b5%96%e4%b8%bbingress">#&lt;/a>
-&lt;/h2>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// nonCanaryIngressExists 只有在存在一个或多个可能合并到的ingress时才允许合并canary ingress 1544行行&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">func&lt;/span> &lt;span style="color:#a6e22e">nonCanaryIngressExists&lt;/span>(&lt;span style="color:#a6e22e">ingresses&lt;/span>, &lt;span style="color:#a6e22e">canaryIngresses&lt;/span> []&lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">ingress&lt;/span>.&lt;span style="color:#a6e22e">Ingress&lt;/span>) &lt;span style="color:#66d9ef">bool&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> len(&lt;span style="color:#a6e22e">ingresses&lt;/span>)&lt;span style="color:#f92672">-&lt;/span>len(&lt;span style="color:#a6e22e">canaryIngresses&lt;/span>) &amp;gt; &lt;span style="color:#ae81ff">0&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// mergeAlternativeBackends处理 903行&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#a6e22e">nonCanaryIngressExists&lt;/span>(&lt;span style="color:#a6e22e">ingresses&lt;/span>, &lt;span style="color:#a6e22e">canaryIngresses&lt;/span>) {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">for&lt;/span> &lt;span style="color:#a6e22e">_&lt;/span>, &lt;span style="color:#a6e22e">canaryIng&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#66d9ef">range&lt;/span> &lt;span style="color:#a6e22e">canaryIngresses&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">mergeAlternativeBackends&lt;/span>(&lt;span style="color:#a6e22e">canaryIng&lt;/span>, &lt;span style="color:#a6e22e">upstreams&lt;/span>, &lt;span style="color:#a6e22e">servers&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250521165735776.png" alt="image-20250521165735776" />&lt;/p></description></item><item><title>2025-5-29 错题分析1</title><link>https://qq547475331.github.io/docs/2025-5-29-%E9%94%99%E9%A2%98%E5%88%86%E6%9E%901/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-5-29-%E9%94%99%E9%A2%98%E5%88%86%E6%9E%901/</guid><description>&lt;pre tabindex="0">&lt;code>以下关于lstio中gateway 的说法，错误的是哪一项?
-Gateway 主要用于管理Ingress流量
-Gateway 可以配置egress gateway
-Gateway 配置应用于服务负载的Envoy 代理上
-Gateway 可以用来限制哪些服务可以访问外部网络
-&lt;/code>&lt;/pre>&lt;p>这道题考察的是对 &lt;strong>Istio 中 Gateway 的理解&lt;/strong>。我们逐项分析，找出&lt;strong>错误选项&lt;/strong>：&lt;/p>
-&lt;hr>
-&lt;h3 id="-选项分析">
- ✅ 选项分析：
- &lt;a class="anchor" href="#-%e9%80%89%e9%a1%b9%e5%88%86%e6%9e%90">#&lt;/a>
-&lt;/h3>
-&lt;h4 id="-1-gateway-主要用于管理-ingress-流量">
- ✅ 1. &lt;code>Gateway 主要用于管理 Ingress 流量&lt;/code>
- &lt;a class="anchor" href="#-1-gateway-%e4%b8%bb%e8%a6%81%e7%94%a8%e4%ba%8e%e7%ae%a1%e7%90%86-ingress-%e6%b5%81%e9%87%8f">#&lt;/a>
-&lt;/h4>
-&lt;p>&lt;strong>正确&lt;/strong>。
-Istio 中的 &lt;code>Gateway&lt;/code> 资源主要用于配置入口（&lt;strong>Ingress&lt;/strong>）流量，比如通过 HTTP、HTTPS 等协议从集群外部进入服务网格。&lt;/p>
-&lt;hr>
-&lt;h4 id="-2-gateway-可以配置-egress-gateway">
- ✅ 2. &lt;code>Gateway 可以配置 egress gateway&lt;/code>
- &lt;a class="anchor" href="#-2-gateway-%e5%8f%af%e4%bb%a5%e9%85%8d%e7%bd%ae-egress-gateway">#&lt;/a>
-&lt;/h4>
-&lt;p>&lt;strong>正确&lt;/strong>。
-虽然 &lt;code>Gateway&lt;/code> 默认是用来处理 Ingress 流量的，但 Istio 同样支持通过配置一个 &lt;strong>Egress Gateway&lt;/strong> 来控制 &lt;strong>出网（egress）流量&lt;/strong>，例如设置出口 IP、控制访问哪些外部服务等。
-这个 egress gateway 通常是通过配置 &lt;strong>ServiceEntry + VirtualService + Gateway&lt;/strong> 等来实现的。&lt;/p>
-&lt;hr>
-&lt;h4 id="-3-gateway-配置应用于服务负载的-envoy-代理上">
- ❌ 3. &lt;code>Gateway 配置应用于服务负载的 Envoy 代理上&lt;/code>
- &lt;a class="anchor" href="#-3-gateway-%e9%85%8d%e7%bd%ae%e5%ba%94%e7%94%a8%e4%ba%8e%e6%9c%8d%e5%8a%a1%e8%b4%9f%e8%bd%bd%e7%9a%84-envoy-%e4%bb%a3%e7%90%86%e4%b8%8a">#&lt;/a>
-&lt;/h4>
-&lt;p>&lt;strong>错误&lt;/strong>。
-这是&lt;strong>错误选项&lt;/strong>，正确答案就是它。&lt;/p></description></item><item><title>2025-5-29 错题分析2</title><link>https://qq547475331.github.io/docs/2025-5-29-%E9%94%99%E9%A2%98%E5%88%86%E6%9E%902/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-5-29-%E9%94%99%E9%A2%98%E5%88%86%E6%9E%902/</guid><description>&lt;pre tabindex="0">&lt;code>多选题
-
-94/231、华为云应用运维管理AOM服务具有哪些功能?
-
-容器监控
-
-日志采集
-
-告警管理
-
-智能排障
-&lt;/code>&lt;/pre>&lt;p>好的，华为云应用运维管理 AOM 服务具备以下功能：&lt;/p>
-&lt;ul>
-&lt;li>&lt;strong>容器监控 (Container Monitoring):&lt;/strong> AOM 提供对 Kubernetes 容器、节点、工作负载等运行状态的监控，包括 CPU、内存、网络、磁盘等指标的采集和展示，帮助用户了解容器化应用的资源使用情况和健康状况。&lt;/li>
-&lt;li>&lt;strong>日志采集 (Log Collection):&lt;/strong> AOM 支持从 Kubernetes 集群中的容器、节点等采集日志数据，并提供日志检索、分析和存储等功能，方便用户进行故障排查和问题分析。&lt;/li>
-&lt;li>&lt;strong>告警管理 (Alarm Management):&lt;/strong> AOM 允许用户基于监控指标配置告警规则，当指标达到阈值时发送告警通知，支持多种告警渠道和告警策略，帮助用户及时发现和处理应用及基础设施问题。&lt;/li>
-&lt;li>&lt;strong>智能排障 (Intelligent Troubleshooting):&lt;/strong> AOM 通常会集成一些智能诊断和排障工具，例如基于 AI 的异常检测、故障关联分析、根因分析等，帮助用户更快速地定位和解决问题，提高运维效率。&lt;/li>
-&lt;/ul>
-&lt;p>&lt;strong>因此，所有列出的功能都是华为云应用运维管理 AOM 服务具备的功能。&lt;/strong>&lt;/p>
-&lt;pre tabindex="0">&lt;code>多选题95/231、容器洞察引擎具有以下哪些特点?
-
-开放兼容云原生技术
-
-以应用为中心，聚焦业务指标
-
-数据无缝关联，快捷排障
-
-健集群诊断
-&lt;/code>&lt;/pre>&lt;p>好的，容器洞察引擎通常具备以下特点：&lt;/p>
-&lt;ul>
-&lt;li>&lt;strong>开放兼容云原生技术:&lt;/strong> 容器洞察引擎通常会遵循和兼容云原生生态的技术栈，例如 Kubernetes、容器运行时 (Docker/CRI-O)、Prometheus、Grafana、OpenTelemetry 等，能够无缝集成和监控这些技术。&lt;/li>
-&lt;li>&lt;strong>以应用为中心，聚焦业务指标:&lt;/strong> 优秀的容器洞察引擎不仅仅关注基础设施指标，更重要的是能够从应用的角度出发，提供业务相关的关键指标监控和分析，帮助用户了解应用的健康状况和业务影响。&lt;/li>
-&lt;li>&lt;strong>数据无缝关联，快捷排障:&lt;/strong> 容器洞察引擎能够将来自不同来源的监控数据（例如容器指标、日志、链路追踪等）进行关联分析，帮助用户快速定位问题根源，缩短故障排除时间。&lt;/li>
-&lt;li>&lt;strong>健康集群诊断:&lt;/strong> 容器洞察引擎通常提供集群级别的健康诊断功能，能够监控 Kubernetes 集群的各个组件（例如控制平面、节点、存储、网络等）的健康状态，并提供告警和诊断信息，确保集群稳定运行。&lt;/li>
-&lt;/ul>
-&lt;p>&lt;strong>因此，所有列出的特点通常都是容器洞察引擎所具备的。&lt;/strong>&lt;/p>
-&lt;pre tabindex="0">&lt;code>多选题
-
-96/231、Karmada控制面包含以下哪些组件?
-
-Karmada APl Server
-
-B
-
-Karmada Controller Manager
-
-Karmada Agent
-
-ETCD
-&lt;/code>&lt;/pre>&lt;p>好的，Karmada 控制面包含以下组件：&lt;/p></description></item><item><title>2025-5-7 好心态 app</title><link>https://qq547475331.github.io/docs/2025-5-7-%E5%A5%BD%E5%BF%83%E6%80%81-app/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-5-7-%E5%A5%BD%E5%BF%83%E6%80%81-app/</guid><description>&lt;h1 id="好心态应用">
+&lt;/code>&lt;/pre></description></item><item><title>2025-5-07 好心态app</title><link>https://qq547475331.github.io/docs/2025-5-7-%E5%A5%BD%E5%BF%83%E6%80%81-app/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-5-7-%E5%A5%BD%E5%BF%83%E6%80%81-app/</guid><description>&lt;h1 id="好心态应用">
  好心态应用
  &lt;a class="anchor" href="#%e5%a5%bd%e5%bf%83%e6%80%81%e5%ba%94%e7%94%a8">#&lt;/a>
 &lt;/h1>
@@ -30421,7 +30298,7 @@ ETCD
  2. 呼吸与冥想
  &lt;a class="anchor" href="#2-%e5%91%bc%e5%90%b8%e4%b8%8e%e5%86%a5%e6%83%b3">#&lt;/a>
 &lt;/h3>
-&lt;p>提供多种呼吸练习模式和引导式冥想，帮助用户放松身心，缓解焦虑。&lt;/p></description></item><item><title>2025-5-7 接单app设计</title><link>https://qq547475331.github.io/docs/2025-5-7-%E6%8E%A5%E5%8D%95app/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-5-7-%E6%8E%A5%E5%8D%95app/</guid><description>&lt;p>开发一个「接单平台 App」，通常是服务类行业中供服务者（接单者）与需求方（发单者）进行任务撮合的应用。根据业务场景（如跑腿、家政、维修、设计等），以下是通用的功能设计方案，适用于初期 MVP 到后期扩展版本的开发。&lt;/p>
+&lt;p>提供多种呼吸练习模式和引导式冥想，帮助用户放松身心，缓解焦虑。&lt;/p></description></item><item><title>2025-5-07 接单app设计</title><link>https://qq547475331.github.io/docs/2025-5-7-%E6%8E%A5%E5%8D%95app/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-5-7-%E6%8E%A5%E5%8D%95app/</guid><description>&lt;p>开发一个「接单平台 App」，通常是服务类行业中供服务者（接单者）与需求方（发单者）进行任务撮合的应用。根据业务场景（如跑腿、家政、维修、设计等），以下是通用的功能设计方案，适用于初期 MVP 到后期扩展版本的开发。&lt;/p>
 &lt;hr>
 &lt;h2 id="-一核心角色划分">
  🚀 一、核心角色划分
@@ -30603,4 +30480,127 @@ ETCD
 &lt;li>&lt;strong>企业端合作&lt;/strong>：支持企业用户批量发单&lt;/li>
 &lt;/ul>
 &lt;hr>
-&lt;p>是否需要我出一张 &lt;strong>功能架构图&lt;/strong> 或者设计一个初步的 &lt;strong>产品原型图&lt;/strong> 给你参考？&lt;/p></description></item></channel></rss>
+&lt;p>是否需要我出一张 &lt;strong>功能架构图&lt;/strong> 或者设计一个初步的 &lt;strong>产品原型图&lt;/strong> 给你参考？&lt;/p></description></item><item><title>2025-5-21 主Ingress副本变为0后报503问题分析</title><link>https://qq547475331.github.io/docs/2025-5-21-ingress%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-5-21-ingress%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/</guid><description>&lt;h1 id="主ingress副本变为0后报503问题分析">
+ 主Ingress副本变为0后报503问题分析
+ &lt;a class="anchor" href="#%e4%b8%bbingress%e5%89%af%e6%9c%ac%e5%8f%98%e4%b8%ba0%e5%90%8e%e6%8a%a5503%e9%97%ae%e9%a2%98%e5%88%86%e6%9e%90">#&lt;/a>
+&lt;/h1>
+&lt;p>当主Ingress副本数变为0时出现503错误，从Ingress-NGINX控制器源码分析，主要有以下几个关键原因：&lt;/p>
+&lt;h2 id="1-默认后端机制">
+ 1. 默认后端机制
+ &lt;a class="anchor" href="#1-%e9%bb%98%e8%ae%a4%e5%90%8e%e7%ab%af%e6%9c%ba%e5%88%b6">#&lt;/a>
+&lt;/h2>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// getDefaultUpstream 返回与默认后端关联的上游 578行&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// 配置上游在错误情况下返回 HTTP 代码 503&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">func&lt;/span> (&lt;span style="color:#a6e22e">n&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">NGINXController&lt;/span>) &lt;span style="color:#a6e22e">getDefaultUpstream&lt;/span>() &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">ingress&lt;/span>.&lt;span style="color:#a6e22e">Backend&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">upstream&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#f92672">&amp;amp;&lt;/span>&lt;span style="color:#a6e22e">ingress&lt;/span>.&lt;span style="color:#a6e22e">Backend&lt;/span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">Name&lt;/span>: &lt;span style="color:#a6e22e">defUpstreamName&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">svcKey&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#a6e22e">n&lt;/span>.&lt;span style="color:#a6e22e">cfg&lt;/span>.&lt;span style="color:#a6e22e">DefaultService&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#a6e22e">svcKey&lt;/span> &lt;span style="color:#f92672">==&lt;/span> &lt;span style="color:#e6db74">&amp;#34;&amp;#34;&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">upstream&lt;/span>.&lt;span style="color:#a6e22e">Endpoints&lt;/span> = append(&lt;span style="color:#a6e22e">upstream&lt;/span>.&lt;span style="color:#a6e22e">Endpoints&lt;/span>, &lt;span style="color:#a6e22e">n&lt;/span>.&lt;span style="color:#a6e22e">DefaultEndpoint&lt;/span>())
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> &lt;span style="color:#a6e22e">upstream&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> 
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// 找不到服务或服务没有有效端点时返回DefaultEndpoint&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// DefaultEndpoint通常返回503错误&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// ...&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250521170206699.png" alt="image-20250521170206699" />&lt;/p>
+&lt;p>当主Ingress副本为0时，控制器找不到匹配的路由规则，会路由到默认后端，默认后端如果未配置或无可用端点时会返回503。&lt;/p>
+&lt;h2 id="2-canary灰度发布依赖主ingress">
+ 2. Canary灰度发布依赖主Ingress
+ &lt;a class="anchor" href="#2-canary%e7%81%b0%e5%ba%a6%e5%8f%91%e5%b8%83%e4%be%9d%e8%b5%96%e4%b8%bbingress">#&lt;/a>
+&lt;/h2>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// nonCanaryIngressExists 只有在存在一个或多个可能合并到的ingress时才允许合并canary ingress 1544行行&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">func&lt;/span> &lt;span style="color:#a6e22e">nonCanaryIngressExists&lt;/span>(&lt;span style="color:#a6e22e">ingresses&lt;/span>, &lt;span style="color:#a6e22e">canaryIngresses&lt;/span> []&lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">ingress&lt;/span>.&lt;span style="color:#a6e22e">Ingress&lt;/span>) &lt;span style="color:#66d9ef">bool&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> len(&lt;span style="color:#a6e22e">ingresses&lt;/span>)&lt;span style="color:#f92672">-&lt;/span>len(&lt;span style="color:#a6e22e">canaryIngresses&lt;/span>) &amp;gt; &lt;span style="color:#ae81ff">0&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// mergeAlternativeBackends处理 903行&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#a6e22e">nonCanaryIngressExists&lt;/span>(&lt;span style="color:#a6e22e">ingresses&lt;/span>, &lt;span style="color:#a6e22e">canaryIngresses&lt;/span>) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">for&lt;/span> &lt;span style="color:#a6e22e">_&lt;/span>, &lt;span style="color:#a6e22e">canaryIng&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#66d9ef">range&lt;/span> &lt;span style="color:#a6e22e">canaryIngresses&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">mergeAlternativeBackends&lt;/span>(&lt;span style="color:#a6e22e">canaryIng&lt;/span>, &lt;span style="color:#a6e22e">upstreams&lt;/span>, &lt;span style="color:#a6e22e">servers&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250521165735776.png" alt="image-20250521165735776" />&lt;/p></description></item><item><title>2025-5-29 错题分析1</title><link>https://qq547475331.github.io/docs/2025-5-29-%E9%94%99%E9%A2%98%E5%88%86%E6%9E%901/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-5-29-%E9%94%99%E9%A2%98%E5%88%86%E6%9E%901/</guid><description>&lt;pre tabindex="0">&lt;code>以下关于lstio中gateway 的说法，错误的是哪一项?
+Gateway 主要用于管理Ingress流量
+Gateway 可以配置egress gateway
+Gateway 配置应用于服务负载的Envoy 代理上
+Gateway 可以用来限制哪些服务可以访问外部网络
+&lt;/code>&lt;/pre>&lt;p>这道题考察的是对 &lt;strong>Istio 中 Gateway 的理解&lt;/strong>。我们逐项分析，找出&lt;strong>错误选项&lt;/strong>：&lt;/p>
+&lt;hr>
+&lt;h3 id="-选项分析">
+ ✅ 选项分析：
+ &lt;a class="anchor" href="#-%e9%80%89%e9%a1%b9%e5%88%86%e6%9e%90">#&lt;/a>
+&lt;/h3>
+&lt;h4 id="-1-gateway-主要用于管理-ingress-流量">
+ ✅ 1. &lt;code>Gateway 主要用于管理 Ingress 流量&lt;/code>
+ &lt;a class="anchor" href="#-1-gateway-%e4%b8%bb%e8%a6%81%e7%94%a8%e4%ba%8e%e7%ae%a1%e7%90%86-ingress-%e6%b5%81%e9%87%8f">#&lt;/a>
+&lt;/h4>
+&lt;p>&lt;strong>正确&lt;/strong>。
+Istio 中的 &lt;code>Gateway&lt;/code> 资源主要用于配置入口（&lt;strong>Ingress&lt;/strong>）流量，比如通过 HTTP、HTTPS 等协议从集群外部进入服务网格。&lt;/p>
+&lt;hr>
+&lt;h4 id="-2-gateway-可以配置-egress-gateway">
+ ✅ 2. &lt;code>Gateway 可以配置 egress gateway&lt;/code>
+ &lt;a class="anchor" href="#-2-gateway-%e5%8f%af%e4%bb%a5%e9%85%8d%e7%bd%ae-egress-gateway">#&lt;/a>
+&lt;/h4>
+&lt;p>&lt;strong>正确&lt;/strong>。
+虽然 &lt;code>Gateway&lt;/code> 默认是用来处理 Ingress 流量的，但 Istio 同样支持通过配置一个 &lt;strong>Egress Gateway&lt;/strong> 来控制 &lt;strong>出网（egress）流量&lt;/strong>，例如设置出口 IP、控制访问哪些外部服务等。
+这个 egress gateway 通常是通过配置 &lt;strong>ServiceEntry + VirtualService + Gateway&lt;/strong> 等来实现的。&lt;/p>
+&lt;hr>
+&lt;h4 id="-3-gateway-配置应用于服务负载的-envoy-代理上">
+ ❌ 3. &lt;code>Gateway 配置应用于服务负载的 Envoy 代理上&lt;/code>
+ &lt;a class="anchor" href="#-3-gateway-%e9%85%8d%e7%bd%ae%e5%ba%94%e7%94%a8%e4%ba%8e%e6%9c%8d%e5%8a%a1%e8%b4%9f%e8%bd%bd%e7%9a%84-envoy-%e4%bb%a3%e7%90%86%e4%b8%8a">#&lt;/a>
+&lt;/h4>
+&lt;p>&lt;strong>错误&lt;/strong>。
+这是&lt;strong>错误选项&lt;/strong>，正确答案就是它。&lt;/p></description></item><item><title>2025-5-29 错题分析2</title><link>https://qq547475331.github.io/docs/2025-5-29-%E9%94%99%E9%A2%98%E5%88%86%E6%9E%902/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-5-29-%E9%94%99%E9%A2%98%E5%88%86%E6%9E%902/</guid><description>&lt;pre tabindex="0">&lt;code>多选题
+
+94/231、华为云应用运维管理AOM服务具有哪些功能?
+
+容器监控
+
+日志采集
+
+告警管理
+
+智能排障
+&lt;/code>&lt;/pre>&lt;p>好的，华为云应用运维管理 AOM 服务具备以下功能：&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>容器监控 (Container Monitoring):&lt;/strong> AOM 提供对 Kubernetes 容器、节点、工作负载等运行状态的监控，包括 CPU、内存、网络、磁盘等指标的采集和展示，帮助用户了解容器化应用的资源使用情况和健康状况。&lt;/li>
+&lt;li>&lt;strong>日志采集 (Log Collection):&lt;/strong> AOM 支持从 Kubernetes 集群中的容器、节点等采集日志数据，并提供日志检索、分析和存储等功能，方便用户进行故障排查和问题分析。&lt;/li>
+&lt;li>&lt;strong>告警管理 (Alarm Management):&lt;/strong> AOM 允许用户基于监控指标配置告警规则，当指标达到阈值时发送告警通知，支持多种告警渠道和告警策略，帮助用户及时发现和处理应用及基础设施问题。&lt;/li>
+&lt;li>&lt;strong>智能排障 (Intelligent Troubleshooting):&lt;/strong> AOM 通常会集成一些智能诊断和排障工具，例如基于 AI 的异常检测、故障关联分析、根因分析等，帮助用户更快速地定位和解决问题，提高运维效率。&lt;/li>
+&lt;/ul>
+&lt;p>&lt;strong>因此，所有列出的功能都是华为云应用运维管理 AOM 服务具备的功能。&lt;/strong>&lt;/p>
+&lt;pre tabindex="0">&lt;code>多选题95/231、容器洞察引擎具有以下哪些特点?
+
+开放兼容云原生技术
+
+以应用为中心，聚焦业务指标
+
+数据无缝关联，快捷排障
+
+健集群诊断
+&lt;/code>&lt;/pre>&lt;p>好的，容器洞察引擎通常具备以下特点：&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>开放兼容云原生技术:&lt;/strong> 容器洞察引擎通常会遵循和兼容云原生生态的技术栈，例如 Kubernetes、容器运行时 (Docker/CRI-O)、Prometheus、Grafana、OpenTelemetry 等，能够无缝集成和监控这些技术。&lt;/li>
+&lt;li>&lt;strong>以应用为中心，聚焦业务指标:&lt;/strong> 优秀的容器洞察引擎不仅仅关注基础设施指标，更重要的是能够从应用的角度出发，提供业务相关的关键指标监控和分析，帮助用户了解应用的健康状况和业务影响。&lt;/li>
+&lt;li>&lt;strong>数据无缝关联，快捷排障:&lt;/strong> 容器洞察引擎能够将来自不同来源的监控数据（例如容器指标、日志、链路追踪等）进行关联分析，帮助用户快速定位问题根源，缩短故障排除时间。&lt;/li>
+&lt;li>&lt;strong>健康集群诊断:&lt;/strong> 容器洞察引擎通常提供集群级别的健康诊断功能，能够监控 Kubernetes 集群的各个组件（例如控制平面、节点、存储、网络等）的健康状态，并提供告警和诊断信息，确保集群稳定运行。&lt;/li>
+&lt;/ul>
+&lt;p>&lt;strong>因此，所有列出的特点通常都是容器洞察引擎所具备的。&lt;/strong>&lt;/p>
+&lt;pre tabindex="0">&lt;code>多选题
+
+96/231、Karmada控制面包含以下哪些组件?
+
+Karmada APl Server
+
+B
+
+Karmada Controller Manager
+
+Karmada Agent
+
+ETCD
+&lt;/code>&lt;/pre>&lt;p>好的，Karmada 控制面包含以下组件：&lt;/p></description></item></channel></rss>
