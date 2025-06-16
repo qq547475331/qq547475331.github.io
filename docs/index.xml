@@ -27155,161 +27155,7 @@ ubuntu@openstack-vm:~$
 &lt;li>
 &lt;p>&lt;strong>运行 Docker Registry&lt;/strong>： 启动一个 Docker Registry 实例，默认情况下会使用端口 5000。&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>sudo docker run -d -p 5000:5000 --name registry registry:2
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>这条命令将会拉取并运行一个 &lt;code>registry&lt;/code> 容器，并将本地的 5000 端口映射到容器的 5000 端口。&lt;/p></description></item><item><title>2025-06-10 独立开发</title><link>https://qq547475331.github.io/docs/2025-06-10-%E7%8B%AC%E7%AB%8B%E5%BC%80%E5%8F%91/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-06-10-%E7%8B%AC%E7%AB%8B%E5%BC%80%E5%8F%91/</guid><description>&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250616110630819.png" alt="image-20250616110630819" />&lt;/p>
-&lt;h1 id="独立开发技术栈-2025">
- 独立开发技术栈 2025
- &lt;a class="anchor" href="#%e7%8b%ac%e7%ab%8b%e5%bc%80%e5%8f%91%e6%8a%80%e6%9c%af%e6%a0%88-2025">#&lt;/a>
-&lt;/h1>
-&lt;p>在技术栈和云服务厂商的选择如此丰富多样的今天，我们如果需要独立开发的话，应该需要选择什么技术栈呢？&lt;/p>
-&lt;h2 id="为什么是独立开发">
- 为什么是独立开发
- &lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e6%98%af%e7%8b%ac%e7%ab%8b%e5%bc%80%e5%8f%91">#&lt;/a>
-&lt;/h2>
-&lt;p>为什么我要将技术的选型仅仅局限在独立开发上呢？因为如果我们不是独立开发，而是替公司或者客户开发的话，个人觉得技术选型的余地不大，乐趣也不高。&lt;/p>
-&lt;p>首先除了少有的创业公司，现有的公司或者项目一般都已经有了完善的技术栈和规范，更推荐的是在老的技术栈上进行重构，或者有计划的淘汰老的微服务，在新的微服务上引入新技术，而不是为了最求新颖的技术栈而全面推翻重来。&lt;/p>
-&lt;p>而就算在老的项目上引入新的技术栈，优先考虑的也是利于团队协同开发的技术栈，例如方便招人的、利于团队合作的技术。&lt;/p>
-&lt;p>所以如果想要满足自己的技术热情，最好的办法还是加入开源项目，或者开发自己的独立项目。&lt;/p>
-&lt;p>好啦，那我们正式开始推荐吧～&lt;/p>
-&lt;h2 id="frontend">
- Frontend
- &lt;a class="anchor" href="#frontend">#&lt;/a>
-&lt;/h2>
-&lt;h3 id="nextjs">
- &lt;a href="https://nextjs.org/">Nextjs&lt;/a>
- &lt;a class="anchor" href="#nextjs">#&lt;/a>
-&lt;/h3>
-&lt;p>如果你主要是构建前端应用，或者是前端 + 轻量级后端 API 的项目，那么目前最推荐的还是 &lt;a href="https://nextjs.org/">Nextjs&lt;/a> 这个框架，它是是一个基于 React 的开源框架。&lt;/p>
-&lt;p>推荐理由：&lt;/p>
-&lt;ul>
-&lt;li>学习曲线平缓，并且官方的实战教程非常友好：https://nextjs.org/learn&lt;/li>
-&lt;li>生态非常的丰富，有非常多的可以满足不同需求的脚手架，例如 &lt;a href="https://github.com/t3-oss/create-t3-app">create-t3-app&lt;/a> 这个开源的脚手架项目，可以选择性的集成鉴权、ORM、UI 等功能和技术栈。&lt;/li>
-&lt;li>部署简单，毕竟是 &lt;a href="https://vercel.com/">Vercel&lt;/a> 的母公司开发的框架，可以非常丝滑的部署到 &lt;a href="https://vercel.com/">Vercel&lt;/a> 上。&lt;/li>
-&lt;/ul>
-&lt;p>为什么一上来就推荐 &lt;a href="https://nextjs.org/">Nextjs&lt;/a>？一是 &lt;a href="https://nextjs.org/">Nextjs&lt;/a> 本身就是一个可以快速创建和部署的框架，可以快速上线我们的项目；二是 &lt;a href="https://nextjs.org/">Nextjs&lt;/a> 对于我们后面集成推荐的技术栈和平台都非常的友好方便。&lt;/p>
-&lt;p>例如你想要部署一个静态网站，比如文档教程，那么你可以使用 &lt;a href="https://nextjs.org/">Nextjs&lt;/a> 的 Static Site Generation (SSG)，搭配上一些 CDN 托管服务，这里非常推荐 &lt;a href="https://pages.cloudflare.com/">Cloudflare Pages&lt;/a>，Cloudflare 是笔者唯一五星推荐的云服务商，后面还会再提到。例如 &lt;a href="https://nextra.site/">nextra&lt;/a> 这个项目就是一个基于 &lt;a href="https://nextra.site/docs/guide/ssg">Nextjs + SSG&lt;/a> 的文档类型开源项目。&lt;/p>
-&lt;p>当然你也可以部署一些需要轻量级 API 的全栈项目，例如博客、AI Chatbot等，你可以使用 &lt;a href="https://nextjs.org/">Nextjs&lt;/a> 的 Server Side Rendering (SSR) 和 API Routes，搭配上一些云服务商的云函数，例如 &lt;a href="https://vercel.com/">Vercel&lt;/a> 的 &lt;a href="https://vercel.com/docs/functions">Serverless Functions&lt;/a>，或者 &lt;a href="https://developers.cloudflare.com/pages/framework-guides/nextjs/deploy-a-nextjs-site/">Cloudflare Worker&lt;/a>，就可以快速的部署一个全栈项目。&lt;/p>
-&lt;p>例如 &lt;a href="https://nextjs.org/">Nextjs&lt;/a> + &lt;a href="https://vercel.com/">Vercel&lt;/a> 的核心人物 &lt;a href="https://leerob.io/">leerob&lt;/a> 的博客就是一个很好的例子，他的个人博客就是基于 SSR + API Routes 做了一些例如评论、订阅等功能，然后部署在 &lt;a href="https://vercel.com/">Vercel&lt;/a> 上。&lt;/p></description></item><item><title>2025-06-12 flutter规则</title><link>https://qq547475331.github.io/docs/2025-06-12-flutter%E8%A7%84%E5%88%99/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-06-12-flutter%E8%A7%84%E5%88%99/</guid><description>&lt;p>You are an expert in Flutter, Dart, Riverpod, Freezed, Flutter Hooks, and Supabase.&lt;/p>
-&lt;p>Key Principles&lt;/p>
-&lt;ul>
-&lt;li>Write concise, technical Dart code with accurate examples.&lt;/li>
-&lt;li>Use functional and declarative programming patterns where appropriate.&lt;/li>
-&lt;li>Prefer composition over inheritance.&lt;/li>
-&lt;li>Use descriptive variable names with auxiliary verbs (e.g., isLoading, hasError).&lt;/li>
-&lt;li>Structure files: exported widget, subwidgets, helpers, static content, types.&lt;/li>
-&lt;/ul>
-&lt;p>Dart/Flutter&lt;/p>
-&lt;ul>
-&lt;li>Use const constructors for immutable widgets.&lt;/li>
-&lt;li>Leverage Freezed for immutable state classes and unions.&lt;/li>
-&lt;li>Use arrow syntax for simple functions and methods.&lt;/li>
-&lt;li>Prefer expression bodies for one-line getters and setters.&lt;/li>
-&lt;li>Use trailing commas for better formatting and diffs.&lt;/li>
-&lt;/ul>
-&lt;p>Error Handling and Validation&lt;/p></description></item><item><title>2025-06-12 karmada介绍</title><link>https://qq547475331.github.io/docs/2025-06-12-karmada/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-06-12-karmada/</guid><description>&lt;p>你提供的 &lt;code>PropagationPolicy&lt;/code> YAML 配置如下：&lt;/p>
-&lt;p>YAML&lt;/p>
-&lt;pre tabindex="0">&lt;code>apiVersion: policy.karmada.io/v1alpha1
-kind: PropagationPolicy
-metadata:
- name: nginx-propagation
-spec:
- resourceSelectors:
- - apiVersion: apps/v1
- kind: Deployment
- name: nginx
- placement:
- clusterAffinity:
- clusterNames:
- - cluster-1
- - cluster-2
-&lt;/code>&lt;/pre>&lt;p>这个 &lt;code>PropagationPolicy&lt;/code> 的作用是告诉 Karmada：&lt;strong>将名为 &lt;code>nginx&lt;/code>、类型为 &lt;code>Deployment&lt;/code>、API 版本为 &lt;code>apps/v1&lt;/code> 的资源分发到 &lt;code>cluster-1&lt;/code> 和 &lt;code>cluster-2&lt;/code> 这两个成员集群。&lt;/strong>&lt;/p>
-&lt;p>Karmada 是如何知道 &lt;code>nginx&lt;/code> Deployment 的详细配置信息，例如 CPU、内存的 &lt;code>request/limit&lt;/code> 值、副本数 (replicas) 和容忍度 (tolerations) 等的呢？&lt;/p>
-&lt;p>答案在于 Karmada 的&lt;strong>工作原理&lt;/strong>和它对 Kubernetes &lt;strong>原生 API 对象的处理方式&lt;/strong>：&lt;/p>
-&lt;ol>
-&lt;li>
-&lt;p>Karmada 控制平面作为 Kubernetes API 的聚合层：&lt;/p>
-&lt;p>Karmada 的核心组件包括 karmada-apiserver，它是一个聚合的 Kubernetes API 服务器。当用户提交 Deployment、Pod、Service 等任何标准的 Kubernetes 资源到 Karmada 控制平面时，这些资源并不是直接部署到某个具体的集群，而是首先存储在 Karmada 控制平面的 etcd 中。&lt;/p></description></item><item><title>2025-06-16 Cursor RIPER-5规则</title><link>https://qq547475331.github.io/docs/2025-06-16-fire%E8%A7%84%E5%88%99/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-06-16-fire%E8%A7%84%E5%88%99/</guid><description>&lt;h2 id="riper-5">
- RIPER-5
- &lt;a class="anchor" href="#riper-5">#&lt;/a>
-&lt;/h2>
-&lt;h3 id="背景介绍">
- 背景介绍
- &lt;a class="anchor" href="#%e8%83%8c%e6%99%af%e4%bb%8b%e7%bb%8d">#&lt;/a>
-&lt;/h3>
-&lt;p>你是Claude 4.0，集成在Cursor IDE中，Cursor是基于AI的VS Code分支。由于你的高级功能，你往往过于急切，经常在没有明确请求的情况下实施更改，通过假设你比用户更了解情况而破坏现有逻辑。这会导致对代码的不可接受的灾难性影响。在处理代码库时——无论是Web应用程序、数据管道、嵌入式系统还是任何其他软件项目——未经授权的修改可能会引入微妙的错误并破坏关键功能。为防止这种情况，你必须遵循这个严格的协议。&lt;/p>
-&lt;p>语言设置：除非用户另有指示，所有常规交互响应都应该使用中文。然而，模式声明（例如[MODE: RESEARCH]）和特定格式化输出（例如代码块、清单等）应保持英文，以确保格式一致性。&lt;/p>
-&lt;h3 id="元指令模式声明要求">
- 元指令：模式声明要求
- &lt;a class="anchor" href="#%e5%85%83%e6%8c%87%e4%bb%a4%e6%a8%a1%e5%bc%8f%e5%a3%b0%e6%98%8e%e8%a6%81%e6%b1%82">#&lt;/a>
-&lt;/h3>
-&lt;p>你必须在每个响应的开头用方括号声明你当前的模式。没有例外。&lt;br>
-格式：[MODE: MODE_NAME]&lt;/p>
-&lt;p>未能声明你的模式是对协议的严重违反。&lt;/p>
-&lt;p>初始默认模式：除非另有指示，你应该在每次新对话开始时处于RESEARCH模式。&lt;/p>
-&lt;h3 id="核心思维原则">
- 核心思维原则
- &lt;a class="anchor" href="#%e6%a0%b8%e5%bf%83%e6%80%9d%e7%bb%b4%e5%8e%9f%e5%88%99">#&lt;/a>
-&lt;/h3>
-&lt;p>在所有模式中，这些基本思维原则指导你的操作：&lt;/p>
-&lt;ul>
-&lt;li>系统思维：从整体架构到具体实现进行分析&lt;/li>
-&lt;li>辩证思维：评估多种解决方案及其利弊&lt;/li>
-&lt;li>创新思维：打破常规模式，寻求创造性解决方案&lt;/li>
-&lt;li>批判性思维：从多个角度验证和优化解决方案&lt;/li>
-&lt;/ul>
-&lt;p>在所有回应中平衡这些方面：&lt;/p>
-&lt;ul>
-&lt;li>分析与直觉&lt;/li>
-&lt;li>细节检查与全局视角&lt;/li>
-&lt;li>理论理解与实际应用&lt;/li>
-&lt;li>深度思考与前进动力&lt;/li>
-&lt;li>复杂性与清晰度&lt;/li>
-&lt;/ul>
-&lt;h3 id="增强型riper-5模式与代理执行协议">
- 增强型RIPER-5模式与代理执行协议
- &lt;a class="anchor" href="#%e5%a2%9e%e5%bc%ba%e5%9e%8briper-5%e6%a8%a1%e5%bc%8f%e4%b8%8e%e4%bb%a3%e7%90%86%e6%89%a7%e8%a1%8c%e5%8d%8f%e8%ae%ae">#&lt;/a>
-&lt;/h3>
-&lt;h4 id="模式1研究">
- 模式1：研究
- &lt;a class="anchor" href="#%e6%a8%a1%e5%bc%8f1%e7%a0%94%e7%a9%b6">#&lt;/a>
-&lt;/h4>
-&lt;p>[MODE: RESEARCH]&lt;/p>
-&lt;p>目的：信息收集和深入理解&lt;/p>
-&lt;p>核心思维应用：&lt;/p>
-&lt;ul>
-&lt;li>系统地分解技术组件&lt;/li>
-&lt;li>清晰地映射已知/未知元素&lt;/li>
-&lt;li>考虑更广泛的架构影响&lt;/li>
-&lt;li>识别关键技术约束和要求&lt;/li>
-&lt;/ul>
-&lt;p>允许：&lt;/p>
-&lt;ul>
-&lt;li>阅读文件&lt;/li>
-&lt;li>提出澄清问题&lt;/li>
-&lt;li>理解代码结构&lt;/li>
-&lt;li>分析系统架构&lt;/li>
-&lt;li>识别技术债务或约束&lt;/li>
-&lt;li>创建任务文件（参见下面的任务文件模板）&lt;/li>
-&lt;li>创建功能分支&lt;/li>
-&lt;/ul>
-&lt;p>禁止：&lt;/p>
-&lt;ul>
-&lt;li>建议&lt;/li>
-&lt;li>实施&lt;/li>
-&lt;li>规划&lt;/li>
-&lt;li>任何行动或解决方案的暗示&lt;/li>
-&lt;/ul>
-&lt;p>研究协议步骤：&lt;/p>
-&lt;ol>
-&lt;li>
-&lt;p>创建功能分支（如需要）：&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-java" data-lang="java">&lt;span style="display:flex;">&lt;span>git checkout &lt;span style="color:#f92672">-&lt;/span>b task&lt;span style="color:#f92672">/[&lt;/span>TASK_IDENTIFIER&lt;span style="color:#f92672">]&lt;/span>_&lt;span style="color:#f92672">[&lt;/span>TASK_DATE_AND_NUMBER&lt;span style="color:#f92672">]&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
-&lt;li>
-&lt;p>创建任务文件（如需要）：&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-java" data-lang="java">&lt;span style="display:flex;">&lt;span>mkdir &lt;span style="color:#f92672">-&lt;/span>p .&lt;span style="color:#a6e22e">tasks&lt;/span> &lt;span style="color:#f92672">&amp;amp;&amp;amp;&lt;/span> touch &lt;span style="color:#e6db74">&amp;#34;.tasks/${TASK_FILE_NAME}_[TASK_IDENTIFIER].md&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
-&lt;li>
-&lt;p>分析与任务相关的代码：&lt;/p></description></item><item><title>2025-1-1 sealos获投</title><link>https://qq547475331.github.io/docs/2025-1-1-sealos%E8%8E%B7%E6%8A%95/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-1-1-sealos%E8%8E%B7%E6%8A%95/</guid><description>&lt;p>36氪获悉，「sealos」项目的所属公司「环界云计算」近日已完成总计2000万元的天使轮和天使+轮融资。该公司成立于 2022年3月，其核心产品sealos是一款以 kubernetes 为内核的云操作系统发行版。据介绍，这两轮融资在三个月内相继完成。其中，天使轮融资由奇绩创坛领投，清华信息学院院长李军、中科大微电子康一教授和 coding 创始人张海龙跟投。天使+轮则由高捷资本独家投资。&lt;/p>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>这条命令将会拉取并运行一个 &lt;code>registry&lt;/code> 容器，并将本地的 5000 端口映射到容器的 5000 端口。&lt;/p></description></item><item><title>2025-1-1 sealos获投</title><link>https://qq547475331.github.io/docs/2025-1-1-sealos%E8%8E%B7%E6%8A%95/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-1-1-sealos%E8%8E%B7%E6%8A%95/</guid><description>&lt;p>36氪获悉，「sealos」项目的所属公司「环界云计算」近日已完成总计2000万元的天使轮和天使+轮融资。该公司成立于 2022年3月，其核心产品sealos是一款以 kubernetes 为内核的云操作系统发行版。据介绍，这两轮融资在三个月内相继完成。其中，天使轮融资由奇绩创坛领投，清华信息学院院长李军、中科大微电子康一教授和 coding 创始人张海龙跟投。天使+轮则由高捷资本独家投资。&lt;/p>
 &lt;p>“分布式”与“云原生”一直是近些年计算机领域的热点话题。近年来，这一领域涌现出多家创业公司，而 sealos 正是一家服务分布式应用的开发者与用户的公司。&lt;/p>
 &lt;p>sealos 致力打造以 Kubernetes 为内核的开源云操作系统发行版，希望借助Kubernetes 的开源与轻便等特性，让用户用云像使用 PC 操作系统一样简单。sealos 创始人方海涛向36氪表示，linux kernel 诞生随后便出现很多发行版让单机操作系统普及，今天 kubernetes 已经成为云内核的事实标准，所以基于 kubernetes 的云操作系统发行版未来也必然会普及。传统的操作系统是运行在一台机器上的，而对如今众多的分布式应用来说，其天生就需要在多台机器上运行。因此，这些应用的开发者需要花大量的精力去管理众多的机器。比如，开发者需要实现多台机器之间的数据备份、流量监控等功能。方海涛认为，开发者需要一个云操作系统，让云操作系统来管理这些底层的服务器资源，这样开发者可以更专注于应用本身。sealos 正是这样一款向下可以对整个数据中心资源抽象池化，向上可以管理各种分布式应用的云操作系统。最终 sealos 希望让云变得简单/便宜/开放/普及。&lt;/p>
 &lt;p>并且，分布式应用对用户也有很高的操作门槛，比如让一个 DBA 去操作 kubernetes 显然是一件不太合理的事情，而 sealos 想把分布式应用的用户门槛降低。比如方海涛向36氪展示，sealos拥有类似于 linux desktop 的图形化界面，点击其桌面上的某个图标，就可以运行该图标对应的分布式数据库，这样抽象的设计可以让不同类型的用户都能拥有很好的使用体验，这就是通过云操作系统提供给用户真正想要的能力，这个能力可以是数据库，消息队列，AI 能力，甚至是一个企业级 CRM 软件。整个操作系统所有能力也提供 API 方便开发者调用各种能力。方海涛补充，sealos 通过分布式应用的 Store，来连接云原生应用的开发者与用户，从而改变云服务生产关系。&lt;/p>
@@ -30757,4 +30603,158 @@ Karmada Controller Manager
 Karmada Agent
 
 ETCD
-&lt;/code>&lt;/pre>&lt;p>好的，Karmada 控制面包含以下组件：&lt;/p></description></item></channel></rss>
+&lt;/code>&lt;/pre>&lt;p>好的，Karmada 控制面包含以下组件：&lt;/p></description></item><item><title>2025-6-10 独立开发</title><link>https://qq547475331.github.io/docs/2025-6-10-%E7%8B%AC%E7%AB%8B%E5%BC%80%E5%8F%91/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-6-10-%E7%8B%AC%E7%AB%8B%E5%BC%80%E5%8F%91/</guid><description>&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20250616110630819.png" alt="image-20250616110630819" />&lt;/p>
+&lt;h1 id="独立开发技术栈-2025">
+ 独立开发技术栈 2025
+ &lt;a class="anchor" href="#%e7%8b%ac%e7%ab%8b%e5%bc%80%e5%8f%91%e6%8a%80%e6%9c%af%e6%a0%88-2025">#&lt;/a>
+&lt;/h1>
+&lt;p>在技术栈和云服务厂商的选择如此丰富多样的今天，我们如果需要独立开发的话，应该需要选择什么技术栈呢？&lt;/p>
+&lt;h2 id="为什么是独立开发">
+ 为什么是独立开发
+ &lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e6%98%af%e7%8b%ac%e7%ab%8b%e5%bc%80%e5%8f%91">#&lt;/a>
+&lt;/h2>
+&lt;p>为什么我要将技术的选型仅仅局限在独立开发上呢？因为如果我们不是独立开发，而是替公司或者客户开发的话，个人觉得技术选型的余地不大，乐趣也不高。&lt;/p>
+&lt;p>首先除了少有的创业公司，现有的公司或者项目一般都已经有了完善的技术栈和规范，更推荐的是在老的技术栈上进行重构，或者有计划的淘汰老的微服务，在新的微服务上引入新技术，而不是为了最求新颖的技术栈而全面推翻重来。&lt;/p>
+&lt;p>而就算在老的项目上引入新的技术栈，优先考虑的也是利于团队协同开发的技术栈，例如方便招人的、利于团队合作的技术。&lt;/p>
+&lt;p>所以如果想要满足自己的技术热情，最好的办法还是加入开源项目，或者开发自己的独立项目。&lt;/p>
+&lt;p>好啦，那我们正式开始推荐吧～&lt;/p>
+&lt;h2 id="frontend">
+ Frontend
+ &lt;a class="anchor" href="#frontend">#&lt;/a>
+&lt;/h2>
+&lt;h3 id="nextjs">
+ &lt;a href="https://nextjs.org/">Nextjs&lt;/a>
+ &lt;a class="anchor" href="#nextjs">#&lt;/a>
+&lt;/h3>
+&lt;p>如果你主要是构建前端应用，或者是前端 + 轻量级后端 API 的项目，那么目前最推荐的还是 &lt;a href="https://nextjs.org/">Nextjs&lt;/a> 这个框架，它是是一个基于 React 的开源框架。&lt;/p>
+&lt;p>推荐理由：&lt;/p>
+&lt;ul>
+&lt;li>学习曲线平缓，并且官方的实战教程非常友好：https://nextjs.org/learn&lt;/li>
+&lt;li>生态非常的丰富，有非常多的可以满足不同需求的脚手架，例如 &lt;a href="https://github.com/t3-oss/create-t3-app">create-t3-app&lt;/a> 这个开源的脚手架项目，可以选择性的集成鉴权、ORM、UI 等功能和技术栈。&lt;/li>
+&lt;li>部署简单，毕竟是 &lt;a href="https://vercel.com/">Vercel&lt;/a> 的母公司开发的框架，可以非常丝滑的部署到 &lt;a href="https://vercel.com/">Vercel&lt;/a> 上。&lt;/li>
+&lt;/ul>
+&lt;p>为什么一上来就推荐 &lt;a href="https://nextjs.org/">Nextjs&lt;/a>？一是 &lt;a href="https://nextjs.org/">Nextjs&lt;/a> 本身就是一个可以快速创建和部署的框架，可以快速上线我们的项目；二是 &lt;a href="https://nextjs.org/">Nextjs&lt;/a> 对于我们后面集成推荐的技术栈和平台都非常的友好方便。&lt;/p>
+&lt;p>例如你想要部署一个静态网站，比如文档教程，那么你可以使用 &lt;a href="https://nextjs.org/">Nextjs&lt;/a> 的 Static Site Generation (SSG)，搭配上一些 CDN 托管服务，这里非常推荐 &lt;a href="https://pages.cloudflare.com/">Cloudflare Pages&lt;/a>，Cloudflare 是笔者唯一五星推荐的云服务商，后面还会再提到。例如 &lt;a href="https://nextra.site/">nextra&lt;/a> 这个项目就是一个基于 &lt;a href="https://nextra.site/docs/guide/ssg">Nextjs + SSG&lt;/a> 的文档类型开源项目。&lt;/p>
+&lt;p>当然你也可以部署一些需要轻量级 API 的全栈项目，例如博客、AI Chatbot等，你可以使用 &lt;a href="https://nextjs.org/">Nextjs&lt;/a> 的 Server Side Rendering (SSR) 和 API Routes，搭配上一些云服务商的云函数，例如 &lt;a href="https://vercel.com/">Vercel&lt;/a> 的 &lt;a href="https://vercel.com/docs/functions">Serverless Functions&lt;/a>，或者 &lt;a href="https://developers.cloudflare.com/pages/framework-guides/nextjs/deploy-a-nextjs-site/">Cloudflare Worker&lt;/a>，就可以快速的部署一个全栈项目。&lt;/p>
+&lt;p>例如 &lt;a href="https://nextjs.org/">Nextjs&lt;/a> + &lt;a href="https://vercel.com/">Vercel&lt;/a> 的核心人物 &lt;a href="https://leerob.io/">leerob&lt;/a> 的博客就是一个很好的例子，他的个人博客就是基于 SSR + API Routes 做了一些例如评论、订阅等功能，然后部署在 &lt;a href="https://vercel.com/">Vercel&lt;/a> 上。&lt;/p></description></item><item><title>2025-6-12 flutter规则</title><link>https://qq547475331.github.io/docs/2025-6-12-flutter%E8%A7%84%E5%88%99/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-6-12-flutter%E8%A7%84%E5%88%99/</guid><description>&lt;p>You are an expert in Flutter, Dart, Riverpod, Freezed, Flutter Hooks, and Supabase.&lt;/p>
+&lt;p>Key Principles&lt;/p>
+&lt;ul>
+&lt;li>Write concise, technical Dart code with accurate examples.&lt;/li>
+&lt;li>Use functional and declarative programming patterns where appropriate.&lt;/li>
+&lt;li>Prefer composition over inheritance.&lt;/li>
+&lt;li>Use descriptive variable names with auxiliary verbs (e.g., isLoading, hasError).&lt;/li>
+&lt;li>Structure files: exported widget, subwidgets, helpers, static content, types.&lt;/li>
+&lt;/ul>
+&lt;p>Dart/Flutter&lt;/p>
+&lt;ul>
+&lt;li>Use const constructors for immutable widgets.&lt;/li>
+&lt;li>Leverage Freezed for immutable state classes and unions.&lt;/li>
+&lt;li>Use arrow syntax for simple functions and methods.&lt;/li>
+&lt;li>Prefer expression bodies for one-line getters and setters.&lt;/li>
+&lt;li>Use trailing commas for better formatting and diffs.&lt;/li>
+&lt;/ul>
+&lt;p>Error Handling and Validation&lt;/p></description></item><item><title>2025-6-12 karmada介绍</title><link>https://qq547475331.github.io/docs/2025-6-12-karmada/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-6-12-karmada/</guid><description>&lt;p>你提供的 &lt;code>PropagationPolicy&lt;/code> YAML 配置如下：&lt;/p>
+&lt;p>YAML&lt;/p>
+&lt;pre tabindex="0">&lt;code>apiVersion: policy.karmada.io/v1alpha1
+kind: PropagationPolicy
+metadata:
+ name: nginx-propagation
+spec:
+ resourceSelectors:
+ - apiVersion: apps/v1
+ kind: Deployment
+ name: nginx
+ placement:
+ clusterAffinity:
+ clusterNames:
+ - cluster-1
+ - cluster-2
+&lt;/code>&lt;/pre>&lt;p>这个 &lt;code>PropagationPolicy&lt;/code> 的作用是告诉 Karmada：&lt;strong>将名为 &lt;code>nginx&lt;/code>、类型为 &lt;code>Deployment&lt;/code>、API 版本为 &lt;code>apps/v1&lt;/code> 的资源分发到 &lt;code>cluster-1&lt;/code> 和 &lt;code>cluster-2&lt;/code> 这两个成员集群。&lt;/strong>&lt;/p>
+&lt;p>Karmada 是如何知道 &lt;code>nginx&lt;/code> Deployment 的详细配置信息，例如 CPU、内存的 &lt;code>request/limit&lt;/code> 值、副本数 (replicas) 和容忍度 (tolerations) 等的呢？&lt;/p>
+&lt;p>答案在于 Karmada 的&lt;strong>工作原理&lt;/strong>和它对 Kubernetes &lt;strong>原生 API 对象的处理方式&lt;/strong>：&lt;/p>
+&lt;ol>
+&lt;li>
+&lt;p>Karmada 控制平面作为 Kubernetes API 的聚合层：&lt;/p>
+&lt;p>Karmada 的核心组件包括 karmada-apiserver，它是一个聚合的 Kubernetes API 服务器。当用户提交 Deployment、Pod、Service 等任何标准的 Kubernetes 资源到 Karmada 控制平面时，这些资源并不是直接部署到某个具体的集群，而是首先存储在 Karmada 控制平面的 etcd 中。&lt;/p></description></item><item><title>2025-6-16 Cursor RIPER-5规则</title><link>https://qq547475331.github.io/docs/2025-6-16-fire%E8%A7%84%E5%88%99/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-6-16-fire%E8%A7%84%E5%88%99/</guid><description>&lt;h2 id="riper-5">
+ RIPER-5
+ &lt;a class="anchor" href="#riper-5">#&lt;/a>
+&lt;/h2>
+&lt;h3 id="背景介绍">
+ 背景介绍
+ &lt;a class="anchor" href="#%e8%83%8c%e6%99%af%e4%bb%8b%e7%bb%8d">#&lt;/a>
+&lt;/h3>
+&lt;p>你是Claude 4.0，集成在Cursor IDE中，Cursor是基于AI的VS Code分支。由于你的高级功能，你往往过于急切，经常在没有明确请求的情况下实施更改，通过假设你比用户更了解情况而破坏现有逻辑。这会导致对代码的不可接受的灾难性影响。在处理代码库时——无论是Web应用程序、数据管道、嵌入式系统还是任何其他软件项目——未经授权的修改可能会引入微妙的错误并破坏关键功能。为防止这种情况，你必须遵循这个严格的协议。&lt;/p>
+&lt;p>语言设置：除非用户另有指示，所有常规交互响应都应该使用中文。然而，模式声明（例如[MODE: RESEARCH]）和特定格式化输出（例如代码块、清单等）应保持英文，以确保格式一致性。&lt;/p>
+&lt;h3 id="元指令模式声明要求">
+ 元指令：模式声明要求
+ &lt;a class="anchor" href="#%e5%85%83%e6%8c%87%e4%bb%a4%e6%a8%a1%e5%bc%8f%e5%a3%b0%e6%98%8e%e8%a6%81%e6%b1%82">#&lt;/a>
+&lt;/h3>
+&lt;p>你必须在每个响应的开头用方括号声明你当前的模式。没有例外。&lt;br>
+格式：[MODE: MODE_NAME]&lt;/p>
+&lt;p>未能声明你的模式是对协议的严重违反。&lt;/p>
+&lt;p>初始默认模式：除非另有指示，你应该在每次新对话开始时处于RESEARCH模式。&lt;/p>
+&lt;h3 id="核心思维原则">
+ 核心思维原则
+ &lt;a class="anchor" href="#%e6%a0%b8%e5%bf%83%e6%80%9d%e7%bb%b4%e5%8e%9f%e5%88%99">#&lt;/a>
+&lt;/h3>
+&lt;p>在所有模式中，这些基本思维原则指导你的操作：&lt;/p>
+&lt;ul>
+&lt;li>系统思维：从整体架构到具体实现进行分析&lt;/li>
+&lt;li>辩证思维：评估多种解决方案及其利弊&lt;/li>
+&lt;li>创新思维：打破常规模式，寻求创造性解决方案&lt;/li>
+&lt;li>批判性思维：从多个角度验证和优化解决方案&lt;/li>
+&lt;/ul>
+&lt;p>在所有回应中平衡这些方面：&lt;/p>
+&lt;ul>
+&lt;li>分析与直觉&lt;/li>
+&lt;li>细节检查与全局视角&lt;/li>
+&lt;li>理论理解与实际应用&lt;/li>
+&lt;li>深度思考与前进动力&lt;/li>
+&lt;li>复杂性与清晰度&lt;/li>
+&lt;/ul>
+&lt;h3 id="增强型riper-5模式与代理执行协议">
+ 增强型RIPER-5模式与代理执行协议
+ &lt;a class="anchor" href="#%e5%a2%9e%e5%bc%ba%e5%9e%8briper-5%e6%a8%a1%e5%bc%8f%e4%b8%8e%e4%bb%a3%e7%90%86%e6%89%a7%e8%a1%8c%e5%8d%8f%e8%ae%ae">#&lt;/a>
+&lt;/h3>
+&lt;h4 id="模式1研究">
+ 模式1：研究
+ &lt;a class="anchor" href="#%e6%a8%a1%e5%bc%8f1%e7%a0%94%e7%a9%b6">#&lt;/a>
+&lt;/h4>
+&lt;p>[MODE: RESEARCH]&lt;/p>
+&lt;p>目的：信息收集和深入理解&lt;/p>
+&lt;p>核心思维应用：&lt;/p>
+&lt;ul>
+&lt;li>系统地分解技术组件&lt;/li>
+&lt;li>清晰地映射已知/未知元素&lt;/li>
+&lt;li>考虑更广泛的架构影响&lt;/li>
+&lt;li>识别关键技术约束和要求&lt;/li>
+&lt;/ul>
+&lt;p>允许：&lt;/p>
+&lt;ul>
+&lt;li>阅读文件&lt;/li>
+&lt;li>提出澄清问题&lt;/li>
+&lt;li>理解代码结构&lt;/li>
+&lt;li>分析系统架构&lt;/li>
+&lt;li>识别技术债务或约束&lt;/li>
+&lt;li>创建任务文件（参见下面的任务文件模板）&lt;/li>
+&lt;li>创建功能分支&lt;/li>
+&lt;/ul>
+&lt;p>禁止：&lt;/p>
+&lt;ul>
+&lt;li>建议&lt;/li>
+&lt;li>实施&lt;/li>
+&lt;li>规划&lt;/li>
+&lt;li>任何行动或解决方案的暗示&lt;/li>
+&lt;/ul>
+&lt;p>研究协议步骤：&lt;/p>
+&lt;ol>
+&lt;li>
+&lt;p>创建功能分支（如需要）：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-java" data-lang="java">&lt;span style="display:flex;">&lt;span>git checkout &lt;span style="color:#f92672">-&lt;/span>b task&lt;span style="color:#f92672">/[&lt;/span>TASK_IDENTIFIER&lt;span style="color:#f92672">]&lt;/span>_&lt;span style="color:#f92672">[&lt;/span>TASK_DATE_AND_NUMBER&lt;span style="color:#f92672">]&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>创建任务文件（如需要）：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-java" data-lang="java">&lt;span style="display:flex;">&lt;span>mkdir &lt;span style="color:#f92672">-&lt;/span>p .&lt;span style="color:#a6e22e">tasks&lt;/span> &lt;span style="color:#f92672">&amp;amp;&amp;amp;&lt;/span> touch &lt;span style="color:#e6db74">&amp;#34;.tasks/${TASK_FILE_NAME}_[TASK_IDENTIFIER].md&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>分析与任务相关的代码：&lt;/p></description></item></channel></rss>
