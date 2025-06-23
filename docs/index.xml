@@ -30757,4 +30757,72 @@ spec:
 &lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-java" data-lang="java">&lt;span style="display:flex;">&lt;span>mkdir &lt;span style="color:#f92672">-&lt;/span>p .&lt;span style="color:#a6e22e">tasks&lt;/span> &lt;span style="color:#f92672">&amp;amp;&amp;amp;&lt;/span> touch &lt;span style="color:#e6db74">&amp;#34;.tasks/${TASK_FILE_NAME}_[TASK_IDENTIFIER].md&amp;#34;&lt;/span>
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
 &lt;li>
-&lt;p>分析与任务相关的代码：&lt;/p></description></item></channel></rss>
+&lt;p>分析与任务相关的代码：&lt;/p></description></item><item><title>2025-6-20 oom排查思路</title><link>https://qq547475331.github.io/docs/2025-6-20-oom/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-6-20-oom/</guid><description>&lt;h1 id="kubernetes环境下jvm应用快速oom退出及重启的故障排查与预防报告">
+ Kubernetes环境下JVM应用快速OOM退出及重启的故障排查与预防报告
+ &lt;a class="anchor" href="#kubernetes%e7%8e%af%e5%a2%83%e4%b8%8bjvm%e5%ba%94%e7%94%a8%e5%bf%ab%e9%80%9foom%e9%80%80%e5%87%ba%e5%8f%8a%e9%87%8d%e5%90%af%e7%9a%84%e6%95%85%e9%9a%9c%e6%8e%92%e6%9f%a5%e4%b8%8e%e9%a2%84%e9%98%b2%e6%8a%a5%e5%91%8a">#&lt;/a>
+&lt;/h1>
+&lt;h2 id="1-执行摘要">
+ 1. 执行摘要
+ &lt;a class="anchor" href="#1-%e6%89%a7%e8%a1%8c%e6%91%98%e8%a6%81">#&lt;/a>
+&lt;/h2>
+&lt;p>Kubernetes环境中，特别是对于JVM应用而言，Pod在极短时间内（例如1分钟内）因内存溢出（OOM）而退出并重启，且普罗米修斯（Prometheus）未能采集到该时期的内存和JVM状况，构成了一项严峻的故障排查挑战。此类事件通常导致应用即时停机和服务不稳定，需要采用专门的诊断方法。&lt;/p>
+&lt;p>问题的核心在于Linux内核的OOM Killer机制、Kubernetes资源管理（cgroups、QoS类）以及JVM独特的内存分配行为之间的复杂交互。由于数据采集间隔或&lt;code>SIGKILL&lt;/code>信号的突然性，传统的监控指标往往无法捕捉到故障发生的精确瞬间。&lt;/p>
+&lt;p>针对此类瞬时OOM事件，建议采取以下关键措施以立即响应：&lt;/p>
+&lt;ul>
+&lt;li>优先分析&lt;strong>节点级日志&lt;/strong>（&lt;code>journalctl&lt;/code>）和&lt;strong>直接读取cgroup文件&lt;/strong>，因为它们能从内核层面提供最接近故障发生时的数据。&lt;/li>
+&lt;li>利用&lt;strong>JVM特定的分析工具&lt;/strong>，如Java Flight Recorder (JFR)或Async-profiler，进行低开销、持续或按需的深度应用内存使用分析。&lt;/li>
+&lt;li>探索基于&lt;strong>eBPF的工具&lt;/strong>，以实现实时、内核级的可观测性，从而捕获其他系统可能遗漏的细粒度内存事件。&lt;/li>
+&lt;/ul>
+&lt;p>从长远来看，预防此类问题的发生需要采取综合性策略，包括：精确配置Kubernetes的资源请求与限制、细致调整JVM内存参数（如&lt;code>-Xmx&lt;/code>和&lt;code>MaxRAMPercentage&lt;/code>）、彻底优化应用程序代码以消除内存泄漏，以及在集群层面进行战略性资源管理。&lt;/p>
+&lt;h2 id="2-理解kubernetes中的快速oomkilled事件">
+ 2. 理解Kubernetes中的快速OOMKilled事件
+ &lt;a class="anchor" href="#2-%e7%90%86%e8%a7%a3kubernetes%e4%b8%ad%e7%9a%84%e5%bf%ab%e9%80%9foomkilled%e4%ba%8b%e4%bb%b6">#&lt;/a>
+&lt;/h2>
+&lt;h3 id="21-linux-oom-killer与cgroups容器内存限制的强制执行机制">
+ 2.1 Linux OOM Killer与cgroups：容器内存限制的强制执行机制
+ &lt;a class="anchor" href="#21-linux-oom-killer%e4%b8%8ecgroups%e5%ae%b9%e5%99%a8%e5%86%85%e5%ad%98%e9%99%90%e5%88%b6%e7%9a%84%e5%bc%ba%e5%88%b6%e6%89%a7%e8%a1%8c%e6%9c%ba%e5%88%b6">#&lt;/a>
+&lt;/h3>
+&lt;p>OOMKilled事件（退出代码137）并非直接由Kubernetes发出，而是Linux内核发出的信号，表明由于内存不足（Out Of Memory, OOM）条件导致进程被终止 1。当容器尝试消耗的内存超出其设定的限制时，Linux内核的cgroups（控制组）机制会强制执行此限制，从而触发OOM条件 1。&lt;/p>
+&lt;p>OOM Killer的主要目的是在物理内存耗尽、交换空间不足或内存回收失败时，通过终止占用内存过多的进程来确保系统的稳定性 1。Kubernetes将Pod的内存限制转换为cgroup配置。如果cgroup（即容器）内的进程试图消耗超出其允许的内存量，Linux内核就会触发OOM条件 1。cgroup机制是通过文件系统实现的，可以在&lt;/p>
+&lt;p>&lt;code>/sys/fs/cgroup/memory/&lt;/code>路径下查看其配置和当前使用情况 2。&lt;/p>
+&lt;p>OOM Killer会根据进程的内存使用量、运行时间及其优先级等因素，为每个进程分配一个“糟糕度”分数（&lt;code>oom_score&lt;/code>）。分数最高的进程将被选中并终止 1。&lt;/p>
+&lt;h3 id="22-kubernetes-qos类与oom行为pod的优先级划分">
+ 2.2 Kubernetes QoS类与OOM行为：Pod的优先级划分
+ &lt;a class="anchor" href="#22-kubernetes-qos%e7%b1%bb%e4%b8%8eoom%e8%a1%8c%e4%b8%bapod%e7%9a%84%e4%bc%98%e5%85%88%e7%ba%a7%e5%88%92%e5%88%86">#&lt;/a>
+&lt;/h3>
+&lt;p>Kubernetes利用&lt;code>oom_score_adj&lt;/code>值来影响OOM Killer的决策，这取决于Pod的服务质量（Quality of Service, QoS）类别 4。这不仅仅是调度问题，更是Kubernetes在OOM Killer决策过程中主动参与的表现。如果关键应用被归类为&lt;/p>
+&lt;p>&lt;code>BestEffort&lt;/code>，那么它们在设计上就是内存压力下最先被终止的对象。这揭示了一种在Kubernetes配置层面就能采取的积极措施，以保护关键服务，甚至在深入进行应用特定调优之前。适当的QoS配置是Kubernetes部署的一项基本架构决策，直接影响内存压力下服务的弹性。它不仅关乎资源分配，还在于定义集群内存管理策略中应用的重要性。&lt;/p>
+&lt;p>Kubernetes定义了三种QoS类别：&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Guaranteed (保证型):&lt;/strong> Pod中所有容器的内存请求（&lt;code>requests&lt;/code>）和限制（&lt;code>limits&lt;/code>）都相等。这类Pod的&lt;code>oom_score_adj&lt;/code>为-997，因此最不可能被OOM Killer终止 6。&lt;/li>
+&lt;li>&lt;strong>Burstable (突发型):&lt;/strong> Pod中至少有一个容器具有内存请求或限制，但未满足Guaranteed的条件。这类Pod的&lt;code>oom_score_adj&lt;/code>值在2-999之间浮动 6。&lt;/li>
+&lt;li>&lt;strong>BestEffort (尽力而为型):&lt;/strong> Pod中所有容器都没有定义内存或CPU请求和限制。这类Pod的&lt;code>oom_score_adj&lt;/code>为1000，因此最有可能被终止 4。&lt;/li>
+&lt;/ul>
+&lt;p>当节点本身面临内存压力时（即所有Pod和系统守护进程的总内存消耗超出节点容量），Kubernetes可能会根据QoS类别驱逐非关键Pod以稳定节点。如果驱逐速度不足以释放足够的内存，则可能发生系统级OOM终止 1。&lt;/p></description></item><item><title>2025-6-23 ingress nginx contrller 内存使用过高分析</title><link>https://qq547475331.github.io/docs/2025-6-23-ingress-nginx-contrller-%E5%88%86%E6%9E%90/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-6-23-ingress-nginx-contrller-%E5%88%86%E6%9E%90/</guid><description>&lt;p>ingress nginx controller 文件描述符，内存增加，内存缓存收集nginx传递的指标数据时存在延迟，导致socket goroutine和指标对象堆积，收集延迟的原因是，在汇总数据累积过程中，存在锁的争用，prometheus 指标损失，prometheus服务器从ingress nginx controller 收集指标时发生超时的原因是，在ingress nginx controller 生成指标响应时，获取摘要数据的锁发生争用&lt;/p>
+&lt;h1 id="ingress-nginx-controller-性能瓶颈诊断与缓解文件描述符内存泄漏和-prometheus-指标收集挑战">
+ Ingress-NGINX Controller 性能瓶颈诊断与缓解：文件描述符、内存泄漏和 Prometheus 指标收集挑战
+ &lt;a class="anchor" href="#ingress-nginx-controller-%e6%80%a7%e8%83%bd%e7%93%b6%e9%a2%88%e8%af%8a%e6%96%ad%e4%b8%8e%e7%bc%93%e8%a7%a3%e6%96%87%e4%bb%b6%e6%8f%8f%e8%bf%b0%e7%ac%a6%e5%86%85%e5%ad%98%e6%b3%84%e6%bc%8f%e5%92%8c-prometheus-%e6%8c%87%e6%a0%87%e6%94%b6%e9%9b%86%e6%8c%91%e6%88%98">#&lt;/a>
+&lt;/h1>
+&lt;h2 id="1-引言">
+ 1. 引言
+ &lt;a class="anchor" href="#1-%e5%bc%95%e8%a8%80">#&lt;/a>
+&lt;/h2>
+&lt;h3 id="ingress-nginx-controller-的作用概述">
+ Ingress-NGINX Controller 的作用概述
+ &lt;a class="anchor" href="#ingress-nginx-controller-%e7%9a%84%e4%bd%9c%e7%94%a8%e6%a6%82%e8%bf%b0">#&lt;/a>
+&lt;/h3>
+&lt;p>Ingress-NGINX Controller 是 Kubernetes 环境中一个至关重要的组件，其核心功能是将 Kubernetes 的 Ingress 对象转换为 NGINX 配置，从而实现对集群内部服务的外部访问管理。作为一个功能强大的反向代理和负载均衡器，Ingress-NGINX Controller 不仅负责流量路由和 SSL 终止，还与 Prometheus 等监控系统深度集成，提供丰富的可观测性指标 1。这种双重角色意味着其性能表现直接影响着应用程序的可用性和整个系统的监控健全性。&lt;/p>
+&lt;h3 id="问题陈述">
+ 问题陈述
+ &lt;a class="anchor" href="#%e9%97%ae%e9%a2%98%e9%99%88%e8%bf%b0">#&lt;/a>
+&lt;/h3>
+&lt;p>在实际操作中，Ingress-NGINX Controller 可能会遭遇一系列复杂的性能问题，这些问题往往相互关联，形成性能下降的连锁反应。用户观察到的具体症状包括：文件描述符耗尽、内存持续增长、Prometheus 指标收集延迟、socket goroutine 和指标对象堆积、数据聚合过程中存在的锁争用、Prometheus 指标丢失，以及 Prometheus 服务器从 Ingress-NGINX Controller 收集指标时发生的超时。本报告旨在深入分析这些现象，揭示其深层原因，并提供基于现有证据的缓解策略。&lt;/p>
+&lt;h2 id="2-ingress-nginx-controller-中的文件描述符耗尽">
+ 2. Ingress-NGINX Controller 中的文件描述符耗尽
+ &lt;a class="anchor" href="#2-ingress-nginx-controller-%e4%b8%ad%e7%9a%84%e6%96%87%e4%bb%b6%e6%8f%8f%e8%bf%b0%e7%ac%a6%e8%80%97%e5%b0%bd">#&lt;/a>
+&lt;/h2>
+&lt;h3 id="理解-nginx-中的文件描述符">
+ 理解 NGINX 中的文件描述符
+ &lt;a class="anchor" href="#%e7%90%86%e8%a7%a3-nginx-%e4%b8%ad%e7%9a%84%e6%96%87%e4%bb%b6%e6%8f%8f%e8%bf%b0%e7%ac%a6">#&lt;/a>
+&lt;/h3>
+&lt;p>文件描述符（FDs）是操作系统为进程提供的抽象句柄，用于访问各种 I/O 资源，包括网络套接字、打开的文件和管道。NGINX 作为一款事件驱动的高性能 Web 服务器，高度依赖文件描述符来管理并发连接、代理请求以及处理内部通信。每一个活跃的客户端连接、每一个到上游服务器的连接，以及 NGINX 内部的各个组件，通常都会消耗一个或多个文件描述符。&lt;/p></description></item></channel></rss>
