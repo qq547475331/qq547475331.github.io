@@ -30825,4 +30825,45 @@ spec:
  理解 NGINX 中的文件描述符
  &lt;a class="anchor" href="#%e7%90%86%e8%a7%a3-nginx-%e4%b8%ad%e7%9a%84%e6%96%87%e4%bb%b6%e6%8f%8f%e8%bf%b0%e7%ac%a6">#&lt;/a>
 &lt;/h3>
-&lt;p>文件描述符（FDs）是操作系统为进程提供的抽象句柄，用于访问各种 I/O 资源，包括网络套接字、打开的文件和管道。NGINX 作为一款事件驱动的高性能 Web 服务器，高度依赖文件描述符来管理并发连接、代理请求以及处理内部通信。每一个活跃的客户端连接、每一个到上游服务器的连接，以及 NGINX 内部的各个组件，通常都会消耗一个或多个文件描述符。&lt;/p></description></item></channel></rss>
+&lt;p>文件描述符（FDs）是操作系统为进程提供的抽象句柄，用于访问各种 I/O 资源，包括网络套接字、打开的文件和管道。NGINX 作为一款事件驱动的高性能 Web 服务器，高度依赖文件描述符来管理并发连接、代理请求以及处理内部通信。每一个活跃的客户端连接、每一个到上游服务器的连接，以及 NGINX 内部的各个组件，通常都会消耗一个或多个文件描述符。&lt;/p></description></item><item><title>2025-6-27 geminicli</title><link>https://qq547475331.github.io/docs/2025-6-27-geminicli/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-6-27-geminicli/</guid><description>&lt;h1 id="google震撼发布gemini-cli100万token超长上下文远超claude-code支持mcp-server扩展开发者的终极aicontext7task-master轻松开发ai智能体">
+ Google震撼发布Gemini CLI！100万TOKEN超长上下文远超Claude Code，支持MCP Server扩展，开发者的终极AI！Context7+Task Master轻松开发AI智能体
+ &lt;a class="anchor" href="#google%e9%9c%87%e6%92%bc%e5%8f%91%e5%b8%83gemini-cli100%e4%b8%87token%e8%b6%85%e9%95%bf%e4%b8%8a%e4%b8%8b%e6%96%87%e8%bf%9c%e8%b6%85claude-code%e6%94%af%e6%8c%81mcp-server%e6%89%a9%e5%b1%95%e5%bc%80%e5%8f%91%e8%80%85%e7%9a%84%e7%bb%88%e6%9e%81aicontext7task-master%e8%bd%bb%e6%9d%be%e5%bc%80%e5%8f%91ai%e6%99%ba%e8%83%bd%e4%bd%93">#&lt;/a>
+&lt;/h1>
+&lt;p>Google最近推出了Gemini CLI，这是一个基于Gemini 2.5 Pro模型的开源命令行界面工具，将人工智能直接引入开发者的终端环境。这一创新工具代表了开发者生产力的重大进步，将传统命令行从刚性的命令执行器转变为智能的对话伙伴。&lt;/p>
+&lt;p>&lt;strong>核心功能与架构&lt;/strong>&lt;/p>
+&lt;p>Gemini CLI的核心是Gemini 2.5 Pro，这是一个能够处理多达100万个令牌上下文窗口的多模态基础模型。这个庞大的上下文窗口允许开发者输入大型代码库、文档和文件树，进行全面的多步骤分析或转换。该工具配备了多个内置功能，包括代码阅读器、命令运行器和内存模块，这些功能可以通过多模态可组合函数（MCPs）进行扩展，这是一个基于Python的接口，用于添加自定义行为。&lt;/p>
+&lt;p>&lt;strong>多功能开发助手&lt;/strong>&lt;/p>
+&lt;p>虽然Gemini CLI在编程方面表现出色，但它被设计为一个多功能的本地实用工具，可用于广泛的任务，从内容生成和问题解决到深度研究和任务管理。该工具允许用户使用自然语言进行提示，消除了输入冗长复杂命令或不断查阅文档的需要。开发者可以通过自然语言命令执行复杂任务，如代码重构、文档生成、执行shell命令、运行脚本和编辑文件。&lt;/p>
+&lt;p>&lt;strong>免费访问与使用限制&lt;/strong>&lt;/p>
+&lt;p>任何拥有个人Google账户的用户都可以免费访问Gemini 1.5 Pro，限制为每分钟60次请求和每天1000次请求。这个慷慨的额度确保个人开发者在开发工作中很少遇到使用限制。对于需要更高限制或特定模型的专业开发者，Google提供与Google AI Studio和Vertex AI的集成，采用基于使用量的计费方式。&lt;/p>
+&lt;p>&lt;strong>开源与可扩展性&lt;/strong>&lt;/p>
+&lt;p>该项目完全开源，采用Apache 2.0许可证。这种透明性允许开发者检查代码、了解其功能并验证安全影响。开源特性鼓励社区贡献，包括错误报告、功能建议和代码改进。该工具支持与模型上下文协议（MCP）和捆绑扩展的内置集成，允许开发者为特定工作流定制提示和说明。&lt;/p>
+&lt;p>&lt;strong>开发生态系统集成&lt;/strong>&lt;/p>
+&lt;p>Gemini CLI与Google的AI编程助手Gemini Code Assist共享相同的技术。这种集成在不同的开发环境中提供了一致性，无论是在终端还是在VS Code中工作。该工具可以通过Google搜索为提示提供基础，获取网页并为模型提供实时的外部上下文。&lt;/p>
+&lt;p>&lt;strong>跨平台兼容性&lt;/strong>&lt;/p>
+&lt;p>Gemini CLI使用TypeScript编写，可在所有平台上运行，包括Windows、macOS和Linux。通过npm进行安装非常简单，使得开发者无论使用何种操作系统都能轻松访问。&lt;/p>
+&lt;p>Gemini CLI代表了开发者工具的范式转变，人工智能成为命令行体验的组成部分，在保持开发者重视的终端效率和可移植性的同时提高了生产力。&lt;/p>
+&lt;h2 id="基础操作">
+ 基础操作：
+ &lt;a class="anchor" href="#%e5%9f%ba%e7%a1%80%e6%93%8d%e4%bd%9c">#&lt;/a>
+&lt;/h2>
+&lt;ul>
+&lt;li>&lt;strong>添加上下文&lt;/strong>：使用 @ 指定文件作为上下文（例如：@src/myFile.ts）来定位特定文件或文件夹&lt;/li>
+&lt;li>&lt;strong>Shell 模式&lt;/strong>：通过 ! 执行shell命令（例如：!npm run start）或使用自然语言（例如：启动服务器）&lt;/li>
+&lt;/ul>
+&lt;h2 id="命令列表">
+ 命令列表：
+ &lt;a class="anchor" href="#%e5%91%bd%e4%bb%a4%e5%88%97%e8%a1%a8">#&lt;/a>
+&lt;/h2>
+&lt;ul>
+&lt;li>
+&lt;p>&lt;code>/help&lt;/code> - 显示 gemini-cli 的帮助信息&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;code>/docs&lt;/code> - 在浏览器中打开完整的 Gemini CLI 文档&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;code>/clear&lt;/code> - 清除屏幕和对话历史&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;code>/theme&lt;/code> - 更改主题&lt;/p></description></item></channel></rss>
