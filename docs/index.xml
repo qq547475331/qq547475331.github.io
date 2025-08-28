@@ -30786,4 +30786,56 @@ spec:
 &lt;p>&lt;code>/clear&lt;/code> - 清除屏幕和对话历史&lt;/p>
 &lt;/li>
 &lt;li>
-&lt;p>&lt;code>/theme&lt;/code> - 更改主题&lt;/p></description></item></channel></rss>
+&lt;p>&lt;code>/theme&lt;/code> - 更改主题&lt;/p></description></item><item><title>2025-8-28 表单到集群</title><link>https://qq547475331.github.io/docs/2025-8-29-%E8%A1%A8%E5%8D%95%E5%88%B0%E9%9B%86%E7%BE%A4/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-8-29-%E8%A1%A8%E5%8D%95%E5%88%B0%E9%9B%86%E7%BE%A4/</guid><description>&lt;h2 id="前端填写的deployment的表单怎么变为后端deployment的yaml以及如何被部署到k8s集群的">
+ 前端填写的deployment的表单怎么变为后端deployment的yaml，以及如何被部署到k8s集群的
+ &lt;a class="anchor" href="#%e5%89%8d%e7%ab%af%e5%a1%ab%e5%86%99%e7%9a%84deployment%e7%9a%84%e8%a1%a8%e5%8d%95%e6%80%8e%e4%b9%88%e5%8f%98%e4%b8%ba%e5%90%8e%e7%ab%afdeployment%e7%9a%84yaml%e4%bb%a5%e5%8f%8a%e5%a6%82%e4%bd%95%e8%a2%ab%e9%83%a8%e7%bd%b2%e5%88%b0k8s%e9%9b%86%e7%be%a4%e7%9a%84">#&lt;/a>
+&lt;/h2>
+&lt;p>你问的这个流程，其实就是 &lt;strong>前端表单 → 后端生成 YAML → K8s API Server 部署&lt;/strong> 的链路。
+我给你详细拆开说：&lt;/p>
+&lt;hr>
+&lt;h2 id="1-前端表单--deployment-配置数据">
+ 1️⃣ 前端表单 → Deployment 配置数据
+ &lt;a class="anchor" href="#1-%e5%89%8d%e7%ab%af%e8%a1%a8%e5%8d%95--deployment-%e9%85%8d%e7%bd%ae%e6%95%b0%e6%8d%ae">#&lt;/a>
+&lt;/h2>
+&lt;p>前端的表单（比如输入 &lt;strong>应用名、镜像名、副本数、CPU/内存限制、端口&lt;/strong> 等）就是 &lt;strong>Deployment 的核心字段&lt;/strong>。
+前端提交的通常是 JSON 格式的数据，例如：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-json" data-lang="json">&lt;span style="display:flex;">&lt;span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">&amp;#34;name&amp;#34;&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;myapp&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">&amp;#34;namespace&amp;#34;&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;default&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">&amp;#34;replicas&amp;#34;&lt;/span>: &lt;span style="color:#ae81ff">3&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">&amp;#34;image&amp;#34;&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;nginx:1.21&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">&amp;#34;cpu&amp;#34;&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;200m&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">&amp;#34;memory&amp;#34;&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;256Mi&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">&amp;#34;port&amp;#34;&lt;/span>: &lt;span style="color:#ae81ff">80&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;hr>
+&lt;h2 id="2-后端--转换为-k8s-yamlmanifest">
+ 2️⃣ 后端 → 转换为 K8s YAML/Manifest
+ &lt;a class="anchor" href="#2-%e5%90%8e%e7%ab%af--%e8%bd%ac%e6%8d%a2%e4%b8%ba-k8s-yamlmanifest">#&lt;/a>
+&lt;/h2>
+&lt;p>后端拿到这个 JSON，就会用模板（或者动态拼接）生成 &lt;strong>Deployment 的 YAML 清单&lt;/strong>：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">apiVersion&lt;/span>: &lt;span style="color:#ae81ff">apps/v1&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">Deployment&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">metadata&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">myapp&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">namespace&lt;/span>: &lt;span style="color:#ae81ff">default&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">spec&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">replicas&lt;/span>: &lt;span style="color:#ae81ff">3&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">selector&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">matchLabels&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">app&lt;/span>: &lt;span style="color:#ae81ff">myapp&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">template&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">metadata&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">labels&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">app&lt;/span>: &lt;span style="color:#ae81ff">myapp&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">spec&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">containers&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">myapp&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">image&lt;/span>: &lt;span style="color:#ae81ff">nginx:1.21&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">resources&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">limits&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">cpu&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;200m&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">memory&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;256Mi&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">ports&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> - &lt;span style="color:#f92672">containerPort&lt;/span>: &lt;span style="color:#ae81ff">80&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>⚡ 这里后端可能会用模板引擎（Go Template、Jinja2、Handlebars.js 等）来把表单字段替换进 YAML。&lt;/p></description></item></channel></rss>
