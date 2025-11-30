@@ -31217,7 +31217,39 @@ spec:
  🔁 二、Reconciler 模式的运行机制
  &lt;a class="anchor" href="#-%e4%ba%8creconciler-%e6%a8%a1%e5%bc%8f%e7%9a%84%e8%bf%90%e8%a1%8c%e6%9c%ba%e5%88%b6">#&lt;/a>
 &lt;/h2>
-&lt;p>可概括为：&lt;/p></description></item><item><title>2025-11-30 Kubernetes设计理念</title><link>https://qq547475331.github.io/docs/2025-11-30-kubernetes%E8%AE%BE%E8%AE%A1%E7%90%86%E5%BF%B5/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-11-30-kubernetes%E8%AE%BE%E8%AE%A1%E7%90%86%E5%BF%B5/</guid><description>&lt;h1 id="kubernetes设计理念">
+&lt;p>可概括为：&lt;/p></description></item><item><title>2025-11-30 Kubernetes核心组件</title><link>https://qq547475331.github.io/docs/2025-11-30-%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-11-30-%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6/</guid><description>&lt;h2 id="核心组件">
+ 核心组件
+ &lt;a class="anchor" href="#%e6%a0%b8%e5%bf%83%e7%bb%84%e4%bb%b6">#&lt;/a>
+&lt;/h2>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20251130124242346-20251130124332258-20251130124350046.png" alt="" />&lt;/p>
+&lt;p>Kubernetes 主要由以下几个核心组件组成:&lt;/p>
+&lt;ul>
+&lt;li>etcd 保存了整个集群的状态；&lt;/li>
+&lt;li>API Server 提供了资源操作的唯一入口，并提供认证、授权、访问控制、API 注册和发现等机制；&lt;/li>
+&lt;li>Controller Manager 负责维护集群的状态，比如故障检测、自动扩展、滚动更新等；&lt;/li>
+&lt;li>Scheduler 负责资源的调度，按照预定的调度策略将 Pod 调度到相应的机器上；&lt;/li>
+&lt;li>Kubelet 负责维护容器的生命周期，同时也负责 Volume（CVI）和网络（CNI）的管理；&lt;/li>
+&lt;li>Container Runtime 负责镜像管理以及 Pod 和容器的真正运行（CRI）；&lt;/li>
+&lt;li>Kube-proxy 负责为 Service 提供 cluster 内部的服务发现和负载均衡；&lt;/li>
+&lt;/ul>
+&lt;h2 id="组件通信">
+ 组件通信
+ &lt;a class="anchor" href="#%e7%bb%84%e4%bb%b6%e9%80%9a%e4%bf%a1">#&lt;/a>
+&lt;/h2>
+&lt;p>Kubernetes 多组件之间的通信原理为&lt;/p>
+&lt;ul>
+&lt;li>
+&lt;p>API Server 负责 etcd 存储的所有操作，且只有 API Server 才直接操作 etcd 集群&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>API Server 对内（集群中的其他组件）和对外（用户）提供统一的 REST API，其他组件均通过 API Server 进行通信&lt;/p>
+&lt;ul>
+&lt;li>Controller Manager、Scheduler、Kube-proxy 和 Kubelet 等均通过 API Server watch API 监测资源变化情况，并对资源作相应的操作&lt;/li>
+&lt;li>所有需要更新资源状态的操作均通过 API Server 的 REST API 进行&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>
+&lt;p>API Server 也会直接调用 Kubelet API（如 logs, exec, attach 等），默认不校验Kubelet 证书，但可以通过 &amp;ndash;kubelet-certificate-authority 开启（而 GKE 通过 SSH隧道保护它们之间的通信）&lt;/p></description></item><item><title>2025-11-30 Kubernetes设计理念</title><link>https://qq547475331.github.io/docs/2025-11-30-kubernetes%E8%AE%BE%E8%AE%A1%E7%90%86%E5%BF%B5/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-11-30-kubernetes%E8%AE%BE%E8%AE%A1%E7%90%86%E5%BF%B5/</guid><description>&lt;h1 id="kubernetes设计理念">
  Kubernetes设计理念
  &lt;a class="anchor" href="#kubernetes%e8%ae%be%e8%ae%a1%e7%90%86%e5%bf%b5">#&lt;/a>
 &lt;/h1>
