@@ -31331,4 +31331,31 @@ spec:
  复制控制器（Replication Controller，RC）
  &lt;a class="anchor" href="#%e5%a4%8d%e5%88%b6%e6%8e%a7%e5%88%b6%e5%99%a8replication-controllerrc">#&lt;/a>
 &lt;/h2>
-&lt;p>RC是K8s集群中最早的保证Pod高可用的API对象。通过监控运行中的Pod来保证集群中运行指定数目的Pod副本。指定的数目可以是多个也可以是1个；少于指定数目，RC就会启动运行新的Pod副本；多于指定数目，RC就会杀死多余的Pod副本。即使在指定数目为1的情况下，通过RC运行Pod也比直接运行Pod更明智，因为RC也可以发挥它高可用的能力，保证永远有1个Pod在运行。RC是K8s较早期的技术概念，只适用于长期伺服型的业务类型，比如控制小机器人提供高可用的Web服务。&lt;/p></description></item></channel></rss>
+&lt;p>RC是K8s集群中最早的保证Pod高可用的API对象。通过监控运行中的Pod来保证集群中运行指定数目的Pod副本。指定的数目可以是多个也可以是1个；少于指定数目，RC就会启动运行新的Pod副本；多于指定数目，RC就会杀死多余的Pod副本。即使在指定数目为1的情况下，通过RC运行Pod也比直接运行Pod更明智，因为RC也可以发挥它高可用的能力，保证永远有1个Pod在运行。RC是K8s较早期的技术概念，只适用于长期伺服型的业务类型，比如控制小机器人提供高可用的Web服务。&lt;/p></description></item><item><title>2026-01-20 Spring Cloud Alibaba微服务</title><link>https://qq547475331.github.io/docs/2026-01-20-%E5%BE%AE%E6%9C%8D%E5%8A%A1/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2026-01-20-%E5%BE%AE%E6%9C%8D%E5%8A%A1/</guid><description>&lt;h1 id="spring-cloud-alibaba">
+ Spring Cloud Alibaba
+ &lt;a class="anchor" href="#spring-cloud-alibaba">#&lt;/a>
+&lt;/h1>
+&lt;p>Spring Cloud Alibaba 致力于提供微服务开发的一站式解决方案。项目包含开发分布式应用微服务的必需组件，方便开发者通过 Spring Cloud 编程模型轻松使用这些组件来开发分布式应用服务。&lt;/p>
+&lt;p>依托 Spring Cloud Alibaba，您只需要添加一些注解和少量配置，就可以将 Spring Cloud 应用接入阿里微服务解决方案，通过阿里中间件来迅速搭建分布式应用系统。&lt;/p>
+&lt;p>此外，阿里云同时还提供了 Spring Cloud Alibaba 企业版 &lt;a href="https://www.aliyun.com/product/aliware/mse?spm=github.spring.com.topbar">微服务解决方案&lt;/a>，包括无侵入服务治理(全链路灰度，无损上下线，离群实例摘除等)，企业级 Nacos 注册配置中心和企业级云原生网关等众多产品。&lt;/p>
+&lt;h2 id="主要功能">
+ 主要功能
+ &lt;a class="anchor" href="#%e4%b8%bb%e8%a6%81%e5%8a%9f%e8%83%bd">#&lt;/a>
+&lt;/h2>
+&lt;ul>
+&lt;li>&lt;strong>服务限流降级&lt;/strong>：默认支持 WebServlet、WebFlux、OpenFeign、RestTemplate、Spring Cloud Gateway、Dubbo 和 RocketMQ 限流降级功能的接入，可以在运行时通过控制台实时修改限流降级规则，还支持查看限流降级 Metrics 监控。&lt;/li>
+&lt;li>&lt;strong>服务注册与发现&lt;/strong>：适配 Spring Cloud 服务注册与发现标准，默认集成对应 Spring Cloud 版本所支持的负载均衡组件的适配。&lt;/li>
+&lt;li>&lt;strong>分布式配置管理&lt;/strong>：支持分布式系统中的外部化配置，配置更改时自动刷新。&lt;/li>
+&lt;li>&lt;strong>消息驱动能力&lt;/strong>：基于 Spring Cloud Stream 为微服务应用构建消息驱动能力。&lt;/li>
+&lt;li>&lt;strong>分布式事务&lt;/strong>：使用 @GlobalTransactional 注解， 高效并且对业务零侵入地解决分布式事务问题。&lt;/li>
+&lt;li>&lt;strong>阿里云对象存储&lt;/strong>：阿里云提供的海量、安全、低成本、高可靠的云存储服务。支持在任何应用、任何时间、任何地点存储和访问任意类型的数据。&lt;/li>
+&lt;li>&lt;strong>分布式任务调度&lt;/strong>：提供秒级、精准、高可靠、高可用的定时（基于 Cron 表达式）任务调度服务。同时提供分布式的任务执行模型，如网格任务。网格任务支持海量子任务均匀分配到所有 Worker（schedulerx-client）上执行。&lt;/li>
+&lt;li>&lt;strong>阿里云短信服务&lt;/strong>：覆盖全球的短信服务，友好、高效、智能的互联化通讯能力，帮助企业迅速搭建客户触达通道。&lt;/li>
+&lt;/ul>
+&lt;p>更多功能请参考 &lt;a href="https://github.com/alibaba/spring-cloud-alibaba/blob/2025.1.x/Roadmap-zh.md">Roadmap&lt;/a>&lt;/p>
+&lt;p>除了上述所具有的功能外，针对企业级用户的场景，Spring Cloud Alibaba 配套的企业版微服务治理方案 &lt;a href="https://www.aliyun.com/product/aliware/mse?spm=github.spring.com.topbar">微服务引擎MSE&lt;/a> 还提供了企业级微服务治理中心，包括全链路灰度、服务预热、无损上下线和离群实例摘除等更多更强大的治理能力，同时还提供了企业级 Nacos 注册配置中心，企业级云原生网关等多种产品及解决方案。&lt;/p>
+&lt;h2 id="组件">
+ 组件
+ &lt;a class="anchor" href="#%e7%bb%84%e4%bb%b6">#&lt;/a>
+&lt;/h2>
+&lt;p>&lt;strong>&lt;a href="https://github.com/alibaba/Sentinel">Sentinel&lt;/a>&lt;/strong>：把流量作为切入点，从流量控制、熔断降级、系统负载保护等多个维度保护服务的稳定性。&lt;/p></description></item></channel></rss>
