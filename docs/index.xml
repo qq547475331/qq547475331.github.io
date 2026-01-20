@@ -31071,7 +31071,184 @@ spec:
 &lt;p>从 Vibe coding 到全栈 Agent&lt;/p>
 &lt;p>Matt：你们在 2024 年秋季发布了 V0，此后发展迅速。是否有一些数据，可以帮助我们了解它的增长情况？&lt;/p>
 &lt;p>**Guillermo：**V0 的核心功能是将文字转化为应用——从一个想法到一个可用的软件。它触达的用户群体远远超过了 Vercel 以往的受众，不需要工程背景，只需要有想法即可，这也正是所谓的 “Vibe coding（氛围编程）”的体现。&lt;/p>
-&lt;p>目前，V0 每秒钟能生成 7 个新应用。迄今为止，V0 已经生成超过 1 亿个应用。在不到一年的时间里，V0 的用户数已超过 Vercel 过去十年的总和。这意味着编码正在被自动化，更多人能够像在 ChatGPT 中输入问题一样轻松完成开发。&lt;/p></description></item><item><title>2025-10-23 informer模式</title><link>https://qq547475331.github.io/docs/2025-10-23-informer/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-10-23-informer/</guid><description>&lt;p>informer 机制的原理、关键源码点（来自 kubernetes 仓库）和针对云平台使用 client-go 时的设计/实现建议与示例代码。穿插对核心源码（Reflector、SharedInformer、SharedInformerFactory、Lister/Indexer、ListerWatcher 等）的引用与要点摘录，最后给出在云平台中常用的工程实践和示例实现。&lt;/p>
+&lt;p>目前，V0 每秒钟能生成 7 个新应用。迄今为止，V0 已经生成超过 1 亿个应用。在不到一年的时间里，V0 的用户数已超过 Vercel 过去十年的总和。这意味着编码正在被自动化，更多人能够像在 ChatGPT 中输入问题一样轻松完成开发。&lt;/p></description></item><item><title>2025-09-30 Prompt优化技巧</title><link>https://qq547475331.github.io/docs/2025-9-30-%E6%8F%90%E7%A4%BA%E8%AF%8D/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-9-30-%E6%8F%90%E7%A4%BA%E8%AF%8D/</guid><description>&lt;p>&lt;strong>在与AI结对编程的过程中，优秀的 Prompt 设计是充分发挥 AI 能力的关键。本文将分享一些开发中实用的 Prompt 优化技巧，帮助开发者更高效地与 AI 协作。&lt;/strong>&lt;/p>
+&lt;h1 id="01">
+ 01
+ &lt;a class="anchor" href="#01">#&lt;/a>
+&lt;/h1>
+&lt;p>基础优化技巧&lt;/p>
+&lt;p>&lt;strong>1.1 明确角色定义&lt;/strong>&lt;/p>
+&lt;p>&lt;strong>❌ 低效写法：&lt;/strong>&lt;/p>
+&lt;pre tabindex="0">&lt;code>帮我写个登录功能
+&lt;/code>&lt;/pre>&lt;p>&lt;strong>✅ 优化写法：&lt;/strong>&lt;/p>
+&lt;pre tabindex="0">&lt;code>你是一个资深的全栈工程师，请为我设计一个基于 JWT 的用户登录系统，包括前端表单验证、后端 API 接口和数据库设计。技术栈：React + Node.js + Golang + MySQL
+&lt;/code>&lt;/pre>&lt;p>&lt;strong>1.2 结构化输出&lt;/strong>&lt;/p>
+&lt;p>&lt;strong>❌ 低效写法：&lt;/strong>&lt;/p>
+&lt;pre tabindex="0">&lt;code>解释一下微服务架构
+&lt;/code>&lt;/pre>&lt;p>&lt;strong>✅ 优化写法：&lt;/strong>&lt;/p>
+&lt;pre tabindex="0">&lt;code>请按以下结构解释微服务架构：1. 核心概念（2-3句话）2. 与单体架构的对比（表格形式）3. 适用场景（3个具体例子）4. 技术栈推荐（分类说明）5. 实施步骤（有序列表）
+&lt;/code>&lt;/pre>&lt;p>&lt;strong>1.3 提供上下文&lt;/strong>&lt;/p>
+&lt;p>&lt;strong>✅ 带上下文的写法：&lt;/strong>&lt;/p>
+&lt;pre tabindex="0">&lt;code>项目情况：- 内容列表页，展示200条记录- 当前加载时间：2秒- 目标：优化到1秒以内- 用户主要用手机访问
+技术栈：React + Next.js + MySQL主要问题：首屏渲染慢，图片加载慢
+请提供具体的优化方案和代码示例。
+&lt;/code>&lt;/pre>&lt;h1 id="02">
+ 02
+ &lt;a class="anchor" href="#02">#&lt;/a>
+&lt;/h1>
+&lt;p>中级技巧&lt;/p>
+&lt;p>&lt;strong>2.1 分步骤思考（Chain of Thought）&lt;/strong>&lt;/p>
+&lt;pre tabindex="0">&lt;code>任务：设计一个实时聊天系统
+请按以下步骤思考：1. 首先分析需求（用户量、消息类型、实时性要求）2. 然后选择技术方案（WebSocket vs Server-Sent Events vs 轮询）3. 接着设计数据结构（用户、房间、消息）4. 最后提供核心代码实现
+每一步都要说明你的思考过程。
+&lt;/code>&lt;/pre>&lt;p>&lt;strong>2.2 Few-Shot Learning（示例学习）&lt;/strong>&lt;/p></description></item><item><title>2025-10-13 client-go机制</title><link>https://qq547475331.github.io/docs/2025-10-13-go-client%E6%9C%BA%E5%88%B6/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-10-13-go-client%E6%9C%BA%E5%88%B6/</guid><description>&lt;p>client-go 编程式交互
+熟练使用并掌握client-go是每个Kubernetes开发者必备的技术&lt;/p>
+&lt;p>首次选第五章节开始是基于‘Kubernetes 源码研习社’的活动参与进行，《Kubernetes 源码剖析》：第五章——Client Go章节本章主要阐述 client-go 编程式交互式工具的实现机制，本章节涉及 Kubernetes 开发者常用的多种 Client ，例如： RESTClient、ClientSet、DynamicClient、DiscoveryClient。详细剖析其内部运行机制，例如：Informer机制、DeltaFIFO队列、Indexer索引机制等等。开发者常使用 client-go 基于 Kubernetes 做二次开发。所以 client-go 是开发者熟练并掌握的必备技能。&lt;/p>
+&lt;p>client-go源码结构
+1.如何查看源码的结构&lt;/p>
+&lt;pre tabindex="0">&lt;code>#路径
+cd kubernetes/vendor/k8s.io
+#cloc代码统计工具统计
+[root@building-kubernetes k8s.io]# cloc client-go/
+Digest::MD5 not installed; will skip file uniqueness checks.
+ 1244 text files.
+ 1243 unique files. 
+ 28 files ignored.
+
+/AlDanial/cloc v 1.86 T=0.98 s (1245.3 files/s, 129358.9 lines/s)
+-------------------------------------------------------------------------------
+Language files blank comment code
+-------------------------------------------------------------------------------
+Go 963 16456 22422 76075
+Bazel 238 905 0 9250
+JSON 1 0 0 650
+Markdown 11 133 0 349
+Starlark 1 1 19 18
+Bourne Shell 1 2 13 3
+Dockerfile 1 1 13 3
+-------------------------------------------------------------------------------
+SUM: 1216 17498 22467 86348
+-------------------------------------------------------------------------------
+&lt;/code>&lt;/pre>&lt;p>*** cloc统计显示kubernetes 1.14中client-go拥有8.6万行代码，其中Go语言代码占7.6万行***&lt;/p></description></item><item><title>2025-10-13 InformerInformer 机制</title><link>https://qq547475331.github.io/docs/2025-10-13-informer%E6%9C%BA%E5%88%B6/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-10-13-informer%E6%9C%BA%E5%88%B6/</guid><description>&lt;p>5.3 Informer 机制
+在Kubernetes系统中，组件之间通过HTTP协议进行通信，在不依赖任何中间件的情况下需要保证消息的实时性、可靠性、顺序性等。那么Kubernetes是如何做到的呢？答案就是Informer机制。Kubernetes的其他组件都是通过client-go的Informer机制与Kubernetes API Server进行通信的。&lt;/p>
+&lt;p>5.3.1 Informer机制架构设计
+本节介绍Informer机制架构设计，Informer运行原理如图5-5所示。&lt;/p>
+&lt;p>&lt;img src="https://picture-base.oss-cn-hangzhou.aliyuncs.com/image-20251013104628970.png" alt="image-20251013104628970" />&lt;/p>
+&lt;p>在Informer架构设计中，有多个核心组件，分别介绍如下。&lt;/p>
+&lt;p>1.ReflectorReflector用于监控（Watch）指定的Kubernetes资源，当监控的资源发生变化时，触发相应的变更事件，例如Added（资源添加）事件、Updated（资源更新）事件、Deleted（资源删除）事件，并将其资源对象存放到本地缓存DeltaFIFO中。
+2.DeltaFIFODeltaFIFO可以分开理解，FIFO是一个先进先出的队列，它拥有队列操作的基本方法，例如Add、Update、Delete、List、Pop、Close等，而Delta是一个资源对象存储，它可以保存资源对象的操作类型，例如Added（添加）操作类型、Updated（更新）操作类型、Deleted（删除）操作类型、Sync（同步）操作类型等。
+3.IndexerIndexer是client-go用来存储资源对象并自带索引功能的本地存储，Reflector从DeltaFIFO中将消费出来的资源对象存储至Indexer。Indexer与Etcd集群中的数据完全保持一致。client-go可以很方便地从本地存储中读取相应的资源对象数据，而无须每次从远程Etcd集群中读取，以减轻Kubernetes API Server和Etcd集群的压力。
+直接阅读Informer机制代码会比较晦涩，通过Informers Example代码示例来理解Informer，印象会更深刻。Informers Example代码示例如下&lt;/p>
+&lt;pre>&lt;code>package main
+
+import (
+	&amp;quot;log&amp;quot;
+	&amp;quot;time&amp;quot;
+
+	v1 &amp;quot;k8s.io/apimachinery/pkg/apis/meta/v1&amp;quot;
+	&amp;quot;k8s.io/client-go/informers&amp;quot;
+	&amp;quot;k8s.io/client-go/kubernetes&amp;quot;
+	&amp;quot;k8s.io/client-go/tools/cache&amp;quot;
+	&amp;quot;k8s.io/client-go/tools/clientcmd&amp;quot;
+)
+
+func main() {
+	config, err := clientcmd.BuildConfigFromFlags(&amp;quot;&amp;quot;, &amp;quot;/root/.kube/config&amp;quot;)
+	if err != nil {
+		panic(err)
+	}
+	// 首先通过kubernetes.NewForConfig创建clientset对象,Informer需要通过ClientSet与Kubernetes API Server进行交互
+	clientSet, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		panic(err)
+	}
+	//创建stopCh对象，该对象用于在程序进程退出之前通知Informer提前退出，因为Informer是一个持久运行的goroutine
+	stopCh := make(chan struct{})
+	defer close(stopCh)
+
+	/*informers.NewSharedInformerFactory函数实例化了SharedInformer对象，
+	它接收两个参数：第1个参数clientset是用于与Kubernetes API Server交互的客户端，
+	第2个参数time.Minute用于设置多久进行一次resync（重新同步），
+	resync会周期性地执行List操作，将所有的资源存放在Informer Store中，如果该参数为0，则禁用resync功能。
+	*/
+	sharedInformers := informers.NewSharedInformerFactory(clientSet, time.Minute)
+	/*
+		通过sharedInformers.Core（）.V1（）.Pods（）.Informer可以得到具体Pod资源的informer对象。
+		通过informer.AddEventHandler函数可以为Pod资源添加资源事件回调方法，支持3种资源事件回调方法，
+		分别介绍如下。
+		● AddFunc：当创建Pod资源对象时触发的事件回调方法。
+		● UpdateFunc：当更新Pod资源对象时触发的事件回调方法。
+		● DeleteFunc：当删除Pod资源对象时触发的事件回调方法。
+	*/
+	informer := sharedInformers.Core().V1().Pods().Informer()
+	// 为Pod资源添加资源事件回调方法，支持AddFunc、UpdateFunc及DeleteFunc
+	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			/*
+				在正常的情况下，Kubernetes的其他组件在使用Informer机制时触发资源事件回调方法，
+				将资源对象推送到WorkQueue或其他队列中，在Informers Example代码示例中，
+				我们直接输出触发的资源事件。
+			*/
+			mObj := obj.(v1.Object)
+			log.Printf(&amp;quot;New Pod Added to Store: %s&amp;quot;, mObj.GetName())
+		},
+		UpdateFunc: func(oldObj, newObj interface{}) {
+			oObj := oldObj.(v1.Object)
+			nObj := newObj.(v1.Object)
+			log.Printf(&amp;quot;%s Pod Updated to %s&amp;quot;, oObj.GetName(), nObj.GetName())
+
+		},
+		DeleteFunc: func(obj interface{}) {
+			mObj := obj.(v1.Object)
+			log.Printf(&amp;quot;Pod Deleted from Store: %s&amp;quot;, mObj.GetName())
+		},
+	})
+	//最后通过informer.Run函数运行当前的Informer，内部为Pod资源类型创建Informer。
+	informer.Run(stopCh)
+}
+&lt;/code>&lt;/pre>
+&lt;p>1.资源Informer
+每一个Kubernetes资源上都实现了Informer机制。每一个Informer上都会实现Informer和Lister方法，例如PodInformer，代码示例如下：&lt;/p></description></item><item><title>2025-10-15 zlibrary记录</title><link>https://qq547475331.github.io/docs/2025-10-14-zlibrary%E8%AE%B0%E5%BD%95/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-10-14-zlibrary%E8%AE%B0%E5%BD%95/</guid><description>&lt;p>Z-Library是一家电子图书馆，被誉为全球最大的科学图书和学术文献免费资源之一。它创办于2009年，截至2022年10月1日，已收录超过1129万本图书和8483万篇学术文章。从各种知名文学著作，理工学科，人文艺术、到学术论文等应有尽有！支持PDF、epub、mobi等多种格式图书资源下载绝对是你找书的不二选择。&lt;/p>
+&lt;p>Z-Library的使命是拓宽服务领域，促使更多人能够轻松获取文学作品。它不仅提供电子书资源，还在全球42个国家设立了150多个实体书籍交流中心，即“&lt;a href="https://zhida.zhihu.com/search?content_id=253840612&amp;amp;content_type=Article&amp;amp;match_order=1&amp;amp;q=Z-Points&amp;amp;zd_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ6aGlkYV9zZXJ2ZXIiLCJleHAiOjE3NjA1OTYxMDYsInEiOiJaLVBvaW50cyIsInpoaWRhX3NvdXJjZSI6ImVudGl0eSIsImNvbnRlbnRfaWQiOjI1Mzg0MDYxMiwiY29udGVudF90eXBlIjoiQXJ0aWNsZSIsIm1hdGNoX29yZGVyIjoxLCJ6ZF90b2tlbiI6bnVsbH0.q9ha6he_uBo4qOhQK-4Ok6RtC8dwK_XxDp4C2JXPkvo&amp;amp;zhida_source=entity">Z-Points&lt;/a>”，用户可以通过邮寄书籍进行借阅和交流。&lt;/p>
+&lt;p>客户端每天可以下载20本电子书，比网页版多10本，防止丢失或失效，先转存。无需魔法就能正常使用，比镜像站稳定。zlibrary数字图书馆是否有下载限制未注册用户（访客模式)每天最多可以下载 5 本电子书；正常注册用户每天最多可以下载 10 本电子书。捐赠用户：通过捐赠可以提高下载限额，但通过捐赠具体能提高的下载额度数目不确定，视官方活动而定。这些限制旨在平衡服务器负载和用户需求，确保所有用户都能顺利访问和下载所需的资源。&lt;/p>
+&lt;h3 id="zlibrary数字图书馆官网镜像网址">
+ zlibrary数字图书馆官网/镜像网址
+ &lt;a class="anchor" href="#zlibrary%e6%95%b0%e5%ad%97%e5%9b%be%e4%b9%a6%e9%a6%86%e5%ae%98%e7%bd%91%e9%95%9c%e5%83%8f%e7%bd%91%e5%9d%80">#&lt;/a>
+&lt;/h3>
+&lt;p>zlibrary最新国内入口：&lt;a href="https://link.zhihu.com/?target=https%3A//zlib.wwwnav.com/">https://zlib.wwwnav.com/&lt;/a> （可用，永久入口）&lt;/p>
+&lt;p>zlibrary最新镜像地址：&lt;a href="https://link.zhihu.com/?target=https%3A//z-library.wwwnav.com/">https://zh.z-lib.today&lt;/a>&lt;/p>
+&lt;p>zlibrary最新官网地址：&lt;a href="https://link.zhihu.com/?target=https%3A//zh.z-library.sk/">https://zh.z-library.sk&lt;/a> （需梯）&lt;/p>
+&lt;p>zlibrary最新官网地址：&lt;a href="https://link.zhihu.com/?target=https%3A//zh.z-lib.gd/">https://zh.z-lib.gd/&lt;/a> （需梯）&lt;/p>
+&lt;h3 id="zlibrary数字图书馆电脑客户端安卓app">
+ zlibrary数字图书馆电脑客户端/安卓app
+ &lt;a class="anchor" href="#zlibrary%e6%95%b0%e5%ad%97%e5%9b%be%e4%b9%a6%e9%a6%86%e7%94%b5%e8%84%91%e5%ae%a2%e6%88%b7%e7%ab%af%e5%ae%89%e5%8d%93app">#&lt;/a>
+&lt;/h3>
+&lt;p>&lt;strong>zlibrary（windows/mac/安卓/ipad）安装包下载：&lt;/strong>&lt;/p>
+&lt;p>&lt;a href="https://zhida.zhihu.com/search?content_id=253840612&amp;amp;content_type=Article&amp;amp;match_order=1&amp;amp;q=%e5%a4%b8%e5%85%8b%e7%bd%91%e7%9b%98&amp;amp;zd_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ6aGlkYV9zZXJ2ZXIiLCJleHAiOjE3NjA1OTYxMDYsInEiOiLlpLjlhYvnvZHnm5giLCJ6aGlkYV9zb3VyY2UiOiJlbnRpdHkiLCJjb250ZW50X2lkIjoyNTM4NDA2MTIsImNvbnRlbnRfdHlwZSI6IkFydGljbGUiLCJtYXRjaF9vcmRlciI6MSwiemRfdG9rZW4iOm51bGx9.715yL0g9LIbLP0W3PoMEiTz4t4-yjjFzu2Uj5nF3Oz0&amp;amp;zhida_source=entity">夸克网盘&lt;/a>下载：&lt;a href="https://link.zhihu.com/?target=https%3A//pan.quark.cn/s/d316854c0a69">https://pan.quark.cn/s/d316854c0a69&lt;/a> （随时失效，先保存）&lt;/p>
+&lt;p>百度网盘下载：&lt;a href="https://link.zhihu.com/?target=https%3A//pan.baidu.com/s/1cSVo38rtLDarwQJV3GYAEA%3Fpwd%3D4rkf">https://pan.baidu.com/s/1cSVo38rtLDarwQJV3GYAEA?pwd=4rkf&lt;/a> （随时失效，先保存）&lt;/p>
+&lt;p>&lt;a href="https://zhida.zhihu.com/search?content_id=253840612&amp;amp;content_type=Article&amp;amp;match_order=1&amp;amp;q=Olib%e5%9b%be%e4%b9%a6%e9%a6%86&amp;amp;zd_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ6aGlkYV9zZXJ2ZXIiLCJleHAiOjE3NjA1OTYxMDYsInEiOiJPbGli5Zu-5Lmm6aaGIiwiemhpZGFfc291cmNlIjoiZW50aXR5IiwiY29udGVudF9pZCI6MjUzODQwNjEyLCJjb250ZW50X3R5cGUiOiJBcnRpY2xlIiwibWF0Y2hfb3JkZXIiOjEsInpkX3Rva2VuIjpudWxsfQ.M8dp8htlSG3vRiNaKt-nxNfw0msYuJ3wtLZ7HjXM3AM&amp;amp;zhida_source=entity">Olib图书馆&lt;/a>下载：&lt;a href="https://link.zhihu.com/?target=https%3A//olib.wwwnav.com/">https://olib.wwwnav.com/&lt;/a> （zlibrary图书下载器，国内无限下载）&lt;/p>
+&lt;p>电子书/电影/音乐/漫画/游戏资源：&lt;a href="https://link.zhihu.com/?target=https%3A//wangpan.z-library.click/">https://wangpan.z-library.click/&lt;/a>&lt;/p>
+&lt;pre tabindex="0">&lt;code>今天我们提供机会创建账户，或者通过特殊的电子邮箱地址重新访问现有的账户。
+
+这如何运作？只要从您的邮箱给我们的神奇邮箱blackbox@z-library.so发送任何一封邮件，您就可以在3到5分钟内自动生成的回信中访问Z-Library。全都很简单！
+&lt;/code>&lt;/pre></description></item><item><title>2025-10-15 反思模式</title><link>https://qq547475331.github.io/docs/2025-10-15-chapter-04-reflection/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-10-15-chapter-04-reflection/</guid><description>&lt;h1 id="chapter-4-reflection--第四章反思">
+ Chapter 4: Reflection | &lt;!-- raw HTML omitted -->第四章：反思&lt;!-- raw HTML omitted -->
+ &lt;a class="anchor" href="#chapter-4-reflection--%e7%ac%ac%e5%9b%9b%e7%ab%a0%e5%8f%8d%e6%80%9d">#&lt;/a>
+&lt;/h1>
+&lt;h2 id="reflection-pattern-overview--反思模式概述">
+ Reflection Pattern Overview | &lt;!-- raw HTML omitted -->反思模式概述&lt;!-- raw HTML omitted -->
+ &lt;a class="anchor" href="#reflection-pattern-overview--%e5%8f%8d%e6%80%9d%e6%a8%a1%e5%bc%8f%e6%a6%82%e8%bf%b0">#&lt;/a>
+&lt;/h2>
+&lt;p>In the preceding chapters, we&amp;rsquo;ve explored fundamental agentic patterns: Chaining for sequential execution, Routing for dynamic path selection, and Parallelization for concurrent task execution. These patterns enable agents to perform complex tasks more efficiently and flexibly. However, even with sophisticated workflows, an agent&amp;rsquo;s initial output or plan might not be optimal, accurate, or complete. This is where the &lt;strong>Reflection&lt;/strong> pattern comes into play.&lt;/p></description></item><item><title>2025-10-15 记忆管理</title><link>https://qq547475331.github.io/docs/2025-10-15-chapter-08-memory-management/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-10-15-chapter-08-memory-management/</guid><description>&lt;h1 id="chapter-8-memory-management-">
+ Chapter 8: Memory Management |
+ &lt;a class="anchor" href="#chapter-8-memory-management-">#&lt;/a>
+&lt;/h1>
+&lt;h1 id="第-8-章记忆管理">
+ &lt;!-- raw HTML omitted -->第 8 章：记忆管理&lt;!-- raw HTML omitted -->
+ &lt;a class="anchor" href="#%e7%ac%ac-8-%e7%ab%a0%e8%ae%b0%e5%bf%86%e7%ae%a1%e7%90%86">#&lt;/a>
+&lt;/h1>
+&lt;p>Effective memory management is crucial for intelligent agents to retain information. Agents require different types of memory, much like humans, to operate efficiently. This chapter delves into memory management, specifically addressing the immediate (short-term) and persistent (long-term) memory requirements of agents.&lt;/p>
+&lt;p>&lt;!-- raw HTML omitted -->有效的记忆管理对于智能体保留信息至关重要。与人类相似，智能体需要不同类型的记忆才能高效运作。本章将深入探讨记忆管理，重点关注智能体的即时（短期）和持久（长期）记忆需求。&lt;!-- raw HTML omitted -->&lt;/p></description></item><item><title>2025-10-23 informer模式</title><link>https://qq547475331.github.io/docs/2025-10-23-informer/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://qq547475331.github.io/docs/2025-10-23-informer/</guid><description>&lt;p>informer 机制的原理、关键源码点（来自 kubernetes 仓库）和针对云平台使用 client-go 时的设计/实现建议与示例代码。穿插对核心源码（Reflector、SharedInformer、SharedInformerFactory、Lister/Indexer、ListerWatcher 等）的引用与要点摘录，最后给出在云平台中常用的工程实践和示例实现。&lt;/p>
 &lt;p>一、核心概念与整体流程（高层架构）&lt;/p>
 &lt;ul>
 &lt;li>ListerWatcher：负责通过 Kubernetes API 做 List（获取当前快照）和 Watch（订阅增量事件）。通常由 client-go 提供的 ListWatch（实现 ListerWatcher 接口）创建。&lt;/li>
